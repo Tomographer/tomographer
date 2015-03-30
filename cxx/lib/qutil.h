@@ -11,12 +11,20 @@ struct MatrQBase
 {
   /** \brief Complex dim x dim Matrix */
   typedef Eigen::Matrix<std::complex<Derived::RealScalar>,Derived::FixedDim,Derived::FixedDim> MatrixType;
+  
   /** \brief Real dim*dim Vector */
   typedef Eigen::Matrix<Derived::RealScalar,Derived::FixedDim*Derived::FixedDim,1> VectorParamType;
-
-  /** \brief dynamic Matrix with rows = dim*dim Vectors (row-major) */
+  
+  /** \brief dynamic Matrix with rows = dim*dim Vectors (row-major)
+   * [maximum FixedMaxParamList rows, or Dynamic]
+   */
   Matrix<Derived::RealScalar, Eigen::Dynamic, Derived::FixedDim*Derived::FixedDim, Eigen::RowMajor,
          Derived::FixedMaxParamList, Derived::FixedDim*Derived::FixedDim> VectorParamListType;
+
+  /** \brief dynamic Array of integers [maximum FixedMaxParamList entries or Dynamic]
+   */
+  Array<Derived::IntFreqType, Eigen::Dynamic, 1, 0 /*Options*/,
+        Derived::FixedMaxParamList, 1> FreqListType;
 
 
   const size_t dim;
@@ -28,18 +36,10 @@ struct MatrQBase
 };
 
 
-template<int FixedDim_ = Eigen::Dynamic, int FixedMaxParamList_ = Eigen::Dynamic, typename RealScalar_ = double>
-struct MatrQ : public MatrQBase<MatrQ<FixedDim_, FixedMaxParamList_, RealScalar_> >
+template<typename Derived, bool has_fixed_dim>
+struct MatrQBaseWithInitializers : public MatrQBase<Derived>
 {
-  enum {
-    FixedDim = FixedDim_,
-    FixedMaxParamList = FixedMaxParamList_
-  };
-  typedef RealScalar_ RealScalar;
-
-  MatrQ(size_t dim_) : MatrQBase(dim_)
-  {
-  }
+  MatrixQBaseWithInitializers(size_t dim_) : MatrixQBase<Derived>(dim_) { }
 
   inline auto mkMatrixType()
   {
@@ -53,19 +53,16 @@ struct MatrQ : public MatrQBase<MatrQ<FixedDim_, FixedMaxParamList_, RealScalar_
   {
     return MatrixType::Zero(len);
   }
-};
-
-// specialization for dynamic size
-template<typename RealScalar_ = double>
-struct MatrQ<Eigen::Dynamic, Eigen::Dynamic, RealScalar>
-  : public MatrQBase<MatrQ<Eigen::Dynamic, Eigen::Dynamic, RealScalar_> >
-{
-  enum { FixedDim = FixedDim_};
-  typedef RealScalar_ RealScalar;
-
-  MatrQ(size_t dim_) : MatrQBase(dim_)
+  inline auto mkFreqListType(size_t len)
   {
+    return FreqListType::Zero(len);
   }
+};
+// specialization for dynamic sized types -- give good initializers
+template<typename Derived>
+struct MatrQBaseWithInitializers<Derived, false> : public MatrQBase<Derived>
+{
+  MatrixQBaseWithInitializers(size_t dim_) : MatrixQBase<Derived>(dim_) { }
 
   inline auto mkMatrixType()
   {
@@ -79,6 +76,34 @@ struct MatrQ<Eigen::Dynamic, Eigen::Dynamic, RealScalar>
   {
     return MatrixType::Zero(len, dim*dim);
   }
+  inline auto mkFreqListType(size_t len)
+  {
+    return FreqListType::Zero(len);
+  }
+}
+
+
+
+
+template<int FixedDim_ = Eigen::Dynamic, int FixedMaxParamList_ = Eigen::Dynamic,
+         typename RealScalar_ = double, typename IntFreqType_ = int>
+struct MatrQ
+  : public MatrQBaseWithInitializers<MatrQ<FixedDim_, FixedMaxParamList_, RealScalar_, IntFreqType_>,
+                                     FixedDim_ != Eigen::Dynamic>
+{
+  enum {
+    FixedDim = FixedDim_,
+    FixedMaxParamList = FixedMaxParamList_
+  };
+  typedef RealScalar_ RealScalar;
+  typedef IntFreqType_ IntFreqType
+
+  MatrQ(size_t dim_)
+    : MatrQBaseWithInitializers<MatrQ<FixedDim_, FixedMaxParamList_, RealScalar_, IntFreqType_>,
+                                FixedDim_ != Eigen::Dynamic>(dim_)
+  {
+  }
+
 };
 
 
