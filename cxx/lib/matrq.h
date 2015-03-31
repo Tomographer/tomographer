@@ -55,21 +55,18 @@ struct MatrQBase
    */
   typedef Eigen::Array<IntFreqType, Eigen::Dynamic, 1, 0 /*Options*/,
                        FixedMaxParamList, 1> FreqListType;
-
-
-  const size_t dim;
-  MatrQBase(size_t dim_)
-    : dim(dim_)
-  {
-    eigen_assert(FixedDim == Eigen::Dynamic || (int)dim_ == FixedDim);
-  }
 };
 
 
 template<typename Derived, bool has_fixed_dim>
-struct MatrQBaseWithInitializers : public MatrQBase<Derived>
+struct MatrQBaseDimStore : public MatrQBase<Derived>
 {
-  MatrQBaseWithInitializers(size_t dim_) : MatrQBase<Derived>(dim_) { }
+  inline size_t dim() const { return FixedDim; }
+
+  MatrQBaseDimStore(size_t dim_)
+  {
+    eigen_assert(FixedDim != Eigen::Dynamic && dim_ == dim());
+  }
 
   inline typename MatrQBase<Derived>::MatrixType::ConstantReturnType initMatrixType() const
   {
@@ -91,9 +88,19 @@ struct MatrQBaseWithInitializers : public MatrQBase<Derived>
 };
 // specialization for dynamic sized types -- give good initializers
 template<typename Derived>
-struct MatrQBaseWithInitializers<Derived, false> : public MatrQBase<Derived>
+struct MatrQBaseDimStore<Derived, false> : public MatrQBase<Derived>
 {
-  MatrQBaseWithInitializers(size_t dim_) : MatrQBase<Derived>(dim_) { }
+private:
+  const size_t _dim;
+public:
+
+  inline size_t dim() const { return _dim; }
+
+  MatrQBaseDimStore(size_t dim_)
+    : dim(dim_)
+  {
+    eigen_assert(FixedDim == Eigen::Dynamic);
+  }
 
   inline typename MatrQBase<Derived>::MatrixType::ConstantReturnType initMatrixType() const
   {
@@ -118,12 +125,12 @@ struct MatrQBaseWithInitializers<Derived, false> : public MatrQBase<Derived>
 
 template<int FixedDim_, int FixedMaxParamList_, typename RealScalar_, typename IntFreqType_>
 struct MatrQ
-  : public MatrQBaseWithInitializers<MatrQ<FixedDim_, FixedMaxParamList_, RealScalar_, IntFreqType_>,
-                                     FixedDim_ != Eigen::Dynamic>
+  : public MatrQBaseDimStore<MatrQ<FixedDim_, FixedMaxParamList_, RealScalar_, IntFreqType_>,
+                             FixedDim_ != Eigen::Dynamic>
 {
   MatrQ(size_t dim_)
-    : MatrQBaseWithInitializers<MatrQ<FixedDim_, FixedMaxParamList_, RealScalar_, IntFreqType_>,
-                                FixedDim_ != Eigen::Dynamic>(dim_)
+    : MatrQBaseDimStore<MatrQ<FixedDim_, FixedMaxParamList_, RealScalar_, IntFreqType_>,
+                        FixedDim_ != Eigen::Dynamic>(dim_)
   {
   }
 };
