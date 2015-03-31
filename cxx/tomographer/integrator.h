@@ -5,28 +5,30 @@
 #include <limits>
 #include <random>
 
-#include "matrq.h"
-#include "tomoproblem.h"
-#include "param_herm_x.h"
-#include "loggers.h"
+#include <tomographer/matrq.h>
+#include <tomographer/tomoproblem.h>
+#include <tomographer/param_herm_x.h>
+#include <tomographer/loggers.h>
 
 
+enum {
+  MHUseFnValue = 1,    // use MHWalker::fnval(newpt)
+  MHUseFnLogValue,     // use MHWalker::fnlogval(newpt)
+  MHUseFnRelativeValue // use MHWalker::fnrelval(newpt, curpt)
+};
 
-/*
-template<typename Rng, typename MHWalker>
+template<typename Rng, typename MHWalker, typename StatsCollector, typename Logger>
 class MHRandomWalk
 {
 public:
   typedef typename MHWalker::PointType PointType;
   typedef typename MHWalker::RealScalar RealScalar;
-  typedef typename MHWalker::FnValueType FnValuetype;
+
+  // yes, sorry: MHWalker must define FnValueType even if UseFnSyntaxType ==
+  // MHUseFnRelative. It may be a dummy type (e.g. int) though in that case.
+  typedef typename MHWalker::FnValueType FnValueType;
   enum {
     UseFnSyntaxType = MHWalker::UseFnSyntaxType
-  };
-  enum {
-    UseFnValue = 1, // MHWalker::fnval(newpt)
-    UseFnLogValue,  // MHWalker::fnlogval(newpt)
-    UseFnRelativeValue // MHWalker::fnrelval(newpt, curpt)
   };
 
 private:
@@ -37,20 +39,25 @@ private:
 
   Rng & _rng;
   MHWalker & _mhwalker;
+  StatsCollector & _stats;
+  Logger & _log;
 
   PointType curpt;
-  FnValueType curfnval;
+  FnValueType curptval;
 
   size_t num_accepted;
   size_t num_live_points;
 
 public:
 
-  DMStateSpaceRandomWalk(size_t n_sweep, size_t n_therm, size_t n_run, RealScalar step_size,
-                         const PointType & startpt, MHWalker & mhwalker, Rng & rng)
+  MHRandomWalk(size_t n_sweep, size_t n_therm, size_t n_run, RealScalar step_size,
+               const PointType & startpt, MHWalker & mhwalker, StatsCollector & stats,
+               Rng & rng, Logger & log_)
     : _n_sweep(n_sweep), _n_therm(n_therm), _n_run(n_run),
       _step_size(step_size),
       _mhwalker(mhwalker),
+      _stats(stats),
+      _log(log_),
       _rng(rng),
       curpt(startpt)
   {
@@ -60,43 +67,53 @@ public:
   inline size_t n_therm() const { return _n_therm; }
   inline size_t n_run() const { return _n_run; }
 
-  inline void init() {
+  inline void init()
+  {
     num_accepted = 0;
     num_live_points = 0;
     switch (UseFnSyntaxType) {
-    case UseFnLogValue:
+    case MHUseFnLogValue:
       curptval = _mhwalker.fnlogval(curpt);
       break;
-    case UseFnValue:
+    case MHUseFnValue:
       curptval = _mhwalker.fnval(curpt);
       break;
-    case UseFnRelativeValue:
+    case MHUseFnRelativeValue:
     default:
       curptval = 0;
       break;
     }
+    _stats.init();
   }
-  inline void thermalizing_done() {
+  inline void thermalizing_done()
+  {
+    _stats.thermalizing_done();
   }
-  inline void done() {
+  inline void done()
+  {
+    _stats.done();
   }
 
   inline void move(size_t k, bool is_thermalizing, bool is_live_iter)
   {
-    PointType newpt = _mhwalker.jumpFn(curpt, _step_size);
+    // The reason `step_size` is passed to jump_fn instead of leaving jump_fn itself
+    // handle the step size, is that we might in the future want to dynamically adapt the
+    // step size according to the acceptance ratio. That would have to be done in this
+    // class.
+    PointType newpt = _mhwalker.jump_fn(curpt, _step_size);
 
     FnValueType newptval;
     double a = 1.0;
-    switch (UseFnSytaxType) {
-    case UseFnLogValue:
-      newptval = _mhwalker.fnlogval(curpt);
-      a = (newptlogval > curptlogval) ? 1.0 : exp(newptlogval - curptlogval);
+    switch (UseFnSyntaxType) {
+    case MHUseFnLogValue:
+      newptval = _mhwalker.fnlogval(newpt);
+      a = (newptval > curptval) ? 1.0 : exp(newptval - curptval);
       break;
-    case UseFnValue:
-      newptval = _mhwalker.fnval(curpt);
-      a = newptlogval / curptlogval;
+    case MHUseFnValue:
+      newptval = _mhwalker.fnval(newpt);
+      a = newptval / curptval;
       break;
-    case UseFnRelativeValue:
+    case MHUseFnRelativeValue:
       newptval = 0.0;
       a = _mhwalker.fnrelval(newpt, curpt);
       break;
@@ -116,14 +133,19 @@ public:
       ++num_live_points;
     }
 
+    _stats.raw_move(k, is_thermalizing, is_live_iter, accept, a, newpt, newptval, curpt, curptval, *this);
+
+    _log.longdebug("MHRandomWalk",
+                   "%s%3lu: %s a=%-7.2g, newptval=%5.4g [llh=%.4g], curptval=%5.4g [llh=%.4g]   accept_ratio=%.2g",
+                   (is_thermalizing?"T":"#"),
+                   k, accept?"AC":"RJ", a, newptval, -2*newptval, curptval, -2*curptval,
+                   acceptance_ratio());
+
     if (accept) {
       // update the internal state of the random walk
       curpt = newpt;
-      curptlogval = newptlogval;
+      curptval = newptval;
     }
-
-    _log.longdebug("  #%lu: accept=%d, a=%g, newptval=%g, accept_ratio=%g",
-                   k, accept, a, newptval, (double)num_accepted/num_live_points);
   }
 
   inline double acceptance_ratio() const
@@ -133,13 +155,9 @@ public:
 
   inline void process(size_t k)
   {
-    _log.longdebug("DMStateSpaceRandomWalk::process(%lu)", k);
   }
-
  
 };
-
-*/
 
 
 

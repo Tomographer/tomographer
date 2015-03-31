@@ -1,1 +1,3 @@
+build
 test_lib_basics
+test_integrator_basic

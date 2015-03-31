@@ -3,10 +3,10 @@
 #include <random>
 #include <iostream>
 
-#include "lib/matrq.h"
-#include "lib/tomoproblem.h"
-#include "lib/integrator.h"
-#include "lib/dmintegrator.h"
+#include <tomographer/matrq.h>
+#include <tomographer/tomoproblem.h>
+#include <tomographer/integrator.h>
+#include <tomographer/dmintegrator.h>
 
 
 int main()
@@ -28,7 +28,10 @@ int main()
     0,   1,    0,         0
     ;
   dat.Nx = qmq.initFreqListType(6);
-  dat.Nx << 1500, 800, 300, 300, 10, 30;
+  //  dat.Nx << 1500, 800, 300, 300, 10, 30;
+
+  // try to reproduce the nice "1qubit-test9-pureup-extreme-onlyupmeas" curve
+  dat.Nx << 0, 0, 0, 0, 250, 0;
 
   dat.x_MLE << 1.0, 0, 0, 0; // pure up state
 
@@ -36,16 +39,16 @@ int main()
   // now, prepare the integrator.
   std::mt19937 rng(1544554); // seeded random number generator
 
-  SimpleFoutLogger flog(stdout);
+  SimpleFoutLogger flog(stdout); // just log normally to STDOUT
 
   QubitPaulisMatrQ::MatrixType start_T = qmq.initMatrixType();
   start_T << 1.0/sqrt(2.0), 0, 0, 1.0/sqrt(2.0);
 
   typedef DMStateSpaceRandomWalk<std::mt19937,IndepMeasTomoProblem<QubitPaulisMatrQ>,SimpleFoutLogger>
     MyRandomWalk;
-  MyRandomWalk rwalk(1, 20, 50, 0.05, start_T, dat, rng, flog);
+  MyRandomWalk rwalk(1, 100, 500, 0.05, start_T, dat, rng, flog);
 
-  MetropolisWalkerBase<MyRandomWalk>::run(rwalk);
+  rwalk.run();
   
   return 0;
 }

@@ -1,8 +1,8 @@
 
 #include <iostream>
 
-#include "lib/matrq.h"
-#include "lib/tomoproblem.h"
+#include "tomographer/matrq.h"
+#include "tomographer/tomoproblem.h"
 
 int main()
 {
@@ -59,7 +59,7 @@ int main()
     QubitPaulisMatrQ::VectorParamType x = qmq.initVectorParamType();
     x << 0.5, 0.5, 0, 0; // maximally mixed state
 
-    QubitPaulisMatrQ::RealScalar value = dat.calc_llh<true>(x);
+    QubitPaulisMatrQ::RealScalar value = dat.calc_llh(x);
 
     std::cout << "llh @ mixed state = " << value << "\n";
 

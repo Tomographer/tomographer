@@ -104,15 +104,15 @@ public:
 
   inline typename MatrQBase<Derived>::MatrixType::ConstantReturnType initMatrixType() const
   {
-    return MatrQBase<Derived>::MatrixType::Zero(MatrQBase<Derived>::dim, MatrQBase<Derived>::dim);
+    return MatrQBase<Derived>::MatrixType::Zero(_dim, _dim);
   }
   inline typename MatrQBase<Derived>::VectorParamType::ConstantReturnType initVectorParamType() const
   {
-    return MatrQBase<Derived>::VectorParamType::Zero(MatrQBase<Derived>::dim*MatrQBase<Derived>::dim);
+    return MatrQBase<Derived>::VectorParamType::Zero(_dim*_dim);
   }
   inline typename MatrQBase<Derived>::VectorParamListType::ConstantReturnType initVectorParamListType(size_t len) const
   {
-    return MatrQBase<Derived>::VectorParamListType::Zero(len, MatrQBase<Derived>::dim*MatrQBase<Derived>::dim);
+    return MatrQBase<Derived>::VectorParamListType::Zero(len, _dim*_dim);
   }
   inline typename MatrQBase<Derived>::FreqListType::ConstantReturnType initFreqListType(size_t len) const
   {
