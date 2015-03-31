@@ -33,10 +33,10 @@ inline void param_x_to_herm(Eigen::MatrixBase<Derived1>& Herm, const Eigen::Dens
     for (m = 0; m < n; ++m) {
       const int k = dim + n*(n-1)/2 + m;
       const int l = dimtri + k;
-      Herm(n,m) = SQRT_12 * typename Eigen::internal::traits<Derived1>::Scalar(x(k), x(l));
+      Herm(n,m) = tomo_internal::SQRT_12 * typename Eigen::internal::traits<Derived1>::Scalar(x(k), x(l));
       if (!OnlyLowerTri) {
         // complex conj. on opposite triangular part
-        Herm(m,n) = SQRT_12 * typename Eigen::internal::traits<Derived1>::Scalar(x(k), -x(l));
+        Herm(m,n) = tomo_internal::SQRT_12 * typename Eigen::internal::traits<Derived1>::Scalar(x(k), -x(l));
       }
     }
   }
@@ -63,8 +63,8 @@ inline void param_herm_to_x(Eigen::DenseBase<Derived1>& x, const Eigen::MatrixBa
     for (m = 0; m < n; ++m) {
       const int k = dim + n*(n-1)/2 + m;
       const int l = dimtri + k;
-      x(k) = Herm(n,m).real() * SQRT_2;
-      x(l) = Herm(n,m).imag() * SQRT_2;
+      x(k) = Herm(n,m).real() * tomo_internal::SQRT_2;
+      x(l) = Herm(n,m).imag() * tomo_internal::SQRT_2;
     }
   }
 }

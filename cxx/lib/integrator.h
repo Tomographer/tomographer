@@ -7,32 +7,39 @@
 
 #include "matrq.h"
 #include "tomoproblem.h"
+#include "param_herm_x.h"
 #include "loggers.h"
 
 
-template<typename Rng, typename TomoProblem, typename Logger>
-class DMStateSpaceRandomWalk
+
+/*
+template<typename Rng, typename MHWalker>
+class MHRandomWalk
 {
 public:
-  typedef typename TomoProblem::MatrQ MatrQ;
-  typedef typename TomoProblem::LLHValueType LLHValueType;
-  typedef typename MatrQ::MatrixType MatrixType;
-  typedef typename MatrQ::RealScalar RealScalar;
+  typedef typename MHWalker::PointType PointType;
+  typedef typename MHWalker::RealScalar RealScalar;
+  typedef typename MHWalker::FnValueType FnValuetype;
+  enum {
+    UseFnSyntaxType = MHWalker::UseFnSyntaxType
+  };
+  enum {
+    UseFnValue = 1, // MHWalker::fnval(newpt)
+    UseFnLogValue,  // MHWalker::fnlogval(newpt)
+    UseFnRelativeValue // MHWalker::fnrelval(newpt, curpt)
+  };
 
 private:
   const size_t _n_sweep;
   const size_t _n_therm;
   const size_t _n_run;
-  const double _step_size;
+  const RealScalar _step_size;
 
-  TomoProblem & _tomo;
   Rng & _rng;
-  std::normal_distribution<LLHValueType> _normal_distr_rnd;
+  MHWalker & _mhwalker;
 
-  Logger & _log;
-
-  MatrixType cur_T;
-  LLHValueType curptlogval;
+  PointType curpt;
+  FnValueType curfnval;
 
   size_t num_accepted;
   size_t num_live_points;
@@ -40,14 +47,12 @@ private:
 public:
 
   DMStateSpaceRandomWalk(size_t n_sweep, size_t n_therm, size_t n_run, RealScalar step_size,
-                         const MatrixType & startpt, TomoProblem & tomo, Rnd & rng, Logger & log)
+                         const PointType & startpt, MHWalker & mhwalker, Rng & rng)
     : _n_sweep(n_sweep), _n_therm(n_therm), _n_run(n_run),
       _step_size(step_size),
-      cur_T(startpt),
-      _tomo(tomo),
+      _mhwalker(mhwalker),
       _rng(rng),
-      _normal_distr_rnd(0.0, 1.0),
-      _log(log)
+      curpt(startpt)
   {
   }
 
@@ -55,76 +60,70 @@ public:
   inline size_t n_therm() const { return _n_therm; }
   inline size_t n_run() const { return _n_run; }
 
-  inline void init() const {
-    log.longdebug("DMStateSpaceRandomWalk::init()");
+  inline void init() {
     num_accepted = 0;
     num_live_points = 0;
-    curptlogval = fnlogval(cur_T);
+    switch (UseFnSyntaxType) {
+    case UseFnLogValue:
+      curptval = _mhwalker.fnlogval(curpt);
+      break;
+    case UseFnValue:
+      curptval = _mhwalker.fnval(curpt);
+      break;
+    case UseFnRelativeValue:
+    default:
+      curptval = 0;
+      break;
+    }
   }
-  inline void thermalizing_done() const {
-    log.longdebug("DMStateSpaceRandomWalk::thermalizing_done()");
+  inline void thermalizing_done() {
   }
-  inline void done() const {
-    log.longdebug("DMStateSpaceRandomWalk::done()");
-  }
-
-  inline double fnlogval(const MatrixType & T)
-  {
-    MatrixType rho = _matq.initMatrixType();
-    rho.noalias() = T*T.adjoint();
-
-    VectorParamType x = _matq.initVectorParamType();
-    param_herm_to_x(x, rho);
-
-    return -0.5 * _tomo.calc_llh(x);
+  inline void done() {
   }
 
   inline void move(size_t k, bool is_thermalizing, bool is_live_iter)
   {
-    log.longdebug("DMStateSpaceRandomWalk::move(%d, %d, %d)", k, is_thermalizing, is_live_iter);
+    PointType newpt = _mhwalker.jumpFn(curpt, _step_size);
 
-    MatrixType new_T = _matrq.initMatrixType();
-
-    MatrixType DeltaT = _matrq.initMatrixType();
-
-    // iterate over rows first, as Eigen stores in column-major order by default
-    for (int j = 0; j < _matrq.dim(); ++j) {
-      for (int k = 0; k < _matrq.dim(); ++k) {
-        DeltaT(k,j) = MatrQ::ComplexType(_normal_distr_rnd(_rng), _normal_distr_rnd(_rng));
-      }
+    FnValueType newptval;
+    double a = 1.0;
+    switch (UseFnSytaxType) {
+    case UseFnLogValue:
+      newptval = _mhwalker.fnlogval(curpt);
+      a = (newptlogval > curptlogval) ? 1.0 : exp(newptlogval - curptlogval);
+      break;
+    case UseFnValue:
+      newptval = _mhwalker.fnval(curpt);
+      a = newptlogval / curptlogval;
+      break;
+    case UseFnRelativeValue:
+      newptval = 0.0;
+      a = _mhwalker.fnrelval(newpt, curpt);
+      break;
+    default:
+      assert(0 && "Unknown UseFnSyntaxType!");
     }
-
-    //std::cout << "Delta:\n" << Delta <<"\n";
-    new_T.noalias() = cur_T + step_size * DeltaT;
-
-    //std::cout << "Tnew:\n" << Tnew <<"\n" << "Tnew.norm()=" << Tnew.norm()<<"\n";
-    // renormalize to "project" onto the large T-space sphere
-    new_T /= Tnew.norm(); //Matrix<>.norm() is Frobenius norm.
-
-
-    LLHValueType newptlogval = fnlogval(newpt);
 
     // accept move?
-    bool accept = false;
-    if (newptlogval > curptlogval) {
-      accept = true;
-    } else {
-      double a = exp(newptlogval - curptlogval);
-      auto r = rng();
-      if ( r-rng.min() <= a*(rng.max()-rng.min()) ) {
-        accept = true;
-      }
+    bool accept = true;
+    if (a < 1.0) {
+      accept = bool( _rng()-_rng.min() <= a*(_rng.max()-_rng.min()) );
     }
 
-    // track acceptance ratio
-    num_accepted += accept ? 1 : 0;
-    ++num_live_points;
+    // track acceptance ratio, except if we are thermalizing
+    if (!is_thermalizing) {
+      num_accepted += accept ? 1 : 0;
+      ++num_live_points;
+    }
 
     if (accept) {
       // update the internal state of the random walk
-      cur_T = new_T;
+      curpt = newpt;
       curptlogval = newptlogval;
     }
+
+    _log.longdebug("  #%lu: accept=%d, a=%g, newptval=%g, accept_ratio=%g",
+                   k, accept, a, newptval, (double)num_accepted/num_live_points);
   }
 
   inline double acceptance_ratio() const
@@ -134,18 +133,22 @@ public:
 
   inline void process(size_t k)
   {
-    log.longdebug("DMStateSpaceRandomWalk::process(%d)", k);
+    _log.longdebug("DMStateSpaceRandomWalk::process(%lu)", k);
   }
 
  
 };
+
+*/
+
+
 
 
 
 
 
 template<typename RandomWalk_>
-class MetropolisWalkerBase
+struct MetropolisWalkerBase
 {
   typedef RandomWalk_ RandomWalk;
 
@@ -199,7 +202,7 @@ class MetropolisWalkerBase
 
     for (k = 0; k < num_run; ++k) {
 
-      bool is_live_iter = (k % Nsweep == 0);
+      bool is_live_iter = ((k+1) % Nsweep == 0);
       
       // calculate a candidate jump point and see if we accept the move
       rw.move(k, false, is_live_iter);

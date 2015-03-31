@@ -19,7 +19,7 @@ struct IndepMeasTomoProblem
   const int dim2; //!< the square of the dimension of the Hilbert space, dim2=dim*dim
   const int Ndof; //!< the number of degrees of freedom, Ndof = dim*dim-1
 
-  typename LLHValueType NMeasAmplifyFactor; //!< A factor to artificially amplify the number of measurements by
+  LLHValueType NMeasAmplifyFactor; //!< A factor to artificially amplify the number of measurements by
 
   typename MatrQ::VectorParamListType Exn; //!< POVM Entries, parameterized with X-param
   typename MatrQ::FreqListType Nx; //!< frequency list
@@ -55,7 +55,7 @@ namespace tomo_internal
                                         const typename MatrQ::VectorParamType & x)
     {
       return -2 * data->NMeasAmplifyFactor * (
-          data->Nx.template cast<LLHValueType>() * (data->Exn * data->x).array().log()
+          data->Nx.template cast<LLHValueType>() * (data->Exn * x).array().log()
           ).sum();
     }
   };
@@ -63,7 +63,7 @@ namespace tomo_internal
   template<typename MatrQ, typename LLHValueType>
   struct LLH_Calculator<MatrQ, LLHValueType, true>
   {
-    static inline LLHValueType calc_llh(const IndepMeasTomoProblem<MatrQ,LLHValueType,UseCLoopInstead> *data,
+    static inline LLHValueType calc_llh(const IndepMeasTomoProblem<MatrQ,LLHValueType,true> *data,
                                         const typename MatrQ::VectorParamType & x)
     {
       size_t k;
@@ -81,10 +81,9 @@ namespace tomo_internal
 
 
 template<typename MatrQ, typename LLHValueType, bool UseCLoopInstead>
-inline typename MatrQ::RealScalar
-    IndepMeasTomoProblem<MatrQ, LLHValueType, UseCLoopInstead>::calc_llh(
-        const typename MatrQ::VectorParamType & x
-        ) const
+inline LLHValueType IndepMeasTomoProblem<MatrQ, LLHValueType, UseCLoopInstead>::calc_llh(
+    const typename MatrQ::VectorParamType & x
+    ) const
 {
   return tomo_internal::LLH_Calculator<MatrQ, LLHValueType, UseCLoopInstead>::calc_llh(this, x);
 }

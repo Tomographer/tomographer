@@ -1,6 +1,6 @@
 
 
-all: test_lib_basics
+all: test_integrator_basic #test_lib_basics
 
 
 CXX = g++
@@ -20,4 +20,7 @@ LDFLAGS = -L$(CUBADIR)/lib -L$(HOME)/.local/lib  -lmatio -lz -lcblas -latlas -lm
 
 
 test_lib_basics: test_lib_basics.cxx
+	g++ -o $@ $<  -fopenmp  $(CXXFLAGS) -L$(HOME)/.local/lib -lboost_program_options -lmatio -lz -lm -lgomp
+
+test_integrator_basic: test_integrator_basic.cxx
 	g++ -o $@ $<  -fopenmp  $(CXXFLAGS) -L$(HOME)/.local/lib -lboost_program_options -lmatio -lz -lm -lgomp

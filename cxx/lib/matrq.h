@@ -61,11 +61,11 @@ struct MatrQBase
 template<typename Derived, bool has_fixed_dim>
 struct MatrQBaseDimStore : public MatrQBase<Derived>
 {
-  inline size_t dim() const { return FixedDim; }
+  inline size_t dim() const { return MatrQBase<Derived>::FixedDim; }
 
   MatrQBaseDimStore(size_t dim_)
   {
-    eigen_assert(FixedDim != Eigen::Dynamic && dim_ == dim());
+    eigen_assert(MatrQBase<Derived>::FixedDim != Eigen::Dynamic && dim_ == dim());
   }
 
   inline typename MatrQBase<Derived>::MatrixType::ConstantReturnType initMatrixType() const
@@ -97,9 +97,9 @@ public:
   inline size_t dim() const { return _dim; }
 
   MatrQBaseDimStore(size_t dim_)
-    : dim(dim_)
+    : _dim(dim_)
   {
-    eigen_assert(FixedDim == Eigen::Dynamic);
+    eigen_assert(MatrQBase<Derived>::FixedDim == Eigen::Dynamic);
   }
 
   inline typename MatrQBase<Derived>::MatrixType::ConstantReturnType initMatrixType() const
