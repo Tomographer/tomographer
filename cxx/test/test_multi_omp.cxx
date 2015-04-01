@@ -79,7 +79,7 @@ int main()
 
       VacuumLogger vlog;
 
-      MyRandomWalk rwalk(20, 300, 5000, 0.05, pcdata->prob.matq.initMatrixType(),
+      MyRandomWalk rwalk(20, 500, 40000, 0.05, pcdata->prob.matq.initMatrixType(),
                          pcdata->prob, rng, fidstatscollector, vlog);
       
       rwalk.run();
@@ -113,9 +113,20 @@ int main()
 
   ResultsCollector results(taskcdat.histogram_params);
 
-  MultiProc::run_omp_tasks<OurMHTask>(&taskcdat, &results, (size_t)20 /* num_runs */, (size_t)1 /* n_chunk */);
+  time_t time_start;
+  time(&time_start);
+
+  MultiProc::run_omp_tasks<OurMHTask>(&taskcdat, &results, (size_t)256 /* num_runs */, (size_t)1 /* n_chunk */);
+
+  time_t time_end;
+  time(&time_end);
+
+  int dt = time_end-time_start;
+
 
   std::cout << "FINAL HISTOGRAM\n" << results.final_histogram.pretty_print() << "\n";
+
+  std::cout << fmts("Total elapsed time: %d:%02d:%02d\n\n", dt/3600, (dt/60)%60, dt%60).c_str();
   
   return 0;
 }

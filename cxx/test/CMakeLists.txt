@@ -10,6 +10,12 @@ include(Util)
 # Find specific features and packages
 # ==============================================================================
 
+# default to Release build
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE "Release")
+endif()
+message(STATUS "CMake Build Type: ${CMAKE_BUILD_TYPE}")
+
 # Check for C++0x/C++11 features
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)

@@ -63,7 +63,7 @@ public:
           );
       T = T/T.norm(); // normalize to be on surface of the sphere
 
-      printf("T = \n%s\n", streamcstr(T));
+      // DEBUG: printf("T = \n%s\n", streamcstr(T));
 
       _mhrw.set_curpt(T);
     }
