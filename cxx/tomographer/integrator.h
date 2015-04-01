@@ -24,6 +24,7 @@ namespace tomo_internal {
   struct MHRandomWalk_helper_decide_jump
   {
     typedef typename MHWalker::PointType PointType;
+    typedef int FnValueType; // dummy FnValueType
 
     static inline double get_ptval(MHWalker & mhwalker, const PointType & curpt)
     {
@@ -40,6 +41,7 @@ namespace tomo_internal {
   struct MHRandomWalk_helper_decide_jump<MHWalker, MHUseFnValue>
   {
     typedef typename MHWalker::PointType PointType;
+    typedef typename MHWalker::FnValueType FnValueType;
 
     static inline double get_ptval(MHWalker & mhwalker, const PointType & curpt)
     {
@@ -56,6 +58,7 @@ namespace tomo_internal {
   struct MHRandomWalk_helper_decide_jump<MHWalker, MHUseFnLogValue>
   {
     typedef typename MHWalker::PointType PointType;
+    typedef typename MHWalker::FnValueType FnValueType;
 
     static inline double get_ptval(MHWalker & mhwalker, const PointType & curpt)
     {
@@ -72,6 +75,7 @@ namespace tomo_internal {
   struct MHRandomWalk_helper_decide_jump<MHWalker, MHUseFnRelativeValue>
   {
     typedef typename MHWalker::PointType PointType;
+    typedef int FnValueType; // dummy FnValueType
 
     static inline double get_ptval(MHWalker & /*mhwalker*/, const PointType & /*curpt*/)
     {
@@ -88,16 +92,15 @@ namespace tomo_internal {
 
 
 
-template<typename Rng, typename MHWalker, typename StatsCollector, typename Logger>
+template<typename Rng, typename MHWalker, typename StatsCollector, typename Log>
 class MHRandomWalk
 {
 public:
   typedef typename MHWalker::PointType PointType;
   typedef typename MHWalker::RealScalar RealScalar;
 
-  // yes, sorry: MHWalker must define FnValueType even if UseFnSyntaxType ==
-  // MHUseFnRelative. It may be a dummy type (e.g. int) though in that case.
-  typedef typename MHWalker::FnValueType FnValueType;
+  typedef typename tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,MHWalker::UseFnSyntaxType>::FnValueType
+          FnValueType;
   enum {
     UseFnSyntaxType = MHWalker::UseFnSyntaxType
   };
@@ -111,7 +114,7 @@ private:
   Rng & _rng;
   MHWalker & _mhwalker;
   StatsCollector & _stats;
-  Logger & _log;
+  Log & _log;
 
   PointType curpt;
   FnValueType curptval;
@@ -123,7 +126,7 @@ public:
 
   MHRandomWalk(size_t n_sweep, size_t n_therm, size_t n_run, RealScalar step_size,
                const PointType & startpt, MHWalker & mhwalker, StatsCollector & stats,
-               Rng & rng, Logger & log_)
+               Rng & rng, Log & log_)
     : _n_sweep(n_sweep), _n_therm(n_therm), _n_run(n_run),
       _step_size(step_size),
       _mhwalker(mhwalker),
@@ -145,15 +148,53 @@ public:
 
     curptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, curpt);
 
+    _mhwalker.init();
     _stats.init();
   }
   inline void thermalizing_done()
   {
+    _mhwalker.thermalizing_done();
     _stats.thermalizing_done();
   }
   inline void done()
   {
+    _mhwalker.done();
     _stats.done();
+  }
+
+  /** \brief Access the current state of the random walk
+   *
+   * \returns the current point the random walk is located at.
+   */
+  inline const PointType & get_curpt() const
+  {
+    return curpt;
+  }
+
+  /** \brief Access the current function value of the random walk
+   *
+   * \returns the current value of the function in the current state of the random walk.
+   *
+   * \warning the meaning of this value depends on \c MHRandomWalk::UseFnSyntaxType. It is
+   * either the value of the function, its logarithm, or a dummy value.
+   */
+  inline const FnValueType & get_curptval() const
+  {
+    return curptval;
+  }
+
+  /** \brief Force manual state of random walk
+   *
+   * This may be called to force setting the current state of the random walk to the given
+   * point \c pt.
+   */
+  inline void set_curpt(const PointType& pt)
+  {
+    curpt = pt;
+    curptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, curpt);
+    _log.longdebug("MHRandomWalk",
+                   streamstr("set_curpt(): set internal state. Value = "<<curptval<<"; Point =\n"<<pt<<"\n"));
+                   
   }
 
   inline void move(size_t k, bool is_thermalizing, bool is_live_iter)

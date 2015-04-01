@@ -1,6 +1,7 @@
 
 #include <cstdio>
 #include <random>
+#include <chrono>
 #include <iostream>
 
 #include <tomographer/qit/matrq.h>
@@ -38,7 +39,7 @@ int main()
 
 
   // now, prepare the integrator.
-  std::mt19937 rng(1544554); // seeded random number generator
+  std::mt19937 rng(std::chrono::system_clock::now().time_since_epoch().count()); // seeded random number generator
 
   SimpleFoutLogger flog(stdout, Logger::LONGDEBUG); // just log normally to STDOUT
 
@@ -55,7 +56,9 @@ int main()
 
   typedef DMStateSpaceRandomWalk<std::mt19937,IndepMeasTomoProblem<QubitPaulisMatrQ>,OurFidStatsCollector,SimpleFoutLogger>
     MyRandomWalk;
-  MyRandomWalk rwalk(20, 300, 5000, 0.04, start_T, dat, rng, fidstats, flog);
+
+  //  MyRandomWalk rwalk(20, 300, 5000, 0.05, start_T, dat, rng, fidstats, flog);
+  MyRandomWalk rwalk(4, 20, 50, 0.06, Eigen::Matrix2cd::Zero(), dat, rng, fidstats, flog);
 
   rwalk.run();
   

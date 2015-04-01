@@ -18,7 +18,7 @@ else()
     )
 endif()
 
-# path needs to be relative to get the good header dependencies
+# path needs to be relative to get the good automatic header dependencies
 include_directories(..)
 
 find_package(Eigen3 REQUIRED)

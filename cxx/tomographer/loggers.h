@@ -262,4 +262,19 @@ private:
 
 
 
+/** \brief Logger that discards all messages.
+ *
+ * Use this logger if you don't want to log messages.
+ */
+class VacuumLogger : public LoggerBase<VacuumLogger>
+{
+public:
+  inline void emit_log(int /*level*/, const char * /*origin*/, const std::string & /*msg*/)
+  {
+  }
+};
+
+
+
+
 #endif

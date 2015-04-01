@@ -25,6 +25,7 @@ struct IndepMeasTomoProblem
   typename MatrQ::FreqListType Nx; //!< frequency list
 
   typename MatrQ::MatrixType rho_MLE; //!< Maximum likelihood estimate as density matrix
+  typename MatrQ::MatrixType T_MLE; //!< Maximum likelihood estimate as T-parameterized density matrix
   typename MatrQ::VectorParamType x_MLE; //!< X-Parameterized version of rho_MLE
 
   IndepMeasTomoProblem(MatrQ matq_)
@@ -34,6 +35,7 @@ struct IndepMeasTomoProblem
       Ndof(dim2 - 1),
       NMeasAmplifyFactor(1),
       rho_MLE(matq.initMatrixType()),
+      T_MLE(matq.initMatrixType()),
       x_MLE(matq.initVectorParamType())
   {
     // NOTE: Exn & N are left uninitialized, because we don't yet know how many POVM

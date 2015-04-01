@@ -2,11 +2,13 @@
 #ifndef DMINTEGRATOR_H
 #define DMINTEGRATOR_H
 
+#include <tomographer/qit/util.h>
 #include <tomographer/qit/dist.h>
 #include <tomographer/integrator.h>
+#include <tomographer/loggers.h>
 
 
-template<typename Rng, typename TomoProblem, typename StatsCollector, typename Logger>
+template<typename Rng, typename TomoProblem, typename StatsCollector, typename Log>
 class DMStateSpaceRandomWalk
 {
 public:
@@ -15,6 +17,7 @@ public:
   typedef typename MatrQ::MatrixType MatrixType;
   typedef typename MatrQ::VectorParamType VectorParamType;
   typedef typename MatrQ::RealScalar RealScalar;
+  typedef typename MatrQ::ComplexScalar ComplexScalar;
 
   typedef MatrixType PointType;
   typedef LLHValueType FnValueType;
@@ -28,9 +31,9 @@ private:
   Rng & _rng;
   std::normal_distribution<RealScalar> _normal_distr_rnd;
 
-  Logger & _log;
+  Log & _log;
   
-  typedef MHRandomWalk<Rng,DMStateSpaceRandomWalk<Rng,TomoProblem,StatsCollector,Logger>,StatsCollector,Logger>
+  typedef MHRandomWalk<Rng,DMStateSpaceRandomWalk<Rng,TomoProblem,StatsCollector,Log>,StatsCollector,Log>
           OurMHRandomWalk;
 
   OurMHRandomWalk _mhrw;
@@ -39,12 +42,36 @@ public:
 
   DMStateSpaceRandomWalk(size_t n_sweep, size_t n_therm, size_t n_run, RealScalar step_size,
                          const MatrixType & startpt, TomoProblem & tomo, Rng & rng, StatsCollector & stats,
-                         Logger & log_)
+                         Log & log_)
     : _tomo(tomo),
       _rng(rng),
       _normal_distr_rnd(0.0, 1.0),
       _log(log_),
       _mhrw(n_sweep, n_therm, n_run, step_size, startpt, *this, stats, _rng, log_)
+  {
+  }
+
+  inline void init()
+  {
+    if (_mhrw.get_curpt().norm() < 1e-3) {
+      // zero matrix given: means to choose random starting point
+      MatrixType T;// = _tomo.matq.initMatrixType();
+
+      T = dense_random<MatrixType>(
+          _rng, _normal_distr_rnd, _tomo.matq.dim(), _tomo.matq.dim()
+          );
+      T = T/T.norm(); // normalize to be on surface of the sphere
+
+      printf("T = \n%s\n", streamcstr(T));
+
+      _mhrw.set_curpt(T);
+    }
+  }
+  inline void thermalizing_done()
+  {
+  }
+
+  inline void done()
   {
   }
 
@@ -67,13 +94,9 @@ public:
 
   inline MatrixType jump_fn(const MatrixType& cur_T, RealScalar step_size)
   {
-    MatrixType DeltaT = _tomo.matq.initMatrixType();
-    // iterate over rows first, as Eigen stores in column-major order by default
-    for (size_t j = 0; j < _tomo.matq.dim(); ++j) {
-      for (size_t k = 0; k < _tomo.matq.dim(); ++k) {
-        DeltaT(k,j) = typename MatrQ::ComplexScalar(_normal_distr_rnd(_rng), _normal_distr_rnd(_rng));
-      }
-    }
+    MatrixType DeltaT = dense_random<MatrixType>(
+        _rng, _normal_distr_rnd, _tomo.matq.dim(), _tomo.matq.dim()
+        );
 
     MatrixType new_T = _tomo.matq.initMatrixType();
 
@@ -101,7 +124,7 @@ public:
 
 
 
-template<typename MatrQ, typename Logger>
+template<typename MatrQ, typename Log>
 class FidelityHistogramStatsCollector
 {
 public:
@@ -114,12 +137,12 @@ private:
 
   MatrixType _ref_T;
 
-  Logger & _log;
+  Log & _log;
 
 public:
   FidelityHistogramStatsCollector(double fid_min, double fid_max, int num_bins,
                                   const MatrixType & ref_T, MatrQ /*mq*/,
-                                  Logger & logger)
+                                  Log & logger)
     : _fid_min(fid_min), _fid_max(fid_max),
       _fid_bin_counts(num_bins), // resize our array.
       _ref_T(ref_T),
@@ -140,16 +163,19 @@ public:
   }
   inline void done()
   {
-    // _log.longdebug("FidelityHistogramStatsCollector", "done()");
-    std::string hist;
-    size_t Ntot = _fid_bin_counts.size();
-    double barscale = (1+_fid_bin_counts.maxCoeff()) / 80.0; // full bar is 80 chars wide
-    // _log.longdebug("FidelityHistogramStatsCollector", "done(): Ntot=%lu, barscale=%g", Ntot, barscale);
-    for (size_t k = 0; k < Ntot; ++k) {
-      hist += fmts("%-6.4g | %3d %s\n", _fid_min + k*(_fid_max-_fid_min)/Ntot,
-                   _fid_bin_counts(k), std::string((int)(_fid_bin_counts(k)/barscale+0.5), '*').c_str());
+    if (_log.enabled_for(Logger::LONGDEBUG)) {
+      // _log.longdebug("FidelityHistogramStatsCollector", "done()");
+      std::string hist;
+      size_t Ntot = _fid_bin_counts.size();
+      double barscale = (1+_fid_bin_counts.maxCoeff()) / 80.0; // full bar is 80 chars wide
+      // _log.longdebug("FidelityHistogramStatsCollector", "done(): Ntot=%lu, barscale=%g", Ntot, barscale);
+      for (size_t k = 0; k < Ntot; ++k) {
+        hist += fmts("%-6.4g | %3d %s\n", _fid_min + k*(_fid_max-_fid_min)/Ntot,
+                     _fid_bin_counts(k), std::string((int)(_fid_bin_counts(k)/barscale+0.5), '*').c_str());
+      }
+      _log.longdebug("FidelityHistogramStatsCollector",
+                     "Done walking & collecting stats. Here's the histogram:\n"+hist);
     }
-    _log.longdebug("FidelityHistogramStatsCollector", "Done walking & collecting stats. Here's the histogram:\n"+hist);
   }
 
   template<typename LLHValueType, typename MHRandomWalk>
