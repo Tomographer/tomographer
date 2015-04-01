@@ -1,0 +1,64 @@
+
+#ifndef QIT_DIST_H
+#define QIT_DIST_H
+
+
+#include <Eigen/Core>
+#include <Eigen/SVD>
+#include <unsupported/Eigen/MatrixFunctions>
+
+
+
+/** \brief Fidelity between two density matrices
+ *
+ * Calculates \f$ F(\rho,\sigma) = \left\Vert\sigma^{1/2}\rho^{1/2}\right\Vert_1 \f$.
+ *
+ * \note This is the Nielsen & Chuang fidelity, also called "root fidelity."
+ */
+template<typename Derived, typename Derived2>
+inline double fidelity(const Eigen::MatrixBase<Derived>& rho, const Eigen::MatrixBase<Derived2>& sigma)
+{
+  // The Schatten one-norm is the sum of the singular values.
+  return (rho.sqrt()*sigma.sqrt()).jacobiSvd().singularValues().sum();
+}
+
+/** \brief Fidelity between two \c T-parameterizations of quantum states
+ *
+ * The \f$ T \f$ -parameterization of \f$ \rho \f$ is a matrix \f$ T \f$ which satisfies
+ * \f[
+ *     \rho = T T^\dagger .
+ * \f]
+ *
+ * This function calculates the same fidelity function as \ref fidelity(), but accepts
+ * T-parameterizations of the quantum states instead. The formula used by this function
+ * acts directly on the \f$ T \f$ 's:
+ * \f[
+ *    F(T_1 T_1^\dagger, T_2 T_2^\dagger)
+ *        = \left\Vert\rho^{1/2}\sigma^{1/2}\right\Vert_1
+ *        = \left\Vert T_1^\dagger * T_2\right\Vert_1 .
+ * \f]
+ *
+ * \note This is the Nielsen & Chuang fidelity, also called "root fidelity."
+ */
+template<typename Der1, typename Der2>
+inline double fidelity_T(const Eigen::MatrixBase<Der1>& T1, const Eigen::MatrixBase<Der2>& T2)
+{
+  // Calculate ||sigma^{1/2} rho^{1/2}||_1 == || T1^\dagger * T2 ||_1
+  // and Schatten one-norm is the sum of the singular values.
+  double val = (T1.adjoint()*T2).jacobiSvd().singularValues().sum();
+  return val;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif

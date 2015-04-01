@@ -1,8 +1,8 @@
 
 #include <iostream>
 
-#include "tomographer/matrq.h"
-#include "tomographer/tomoproblem.h"
+#include <tomographer/qit/matrq.h>
+#include <tomographer/tomoproblem.h>
 
 int main()
 {

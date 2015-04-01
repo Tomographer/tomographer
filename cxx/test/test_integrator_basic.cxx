@@ -3,7 +3,8 @@
 #include <random>
 #include <iostream>
 
-#include <tomographer/matrq.h>
+#include <tomographer/qit/matrq.h>
+#include <tomographer/loggers.h>
 #include <tomographer/tomoproblem.h>
 #include <tomographer/integrator.h>
 #include <tomographer/dmintegrator.h>
@@ -39,14 +40,22 @@ int main()
   // now, prepare the integrator.
   std::mt19937 rng(1544554); // seeded random number generator
 
-  SimpleFoutLogger flog(stdout); // just log normally to STDOUT
+  SimpleFoutLogger flog(stdout, Logger::LONGDEBUG); // just log normally to STDOUT
 
   QubitPaulisMatrQ::MatrixType start_T = qmq.initMatrixType();
   start_T << 1.0/sqrt(2.0), 0, 0, 1.0/sqrt(2.0);
 
-  typedef DMStateSpaceRandomWalk<std::mt19937,IndepMeasTomoProblem<QubitPaulisMatrQ>,SimpleFoutLogger>
+  QubitPaulisMatrQ::MatrixType ref_T = qmq.initMatrixType();
+  ref_T << 1.0, 0, 0, 0;
+
+  typedef FidelityHistogramStatsCollector<QubitPaulisMatrQ,SimpleFoutLogger>
+    OurFidStatsCollector;
+
+  OurFidStatsCollector fidstats(0.98, 1.0, 50, ref_T, qmq, flog);
+
+  typedef DMStateSpaceRandomWalk<std::mt19937,IndepMeasTomoProblem<QubitPaulisMatrQ>,OurFidStatsCollector,SimpleFoutLogger>
     MyRandomWalk;
-  MyRandomWalk rwalk(1, 100, 500, 0.05, start_T, dat, rng, flog);
+  MyRandomWalk rwalk(20, 300, 5000, 0.04, start_T, dat, rng, fidstats, flog);
 
   rwalk.run();
   

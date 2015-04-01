@@ -2,10 +2,11 @@
 #ifndef INTEGRATOR_H
 #define INTEGRATOR_H
 
+#include <cassert>
 #include <limits>
 #include <random>
 
-#include <tomographer/matrq.h>
+#include <tomographer/qit/matrq.h>
 #include <tomographer/tomoproblem.h>
 #include <tomographer/param_herm_x.h>
 #include <tomographer/loggers.h>
@@ -16,6 +17,76 @@ enum {
   MHUseFnLogValue,     // use MHWalker::fnlogval(newpt)
   MHUseFnRelativeValue // use MHWalker::fnrelval(newpt, curpt)
 };
+
+
+namespace tomo_internal {
+  template<typename MHWalker, int UseFnSyntaxType>
+  struct MHRandomWalk_helper_decide_jump
+  {
+    typedef typename MHWalker::PointType PointType;
+
+    static inline double get_ptval(MHWalker & mhwalker, const PointType & curpt)
+    {
+      assert(0 && "UNKNOWN UseFnSyntaxType: Not implemented");
+    }
+    static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, double /*newptval*/,
+                                     const PointType & /*curpt*/, double /*curptval*/)
+    {
+      assert(0 && "UNKNOWN UseFnSyntaxType: Not implemented");
+    }
+  };
+
+  template<typename MHWalker>
+  struct MHRandomWalk_helper_decide_jump<MHWalker, MHUseFnValue>
+  {
+    typedef typename MHWalker::PointType PointType;
+
+    static inline double get_ptval(MHWalker & mhwalker, const PointType & curpt)
+    {
+      return mhwalker.fnval(curpt);
+    }
+    static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, double newptval,
+                                     const PointType & /*curpt*/, double curptval)
+    {
+      return (newptval / curptval);
+    }
+  };
+
+  template<typename MHWalker>
+  struct MHRandomWalk_helper_decide_jump<MHWalker, MHUseFnLogValue>
+  {
+    typedef typename MHWalker::PointType PointType;
+
+    static inline double get_ptval(MHWalker & mhwalker, const PointType & curpt)
+    {
+      return mhwalker.fnlogval(curpt);
+    }
+    static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, double newptval,
+                                     const PointType & /*curpt*/, double curptval)
+    {
+      return (newptval > curptval) ? 1.0 : exp(newptval - curptval);
+    }
+  };
+
+  template<typename MHWalker>
+  struct MHRandomWalk_helper_decide_jump<MHWalker, MHUseFnRelativeValue>
+  {
+    typedef typename MHWalker::PointType PointType;
+
+    static inline double get_ptval(MHWalker & /*mhwalker*/, const PointType & /*curpt*/)
+    {
+      return 0.0;
+    }
+    static inline double get_a_value(MHWalker & mhwalker, const PointType & newpt, double /*newptval*/,
+                                     const PointType & curpt, double /*curptval*/)
+    {
+      return mhwalker.fnrelval(newpt, curpt);
+    }
+  };
+};
+
+
+
 
 template<typename Rng, typename MHWalker, typename StatsCollector, typename Logger>
 class MHRandomWalk
@@ -71,18 +142,9 @@ public:
   {
     num_accepted = 0;
     num_live_points = 0;
-    switch (UseFnSyntaxType) {
-    case MHUseFnLogValue:
-      curptval = _mhwalker.fnlogval(curpt);
-      break;
-    case MHUseFnValue:
-      curptval = _mhwalker.fnval(curpt);
-      break;
-    case MHUseFnRelativeValue:
-    default:
-      curptval = 0;
-      break;
-    }
+
+    curptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, curpt);
+
     _stats.init();
   }
   inline void thermalizing_done()
@@ -103,23 +165,12 @@ public:
     PointType newpt = _mhwalker.jump_fn(curpt, _step_size);
 
     FnValueType newptval;
-    double a = 1.0;
-    switch (UseFnSyntaxType) {
-    case MHUseFnLogValue:
-      newptval = _mhwalker.fnlogval(newpt);
-      a = (newptval > curptval) ? 1.0 : exp(newptval - curptval);
-      break;
-    case MHUseFnValue:
-      newptval = _mhwalker.fnval(newpt);
-      a = newptval / curptval;
-      break;
-    case MHUseFnRelativeValue:
-      newptval = 0.0;
-      a = _mhwalker.fnrelval(newpt, curpt);
-      break;
-    default:
-      assert(0 && "Unknown UseFnSyntaxType!");
-    }
+
+    newptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, newpt);
+
+    double a = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_a_value(
+        _mhwalker, newpt, newptval, curpt, curptval
+        );
 
     // accept move?
     bool accept = true;
@@ -136,10 +187,10 @@ public:
     _stats.raw_move(k, is_thermalizing, is_live_iter, accept, a, newpt, newptval, curpt, curptval, *this);
 
     _log.longdebug("MHRandomWalk",
-                   "%s%3lu: %s a=%-7.2g, newptval=%5.4g [llh=%.4g], curptval=%5.4g [llh=%.4g]   accept_ratio=%.2g",
+                   "%s%3lu: %s a=%-7.2g, newptval=%5.4g [llh=%.4g], curptval=%5.4g [llh=%.4g]   accept_ratio=%s",
                    (is_thermalizing?"T":"#"),
                    k, accept?"AC":"RJ", a, newptval, -2*newptval, curptval, -2*curptval,
-                   acceptance_ratio());
+                   (!is_thermalizing?fmts("%.2g", acceptance_ratio()).c_str():"N/A"));
 
     if (accept) {
       // update the internal state of the random walk
@@ -153,8 +204,9 @@ public:
     return (double) num_accepted / num_live_points;
   }
 
-  inline void process(size_t k)
+  inline void process_sample(size_t k)
   {
+    _stats.process_sample(k, curpt, curptval, *this);
   }
  
 };
@@ -193,7 +245,7 @@ struct MetropolisWalkerBase
     //
     // For collecting results, rw should provide the following methods:
     //
-    //   void rw.process(size_t k)
+    //   void rw.process_sample(size_t k)
     //       -- called for each "live" point (i.e. not thermalizing, and after full sweep)
     //
     //
@@ -226,7 +278,7 @@ struct MetropolisWalkerBase
       rw.move(k, false, is_live_iter);
 
       if (is_live_iter) {
-        rw.process(k);
+        rw.process_sample(k);
       }
 
     }

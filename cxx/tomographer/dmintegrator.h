@@ -2,10 +2,11 @@
 #ifndef DMINTEGRATOR_H
 #define DMINTEGRATOR_H
 
+#include <tomographer/qit/dist.h>
 #include <tomographer/integrator.h>
 
 
-template<typename Rng, typename TomoProblem, typename Logger>
+template<typename Rng, typename TomoProblem, typename StatsCollector, typename Logger>
 class DMStateSpaceRandomWalk
 {
 public:
@@ -29,19 +30,21 @@ private:
 
   Logger & _log;
   
-  typedef MHRandomWalk<Rng,DMStateSpaceRandomWalk<Rng,TomoProblem,Logger>,DMStateSpaceRandomWalk<Rng,TomoProblem,Logger>,Logger> OurMHRandomWalk;
+  typedef MHRandomWalk<Rng,DMStateSpaceRandomWalk<Rng,TomoProblem,StatsCollector,Logger>,StatsCollector,Logger>
+          OurMHRandomWalk;
 
   OurMHRandomWalk _mhrw;
 
 public:
 
   DMStateSpaceRandomWalk(size_t n_sweep, size_t n_therm, size_t n_run, RealScalar step_size,
-                         const MatrixType & startpt, TomoProblem & tomo, Rng & rng, Logger & log_)
+                         const MatrixType & startpt, TomoProblem & tomo, Rng & rng, StatsCollector & stats,
+                         Logger & log_)
     : _tomo(tomo),
       _rng(rng),
       _normal_distr_rnd(0.0, 1.0),
       _log(log_),
-      _mhrw(n_sweep, n_therm, n_run, step_size, startpt, *this, *this, _rng, log_)
+      _mhrw(n_sweep, n_therm, n_run, step_size, startpt, *this, stats, _rng, log_)
   {
   }
 
@@ -58,8 +61,8 @@ public:
     return llhval;
   }
 
-  inline LLHValueType fnval(const MatrixType &) { return -999; }
-  inline LLHValueType fnrelval(const MatrixType &, const MatrixType &) { return -999; }
+  //  inline LLHValueType fnval(const MatrixType &) { return -999; }
+  //  inline LLHValueType fnrelval(const MatrixType &, const MatrixType &) { return -999; }
 
 
   inline MatrixType jump_fn(const MatrixType& cur_T, RealScalar step_size)
@@ -93,30 +96,90 @@ public:
     MetropolisWalkerBase<OurMHRandomWalk>::run(_mhrw);
   }
 
+};
+
+
+
+
+template<typename MatrQ, typename Logger>
+class FidelityHistogramStatsCollector
+{
+public:
+  typedef typename MatrQ::MatrixType MatrixType;
+
+private:
+  double _fid_min;
+  double _fid_max;
+  Eigen::ArrayXi _fid_bin_counts;
+
+  MatrixType _ref_T;
+
+  Logger & _log;
+
+public:
+  FidelityHistogramStatsCollector(double fid_min, double fid_max, int num_bins,
+                                  const MatrixType & ref_T, MatrQ /*mq*/,
+                                  Logger & logger)
+    : _fid_min(fid_min), _fid_max(fid_max),
+      _fid_bin_counts(num_bins), // resize our array.
+      _ref_T(ref_T),
+      _log(logger)
+  {
+  }
+
 
   // stats collector part
 
   inline void init()
   {
+    // reset our array
+    _fid_bin_counts.setZero();
   }
   inline void thermalizing_done()
   {
   }
   inline void done()
   {
+    // _log.longdebug("FidelityHistogramStatsCollector", "done()");
+    std::string hist;
+    size_t Ntot = _fid_bin_counts.size();
+    double barscale = (1+_fid_bin_counts.maxCoeff()) / 80.0; // full bar is 80 chars wide
+    // _log.longdebug("FidelityHistogramStatsCollector", "done(): Ntot=%lu, barscale=%g", Ntot, barscale);
+    for (size_t k = 0; k < Ntot; ++k) {
+      hist += fmts("%-6.4g | %3d %s\n", _fid_min + k*(_fid_max-_fid_min)/Ntot,
+                   _fid_bin_counts(k), std::string((int)(_fid_bin_counts(k)/barscale+0.5), '*').c_str());
+    }
+    _log.longdebug("FidelityHistogramStatsCollector", "Done walking & collecting stats. Here's the histogram:\n"+hist);
   }
 
+  template<typename LLHValueType, typename MHRandomWalk>
   void raw_move(size_t k, bool is_thermalizing, bool is_live_iter, bool accept,
-                double a, const MatrixType& newpt, LLHValueType newptval, const MatrixType& curpt,
-                LLHValueType curptval, OurMHRandomWalk & mh)
+                double a, const MatrixType & newpt, LLHValueType newptval, const MatrixType & curpt,
+                LLHValueType curptval, MHRandomWalk & mh)
   {
-    _log.longdebug("DMStateSpaceRandomWalk", "raw_move(): k=%lu", k);
+    _log.longdebug("FidelityHistogramStatsCollector", "raw_move(): k=%lu", k);
   }
 
+  template<typename LLHValueType, typename MHRandomWalk>
+  void process_sample(size_t k, const MatrixType & curpt, LLHValueType curptval, MHRandomWalk & mh)
+  {
+    double fid = fidelity_T(curpt, _ref_T);
+
+    _log.longdebug("FidelityHistogramStatsCollector", "in process_sample(): k=%lu, fid=%.4g", k, fid);
+
+    if (fid < _fid_min || fid >= _fid_max) {
+      _log.longdebug("FidelityHistogramStatsCollector", "fidelity %.3g out of histogram range [%.3g, %.3g]",
+                     fid, _fid_min, _fid_max);
+      return;
+    }
+
+    ++_fid_bin_counts( (int)((fid-_fid_min) / (_fid_max-_fid_min) * _fid_bin_counts.size()) );
+
+    //_log.longdebug("FidelityHistogramStatsCollector", "process_sample() finished");
+  }
  
+
 };
-
-
 
 
 

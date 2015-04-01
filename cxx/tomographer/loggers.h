@@ -17,15 +17,15 @@
 
 /** \brief Exception for bad \c printf format
  *
- * This exception is raised when \ref fmtf() or \ref vfmtf() are called with a bad format
+ * This exception is raised when \ref fmts() or \ref vfmts() are called with a bad format
  * argument, causing \c vsnprintf() to return a negative number.
  */
-class bad_fmtf_format : public std::exception
+class bad_fmts_format : public std::exception
 {
   std::string msg;
 public:
-  bad_fmtf_format(const std::string& msg_) : msg(msg_) { }
-  ~bad_fmtf_format() throw() { }
+  bad_fmts_format(const std::string& msg_) : msg(msg_) { }
+  ~bad_fmts_format() throw() { }
 
   const char * what() const throw() {
     return msg.c_str();
@@ -38,7 +38,7 @@ public:
  *
  * Does safe allocation, etc.
  */
-inline std::string vfmtf(const char* fmt, va_list vl)
+inline std::string vfmts(const char* fmt, va_list vl)
 {
   // check out printf() formatting for std::string:
   //    http://stackoverflow.com/a/10150393/1694896
@@ -51,7 +51,7 @@ inline std::string vfmtf(const char* fmt, va_list vl)
   int nsize = vsnprintf(buffer, size, fmt, ap1);
   if (nsize < 0) {
     // failure: bad format probably
-    throw bad_fmtf_format("vsnprintf("+std::string(fmt)+") failure: code="+std::to_string(nsize));
+    throw bad_fmts_format("vsnprintf("+std::string(fmt)+") failure: code="+std::to_string(nsize));
   }
   if(size <= nsize) {
     // buffer too small: delete buffer and try again
@@ -71,15 +71,15 @@ inline std::string vfmtf(const char* fmt, va_list vl)
  *
  * Does safe allocation, etc.
  */
-inline std::string fmtf(const char * fmt, ...)  PRINTF1_ARGS_SAFE;
+inline std::string fmts(const char * fmt, ...)  PRINTF1_ARGS_SAFE;
 
 // definition. It seems definitions cannot have function attributes (here
 // PRINTF1_ARGS_SAFE), so that's why it's separate
-inline std::string fmtf(const char * fmt, ...)
+inline std::string fmts(const char * fmt, ...)
 {
   va_list ap;
   va_start(ap, fmt);
-  std::string result = vfmtf(fmt, ap);
+  std::string result = vfmts(fmt, ap);
   va_end(ap);
   return result;
 }
@@ -113,19 +113,8 @@ inline std::string fmtf(const char * fmt, ...)
 
 
 
-/** \brief Base logger class.
- *
- * This class serves as base class for logger implementations. It provides storing a
- * current given level, emitting the log only if the level is reached, etc. Don't
- * instantiate this class directly.
- *
- * See also \ref SimpleFoutLogger.
- */
-template<typename Derived>
-class Logger
+namespace Logger
 {
-public:
-
   /** \brief Possible logging levels.
    *
    * Don't trust the numeric values here, they may change at any time. Just the order is
@@ -138,9 +127,23 @@ public:
     DEBUG,
     LONGDEBUG
   };
+};
 
 
-  Logger(int level = INFO)
+/** \brief Base logger class.
+ *
+ * This class serves as base class for logger implementations. It provides storing a
+ * current given level, emitting the log only if the level is reached, etc. Don't
+ * instantiate this class directly.
+ *
+ * See also \ref SimpleFoutLogger.
+ */
+template<typename Derived>
+class LoggerBase
+{
+public:
+
+  LoggerBase(int level = Logger::INFO)
     : _level(level)
   {
   }
@@ -169,34 +172,34 @@ private:
 #define LOGGERS_H_MAKE_MSG_FROM_ARGPTR_FMT      \
   va_list ap;                                   \
   va_start(ap, fmt);                            \
-  std::string msg = vfmtf(fmt, ap);             \
-  va_end(ap);                                   \
+  std::string msg = vfmts(fmt, ap);             \
+  va_end(ap);
 
 
 template<typename Derived>
-inline void Logger<Derived>::longdebug(const char * origin, const char * fmt, ...)
+inline void LoggerBase<Derived>::longdebug(const char * origin, const char * fmt, ...)
 {
-  if (!enabled_for(LONGDEBUG)) {
+  if (!enabled_for(Logger::LONGDEBUG)) {
     return;
   }
 
   LOGGERS_H_MAKE_MSG_FROM_ARGPTR_FMT;
 
-  call_emit_log(LONGDEBUG, origin, msg);
+  call_emit_log(Logger::LONGDEBUG, origin, msg);
 }
 
 template<typename Derived>
-inline void Logger<Derived>::longdebug(const char * origin, const std::string & msg)
+inline void LoggerBase<Derived>::longdebug(const char * origin, const std::string & msg)
 {
-  if (!enabled_for(LONGDEBUG)) {
+  if (!enabled_for(Logger::LONGDEBUG)) {
     return;
   }
-  call_emit_log(LONGDEBUG, origin, msg);
+  call_emit_log(Logger::LONGDEBUG, origin, msg);
 }
 
 
 template<typename Derived>
-inline void Logger<Derived>::log(int level, const char * origin, const char * fmt, ...)
+inline void LoggerBase<Derived>::log(int level, const char * origin, const char * fmt, ...)
 {
   if (!enabled_for(level)) {
     return;
@@ -208,7 +211,7 @@ inline void Logger<Derived>::log(int level, const char * origin, const char * fm
 }
 
 template<typename Derived>
-inline void Logger<Derived>::log(int level, const char * origin, const std::string & msg)
+inline void LoggerBase<Derived>::log(int level, const char * origin, const std::string & msg)
 {
   if (!enabled_for(level)) {
     return;
@@ -217,12 +220,13 @@ inline void Logger<Derived>::log(int level, const char * origin, const std::stri
 }
 
 template<typename Derived>
-inline void Logger<Derived>::call_emit_log(int level, const char * origin, const std::string & msg)
+inline void LoggerBase<Derived>::call_emit_log(int level, const char * origin, const std::string & msg)
 {
   try {
     static_cast<Derived*>(this)->emit_log(level, origin, msg);
   } catch (const std::exception & e) {
-    fprintf(stderr, "Warning in Logger::log(%d, \"%s\", msg): Exception caught: %s", level, origin, e.what());
+    fprintf(stderr, "Warning in LoggerBase::call_emit_log(%d, \"%s\", msg): Exception caught: %s\n",
+            level, origin, e.what());
   }
 }
 
@@ -238,17 +242,17 @@ inline void Logger<Derived>::call_emit_log(int level, const char * origin, const
  * The \c FILE may be any C \c FILE* pointer, in particular \c stdin or \c stderr. If it
  * is a file, it should be open and writeable.
  */
-class SimpleFoutLogger : public Logger<SimpleFoutLogger>
+class SimpleFoutLogger : public LoggerBase<SimpleFoutLogger>
 {
 public:
-  SimpleFoutLogger(FILE * fp_, int level = INFO)
-    : Logger<SimpleFoutLogger>(level), fp(fp_)
+  SimpleFoutLogger(FILE * fp_, int level = Logger::INFO)
+    : LoggerBase<SimpleFoutLogger>(level), fp(fp_)
   {
   }
 
   inline void emit_log(int level, const char * origin, const std::string & msg)
   {
-    fprintf(fp, "%s\n", ((origin&&origin[0] ? std::string(origin) : std::string()) + msg).c_str());
+    fprintf(fp, "%s\n", ((origin&&origin[0] ? "["+std::string(origin)+"] " : std::string()) + msg).c_str());
   }
 
 private:
