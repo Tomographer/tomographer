@@ -2,6 +2,7 @@
 #include <cstdio>
 #include <random>
 #include <iostream>
+#include <chrono>
 
 #include <tomographer/qit/matrq.h>
 #include <tomographer/loggers.h>
@@ -43,6 +44,7 @@ int main()
     1.0, 0,
     0,   0;
 
+  /*
   typedef FidelityHistogramStatsCollector<QubitPaulisMatrQ,VacuumLogger>
     OurFidStatsCollector;
 
@@ -57,7 +59,7 @@ int main()
     VacuumLogger _vlog;
     OurFidStatsCollector fidstatscollector;
 
-    static inline int get_input(int k, const OurCData * /*pcdata*/)
+    static inline int get_input(int k, const OurCData * pcdata)
     {
       return 438943 + k;
     }
@@ -94,7 +96,7 @@ int main()
     {
     }
 
-    inline void init() const { }
+    inline void init(size_t, size_t const OurCData *) const { }
 
     inline void run_finished() const { }
 
@@ -104,29 +106,73 @@ int main()
       final_histogram.off_chart += t.fidstatscollector.histogram().off_chart;
     }
   };
-
+  */
 
   // NOW, RUN THE MH TASKS:
 
-  OurCData taskcdat(dat);
-  taskcdat.histogram_params = OurFidStatsCollector::HistogramType::Params(0.98, 1.0, 50);
+  SimpleFoutLogger flog(stdout, Logger::DEBUG);
 
-  ResultsCollector results(taskcdat.histogram_params);
+  flog.debug("main()", "Starting to log stuff.");
 
-  time_t time_start;
-  time(&time_start);
+  // MHRandomWalkTask<TomoProblem, typename Rng = std::mt19937, typename FidelityValueType = double>
 
-  MultiProc::run_omp_tasks<OurMHTask>(&taskcdat, &results, (size_t)256 /* num_runs */, (size_t)1 /* n_chunk */);
+  typedef DMIntegratorTasks::CData<OurTomoProblem> MyCData;
+  typedef MultiProc::OMPTaskLogger<SimpleFoutLogger> MyTaskLogger;
+  typedef DMIntegratorTasks::MHRandomWalkTask<OurTomoProblem,MyTaskLogger> MyMHRandomWalkTask;
+  typedef DMIntegratorTasks::MHRandomWalkResultsCollector<MyMHRandomWalkTask::FidStatsCollector::HistogramType>
+    MyResultsCollector;
 
-  time_t time_end;
-  time(&time_end);
+  // ---------------
+  
+  // first, independently, test OMPTaskLogger:      --- WORKS!
 
-  int dt = time_end-time_start;
+  //   BufferLogger buflog(Logger::LONGDEBUG);
+  //
+  //   MultiProc::OMPTaskLogger<BufferLogger> testtasklogger(buflog);
+  //
+  //   testtasklogger.debug("main()", "test task logger: log something");
+  //
+  //   testtasklogger.longdebug("main()", "test task logger: log something on longdebug level");
+  //
+  //   std::cout << buflog.get_contents() << "\n";
+  //
+  //
+  //   fprintf(stderr, "JUST TESTING TASK LOGGER FOR NOW. REMOVE exit(0); TO PERFORM OMP TEST.\n");
+  //   ::exit(0);
 
+  // ---------------
+
+  MyCData taskcdat(dat);
+  // seed for random number generator
+  taskcdat.base_seed = std::chrono::system_clock::now().time_since_epoch().count();
+  // parameters for the fidelity histogram
+  taskcdat.histogram_params = MyCData::HistogramParams(0.98, 1.0, 50);
+
+  MyResultsCollector results(taskcdat.histogram_params);
+
+//#define clock std::chrono::high_resolution_clock
+#define clock std::chrono::system_clock
+
+  auto time_start = clock::now();
+
+  MultiProc::run_omp_tasks<MyMHRandomWalkTask>(
+      &taskcdat, &results, (size_t)128 /* num_runs */, (size_t)1 /* n_chunk */,
+      flog
+      );
+
+  auto time_end = clock::now();
+
+  // delta-time, in seconds and fraction of seconds
+  double dt = (double)(time_end - time_start).count() * clock::period::num / clock::period::den ;
+  // integral part and fractional part
+  double dt_i_d;
+  double dt_f = std::modf(dt, &dt_i_d);
+  int dt_i = (int)(dt_i_d+0.5);
 
   std::cout << "FINAL HISTOGRAM\n" << results.final_histogram.pretty_print() << "\n";
 
-  std::cout << fmts("Total elapsed time: %d:%02d:%02d\n\n", dt/3600, (dt/60)%60, dt%60).c_str();
+  std::cout << fmts("Total elapsed time: %d:%02d:%02d.%03d\n\n",
+                    dt_i/3600, (dt_i/60)%60, dt_i%60, (int)(dt_f*1000+0.5)).c_str();
   
   return 0;
 }

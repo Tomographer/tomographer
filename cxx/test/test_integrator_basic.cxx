@@ -49,7 +49,7 @@ int main()
   QubitPaulisMatrQ::MatrixType ref_T = qmq.initMatrixType();
   ref_T << 1.0, 0, 0, 0;
 
-  typedef FidelityHistogramStatsCollector<QubitPaulisMatrQ,SimpleFoutLogger>
+  typedef FidelityHistogramStatsCollector<QubitPaulisMatrQ,double,SimpleFoutLogger>
     OurFidStatsCollector;
 
   OurFidStatsCollector fidstats(0.98, 1.0, 50, ref_T, qmq, flog);

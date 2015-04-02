@@ -130,6 +130,34 @@ namespace Logger
 };
 
 
+/** \brief Traits for Logger classes.
+ *
+ * If you write your own logger class, you can provide also information about this class
+ * such as whether it is thread-safe by specializing this traits class, e.g.:
+ * \code
+ *   template<>
+ *   struct LoggerTraits<MyCustomLogger>
+ *   {
+ *     enum {
+ *       IsThreadSafe = 1
+ *     };
+ *   };
+ * \endcode
+ */
+template<typename Logger>
+struct LoggerTraits
+{
+  enum {
+    /** \brief Whether a same logger instance may be called from different threads
+     * simultaneously
+     *
+     * By default, loggers are not thread-safe.
+     */
+    IsThreadSafe = 0
+  };
+};
+
+
 /** \brief Base logger class.
  *
  * This class serves as base class for logger implementations. It provides storing a
@@ -149,6 +177,10 @@ public:
   }
 
   PRINTF3_ARGS_SAFE
+  inline void debug(const char * origin, const char * fmt, ...);
+  inline void debug(const char * origin, const std::string & msg);
+
+  PRINTF3_ARGS_SAFE
   inline void longdebug(const char * origin, const char * fmt, ...);
   inline void longdebug(const char * origin, const std::string & msg);
 
@@ -162,11 +194,51 @@ public:
     return level <= _level;
   };
 
+  inline int level() const { return _level; }
+
 private:
   int _level;
-
-  inline void call_emit_log(int level, const char * origin, const std::string & msg);
 };
+
+namespace tomo_internal {
+  /**
+   * Helper to decide whether to emit log entry or not for a given log level. This is
+   * separate from \c LoggerBase really only because otherwise it would have needed to be
+   * a public member to be accessible from \c LoggerBaseHelperStatic.
+   */
+  template<typename Derived>
+  struct LoggerBaseHelperDynamic {
+    static inline void call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin,
+                                     const std::string & msg)
+    {
+      try {
+        //printf("Calling emit_log(%d,\"%s\",\"%s\") on object %p\n", level, origin, msg.c_str(), loggerbase);
+        static_cast<Derived*>(loggerbase)->emit_log(level, origin, msg);
+      } catch (const std::exception & e) {
+        fprintf(stderr, "Warning in LoggerBase::call_emit_log(%d, \"%s\", msg): Exception caught: %s\n",
+                level, origin, e.what());
+      }
+    }
+  };
+
+  /**
+   * Helper to statically decide whether to emit log entry or not for a given log level.
+   *
+   * For now, just relay to dynamical version.
+   *
+   * \todo STATIC log emit decision here
+   */
+  template<typename Derived, int Level>
+  struct LoggerBaseHelperStatic {
+    static inline void call_emit_log(LoggerBase<Derived> * loggerbase, const char * origin,
+                                     const std::string & msg)
+    {
+      LoggerBaseHelperDynamic<Derived>::call_emit_log(loggerbase, Level, origin, msg);
+    }
+  };
+
+};
+
 
 /** \internal */
 #define LOGGERS_H_MAKE_MSG_FROM_ARGPTR_FMT      \
@@ -177,6 +249,27 @@ private:
 
 
 template<typename Derived>
+inline void LoggerBase<Derived>::debug(const char * origin, const char * fmt, ...)
+{
+  if (!enabled_for(Logger::DEBUG)) {
+    return;
+  }
+
+  LOGGERS_H_MAKE_MSG_FROM_ARGPTR_FMT;
+
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::DEBUG>::call_emit_log(this, origin, msg);
+}
+
+template<typename Derived>
+inline void LoggerBase<Derived>::debug(const char * origin, const std::string & msg)
+{
+  if (!enabled_for(Logger::DEBUG)) {
+    return;
+  }
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::DEBUG>::call_emit_log(this, origin, msg);
+}
+
+template<typename Derived>
 inline void LoggerBase<Derived>::longdebug(const char * origin, const char * fmt, ...)
 {
   if (!enabled_for(Logger::LONGDEBUG)) {
@@ -185,7 +278,7 @@ inline void LoggerBase<Derived>::longdebug(const char * origin, const char * fmt
 
   LOGGERS_H_MAKE_MSG_FROM_ARGPTR_FMT;
 
-  call_emit_log(Logger::LONGDEBUG, origin, msg);
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::LONGDEBUG>::call_emit_log(this, origin, msg);
 }
 
 template<typename Derived>
@@ -194,7 +287,7 @@ inline void LoggerBase<Derived>::longdebug(const char * origin, const std::strin
   if (!enabled_for(Logger::LONGDEBUG)) {
     return;
   }
-  call_emit_log(Logger::LONGDEBUG, origin, msg);
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::LONGDEBUG>::call_emit_log(this, origin, msg);
 }
 
 
@@ -207,7 +300,7 @@ inline void LoggerBase<Derived>::log(int level, const char * origin, const char 
 
   LOGGERS_H_MAKE_MSG_FROM_ARGPTR_FMT;
 
-  call_emit_log(level, origin, msg);
+  tomo_internal::LoggerBaseHelperDynamic<Derived>::call_emit_log(this, level, origin, msg);
 }
 
 template<typename Derived>
@@ -216,20 +309,8 @@ inline void LoggerBase<Derived>::log(int level, const char * origin, const std::
   if (!enabled_for(level)) {
     return;
   }
-  call_emit_log(level, origin, msg);
+  tomo_internal::LoggerBaseHelperDynamic<Derived>::call_emit_log(this, level, origin, msg);
 }
-
-template<typename Derived>
-inline void LoggerBase<Derived>::call_emit_log(int level, const char * origin, const std::string & msg)
-{
-  try {
-    static_cast<Derived*>(this)->emit_log(level, origin, msg);
-  } catch (const std::exception & e) {
-    fprintf(stderr, "Warning in LoggerBase::call_emit_log(%d, \"%s\", msg): Exception caught: %s\n",
-            level, origin, e.what());
-  }
-}
-
 
 
 #undef LOGGERS_H_MAKE_MSG_FROM_ARGPTR_FMT
@@ -260,6 +341,18 @@ private:
 };
 
 
+//
+// Traits for SimpleFoutLogger -- fprintf is actually thread-safe, that's good :)
+//
+template<>
+struct LoggerTraits<SimpleFoutLogger>
+{
+  enum {
+    IsThreadSafe = 1
+  };
+};
+
+
 
 
 /** \brief Logger that discards all messages.
@@ -273,6 +366,71 @@ public:
   {
   }
 };
+
+
+//
+// Traits for VacuumLogger -- is a NOOP thread-safe? yeah probably.
+//
+template<>
+struct LoggerTraits<VacuumLogger>
+{
+  enum {
+    IsThreadSafe = 1
+  };
+};
+
+
+
+
+
+/** \brief Log messages into an internal memory buffer
+ *
+ * Logs messages into an internal string buffer. The contents of the buffer may be
+ * retrieved with \ref get_contents().
+ */
+class BufferLogger : public LoggerBase<BufferLogger>
+{
+  std::ostringstream buffer;
+public:
+  BufferLogger(int level)
+    : LoggerBase<BufferLogger>(level)
+  {
+  }
+
+  inline void emit_log(int level, const char * origin, const std::string& msg)
+  {
+    buffer << (origin&&origin[0] ? "["+std::string(origin)+"] " : std::string())
+           << msg.c_str() << "\n";
+  }
+
+  /** \brief Clears the internal memory buffer.
+   *
+   * Clears all messages logged so far. A future call to \ref get_contents() will only
+   * return the messages logged after calling this function.
+   */
+  inline void clear()
+  {
+    buffer.clear();
+  }
+
+  /** \brief get the contents of the internal buffer
+   *
+   * This returns a string containing all the messages that have been logged so far.
+   */
+  inline std::string get_contents() const
+  {
+    return buffer.str();
+  }
+};
+
+
+
+
+
+
+
+
+
 
 
 

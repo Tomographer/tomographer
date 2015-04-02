@@ -67,6 +67,7 @@ public:
 
       _mhrw.set_curpt(T);
     }
+    _log.debug("DMStateSpaceRandomWalk", "Starting random walk");
   }
   inline void thermalizing_done()
   {
@@ -125,12 +126,24 @@ public:
 
 
 
-template<typename MatrQ, typename Log>
+template<typename MatrQ, typename FidelityValueType>
+struct FidelityHistogramStatsCollectorInfo
+{
+  typedef typename MatrQ::MatrixType MatrixType;
+  typedef UniformBinsHistogram<FidelityValueType> HistogramType;
+  typedef typename HistogramType::Params HistogramParams;
+};
+
+template<typename MatrQ_, typename FidelityValueType_, typename Log>
 class FidelityHistogramStatsCollector
 {
 public:
-  typedef typename MatrQ::MatrixType MatrixType;
-  typedef UniformBinsHistogram<double> HistogramType;
+  typedef MatrQ_ MatrQ;
+  typedef FidelityValueType_ FidelityValueType;
+
+  typedef typename FidelityHistogramStatsCollectorInfo<MatrQ, FidelityValueType>::MatrixType MatrixType;
+  typedef typename FidelityHistogramStatsCollectorInfo<MatrQ, FidelityValueType>::HistogramType HistogramType;
+  typedef typename FidelityHistogramStatsCollectorInfo<MatrQ, FidelityValueType>::HistogramParams HistogramParams;
 
 private:
 
@@ -141,7 +154,7 @@ private:
   Log & _log;
 
 public:
-  FidelityHistogramStatsCollector(double fid_min, double fid_max, int num_bins,
+  FidelityHistogramStatsCollector(FidelityValueType fid_min, FidelityValueType fid_max, int num_bins,
                                   const MatrixType & ref_T, MatrQ /*mq*/,
                                   Log & logger)
     : _histogram(fid_min, fid_max, num_bins),
@@ -149,7 +162,7 @@ public:
       _log(logger)
   {
   }
-  FidelityHistogramStatsCollector(HistogramType::Params histogram_params,
+  FidelityHistogramStatsCollector(HistogramParams histogram_params,
                                   const MatrixType & ref_T, MatrQ /*mq*/,
                                   Log & logger)
     : _histogram(histogram_params),
@@ -195,7 +208,7 @@ public:
   template<typename LLHValueType, typename MHRandomWalk>
   void process_sample(size_t k, const MatrixType & curpt, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
-    double fid = fidelity_T(curpt, _ref_T);
+    FidelityValueType fid = fidelity_T(curpt, _ref_T);
 
     _log.longdebug("FidelityHistogramStatsCollector", "in process_sample(): k=%lu, fid=%.4g", k, fid);
 
@@ -206,6 +219,122 @@ public:
  
 
 };
+
+
+
+
+
+
+
+
+namespace DMIntegratorTasks
+{
+
+  //  typedef FidelityHistogramStatsCollector<QubitPaulisMatrQ,VacuumLogger>
+  //    FidStatsCollector;
+
+  template<typename TomoProblem, typename FidelityValueType = double>
+  struct CData
+  {
+    typedef typename FidelityHistogramStatsCollectorInfo<typename TomoProblem::MatrQ,
+                                                         FidelityValueType>::HistogramParams
+    /*..*/  HistogramParams;
+
+    CData(const TomoProblem &prob_, int base_seed_ = 0,
+             HistogramParams hparams = HistogramParams())
+      : prob(prob_), base_seed(base_seed_), histogram_params(hparams)
+    {
+    }
+
+    // the data:
+
+    int base_seed;
+
+    TomoProblem prob;
+
+    HistogramParams histogram_params;
+  };
+
+  /**
+   *
+   * \todo HANDLE LOGGER HERE and in OMP Task Manager. Task Manager should provide a
+   *       logger which performs the log in a critical section for thread safety?
+   */
+  template<typename TomoProblem, typename Logger, typename Rng = std::mt19937, typename FidelityValueType = double>
+  struct MHRandomWalkTask
+  {
+    int _seed;
+    Logger _log;
+
+    typedef FidelityHistogramStatsCollector<typename TomoProblem::MatrQ, FidelityValueType, Logger>
+    /*..*/ FidStatsCollector;
+    FidStatsCollector fidstats;
+
+    typedef CData<TomoProblem, FidelityValueType> OurCData;
+
+    /** \brief Returns the random seed to seed the random number generator with.
+     *
+     * This simply returns \code pcdata->base_seed + k \endcode
+     */
+    static inline int get_input(int k, const OurCData * pcdata)
+    {
+      return pcdata->base_seed + k;
+    }
+
+    MHRandomWalkTask(int inputseed, const OurCData * pcdata, Logger & log)
+      : _seed(inputseed),
+        _log(log),
+        fidstats(pcdata->histogram_params, pcdata->prob.T_MLE, pcdata->prob.matq, _log)
+    {
+    }
+
+    inline void run(const OurCData * pcdata, Logger & /*log*/)
+    {
+      
+      typedef DMStateSpaceRandomWalk<Rng,TomoProblem,FidStatsCollector,Logger>
+        OurRandomWalk;
+      
+      Rng rng(_seed); // seeded random number generator
+      
+      OurRandomWalk rwalk(20, 500, 10000, 0.05, pcdata->prob.matq.initMatrixType(),
+                          pcdata->prob, rng, fidstats, _log);
+      
+      rwalk.run();
+    }
+  };
+
+  template<typename HistogramType_>
+  struct MHRandomWalkResultsCollector
+  {
+    typedef HistogramType_ HistogramType;
+    typedef typename HistogramType::Params HistogramParams;
+
+    HistogramType final_histogram;
+
+    MHRandomWalkResultsCollector(HistogramParams p)
+      : final_histogram(p)
+    {
+    }
+
+    inline void init(size_t num_runs, size_t n_chunk, const void * pcdata) const
+    {
+    }
+
+    inline void run_finished() const
+    {
+    }
+
+    template<typename TomoProblem, typename Rng, typename FidelityValueType>
+    inline void collect_results(const MHRandomWalkTask<TomoProblem,Rng,FidelityValueType>& t)
+    {
+      final_histogram.bins += t.fidstats.histogram().bins;
+      final_histogram.off_chart += t.fidstats.histogram().off_chart;
+    }
+  };
+
+
+}
+
 
 
 
