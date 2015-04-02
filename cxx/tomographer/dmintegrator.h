@@ -9,7 +9,7 @@
 #include <tomographer/histogram.h>
 
 
-template<typename Rng, typename TomoProblem, typename StatsCollector, typename Log>
+template<typename Rng, typename TomoProblem, typename RWStatsCollector, typename Log>
 class DMStateSpaceRandomWalk
 {
 public:
@@ -34,7 +34,7 @@ private:
 
   Log & _log;
   
-  typedef MHRandomWalk<Rng,DMStateSpaceRandomWalk<Rng,TomoProblem,StatsCollector,Log>,StatsCollector,Log>
+  typedef MHRandomWalk<Rng,DMStateSpaceRandomWalk<Rng,TomoProblem,RWStatsCollector,Log>,RWStatsCollector,Log>
           OurMHRandomWalk;
 
   OurMHRandomWalk _mhrw;
@@ -42,7 +42,7 @@ private:
 public:
 
   DMStateSpaceRandomWalk(size_t n_sweep, size_t n_therm, size_t n_run, RealScalar step_size,
-                         const MatrixType & startpt, const TomoProblem & tomo, Rng & rng, StatsCollector & stats,
+                         const MatrixType & startpt, const TomoProblem & tomo, Rng & rng, RWStatsCollector & stats,
                          Log & log_)
     : _tomo(tomo),
       _rng(rng),
@@ -127,7 +127,7 @@ public:
 
 
 template<typename MatrQ, typename FidelityValueType>
-struct FidelityHistogramStatsCollectorInfo
+struct FidelityHistogramRWStatsCollectorInfo
 {
   typedef typename MatrQ::MatrixType MatrixType;
   typedef UniformBinsHistogram<FidelityValueType> HistogramType;
@@ -135,15 +135,15 @@ struct FidelityHistogramStatsCollectorInfo
 };
 
 template<typename MatrQ_, typename FidelityValueType_, typename Log>
-class FidelityHistogramStatsCollector
+class FidelityHistogramRWStatsCollector
 {
 public:
   typedef MatrQ_ MatrQ;
   typedef FidelityValueType_ FidelityValueType;
 
-  typedef typename FidelityHistogramStatsCollectorInfo<MatrQ, FidelityValueType>::MatrixType MatrixType;
-  typedef typename FidelityHistogramStatsCollectorInfo<MatrQ, FidelityValueType>::HistogramType HistogramType;
-  typedef typename FidelityHistogramStatsCollectorInfo<MatrQ, FidelityValueType>::HistogramParams HistogramParams;
+  typedef typename FidelityHistogramRWStatsCollectorInfo<MatrQ, FidelityValueType>::MatrixType MatrixType;
+  typedef typename FidelityHistogramRWStatsCollectorInfo<MatrQ, FidelityValueType>::HistogramType HistogramType;
+  typedef typename FidelityHistogramRWStatsCollectorInfo<MatrQ, FidelityValueType>::HistogramParams HistogramParams;
 
 private:
 
@@ -154,7 +154,7 @@ private:
   Log & _log;
 
 public:
-  FidelityHistogramStatsCollector(FidelityValueType fid_min, FidelityValueType fid_max, int num_bins,
+  FidelityHistogramRWStatsCollector(FidelityValueType fid_min, FidelityValueType fid_max, int num_bins,
                                   const MatrixType & ref_T, MatrQ /*mq*/,
                                   Log & logger)
     : _histogram(fid_min, fid_max, num_bins),
@@ -162,7 +162,7 @@ public:
       _log(logger)
   {
   }
-  FidelityHistogramStatsCollector(HistogramParams histogram_params,
+  FidelityHistogramRWStatsCollector(HistogramParams histogram_params,
                                   const MatrixType & ref_T, MatrQ /*mq*/,
                                   Log & logger)
     : _histogram(histogram_params),
@@ -190,8 +190,8 @@ public:
   inline void done()
   {
     if (_log.enabled_for(Logger::LONGDEBUG)) {
-      // _log.longdebug("FidelityHistogramStatsCollector", "done()");
-      _log.longdebug("FidelityHistogramStatsCollector",
+      // _log.longdebug("FidelityHistogramRWStatsCollector", "done()");
+      _log.longdebug("FidelityHistogramRWStatsCollector",
                      "Done walking & collecting stats. Here's the histogram:\n"
                      + _histogram.pretty_print());
     }
@@ -202,7 +202,7 @@ public:
                 double /*a*/, const MatrixType & /*newpt*/, LLHValueType /*newptval*/,
                 const MatrixType & /*curpt*/, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
-    _log.longdebug("FidelityHistogramStatsCollector", "raw_move(): k=%lu", k);
+    _log.longdebug("FidelityHistogramRWStatsCollector", "raw_move(): k=%lu", k);
   }
 
   template<typename LLHValueType, typename MHRandomWalk>
@@ -210,11 +210,11 @@ public:
   {
     FidelityValueType fid = fidelity_T(curpt, _ref_T);
 
-    _log.longdebug("FidelityHistogramStatsCollector", "in process_sample(): k=%lu, fid=%.4g", k, fid);
+    _log.longdebug("FidelityHistogramRWStatsCollector", "in process_sample(): k=%lu, fid=%.4g", k, fid);
 
     _histogram.record(fid);
 
-    //_log.longdebug("FidelityHistogramStatsCollector", "process_sample() finished");
+    //_log.longdebug("FidelityHistogramRWStatsCollector", "process_sample() finished");
   }
  
 
@@ -230,20 +230,24 @@ public:
 namespace DMIntegratorTasks
 {
 
-
+  /** \brief Data needed to be accessible to the working code
+   *
+   * Stores the tomography data, as well as parameters to the random walk and ranges for
+   * the fidelity histgram to take.
+   */
   template<typename TomoProblem, typename FidelityValueType = double>
   struct CData
   {
-    typedef typename FidelityHistogramStatsCollectorInfo<typename TomoProblem::MatrQ,
-                                                         FidelityValueType>::HistogramParams
+    typedef typename FidelityHistogramRWStatsCollectorInfo<typename TomoProblem::MatrQ,
+                                                           FidelityValueType>::HistogramParams
     /*..*/  HistogramParams;
-
+    
     CData(const TomoProblem &prob_, int base_seed_ = 0,
-             HistogramParams hparams = HistogramParams())
+          HistogramParams hparams = HistogramParams())
       : prob(prob_), base_seed(base_seed_), histogram_params(hparams)
     {
     }
-
+    
     // the data:
 
     //! the Tomography data (POVM effects, frequencies, etc.)
@@ -265,8 +269,10 @@ namespace DMIntegratorTasks
     HistogramParams histogram_params;
   };
 
-  /**
+  /** \brief Random Walk on the space of density matrices, collecting fidelity histogram
+   * statistics
    *
+   * This class can be used with \ref MultiProc::run_omp_tasks(), for example.
    */
   template<typename TomoProblem, typename Logger, typename Rng = std::mt19937, typename FidelityValueType = double>
   struct MHRandomWalkTask
@@ -274,9 +280,9 @@ namespace DMIntegratorTasks
     int _seed;
     Logger _log;
 
-    typedef FidelityHistogramStatsCollector<typename TomoProblem::MatrQ, FidelityValueType, Logger>
-    /*..*/ FidStatsCollector;
-    FidStatsCollector fidstats;
+    typedef FidelityHistogramRWStatsCollector<typename TomoProblem::MatrQ, FidelityValueType, Logger>
+    /*..*/ FidRWStatsCollector;
+    FidRWStatsCollector fidstats;
 
     typedef CData<TomoProblem, FidelityValueType> OurCData;
 
@@ -299,7 +305,7 @@ namespace DMIntegratorTasks
     inline void run(const OurCData * pcdata, Logger & /*log*/)
     {
       
-      typedef DMStateSpaceRandomWalk<Rng,TomoProblem,FidStatsCollector,Logger>
+      typedef DMStateSpaceRandomWalk<Rng,TomoProblem,FidRWStatsCollector,Logger>
         OurRandomWalk;
       
       Rng rng(_seed); // seeded random number generator
@@ -323,6 +329,11 @@ namespace DMIntegratorTasks
     }
   };
 
+  /** \brief Collect results from MHRandomWalkTask's
+   *
+   * This is meant to be used in a task dispatcher environment, e.g. 
+   * \ref MultiProc::run_omp_tasks().
+   */
   template<typename HistogramType_>
   struct MHRandomWalkResultsCollector
   {

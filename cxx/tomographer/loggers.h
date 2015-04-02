@@ -177,6 +177,18 @@ public:
   }
 
   PRINTF3_ARGS_SAFE
+  inline void error(const char * origin, const char * fmt, ...);
+  inline void error(const char * origin, const std::string & msg);
+
+  PRINTF3_ARGS_SAFE
+  inline void warning(const char * origin, const char * fmt, ...);
+  inline void warning(const char * origin, const std::string & msg);
+
+  PRINTF3_ARGS_SAFE
+  inline void info(const char * origin, const char * fmt, ...);
+  inline void info(const char * origin, const std::string & msg);
+
+  PRINTF3_ARGS_SAFE
   inline void debug(const char * origin, const char * fmt, ...);
   inline void debug(const char * origin, const std::string & msg);
 
@@ -247,6 +259,69 @@ namespace tomo_internal {
   std::string msg = vfmts(fmt, ap);             \
   va_end(ap);
 
+
+template<typename Derived>
+inline void LoggerBase<Derived>::error(const char * origin, const char * fmt, ...)
+{
+  if (!enabled_for(Logger::ERROR)) {
+    return;
+  }
+
+  LOGGERS_H_MAKE_MSG_FROM_ARGPTR_FMT;
+
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::ERROR>::call_emit_log(this, origin, msg);
+}
+
+template<typename Derived>
+inline void LoggerBase<Derived>::error(const char * origin, const std::string & msg)
+{
+  if (!enabled_for(Logger::ERROR)) {
+    return;
+  }
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::ERROR>::call_emit_log(this, origin, msg);
+}
+
+template<typename Derived>
+inline void LoggerBase<Derived>::warning(const char * origin, const char * fmt, ...)
+{
+  if (!enabled_for(Logger::WARNING)) {
+    return;
+  }
+
+  LOGGERS_H_MAKE_MSG_FROM_ARGPTR_FMT;
+
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::WARNING>::call_emit_log(this, origin, msg);
+}
+
+template<typename Derived>
+inline void LoggerBase<Derived>::warning(const char * origin, const std::string & msg)
+{
+  if (!enabled_for(Logger::WARNING)) {
+    return;
+  }
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::WARNING>::call_emit_log(this, origin, msg);
+}
+
+template<typename Derived>
+inline void LoggerBase<Derived>::info(const char * origin, const char * fmt, ...)
+{
+  if (!enabled_for(Logger::INFO)) {
+    return;
+  }
+
+  LOGGERS_H_MAKE_MSG_FROM_ARGPTR_FMT;
+
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::INFO>::call_emit_log(this, origin, msg);
+}
+
+template<typename Derived>
+inline void LoggerBase<Derived>::info(const char * origin, const std::string & msg)
+{
+  if (!enabled_for(Logger::INFO)) {
+    return;
+  }
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::INFO>::call_emit_log(this, origin, msg);
+}
 
 template<typename Derived>
 inline void LoggerBase<Derived>::debug(const char * origin, const char * fmt, ...)
@@ -322,6 +397,9 @@ inline void LoggerBase<Derived>::log(int level, const char * origin, const std::
  *
  * The \c FILE may be any C \c FILE* pointer, in particular \c stdin or \c stderr. If it
  * is a file, it should be open and writeable.
+ *
+ * \note This class is thread-safe AS LONG AS you DO NOT CHANGE the target \c fp file
+ *       pointer.
  */
 class SimpleFoutLogger : public LoggerBase<SimpleFoutLogger>
 {
@@ -331,9 +409,34 @@ public:
   {
   }
 
+  /**
+   * \warning This method is not thread-safe!
+   */
+  inline void setFp(FILE * fp_)
+  {
+    fp = fp_;
+  }
+
   inline void emit_log(int level, const char * origin, const std::string & msg)
   {
-    fprintf(fp, "%s\n", ((origin&&origin[0] ? "["+std::string(origin)+"] " : std::string()) + msg).c_str());
+    static const std::string level_prefixes[] = {
+      std::string("*** ERROR -- "),
+      std::string("*** Warning: ")
+    };
+
+    std::string finalmsg = (
+        (level < sizeof(level_prefixes) ? level_prefixes[level] : std::string())
+        + (origin&&origin[0] ? "["+std::string(origin)+"] " : std::string())
+        + msg
+        );
+
+    // display the log message
+    fprintf(fp, "%s\n", finalmsg.c_str());
+
+    // force output also on stderr for warnings and errors if we are being redirected to a file
+    if (fp != stdout && fp != stderr && level <= Logger::WARNING) {
+      fprintf(stderr, "%s\n", finalmsg.c_str());
+    }
   }
 
 private:

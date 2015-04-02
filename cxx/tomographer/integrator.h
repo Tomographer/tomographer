@@ -222,7 +222,7 @@ namespace tomo_internal {
  * .....................
  *
  */
-template<typename Rng, typename MHWalker, typename StatsCollector, typename Log>
+template<typename Rng, typename MHWalker, typename RWStatsCollector, typename Log>
 class MHRandomWalk
 {
 public:
@@ -243,7 +243,7 @@ private:
 
   Rng & _rng;
   MHWalker & _mhwalker;
-  StatsCollector & _stats;
+  RWStatsCollector & _stats;
   Log & _log;
 
   PointType curpt;
@@ -255,7 +255,7 @@ private:
 public:
 
   MHRandomWalk(size_t n_sweep, size_t n_therm, size_t n_run, RealScalar step_size,
-               const PointType & startpt, MHWalker & mhwalker, StatsCollector & stats,
+               const PointType & startpt, MHWalker & mhwalker, RWStatsCollector & stats,
                Rng & rng, Log & log_)
     : _n_sweep(n_sweep), _n_therm(n_therm), _n_run(n_run),
       _step_size(step_size),
@@ -428,17 +428,17 @@ namespace tomo_internal {
 
 
 
-template<typename... StatsCollectors>
-class MultipleStatsCollectors
+template<typename... RWStatsCollectors>
+class MultipleRWStatsCollectors
 {
-  std::tuple<StatsCollectors&...>  statscollectors;
+  std::tuple<RWStatsCollectors&...>  statscollectors;
 
   enum {
-    NumStatColl = sizeof...(StatsCollectors)
+    NumStatColl = sizeof...(RWStatsCollectors)
   };
 
 public:
-  MultipleStatsCollectors(StatsCollectors&... statscollectors_)
+  MultipleRWStatsCollectors(RWStatsCollectors&... statscollectors_)
     : statscollectors(statscollectors_...)
   {
   }

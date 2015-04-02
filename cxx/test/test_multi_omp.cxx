@@ -45,19 +45,19 @@ int main()
     0,   0;
 
   /*
-  typedef FidelityHistogramStatsCollector<QubitPaulisMatrQ,VacuumLogger>
-    OurFidStatsCollector;
+  typedef FidelityHistogramRWStatsCollector<QubitPaulisMatrQ,VacuumLogger>
+    OurFidRWStatsCollector;
 
   struct OurCData {
     OurCData(const OurTomoProblem &prob_) : prob(prob_) { }
     OurTomoProblem prob;
-    OurFidStatsCollector::HistogramType::Params histogram_params;
+    OurFidRWStatsCollector::HistogramType::Params histogram_params;
   };
 
   struct OurMHTask {
     int _seed;
     VacuumLogger _vlog;
-    OurFidStatsCollector fidstatscollector;
+    OurFidRWStatsCollector fidstatscollector;
 
     static inline int get_input(int k, const OurCData * pcdata)
     {
@@ -74,7 +74,7 @@ int main()
     inline void run(const OurCData * pcdata)
     {
       
-      typedef DMStateSpaceRandomWalk<std::mt19937,OurTomoProblem,OurFidStatsCollector,VacuumLogger>
+      typedef DMStateSpaceRandomWalk<std::mt19937,OurTomoProblem,OurFidRWStatsCollector,VacuumLogger>
         MyRandomWalk;
 
       std::mt19937 rng(_seed); // seeded random number generator
@@ -89,9 +89,9 @@ int main()
   };
 
   struct ResultsCollector {
-    OurFidStatsCollector::HistogramType final_histogram;
+    OurFidRWStatsCollector::HistogramType final_histogram;
 
-    ResultsCollector(OurFidStatsCollector::HistogramType::Params p)
+    ResultsCollector(OurFidRWStatsCollector::HistogramType::Params p)
       : final_histogram(p)
     {
     }
@@ -119,7 +119,7 @@ int main()
   typedef DMIntegratorTasks::CData<OurTomoProblem> MyCData;
   typedef MultiProc::OMPTaskLogger<SimpleFoutLogger> MyTaskLogger;
   typedef DMIntegratorTasks::MHRandomWalkTask<OurTomoProblem,MyTaskLogger> MyMHRandomWalkTask;
-  typedef DMIntegratorTasks::MHRandomWalkResultsCollector<MyMHRandomWalkTask::FidStatsCollector::HistogramType>
+  typedef DMIntegratorTasks::MHRandomWalkResultsCollector<MyMHRandomWalkTask::FidRWStatsCollector::HistogramType>
     MyResultsCollector;
 
   // ---------------
