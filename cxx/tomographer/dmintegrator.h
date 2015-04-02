@@ -2,6 +2,8 @@
 #ifndef DMINTEGRATOR_H
 #define DMINTEGRATOR_H
 
+#include <cstddef>
+
 #include <tomographer/qit/util.h>
 #include <tomographer/qit/dist.h>
 #include <tomographer/integrator.h>
@@ -41,7 +43,7 @@ private:
 
 public:
 
-  DMStateSpaceRandomWalk(size_t n_sweep, size_t n_therm, size_t n_run, RealScalar step_size,
+  DMStateSpaceRandomWalk(std::size_t n_sweep, std::size_t n_therm, std::size_t n_run, RealScalar step_size,
                          const MatrixType & startpt, const TomoProblem & tomo, Rng & rng, RWStatsCollector & stats,
                          Log & log_)
     : _tomo(tomo),
@@ -198,7 +200,7 @@ public:
   }
 
   template<typename LLHValueType, typename MHRandomWalk>
-  void raw_move(size_t k, bool /*is_thermalizing*/, bool /*is_live_iter*/, bool /*accepted*/,
+  void raw_move(std::size_t k, bool /*is_thermalizing*/, bool /*is_live_iter*/, bool /*accepted*/,
                 double /*a*/, const MatrixType & /*newpt*/, LLHValueType /*newptval*/,
                 const MatrixType & /*curpt*/, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
@@ -206,7 +208,7 @@ public:
   }
 
   template<typename LLHValueType, typename MHRandomWalk>
-  void process_sample(size_t k, const MatrixType & curpt, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
+  void process_sample(std::size_t k, const MatrixType & curpt, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
     FidelityValueType fid = fidelity_T(curpt, _ref_T);
 
@@ -255,11 +257,11 @@ namespace DMIntegratorTasks
     TomoProblem prob;
 
     //! Parameter of the random walk -- number of iterations per sweep
-    size_t n_sweep;
+    std::size_t n_sweep;
     //! Parameter of the random walk -- number of thermalizing sweeps
-    size_t n_therm;
+    std::size_t n_therm;
     //! Parameter of the random walk -- number of "live" sweeps
-    size_t n_run;
+    std::size_t n_run;
     //! Parameter of the random walk -- step size of the random walk
     typename TomoProblem::MatrQ::RealScalar step_size;
 
@@ -348,7 +350,7 @@ namespace DMIntegratorTasks
     {
     }
 
-    inline void init(size_t num_runs, size_t n_chunk, const void * pcdata) const
+    inline void init(std::size_t num_runs, std::size_t n_chunk, const void * pcdata) const
     {
     }
 

@@ -61,9 +61,9 @@ struct MatrQBase
 template<typename Derived, bool has_fixed_dim>
 struct MatrQBaseDimStore : public MatrQBase<Derived>
 {
-  inline size_t dim() const { return MatrQBase<Derived>::FixedDim; }
+  inline std::size_t dim() const { return MatrQBase<Derived>::FixedDim; }
 
-  MatrQBaseDimStore(size_t dim_)
+  MatrQBaseDimStore(std::size_t dim_)
   {
     eigen_assert(MatrQBase<Derived>::FixedDim != Eigen::Dynamic && dim_ == dim());
   }
@@ -79,13 +79,13 @@ struct MatrQBaseDimStore : public MatrQBase<Derived>
     return MatrQBase<Derived>::VectorParamType::Zero();
   }
   /** When assigned to a VectorParamListType, should initialize it with zeros. */
-  inline typename MatrQBase<Derived>::VectorParamListType::ConstantReturnType initVectorParamListType(size_t len) const
+  inline typename MatrQBase<Derived>::VectorParamListType::ConstantReturnType initVectorParamListType(std::size_t len) const
   {
     return MatrQBase<Derived>::VectorParamListType::Zero(len,
                                                          MatrQBase<Derived>::FixedDim*MatrQBase<Derived>::FixedDim);
   }
   /** When assigned to a FreqListType, should initialize it with zeros. */
-  inline typename MatrQBase<Derived>::FreqListType::ConstantReturnType initFreqListType(size_t len) const
+  inline typename MatrQBase<Derived>::FreqListType::ConstantReturnType initFreqListType(std::size_t len) const
   {
     return MatrQBase<Derived>::FreqListType::Zero(len);
   }
@@ -95,12 +95,12 @@ template<typename Derived>
 struct MatrQBaseDimStore<Derived, false> : public MatrQBase<Derived>
 {
 private:
-  const size_t _dim;
+  const std::size_t _dim;
 public:
 
-  inline size_t dim() const { return _dim; }
+  inline std::size_t dim() const { return _dim; }
 
-  MatrQBaseDimStore(size_t dim_)
+  MatrQBaseDimStore(std::size_t dim_)
     : _dim(dim_)
   {
     eigen_assert(MatrQBase<Derived>::FixedDim == Eigen::Dynamic);
@@ -117,12 +117,12 @@ public:
     return MatrQBase<Derived>::VectorParamType::Zero(_dim*_dim);
   }
   /** When assigned to a VectorParamListType, should initialize it with zeros. */
-  inline typename MatrQBase<Derived>::VectorParamListType::ConstantReturnType initVectorParamListType(size_t len) const
+  inline typename MatrQBase<Derived>::VectorParamListType::ConstantReturnType initVectorParamListType(std::size_t len) const
   {
     return MatrQBase<Derived>::VectorParamListType::Zero(len, _dim*_dim);
   }
   /** When assigned to a FreqListType, should initialize it with zeros. */
-  inline typename MatrQBase<Derived>::FreqListType::ConstantReturnType initFreqListType(size_t len) const
+  inline typename MatrQBase<Derived>::FreqListType::ConstantReturnType initFreqListType(std::size_t len) const
   {
     return MatrQBase<Derived>::FreqListType::Zero(len);
   }
@@ -139,7 +139,7 @@ struct MatrQ
   : public MatrQBaseDimStore<MatrQ<FixedDim_, FixedMaxParamList_, RealScalar_, IntFreqType_>,
                              FixedDim_ != Eigen::Dynamic>
 {
-  MatrQ(size_t dim_)
+  MatrQ(std::size_t dim_)
     : MatrQBaseDimStore<MatrQ<FixedDim_, FixedMaxParamList_, RealScalar_, IntFreqType_>,
                         FixedDim_ != Eigen::Dynamic>(dim_)
   {

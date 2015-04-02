@@ -1,10 +1,12 @@
 
-#include <signal.h>
-#include <errno.h>
-
-#include <cstdio>
+//#include <csignal>
+#include <cstddef>
 #include <cmath>
+#include <cstdio>
 #include <ctime>
+#include <cerrno>
+
+#include <unistd.h>
 
 #include <complex>
 #include <chrono>
@@ -58,18 +60,18 @@ struct ProgOptions
 
   double step_size;
 
-  size_t Nsweep;
-  size_t Ntherm;
-  size_t Nrun;
+  std::size_t Nsweep;
+  std::size_t Ntherm;
+  std::size_t Nrun;
 
   double fid_min;
   double fid_max;
-  size_t fid_nbins;
+  std::size_t fid_nbins;
 
   int start_seed;
 
-  size_t Nrepeats;
-  size_t Nchunk;
+  std::size_t Nrepeats;
+  std::size_t Nchunk;
 
   double NMeasAmplifyFactor;
 
@@ -104,15 +106,15 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
      "Do a histogram for different fidelity values, format MIN:MAX/NPOINTS")
     ("step-size", value<double>(& opt->step_size)->default_value(opt->step_size),
      "the step size for the region")
-    ("n-sweep", value<size_t>(& opt->Nsweep)->default_value(opt->Nsweep),
+    ("n-sweep", value<std::size_t>(& opt->Nsweep)->default_value(opt->Nsweep),
      "number of iterations per sweep")
-    ("n-therm", value<size_t>(& opt->Ntherm)->default_value(opt->Ntherm),
+    ("n-therm", value<std::size_t>(& opt->Ntherm)->default_value(opt->Ntherm),
      "number of thermalizing sweeps")
-    ("n-run", value<size_t>(& opt->Nrun)->default_value(opt->Nrun),
+    ("n-run", value<std::size_t>(& opt->Nrun)->default_value(opt->Nrun),
      "number of running sweeps after thermalizing")
-    ("n-repeats", value<size_t>(& opt->Nrepeats)->default_value(opt->Nrepeats),
+    ("n-repeats", value<std::size_t>(& opt->Nrepeats)->default_value(opt->Nrepeats),
      "number of times to repeat the metropolis procedure")
-    ("n-chunk", value<size_t>(& opt->Nchunk)->default_value(opt->Nchunk),
+    ("n-chunk", value<std::size_t>(& opt->Nchunk)->default_value(opt->Nchunk),
      "chunk the number of repeats by this number per OMP thread")
     ("n-meas-amplify-factor", value<double>(& opt->NMeasAmplifyFactor)->default_value(opt->NMeasAmplifyFactor),
      "Specify an integer factor by which to multiply number of measurements.")
@@ -159,13 +161,15 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
     std::time_t tt;
     std::time(&tt);
     std::tm * ptim = localtime(&tt);
-    strftime(curdtstr, sizeof(curdtstr), "%c", ptim);
-    fprintf(opt->flog,
-            "\n\n\n"
-            "================================================================================\n"
-            "    tomorun -- NEW RUN   on %s\n"
-            "================================================================================\n\n",
-            curdtstr);
+    std::strftime(curdtstr, sizeof(curdtstr), "%c", ptim);
+    std::fprintf(
+        opt->flog,
+        "\n\n\n"
+        "================================================================================\n"
+        "    tomorun -- NEW RUN   on %s\n"
+        "================================================================================\n\n",
+        curdtstr
+        );
 
     logger.setFp(opt->flog);
   }
@@ -245,6 +249,25 @@ int main(int argc, char **argv)
 
   display_parameters(&opt);
 
+  //
+  // Renice the program, if requested
+  //
+
+  if (opt.nice_level != 0) {
+    // nice up our process.
+    errno = 0; // not std::errno, errno is a macro
+    int niceret = nice(opt.nice_level);
+    if (niceret == -1 && errno != 0) {
+      logger.warning(
+          "main()",
+          "Failed to nice(%d) process: %s",
+          opt.nice_level, strerror(errno)
+          );
+    } else {
+      logger.debug("main()", "nice()'ed our process to priority %d", niceret);
+    }
+  }
+
   logger.info(
       // origin
       "main()",
@@ -253,7 +276,21 @@ int main(int argc, char **argv)
       Eigen::SimdInstructionSetsInUse()
       );
 
-  logger.warning("main()", "In the future, this program might actually do something useful.");
+  //
+  // ---------------------------------------------------------------------------
+  // Read tomography data from MATLAB file
+  // ---------------------------------------------------------------------------
+  //
 
+//   UserData our_data;
+//   /* Read the data for the llh function & rho_MLE. */
+//   try {
+//     read_user_data(&our_data, data_file_name);
+//   } catch (const MAT::Exception& e) {
+//     fprintf(stderr, "Failed to read data: got exception:\n\t%s\n", e.what());
+//     return 1;
+//   }
 
+  //fprintf(flog, "Loaded data. dim=%d\n", our_data.dim);
+  
 }

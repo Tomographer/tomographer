@@ -2,7 +2,9 @@
 #ifndef INTEGRATOR_H
 #define INTEGRATOR_H
 
+#include <cstddef>
 #include <cassert>
+
 #include <limits>
 #include <random>
 #include <tuple>
@@ -43,13 +45,13 @@
  * function is called. \c RandomWalk needs to provide the following members, which are
  * called at the appropriate times:
  *
- * <ul><li> <code>size_t RandomWalk::n_sweep()</code>
+ * <ul><li> <code>std::size_t RandomWalk::n_sweep()</code>
  *          Number of iterations that compose a "sweep".
- *     <li> <code>size_t RandomWalk::n_therm()</code>
+ *     <li> <code>std::size_t RandomWalk::n_therm()</code>
  *          Number of thermalizing sweeps to perform.
- *     <li> <code>size_t RandomWalk::n_run()</code>
+ *     <li> <code>std::size_t RandomWalk::n_run()</code>
  *          Number of live sweeps to perofrm.
- *     <li> <code>void RandomWalk::move(size_t k, bool is_thermalizing, bool is_live_iter)</code>
+ *     <li> <code>void RandomWalk::move(std::size_t k, bool is_thermalizing, bool is_live_iter)</code>
  *          Is called to perform a new random walk iteration. The \c rw object is
  *          responsible for keeping the current state of the random walk in memory,
  *          and for processing a jump function. This method should update the internal
@@ -58,7 +60,7 @@
  *          thermalizing sweeps). \c is_thermalizing is \c true during the thermalizing
  *          runs, \c false otherwise. \c is_live_iter is \c true when a live sample is
  *          taken, only once every sweep after the thermalization runs.
- *     <li> <code>void RandomWalk::process_sample(size_t k)</code>
+ *     <li> <code>void RandomWalk::process_sample(std::size_t k)</code>
  *          Is called for each "live" point for which a sample should be taken. The point
  *          in question is the current state of the random walk. This only happens after
  *          thermalization, and at the last iteration of a sweep.
@@ -85,15 +87,15 @@ struct RandomWalkBase
   static void run(RandomWalk & rw)
   {
 
-    const size_t Nsweep = rw.n_sweep();
-    const size_t Ntherm = rw.n_therm();
-    const size_t Nrun = rw.n_run();
+    const std::size_t Nsweep = rw.n_sweep();
+    const std::size_t Ntherm = rw.n_therm();
+    const std::size_t Nrun = rw.n_run();
 
     rw.init();
 
-    size_t k;
+    std::size_t k;
 
-    const size_t num_thermalize = Nsweep*Ntherm;
+    const std::size_t num_thermalize = Nsweep*Ntherm;
 
     for (k = 0; k < num_thermalize; ++k) {
       // calculate a candidate jump point and see if we accept the move
@@ -103,7 +105,7 @@ struct RandomWalkBase
 
     rw.thermalizing_done();
 
-    const size_t num_run = Nsweep*Nrun;
+    const std::size_t num_run = Nsweep*Nrun;
 
     for (k = 0; k < num_run; ++k) {
 
@@ -236,9 +238,9 @@ public:
   };
 
 private:
-  const size_t _n_sweep;
-  const size_t _n_therm;
-  const size_t _n_run;
+  const std::size_t _n_sweep;
+  const std::size_t _n_therm;
+  const std::size_t _n_run;
   const RealScalar _step_size;
 
   Rng & _rng;
@@ -249,12 +251,12 @@ private:
   PointType curpt;
   FnValueType curptval;
 
-  size_t num_accepted;
-  size_t num_live_points;
+  std::size_t num_accepted;
+  std::size_t num_live_points;
 
 public:
 
-  MHRandomWalk(size_t n_sweep, size_t n_therm, size_t n_run, RealScalar step_size,
+  MHRandomWalk(std::size_t n_sweep, std::size_t n_therm, std::size_t n_run, RealScalar step_size,
                const PointType & startpt, MHWalker & mhwalker, RWStatsCollector & stats,
                Rng & rng, Log & log_)
     : _n_sweep(n_sweep), _n_therm(n_therm), _n_run(n_run),
@@ -267,9 +269,9 @@ public:
   {
   }
 
-  inline size_t n_sweep() const { return _n_sweep; }
-  inline size_t n_therm() const { return _n_therm; }
-  inline size_t n_run() const { return _n_run; }
+  inline std::size_t n_sweep() const { return _n_sweep; }
+  inline std::size_t n_therm() const { return _n_therm; }
+  inline std::size_t n_run() const { return _n_run; }
 
   inline void init()
   {
@@ -327,7 +329,7 @@ public:
                    
   }
 
-  inline void move(size_t k, bool is_thermalizing, bool is_live_iter)
+  inline void move(std::size_t k, bool is_thermalizing, bool is_live_iter)
   {
     // The reason `step_size` is passed to jump_fn instead of leaving jump_fn itself
     // handle the step size, is that we might in the future want to dynamically adapt the
@@ -375,7 +377,7 @@ public:
     return (double) num_accepted / num_live_points;
   }
 
-  inline void process_sample(size_t k)
+  inline void process_sample(std::size_t k)
   {
     _stats.process_sample(k, curpt, curptval, *this);
   }
@@ -487,7 +489,7 @@ public:
 
   template<typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
   inline typename std::enable_if<I < NumStatColl, void>::type raw_move(
-      size_t k, bool is_thermalizing, bool is_live_iter, bool accepted,
+      std::size_t k, bool is_thermalizing, bool is_live_iter, bool accepted,
       double a, const PointType & newpt, FnValueType newptval,
       const PointType & curpt, FnValueType curptval,
       MHRandomWalk & rw
@@ -500,7 +502,7 @@ public:
   }
   template<typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
   inline typename std::enable_if<I == NumStatColl, void>::type raw_move(
-      size_t, bool, bool, bool, double, const PointType &, FnValueType,
+      std::size_t, bool, bool, bool, double, const PointType &, FnValueType,
       const PointType &, FnValueType, MHRandomWalk &
       )
   {
@@ -511,7 +513,7 @@ public:
 
   template<typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
   inline typename std::enable_if<I < NumStatColl, void>::type process_sample(
-      size_t k, const PointType & curpt, FnValueType curptval, MHRandomWalk & rw
+      std::size_t k, const PointType & curpt, FnValueType curptval, MHRandomWalk & rw
       )
   {
     std::get<I>(statscollectors).process_sample(k, curpt, curptval, rw);
@@ -520,7 +522,7 @@ public:
 
   template<typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
   inline typename std::enable_if<I == NumStatColl, void>::type process_sample(
-      size_t, const PointType &, FnValueType, MHRandomWalk &
+      std::size_t, const PointType &, FnValueType, MHRandomWalk &
       )
   {
   }

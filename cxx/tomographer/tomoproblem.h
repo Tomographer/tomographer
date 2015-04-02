@@ -68,9 +68,9 @@ namespace tomo_internal
     static inline LLHValueType calc_llh(const IndepMeasTomoProblem<MatrQ,LLHValueType,true> *data,
                                         const typename MatrQ::VectorParamType & x)
     {
-      size_t k;
+      std::size_t k;
       typename MatrQ::RealScalar val = 0;
-      for (k = 0; k < (size_t)data->Exn.rows(); ++k) {
+      for (k = 0; k < (std::size_t)data->Exn.rows(); ++k) {
         const typename MatrQ::RealScalar thisval = (data->Exn.row(k) * x);
         //std::cout << "k = "<<k<<"; thisval = "<<thisval << "\n";
         val += data->Nx[k] * log(thisval);
