@@ -147,6 +147,11 @@ int main()
   taskcdat.base_seed = std::chrono::system_clock::now().time_since_epoch().count();
   // parameters for the fidelity histogram
   taskcdat.histogram_params = MyCData::HistogramParams(0.98, 1.0, 50);
+  // parameters of the random walk
+  taskcdat.n_sweep = 20;
+  taskcdat.n_therm = 500;
+  taskcdat.n_run = 10000;
+  taskcdat.step_size = 0.05;
 
   MyResultsCollector results(taskcdat.histogram_params);
 

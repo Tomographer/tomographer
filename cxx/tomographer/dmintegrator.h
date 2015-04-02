@@ -248,10 +248,22 @@ namespace DMIntegratorTasks
 
     // the data:
 
-    int base_seed;
-
+    //! the Tomography data (POVM effects, frequencies, etc.)
     TomoProblem prob;
 
+    //! Parameter of the random walk -- number of iterations per sweep
+    size_t n_sweep;
+    //! Parameter of the random walk -- number of thermalizing sweeps
+    size_t n_therm;
+    //! Parameter of the random walk -- number of "live" sweeps
+    size_t n_run;
+    //! Parameter of the random walk -- step size of the random walk
+    typename TomoProblem::MatrQ::RealScalar step_size;
+
+    //! A base random seed from which each run seed will be derived
+    int base_seed;
+
+    //! Which histogram to record (min, max, numbins)
     HistogramParams histogram_params;
   };
 
@@ -296,8 +308,20 @@ namespace DMIntegratorTasks
       
       Rng rng(_seed); // seeded random number generator
       
-      OurRandomWalk rwalk(20, 500, 10000, 0.05, pcdata->prob.matq.initMatrixType(),
-                          pcdata->prob, rng, fidstats, _log);
+      OurRandomWalk rwalk(
+          // MH random walk parameters
+          pcdata->n_sweep,
+          pcdata->n_therm,
+          pcdata->n_run,
+          pcdata->step_size,
+          // starting point: zero matrix means random starting point
+          pcdata->prob.matq.initMatrixType(),
+          // the tomo problem data
+          pcdata->prob,
+          // rng, stats collector and logger
+          rng,
+          fidstats,
+          _log);
       
       rwalk.run();
     }
