@@ -6,15 +6,16 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 include(Util)
 
-# ==============================================================================
-# Find specific features and packages
-# ==============================================================================
-
-# default to Release build
+# default to release build with debugging info
 if(NOT CMAKE_BUILD_TYPE)
   set(CMAKE_BUILD_TYPE "RelWithDebInfo")
 endif()
 message(STATUS "CMake Build Type: ${CMAKE_BUILD_TYPE}")
+
+
+# ==============================================================================
+# Find specific features and packages
+# ==============================================================================
 
 # Check for C++0x/C++11 features
 include(CheckCXXCompilerFlag)
@@ -27,6 +28,11 @@ find_package(Eigen3 REQUIRED)
 # Find OpenMP
 find_package(OpenMP)
 
+# Find MatIO library (https://sourceforge.net/projects/matio/)
+find_package(MatIO REQUIRED)
+
+# Find boost::program_options
+FIND_PACKAGE(Boost 1.40 COMPONENTS program_options REQUIRED)
 
 
 # ==============================================================================

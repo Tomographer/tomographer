@@ -76,7 +76,7 @@ struct UniformBinsHistogram
                 bins(k), std::string((int)(bins(k)/barscale+0.5), '*').c_str());
     }
     if (off_chart > 0) {
-      s += fmts("   ... with another %lu points off chart.\n", off_chart);
+      s += fmts("   ... with another %lu points off chart.\n", (unsigned long)off_chart);
     }
     return s;
   }

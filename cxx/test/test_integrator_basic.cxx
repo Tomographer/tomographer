@@ -41,7 +41,11 @@ int main()
   // now, prepare the integrator.
   std::mt19937 rng(std::chrono::system_clock::now().time_since_epoch().count()); // seeded random number generator
 
+  //  std::cout << "about to create a SimpleFoutLogger object...\n";
+
   SimpleFoutLogger flog(stdout, Logger::LONGDEBUG); // just log normally to STDOUT
+
+  //  std::cout << "about to create a SimpleFoutLogger object... done\n";
 
   QubitPaulisMatrQ::MatrixType start_T = qmq.initMatrixType();
   start_T << 1.0/sqrt(2.0), 0, 0, 1.0/sqrt(2.0);
@@ -64,8 +68,12 @@ int main()
                                  OurMultiRWStatsCollector,SimpleFoutLogger>
     MyRandomWalk;
 
+  std::cout << "About to create the randomwalk object ...\n";
+
   //  MyRandomWalk rwalk(20, 300, 5000, 0.05, start_T, dat, rng, fidstats, flog);
   MyRandomWalk rwalk(4, 20, 50, 0.06, Eigen::Matrix2cd::Zero(), dat, rng, multistats, flog);
+
+  std::cout << "About to run the randomwalk object ...\n";
 
   rwalk.run();
 

@@ -202,7 +202,7 @@ public:
                 double /*a*/, const MatrixType & /*newpt*/, LLHValueType /*newptval*/,
                 const MatrixType & /*curpt*/, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
-    _log.longdebug("FidelityHistogramRWStatsCollector", "raw_move(): k=%lu", k);
+    _log.longdebug("FidelityHistogramRWStatsCollector", "raw_move(): k=%lu", (unsigned long)k);
   }
 
   template<typename LLHValueType, typename MHRandomWalk>
@@ -210,7 +210,8 @@ public:
   {
     FidelityValueType fid = fidelity_T(curpt, _ref_T);
 
-    _log.longdebug("FidelityHistogramRWStatsCollector", "in process_sample(): k=%lu, fid=%.4g", k, fid);
+    _log.longdebug("FidelityHistogramRWStatsCollector", "in process_sample(): k=%lu, fid=%.4g",
+                   (unsigned long)k, fid);
 
     _histogram.record(fid);
 

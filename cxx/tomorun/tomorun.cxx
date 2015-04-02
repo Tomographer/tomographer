@@ -1,5 +1,9 @@
 
+#include <signal.h>
+#include <errno.h>
+
 #include <cstdio>
+#include <cmath>
 #include <ctime>
 
 #include <complex>
@@ -7,10 +11,13 @@
 
 #include <boost/program_options.hpp>
 
+#include <Eigen/Core>
+
 #define EZMATIO_EIGEN_TYPES
 #define EZMATIO_MORE_UTILS
 #include "ezmatio.h"
 
+#include <tomographer/loggers.h>
 #include <tomographer/tomoproblem.h>
 
 #ifdef TOMOGRAPHER_HAVE_OMP
@@ -51,9 +58,9 @@ struct ProgOptions
 
   double step_size;
 
-  int Nsweep;
-  int Ntherm;
-  int Nrun;
+  size_t Nsweep;
+  size_t Ntherm;
+  size_t Nrun;
 
   double fid_min;
   double fid_max;
@@ -61,8 +68,8 @@ struct ProgOptions
 
   int start_seed;
 
-  int Nrepeats;
-  int Nchunk;
+  size_t Nrepeats;
+  size_t Nchunk;
 
   double NMeasAmplifyFactor;
 
@@ -73,13 +80,11 @@ struct ProgOptions
 
 
 
-SimpleFoutLogger logger(stdout);
+SimpleFoutLogger logger(stdout, Logger::INFO, false);
 
 
 
 // ------------------------------------------------------------------------------
-
-void display_parameters(ProgOptions * opt);
 
 void parse_options(ProgOptions * opt, int argc, char **argv)
 {
@@ -99,17 +104,17 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
      "Do a histogram for different fidelity values, format MIN:MAX/NPOINTS")
     ("step-size", value<double>(& opt->step_size)->default_value(opt->step_size),
      "the step size for the region")
-    ("n-sweep", value<int>(& opt->Nsweep)->default_value(opt->Nsweep),
+    ("n-sweep", value<size_t>(& opt->Nsweep)->default_value(opt->Nsweep),
      "number of iterations per sweep")
-    ("n-therm", value<int>(& opt->Ntherm)->default_value(opt->Ntherm),
+    ("n-therm", value<size_t>(& opt->Ntherm)->default_value(opt->Ntherm),
      "number of thermalizing sweeps")
-    ("n-run", value<int>(& opt->Nrun)->default_value(opt->Nrun),
+    ("n-run", value<size_t>(& opt->Nrun)->default_value(opt->Nrun),
      "number of running sweeps after thermalizing")
-    ("n-repeats", value<int>(& opt->Nrepeats)->default_value(opt->Nrepeats),
+    ("n-repeats", value<size_t>(& opt->Nrepeats)->default_value(opt->Nrepeats),
      "number of times to repeat the metropolis procedure")
-    ("n-chunk", value<int>(& opt->Nchunk)->default_value(opt->Nchunk),
+    ("n-chunk", value<size_t>(& opt->Nchunk)->default_value(opt->Nchunk),
      "chunk the number of repeats by this number per OMP thread")
-    ("n-meas-amplify-factor", value<int>(& opt->NMeasAmplifyFactor)->default_value(opt->NMeasAmplifyFactor),
+    ("n-meas-amplify-factor", value<double>(& opt->NMeasAmplifyFactor)->default_value(opt->NMeasAmplifyFactor),
      "Specify an integer factor by which to multiply number of measurements.")
     ("write-histogram", value<std::string>(& opt->write_histogram),
      "write the histogram to the given file in tabbed CSV values")
@@ -119,7 +124,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
     ("nice", value<int>(& opt->nice_level)->default_value(opt->nice_level),
      "Renice the process to the given level to avoid slowing down the whole system. Set to zero "
      "to avoid renicing.")
-    ("log", value<std::string>(& opt->flogname),
+    ("log", value<std::string>(& flogname),
      "Redirect standard output (log) to the given file. Use '-' for stdout.")
     ;
 
@@ -143,7 +148,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
     opt->flog = stdout;
   } else {
     opt->flog = fopen(flogname.c_str(), "a");
-    if (flog == NULL) {
+    if (opt->flog == NULL) {
       logger.error("parse_options()", "Can't open file %s: %s", flogname.c_str(), strerror(errno));
       ::exit(255);
     }
@@ -151,7 +156,9 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
 
     // write out header
     char curdtstr[128];
-    std::tm * ptim = localtime(std::time(NULL));
+    std::time_t tt;
+    std::time(&tt);
+    std::tm * ptim = localtime(&tt);
     strftime(curdtstr, sizeof(curdtstr), "%c", ptim);
     fprintf(opt->flog,
             "\n\n\n"
@@ -162,6 +169,9 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
 
     logger.setFp(opt->flog);
   }
+
+  // set up log level
+  logger.setLevel(opt->loglevel);
 
   if (fidhiststr.size()) {
     double fmin, fmax;
@@ -176,8 +186,6 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
     opt->fid_max = fmax;
     opt->fid_nbins = nbins;
   }
-
-  display_parameters(opt);
 }
 
 
@@ -188,29 +196,29 @@ void display_parameters(ProgOptions * opt)
       "display_parameters()",
       // message
       "\n"
-      "Using  data from file     = %s  (measurements x%d)\n"
-      "       fid. histogram     = %.2g--%.2g (%d bins)\n"
+      "Using  data from file     = %s  (measurements x%.3g)\n"
+      "       fid. histogram     = %.2g--%.2g (%lu bins)\n"
       "       step size          = %.6f\n"
-      "       sweep size         = %d\n"
-      "       # therm sweeps     = %d\n"
-      "       # run sweeps       = %d\n"
-      "       # intgr. repeats   = %d   (chunked by %d/thread)\n"
+      "       sweep size         = %lu\n"
+      "       # therm sweeps     = %lu\n"
+      "       # run sweeps       = %lu\n"
+      "       # intgr. repeats   = %lu   (chunked by %lu/thread)\n"
       "       write histogram to = %s\n"
       "\n"
-      "       --> total no. of live samples = %d  (%.2e)\n"
+      "       --> total no. of live samples = %lu  (%.2e)\n"
       "\n",
       opt->data_file_name.c_str(),
       opt->NMeasAmplifyFactor,
-      opt->fid_min, opt->fid_max, opt->fid_nbins,
+      opt->fid_min, opt->fid_max, (unsigned long)opt->fid_nbins,
       opt->step_size,
-      opt->Nsweep,
-      opt->Ntherm,
-      opt->Nrun,
-      opt->Nrepeats,
-      opt->Nchunk,
-      (write_histogram.size()?write_histogram:std::string("<don't write histogram>")).c_str(),
-      opt->Nrun*Nrepeats,
-      opt->(double)(Nrun*Nrepeats)
+      (unsigned long)opt->Nsweep,
+      (unsigned long)opt->Ntherm,
+      (unsigned long)opt->Nrun,
+      (unsigned long)opt->Nrepeats,
+      (unsigned long)opt->Nchunk,
+      (opt->write_histogram.size()?opt->write_histogram:std::string("<don't write histogram>")).c_str(),
+      (unsigned long)(opt->Nrun*opt->Nrepeats),
+      (double)(opt->Nrun*opt->Nrepeats)
       );
 }
 
@@ -229,17 +237,23 @@ int main(int argc, char **argv)
       // origin
       "main()",
       // message
+      "\n"
+      "-------------------------------\n"
       "Welcome to tomorun.\n"
       "-------------------------------\n"
-      "\n",
       );
+
+  display_parameters(&opt);
+
   logger.info(
       // origin
       "main()",
       // message
-      "SIMD instructions set in use by Eigen: %s\n",
-      SimdInstructionSetsInUse()
+      "SIMD instructions set in use by Eigen: %s",
+      Eigen::SimdInstructionSetsInUse()
       );
+
+  logger.warning("main()", "In the future, this program might actually do something useful.");
 
 
 }

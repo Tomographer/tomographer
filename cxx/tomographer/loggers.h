@@ -2,10 +2,12 @@
 #ifndef LOGGERS_H
 #define LOGGERS_H
 
-#include <string>
-#include <iostream>
 #include <cstdio>
 #include <cstdarg>
+
+#include <string>
+#include <iostream>
+#include <type_traits>
 
 
 #define PRINTF1_ARGS_SAFE  __attribute__ ((format (printf, 1, 2)))
@@ -165,6 +167,10 @@ struct LoggerTraits
  * instantiate this class directly.
  *
  * See also \ref SimpleFoutLogger.
+ *
+ * \note For subclasses: \c _level is protected, in case you might want to provide a
+ * function \c setLevel(). That function is not provided here in case you need a
+ * thread-safe logger.
  */
 template<typename Derived>
 class LoggerBase
@@ -208,7 +214,7 @@ public:
 
   inline int level() const { return _level; }
 
-private:
+protected:
   int _level;
 };
 
@@ -398,14 +404,16 @@ inline void LoggerBase<Derived>::log(int level, const char * origin, const std::
  * The \c FILE may be any C \c FILE* pointer, in particular \c stdin or \c stderr. If it
  * is a file, it should be open and writeable.
  *
+ * You may set the given log level with \ref setLevel().
+ *
  * \note This class is thread-safe AS LONG AS you DO NOT CHANGE the target \c fp file
- *       pointer.
+ *       pointer AND YOU DO NOT CHANGE the log level with \ref setLevel()
  */
 class SimpleFoutLogger : public LoggerBase<SimpleFoutLogger>
 {
 public:
-  SimpleFoutLogger(FILE * fp_, int level = Logger::INFO)
-    : LoggerBase<SimpleFoutLogger>(level), fp(fp_)
+  SimpleFoutLogger(FILE * fp_, int level = Logger::INFO, bool display_origin_ = true)
+    : LoggerBase<SimpleFoutLogger>(level), fp(fp_), display_origin(display_origin_)
   {
   }
 
@@ -417,16 +425,25 @@ public:
     fp = fp_;
   }
 
+  /**
+   * \warning This method is not thread-safe!
+   */
+  inline void setLevel(int level)
+  {
+    _level = level;
+  }
+
   inline void emit_log(int level, const char * origin, const std::string & msg)
   {
     static const std::string level_prefixes[] = {
-      std::string("*** ERROR -- "),
-      std::string("*** Warning: ")
+      std::string("\n\n*** ERROR -- "),
+      std::string("\n*** Warning: ")
     };
 
     std::string finalmsg = (
-        (level < sizeof(level_prefixes) ? level_prefixes[level] : std::string())
-        + (origin&&origin[0] ? "["+std::string(origin)+"] " : std::string())
+        ( (level >= 0 && level < std::extent<decltype(level_prefixes)>::value)
+          ? level_prefixes[level] : std::string() )
+        + ((display_origin && origin && origin[0]) ? "["+std::string(origin)+"] " : std::string())
         + msg
         );
 
@@ -441,6 +458,7 @@ public:
 
 private:
   std::FILE * fp;
+  bool display_origin;
 };
 
 

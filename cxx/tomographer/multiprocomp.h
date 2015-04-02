@@ -220,7 +220,7 @@ namespace MultiProc
         // construct a thread-safe logger we can use
         OMPTaskLogger<Logger> threadsafelogger(logger);
 
-        threadsafelogger.debug("run_omp_tasks()", "Running task #%lu ...", k);
+        threadsafelogger.debug("run_omp_tasks()", "Running task #%lu ...", (unsigned long)k);
 
         // construct a new task instance
         Task t(Task::get_input(k, pcdata), pcdata, threadsafelogger);
