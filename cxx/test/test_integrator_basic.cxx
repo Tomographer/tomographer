@@ -52,15 +52,25 @@ int main()
   typedef FidelityHistogramStatsCollector<QubitPaulisMatrQ,double,SimpleFoutLogger>
     OurFidStatsCollector;
 
-  OurFidStatsCollector fidstats(0.98, 1.0, 50, ref_T, qmq, flog);
+  typedef MultipleStatsCollectors<OurFidStatsCollector,OurFidStatsCollector>
+    OurMultiStatsCollector;
 
-  typedef DMStateSpaceRandomWalk<std::mt19937,IndepMeasTomoProblem<QubitPaulisMatrQ>,OurFidStatsCollector,SimpleFoutLogger>
+  OurFidStatsCollector fidstats(0.98, 1.0, 50, ref_T, qmq, flog);
+  OurFidStatsCollector fidstats2(0.96, 0.98, 10, ref_T, qmq, flog);
+
+  OurMultiStatsCollector multistats(fidstats, fidstats2);
+
+  typedef DMStateSpaceRandomWalk<std::mt19937,IndepMeasTomoProblem<QubitPaulisMatrQ>,
+                                 OurMultiStatsCollector,SimpleFoutLogger>
     MyRandomWalk;
 
   //  MyRandomWalk rwalk(20, 300, 5000, 0.05, start_T, dat, rng, fidstats, flog);
-  MyRandomWalk rwalk(4, 20, 50, 0.06, Eigen::Matrix2cd::Zero(), dat, rng, fidstats, flog);
+  MyRandomWalk rwalk(4, 20, 50, 0.06, Eigen::Matrix2cd::Zero(), dat, rng, multistats, flog);
 
   rwalk.run();
+
+  std::cout << "FINAL HISTOGRAM (1)\n" << fidstats.histogram().pretty_print() << "\n";
+  std::cout << "FINAL HISTOGRAM (2)\n" << fidstats2.histogram().pretty_print() << "\n";
   
   return 0;
 }

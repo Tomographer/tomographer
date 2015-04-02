@@ -118,7 +118,7 @@ public:
 
   void run()
   {
-    MetropolisWalkerBase<OurMHRandomWalk>::run(_mhrw);
+    RandomWalkBase<OurMHRandomWalk>::run(_mhrw);
   }
 
 };
@@ -230,8 +230,6 @@ public:
 namespace DMIntegratorTasks
 {
 
-  //  typedef FidelityHistogramStatsCollector<QubitPaulisMatrQ,VacuumLogger>
-  //    FidStatsCollector;
 
   template<typename TomoProblem, typename FidelityValueType = double>
   struct CData
@@ -269,8 +267,6 @@ namespace DMIntegratorTasks
 
   /**
    *
-   * \todo HANDLE LOGGER HERE and in OMP Task Manager. Task Manager should provide a
-   *       logger which performs the log in a critical section for thread safety?
    */
   template<typename TomoProblem, typename Logger, typename Rng = std::mt19937, typename FidelityValueType = double>
   struct MHRandomWalkTask
