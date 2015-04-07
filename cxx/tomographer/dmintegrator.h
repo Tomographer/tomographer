@@ -10,6 +10,8 @@
 #include <tomographer/loggers.h>
 #include <tomographer/histogram.h>
 
+namespace Tomographer {
+
 
 template<typename Rng, typename TomoProblem, typename RWStatsCollector, typename Log>
 class DMStateSpaceRandomWalk
@@ -43,7 +45,7 @@ private:
 
 public:
 
-  DMStateSpaceRandomWalk(std::size_t n_sweep, std::size_t n_therm, std::size_t n_run, RealScalar step_size,
+  DMStateSpaceRandomWalk(unsigned int n_sweep, unsigned int n_therm, unsigned int n_run, RealScalar step_size,
                          const MatrixType & startpt, const TomoProblem & tomo, Rng & rng, RWStatsCollector & stats,
                          Log & log_)
     : _tomo(tomo),
@@ -200,7 +202,7 @@ public:
   }
 
   template<typename LLHValueType, typename MHRandomWalk>
-  void raw_move(std::size_t k, bool /*is_thermalizing*/, bool /*is_live_iter*/, bool /*accepted*/,
+  void raw_move(unsigned int k, bool /*is_thermalizing*/, bool /*is_live_iter*/, bool /*accepted*/,
                 double /*a*/, const MatrixType & /*newpt*/, LLHValueType /*newptval*/,
                 const MatrixType & /*curpt*/, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
@@ -208,7 +210,7 @@ public:
   }
 
   template<typename LLHValueType, typename MHRandomWalk>
-  void process_sample(std::size_t k, const MatrixType & curpt, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
+  void process_sample(unsigned int k, const MatrixType & curpt, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
     FidelityValueType fid = fidelity_T(curpt, _ref_T);
 
@@ -257,11 +259,11 @@ namespace DMIntegratorTasks
     TomoProblem prob;
 
     //! Parameter of the random walk -- number of iterations per sweep
-    std::size_t n_sweep;
+    unsigned int n_sweep;
     //! Parameter of the random walk -- number of thermalizing sweeps
-    std::size_t n_therm;
+    unsigned int n_therm;
     //! Parameter of the random walk -- number of "live" sweeps
-    std::size_t n_run;
+    unsigned int n_run;
     //! Parameter of the random walk -- step size of the random walk
     typename TomoProblem::MatrQ::RealScalar step_size;
 
@@ -350,7 +352,7 @@ namespace DMIntegratorTasks
     {
     }
 
-    inline void init(std::size_t num_runs, std::size_t n_chunk, const void * pcdata) const
+    inline void init(unsigned int num_runs, unsigned int n_chunk, const void * pcdata) const
     {
     }
 
@@ -370,6 +372,7 @@ namespace DMIntegratorTasks
 }
 
 
+} // namespace Tomographer
 
 
 #endif

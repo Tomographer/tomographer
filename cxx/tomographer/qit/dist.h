@@ -7,6 +7,7 @@
 #include <Eigen/SVD>
 #include <unsupported/Eigen/MatrixFunctions>
 
+namespace Tomographer {
 
 
 /** \brief Fidelity between two density matrices
@@ -54,6 +55,7 @@ inline double fidelity_T(const Eigen::MatrixBase<Der1>& T1, const Eigen::MatrixB
 
 
 
+} // namespace Tomographer
 
 
 

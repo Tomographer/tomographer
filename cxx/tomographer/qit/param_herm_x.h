@@ -8,6 +8,9 @@
 #include <Eigen/Core>
 
 
+namespace Tomographer {
+
+
 namespace tomo_internal {
   static const double SQRT_2 = std::sqrt(2.0);
   static const double SQRT_12 = 1.0/std::sqrt(2.0);
@@ -69,6 +72,8 @@ inline void param_herm_to_x(Eigen::DenseBase<Derived1>& x, const Eigen::MatrixBa
   }
 }
 
+
+} // namespace Tomographer
 
 
 #endif

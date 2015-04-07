@@ -3,6 +3,7 @@
 #define TOMOPROBLEM_H
 
 
+namespace Tomographer {
 
 
 /** Tomography probem, given by a list of POVM effects with their frequencies.
@@ -94,6 +95,7 @@ inline LLHValueType IndepMeasTomoProblem<MatrQ, LLHValueType, UseCLoopInstead>::
 
 
 
+} // namespace Tomographer
 
 
 

@@ -5,6 +5,11 @@
 
 #include <Eigen/Core>
 
+
+namespace Tomographer {
+
+
+
 template<int FixedDim_ = Eigen::Dynamic, int FixedMaxParamList_ = Eigen::Dynamic,
          typename RealScalar_ = double, typename IntFreqType_ = int> struct MatrQ;
 
@@ -155,6 +160,7 @@ typedef MatrQ<2,6,double,int> QubitPaulisMatrQ;
 
 
 
+} // namespace Tomographer
 
 
 #endif

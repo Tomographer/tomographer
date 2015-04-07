@@ -7,6 +7,8 @@
 #include <Eigen/Dense>
 
 
+namespace Tomographer {
+
 namespace tomo_internal {
 
   template<typename Rng, typename RndDist, typename Scalar>
@@ -48,13 +50,20 @@ namespace tomo_internal {
   };
 } // end namespace tomo_internal
 
+} // namespace Tomographer
+
+
 namespace Eigen {
   namespace internal {
     template<typename Rng, typename RndDist, typename Scalar>
-    struct functor_traits<tomo_internal::random_generator<Rng, RndDist, Scalar> >
+    struct functor_traits<Tomographer::tomo_internal::random_generator<Rng, RndDist, Scalar> >
     { enum { Cost = 50 * NumTraits<Scalar>::MulCost, PacketAccess = false, IsRepeatable = false }; };
   }
 } // end namespace Eigen
+
+
+
+namespace Tomographer {
 
 
 /** \brief a matrix populated with random entries using C++'s \c random framework
@@ -74,9 +83,7 @@ dense_random(Rng & rng, RndDist &rnddist, IndexTypes... sizes)
 }
 
 
-
-
-
+} // namespace Tomographer
 
 
 

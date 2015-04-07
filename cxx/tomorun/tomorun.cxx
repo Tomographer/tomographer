@@ -29,6 +29,9 @@
 
 
 
+using namespace Tomographer;
+
+
 struct ProgOptions
 {
   ProgOptions()
@@ -45,7 +48,7 @@ struct ProgOptions
     fid_nbins(50),
     start_seed(std::chrono::system_clock::now().time_since_epoch().count()),
     Nrepeats(256),
-    Nchunk(10),
+    Nchunk(1),
     NMeasAmplifyFactor(1.0),
     loglevel(Logger::INFO),
     write_histogram("")
@@ -127,7 +130,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
      "Renice the process to the given level to avoid slowing down the whole system. Set to zero "
      "to avoid renicing.")
     ("log", value<std::string>(& flogname),
-     "Redirect standard output (log) to the given file. Use '-' for stdout.")
+     "Redirect standard output (log) to the given file. Use '-' for stdout. If file exists, will append.")
     ;
 
   try {
@@ -151,7 +154,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
   } else {
     opt->flog = fopen(flogname.c_str(), "a");
     if (opt->flog == NULL) {
-      logger.error("parse_options()", "Can't open file %s: %s", flogname.c_str(), strerror(errno));
+      logger.error("parse_options()", "Can't open file %s for logging: %s", flogname.c_str(), strerror(errno));
       ::exit(255);
     }
     logger.info("parse_options()", "Output is now being redirected to %s.", flogname.c_str());
@@ -180,7 +183,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
   if (fidhiststr.size()) {
     double fmin, fmax;
     int nbins = 100;
-    if (sscanf(fidhiststr.c_str(), "%lf:%lf/%d", &fmin, &fmax, &nbins) < 2) {
+    if (std::sscanf(fidhiststr.c_str(), "%lf:%lf/%d", &fmin, &fmax, &nbins) < 2) {
       logger.error("parse_options()",
                    "Error: --fidelity-hist expects an argument of format MIN:MAX[/NPOINTS]");
       ::exit(255);
@@ -201,7 +204,7 @@ void display_parameters(ProgOptions * opt)
       // message
       "\n"
       "Using  data from file     = %s  (measurements x%.3g)\n"
-      "       fid. histogram     = %.2g--%.2g (%lu bins)\n"
+      "       fid. histogram     = [%.2g, %.2g] (%lu bins)\n"
       "       step size          = %.6f\n"
       "       sweep size         = %lu\n"
       "       # therm sweeps     = %lu\n"
@@ -268,7 +271,7 @@ int main(int argc, char **argv)
     }
   }
 
-  logger.info(
+  logger.debug(
       // origin
       "main()",
       // message

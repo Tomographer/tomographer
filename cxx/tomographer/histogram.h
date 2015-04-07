@@ -7,6 +7,10 @@
 #include <Eigen/Core>
 
 
+namespace Tomographer {
+
+
+
 template<typename Scalar_>
 struct UniformBinsHistogram
 {
@@ -24,7 +28,7 @@ struct UniformBinsHistogram
 
   Params params;
   Eigen::ArrayXi bins;
-  std::size_t off_chart;
+  unsigned int off_chart;
 
   UniformBinsHistogram(Params p = Params())
     : params(p), bins(p.num_bins), off_chart(0)
@@ -76,7 +80,7 @@ struct UniformBinsHistogram
                 bins(k), std::string((int)(bins(k)/barscale+0.5), '*').c_str());
     }
     if (off_chart > 0) {
-      s += fmts("   ... with another %lu points off chart.\n", (unsigned long)off_chart);
+      s += fmts("   ... with another %u points off chart.\n", (unsigned int)off_chart);
     }
     return s;
   }
@@ -92,17 +96,7 @@ struct UniformBinsHistogram
 
 
 
-
-
-
-
-
-
-
-
-
-
-
+} // namespace Tomographer
 
 
 

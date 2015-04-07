@@ -6,6 +6,8 @@
 
 int main()
 {
+  using namespace Tomographer;
+
   {
     std::cout << "testing DefaultMatrQ ...\n";
     

@@ -10,9 +10,10 @@
 #include <tomographer/integrator.h>
 #include <tomographer/dmintegrator.h>
 
-
 int main()
 {
+  using namespace Tomographer;
+
   std::cout << "testing our integrator with Pauli meas. on a qubit ... \n";
 
   QubitPaulisMatrQ qmq(2);

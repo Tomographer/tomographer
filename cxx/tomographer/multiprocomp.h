@@ -3,6 +3,9 @@
 #define MULTIPROCOMP_H
 
 
+namespace Tomographer {
+
+
 
 namespace MultiProc
 {
@@ -152,7 +155,7 @@ namespace MultiProc
    *     keep in mind that each of these methods will be called from a local thread.
    *
    *     <ul>
-   *     <li> <code>static Task::get_input(std::size_t k, const ConstantDataType * pcdata)</code>
+   *     <li> <code>static Task::get_input(unsigned int k, const ConstantDataType * pcdata)</code>
    *          should provide input to a new task. \c k is the task iteration number
    *          and \c pcdata is a pointer to the shared const data.
    *
@@ -175,7 +178,7 @@ namespace MultiProc
    *     should provide the following methods:
    *
    *     <ul>
-   *     <li> <code>void ResultsCollector::init(std::size_t num_runs, std::size_t n_chunk,
+   *     <li> <code>void ResultsCollector::init(unsigned int num_runs, unsigned int n_chunk,
    *                                            const ConstantDataType * pcdata)</code>
    *         will be called before the tasks are run, and before starting the parallel
    *         section.
@@ -202,9 +205,9 @@ namespace MultiProc
    */
   template<typename Task, typename ConstantDataType, typename ResultsCollector, typename Logger>
   inline void run_omp_tasks(const ConstantDataType * pcdata, ResultsCollector * results,
-                            std::size_t num_runs, std::size_t n_chunk, Logger & logger)
+                            unsigned int num_runs, unsigned int n_chunk, Logger & logger)
   {
-    std::size_t k;
+    unsigned int k;
     
     results->init(num_runs, n_chunk, pcdata);
     
@@ -238,8 +241,9 @@ namespace MultiProc
     results->run_finished();
   }
     
-};
+} // namespace MultiProc
 
+} // namespace Tomographer
 
 
 

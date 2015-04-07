@@ -16,6 +16,9 @@
 #define PRINTF4_ARGS_SAFE  __attribute__ ((format (printf, 4, 5)))
 
 
+namespace Tomographer {
+
+
 
 /** \brief Exception for bad \c printf format
  *
@@ -546,13 +549,7 @@ public:
 
 
 
-
-
-
-
-
-
-
+} // namespace Tomographer
 
 
 
