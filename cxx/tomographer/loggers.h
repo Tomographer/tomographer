@@ -7,6 +7,7 @@
 
 #include <string>
 #include <iostream>
+#include <functional>
 #include <type_traits>
 
 
@@ -163,6 +164,7 @@ struct LoggerTraits
 };
 
 
+
 /** \brief Base logger class.
  *
  * This class serves as base class for logger implementations. It provides storing a
@@ -188,22 +190,37 @@ public:
   PRINTF3_ARGS_SAFE
   inline void error(const char * origin, const char * fmt, ...);
   inline void error(const char * origin, const std::string & msg);
+  template<typename Fn>
+  inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+  error(const char * origin, Fn f);
 
   PRINTF3_ARGS_SAFE
   inline void warning(const char * origin, const char * fmt, ...);
   inline void warning(const char * origin, const std::string & msg);
+  template<typename Fn>
+  inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+  warning(const char * origin, Fn f);
 
   PRINTF3_ARGS_SAFE
   inline void info(const char * origin, const char * fmt, ...);
   inline void info(const char * origin, const std::string & msg);
+  template<typename Fn>
+  inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+  info(const char * origin, Fn f);
 
   PRINTF3_ARGS_SAFE
   inline void debug(const char * origin, const char * fmt, ...);
   inline void debug(const char * origin, const std::string & msg);
+  template<typename Fn>
+  inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+  debug(const char * origin, Fn f);
 
   PRINTF3_ARGS_SAFE
   inline void longdebug(const char * origin, const char * fmt, ...);
   inline void longdebug(const char * origin, const std::string & msg);
+  template<typename Fn>
+  inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+  longdebug(const char * origin, Fn f);
 
 
   PRINTF4_ARGS_SAFE
@@ -291,6 +308,20 @@ inline void LoggerBase<Derived>::error(const char * origin, const std::string & 
 }
 
 template<typename Derived>
+template<typename Fn>
+inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+LoggerBase<Derived>::error(const char * origin, Fn f)
+{
+  if (!enabled_for(Logger::ERROR)) {
+    return;
+  }
+  std::ostringstream sstr;
+  f(sstr);
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::ERROR>::call_emit_log(this, origin, sstr.str());
+}
+
+
+template<typename Derived>
 inline void LoggerBase<Derived>::warning(const char * origin, const char * fmt, ...)
 {
   if (!enabled_for(Logger::WARNING)) {
@@ -309,6 +340,19 @@ inline void LoggerBase<Derived>::warning(const char * origin, const std::string 
     return;
   }
   tomo_internal::LoggerBaseHelperStatic<Derived,Logger::WARNING>::call_emit_log(this, origin, msg);
+}
+
+template<typename Derived>
+template<typename Fn>
+inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+LoggerBase<Derived>::warning(const char * origin, Fn f)
+{
+  if (!enabled_for(Logger::WARNING)) {
+    return;
+  }
+  std::ostringstream sstr;
+  f(sstr);
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::WARNING>::call_emit_log(this, origin, sstr.str());
 }
 
 template<typename Derived>
@@ -333,6 +377,19 @@ inline void LoggerBase<Derived>::info(const char * origin, const std::string & m
 }
 
 template<typename Derived>
+template<typename Fn>
+inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+LoggerBase<Derived>::info(const char * origin, Fn f)
+{
+  if (!enabled_for(Logger::INFO)) {
+    return;
+  }
+  std::ostringstream sstr;
+  f(sstr);
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::INFO>::call_emit_log(this, origin, sstr.str());
+}
+
+template<typename Derived>
 inline void LoggerBase<Derived>::debug(const char * origin, const char * fmt, ...)
 {
   if (!enabled_for(Logger::DEBUG)) {
@@ -354,6 +411,19 @@ inline void LoggerBase<Derived>::debug(const char * origin, const std::string & 
 }
 
 template<typename Derived>
+template<typename Fn>
+inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+LoggerBase<Derived>::debug(const char * origin, Fn f)
+{
+  if (!enabled_for(Logger::DEBUG)) {
+    return;
+  }
+  std::ostringstream sstr;
+  f(sstr);
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::DEBUG>::call_emit_log(this, origin, sstr.str());
+}
+
+template<typename Derived>
 inline void LoggerBase<Derived>::longdebug(const char * origin, const char * fmt, ...)
 {
   if (!enabled_for(Logger::LONGDEBUG)) {
@@ -372,6 +442,19 @@ inline void LoggerBase<Derived>::longdebug(const char * origin, const std::strin
     return;
   }
   tomo_internal::LoggerBaseHelperStatic<Derived,Logger::LONGDEBUG>::call_emit_log(this, origin, msg);
+}
+
+template<typename Derived>
+template<typename Fn>
+inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+LoggerBase<Derived>::longdebug(const char * origin, Fn f)
+{
+  if (!enabled_for(Logger::LONGDEBUG)) {
+    return;
+  }
+  std::ostringstream sstr;
+  f(sstr);
+  tomo_internal::LoggerBaseHelperStatic<Derived,Logger::LONGDEBUG>::call_emit_log(this, origin, sstr.str());
 }
 
 
@@ -444,7 +527,7 @@ public:
     };
 
     std::string finalmsg = (
-        ( (level >= 0 && level < std::extent<decltype(level_prefixes)>::value)
+        ( (level >= 0 && level < (int)std::extent<decltype(level_prefixes)>::value)
           ? level_prefixes[level] : std::string() )
         + ((display_origin && origin && origin[0]) ? "["+std::string(origin)+"] " : std::string())
         + msg
@@ -521,7 +604,7 @@ public:
   {
   }
 
-  inline void emit_log(int level, const char * origin, const std::string& msg)
+  inline void emit_log(int /*level*/, const char * origin, const std::string& msg)
   {
     buffer << (origin&&origin[0] ? "["+std::string(origin)+"] " : std::string())
            << msg.c_str() << "\n";

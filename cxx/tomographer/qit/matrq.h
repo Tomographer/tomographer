@@ -38,6 +38,7 @@ struct MatrQBase
 {
   enum {
     FixedDim = tomo_internal::matrq_traits<Derived>::FixedDim,
+    FixedDim2 = ((FixedDim!=Eigen::Dynamic)?FixedDim*FixedDim : Eigen::Dynamic),
     FixedMaxParamList = tomo_internal::matrq_traits<Derived>::FixedMaxParamList
   };
   typedef typename tomo_internal::matrq_traits<Derived>::RealScalar RealScalar;
@@ -48,13 +49,13 @@ struct MatrQBase
   typedef Eigen::Matrix<std::complex<RealScalar>, FixedDim, FixedDim> MatrixType;
   
   /** \brief Real dim*dim Vector */
-  typedef Eigen::Matrix<RealScalar, FixedDim*FixedDim, 1> VectorParamType;
+  typedef Eigen::Matrix<RealScalar, FixedDim2, 1> VectorParamType;
   
   /** \brief dynamic Matrix with rows = dim*dim Vectors (row-major)
    * [maximum FixedMaxParamList rows, or Dynamic]
    */
-  typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, FixedDim*FixedDim, Eigen::RowMajor,
-                        FixedMaxParamList, FixedDim*FixedDim> VectorParamListType;
+  typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, FixedDim2, Eigen::RowMajor,
+                        FixedMaxParamList, FixedDim2> VectorParamListType;
 
   /** \brief dynamic Array of integers [maximum FixedMaxParamList entries or Dynamic]
    */

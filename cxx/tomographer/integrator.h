@@ -263,10 +263,10 @@ public:
                Rng & rng, Log & log_)
     : _n_sweep(n_sweep), _n_therm(n_therm), _n_run(n_run),
       _step_size(step_size),
+      _rng(rng),
       _mhwalker(mhwalker),
       _stats(stats),
       _log(log_),
-      _rng(rng),
       curpt(startpt)
   {
   }
@@ -384,49 +384,6 @@ public:
     _stats.process_sample(k, curpt, curptval, *this);
   }
  
-};
-
-
-
-
-namespace tomo_internal {
-  // see http://stackoverflow.com/a/6894436/1694896 : iterating over a tuple
-
-  /*
-  template<typename... Tp>
-  struct TupleIterator
-  {
-    template<std::size_t I = 0, typename FuncT, typename... FnArgs>
-    static inline typename std::enable_if<I == sizeof...(Tp), void>::type
-    for_each(std::tuple<Tp&...> & , FuncT , const FnArgs & ... )
-    {
-    }
-
-    template<std::size_t I = 0, typename FuncT, typename... FnArgs>
-    static inline typename std::enable_if<I < sizeof...(Tp), void>::type
-    for_each(std::tuple<Tp&...>& tup, FuncT f, const FnArgs & ... args)
-    {
-      f(std::get<I>(tup), args...);
-      for_each<I + 1, FuncT, Tp...>(t, f);
-    }
-  };
-  */
-  
-  /*
-  template<std::size_t I = 0, typename FuncT, typename... Tp>
-  inline typename std::enable_if<I == sizeof...(Tp), void>::type
-  for_each(std::tuple<Tp...> & , FuncT ) // Unused arguments are given no names.
-  {
-  }
-
-  template<std::size_t I = 0, typename FuncT, typename... Tp>
-  inline typename std::enable_if<I < sizeof...(Tp), void>::type
-  for_each(std::tuple<Tp...>& t, FuncT f)
-  {
-    f(std::get<I>(t));
-    for_each<I + 1, FuncT, Tp...>(t, f);
-  }
-  */
 };
 
 

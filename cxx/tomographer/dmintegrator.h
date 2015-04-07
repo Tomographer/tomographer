@@ -345,26 +345,94 @@ namespace DMIntegratorTasks
     typedef HistogramType_ HistogramType;
     typedef typename HistogramType::Params HistogramParams;
 
-    HistogramType final_histogram;
+    const HistogramParams params;
+    Eigen::ArrayXd final_histogram;
+    Eigen::ArrayXd std_dev;
+    double off_chart;
+    unsigned int num_histograms;
 
     MHRandomWalkResultsCollector(HistogramParams p)
-      : final_histogram(p)
+      : params(p)
     {
     }
 
-    inline void init(unsigned int num_runs, unsigned int n_chunk, const void * pcdata) const
+    inline void init(unsigned int /* num_runs */, unsigned int /* n_chunk */, const void * /* pcdata */)
     {
+      final_histogram = Eigen::ArrayXd::Zero(params.num_bins);
+      std_dev = Eigen::ArrayXd::Zero(params.num_bins);
+      num_histograms = 0;
+      off_chart = 0;
     }
 
-    inline void run_finished() const
+    inline void run_finished()
     {
+      final_histogram /= num_histograms;
+      std_dev /= num_histograms;
+      off_chart /= num_histograms;
+
+      // std_dev = sqrt(< X^2 > - < X >^2) / sqrt(Nrepeats)
+      auto finhist2 = final_histogram*final_histogram; // for array, this is c-wise product
+      std_dev = ( (std_dev - finhist2) / num_histograms ).sqrt();
     }
 
     template<typename TomoProblem, typename Rng, typename FidelityValueType>
     inline void collect_results(const MHRandomWalkTask<TomoProblem,Rng,FidelityValueType>& t)
     {
-      final_histogram.bins += t.fidstats.histogram().bins;
-      final_histogram.off_chart += t.fidstats.histogram().off_chart;
+      // final_histogram collects the sum of the histograms
+      // std_dev for now collects the sum of squares. std_dev will be normalized in run_finished().
+      auto newbins = t.fidstats.histogram().bins.template cast<double>();
+      final_histogram += newbins;
+      std_dev += newbins * newbins ; // for arrays, this is c-wise product : square of each value
+      off_chart += t.fidstats.histogram().off_chart;
+      ++num_histograms;
+    }
+
+    inline std::string pretty_print(const unsigned int max_width = 100) const
+    {
+      std::string s;
+      assert(final_histogram.size() >= 0);
+      std::size_t Ntot = (std::size_t)final_histogram.size();
+      // max_width - formatting widths (see below) - some leeway
+      const unsigned int max_bar_width = max_width - (6+3+4+5+4+5) - 5;
+      double barscale = (1.0+final_histogram.maxCoeff()) / max_bar_width; // full bar is max_bar_width chars wide
+      assert(barscale > 0);
+      auto val_to_bar_len = [max_bar_width,barscale](double val) -> unsigned int {
+        if (val < 0) {
+          val = 0;
+        }
+        unsigned int l = (unsigned int)(val/barscale+0.5);
+        if (l >= max_bar_width) {
+          return max_bar_width-1;
+        }
+        return l;
+      };
+      auto fill_str_len = [val_to_bar_len](std::string & s, double valstart, double valend, char c, char cside) {
+        unsigned int vs = val_to_bar_len(valstart);
+        unsigned int ve = val_to_bar_len(valend);
+        assert(vs < s.size() && ve < s.size());
+        for (unsigned int j = vs+1; j < ve; ++j) {
+          s[j] = c;
+        }
+        s[vs] = cside;
+        s[ve] = cside;
+      };
+
+      for (std::size_t k = 0; k < Ntot; ++k) {
+        assert(final_histogram(k) >= 0);
+        std::string sline(max_bar_width, ' ');
+        fill_str_len(sline, 0.0, final_histogram(k) - std_dev(k), '*', '*');
+        fill_str_len(sline, final_histogram(k) - std_dev(k), final_histogram(k) + std_dev(k), '-', '|');
+
+        s += fmts("%-6.4g | %s    %5.1f +- %5.1f\n",
+                  params.min + k*(params.max-params.min)/Ntot,
+                  sline.c_str(),
+                  final_histogram(k), std_dev(k)
+                  );
+      }
+      if (off_chart > 1e-6) {
+        s += fmts("   ... with another (average) %.4g points off chart.\n", (double)off_chart);
+      }
+      return s;
     }
   };
 

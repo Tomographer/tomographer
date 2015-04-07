@@ -1,6 +1,7 @@
 
 //#include <csignal>
 #include <cstddef>
+#include <cstdlib>
 #include <cmath>
 #include <cstdio>
 #include <ctime>
@@ -19,17 +20,36 @@
 #define EZMATIO_MORE_UTILS
 #include "ezmatio.h"
 
-#include <tomographer/loggers.h>
-#include <tomographer/tomoproblem.h>
 
-#ifdef TOMOGRAPHER_HAVE_OMP
+//#ifdef TOMOGRAPHER_HAVE_OMP
 // yes, OMP multithreading ROCKS!
 #  include <omp.h>
-#endif
+//#endif
+
+#include <tomographer/qit/matrq.h>
+#include <tomographer/qit/util.h>
+#include <tomographer/qit/param_herm_x.h>
+#include <tomographer/loggers.h>
+#include <tomographer/tomoproblem.h>
+#include <tomographer/integrator.h>
+#include <tomographer/dmintegrator.h>
+#include <tomographer/multiprocomp.h>
+
+
+
+// if defined, will make sure that all POVM effects read from the input file are positive
+// semidefinite and nonzero.
+#define DO_SLOW_POVM_CONSISTENCY_CHECKS
+
+
+//#define TimerClock std::chrono::high_resolution_clock
+#define TimerClock std::chrono::system_clock
+
 
 
 
 using namespace Tomographer;
+
 
 
 struct ProgOptions
@@ -63,9 +83,9 @@ struct ProgOptions
 
   double step_size;
 
-  std::size_t Nsweep;
-  std::size_t Ntherm;
-  std::size_t Nrun;
+  unsigned int Nsweep;
+  unsigned int Ntherm;
+  unsigned int Nrun;
 
   double fid_min;
   double fid_max;
@@ -73,8 +93,8 @@ struct ProgOptions
 
   int start_seed;
 
-  std::size_t Nrepeats;
-  std::size_t Nchunk;
+  unsigned int Nrepeats;
+  unsigned int Nchunk;
 
   double NMeasAmplifyFactor;
 
@@ -109,15 +129,15 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
      "Do a histogram for different fidelity values, format MIN:MAX/NPOINTS")
     ("step-size", value<double>(& opt->step_size)->default_value(opt->step_size),
      "the step size for the region")
-    ("n-sweep", value<std::size_t>(& opt->Nsweep)->default_value(opt->Nsweep),
+    ("n-sweep", value<unsigned int>(& opt->Nsweep)->default_value(opt->Nsweep),
      "number of iterations per sweep")
-    ("n-therm", value<std::size_t>(& opt->Ntherm)->default_value(opt->Ntherm),
+    ("n-therm", value<unsigned int>(& opt->Ntherm)->default_value(opt->Ntherm),
      "number of thermalizing sweeps")
-    ("n-run", value<std::size_t>(& opt->Nrun)->default_value(opt->Nrun),
+    ("n-run", value<unsigned int>(& opt->Nrun)->default_value(opt->Nrun),
      "number of running sweeps after thermalizing")
-    ("n-repeats", value<std::size_t>(& opt->Nrepeats)->default_value(opt->Nrepeats),
+    ("n-repeats", value<unsigned int>(& opt->Nrepeats)->default_value(opt->Nrepeats),
      "number of times to repeat the metropolis procedure")
-    ("n-chunk", value<std::size_t>(& opt->Nchunk)->default_value(opt->Nchunk),
+    ("n-chunk", value<unsigned int>(& opt->Nchunk)->default_value(opt->Nchunk),
      "chunk the number of repeats by this number per OMP thread")
     ("n-meas-amplify-factor", value<double>(& opt->NMeasAmplifyFactor)->default_value(opt->NMeasAmplifyFactor),
      "Specify an integer factor by which to multiply number of measurements.")
@@ -233,6 +253,9 @@ void display_parameters(ProgOptions * opt)
 
 // ------------------------------------------------------------------------------
 
+template<int FixedDim, int FixedMaxPOVMEffects>
+inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf);
+
 
 int main(int argc, char **argv)
 {
@@ -285,15 +308,205 @@ int main(int argc, char **argv)
   // ---------------------------------------------------------------------------
   //
 
-//   UserData our_data;
-//   /* Read the data for the llh function & rho_MLE. */
-//   try {
-//     read_user_data(&our_data, data_file_name);
-//   } catch (const MAT::Exception& e) {
-//     fprintf(stderr, "Failed to read data: got exception:\n\t%s\n", e.what());
-//     return 1;
-//   }
+  MAT::File * matf = 0;
+  unsigned int dim = 0;
+  unsigned int n_povms = 0;
+  try {
+    matf = new MAT::File(opt.data_file_name);
+    dim = MAT::value<int>(matf->var("dim"));
+    n_povms = matf->var("Nm").numel();
+  } catch(const std::exception& e) {
+    logger.error("main()", [&opt, &e](std::ostream & str){
+                   str << "Failed to read data from file "<< opt.data_file_name << "\n\t" << e.what() << "\n";
+                 });
+    ::exit(1);
+  }
 
-  //fprintf(flog, "Loaded data. dim=%d\n", our_data.dim);
+  auto delete_matf = finally([matf] {
+                               logger.debug("main()", "Freeing input file resource");
+                               delete matf;
+                             });
+
+  logger.debug("main()", "Data file opened, dim = %u", dim);
+
+  //
+  // ---------------------------------------------------------------------------
+  // Now, run our main program.
+  // ---------------------------------------------------------------------------
+  //
+
+  // Maybe use statically instantiated size for some predefined sizes.
+
+  //  try {
+    if (dim == 2 && n_povms <= 6) {
+      tomorun<2, 6>(dim, &opt, matf);
+    } else if (dim == 2 && n_povms <= 1024) {
+      tomorun<2, 1024>(dim, &opt, matf);
+    } else if (dim == 2) {
+      tomorun<2, Eigen::Dynamic>(dim, &opt, matf);
+    } else if (dim == 4 && n_povms <= 1024) {
+      tomorun<4, 1024>(dim, &opt, matf);
+    } else if (dim == 4) {
+      tomorun<4, Eigen::Dynamic>(dim, &opt, matf);
+    } else {
+      tomorun<Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf);
+    }
+    //  } catch (const std::exception& e) {
+    //    logger.error("main()", "Caught exception: %s", e.what());
+    //    return 2;
+    //  }
+}
+
+
+//
+// Here goes the actual program. This is templated, because then we can let Eigen use
+// static allocation on the stack rather than malloc'ing 2x2 matrices...
+//
+template<int FixedDim, int FixedMaxPOVMEffects>
+inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf)
+{
+  logger.debug("tomorun()", "Running tomography program! FixedDim=%d and FixedMaxPOVMEffects=%d",
+               FixedDim, FixedMaxPOVMEffects);
+
+  //
+  // Typedefs for tomography data types
+  //
+
+  typedef MatrQ<FixedDim, FixedMaxPOVMEffects, double, unsigned int> OurMatrQ;
+  typedef IndepMeasTomoProblem<OurMatrQ, double> OurTomoProblem;
+
+  //
+  // Read data from file
+  //
+
+  OurMatrQ matq(dim);
+  OurTomoProblem tomodat(matq);
+
+  std::vector<typename OurMatrQ::MatrixType> Emn;
+  MAT::getListOfEigenMatrices(matf->var("Emn"), & Emn, true);
+  Eigen::VectorXi Nm;
+  MAT::getEigenMatrix(matf->var("Nm"), & Nm);
+  assert((int)Emn.size() == Nm.size());
+
+  // convert to x-parameterization
+  unsigned int k, j;
+  int Npovmeffects = 0;
+  for (k = 0; k < (unsigned int)Nm.size(); ++k) {
+    if (Nm[k] > 0) {
+      ++Npovmeffects;
+    }
+  }
+  logger.debug("tomorun()", "Npovmeffects=%d", Npovmeffects);
+  tomodat.Exn.resize(Npovmeffects, dim*dim);
+  tomodat.Nx.resize(Npovmeffects);
+  j = 0;
+  for (k = 0; k < Emn.size(); ++k) {
+    if (Nm[k] == 0) {
+      continue;
+    }
+    // do some tests: positive semidefinite and non-zero
+#ifdef DO_SLOW_POVM_CONSISTENCY_CHECKS
+    logger.longdebug("tomorun()", [&](std::ostream & str) {
+                       str << "Emn["<<k<<"] = \n" << Emn[k] << "\n"
+                           << "\tEV=" << Emn[k].eigenvalues().transpose().real() << "\n"
+                           << "\tnorm=" << double(Emn[k].norm()) << "\n" ;
+                     });
+    eigen_assert(double( (Emn[k] - Emn[k].adjoint()).norm() ) < 1e-8); // Hermitian
+    eigen_assert(double(Emn[k].eigenvalues().real().minCoeff()) >= -1e-12); // Pos semidef
+    eigen_assert(double(Emn[k].norm()) > 1e-6);
+    logger.debug("tomorun()", "Consistency checks passed for Emn[%u].", k);
+#endif
+
+    // don't need to reset `row` to zero, param_herm_to_x doesn't require it
+    auto Exn_row_as_col = tomodat.Exn.row(j).transpose();
+    param_herm_to_x(Exn_row_as_col, Emn[k]);
+    tomodat.Nx[j] = Nm[k];
+    ++j;
+  }
+  // done.
+
+  logger.debug("tomorun()", [&](std::ostream & ss) {
+                 ss << "\n\nExn: size="<<tomodat.Exn.size()<<"\n"
+                    << tomodat.Exn << "\n";
+                 ss << "\n\nNx: size="<<tomodat.Nx.size()<<"\n"
+                    << tomodat.Nx << "\n";
+               });
+
+  MAT::getEigenMatrix(matf->var("rho_MLE"), &tomodat.rho_MLE);
+
+  tomodat.x_MLE = matq.initVectorParamType();
+  param_herm_to_x(tomodat.x_MLE, tomodat.rho_MLE);
+
+  tomodat.T_MLE = matq.initMatrixType();
+
+  Eigen::LDLT<typename OurMatrQ::MatrixType> ldlt(tomodat.rho_MLE);
+  typename OurMatrQ::MatrixType P = matq.initMatrixType();
+  P = ldlt.transpositionsP().transpose() * OurMatrQ::MatrixType::Identity(dim,dim);
+  tomodat.T_MLE.noalias() = P * ldlt.matrixL() * ldlt.vectorD().cwiseSqrt().asDiagonal();
+
+  tomodat.NMeasAmplifyFactor = opt->NMeasAmplifyFactor;
+
+  //
+  // Data has now been successfully read. Now, create the OMP Task Manager and run.
+  //
+
+  typedef DMIntegratorTasks::CData<OurTomoProblem> OurCData;
+  typedef MultiProc::OMPTaskLogger<decltype(logger)> OurTaskLogger;
+  typedef DMIntegratorTasks::MHRandomWalkTask<OurTomoProblem,OurTaskLogger> OurMHRandomWalkTask;
+  typedef DMIntegratorTasks::MHRandomWalkResultsCollector<typename OurMHRandomWalkTask::FidRWStatsCollector::HistogramType>
+    OurResultsCollector;
+
+  OurCData taskcdat(tomodat);
+  // seed for random number generator
+  taskcdat.base_seed = std::chrono::system_clock::now().time_since_epoch().count();
+  // parameters for the fidelity histogram
+  taskcdat.histogram_params = typename OurCData::HistogramParams(opt->fid_min, opt->fid_max, opt->fid_nbins);
+  // parameters of the random walk
+  taskcdat.n_sweep = opt->Nsweep;
+  taskcdat.n_therm = opt->Ntherm;
+  taskcdat.n_run = opt->Nrun;
+  taskcdat.step_size = opt->step_size;
+
+  OurResultsCollector results(taskcdat.histogram_params);
+
+  auto time_start = TimerClock::now();
+
+  MultiProc::run_omp_tasks<OurMHRandomWalkTask>(
+      &taskcdat, // constant data
+      &results, // results collector
+      opt->Nrepeats, // num_runs
+      opt->Nchunk, // n_chunk
+      logger // the main logger object
+      );
+
+  auto time_end = TimerClock::now();
+
+  logger.debug("tomorun()", "Random walks done.");
+
+  // delta-time, in seconds and fraction of seconds
+  double dt = (double)(time_end - time_start).count() * TimerClock::period::num / TimerClock::period::den ;
+  // split dt into integral part and fractional part
+  double dt_i_d;
+  double dt_f = std::modf(dt, &dt_i_d);
+  int dt_i = (int)(dt_i_d+0.5);
+
+
+  logger.info(
+      "tomorun()", [&results](std::ostream & str) {
+        unsigned int width = 80;
+        // If the user provided a value for the terminal width, use it. Note that $COLUMNS is
+        // not in the environment usually, so you have to set it manually with e.g.
+        //    shell> export COLUMNS=$COLUMNS
+        const char * cols_s = std::getenv("COLUMNS");
+        if (cols_s != NULL) {
+          width = std::atoi(cols_s);
+        }
+        str << "FINAL HISTOGRAM\n" << results.pretty_print(width) << "\n";
+      });
+
+  logger.info("tomorun()",
+              "Total elapsed time: %d:%02d:%02d.%03d\n\n",
+              dt_i/3600, (dt_i/60)%60, dt_i%60, (int)(dt_f*1000+0.5));
   
+
 }

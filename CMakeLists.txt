@@ -31,8 +31,16 @@ find_package(OpenMP)
 # Find MatIO library (https://sourceforge.net/projects/matio/)
 find_package(MatIO REQUIRED)
 
+# ... which requires the libz library
+find_package(ZLIB REQUIRED)
+
 # Find boost::program_options
-FIND_PACKAGE(Boost 1.40 COMPONENTS program_options REQUIRED)
+find_package(Boost 1.40 COMPONENTS program_options REQUIRED)
+
+
+# activate warning flags on debug builds
+set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra")
+set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wall -Wextra")
 
 
 # ==============================================================================

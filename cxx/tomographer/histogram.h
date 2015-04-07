@@ -31,12 +31,12 @@ struct UniformBinsHistogram
   unsigned int off_chart;
 
   UniformBinsHistogram(Params p = Params())
-    : params(p), bins(p.num_bins), off_chart(0)
+    : params(p), bins(Eigen::ArrayXi::Zero(p.num_bins)), off_chart(0)
   {
   }
 
   UniformBinsHistogram(Scalar min_, Scalar max_, std::size_t num_bins)
-    : params(min_, max_, num_bins), bins(num_bins), off_chart(0)
+    : params(min_, max_, num_bins), bins(Eigen::ArrayXi::Zero(num_bins)), off_chart(0)
   {
   }
 
@@ -72,15 +72,17 @@ struct UniformBinsHistogram
   inline std::string pretty_print(const int max_bar_width = 80) const
   {
     std::string s;
-    std::size_t Ntot = bins.size();
+    assert(bins.size() >= 0);
+    std::size_t Ntot = (std::size_t)bins.size();
     double barscale = (1.0+bins.maxCoeff()) / max_bar_width; // full bar is 80 chars wide
     for (std::size_t k = 0; k < Ntot; ++k) {
+      assert(bins(k) >= 0);
       s += fmts("%-6.4g | %3d %s\n",
                 params.min + k*(params.max-params.min)/Ntot,
                 bins(k), std::string((int)(bins(k)/barscale+0.5), '*').c_str());
     }
     if (off_chart > 0) {
-      s += fmts("   ... with another %u points off chart.\n", (unsigned int)off_chart);
+      s += fmts("   ... with another %lu points off chart.\n", (unsigned long)off_chart);
     }
     return s;
   }

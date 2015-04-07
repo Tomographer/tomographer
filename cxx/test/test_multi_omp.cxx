@@ -98,7 +98,7 @@ int main()
     {
     }
 
-    inline void init(size_t, size_t const OurCData *) const { }
+    inline void init(unsigned int, unsigned int, const OurCData *) const { }
 
     inline void run_finished() const { }
 
@@ -163,7 +163,7 @@ int main()
   auto time_start = clock::now();
 
   MultiProc::run_omp_tasks<MyMHRandomWalkTask>(
-      &taskcdat, &results, (size_t)128 /* num_runs */, (size_t)1 /* n_chunk */,
+      &taskcdat, &results, 128 /* num_runs */, 1 /* n_chunk */,
       flog
       );
 
@@ -176,7 +176,7 @@ int main()
   double dt_f = std::modf(dt, &dt_i_d);
   int dt_i = (int)(dt_i_d+0.5);
 
-  std::cout << "FINAL HISTOGRAM\n" << results.final_histogram.pretty_print() << "\n";
+  std::cout << "FINAL HISTOGRAM\n" << results.pretty_print() << "\n";
 
   std::cout << fmts("Total elapsed time: %d:%02d:%02d.%03d\n\n",
                     dt_i/3600, (dt_i/60)%60, dt_i%60, (int)(dt_f*1000+0.5)).c_str();

@@ -3,6 +3,8 @@
 
 #include <inttypes.h>
 
+#include <cerrno>
+
 #include <complex>
 #include <string>
 #include <vector>
@@ -69,8 +71,8 @@ namespace MAT {
 
   class FileOpenError : public Exception {
   public:
-    FileOpenError(const std::string& fname)
-      : Exception("File Error", EZ_MAKE_STRING("Error opening file `"+fname+"`"))
+    FileOpenError(const std::string& fname, const std::string& errmsg = "")
+      : Exception("File Error", "Error opening file `" + fname + (errmsg.size() ? "': "+errmsg : ""))
     {
     }
     virtual ~FileOpenError() throw() { }
@@ -101,9 +103,10 @@ namespace MAT {
   public:
     File(const std::string& fname)
     {
+      errno = 0;
       p_matfp = Mat_Open(fname.c_str(), MAT_ACC_RDONLY);
       if ( p_matfp == NULL ) {
-        throw FileOpenError(fname);
+        throw FileOpenError(fname, strerror(errno));
       }
     }
 

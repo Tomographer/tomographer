@@ -41,7 +41,7 @@ struct IndepMeasTomoProblem
   {
     // NOTE: Exn & N are left uninitialized, because we don't yet know how many POVM
     // effects there will be. (That will probably be read from a MAT file or such...)
-    assert(MatrQ::FixedDim == Eigen::Dynamic || MatrQ::FixedDim == matq.dim());
+    assert(MatrQ::FixedDim == Eigen::Dynamic || MatrQ::FixedDim == (int)matq.dim());
   }
 
   inline LLHValueType calc_llh(const typename MatrQ::VectorParamType & x) const;
