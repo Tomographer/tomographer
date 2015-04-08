@@ -564,7 +564,7 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf)
   typedef MultiProc::OMPTaskLogger<decltype(logger)> OurTaskLogger;
   typedef DMIntegratorTasks::MHRandomWalkTask<OurTomoProblem,OurTaskLogger> OurMHRandomWalkTask;
   typedef DMIntegratorTasks::MHRandomWalkResultsCollector<
-      typename OurMHRandomWalkTask::FidRWStatsCollector::HistogramType
+      typename OurMHRandomWalkTask::FidelityHistogramMHRWStatsCollectorType::HistogramType
       >
     OurResultsCollector;
 

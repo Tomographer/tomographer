@@ -127,7 +127,7 @@ namespace MultiProc
   /** \brief Thread-safe logger for OMP tasks
    *
    * This is the type of the logger that tasks will be guaranteed to be given within
-   * \ref run_omp_tasks().
+   * \ref OMPTaskDispatcher.
    */
   template<typename BaseLogger>
   struct OMPTaskLogger : public OMPThreadSanitizerLogger<BaseLogger> {
@@ -167,18 +167,18 @@ namespace MultiProc
    *          The <tt>&lt;input&gt;</tt> parameter is whatever \c Task::get_input()
    *          returned.
    *
-   *     <li> <code>template<typename T>
+   *     <li> <code>template<typename TaskManagerIface>
    *                void Task::run(const ConstantDataType * pcdata,
    *                               OMPTaskLogger<Logger> & logger,
-   *                               T * p)</code>
+   *                               TaskManagerIface * tmgriface)</code>
    *          actually runs the task. It can log to the given \c logger (see
    *          \ref LoggerBase). Note that the `logger` is NOT directly the one initially
    *          given, but an internal thread-safe wrapper to it. You can of course take a
    *          \c Logger template parameter to avoid spelling out the full type.
    *
-   *          The code in \c run() should poll <code>p->status_report_requested()</code>
+   *          The code in \c run() should poll <code>tmgriface->status_report_requested()</code>
    *          and provide a status report if requested to do so via
-   *          <code>p->status_report(const TaskStatusReportType &)</code>. See documentation
+   *          <code>tmgriface->status_report(const TaskStatusReportType &)</code>. See documentation
    *          for \ref request_status_report().
    *     </ul>
    *
@@ -227,7 +227,7 @@ namespace MultiProc
     typedef std::function<void(int, const TaskStatusReportType&)> ThreadStatReportFnType;
 
   private:
-    ///! thread-shared variables
+    //! thread-shared variables
     struct thread_shared_data {
       thread_shared_data(const ConstantDataType *pcdata_, ResultsCollector * results_, Logger & logger_,
                          CountIntType num_runs_, CountIntType n_chunk_)
@@ -251,7 +251,7 @@ namespace MultiProc
 
       CountIntType num_active_working_threads;
     };
-    ///! thread-local variables and stuff
+    //! thread-local variables and stuff &mdash; also serves as TaskManagerIface
     struct thread_private_data {
       thread_private_data(thread_shared_data * shared_data_ = NULL)
         : shared_data(shared_data_), kiter(0),
@@ -380,14 +380,16 @@ namespace MultiProc
      * These callbacks are not expected to return anything.
      *
      * \par How Tasks should handle status reports.
-     * Task's must regularly check whether a status report has been requested as they run. This
-     * is done by regularly calling the function <code>p->status_report_requested()</code> on the
-     * \c p object provided to <code>Task::run()</code>. This function call does not require a
-     * \c critical section and is fast, so this check can be done often. The function
-     * <code>p->status_report_requested()</code> returns a \c bool indicating whether such a report
-     * was requested or not. If such a report was requested, then the thread should prepare its
-     * status report object (of type \c TaskStatusReportType), and call
-     * <code>p->submit_status_report(const TaskStatusReportType & obj)</code>.
+     * Task's must regularly check whether a status report has been requested as they run. 
+     * This is done by regularly calling the function
+     * <code>tmgriface->status_report_requested()</code> on the \c tmgriface object
+     * provided to <code>Task::run()</code>. This function call does not require a \c
+     * critical section and is fast, so this check can be done often. The function
+     * <code>tmgriface->status_report_requested()</code> returns a \c bool indicating
+     * whether such a report was requested or not. If such a report was requested, then
+     * the thread should prepare its status report object (of type \c
+     * TaskStatusReportType), and call <code>tmgriface->submit_status_report(const
+     * TaskStatusReportType & obj)</code>.
      *
      * \par
      * Note that the task should provide a member type named \c StatusReportType, which can be

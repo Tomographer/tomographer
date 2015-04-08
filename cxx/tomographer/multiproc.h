@@ -7,13 +7,25 @@
 
 namespace Tomographer {
 
+
+/** \brief Definitions for multi-processing classes and helpers
+ *
+ * This namespace encompasses classes and functions allowing to dispatch and process
+ * several tasks simultaneously.
+ *
+ * Currently, only an OpenMP implementation is provided, see \ref OMPTaskDispatcher.
+ */
 namespace MultiProc {
 
   /** \brief Simple status report class
    *
    * This may serve as base class for a more detailed and specific status report.
    *
-   * See OMPTaskDispatcher's status report mechanism.
+   * See also:
+   *  - \ref pageTaskManagerDispatcher;
+   *  - \ref OMPTaskDispatcher's status report mechanism;
+   *  - \ref DMIntegratorTasks::MHRandomWalkTask::StatusReport for an example usage.
+   *
    */
   struct StatusReport
   {

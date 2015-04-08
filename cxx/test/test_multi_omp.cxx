@@ -46,70 +46,6 @@ int main()
     1.0, 0,
     0,   0;
 
-  /*
-  typedef FidelityHistogramMHRWStatsCollector<QubitPaulisMatrQ,VacuumLogger>
-    OurFidRWStatsCollector;
-
-  struct OurCData {
-    OurCData(const OurTomoProblem &prob_) : prob(prob_) { }
-    OurTomoProblem prob;
-    OurFidRWStatsCollector::HistogramType::Params histogram_params;
-  };
-
-  struct OurMHTask {
-    int _seed;
-    VacuumLogger _vlog;
-    OurFidRWStatsCollector fidstatscollector;
-
-    static inline int get_input(int k, const OurCData * pcdata)
-    {
-      return 438943 + k;
-    }
-
-    OurMHTask(int inputseed, const OurCData * pcdata)
-      : _seed(inputseed),
-        _vlog(),
-        fidstatscollector(pcdata->histogram_params, pcdata->prob.T_MLE, pcdata->prob.matq, _vlog)
-    {
-    }
-
-    inline void run(const OurCData * pcdata)
-    {
-      
-      typedef DMStateSpaceRandomWalk<OurTomoProblem,std::mt19937,OurFidRWStatsCollector,VacuumLogger>
-        MyRandomWalk;
-
-      std::mt19937 rng(_seed); // seeded random number generator
-
-      VacuumLogger vlog;
-
-      MyRandomWalk rwalk(20, 500, 40000, 0.05, pcdata->prob.matq.initMatrixType(),
-                         pcdata->prob, rng, fidstatscollector, vlog);
-      
-      rwalk.run();
-    }
-  };
-
-  struct ResultsCollector {
-    OurFidRWStatsCollector::HistogramType final_histogram;
-
-    ResultsCollector(OurFidRWStatsCollector::HistogramType::Params p)
-      : final_histogram(p)
-    {
-    }
-
-    inline void init(unsigned int, unsigned int, const OurCData *) const { }
-
-    inline void run_finished() const { }
-
-    inline void collect_results(const OurMHTask& t)
-    {
-      final_histogram.bins += t.fidstatscollector.histogram().bins;
-      final_histogram.off_chart += t.fidstatscollector.histogram().off_chart;
-    }
-  };
-  */
-
   // NOW, RUN THE MH TASKS:
 
   SimpleFoutLogger flog(stdout, Logger::DEBUG);
@@ -121,26 +57,23 @@ int main()
   typedef DMIntegratorTasks::CData<OurTomoProblem> MyCData;
   typedef MultiProc::OMPTaskLogger<SimpleFoutLogger> MyTaskLogger;
   typedef DMIntegratorTasks::MHRandomWalkTask<OurTomoProblem,MyTaskLogger> MyMHRandomWalkTask;
-  typedef DMIntegratorTasks::MHRandomWalkResultsCollector<MyMHRandomWalkTask::FidRWStatsCollector::HistogramType>
+  typedef DMIntegratorTasks::MHRandomWalkResultsCollector<MyMHRandomWalkTask::FidelityHistogramMHRWStatsCollectorType::HistogramType>
     MyResultsCollector;
 
   // ---------------
   
   // first, independently, test OMPTaskLogger:      --- WORKS!
 
-  //   BufferLogger buflog(Logger::LONGDEBUG);
-  //
-  //   MultiProc::OMPTaskLogger<BufferLogger> testtasklogger(buflog);
-  //
-  //   testtasklogger.debug("main()", "test task logger: log something");
-  //
-  //   testtasklogger.longdebug("main()", "test task logger: log something on longdebug level");
-  //
-  //   std::cout << buflog.get_contents() << "\n";
-  //
-  //
-  //   fprintf(stderr, "JUST TESTING TASK LOGGER FOR NOW. REMOVE exit(0); TO PERFORM OMP TEST.\n");
-  //   ::exit(0);
+  BufferLogger buflog(Logger::LONGDEBUG);
+  
+  MultiProc::OMPTaskLogger<BufferLogger> testtasklogger(buflog);
+  
+  testtasklogger.debug("main()", "test task logger: log something");
+  
+  testtasklogger.longdebug("main()", "test task logger: log something on longdebug level");
+  
+  std::cout << buflog.get_contents() << "\n";
+  
 
   // ---------------
 

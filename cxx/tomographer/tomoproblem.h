@@ -6,7 +6,21 @@
 namespace Tomographer {
 
 
-/** Tomography probem, given by a list of POVM effects with their frequencies.
+/** \brief Stores data for a tomography problem with independent measurements
+ *
+ * Stores data corresponding to a tomography probem. This is given by
+ *
+ *   - a state space dimension
+ *
+ *   - a list of POVM effects
+ *
+ *   - a list of frequencies, i.e. how many times each POVM effect was observed
+ *
+ *   - a Maximum Likelihood Estimate, i.e. the density operator which maximizes the
+ *     likelihood function
+ *
+ * Additionally, we store also a factor by which to (artificially) amplify all the
+ * frequencies by, i.e. to effectively fake more measuremnts with the same statistics.
  */
 template<typename MatrQ_, typename LLHValueType_ = double, bool UseCLoopInstead = false>
 struct IndepMeasTomoProblem
@@ -14,21 +28,40 @@ struct IndepMeasTomoProblem
   typedef MatrQ_ MatrQ;
   typedef LLHValueType_ LLHValueType;
 
+  //! The data types for this problem
   const MatrQ matq;
 
-  const int dim; //!< the dimension of the Hilbert space
-  const int dim2; //!< the square of the dimension of the Hilbert space, dim2=dim*dim
-  const int Ndof; //!< the number of degrees of freedom, Ndof = dim*dim-1
+  //! The dimension of the Hilbert space
+  const int dim;
+  //! The square of the dimension of the Hilbert space, dim2=dim*dim
+  const int dim2;
+  //! The number of degrees of freedom, \f$ \text{Ndof} = \text{dim}\times\text{dim}-1 \f$.
+  const int Ndof;
 
-  LLHValueType NMeasAmplifyFactor; //!< A factor to artificially amplify the number of measurements by
+  //! A factor to artificially amplify the number of measurements by
+  LLHValueType NMeasAmplifyFactor;
 
-  typename MatrQ::VectorParamListType Exn; //!< POVM Entries, parameterized with X-param
-  typename MatrQ::FreqListType Nx; //!< frequency list
+  //! The POVM Entries, parameterized with X-param (\ref param_herm_to_x())
+  typename MatrQ::VectorParamListType Exn;
+  //! The frequency list, i.e. number of times each POVM effect was observed
+  typename MatrQ::FreqListType Nx;
 
-  typename MatrQ::MatrixType rho_MLE; //!< Maximum likelihood estimate as density matrix
-  typename MatrQ::MatrixType T_MLE; //!< Maximum likelihood estimate as T-parameterized density matrix
-  typename MatrQ::VectorParamType x_MLE; //!< X-Parameterized version of rho_MLE
+  //! Maximum likelihood estimate as density matrix
+  typename MatrQ::MatrixType rho_MLE;
+  //! Maximum likelihood estimate as T-parameterized density matrix
+  /**
+   * The T-parameterization is such that \f$ \rho = T T^\dagger \f$ .
+   */
+  typename MatrQ::MatrixType T_MLE;
+  //! X-Parameterized version of rho_MLE (\ref param_herm_to_x())
+  typename MatrQ::VectorParamType x_MLE;
 
+  /** \brief Constructs an IndepMeasTomoProblem instance
+   *
+   * \note The members \ref Exn and \ref Nx are left uninitialized, because we don't know
+   * how many POVM effects there will be yet. This information will anyway probably be
+   * read later from an input file or such.
+   */
   IndepMeasTomoProblem(MatrQ matq_)
     : matq(matq_),
       dim(matq_.dim()),
@@ -44,6 +77,13 @@ struct IndepMeasTomoProblem
     assert(MatrQ::FixedDim == Eigen::Dynamic || MatrQ::FixedDim == (int)matq.dim());
   }
 
+  /** \brief Calculates the log-likelihood function
+   *
+   * \returns the value of the -2-log-likelihood function of this data at the point \a x,
+   * defined as \f[
+   *    \lambda(\texttt{x}) = -2\sum_k \texttt{Nx[k]}\,\ln\mathrm{tr}(\texttt{Exn[k]}\,\rho(\texttt{x})) .
+   * \f]
+   */
   inline LLHValueType calc_llh(const typename MatrQ::VectorParamType & x) const;
 };
 
@@ -51,9 +91,25 @@ struct IndepMeasTomoProblem
 
 namespace tomo_internal
 {
+  /** \internal
+   * \brief Helper class for \ref IndepMeasTomoProblem
+   *
+   * This class allows to statically decied how to calculate the LLH function. This can
+   * either be done with Eigen's functional-like programming, or with a simple C \c for
+   * loop.
+   */
   template<typename MatrQ, typename LLHValueType, bool UseCLoopInstead>
   struct LLH_Calculator
   {
+    /** \brief calculate the log-likelihood function
+     *
+     * Calculate the -2 * log-likelihood function for the given data at the given point \c
+     * x in state space. \c x represents a density matrix parameterized with \ref
+     * param_herm_to_x().
+     *
+     * This function will either be implemented with Eigen's functional-like notation, or
+     * with a C-style \c for loop, depending on the template parameter \c UseCLoopInstead.
+     */
     static inline LLHValueType calc_llh(const IndepMeasTomoProblem<MatrQ,LLHValueType,UseCLoopInstead> *data,
                                         const typename MatrQ::VectorParamType & x)
     {
@@ -63,6 +119,11 @@ namespace tomo_internal
     }
   };
 
+  //
+  // Specialization of helper for implementing the C for loop instead.
+  //
+  // no doxygen doc needed.
+  //
   template<typename MatrQ, typename LLHValueType>
   struct LLH_Calculator<MatrQ, LLHValueType, true>
   {

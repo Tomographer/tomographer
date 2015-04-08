@@ -99,6 +99,7 @@ namespace tomo_internal {
 
 namespace Eigen {
   namespace internal {
+    /** \internal */
     template<typename Rng, typename RndDist, typename Scalar>
     struct functor_traits<Tomographer::tomo_internal::random_generator<Rng, RndDist, Scalar> >
     { enum { Cost = 50 * NumTraits<Scalar>::MulCost, PacketAccess = false, IsRepeatable = false }; };
@@ -111,8 +112,11 @@ namespace Tomographer {
 
 /** \brief a matrix populated with random entries using C++'s \c random framework
  *
- * \param sizes either no parameter, one parameter or two parameters specifying the sizes
- *        of the dense object to return.
+ * \param rng the \c std::random generator, such as a \c std::mt19937 instance
+ * \param rnddist the \c std::random distribution to sample from, such as a
+ *   \c std::normal_distribution instance
+ * \param sizes either no parameter, one parameter or two parameters specifying
+ *   the sizes of the dense object to return.
  */
 template<typename Der, typename Rng, typename RndDist, typename... IndexTypes>
 inline const Eigen::CwiseNullaryOp<tomo_internal::random_generator<Rng, RndDist, typename Eigen::internal::traits<Der>::Scalar>, Der>

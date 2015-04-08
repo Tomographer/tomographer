@@ -150,14 +150,23 @@ makeDMStateSpaceRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntT
 
 
 
+/** \brief Stores information about how to acquire a fidelity histogram (e.g. during a
+ * random walk).
+ *
+ * See \ref FidelityHistogramMHRWStatsCollector
+ */
 template<typename MatrQ, typename FidelityValueType>
-struct FidelityHistogramMHRWStatsCollectorInfo
+struct FidelityHistogramMHRWStatsCollectorTraits
 {
   typedef typename MatrQ::MatrixType MatrixType;
   typedef UniformBinsHistogram<FidelityValueType> HistogramType;
   typedef typename HistogramType::Params HistogramParams;
 };
 
+/** \brief A StatsCollector which builds a histogram of fidelities to a reference point
+ *
+ * This stats collector is suitable for tracking statistics during a \ref MHRandomWalk.
+ */
 template<typename MatrQ_, typename FidelityValueType_, typename Log>
 class FidelityHistogramMHRWStatsCollector
 {
@@ -165,9 +174,9 @@ public:
   typedef MatrQ_ MatrQ;
   typedef FidelityValueType_ FidelityValueType;
 
-  typedef typename FidelityHistogramMHRWStatsCollectorInfo<MatrQ, FidelityValueType>::MatrixType MatrixType;
-  typedef typename FidelityHistogramMHRWStatsCollectorInfo<MatrQ, FidelityValueType>::HistogramType HistogramType;
-  typedef typename FidelityHistogramMHRWStatsCollectorInfo<MatrQ, FidelityValueType>::HistogramParams HistogramParams;
+  typedef typename FidelityHistogramMHRWStatsCollectorTraits<MatrQ, FidelityValueType>::MatrixType MatrixType;
+  typedef typename FidelityHistogramMHRWStatsCollectorTraits<MatrQ, FidelityValueType>::HistogramType HistogramType;
+  typedef typename FidelityHistogramMHRWStatsCollectorTraits<MatrQ, FidelityValueType>::HistogramParams HistogramParams;
 
 private:
 
@@ -252,6 +261,12 @@ public:
 
 
 
+/** \brief Definitions for running multiple random walks and collecting fidelity statistics
+ *
+ * Provides class definitions for interfacing with a task manager/dispatcher (see \ref
+ * pageTaskManagerDispatcher).
+ *
+ */
 namespace DMIntegratorTasks
 {
 
@@ -263,8 +278,8 @@ namespace DMIntegratorTasks
   template<typename TomoProblem, typename FidelityValueType = double>
   struct CData
   {
-    typedef typename FidelityHistogramMHRWStatsCollectorInfo<typename TomoProblem::MatrQ,
-                                                           FidelityValueType>::HistogramParams
+    typedef typename FidelityHistogramMHRWStatsCollectorTraits<typename TomoProblem::MatrQ,
+                                                               FidelityValueType>::HistogramParams
     /*..*/  HistogramParams;
     
     CData(const TomoProblem &prob_, int base_seed_ = 0,
@@ -297,13 +312,21 @@ namespace DMIntegratorTasks
   /** \brief Random Walk on the space of density matrices, collecting fidelity histogram
    * statistics
    *
-   * This class can be used with \ref MultiProc::run_omp_tasks(), for example.
+   * This class can be used with \ref MultiProc::OMPTaskDispatcher, for example.
    */
   template<typename TomoProblem, typename Logger, typename Rng = std::mt19937,
            typename FidelityValueType = double, typename CountIntType = unsigned int>
   struct MHRandomWalkTask
   {
+    /** \brief Status Report for a \ref MHRandomWalkTask
+     *
+     * This struct can store information about the current status of a \ref
+     * MHRandomWalkTask while it is running.
+     *
+     * This is for use with, for example, \ref OMPTaskDispatcher::request_status_report().
+     */
     struct StatusReport : MultiProc::StatusReport {
+      /** \brief Constructor which initializes all fields */
       StatusReport(double fdone, const std::string & msg, CountIntType kstep_, CountIntType n_sweep_,
                    CountIntType n_therm_, CountIntType n_run_, double acceptance_ratio_)
         : MultiProc::StatusReport(fdone, msg),
@@ -315,42 +338,85 @@ namespace DMIntegratorTasks
           n_total_iters(n_sweep*(n_therm+n_run))
       {
       }
+      /** \brief the current iteration number */
       const CountIntType kstep;
+      /** \brief the number of iterations that form a sweep (see \ref MHRandomWalk) */
       const CountIntType n_sweep;
+      /** \brief the number of thermalization sweeps (see \ref MHRandomWalk) */
       const CountIntType n_therm;
+      /** \brief the number of live run sweeps (see \ref MHRandomWalk) */
       const CountIntType n_run;
+      /** \brief the current acceptance ratio of the random walk (see \ref
+       *     Tomographer::MHRandomWalk::acceptance_ratio()) */
       const double acceptance_ratio;
+      /** \brief the total number of iterations required for this random walk
+       *
+       * This is calculated as \f$
+       *  \textit{nTotalIters} = \textit{nSweep} \times \left( \textit{nTherm} + \textit{nRun} \right)
+       * \f$.
+       */
       const CountIntType n_total_iters;
     };
+    /** \brief Typedef for \ref StatusReport
+     *
+     * This is needed by, e.g. \ref OMPTaskDispatcher.
+     */
     typedef StatusReport StatusReportType;
 
+    /** \brief convenience typedef for the \ref DMIntegratorTasks::CData which we will use */
+    typedef CData<TomoProblem, FidelityValueType> CDataType;
+
+    /** \brief convenience typedef for our \ref FidelityHistogramMHRWStatsCollector which we use here */
+    typedef FidelityHistogramMHRWStatsCollector<typename TomoProblem::MatrQ, FidelityValueType, Logger>
+    /*..*/ FidelityHistogramMHRWStatsCollectorType;
+
+  private:
+    /** \brief how to seed the random number generator for this particular task (input) */
     typename Rng::result_type _seed;
+
+    /** \brief a logger to which we can log messages */
     Logger _log;
 
-    typedef FidelityHistogramMHRWStatsCollector<typename TomoProblem::MatrQ, FidelityValueType, Logger>
-    /*..*/ FidRWStatsCollector;
-    FidRWStatsCollector fidstats;
+    /** \brief our \ref FidelityHistogramMHRWStatsCollector instance */
+    FidelityHistogramMHRWStatsCollectorType fidstats;
 
-    typedef CData<TomoProblem, FidelityValueType> OurCData;
+  public:
 
-    /** \brief Returns the random seed to seed the random number generator with.
+    /** \brief Returns a random seed to seed the random number generator with for run #k
      *
      * This simply returns \code pcdata->base_seed + k \endcode
+     *
+     * This should be considered as the input of the k-th task. Each task must of course
+     * have a different seed, otherwise we will just repeat the same "random" walks!
      */
-    static inline int get_input(int k, const OurCData * pcdata)
+    static inline int get_input(int k, const CDataType * pcdata)
     {
       return pcdata->base_seed + k;
     }
 
-    MHRandomWalkTask(int inputseed, const OurCData * pcdata, Logger & log)
+    /** \brief Constructs the MHRandomWalkTask
+     *
+     * You should never need to call this directly, except if you're writing a task
+     * manager/dispatcher (e.g. \ref OMPTaskDispatcher)
+     */
+    MHRandomWalkTask(int inputseed, const CDataType * pcdata, Logger & log)
       : _seed(inputseed),
         _log(log),
         fidstats(pcdata->histogram_params, pcdata->prob.T_MLE, pcdata->prob.matq, _log)
     {
     }
 
+    /** \brief Run this task
+     *
+     * Runs this task, i.e. instantiates a \ref DMStateSpaceRandomWalk with the provided
+     * inputs and data, and runs it.
+     *
+     * This also takes care to call the task manager interface's
+     * <code>status_report_requested()</code> and submits a status report if required. See
+     * e.g. \ref OMPTaskDispatcher::request_status_report().
+     */
     template<typename TaskManagerIface>
-    inline void run(const OurCData * pcdata, Logger & /*log*/, TaskManagerIface * tmgriface)
+    inline void run(const CDataType * pcdata, Logger & /*log*/, TaskManagerIface * tmgriface)
     {
       Rng rng(_seed); // seeded random number generator
 
@@ -358,7 +424,7 @@ namespace DMIntegratorTasks
 
       OurStatusReportCheck statreportcheck(this, tmgriface);
       
-      MultipleMHRWStatsCollectors<FidRWStatsCollector, OurStatusReportCheck>
+      MultipleMHRWStatsCollectors<FidelityHistogramMHRWStatsCollectorType, OurStatusReportCheck>
         statscollectors(fidstats, statreportcheck);
 
       auto rwalk = makeDMStateSpaceRandomWalk(
@@ -379,10 +445,17 @@ namespace DMIntegratorTasks
       rwalk.run();
     }
 
+
+    inline const FidelityHistogramMHRWStatsCollectorType & get_fid_stats() const
+    {
+      return fidstats;
+    }
+
   private:
-    /** \brief helper to provide status report
+    /** \internal
+     * \brief helper to provide status report
      *
-     * \internal
+     * This is in fact a StatsCollector.
      */
     template<typename TaskManagerIface>
     struct StatusReportCheck
@@ -435,7 +508,7 @@ namespace DMIntegratorTasks
   /** \brief Collect results from MHRandomWalkTask's
    *
    * This is meant to be used in a task dispatcher environment, e.g. 
-   * \ref MultiProc::run_omp_tasks().
+   * \ref MultiProc::OMPTaskDispatcher.
    */
   template<typename HistogramType_>
   struct MHRandomWalkResultsCollector
@@ -478,10 +551,11 @@ namespace DMIntegratorTasks
     {
       // final_histogram collects the sum of the histograms
       // std_dev for now collects the sum of squares. std_dev will be normalized in run_finished().
-      auto newbins = t.fidstats.histogram().bins.template cast<double>();
+      auto& histogram = t.get_fid_stats().histogram();
+      auto newbins = histogram.bins.template cast<double>();
       final_histogram += newbins;
       std_dev += newbins * newbins ; // for arrays, this is c-wise product : square of each value
-      off_chart += t.fidstats.histogram().off_chart;
+      off_chart += histogram.off_chart;
       ++num_histograms;
     }
 

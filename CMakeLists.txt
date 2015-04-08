@@ -43,6 +43,16 @@ set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wall -Wextra")
 
 
+# optimization flags for computer architecture.
+# -> set TARGET_ARCHITECTURE=generic to disable optimizations
+include(OptimizeForArchitecture)
+OptimizeForArchitecture()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Vc_ARCHITECTURE_FLAGS}")
+
+#option(TOMOGRAPHER_ARCH_OPTIM "Activate architecture-dependent vectorization/optimization flags" TRUE)
+#if(TOMOGRAPHER_ARCH_OPTIM)
+#endif(TOMOGRAPHER_ARCH_OPTIM)
+
 # ==============================================================================
 # Include our subdirectories
 # ==============================================================================

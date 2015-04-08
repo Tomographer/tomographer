@@ -145,16 +145,48 @@ enum {
 
 
 namespace tomo_internal {
+  /** \internal
+   * \brief Helper class for \ref MHRandomWalk
+   *
+   * Helps out \ref MHRandomWalk decide how to calculate the Metropolis-Hastings function
+   * value ratio statically, without having to resort to a run-time \c if or \c switch
+   * construct.
+   */
   template<typename MHWalker, int UseFnSyntaxType>
   struct MHRandomWalk_helper_decide_jump
   {
+    /** \internal
+     * \brief Type of a point in the random walk
+     */
     typedef typename MHWalker::PointType PointType;
-    typedef int FnValueType; // dummy FnValueType
+    /** \internal
+     * \brief Type of the function value returned by the \c MHWalker object
+     */
+    typedef typename MHWalker::FnValueType FnValueType;
 
+    /** \internal
+     * \brief get a value for the given point
+     *
+     * Depending on the \c UseFnSyntaxType template parameter, this is either the function
+     * value, its logarithm, or a dummy value.
+     */
     static inline double get_ptval(MHWalker & mhwalker, const PointType & curpt)
     {
       assert(0 && "UNKNOWN UseFnSyntaxType: Not implemented");
     }
+    /** \internal
+     * \brief calculate the MH function ratio between two points
+     *
+     * This function calculates and returns the \f$ a \f$ parameter which is the ratio of
+     * the function value between the new, proposal point and the current point. Recall,
+     * if \f$ a < 1 \f$ then the new point should be accepted with probability \f$ a \f$,
+     * else the new point should always be accepted.
+     *
+     * \note this function may return simply 1 if we are sure that \f$ a > 1 \f$.
+     *
+     * The returnd value of \f$ a \f$ is calculated differently depending on the value of
+     * the \c UseFnSyntaxType template parameter.
+     */
     static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, double /*newptval*/,
                                      const PointType & /*curpt*/, double /*curptval*/)
     {
@@ -162,6 +194,9 @@ namespace tomo_internal {
     }
   };
 
+  /** \internal
+   * Template specialization of \ref MHRandomWalk_helper_decide_jump.
+   */
   template<typename MHWalker>
   struct MHRandomWalk_helper_decide_jump<MHWalker, MHUseFnValue>
   {
@@ -179,6 +214,9 @@ namespace tomo_internal {
     }
   };
 
+  /** \internal
+   * Template specialization of \ref MHRandomWalk_helper_decide_jump.
+   */
   template<typename MHWalker>
   struct MHRandomWalk_helper_decide_jump<MHWalker, MHUseFnLogValue>
   {
@@ -196,6 +234,9 @@ namespace tomo_internal {
     }
   };
 
+  /** \internal
+   * Template specialization of \ref MHRandomWalk_helper_decide_jump.
+   */
   template<typename MHWalker>
   struct MHRandomWalk_helper_decide_jump<MHWalker, MHUseFnRelativeValue>
   {

@@ -20,6 +20,12 @@
 namespace Tomographer {
 
 
+//
+// =============================================================================
+//
+// Formatting Utilities
+//
+
 
 /** \brief Exception for bad \c printf format
  *
@@ -99,8 +105,8 @@ inline std::string fmts(const char * fmt, ...)
  *   std::string s = streamstr("x is = " << x.transpose());
  * \endcode
  *
- * This is typically useful if you want to feed in C++ objects to a printf()-like output
- * environment as used in the logger module (e.g. \ref SimpleFoutLogger).
+ * This is typically useful if you want to feed in C++ objects to a printf()-like
+ * function.
  */
 #define streamstr(tokens)                       \
   dynamic_cast<std::ostringstream&>(            \
@@ -119,6 +125,14 @@ inline std::string fmts(const char * fmt, ...)
 
 
 
+// =============================================================================
+
+
+
+
+/** \brief General definitions for loggers
+ *
+ */
 namespace Logger
 {
   /** \brief Possible logging levels.
@@ -127,10 +141,49 @@ namespace Logger
    * important.
    */
   enum {
+    /** \brief Error logging level
+     *
+     * A log message with this level signifies that a critical error has occurred which
+     * prevents further processing. The program should terminate.
+     */
     ERROR = 0,
+
+    /** \brief Warning logging level
+     *
+     * A log message with this level signifies a warning for the user. The computation may
+     * continue, but most likely the user made provided erroneous input, or there are
+     * features which will not be available.
+     */
     WARNING,
+
+    /** \brief Information logging level
+     *
+     * Log messages with the \c INFO level are general messages which inform the user
+     * about the global steps being taken. They may indicate, for example, what will be
+     * computed.
+     */
     INFO,
+
+    /** \brief Debug logging level
+     *
+     * More verbose information, meant to debug either the input data or the
+     * \c Tomographer program itself. These messages should make it easier to locate a
+     * specific error, and generally give a more specific idea of what the program does.
+     *
+     * The \c DEBUG level is meant to still be readable on a terminal output, even with
+     * multiple threads. Don't generate too many messages with this level. Use the
+     * \c LONGDEBUG level to generate as many messages as you want.
+     */
     DEBUG,
+
+    /** \brief Long Debug logging level
+     *
+     * This level is meant to signify very specific messages, such as individual
+     * iterations. The log produced with this level may be very long an no longer readable
+     * on a terminal.
+     *
+     * Use this level for messages that are generated very often.
+     */
     LONGDEBUG
   };
 };
@@ -166,6 +219,8 @@ struct LoggerTraits
 
 
 /** \brief Base logger class.
+ *
+ * Please read \ref pageCustomLogger for how to write a logger.
  *
  * This class serves as base class for logger implementations. It provides storing a
  * current given level, emitting the log only if the level is reached, etc. Don't
