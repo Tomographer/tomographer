@@ -7,6 +7,7 @@
 #include <ctime>
 #include <cerrno>
 
+#include <signal.h>
 #include <unistd.h>
 
 #include <complex>
@@ -39,7 +40,7 @@
 
 // if defined, will make sure that all POVM effects read from the input file are positive
 // semidefinite and nonzero.
-#define DO_SLOW_POVM_CONSISTENCY_CHECKS
+//#define DO_SLOW_POVM_CONSISTENCY_CHECKS
 
 
 //#define TimerClock std::chrono::high_resolution_clock
@@ -215,6 +216,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
   }
 }
 
+// --------------------------------------------------
 
 void display_parameters(ProgOptions * opt)
 {
@@ -248,6 +250,23 @@ void display_parameters(ProgOptions * opt)
       (double)(opt->Nrun*opt->Nrepeats)
       );
 }
+
+
+// --------------------------------------------------
+
+template<typename Duration>
+std::string fmt_duration(Duration dt)
+{
+  // delta-time, in seconds and fraction of seconds
+  double seconds = (double)dt.count() * Duration::period::num / Duration::period::den ;
+
+  // split `seconds' into integral part and fractional part
+  double dt_i_d;
+  double dt_f = std::modf(seconds, &dt_i_d);
+  int dt_i = (int)(dt_i_d+0.5);
+
+  return fmts("%d:%02d:%02d.%03d", dt_i/3600, (dt_i/60)%60, dt_i%60, (int)(dt_f*1000+0.5));
+};
 
 
 
@@ -340,12 +359,12 @@ int main(int argc, char **argv)
   //  try {
     if (dim == 2 && n_povms <= 6) {
       tomorun<2, 6>(dim, &opt, matf);
-    } else if (dim == 2 && n_povms <= 1024) {
-      tomorun<2, 1024>(dim, &opt, matf);
+    } else if (dim == 2 && n_povms <= 64) {
+      tomorun<2, 64>(dim, &opt, matf);
     } else if (dim == 2) {
       tomorun<2, Eigen::Dynamic>(dim, &opt, matf);
-    } else if (dim == 4 && n_povms <= 1024) {
-      tomorun<4, 1024>(dim, &opt, matf);
+    } else if (dim == 4 && n_povms <= 64) {
+      tomorun<4, 64>(dim, &opt, matf);
     } else if (dim == 4) {
       tomorun<4, Eigen::Dynamic>(dim, &opt, matf);
     } else {
@@ -358,9 +377,100 @@ int main(int argc, char **argv)
 }
 
 
+
+//
+// Some ugly workaround to be able to call code within the templated tomorun() from our
+// signal handler.
+//
+struct SignalHandler
+{
+  SignalHandler() { }
+  virtual ~SignalHandler() { }
+
+  virtual void handle_signal(int) = 0;
+};
+
+static SignalHandler * signal_handler = NULL;
+
+//
+// A generic handler which requests a status report from an OMPTaskDispatcher
+//
+template<typename OMPTaskDispatcher, typename Logger>
+struct SigHandlerStatusReporter : public SignalHandler
+{
+  SigHandlerStatusReporter(OMPTaskDispatcher * tasks_, Logger & logger_)
+    : tasks(tasks_), logger(logger_), time_start()
+  {
+  }
+  
+  OMPTaskDispatcher * tasks;
+  Logger & logger;
+
+  TimerClock::time_point time_start;
+
+  virtual void handle_signal(int /*sig*/)
+  {
+    auto fnoverall = [time_start](int num_completed, int num_total, int num_active_working_threads,
+                                  int num_threads) {
+      std::string elapsed = fmt_duration(TimerClock::now() - time_start);
+      fprintf(stderr,
+              "\n"
+              "=========================== Intermediate Progress Report ============================\n"
+              "                                              (hit Ctrl+C quickly again to interrupt)\n"
+              "  Total Completed Runs: %d/%d: %5.2f%%\n"
+              "  %s total elapsed\n"
+              "Current Run(s) information (threads %d working / %d spawned):\n",
+              num_completed, num_total, (double)num_completed/num_total*100.0,
+              elapsed.c_str(), num_active_working_threads, num_threads
+              );
+    };
+    auto fntask = [](int thread_num, const MultiProc::StatusReport & report) {
+      fprintf(stderr,
+              "=== Thread #%2d: %s\n", thread_num, report.msg.c_str());
+    };
+    auto fndone = []() {
+      fprintf(stderr,
+              "=====================================================================================\n\n");
+    };
+    tasks->request_status_report(fnoverall, fntask, fndone);
+  }
+};
+
+template<typename OMPTaskDispatcher, typename Logger>
+SigHandlerStatusReporter<OMPTaskDispatcher, Logger>
+makeSigHandlerStatusReporter(OMPTaskDispatcher * tasks, Logger & logger)
+{
+  // yes, RVO better kick in
+  return SigHandlerStatusReporter<OMPTaskDispatcher, Logger>(tasks, logger);
+}
+
+
+
+static std::time_t last_sig_hit_time = 0;
+
+void sig_int_handler(int signal)
+{
+  std::fprintf(stderr, "\n*** interrupt\n");
+  std::time_t now;
+  time(&now);
+  if ( (now - last_sig_hit_time) < 2 ) {
+    // two interrupts within two seconds --> exit
+    std::fprintf(stderr, "\n*** Exit\n");
+    ::exit(1);
+    return;
+  }
+  last_sig_hit_time = now;
+
+  if (signal_handler != NULL) {
+    signal_handler->handle_signal(signal);
+  } else {
+    fprintf(stderr, "Warning: sig_handle: no signal handler set (got signal %d)\n", signal);
+  }
+}
+
 //
 // Here goes the actual program. This is templated, because then we can let Eigen use
-// static allocation on the stack rather than malloc'ing 2x2 matrices...
+// allocation on the stack rather than malloc'ing 2x2 matrices...
 //
 template<int FixedDim, int FixedMaxPOVMEffects>
 inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf)
@@ -453,7 +563,9 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf)
   typedef DMIntegratorTasks::CData<OurTomoProblem> OurCData;
   typedef MultiProc::OMPTaskLogger<decltype(logger)> OurTaskLogger;
   typedef DMIntegratorTasks::MHRandomWalkTask<OurTomoProblem,OurTaskLogger> OurMHRandomWalkTask;
-  typedef DMIntegratorTasks::MHRandomWalkResultsCollector<typename OurMHRandomWalkTask::FidRWStatsCollector::HistogramType>
+  typedef DMIntegratorTasks::MHRandomWalkResultsCollector<
+      typename OurMHRandomWalkTask::FidRWStatsCollector::HistogramType
+      >
     OurResultsCollector;
 
   OurCData taskcdat(tomodat);
@@ -469,27 +581,36 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf)
 
   OurResultsCollector results(taskcdat.histogram_params);
 
-  auto time_start = TimerClock::now();
-
-  MultiProc::run_omp_tasks<OurMHRandomWalkTask>(
+  auto tasks = MultiProc::makeOMPTaskDispatcher<OurMHRandomWalkTask>(
       &taskcdat, // constant data
       &results, // results collector
+      logger, // the main logger object
       opt->Nrepeats, // num_runs
-      opt->Nchunk, // n_chunk
-      logger // the main logger object
+      opt->Nchunk // n_chunk
       );
+
+  // set up signal handling
+
+  auto srep = makeSigHandlerStatusReporter(&tasks, logger);
+
+  signal_handler = &srep;
+
+  signal(SIGINT, sig_int_handler);
+
+  // and run our tomo process
+
+  auto time_start = TimerClock::now();
+
+  srep.time_start = time_start;
+
+  tasks.run();
 
   auto time_end = TimerClock::now();
 
   logger.debug("tomorun()", "Random walks done.");
 
   // delta-time, in seconds and fraction of seconds
-  double dt = (double)(time_end - time_start).count() * TimerClock::period::num / TimerClock::period::den ;
-  // split dt into integral part and fractional part
-  double dt_i_d;
-  double dt_f = std::modf(dt, &dt_i_d);
-  int dt_i = (int)(dt_i_d+0.5);
-
+  std::string elapsed_s = fmt_duration(time_end - time_start);
 
   logger.info(
       "tomorun()", [&results](std::ostream & str) {
@@ -505,8 +626,7 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf)
       });
 
   logger.info("tomorun()",
-              "Total elapsed time: %d:%02d:%02d.%03d\n\n",
-              dt_i/3600, (dt_i/60)%60, dt_i%60, (int)(dt_f*1000+0.5));
-  
+              "Total elapsed time: %s\n\n",
+              elapsed_s.c_str());
 
 }

@@ -9,11 +9,14 @@
 #include <tomographer/integrator.h>
 #include <tomographer/loggers.h>
 #include <tomographer/histogram.h>
+#include <tomographer/multiproc.h>
+
 
 namespace Tomographer {
 
 
-template<typename Rng, typename TomoProblem, typename RWStatsCollector, typename Log>
+template<typename TomoProblem, typename Rng, typename RWStatsCollector, typename Log,
+         typename CountIntType = unsigned int>
 class DMStateSpaceRandomWalk
 {
 public:
@@ -38,14 +41,15 @@ private:
 
   Log & _log;
   
-  typedef MHRandomWalk<Rng,DMStateSpaceRandomWalk<Rng,TomoProblem,RWStatsCollector,Log>,RWStatsCollector,Log>
+  typedef MHRandomWalk<Rng,DMStateSpaceRandomWalk<TomoProblem,Rng,RWStatsCollector,Log>,RWStatsCollector,
+                       Log,CountIntType>
           OurMHRandomWalk;
 
   OurMHRandomWalk _mhrw;
 
 public:
 
-  DMStateSpaceRandomWalk(unsigned int n_sweep, unsigned int n_therm, unsigned int n_run, RealScalar step_size,
+  DMStateSpaceRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run, RealScalar step_size,
                          const MatrixType & startpt, const TomoProblem & tomo, Rng & rng, RWStatsCollector & stats,
                          Log & log_)
     : _tomo(tomo),
@@ -128,10 +132,26 @@ public:
 };
 
 
+template<typename TomoProblem, typename Rng, typename RWStatsCollector, typename Log,
+         typename CountIntType = unsigned int>
+DMStateSpaceRandomWalk<TomoProblem,Rng,RWStatsCollector,Log,CountIntType>
+makeDMStateSpaceRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run,
+                           typename TomoProblem::MatrQ::RealScalar step_size,
+                           const typename TomoProblem::MatrQ::MatrixType & startpt,
+                           const TomoProblem & tomo, Rng & rng, RWStatsCollector & stats,
+                           Log & log_)
+{
+  return DMStateSpaceRandomWalk<TomoProblem,Rng,RWStatsCollector,Log,CountIntType>(
+      n_sweep, n_therm, n_run, step_size, startpt, tomo, rng, stats, log_
+      );
+}
+
+
+
 
 
 template<typename MatrQ, typename FidelityValueType>
-struct FidelityHistogramRWStatsCollectorInfo
+struct FidelityHistogramMHRWStatsCollectorInfo
 {
   typedef typename MatrQ::MatrixType MatrixType;
   typedef UniformBinsHistogram<FidelityValueType> HistogramType;
@@ -139,15 +159,15 @@ struct FidelityHistogramRWStatsCollectorInfo
 };
 
 template<typename MatrQ_, typename FidelityValueType_, typename Log>
-class FidelityHistogramRWStatsCollector
+class FidelityHistogramMHRWStatsCollector
 {
 public:
   typedef MatrQ_ MatrQ;
   typedef FidelityValueType_ FidelityValueType;
 
-  typedef typename FidelityHistogramRWStatsCollectorInfo<MatrQ, FidelityValueType>::MatrixType MatrixType;
-  typedef typename FidelityHistogramRWStatsCollectorInfo<MatrQ, FidelityValueType>::HistogramType HistogramType;
-  typedef typename FidelityHistogramRWStatsCollectorInfo<MatrQ, FidelityValueType>::HistogramParams HistogramParams;
+  typedef typename FidelityHistogramMHRWStatsCollectorInfo<MatrQ, FidelityValueType>::MatrixType MatrixType;
+  typedef typename FidelityHistogramMHRWStatsCollectorInfo<MatrQ, FidelityValueType>::HistogramType HistogramType;
+  typedef typename FidelityHistogramMHRWStatsCollectorInfo<MatrQ, FidelityValueType>::HistogramParams HistogramParams;
 
 private:
 
@@ -158,7 +178,7 @@ private:
   Log & _log;
 
 public:
-  FidelityHistogramRWStatsCollector(FidelityValueType fid_min, FidelityValueType fid_max, int num_bins,
+  FidelityHistogramMHRWStatsCollector(FidelityValueType fid_min, FidelityValueType fid_max, int num_bins,
                                   const MatrixType & ref_T, MatrQ /*mq*/,
                                   Log & logger)
     : _histogram(fid_min, fid_max, num_bins),
@@ -166,7 +186,7 @@ public:
       _log(logger)
   {
   }
-  FidelityHistogramRWStatsCollector(HistogramParams histogram_params,
+  FidelityHistogramMHRWStatsCollector(HistogramParams histogram_params,
                                   const MatrixType & ref_T, MatrQ /*mq*/,
                                   Log & logger)
     : _histogram(histogram_params),
@@ -194,8 +214,8 @@ public:
   inline void done()
   {
     if (_log.enabled_for(Logger::LONGDEBUG)) {
-      // _log.longdebug("FidelityHistogramRWStatsCollector", "done()");
-      _log.longdebug("FidelityHistogramRWStatsCollector",
+      // _log.longdebug("FidelityHistogramMHRWStatsCollector", "done()");
+      _log.longdebug("FidelityHistogramMHRWStatsCollector",
                      "Done walking & collecting stats. Here's the histogram:\n"
                      + _histogram.pretty_print());
     }
@@ -206,7 +226,7 @@ public:
                 double /*a*/, const MatrixType & /*newpt*/, LLHValueType /*newptval*/,
                 const MatrixType & /*curpt*/, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
-    _log.longdebug("FidelityHistogramRWStatsCollector", "raw_move(): k=%lu", (unsigned long)k);
+    _log.longdebug("FidelityHistogramMHRWStatsCollector", "raw_move(): k=%lu", (unsigned long)k);
   }
 
   template<typename LLHValueType, typename MHRandomWalk>
@@ -214,12 +234,12 @@ public:
   {
     FidelityValueType fid = fidelity_T(curpt, _ref_T);
 
-    _log.longdebug("FidelityHistogramRWStatsCollector", "in process_sample(): k=%lu, fid=%.4g",
+    _log.longdebug("FidelityHistogramMHRWStatsCollector", "in process_sample(): k=%lu, fid=%.4g",
                    (unsigned long)k, fid);
 
     _histogram.record(fid);
 
-    //_log.longdebug("FidelityHistogramRWStatsCollector", "process_sample() finished");
+    //_log.longdebug("FidelityHistogramMHRWStatsCollector", "process_sample() finished");
   }
  
 
@@ -243,7 +263,7 @@ namespace DMIntegratorTasks
   template<typename TomoProblem, typename FidelityValueType = double>
   struct CData
   {
-    typedef typename FidelityHistogramRWStatsCollectorInfo<typename TomoProblem::MatrQ,
+    typedef typename FidelityHistogramMHRWStatsCollectorInfo<typename TomoProblem::MatrQ,
                                                            FidelityValueType>::HistogramParams
     /*..*/  HistogramParams;
     
@@ -279,13 +299,35 @@ namespace DMIntegratorTasks
    *
    * This class can be used with \ref MultiProc::run_omp_tasks(), for example.
    */
-  template<typename TomoProblem, typename Logger, typename Rng = std::mt19937, typename FidelityValueType = double>
+  template<typename TomoProblem, typename Logger, typename Rng = std::mt19937,
+           typename FidelityValueType = double, typename CountIntType = unsigned int>
   struct MHRandomWalkTask
   {
-    int _seed;
+    struct StatusReport : MultiProc::StatusReport {
+      StatusReport(double fdone, const std::string & msg, CountIntType kstep_, CountIntType n_sweep_,
+                   CountIntType n_therm_, CountIntType n_run_, double acceptance_ratio_)
+        : MultiProc::StatusReport(fdone, msg),
+          kstep(kstep_),
+          n_sweep(n_sweep_),
+          n_therm(n_therm_),
+          n_run(n_run_),
+          acceptance_ratio(acceptance_ratio_),
+          n_total_iters(n_sweep*(n_therm+n_run))
+      {
+      }
+      const CountIntType kstep;
+      const CountIntType n_sweep;
+      const CountIntType n_therm;
+      const CountIntType n_run;
+      const double acceptance_ratio;
+      const CountIntType n_total_iters;
+    };
+    typedef StatusReport StatusReportType;
+
+    typename Rng::result_type _seed;
     Logger _log;
 
-    typedef FidelityHistogramRWStatsCollector<typename TomoProblem::MatrQ, FidelityValueType, Logger>
+    typedef FidelityHistogramMHRWStatsCollector<typename TomoProblem::MatrQ, FidelityValueType, Logger>
     /*..*/ FidRWStatsCollector;
     FidRWStatsCollector fidstats;
 
@@ -307,15 +349,19 @@ namespace DMIntegratorTasks
     {
     }
 
-    inline void run(const OurCData * pcdata, Logger & /*log*/)
+    template<typename TaskManagerIface>
+    inline void run(const OurCData * pcdata, Logger & /*log*/, TaskManagerIface * tmgriface)
     {
-      
-      typedef DMStateSpaceRandomWalk<Rng,TomoProblem,FidRWStatsCollector,Logger>
-        OurRandomWalk;
-      
       Rng rng(_seed); // seeded random number generator
+
+      typedef StatusReportCheck<TaskManagerIface> OurStatusReportCheck;
+
+      OurStatusReportCheck statreportcheck(this, tmgriface);
       
-      OurRandomWalk rwalk(
+      MultipleMHRWStatsCollectors<FidRWStatsCollector, OurStatusReportCheck>
+        statscollectors(fidstats, statreportcheck);
+
+      auto rwalk = makeDMStateSpaceRandomWalk(
           // MH random walk parameters
           pcdata->n_sweep,
           pcdata->n_therm,
@@ -327,11 +373,63 @@ namespace DMIntegratorTasks
           pcdata->prob,
           // rng, stats collector and logger
           rng,
-          fidstats,
+          statscollectors,
           _log);
       
       rwalk.run();
     }
+
+  private:
+    /** \brief helper to provide status report
+     *
+     * \internal
+     */
+    template<typename TaskManagerIface>
+    struct StatusReportCheck
+    {
+      StatusReportCheck(MHRandomWalkTask * mhrwtask_, TaskManagerIface *tmgriface_)
+        : mhrwtask(mhrwtask_), tmgriface(tmgriface_)
+      { }
+
+      MHRandomWalkTask *mhrwtask;
+      TaskManagerIface *tmgriface;
+
+      inline void init() { }
+      inline void thermalizing_done() { }
+      inline void done() { }
+
+      template<typename PointType, typename FnValueType, typename MHRandomWalk>
+      inline void raw_move(
+          CountIntType k, bool is_thermalizing, bool, bool, double, const PointType &, FnValueType,
+          const PointType &, FnValueType, MHRandomWalk & rw
+          )
+      {
+        // see if we should provide a status report
+        //        fprintf(stderr, "StatusReportCheck::raw_move(): testing for status report requested!\n");
+        if (tmgriface->status_report_requested()) {
+          // prepare & provide status report
+          CountIntType totiters = rw.n_sweep()*(rw.n_therm()+rw.n_run());
+          double fdone = (double)k/totiters;
+          std::string msg;
+          msg = fmts(
+              "iteration %s %lu/(%lu=%lu*(%lu+%lu)) : %5.2f%% done  [accept ratio=%.2f]",
+              (is_thermalizing ? "[T]" : "   "),
+              (unsigned long)k, (unsigned long)totiters, (unsigned long)rw.n_sweep(),
+              (unsigned long)rw.n_therm(), (unsigned long)rw.n_run(),
+              fdone*100.0,
+              (rw.has_acceptance_ratio() ? rw.acceptance_ratio() : std::nan(""))
+              );
+          tmgriface->submit_status_report(StatusReport(fdone, msg, k, rw.n_sweep(), rw.n_therm(),
+                                                       rw.n_run(), rw.acceptance_ratio()));
+        }
+        //        fprintf(stderr, "StatusReportCheck::raw_move(): done\n");
+      }
+
+      template<typename PointType, typename FnValueType, typename MHRandomWalk>
+      inline void process_sample(CountIntType, const PointType &, FnValueType, MHRandomWalk &)
+      {
+      }
+    };
   };
 
   /** \brief Collect results from MHRandomWalkTask's

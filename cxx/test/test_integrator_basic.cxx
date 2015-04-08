@@ -54,19 +54,19 @@ int main()
   QubitPaulisMatrQ::MatrixType ref_T = qmq.initMatrixType();
   ref_T << 1.0, 0, 0, 0;
 
-  typedef FidelityHistogramRWStatsCollector<QubitPaulisMatrQ,double,SimpleFoutLogger>
-    OurFidRWStatsCollector;
+  typedef FidelityHistogramMHRWStatsCollector<QubitPaulisMatrQ,double,SimpleFoutLogger>
+    OurFidMHRWStatsCollector;
 
-  typedef MultipleRWStatsCollectors<OurFidRWStatsCollector,OurFidRWStatsCollector>
-    OurMultiRWStatsCollector;
+  typedef MultipleMHRWStatsCollectors<OurFidMHRWStatsCollector,OurFidMHRWStatsCollector>
+    OurMultiMHRWStatsCollector;
 
-  OurFidRWStatsCollector fidstats(0.98, 1.0, 50, ref_T, qmq, flog);
-  OurFidRWStatsCollector fidstats2(0.96, 0.98, 10, ref_T, qmq, flog);
+  OurFidMHRWStatsCollector fidstats(0.98, 1.0, 50, ref_T, qmq, flog);
+  OurFidMHRWStatsCollector fidstats2(0.96, 0.98, 10, ref_T, qmq, flog);
 
-  OurMultiRWStatsCollector multistats(fidstats, fidstats2);
+  OurMultiMHRWStatsCollector multistats(fidstats, fidstats2);
 
-  typedef DMStateSpaceRandomWalk<std::mt19937,IndepMeasTomoProblem<QubitPaulisMatrQ>,
-                                 OurMultiRWStatsCollector,SimpleFoutLogger>
+  typedef DMStateSpaceRandomWalk<IndepMeasTomoProblem<QubitPaulisMatrQ>,std::mt19937,
+                                 OurMultiMHRWStatsCollector,SimpleFoutLogger>
     MyRandomWalk;
 
   std::cout << "About to create the randomwalk object ...\n";

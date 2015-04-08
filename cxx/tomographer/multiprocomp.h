@@ -13,8 +13,6 @@ namespace Tomographer {
 namespace MultiProc
 {
 
-
-
   /** \brief Internal. Helper for \ref OMPThreadSanitizerLogger
    *
    * Emits the log to \c baselogger. This template is specialized for
@@ -137,22 +135,6 @@ namespace MultiProc
   };
 
 
-
-
-  /** \brief Simple status report class
-   *
-   * This may serve as base class for a more detailed and specific status report.
-   *
-   * See OMPTaskDispatcher's status report mechanism.
-   */
-  struct StatusReport
-  {
-    double fraction_done;
-    std::string msg;
-  };
-
-
-
   /** \brief Dispatches tasks to parallel threads using OpenMP
    *
    * Uses <a href="http://openmp.org/">OpenMP</a> to parallelize the repetition of a same
@@ -180,21 +162,24 @@ namespace MultiProc
    *
    *          The return value may be any type.
    *               
-   *     <li> <code>Task::Task( <input> , const ConstantDataType * pcdata, OMPTaskManager * tmgr)</code> --
+   *     <li> <code>Task::Task( <input> , const ConstantDataType * pcdata)</code> --
    *          construct a Task instance which will solve the task for the given input.
    *          The <tt>&lt;input&gt;</tt> parameter is whatever \c Task::get_input()
-   *          returned. The current task manager instance is provided.
+   *          returned.
    *
-   *     <li> <code>void Task::run(const ConstantDataType * pcdata,
-   *                               OMPTaskLogger<Logger> & logger)</code>
+   *     <li> <code>template<typename T>
+   *                void Task::run(const ConstantDataType * pcdata,
+   *                               OMPTaskLogger<Logger> & logger,
+   *                               T * p)</code>
    *          actually runs the task. It can log to the given \c logger (see
    *          \ref LoggerBase). Note that the `logger` is NOT directly the one initially
    *          given, but an internal thread-safe wrapper to it. You can of course take a
    *          \c Logger template parameter to avoid spelling out the full type.
    *
-   *          The code in \c run() should poll <code>OMPTaskManager::status_report_requested()</code>
-   *          and provide a status report if requested to do so. See
-   *          \ref status_report_requested().
+   *          The code in \c run() should poll <code>p->status_report_requested()</code>
+   *          and provide a status report if requested to do so via
+   *          <code>p->status_report(const TaskStatusReportType &)</code>. See documentation
+   *          for \ref request_status_report().
    *     </ul>
    *
    * <li> \c ResultsCollector takes care of collecting the results from each task run. It
@@ -226,131 +211,252 @@ namespace MultiProc
    *
    *
    */
-  template<typename Task_, typename ConstantDataType_, typename ResultsCollector_, typename Logger_,
-           typename StatusReportType_ = StatusReport, typename CountIntType_ = unsigned int>
+  template<typename Task_, typename ConstantDataType_, typename ResultsCollector_,
+           typename Logger_, typename CountIntType_>
   class OMPTaskDispatcher
   {
   public:
     typedef Task_ Task;
+    typedef typename Task::StatusReportType TaskStatusReportType;
     typedef ConstantDataType_ ConstantDataType;
     typedef ResultsCollector_ ResultsCollector;
     typedef Logger_ Logger;
-    typedef StatusReportType_ StatusReportType;
     typedef CountIntType_ CountIntType;
 
+    typedef std::function<void(int, const TaskStatusReportType&)> ThreadStatReportFnType;
+
   private:
-    // thread-shared variables
-    const ConstantDataType * pcdata;
-    ResultsCollector * results;
-    Logger & logger;
+    ///! thread-shared variables
+    struct thread_shared_data {
+      thread_shared_data(const ConstantDataType *pcdata_, ResultsCollector * results_, Logger & logger_,
+                         CountIntType num_runs_, CountIntType n_chunk_)
+        : pcdata(pcdata_), results(results_), logger(logger_),
+          status_report_fn(), status_report_counter(0), status_report_numreportsrecieved(0),
+          num_runs(num_runs_), n_chunk(n_chunk_), num_completed(0),
+          num_active_working_threads(0)
+      { }
 
-    std::function<void(int, const StatusReportType&)> status_report_fn;
-    CountIntType status_report_counter;
-    
-    CountIntType num_runs;
-    CountIntType n_chunk;
-    CountIntType num_completed;
+      const ConstantDataType * pcdata;
+      ResultsCollector * results;
+      Logger & logger;
 
-    // thread-local variables
-    CountIntType kiter;
-    CountIntType local_status_report_counter;
+      ThreadStatReportFnType status_report_fn;
+      CountIntType status_report_counter;
+      CountIntType status_report_numreportsrecieved;
+
+      CountIntType num_runs;
+      CountIntType n_chunk;
+      CountIntType num_completed;
+
+      CountIntType num_active_working_threads;
+    };
+    ///! thread-local variables and stuff
+    struct thread_private_data {
+      thread_private_data(thread_shared_data * shared_data_ = NULL)
+        : shared_data(shared_data_), kiter(0),
+          local_status_report_counter(0)
+      {
+        if (shared_data != NULL) {
+          local_status_report_counter = shared_data->status_report_counter;
+        }
+      }
+
+      thread_shared_data * shared_data;
+
+      CountIntType kiter;
+      CountIntType local_status_report_counter;
+
+      inline bool status_report_requested()
+      {
+        //fprintf(stderr, "status_report_requested(), shared_data=%p\n", shared_data);
+        return local_status_report_counter != shared_data->status_report_counter;
+      }
+
+      inline void submit_status_report(const TaskStatusReportType &statreport)
+      {
+        local_status_report_counter = shared_data->status_report_counter;
+        shared_data->status_report_fn(omp_get_thread_num(), statreport);
+      }
+    };
+
+    thread_shared_data shared_data;
 
   public:
     OMPTaskDispatcher(ConstantDataType * pcdata_, ResultsCollector * results_, Logger & logger_,
                       CountIntType num_runs_, CountIntType n_chunk_)
-      : pcdata(pcdata_), results(results_), logger(logger_),
-        status_report_fn(NULL), status_report_counter(0),
-        num_runs(num_runs_), n_chunk(n_chunk_),
-        num_completed(0)
+      : shared_data(pcdata_, results_, logger_, num_runs_, n_chunk_)
     {
     }
 
     inline void run()
     {
-      results->init(num_runs, n_chunk, pcdata);
+      shared_data.results->init(shared_data.num_runs, shared_data.n_chunk, shared_data.pcdata);
       
-      logger.debug("run_omp_tasks()", "About to start parallel section.");
+      shared_data.logger.debug("run_omp_tasks()", "About to start parallel section.");
 
-      // note: shared(pcdata, results) doesn't really do anything to the sharedness of the
-      // ResultsCollector and/or ConstantDataType, because `results` is a *pointer*
-#pragma omp parallel default(none) private(kiter, local_status_report_counter) shared(pcdata, results, logger, status_report_fn, status_report_counter, num_completed, num_runs, n_chunk)
+      // declaring these as "const" causes a weird compiler error
+      // "`n_chunk' is predetermined `shared' for `shared'"
+      CountIntType num_runs = shared_data.num_runs;
+      CountIntType n_chunk = shared_data.n_chunk;
+
+      CountIntType k = 0;
+
+      thread_shared_data *shdat = &shared_data;
+      thread_private_data privdat;
+
+#pragma omp parallel default(none) private(k, privdat) shared(shdat, num_runs, n_chunk)
       {
+        privdat.shared_data = shdat;
+        privdat.kiter = 0;
+        privdat.local_status_report_counter = shdat->status_report_counter;
+
 #pragma omp for schedule(dynamic,n_chunk) nowait
-        for (kiter = 0; kiter < num_runs; ++kiter) {
-
-          // construct a thread-safe logger we can use
-          OMPTaskLogger<Logger> threadsafelogger(logger);
-
-          threadsafelogger.debug("run_omp_tasks()", "Running task #%lu ...", (unsigned long)kiter);
-
-          // construct a new task instance
-          Task t(Task::get_input(kiter, pcdata), pcdata, threadsafelogger, this);
-
-          // and run it
-          t.run(pcdata, threadsafelogger);
+        for (k = 0; k < num_runs; ++k) {
 
 #pragma omp critical
           {
-            results->collect_results(t);
-            ++num_completed;
+            ++ shdat->num_active_working_threads;
+          }
+
+          privdat.kiter = k;
+
+          // construct a thread-safe logger we can use
+          OMPTaskLogger<Logger> threadsafelogger(shdat->logger);
+
+          threadsafelogger.debug("run_omp_tasks()", "Running task #%lu ...", (unsigned long)k);
+
+          // construct a new task instance
+          Task t(Task::get_input(k, shdat->pcdata), shdat->pcdata, threadsafelogger);
+
+          // and run it
+          t.run(shdat->pcdata, threadsafelogger, &privdat);
+
+#pragma omp critical
+          {
+            shdat->results->collect_results(t);
+
+            if (privdat.local_status_report_counter != shdat->status_report_counter) {
+              // status report request missed by task... do as if we had provided a
+              // report, but don't provide report.
+              ++ shdat->status_report_numreportsrecieved;
+            }
+
+            ++ shdat->num_completed;
+            -- shdat->num_active_working_threads;
           }
         }
       }
     
-      results->run_finished();
+      shared_data.results->run_finished();
     }
 
 
-    inline bool status_report_requested()
-    {
-      return local_status_report_counter != status_report_counter;
-    }
-
-    template<typename Fn1, typename Fn2>
+    /** \brief Request a status report
+     *
+     * (This can be typically called, e.g. from a signal handler.)
+     *
+     * \par Status Reporting Mechanism.
+     * This function, in turn:
+     *
+     *  - calls <code>void fnoverall(int num_completed, int num_runs,
+     *                               int num_active_working_threads,
+     *                               int num_threads)</code>
+     *    passing as parameters the number of completed tasks, the total number of tasks
+     *    to perform, the number of actively working threads, and the number of spawned
+     *    threads.
+     *
+     *  - signals each working thread's task to provide a status report, and correspondingly
+     *    calls <code>void fntask(int threadnum, const TaskStatusReportType& srep)</code> for each
+     *    working thread, in a thread-safe manner.
+     *
+     *  - calls <code>void fndone()</code> after all threads have finished reporting.
+     *
+     * \par
+     * All calls to the callbacks <code>fnoverall()</code>, <code>fntask()</code>, and
+     * <code>fndone()</code> are done within an OMP \c critical section, making them thread-safe.
+     *
+     * \par
+     * These callbacks are not expected to return anything.
+     *
+     * \par How Tasks should handle status reports.
+     * Task's must regularly check whether a status report has been requested as they run. This
+     * is done by regularly calling the function <code>p->status_report_requested()</code> on the
+     * \c p object provided to <code>Task::run()</code>. This function call does not require a
+     * \c critical section and is fast, so this check can be done often. The function
+     * <code>p->status_report_requested()</code> returns a \c bool indicating whether such a report
+     * was requested or not. If such a report was requested, then the thread should prepare its
+     * status report object (of type \c TaskStatusReportType), and call
+     * <code>p->submit_status_report(const TaskStatusReportType & obj)</code>.
+     *
+     * \par
+     * Note that the task should provide a member type named \c StatusReportType, which can be
+     * for example a simple typedef to \ref MultiProc::StatusReport, which specifies the
+     * type of its status reports.
+     *
+     */
+    template<typename Fn1, typename Fn2, typename Fn3>
     inline void request_status_report(
         Fn1 fnoverall,
         Fn2 fntask,
-        bool fn_are_thread_safe = false
+        Fn3 fndone
         )
     {
-      if (fn_are_thread_safe) {
-        fnoverall(num_completed, omp_get_num_threads(), num_runs);
-      } else {
+      if (shared_data.status_report_fn) {
+        // status report already underway!
+        shared_data.logger.debug("OMPTaskDispatcher::request_status_report()",
+                                 "status report already underway!");
+        return;
+      }
+
+      shared_data.logger.longdebug("OMPTaskDispatcher::request_status_report()",
+                               "will request a status report.");
+
+      // prepare function to pass on to threads, in a thread-safe wrapper
+      shared_data.status_report_fn = [&fntask,&shared_data,&fndone](int threadnum, const TaskStatusReportType& srep) {
 #pragma omp critical
         {
-          fnoverall(num_completed, omp_get_num_threads(), num_runs);
-        }
-      }
-      // now, inform each thread that they should provide a status report
-      if (fn_are_thread_safe) {
-
-        // fntask is already thread-safe
-        status_report_fn = fntask;
-        // now, pass on signal to other threads
-        ++status_report_counter;
-
-      } else {
-        
-        // thread-safe wrapper around fntask
-        status_report_fn = [&fntask](int threadnum, const StatusReportType& srep) {
-#pragma omp critical
-          {
-            fntask(threadnum, srep);
+          //          shared_data.logger.debug("OMPTaskDispatcher::request_status_report()",
+          //                                   "got report from thread #%d.", threadnum);
+          fntask(threadnum, srep);
+          ++ shared_data.status_report_numreportsrecieved;
+          if ((int)shared_data.status_report_numreportsrecieved == shared_data.num_active_working_threads) {
+            // all reports recieved: done
+            shared_data.status_report_numreportsrecieved = 0;
+            shared_data.status_report_fn = ThreadStatReportFnType(); // empty function
+            fndone();
+            shared_data.logger.debug("OMPTaskDispatcher::request_status_report()",
+                                     "finished reporting.");
           }
-        };
-        // now, pass on signal to other threads
-        ++status_report_counter;
+        }
+      };
 
+#pragma omp critical
+      {
+        // overall progress report
+        fnoverall(shared_data.num_completed, shared_data.num_runs,
+                  shared_data.num_active_working_threads, omp_get_num_threads());
+        // initialize
+        shared_data.status_report_numreportsrecieved = 0;
+        // now, pass on signal to other threads to invite them to report progress
+        ++ shared_data.status_report_counter;
       }
-    }
 
-
-    inline void status_report(const StatusReportType &statreport)
-    {
-      status_report_fn(omp_get_thread_num(), statreport);
     }
 
   };
+
+  template<typename Task_, typename ConstantDataType_, typename ResultsCollector_,
+           typename Logger_, typename CountIntType_ = unsigned int>
+  OMPTaskDispatcher<Task_, ConstantDataType_, ResultsCollector_,
+                    Logger_, CountIntType_>
+  makeOMPTaskDispatcher(ConstantDataType_ * pcdata_, ResultsCollector_ * results_, Logger_ & logger_,
+                        CountIntType_ num_runs_, CountIntType_ n_chunk_)
+  {
+    return OMPTaskDispatcher<Task_, ConstantDataType_, ResultsCollector_,
+                             Logger_, CountIntType_>(
+        pcdata_, results_, logger_, num_runs_, n_chunk_
+        );
+  }
     
 } // namespace MultiProc
 

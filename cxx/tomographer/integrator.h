@@ -85,19 +85,19 @@ template<typename RandomWalk_>
 struct RandomWalkBase
 {
   typedef RandomWalk_ RandomWalk;
+  typedef typename RandomWalk::CountIntType CountIntType;
 
   static void run(RandomWalk & rw)
   {
-
-    const unsigned int Nsweep = rw.n_sweep();
-    const unsigned int Ntherm = rw.n_therm();
-    const unsigned int Nrun = rw.n_run();
+    const CountIntType Nsweep = rw.n_sweep();
+    const CountIntType Ntherm = rw.n_therm();
+    const CountIntType Nrun = rw.n_run();
 
     rw.init();
 
-    unsigned int k;
+    CountIntType k;
 
-    const unsigned int num_thermalize = Nsweep*Ntherm;
+    const CountIntType num_thermalize = Nsweep*Ntherm;
 
     for (k = 0; k < num_thermalize; ++k) {
       // calculate a candidate jump point and see if we accept the move
@@ -107,7 +107,7 @@ struct RandomWalkBase
 
     rw.thermalizing_done();
 
-    const unsigned int num_run = Nsweep*Nrun;
+    const CountIntType num_run = Nsweep*Nrun;
 
     for (k = 0; k < num_run; ++k) {
 
@@ -225,11 +225,45 @@ namespace tomo_internal {
  *
  * .....................
  *
+ * A \c MHRWStatsCollector takes care of collecting useful data during a random walk. This type
+ * must provide the following members:
+ * <ul><li><code>void init()</code> is called before starting the random walk
+ *     <li><code>void thermalizing_done()</code> is called after the thermalizing runs, before
+ *         starting the "live" runs.
+ *     <li><code>void done()</code> is called after the random walk is finished.
+ *     <li><code>void process_sample(CountIntType, const PointType & pt, FnValueType fnval,
+ *                                   MHRandomWalk & rw)</code> is called at the end of each
+ *         sweep, after the thermalization sweeps have finished. This function is meant to
+ *         actually take live samples.
+ *     <li><code>void raw_move(CountIntType k, bool is_thermalizing, bool is_live_iter, bool accepted,
+ *                             double a, const PointType & newpt, FnValueType newptval,
+ *                             const PointType & curpt, FnValueType curptval, MHRandomWalk & rw)</code>
+ *         is called after each move during the random walk. Note that if you want to take
+ *         real samples, use \c process_sample() instead.
+ *
+ *         \c k is the iteration number, \c is_thermalizing is \c true during the first
+ *         part of the random walk during the thermalizing runs, \c is_live_iter is set to
+ *         \c true only if a sample is taken at this point, i.e. if not thermalizing and
+ *         after a full sweep. \c accepted indicates whether this Metropolis-Hastings move
+ *         was accepted or not and \c a gives the ratio of the function which was tested
+ *         for the move. (Note that \c a might not be calculated and left to 1 if known to
+ *         be greater than 1.) \c newpt and \c newptval are the new proposal jump point
+ *         and the function value at that new point. The function value is either the
+ *         actual value of the function, or its logarithm, or a dummy value, depending on
+ *         \c MHWalker::UseFnSyntaxType. Similarly \c curpt and \c curptval are the
+ *         current point and function value. The object \c rw is a reference to the random
+ *         walk object instance.
+ *
+ * </ul>
+ *
  */
-template<typename Rng, typename MHWalker, typename RWStatsCollector, typename Log>
+template<typename Rng, typename MHWalker_, typename MHRWStatsCollector, typename Log,
+         typename CountIntType_ = unsigned int>
 class MHRandomWalk
 {
 public:
+  typedef MHWalker_ MHWalker;
+  typedef CountIntType_ CountIntType;
   typedef typename MHWalker::PointType PointType;
   typedef typename MHWalker::RealScalar RealScalar;
 
@@ -240,26 +274,26 @@ public:
   };
 
 private:
-  const unsigned int _n_sweep;
-  const unsigned int _n_therm;
-  const unsigned int _n_run;
+  const CountIntType _n_sweep;
+  const CountIntType _n_therm;
+  const CountIntType _n_run;
   const RealScalar _step_size;
 
   Rng & _rng;
   MHWalker & _mhwalker;
-  RWStatsCollector & _stats;
+  MHRWStatsCollector & _stats;
   Log & _log;
 
   PointType curpt;
   FnValueType curptval;
 
-  unsigned int num_accepted;
-  unsigned int num_live_points;
+  CountIntType num_accepted;
+  CountIntType num_live_points;
 
 public:
 
-  MHRandomWalk(unsigned int n_sweep, unsigned int n_therm, unsigned int n_run, RealScalar step_size,
-               const PointType & startpt, MHWalker & mhwalker, RWStatsCollector & stats,
+  MHRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run, RealScalar step_size,
+               const PointType & startpt, MHWalker & mhwalker, MHRWStatsCollector & stats,
                Rng & rng, Log & log_)
     : _n_sweep(n_sweep), _n_therm(n_therm), _n_run(n_run),
       _step_size(step_size),
@@ -271,9 +305,9 @@ public:
   {
   }
 
-  inline unsigned int n_sweep() const { return _n_sweep; }
-  inline unsigned int n_therm() const { return _n_therm; }
-  inline unsigned int n_run() const { return _n_run; }
+  inline CountIntType n_sweep() const { return _n_sweep; }
+  inline CountIntType n_therm() const { return _n_therm; }
+  inline CountIntType n_run() const { return _n_run; }
 
   inline void init()
   {
@@ -331,7 +365,7 @@ public:
                    
   }
 
-  inline void move(unsigned int k, bool is_thermalizing, bool is_live_iter)
+  inline void move(CountIntType k, bool is_thermalizing, bool is_live_iter)
   {
     // The reason `step_size` is passed to jump_fn instead of leaving jump_fn itself
     // handle the step size, is that we might in the future want to dynamically adapt the
@@ -374,12 +408,16 @@ public:
     }
   }
 
+  inline bool has_acceptance_ratio() const
+  {
+    return (num_live_points > 0);
+  }
   inline double acceptance_ratio() const
   {
     return (double) num_accepted / num_live_points;
   }
 
-  inline void process_sample(unsigned int k)
+  inline void process_sample(CountIntType k)
   {
     _stats.process_sample(k, curpt, curptval, *this);
   }
@@ -388,18 +426,24 @@ public:
 
 
 
-
-template<typename... RWStatsCollectors>
-class MultipleRWStatsCollectors
+/** \brief A simple MHRWStatsCollector interface which combines several stats collectors
+ *
+ * A \ref MHRandomWalk object expects one instance of a \c MHRWStatsCollector; in case you
+ * wish to provide several stats collectors, you should use a MultipleMHRWStatsCollectors
+ * instance which combines all your preferred stats collectors.
+ *
+ */
+template<typename... MHRWStatsCollectors>
+class MultipleMHRWStatsCollectors
 {
-  std::tuple<RWStatsCollectors&...>  statscollectors;
+  std::tuple<MHRWStatsCollectors&...>  statscollectors;
 
   enum {
-    NumStatColl = sizeof...(RWStatsCollectors)
+    NumStatColl = sizeof...(MHRWStatsCollectors)
   };
 
 public:
-  MultipleRWStatsCollectors(RWStatsCollectors&... statscollectors_)
+  MultipleMHRWStatsCollectors(MHRWStatsCollectors&... statscollectors_)
     : statscollectors(statscollectors_...)
   {
   }
@@ -446,22 +490,26 @@ public:
 
   // raw_move() callback
 
-  template<typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
+  template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
   inline typename std::enable_if<I < NumStatColl, void>::type raw_move(
-      unsigned int k, bool is_thermalizing, bool is_live_iter, bool accepted,
+      CountIntType k, bool is_thermalizing, bool is_live_iter, bool accepted,
       double a, const PointType & newpt, FnValueType newptval,
       const PointType & curpt, FnValueType curptval,
       MHRandomWalk & rw
       )
   {
-    std::get<I>(statscollectors).raw_move(k, is_thermalizing, is_live_iter, accepted, a,
-                                          newpt, newptval, curpt, curptval, rw);
-    raw_move<PointType, FnValueType, MHRandomWalk, I+1>(k, is_thermalizing, is_live_iter, accepted, a,
-                                                        newpt, newptval, curpt, curptval, rw);
+    std::get<I>(statscollectors).raw_move(
+        k, is_thermalizing, is_live_iter, accepted, a,
+        newpt, newptval, curpt, curptval, rw
+        );
+    raw_move<CountIntType, PointType, FnValueType, MHRandomWalk, I+1>(
+        k, is_thermalizing, is_live_iter, accepted, a,
+        newpt, newptval, curpt, curptval, rw
+        );
   }
-  template<typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
+  template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
   inline typename std::enable_if<I == NumStatColl, void>::type raw_move(
-      unsigned int, bool, bool, bool, double, const PointType &, FnValueType,
+      CountIntType, bool, bool, bool, double, const PointType &, FnValueType,
       const PointType &, FnValueType, MHRandomWalk &
       )
   {
@@ -470,18 +518,18 @@ public:
 
   // process_sample() callback
 
-  template<typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
+  template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
   inline typename std::enable_if<I < NumStatColl, void>::type process_sample(
-      unsigned int k, const PointType & curpt, FnValueType curptval, MHRandomWalk & rw
+      CountIntType k, const PointType & curpt, FnValueType curptval, MHRandomWalk & rw
       )
   {
     std::get<I>(statscollectors).process_sample(k, curpt, curptval, rw);
-    process_sample<PointType, FnValueType, MHRandomWalk, I+1>(k, curpt, curptval, rw);
+    process_sample<CountIntType, PointType, FnValueType, MHRandomWalk, I+1>(k, curpt, curptval, rw);
   }
 
-  template<typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
+  template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
   inline typename std::enable_if<I == NumStatColl, void>::type process_sample(
-      unsigned int, const PointType &, FnValueType, MHRandomWalk &
+      CountIntType, const PointType &, FnValueType, MHRandomWalk &
       )
   {
   }

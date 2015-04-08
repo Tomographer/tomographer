@@ -47,7 +47,7 @@ int main()
     0,   0;
 
   /*
-  typedef FidelityHistogramRWStatsCollector<QubitPaulisMatrQ,VacuumLogger>
+  typedef FidelityHistogramMHRWStatsCollector<QubitPaulisMatrQ,VacuumLogger>
     OurFidRWStatsCollector;
 
   struct OurCData {
@@ -76,7 +76,7 @@ int main()
     inline void run(const OurCData * pcdata)
     {
       
-      typedef DMStateSpaceRandomWalk<std::mt19937,OurTomoProblem,OurFidRWStatsCollector,VacuumLogger>
+      typedef DMStateSpaceRandomWalk<OurTomoProblem,std::mt19937,OurFidRWStatsCollector,VacuumLogger>
         MyRandomWalk;
 
       std::mt19937 rng(_seed); // seeded random number generator
@@ -162,10 +162,9 @@ int main()
 
   auto time_start = clock::now();
 
-  MultiProc::run_omp_tasks<MyMHRandomWalkTask>(
-      &taskcdat, &results, 128 /* num_runs */, 1 /* n_chunk */,
-      flog
-      );
+  MultiProc::makeOMPTaskDispatcher<MyMHRandomWalkTask>(
+      &taskcdat, &results, flog, 128 /* num_runs */, 1 /* n_chunk */
+      ).run();
 
   auto time_end = clock::now();
 
