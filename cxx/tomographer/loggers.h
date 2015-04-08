@@ -174,8 +174,8 @@ struct LoggerTraits
  * See also \ref SimpleFoutLogger.
  *
  * \note For subclasses: \c _level is protected, in case you might want to provide a
- * function \c setLevel(). That function is not provided here in case you need a
- * thread-safe logger.
+ * function \c setLevel(). That function is not provided here in case your logger's level
+ * is statically fixed or otherwise can't be changed, or if you need a thread-safe logger.
  */
 template<typename Derived>
 class LoggerBase
@@ -187,27 +187,102 @@ public:
   {
   }
 
+  /** \brief emit an error message
+   *
+   * Call this method to report an error.
+   *
+   * See \ref debug(const char *, const char *, ...) for information about the function
+   * arguments.
+   */
   PRINTF3_ARGS_SAFE
   inline void error(const char * origin, const char * fmt, ...);
+  /** \brief emit an error message
+   *
+   * Call this method to report an error.
+   *
+   * See \ref debug(const char *, const std::string&) for information about the function
+   * arguments.
+   */
   inline void error(const char * origin, const std::string & msg);
+  /** \brief emit an error message
+   *
+   * Call this method to report an error.
+   *
+   * See \ref debug(const char *, Fn) for information about the function arguments.
+   */
   template<typename Fn>
   inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
   error(const char * origin, Fn f);
 
+  /** \brief emit a warning message
+   *
+   * Call this method to report a warning.
+   *
+   * See \ref debug(const char *, const char *, ...) for information about the function
+   * arguments.
+   */
   PRINTF3_ARGS_SAFE
   inline void warning(const char * origin, const char * fmt, ...);
+  /** \brief emit a warning message
+   *
+   * Call this method to report a warning.
+   *
+   * See \ref debug(const char*, const std::string&) for information about the function
+   * arguments.
+   */
   inline void warning(const char * origin, const std::string & msg);
+  /** \brief emit a warning message
+   *
+   * Call this method to report a warning.
+   *
+   * See \ref debug(const char *, Fn) for information about the function arguments.
+   */
   template<typename Fn>
   inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
   warning(const char * origin, Fn f);
 
+  /** \brief emit an information/notice message
+   *
+   * Call this method to report an information/notice message.
+   *
+   * See \ref debug(const char *, const char *, ...) for information about the function
+   * arguments.
+   */
   PRINTF3_ARGS_SAFE
   inline void info(const char * origin, const char * fmt, ...);
+  /** \brief emit an information/notice message
+   *
+   * Call this method to report an information/notice message.
+   *
+   * See \ref debug(const char*, const std::string&) for information about the function
+   * arguments.
+   */
   inline void info(const char * origin, const std::string & msg);
+  /** \brief emit an information/notice message
+   *
+   * Call this method to report an information/notice message.
+   *
+   * See \ref debug(const char *, Fn) for information about the function arguments.
+   */
   template<typename Fn>
   inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
   info(const char * origin, Fn f);
 
+  /** \brief emit an debug message
+   *
+   * Call this method to report a debugging message with this logger. This will relay the
+   * the call to the underlying logger implementation (subclass) if logging at the level
+   * \c Logger::DEBUG is enabled.
+   *
+   * This method overload allows you to format messages in a \c printf -like fashion. The
+   * final message will be formatted using an \c sprintf() function.
+   *
+   * \param origin A string which identifies the place in code from where the debugging
+   * message is originating. This is useful to trace back error messages. Conventionally,
+   * specify the name of the function with its class (e.g. \c "MyClass::my_method()").
+   * \param fmt A \c printf format string
+   * \param ... additional arguments for the \c printf formatting string.
+   */
   PRINTF3_ARGS_SAFE
   inline void debug(const char * origin, const char * fmt, ...);
   inline void debug(const char * origin, const std::string & msg);

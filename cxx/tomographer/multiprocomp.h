@@ -194,6 +194,7 @@ namespace MultiProc
    *     <li> <code>void ResultsCollector::collect_results(const Task& task)</code> is
    *         called each time a task has finished. It is called <b>from a \c critical
    *         OMP section</b>, meaning that it may safely access and write shared data.
+   *     </ul>
    *
    * <li> \c Logger is a logger type derived from \ref LoggerBase, for example
    *      \ref SimpleFoutLogger.
