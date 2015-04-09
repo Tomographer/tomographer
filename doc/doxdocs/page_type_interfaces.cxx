@@ -117,9 +117,10 @@
  *
  * \par double fnrelval(const PointType & newpt, const PointType & curpt) &mdash; required only if UseFnSyntaxType == MHUseFnRelativeValue
  *
- *
+ * <br><br>
+ * 
  * \anchor labelMHWalkerUseFnSyntaxType
- * \par Role of \c UseFnSyntaxType
+ * \par Role of \c UseFnSyntaxType:
  *
  *  - MHUseFnValue --> use MHWalker::fnval(newpt)
  *  - MHUseFnLogValue --> use MHWalker::fnlogval(newpt)
