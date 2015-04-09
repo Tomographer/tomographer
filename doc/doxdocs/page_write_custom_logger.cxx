@@ -7,25 +7,21 @@
  *
  *  - define logger traits to characterize your logger.
  *
- * A simplistic example (simplified version of \ref SimpleFoutLogger) of a logger is given
- * below.
- *
- * \note In the future, we might have to add a member like "StaticMinimumLevel" in the
- *     traits class to statically reject low-level (verbose) messages which are anyway not
- *     wanted.
+ * A simplistic example (simplified version of \ref Tomographer::SimpleFoutLogger) of a
+ * logger is given below.
  *
  * \code
- *   class StderrLogger : public LoggerBase<StderrLogger>
+ *   class StderrLogger : public Tomographer::LoggerBase<StderrLogger>
  *   {
  *   public:
- *     StderrLogger(int level = Logger::INFO) : LoggerBase<StderrLogger>(level)
+ *     StderrLogger(int level = Logger::INFO) : Tomographer::LoggerBase<StderrLogger>(level)
  *     {
  *     }
  *
- *     /// \brief Change the log level
- *     ///
- *     /// \warning This method is not thread-safe!
- *     ///
+ *     // Change the log level
+ *     //
+ *     // WARNING: This method is not thread-safe!
+ *     //
  *     inline void setLevel(int level)
  *     {
  *       // change the protected LoggerBase<StderrLogger>::_level
@@ -49,14 +45,20 @@
  *     }
  *   };
  *
- *   // Traits for StderrLogger -- fprintf is actually thread-safe.
- *   template<>
- *   struct LoggerTraits<StderrLogger>
- *   {
- *     enum {
- *       IsThreadSafe = 1
+ *   namespace Tomographer {
+ *     // Traits for StderrLogger
+ *     template<>
+ *     struct LoggerTraits<StderrLogger>
+ *     {
+ *       enum {
+ *         // fprintf is actually thread-safe, so our logger is thread-safe
+ *         IsThreadSafe = 1,
+ *         // set this to a particular level to unconditinally discard any
+ *         // message logged with strictly lower importance level.
+ *         StaticMinimumImportanceLevel = -1
+ *       };
  *     };
- *   };
+ *   }
  * \endcode
  */
 

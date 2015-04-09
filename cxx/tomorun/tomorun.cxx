@@ -272,8 +272,8 @@ std::string fmt_duration(Duration dt)
 
 // ------------------------------------------------------------------------------
 
-template<int FixedDim, int FixedMaxPOVMEffects>
-inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf);
+template<int FixedDim, int FixedMaxPOVMEffects, typename Logger>
+inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logger & logger);
 
 
 int main(int argc, char **argv)
@@ -356,19 +356,22 @@ int main(int argc, char **argv)
 
   // Maybe use statically instantiated size for some predefined sizes.
 
+  //  MinimumImportanceLogger<SimpleFoutLogger, Logger::INFO> mlog(logger);
+  auto & mlog = logger;
+
   //  try {
     if (dim == 2 && n_povms <= 6) {
-      tomorun<2, 6>(dim, &opt, matf);
+      tomorun<2, 6>(dim, &opt, matf, mlog);
     } else if (dim == 2 && n_povms <= 64) {
-      tomorun<2, 64>(dim, &opt, matf);
+      tomorun<2, 64>(dim, &opt, matf, mlog);
     } else if (dim == 2) {
-      tomorun<2, Eigen::Dynamic>(dim, &opt, matf);
+      tomorun<2, Eigen::Dynamic>(dim, &opt, matf, mlog);
     } else if (dim == 4 && n_povms <= 64) {
-      tomorun<4, 64>(dim, &opt, matf);
+      tomorun<4, 64>(dim, &opt, matf, mlog);
     } else if (dim == 4) {
-      tomorun<4, Eigen::Dynamic>(dim, &opt, matf);
+      tomorun<4, Eigen::Dynamic>(dim, &opt, matf, mlog);
     } else {
-      tomorun<Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf);
+      tomorun<Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
     }
     //  } catch (const std::exception& e) {
     //    logger.error("main()", "Caught exception: %s", e.what());
@@ -472,8 +475,8 @@ void sig_int_handler(int signal)
 // Here goes the actual program. This is templated, because then we can let Eigen use
 // allocation on the stack rather than malloc'ing 2x2 matrices...
 //
-template<int FixedDim, int FixedMaxPOVMEffects>
-inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf)
+template<int FixedDim, int FixedMaxPOVMEffects, typename Logger>
+inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logger & logger)
 {
   logger.debug("tomorun()", "Running tomography program! FixedDim=%d and FixedMaxPOVMEffects=%d",
                FixedDim, FixedMaxPOVMEffects);
@@ -561,7 +564,7 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf)
   //
 
   typedef DMIntegratorTasks::CData<OurTomoProblem> OurCData;
-  typedef MultiProc::OMPTaskLogger<decltype(logger)> OurTaskLogger;
+  typedef MultiProc::OMPTaskLogger<Logger> OurTaskLogger;
   typedef DMIntegratorTasks::MHRandomWalkTask<OurTomoProblem,OurTaskLogger> OurMHRandomWalkTask;
   typedef DMIntegratorTasks::MHRandomWalkResultsCollector<
       typename OurMHRandomWalkTask::FidelityHistogramMHRWStatsCollectorType::HistogramType

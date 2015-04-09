@@ -16,11 +16,11 @@ namespace Tomographer {
  *
  * \note This is the Nielsen & Chuang fidelity, also called "root fidelity."
  */
-template<typename Derived, typename Derived2>
-inline double fidelity(const Eigen::MatrixBase<Derived>& rho, const Eigen::MatrixBase<Derived2>& sigma)
+template<typename ValueType = double, typename Derived, typename Derived2>
+inline ValueType fidelity(const Eigen::MatrixBase<Derived>& rho, const Eigen::MatrixBase<Derived2>& sigma)
 {
   // The Schatten one-norm is the sum of the singular values.
-  return (rho.sqrt()*sigma.sqrt()).jacobiSvd().singularValues().sum();
+  return (rho.sqrt()*sigma.sqrt()).template cast<std::complex<ValueType> >().jacobiSvd().singularValues().sum();
 }
 
 /** \brief Fidelity between two \c T-parameterizations of quantum states
@@ -41,12 +41,12 @@ inline double fidelity(const Eigen::MatrixBase<Derived>& rho, const Eigen::Matri
  *
  * \note This is the Nielsen & Chuang fidelity, also called "root fidelity."
  */
-template<typename Der1, typename Der2>
-inline double fidelity_T(const Eigen::MatrixBase<Der1>& T1, const Eigen::MatrixBase<Der2>& T2)
+template<typename ValueType = double, typename Der1, typename Der2>
+inline ValueType fidelity_T(const Eigen::MatrixBase<Der1>& T1, const Eigen::MatrixBase<Der2>& T2)
 {
   // Calculate ||sigma^{1/2} rho^{1/2}||_1 == || T1^\dagger * T2 ||_1
   // and Schatten one-norm is the sum of the singular values.
-  double val = (T1.adjoint()*T2).jacobiSvd().singularValues().sum();
+  ValueType val = (T1.adjoint()*T2).template cast<std::complex<ValueType> >().jacobiSvd().singularValues().sum();
   return val;
 }
 

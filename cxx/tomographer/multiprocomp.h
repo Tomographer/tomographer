@@ -134,6 +134,27 @@ namespace MultiProc
     OMPTaskLogger(BaseLogger & baselogger) : OMPThreadSanitizerLogger<BaseLogger>(baselogger) { }
   };
 
+}
+
+//
+// logger traits for OMPThreadSanitizerLogger and OMPTaskLogger 
+//
+template<typename BaseLogger>
+struct LoggerTraits<MultiProc::OMPThreadSanitizerLogger<BaseLogger> >
+{
+  enum {
+    IsThreadSafe = 1,
+    StaticMinimumImportanceLevel = LoggerTraits<BaseLogger>::StaticMinimumImportanceLevel
+  };
+};
+template<typename BaseLogger>
+struct LoggerTraits<MultiProc::OMPTaskLogger<BaseLogger> >
+  : public LoggerTraits<MultiProc::OMPThreadSanitizerLogger<BaseLogger> >
+{
+};
+
+
+namespace MultiProc {
 
   /** \brief Dispatches tasks to parallel threads using OpenMP
    *

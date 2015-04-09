@@ -18,6 +18,12 @@ namespace tomo_internal {
 
 
 
+/** \brief Get the Hermitian matrix parameterized by the "X-parameter" vector \c x
+ *
+ * This calculates the hermitian matrix which is parameterized by \c x.
+ *
+ * ................... X-param. ..........................
+ */
 template<bool OnlyLowerTri=false, typename Derived1=Eigen::MatrixXd, typename Derived2=Eigen::MatrixXd>
 inline void param_x_to_herm(Eigen::MatrixBase<Derived1>& Herm, const Eigen::DenseBase<Derived2>& x)
 {
@@ -46,8 +52,11 @@ inline void param_x_to_herm(Eigen::MatrixBase<Derived1>& Herm, const Eigen::Dens
 };
 
 
-/**
- * \note only accesses lower triangular part of \c Herm.
+/** \brief Get the X-parameterization corresponding to a given hermitian matrix
+ *
+ * See also \ref param_x_to_herm().
+ * 
+ * \note This function only accesses lower triangular part of \c Herm.
  */
 template<typename Derived1, typename Derived2>
 inline void param_herm_to_x(Eigen::DenseBase<Derived1>& x, const Eigen::MatrixBase<Derived2>& Herm)

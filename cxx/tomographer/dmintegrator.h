@@ -15,21 +15,46 @@
 namespace Tomographer {
 
 
-template<typename TomoProblem, typename Rng, typename RWStatsCollector, typename Log,
+/** \brief A random walk in the density matrix space of a Hilbert state space of a quantum
+ * system
+ *
+ * The random walk explores in a Haar-invariant way the density operators on a Hilbert
+ * space of a given dimension.
+ *
+ * \tparam TomoProblem the tomography data, expected to be a priori a \ref
+ *      IndepMeasTomoProblem
+ *
+ * \tparam Rng a \c std::random random number \a generator (such as \ref std::mt19937)
+ *
+ * \tparam MHRWStatsCollector a type implementing a StatsCollector interface (\ref
+ *      pageInterfaceMHRWStatsCollector)
+ */
+template<typename TomoProblem, typename Rng, typename MHRWStatsCollector, typename Log,
          typename CountIntType = unsigned int>
 class DMStateSpaceRandomWalk
 {
 public:
+  //! The data types of our problem
   typedef typename TomoProblem::MatrQ MatrQ;
+  //! The loglikelihood function value type (see \ref IndepMeasTomoProblem)
   typedef typename TomoProblem::LLHValueType LLHValueType;
+  //! The matrix type for a density operator on our quantum system
   typedef typename MatrQ::MatrixType MatrixType;
+  //! Type of an X-parameterization of a density operator (see \ref param_x_to_herm())
   typedef typename MatrQ::VectorParamType VectorParamType;
+  //! The real scalar corresponding to our data types. Usually a \c double.
   typedef typename MatrQ::RealScalar RealScalar;
+  //! The complex real scalar corresponding to our data types. Usually a \c std::complex<double>.
   typedef typename MatrQ::ComplexScalar ComplexScalar;
 
+  //! Provided for MHRandomWalk. A point in our random walk = a density matrix
   typedef MatrixType PointType;
+  //! Provided for MHRandomWalk. The function value type is the loglikelihood value type
   typedef LLHValueType FnValueType;
   enum {
+    /** \brief We will calculate the log-likelihood function, which is the logarithm of
+     * the Metropolis-Hastings function we should be calculating
+     */
     UseFnSyntaxType = MHUseFnLogValue
   };
 
@@ -41,7 +66,7 @@ private:
 
   Log & _log;
   
-  typedef MHRandomWalk<Rng,DMStateSpaceRandomWalk<TomoProblem,Rng,RWStatsCollector,Log>,RWStatsCollector,
+  typedef MHRandomWalk<Rng,DMStateSpaceRandomWalk<TomoProblem,Rng,MHRWStatsCollector,Log>,MHRWStatsCollector,
                        Log,CountIntType>
           OurMHRandomWalk;
 
@@ -49,8 +74,13 @@ private:
 
 public:
 
+  /** \brief Constructor which just initializes the given fields
+   *
+   * If you provide a zero \a startpt here, then a random starting point will be chosen
+   * using the \a rng random number generator to generate a random point on the sphere.
+   */
   DMStateSpaceRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run, RealScalar step_size,
-                         const MatrixType & startpt, const TomoProblem & tomo, Rng & rng, RWStatsCollector & stats,
+                         const MatrixType & startpt, const TomoProblem & tomo, Rng & rng, MHRWStatsCollector & stats,
                          Log & log_)
     : _tomo(tomo),
       _rng(rng),
@@ -60,6 +90,15 @@ public:
   {
   }
 
+  /** \brief Provided for \ref MHRandomWalk. Initializes some fields and prepares for a
+   *     random walk.
+   *
+   * \note If the \a startpt given to the constructor is zero (or has very small norm),
+   * then a uniformly random starting point is chosen. The starting point is chosen
+   * randomly according to the Haar-invariant measure on the state space. This corresponds
+   * to choosing a uniform point on the sphere corresponding to the T-parameterization of
+   * the density matrices.
+   */
   inline void init()
   {
     if (_mhrw.get_curpt().norm() < 1e-3) {
@@ -77,14 +116,23 @@ public:
     }
     _log.debug("DMStateSpaceRandomWalk", "Starting random walk");
   }
+
+  //! Callback for after thermalizing is done. No-op.
   inline void thermalizing_done()
   {
   }
 
+  //! Callback for after random walk is finished. No-op.
   inline void done()
   {
   }
 
+  /** \brief Calculate the logarithm of the Metropolis-Hastings function value.
+   *
+   * \return <code>-0.5 * (-2-log-likelihood)</code>, where the
+   * <code>-2-log-likelihood</code> is computed using \ref
+   * IndepMeasTomoProblem::calc_llh()
+   */
   inline LLHValueType fnlogval(const MatrixType & T)
   {
     MatrixType rho = _tomo.matq.initMatrixType();
@@ -98,10 +146,7 @@ public:
     return llhval;
   }
 
-  //  inline LLHValueType fnval(const MatrixType &) { return -999; }
-  //  inline LLHValueType fnrelval(const MatrixType &, const MatrixType &) { return -999; }
-
-
+  //! Decides of a new point to jump to for the random walk
   inline MatrixType jump_fn(const MatrixType& cur_T, RealScalar step_size)
   {
     MatrixType DeltaT = dense_random<MatrixType>(
@@ -123,7 +168,9 @@ public:
     return new_T;
   }
 
-
+  /** \brief Starts the random walk. Simply calls the static \ref RandomWalkBase::run()
+   * method for our random walk.
+   */
   void run()
   {
     RandomWalkBase<OurMHRandomWalk>::run(_mhrw);
@@ -132,16 +179,34 @@ public:
 };
 
 
-template<typename TomoProblem, typename Rng, typename RWStatsCollector, typename Log,
+/** \brief Instantiate an object of type \ref DMStateSpaceRandomWalk.
+ *
+ * This is useful to avoid having to spell out the full template parameters, and let the
+ * function call deduce them.
+ *
+ * Example:
+ * 
+ * \code
+ *   DMStateSpaceRandomWalk<MyTomoProblem,MyRng,MyMHRWStatsCollector,MyLog,
+ *                          MyCountIntType>  myDmStateSpaceRandomWalk(
+ *          n_sweep, n_therm, n_run, step_size, startpt, tomo, rng, stats, log
+ *       );
+ *   // is equivalent to:
+ *   auto myDmStateSpaceRandomWalk = makeDMStateSpaceRandomWalk(
+ *          n_sweep, n_therm, n_run, step_size, startpt, tomo, rng, stats, log
+ *       );
+ * \endcode
+ */
+template<typename TomoProblem, typename Rng, typename MHRWStatsCollector, typename Log,
          typename CountIntType = unsigned int>
-DMStateSpaceRandomWalk<TomoProblem,Rng,RWStatsCollector,Log,CountIntType>
+DMStateSpaceRandomWalk<TomoProblem,Rng,MHRWStatsCollector,Log,CountIntType>
 makeDMStateSpaceRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run,
                            typename TomoProblem::MatrQ::RealScalar step_size,
                            const typename TomoProblem::MatrQ::MatrixType & startpt,
-                           const TomoProblem & tomo, Rng & rng, RWStatsCollector & stats,
+                           const TomoProblem & tomo, Rng & rng, MHRWStatsCollector & stats,
                            Log & log_)
 {
-  return DMStateSpaceRandomWalk<TomoProblem,Rng,RWStatsCollector,Log,CountIntType>(
+  return DMStateSpaceRandomWalk<TomoProblem,Rng,MHRWStatsCollector,Log,CountIntType>(
       n_sweep, n_therm, n_run, step_size, startpt, tomo, rng, stats, log_
       );
 }
@@ -158,8 +223,13 @@ makeDMStateSpaceRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntT
 template<typename MatrQ, typename FidelityValueType>
 struct FidelityHistogramMHRWStatsCollectorTraits
 {
+  //! The matrix type with which we need to calculate fidelities
   typedef typename MatrQ::MatrixType MatrixType;
+  //! The histogram type. This is a \ref UniformBinsHistogram.
   typedef UniformBinsHistogram<FidelityValueType> HistogramType;
+  /** \brief The structure which holds the parameters (range, number of bins) of the
+   * histogram we're recording
+   */
   typedef typename HistogramType::Params HistogramParams;
 };
 
@@ -171,40 +241,50 @@ template<typename MatrQ_, typename FidelityValueType_, typename Log>
 class FidelityHistogramMHRWStatsCollector
 {
 public:
+  //! The data types we're dealing with
   typedef MatrQ_ MatrQ;
+  //! The floating-point value with which to calculate the fidelity.
   typedef FidelityValueType_ FidelityValueType;
 
+  //! Matrix type we have to deal with (calculate fidelities with)
   typedef typename FidelityHistogramMHRWStatsCollectorTraits<MatrQ, FidelityValueType>::MatrixType MatrixType;
+  //! The type of the histogram. A \ref UniformBinsHistogram with \a FidelityValueType range type
   typedef typename FidelityHistogramMHRWStatsCollectorTraits<MatrQ, FidelityValueType>::HistogramType HistogramType;
+  //! Structure which holds the parameters of the histogram we're recording
   typedef typename FidelityHistogramMHRWStatsCollectorTraits<MatrQ, FidelityValueType>::HistogramParams HistogramParams;
 
 private:
 
   HistogramType _histogram;
 
+  /** \brief The reference state we are calculating the fidelity to. This is stored in its
+   * T-representation.
+   */
   MatrixType _ref_T;
 
   Log & _log;
 
 public:
+  //! Simple constructor, initializes with the given values
   FidelityHistogramMHRWStatsCollector(FidelityValueType fid_min, FidelityValueType fid_max, int num_bins,
-                                  const MatrixType & ref_T, MatrQ /*mq*/,
-                                  Log & logger)
+                                      const MatrixType & ref_T, MatrQ /*mq*/,
+                                      Log & logger)
     : _histogram(fid_min, fid_max, num_bins),
       _ref_T(ref_T),
       _log(logger)
   {
   }
+  //! Simple alternative constructor, initializes with the given values
   FidelityHistogramMHRWStatsCollector(HistogramParams histogram_params,
-                                  const MatrixType & ref_T, MatrQ /*mq*/,
-                                  Log & logger)
+                                      const MatrixType & ref_T, MatrQ /*mq*/,
+                                      Log & logger)
     : _histogram(histogram_params),
       _ref_T(ref_T),
       _log(logger)
   {
   }
 
-
+  //! Get the histogram data collected so far. Returns a \ref UniformBinsHistogram.
   inline const HistogramType & histogram() const
   {
     return _histogram;
@@ -212,14 +292,17 @@ public:
 
   // stats collector part
 
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. Initializes the histogram to zeros.
   inline void init()
   {
     // reset our array
     _histogram.reset();
   }
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
   inline void thermalizing_done()
   {
   }
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
   inline void done()
   {
     if (_log.enabled_for(Logger::LONGDEBUG)) {
@@ -230,6 +313,7 @@ public:
     }
   }
 
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
   template<typename LLHValueType, typename MHRandomWalk>
   void raw_move(unsigned int k, bool /*is_thermalizing*/, bool /*is_live_iter*/, bool /*accepted*/,
                 double /*a*/, const MatrixType & /*newpt*/, LLHValueType /*newptval*/,
@@ -238,10 +322,11 @@ public:
     _log.longdebug("FidelityHistogramMHRWStatsCollector", "raw_move(): k=%lu", (unsigned long)k);
   }
 
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. Records the sample in the histogram.
   template<typename LLHValueType, typename MHRandomWalk>
   void process_sample(unsigned int k, const MatrixType & curpt, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
-    FidelityValueType fid = fidelity_T(curpt, _ref_T);
+    FidelityValueType fid = fidelity_T<FidelityValueType>(curpt, _ref_T);
 
     _log.longdebug("FidelityHistogramMHRWStatsCollector", "in process_sample(): k=%lu, fid=%.4g",
                    (unsigned long)k, fid);
@@ -346,8 +431,9 @@ namespace DMIntegratorTasks
       const CountIntType n_therm;
       /** \brief the number of live run sweeps (see \ref MHRandomWalk) */
       const CountIntType n_run;
-      /** \brief the current acceptance ratio of the random walk (see \ref
-       *     Tomographer::MHRandomWalk::acceptance_ratio()) */
+      /** \brief the current acceptance ratio of the random walk (see
+       *    \ref Tomographer::MHRandomWalk::acceptance_ratio()
+       * ) */
       const double acceptance_ratio;
       /** \brief the total number of iterations required for this random walk
        *
@@ -357,9 +443,8 @@ namespace DMIntegratorTasks
        */
       const CountIntType n_total_iters;
     };
-    /** \brief Typedef for \ref StatusReport
-     *
-     * This is needed by, e.g. \ref OMPTaskDispatcher.
+    /** \brief Typedef for \ref StatusReport. This is needed by, e.g. \ref
+     *         MultiProc::OMPTaskDispatcher.
      */
     typedef StatusReport StatusReportType;
 
@@ -382,7 +467,8 @@ namespace DMIntegratorTasks
 
   public:
 
-    /** \brief Returns a random seed to seed the random number generator with for run #k
+    /** \brief Returns a random seed to seed the random number generator with for run
+     * number \a k
      *
      * This simply returns \code pcdata->base_seed + k \endcode
      *

@@ -41,40 +41,9 @@ namespace Tomographer {
  * <em>live</em> sample is taken at the last iteration of each sweep.
  *
  * This class doesn't actually keep the state of the random walk, nor does it have any
- * notion about which space is being explored. The \c RandomWalk type, and the \c rw
- * object instance, are responsible for actually implementing the random walk. It should
- * keep the current state of the random walk in memory and update it when the \c move()
- * function is called. \c RandomWalk needs to provide the following members, which are
- * called at the appropriate times:
- *
- * <ul><li> <code>unsigned int RandomWalk::n_sweep()</code>
- *          Number of iterations that compose a "sweep".
- *     <li> <code>unsigned int RandomWalk::n_therm()</code>
- *          Number of thermalizing sweeps to perform.
- *     <li> <code>unsigned int RandomWalk::n_run()</code>
- *          Number of live sweeps to perofrm.
- *     <li> <code>void RandomWalk::move(unsigned int k, bool is_thermalizing, bool is_live_iter)</code>
- *          Is called to perform a new random walk iteration. The \c rw object is
- *          responsible for keeping the current state of the random walk in memory,
- *          and for processing a jump function. This method should update the internal
- *          state of the random walk. This function does not return anything. \c k is the
- *          raw iteration count, starting at zero (and which is reset to zero after the
- *          thermalizing sweeps). \c is_thermalizing is \c true during the thermalizing
- *          runs, \c false otherwise. \c is_live_iter is \c true when a live sample is
- *          taken, only once every sweep after the thermalization runs.
- *     <li> <code>void RandomWalk::process_sample(unsigned int k)</code>
- *          Is called for each "live" point for which a sample should be taken. The point
- *          in question is the current state of the random walk. This only happens after
- *          thermalization, and at the last iteration of a sweep.
- *     <li> <code>void RandomWalk::init()</code>
- *          Is called before starting the random walk. The RandomWalk may perform custom
- *          last-minute initializations if required.
- *     <li> <code>void RandomWalk::thermalizing_done()</code>
- *          Is called after the thermalizing runs and before starting the live runs.
- *     <li> <code>void RandomWalk::done()</code>
- *          Is called after the random walk is finished. This happens after the given
- *          number of iterations were reached.
- * </ul>
+ * notion about which space is being explored. All of this is delegated to an object
+ * instance of type \a RandomWalk, which must implement the \a RandomWalk type interface
+ * (see \ref pageInterfaceRandomWalk).
  *
  * \note You should not instantiate this class. Just call its static \ref run() method.
  *
@@ -87,6 +56,13 @@ struct RandomWalkBase
   typedef RandomWalk_ RandomWalk;
   typedef typename RandomWalk::CountIntType CountIntType;
 
+  /** \brief Run the random walk. (pun intended)
+   *
+   * This will repeatedly call <code>move()</code> on the random walk object \a rw, first
+   * a number of times for the thermalizing runs, then a number of times for the "live"
+   * runs. The corresponding callbacks in \a rw will be called as documented in \ref
+   * pageInterfaceRandomWalk and in this class documentation.
+   */
   static void run(RandomWalk & rw)
   {
     const CountIntType Nsweep = rw.n_sweep();
@@ -138,13 +114,24 @@ private:
 
 
 enum {
-  MHUseFnValue = 1,    // use MHWalker::fnval(newpt)
-  MHUseFnLogValue,     // use MHWalker::fnlogval(newpt)
-  MHUseFnRelativeValue // use MHWalker::fnrelval(newpt, curpt)
+  /** \brief Provides the MH function value at each point (see \ref
+   * labelMHWalkerUseFnSyntaxType "Role of UseFnSyntaxType")
+   */
+  MHUseFnValue = 1,
+  /** \brief Provides the logarithm MH function value at each point (see \ref
+   * labelMHWalkerUseFnSyntaxType "Role of UseFnSyntaxType")
+   */
+  MHUseFnLogValue,
+  /** \brief Provides directly the ratio of the function values for two consecutive points
+   * of the MH random walk (see \ref labelMHWalkerUseFnSyntaxType
+   * "Role of UseFnSyntaxType")
+   */
+  MHUseFnRelativeValue
 };
 
 
 namespace tomo_internal {
+
   /** \internal
    * \brief Helper class for \ref MHRandomWalk
    *
@@ -170,7 +157,7 @@ namespace tomo_internal {
      * Depending on the \c UseFnSyntaxType template parameter, this is either the function
      * value, its logarithm, or a dummy value.
      */
-    static inline double get_ptval(MHWalker & mhwalker, const PointType & curpt)
+    static inline FnValueType get_ptval(MHWalker & mhwalker, const PointType & curpt)
     {
       assert(0 && "UNKNOWN UseFnSyntaxType: Not implemented");
     }
@@ -187,8 +174,8 @@ namespace tomo_internal {
      * The returnd value of \f$ a \f$ is calculated differently depending on the value of
      * the \c UseFnSyntaxType template parameter.
      */
-    static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, double /*newptval*/,
-                                     const PointType & /*curpt*/, double /*curptval*/)
+    static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, FnValueType /*newptval*/,
+                                     const PointType & /*curpt*/, FnValueType /*curptval*/)
     {
       assert(0 && "UNKNOWN UseFnSyntaxType: Not implemented");
     }
@@ -203,7 +190,7 @@ namespace tomo_internal {
     typedef typename MHWalker::PointType PointType;
     typedef typename MHWalker::FnValueType FnValueType;
 
-    static inline double get_ptval(MHWalker & mhwalker, const PointType & curpt)
+    static inline FnValueType get_ptval(MHWalker & mhwalker, const PointType & curpt)
     {
       return mhwalker.fnval(curpt);
     }
@@ -223,12 +210,12 @@ namespace tomo_internal {
     typedef typename MHWalker::PointType PointType;
     typedef typename MHWalker::FnValueType FnValueType;
 
-    static inline double get_ptval(MHWalker & mhwalker, const PointType & curpt)
+    static inline FnValueType get_ptval(MHWalker & mhwalker, const PointType & curpt)
     {
       return mhwalker.fnlogval(curpt);
     }
-    static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, double newptval,
-                                     const PointType & /*curpt*/, double curptval)
+    static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, FnValueType newptval,
+                                     const PointType & /*curpt*/, FnValueType curptval)
     {
       return (newptval > curptval) ? 1.0 : exp(newptval - curptval);
     }
@@ -243,12 +230,12 @@ namespace tomo_internal {
     typedef typename MHWalker::PointType PointType;
     typedef int FnValueType; // dummy FnValueType
 
-    static inline double get_ptval(MHWalker & /*mhwalker*/, const PointType & /*curpt*/)
+    static inline FnValueType get_ptval(MHWalker & /*mhwalker*/, const PointType & /*curpt*/)
     {
-      return 0.0;
+      return 0;
     }
-    static inline double get_a_value(MHWalker & mhwalker, const PointType & newpt, double /*newptval*/,
-                                     const PointType & curpt, double /*curptval*/)
+    static inline double get_a_value(MHWalker & mhwalker, const PointType & newpt, FnValueType /*newptval*/,
+                                     const PointType & curpt, FnValueType /*curptval*/)
     {
       return mhwalker.fnrelval(newpt, curpt);
     }
@@ -264,53 +251,41 @@ namespace tomo_internal {
  * href="http://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm">Metropolis-Hastings
  * random walk</a>. This takes care of accepting or rejecting a new point and taking samples.
  *
- * .....................
+ * The \a MHWalker is responsible for dealing with the state space, providing a new
+ * proposal point and calculating the function value at different points. See \ref
+ * pageInterfaceMHWalker.
  *
- * A \c MHRWStatsCollector takes care of collecting useful data during a random walk. This type
- * must provide the following members:
- * <ul><li><code>void init()</code> is called before starting the random walk
- *     <li><code>void thermalizing_done()</code> is called after the thermalizing runs, before
- *         starting the "live" runs.
- *     <li><code>void done()</code> is called after the random walk is finished.
- *     <li><code>void process_sample(CountIntType, const PointType & pt, FnValueType fnval,
- *                                   MHRandomWalk & rw)</code> is called at the end of each
- *         sweep, after the thermalization sweeps have finished. This function is meant to
- *         actually take live samples.
- *     <li><code>void raw_move(CountIntType k, bool is_thermalizing, bool is_live_iter, bool accepted,
- *                             double a, const PointType & newpt, FnValueType newptval,
- *                             const PointType & curpt, FnValueType curptval, MHRandomWalk & rw)</code>
- *         is called after each move during the random walk. Note that if you want to take
- *         real samples, use \c process_sample() instead.
- *
- *         \c k is the iteration number, \c is_thermalizing is \c true during the first
- *         part of the random walk during the thermalizing runs, \c is_live_iter is set to
- *         \c true only if a sample is taken at this point, i.e. if not thermalizing and
- *         after a full sweep. \c accepted indicates whether this Metropolis-Hastings move
- *         was accepted or not and \c a gives the ratio of the function which was tested
- *         for the move. (Note that \c a might not be calculated and left to 1 if known to
- *         be greater than 1.) \c newpt and \c newptval are the new proposal jump point
- *         and the function value at that new point. The function value is either the
- *         actual value of the function, or its logarithm, or a dummy value, depending on
- *         \c MHWalker::UseFnSyntaxType. Similarly \c curpt and \c curptval are the
- *         current point and function value. The object \c rw is a reference to the random
- *         walk object instance.
- *
- * </ul>
+ * A \a MHRWStatsCollector takes care of collecting useful data during a random walk. It
+ * should be a type implementing a \a MHRWStatsCollector interface, see \ref
+ * pageInterfaceMHRWStatsCollector.
  *
  */
-template<typename Rng, typename MHWalker_, typename MHRWStatsCollector, typename Log,
+template<typename Rng_, typename MHWalker_, typename MHRWStatsCollector_, typename Log_,
          typename CountIntType_ = unsigned int>
 class MHRandomWalk
 {
 public:
+  //! Random number generator type (see C++ std::random)
+  typedef Rng_ Rng;
+  //! The random walker type which knows about the state space and jump function
   typedef MHWalker_ MHWalker;
+  //! The stats collector type (see \ref pageInterfaceMHRWStatsCollector)
+  typedef MHRWStatsCollector_ MHRWStatsCollector;
+  //! The logger type (see \ref pageLoggers)
+  typedef Log_ Log;
+  //! The type used for counting numbers of iterations (see, e.g. \ref n_sweep())
   typedef CountIntType_ CountIntType;
+
+  //! The type of a point in the random walk
   typedef typename MHWalker::PointType PointType;
+  //! The type of a step size of the random walk
   typedef typename MHWalker::RealScalar RealScalar;
 
+  //! The type of the Metropolis-Hastings function value. (See class documentation)
   typedef typename tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,MHWalker::UseFnSyntaxType>::FnValueType
           FnValueType;
   enum {
+    //! How to calculate the Metropolis-Hastings jump probability ratio (see class documentation)
     UseFnSyntaxType = MHWalker::UseFnSyntaxType
   };
 
@@ -325,14 +300,26 @@ private:
   MHRWStatsCollector & _stats;
   Log & _log;
 
+  //! Current point
   PointType curpt;
+  /** \brief Current function value at current point. This is a dummy value if
+   * <code>UseFnSyntaxType==MHUseFnRelativeValue</code>.
+   */
   FnValueType curptval;
 
+  /** \brief Keeps track of the total number of accepted moves during the "live" runs
+   * (i.e., not thermalizing). This is used to track the acceptance ratio (see \ref
+   * acceptance_ratio())
+   */
   CountIntType num_accepted;
+  /** \brief Keeps track of the total number of moves during the "live" runs, i.e. not
+   * thermalizing. This is used to track the acceptance ratio (see \ref acceptance_ratio())
+   */
   CountIntType num_live_points;
 
 public:
 
+  //! Simple constructor, initializes the given fields
   MHRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run, RealScalar step_size,
                const PointType & startpt, MHWalker & mhwalker, MHRWStatsCollector & stats,
                Rng & rng, Log & log_)
@@ -346,10 +333,16 @@ public:
   {
   }
 
+  //! Required for \ref pageInterfaceRandomWalk. Number of iterations in a sweep.
   inline CountIntType n_sweep() const { return _n_sweep; }
+  //! Required for \ref pageInterfaceRandomWalk. Number of thermalizing sweeps.
   inline CountIntType n_therm() const { return _n_therm; }
+  //! Required for \ref pageInterfaceRandomWalk. Number of live run sweeps.
   inline CountIntType n_run() const { return _n_run; }
 
+  /** \brief Required for \ref pageInterfaceRandomWalk. Resets counts and relays to the
+   * MHWalker and the MHRWStatsCollector.
+   */
   inline void init()
   {
     num_accepted = 0;
@@ -360,11 +353,17 @@ public:
     _mhwalker.init();
     _stats.init();
   }
+  /** \brief Required for \ref pageInterfaceRandomWalk. Relays to the MHWalker and the
+   * MHRWStatsCollector.
+   */
   inline void thermalizing_done()
   {
     _mhwalker.thermalizing_done();
     _stats.thermalizing_done();
   }
+  /** \brief Required for \ref pageInterfaceRandomWalk. Relays to the MHWalker and the
+   * MHRWStatsCollector.
+   */
   inline void done()
   {
     _mhwalker.done();
@@ -406,6 +405,13 @@ public:
                    
   }
 
+  /** \brief Required for \ref pageInterfaceRandomWalk. Processes a single move in the random walk.
+   *
+   * This function gets a new move proposal from the MHWalker object, and calculates the
+   * \a a value, which tells us with which probability we should accept the move. This \a
+   * a value is calculated according to the documentation in \ref
+   * labelMHWalkerUseFnSyntaxType "Role of UseFnSyntaxType".
+   */
   inline void move(CountIntType k, bool is_thermalizing, bool is_live_iter)
   {
     // The reason `step_size` is passed to jump_fn instead of leaving jump_fn itself
@@ -449,15 +455,24 @@ public:
     }
   }
 
+  /** \brief Query whether we have any statistics about acceptance ratio. This is \c
+   * false, for example, during the thermalizing runs.
+   */
   inline bool has_acceptance_ratio() const
   {
     return (num_live_points > 0);
   }
-  inline double acceptance_ratio() const
+  /** \brief Return the acceptance ratio so far.
+   */
+  template<typename RatioType = double>
+  inline RatioType acceptance_ratio() const
   {
-    return (double) num_accepted / num_live_points;
+    return (RatioType) num_accepted / num_live_points;
   }
 
+  /** \brief Required for \ref pageInterfaceRandomWalk. Process a new live sample in the
+   * random walk. Relays the call to the \a MHRWStatsCollector.
+   */
   inline void process_sample(CountIntType k)
   {
     _stats.process_sample(k, curpt, curptval, *this);
@@ -473,6 +488,27 @@ public:
  * wish to provide several stats collectors, you should use a MultipleMHRWStatsCollectors
  * instance which combines all your preferred stats collectors.
  *
+ * The obscure variadic templating of this class should not scare you&mdash;it's
+ * relatively straightforward to use:
+ * \code
+ *   // some stat collectors
+ *   MyStatCollector1 statcoll1(..);
+ *   MyStatCollector2 statcoll2(..);
+ *   MyStatCollector3 statcoll3(..);
+ *
+ *   // we combine them into one single "stat collector interface", which we can then
+ *   // give as argument to the MHRandomWalk object:
+ *   MultipleMHRWStatsCollectors<MyStatCollector1,MyStatCollector2,MyStatCollector3>
+ *       multistatcollector(statcoll1, statcoll2, statcoll3);
+ *
+ *   MHRandomWalk<...> myrandomwalk(..., multistatcollector,...);
+ *   // now, the random walk will call the callbacks in `multistatcollector', which
+ *   // will relay the callbacks to all the given stat collectors `statcoll*'.
+ * \endcode
+ *
+ * The number of stat collectors that were defined is accessible through the constant
+ * enumeration value \ref NumStatColl.
+ *
  */
 template<typename... MHRWStatsCollectors>
 class MultipleMHRWStatsCollectors
@@ -480,6 +516,7 @@ class MultipleMHRWStatsCollectors
   std::tuple<MHRWStatsCollectors&...>  statscollectors;
 
   enum {
+    //! The number of stats collectors we are tracking
     NumStatColl = sizeof...(MHRWStatsCollectors)
   };
 
