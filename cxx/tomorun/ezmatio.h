@@ -277,6 +277,7 @@ namespace MAT {
   template<class OutType>
   class VarDataAccessor {
   public:
+    virtual ~VarDataAccessor() { }
     virtual OutType operator()(int linindex) const = 0;
     inline OutType value(int linindex) const { return this->operator()(linindex); }
   };

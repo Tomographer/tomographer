@@ -11,10 +11,26 @@
 #include <type_traits>
 
 
+#ifdef PARSED_BY_DOXYGEN
+
+#define ENABLE_IF_Fn_CALLABLE_OSTREAM  void
+
+#define PRINTF1_ARGS_SAFE
+#define PRINTF2_ARGS_SAFE
+#define PRINTF3_ARGS_SAFE
+#define PRINTF4_ARGS_SAFE
+
+#else
+
+#define ENABLE_IF_Fn_CALLABLE_OSTREAM                                      \
+  typename std::enable_if<std::is_convertible<Fn,std::function<void(std::ostream&)> >::value, void>::type
+
 #define PRINTF1_ARGS_SAFE  __attribute__ ((format (printf, 1, 2)))
 #define PRINTF2_ARGS_SAFE  __attribute__ ((format (printf, 2, 3)))
 #define PRINTF3_ARGS_SAFE  __attribute__ ((format (printf, 3, 4)))
 #define PRINTF4_ARGS_SAFE  __attribute__ ((format (printf, 4, 5)))
+
+#endif
 
 
 namespace Tomographer {
@@ -283,7 +299,7 @@ public:
    * See \ref debug(const char *, Fn) for information about the function arguments.
    */
   template<typename Fn>
-  inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
   error(const char * origin, Fn f);
 
   /** \brief emit a warning message
@@ -310,7 +326,7 @@ public:
    * See \ref debug(const char *, Fn) for information about the function arguments.
    */
   template<typename Fn>
-  inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
   warning(const char * origin, Fn f);
 
   /** \brief emit an information/notice message
@@ -337,7 +353,7 @@ public:
    * See \ref debug(const char *, Fn) for information about the function arguments.
    */
   template<typename Fn>
-  inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
   info(const char * origin, Fn f);
 
   /** \brief emit an debug message
@@ -405,7 +421,7 @@ public:
    * this!)
    */
   template<typename Fn>
-  inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
   debug(const char * origin, Fn f);
 
   /** \brief emit a very verbose debugging message
@@ -432,7 +448,7 @@ public:
    * See \ref debug(const char *, Fn) for information about the function arguments.
    */
   template<typename Fn>
-  inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
   longdebug(const char * origin, Fn f);
 
 
@@ -467,7 +483,7 @@ public:
    * arguments.
    */
   template<typename Fn>
-  inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
   log(int level, const char * origin, Fn f);
 
   /** \brief Check whether the logger is statically disabled for some levels
@@ -569,7 +585,7 @@ namespace tomo_internal {
     }
     template<typename Fn>
     static inline
-    typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+    ENABLE_IF_Fn_CALLABLE_OSTREAM
     test_and_call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin, Fn f) throw()
     {
       if ( ! loggerbase->enabled_for(level) ) {
@@ -658,7 +674,7 @@ inline void LoggerBase<Derived>::error(const char * origin, const std::string & 
 
 template<typename Derived>
 template<typename Fn>
-inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+inline ENABLE_IF_Fn_CALLABLE_OSTREAM
 LoggerBase<Derived>::error(const char * origin, Fn f)
 {
   tomo_internal::LoggerBaseHelperStatic<Derived,Logger::ERROR>::test_and_call_emit_log(this, origin, f);
@@ -682,7 +698,7 @@ inline void LoggerBase<Derived>::warning(const char * origin, const std::string 
 
 template<typename Derived>
 template<typename Fn>
-inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+inline ENABLE_IF_Fn_CALLABLE_OSTREAM
 LoggerBase<Derived>::warning(const char * origin, Fn f)
 {
   tomo_internal::LoggerBaseHelperStatic<Derived,Logger::WARNING>::test_and_call_emit_log(this, origin, f);
@@ -705,7 +721,7 @@ inline void LoggerBase<Derived>::info(const char * origin, const std::string & m
 
 template<typename Derived>
 template<typename Fn>
-inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+inline ENABLE_IF_Fn_CALLABLE_OSTREAM
 LoggerBase<Derived>::info(const char * origin, Fn f)
 {
   tomo_internal::LoggerBaseHelperStatic<Derived,Logger::INFO>::test_and_call_emit_log(this, origin, f);
@@ -728,7 +744,7 @@ inline void LoggerBase<Derived>::debug(const char * origin, const std::string & 
 
 template<typename Derived>
 template<typename Fn>
-inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+inline ENABLE_IF_Fn_CALLABLE_OSTREAM
 LoggerBase<Derived>::debug(const char * origin, Fn f)
 {
   tomo_internal::LoggerBaseHelperStatic<Derived,Logger::DEBUG>::test_and_call_emit_log(this, origin, f);
@@ -751,7 +767,7 @@ inline void LoggerBase<Derived>::longdebug(const char * origin, const std::strin
 
 template<typename Derived>
 template<typename Fn>
-inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+inline ENABLE_IF_Fn_CALLABLE_OSTREAM
 LoggerBase<Derived>::longdebug(const char * origin, Fn f)
 {
   tomo_internal::LoggerBaseHelperStatic<Derived,Logger::LONGDEBUG>::test_and_call_emit_log(this, origin, f);
@@ -775,7 +791,7 @@ inline void LoggerBase<Derived>::log(int level, const char * origin, const std::
 
 template<typename Derived>
 template<typename Fn>
-inline typename std::enable_if<std::is_convertible<Fn,std::function<void()> >::value, void>::type
+inline ENABLE_IF_Fn_CALLABLE_OSTREAM
 LoggerBase<Derived>::log(int level, const char * origin, Fn f)
 {
   tomo_internal::LoggerBaseHelperDynamic<Derived>::test_and_call_emit_log(this, level, origin, f);

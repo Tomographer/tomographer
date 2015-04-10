@@ -3,6 +3,11 @@
 #define DMINTEGRATOR_H
 
 #include <cstddef>
+#include <cmath>
+
+#include <string>
+#include <random>
+#include <limits>
 
 #include <tomographer/qit/util.h>
 #include <tomographer/qit/dist.h>
@@ -576,7 +581,7 @@ namespace DMIntegratorTasks
               (unsigned long)k, (unsigned long)totiters, (unsigned long)rw.n_sweep(),
               (unsigned long)rw.n_therm(), (unsigned long)rw.n_run(),
               fdone*100.0,
-              (rw.has_acceptance_ratio() ? rw.acceptance_ratio() : std::nan(""))
+              (rw.has_acceptance_ratio() ? rw.acceptance_ratio() : std::numeric_limits<double>::quiet_NaN())
               );
           tmgriface->submit_status_report(StatusReport(fdone, msg, k, rw.n_sweep(), rw.n_therm(),
                                                        rw.n_run(), rw.acceptance_ratio()));

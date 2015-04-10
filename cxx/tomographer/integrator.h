@@ -178,6 +178,7 @@ namespace tomo_internal {
                                      const PointType & /*curpt*/, FnValueType /*curptval*/)
     {
       assert(0 && "UNKNOWN UseFnSyntaxType: Not implemented");
+      return 0;
     }
   };
 

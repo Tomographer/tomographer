@@ -441,20 +441,22 @@ namespace MultiProc {
                                "will request a status report.");
 
       // prepare function to pass on to threads, in a thread-safe wrapper
-      shared_data.status_report_fn = [&fntask,&shared_data,&fndone](int threadnum, const TaskStatusReportType& srep) {
+      auto self = this;
+      shared_data.status_report_fn = [&fntask,&fndone,self](int threadnum, const TaskStatusReportType& srep) {
 #pragma omp critical
         {
           //          shared_data.logger.debug("OMPTaskDispatcher::request_status_report()",
           //                                   "got report from thread #%d.", threadnum);
           fntask(threadnum, srep);
-          ++ shared_data.status_report_numreportsrecieved;
-          if ((int)shared_data.status_report_numreportsrecieved == shared_data.num_active_working_threads) {
+          ++ self->shared_data.status_report_numreportsrecieved;
+          if (self->shared_data.status_report_numreportsrecieved
+              == self->shared_data.num_active_working_threads) {
             // all reports recieved: done
-            shared_data.status_report_numreportsrecieved = 0;
-            shared_data.status_report_fn = ThreadStatReportFnType(); // empty function
+            self->shared_data.status_report_numreportsrecieved = 0;
+            self->shared_data.status_report_fn = ThreadStatReportFnType(); // empty function
             fndone();
-            shared_data.logger.debug("OMPTaskDispatcher::request_status_report()",
-                                     "finished reporting.");
+            self->shared_data.logger.debug("OMPTaskDispatcher::request_status_report()",
+                                           "finished reporting.");
           }
         }
       };

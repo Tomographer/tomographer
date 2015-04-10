@@ -413,8 +413,8 @@ struct SigHandlerStatusReporter : public SignalHandler
 
   virtual void handle_signal(int /*sig*/)
   {
-    auto fnoverall = [time_start](int num_completed, int num_total, int num_active_working_threads,
-                                  int num_threads) {
+    auto fnoverall = [this](int num_completed, int num_total, int num_active_working_threads,
+                                       int num_threads) {
       std::string elapsed = fmt_duration(TimerClock::now() - time_start);
       fprintf(stderr,
               "\n"
