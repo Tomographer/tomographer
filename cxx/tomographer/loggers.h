@@ -11,17 +11,6 @@
 #include <type_traits>
 
 
-#ifdef PARSED_BY_DOXYGEN
-
-#define ENABLE_IF_Fn_CALLABLE_OSTREAM  void
-
-#define PRINTF1_ARGS_SAFE
-#define PRINTF2_ARGS_SAFE
-#define PRINTF3_ARGS_SAFE
-#define PRINTF4_ARGS_SAFE
-
-#else
-
 #define ENABLE_IF_Fn_CALLABLE_OSTREAM                                      \
   typename std::enable_if<std::is_convertible<Fn,std::function<void(std::ostream&)> >::value, void>::type
 
@@ -29,8 +18,6 @@
 #define PRINTF2_ARGS_SAFE  __attribute__ ((format (printf, 2, 3)))
 #define PRINTF3_ARGS_SAFE  __attribute__ ((format (printf, 3, 4)))
 #define PRINTF4_ARGS_SAFE  __attribute__ ((format (printf, 4, 5)))
-
-#endif
 
 
 namespace Tomographer {
