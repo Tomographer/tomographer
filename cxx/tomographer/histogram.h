@@ -38,6 +38,37 @@ struct UniformBinsHistogram
     Scalar max;
     //! Number of bins to split the range into
     std::size_t num_bins;
+
+    //! Tests whether the given value is in the range of the histogram
+    /**
+     * \return \c true if \c value is finite (not inf or nan) and within the interval
+     * \f$[\text{min},\text{max}[\f$.
+     */
+    inline bool is_within_bounds(Scalar value) const
+    {
+      //    printf("is_within_bounds(%.4g) : isfinite=%d, min=%.4g, max=%.4g",
+      //           value, std::isfinite(value), params.min, params.max);
+      return std::isfinite(value) && value >= min && value < max;
+    }
+    //! Returns which bin this value should be counted in (index in \ref bins array)
+    inline int bin_index(Scalar value) const
+    {
+      if ( !is_within_bounds(value) ) {
+        return -1;
+      }
+      return (int)((value-min) / (max-min) * num_bins);
+    }
+    //! Returns the value which a given bin index represents (lower bin value limit)
+    inline Scalar bin_lower_value(int index) const
+    {
+      assert(index >= 0 && (std::size_t)index < num_bins);
+      return min + index * (max-min) / num_bins;
+    }
+    //! Returns the width of a bin
+    inline Scalar bin_resolution() const
+    {
+      return (max - min) / num_bins;
+    }
   };
 
   //! Parameters of this histogram (range and # of bins)
@@ -66,24 +97,25 @@ struct UniformBinsHistogram
     off_chart = 0;
   }
 
-  //! Tests whether the given value is in the range of the histogram
-  /**
-   * \return \c true if \c value is finite (not inf or nan) and within the interval
-   * \f$[\text{min},\text{max}[\f$.
-   */
-  inline bool is_within_bounds(Scalar value)
+  //! Shorthand for <code>params->is_within_bounds(value)</code>
+  inline bool is_within_bounds(Scalar value) const
   {
-    //    printf("is_within_bounds(%.4g) : isfinite=%d, min=%.4g, max=%.4g",
-    //           value, std::isfinite(value), params.min, params.max);
-    return std::isfinite(value) && value >= params.min && value < params.max;
+    return params.is_within_bounds(value);
   }
-  //! Returns which bin this value should be counted in (index in \ref bins array)
-  inline int bin_index(Scalar value)
+  //! Shorthand for <code>params->bin_index(value)</code>
+  inline int bin_index(Scalar value) const
   {
-    if ( !is_within_bounds(value) ) {
-      return -1;
-    }
-    return (int)((value-params.min) / (params.max-params.min) * bins.size());
+    return params.bin_index(value);
+  }
+  //! Shorthand for <code>params->bin_lower_value(index)</code>
+  inline Scalar bin_lower_value(int index) const
+  {
+    params.bin_lower_value(index);
+  }
+  //! Shorthand for <code>params->bin_resolution()</code>
+  inline Scalar bin_resolution() const
+  {
+    return params.bin_resolution();
   }
 
   //! Record a new value in the histogram

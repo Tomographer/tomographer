@@ -12,6 +12,9 @@
 
 #include <complex>
 #include <chrono>
+#include <iostream>
+#include <fstream>
+#include <iomanip>
 
 #include <boost/program_options.hpp>
 
@@ -628,8 +631,24 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logge
         str << "FINAL HISTOGRAM\n" << results.pretty_print(width) << "\n";
       });
 
+
+  // save the histogram to a CSV file if the user required it
+  if (opt->write_histogram.size()) {
+    std::string csvfname = opt->write_histogram+"-histogram.csv";
+    std::ofstream outf;
+    outf.open(csvfname);
+    outf << "Fidelity\tAvgCounts\tError\n"
+         << std::scientific << std::setprecision(10);
+    for (int kk = 0; kk < results.final_histogram.size(); ++kk) {
+      outf << (double)results.params.bin_lower_value(kk) << "\t"
+           << (double)results.final_histogram(kk) << "\t"
+           << (double)results.std_dev(kk) << "\n";
+    }
+    logger.info("tomorun()", "Wrote histogram to CSV file %s", csvfname.c_str());
+  }
+
   logger.info("tomorun()",
-              "Total elapsed time: %s\n\n",
+              "Computation time: %s\n\n",
               elapsed_s.c_str());
 
 }
