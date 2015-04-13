@@ -17,7 +17,7 @@ namespace Tomographer {
  */
 namespace MultiProc {
 
-  /** \brief Simple status report class
+  /** \brief Basic status report class
    *
    * This may serve as base class for a more detailed and specific status report.
    *
@@ -29,6 +29,9 @@ namespace MultiProc {
    */
   struct StatusReport
   {
+    StatusReport()
+      : fraction_done(0), msg("<unknown>")
+    { }
     StatusReport(double fraction_done_, const std::string& msg_)
       : fraction_done(fraction_done_), msg(msg_)
     { }

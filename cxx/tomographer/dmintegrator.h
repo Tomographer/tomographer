@@ -415,10 +415,13 @@ namespace DMIntegratorTasks
      *
      * This is for use with, for example, \ref OMPTaskDispatcher::request_status_report().
      */
-    struct StatusReport : MultiProc::StatusReport {
+    struct StatusReport : MultiProc::StatusReport
+    {
       /** \brief Constructor which initializes all fields */
-      StatusReport(double fdone, const std::string & msg, CountIntType kstep_, CountIntType n_sweep_,
-                   CountIntType n_therm_, CountIntType n_run_, double acceptance_ratio_)
+      StatusReport(double fdone = 0.0, const std::string & msg = std::string(),
+                   CountIntType kstep_ = 0, CountIntType n_sweep_ = 0,
+                   CountIntType n_therm_ = 0, CountIntType n_run_ = 0,
+                   double acceptance_ratio_ = 0.0)
         : MultiProc::StatusReport(fdone, msg),
           kstep(kstep_),
           n_sweep(n_sweep_),
@@ -429,24 +432,24 @@ namespace DMIntegratorTasks
       {
       }
       /** \brief the current iteration number */
-      const CountIntType kstep;
+      CountIntType kstep;
       /** \brief the number of iterations that form a sweep (see \ref MHRandomWalk) */
-      const CountIntType n_sweep;
+      CountIntType n_sweep;
       /** \brief the number of thermalization sweeps (see \ref MHRandomWalk) */
-      const CountIntType n_therm;
+      CountIntType n_therm;
       /** \brief the number of live run sweeps (see \ref MHRandomWalk) */
-      const CountIntType n_run;
+      CountIntType n_run;
       /** \brief the current acceptance ratio of the random walk (see
        *    \ref Tomographer::MHRandomWalk::acceptance_ratio()
        * ) */
-      const double acceptance_ratio;
+      double acceptance_ratio;
       /** \brief the total number of iterations required for this random walk
        *
        * This is calculated as \f$
        *  \textit{nTotalIters} = \textit{nSweep} \times \left( \textit{nTherm} + \textit{nRun} \right)
        * \f$.
        */
-      const CountIntType n_total_iters;
+      CountIntType n_total_iters;
     };
     /** \brief Typedef for \ref StatusReport. This is needed by, e.g. \ref
      *         MultiProc::OMPTaskDispatcher.

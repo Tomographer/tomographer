@@ -10,6 +10,7 @@
 #include <signal.h>
 #include <unistd.h>
 
+#include <algorithm>
 #include <complex>
 #include <chrono>
 #include <iostream>
@@ -384,6 +385,10 @@ int main(int argc, char **argv)
 
 
 
+
+
+
+
 //
 // Some ugly workaround to be able to call code within the templated tomorun() from our
 // signal handler.
@@ -398,6 +403,7 @@ struct SignalHandler
 
 static SignalHandler * signal_handler = NULL;
 
+
 //
 // A generic handler which requests a status report from an OMPTaskDispatcher
 //
@@ -407,6 +413,11 @@ struct SigHandlerStatusReporter : public SignalHandler
   SigHandlerStatusReporter(OMPTaskDispatcher * tasks_, Logger & logger_)
     : tasks(tasks_), logger(logger_), time_start()
   {
+    tasks->set_status_report_handler(
+        [this](const typename OMPTaskDispatcher::FullStatusReportType& report) {
+          logger.debug("SigHandlerStatusReporter/lambda", "intermediate progress report lambda called");
+          this->intermediate_progress_report(report);
+        });
   }
   
   OMPTaskDispatcher * tasks;
@@ -416,30 +427,45 @@ struct SigHandlerStatusReporter : public SignalHandler
 
   virtual void handle_signal(int /*sig*/)
   {
-    auto fnoverall = [this](int num_completed, int num_total, int num_active_working_threads,
-                                       int num_threads) {
-      std::string elapsed = fmt_duration(TimerClock::now() - time_start);
-      fprintf(stderr,
-              "\n"
-              "=========================== Intermediate Progress Report ============================\n"
-              "                                              (hit Ctrl+C quickly again to interrupt)\n"
-              "  Total Completed Runs: %d/%d: %5.2f%%\n"
-              "  %s total elapsed\n"
-              "Current Run(s) information (threads %d working / %d spawned):\n",
-              num_completed, num_total, (double)num_completed/num_total*100.0,
-              elapsed.c_str(), num_active_working_threads, num_threads
-              );
-    };
-    auto fntask = [](int thread_num, const MultiProc::StatusReport & report) {
-      fprintf(stderr,
-              "=== Thread #%2d: %s\n", thread_num, report.msg.c_str());
-    };
-    auto fndone = []() {
-      fprintf(stderr,
-              "=====================================================================================\n\n");
-    };
-    tasks->request_status_report(fnoverall, fntask, fndone);
+    tasks->request_status_report();
   }
+
+  //
+  // Format a nice intermediate progress report.
+  //
+  void intermediate_progress_report(const typename OMPTaskDispatcher::FullStatusReportType& report)
+  {
+    std::string elapsed = fmt_duration(TimerClock::now() - time_start);
+    fprintf(stderr,
+            "\n"
+            "=========================== Intermediate Progress Report ============================\n"
+            "                                              (hit Ctrl+C quickly again to interrupt)\n"
+            "  Total Completed Runs: %d/%d: %5.2f%%\n"
+            "  %s total elapsed\n"
+            "Current Run(s) information (threads %d working / %d spawned):\n",
+            report.num_completed, report.num_total_runs,
+            (double)report.num_completed/report.num_total_runs*100.0,
+            elapsed.c_str(), report.num_active_working_threads,
+            report.num_threads
+            );
+    // calculate padding needed to align results
+    //    typedef typename OMPTaskDispatcher::TaskStatusReportType TaskStatusReportType;
+    //    auto elem = std::max_element(report.tasks_reports.begin(), report.tasks_reports.end(),
+    //                                 [](const TaskStatusReportType& a, const TaskStatusReportType& b) -> bool {
+    //                                   return a.msg.size() < b.msg.size();
+    //                                 });
+    //    std::size_t maxmsgwid = (*elem).msg.size();
+    for (int k = 0; k < report.num_threads; ++k) {
+      std::string msg = report.tasks_running[k] ? report.tasks_reports[k].msg : std::string("<idle>");
+      //      if (msg.size() < maxmsgwid) {
+      //        msg.insert(0, maxmsgwid - msg.size(), ' ');
+      //      }
+      fprintf(stderr, "=== Thread #%2d: %s\n", k, msg.c_str());
+    }
+    fprintf(stderr,
+            "=====================================================================================\n\n");
+  };
+
 };
 
 template<typename OMPTaskDispatcher, typename Logger>
@@ -452,6 +478,11 @@ makeSigHandlerStatusReporter(OMPTaskDispatcher * tasks, Logger & logger)
 
 
 
+
+//const std::time_t SIG_HIT_REPEAT_EXIT_DELAY = 0; // set this only for debugging the signal interrupt
+const std::time_t SIG_HIT_REPEAT_EXIT_DELAY = 2;
+
+
 static std::time_t last_sig_hit_time = 0;
 
 void sig_int_handler(int signal)
@@ -459,7 +490,7 @@ void sig_int_handler(int signal)
   std::fprintf(stderr, "\n*** interrupt\n");
   std::time_t now;
   time(&now);
-  if ( (now - last_sig_hit_time) < 2 ) {
+  if ( (now - last_sig_hit_time) < SIG_HIT_REPEAT_EXIT_DELAY ) {
     // two interrupts within two seconds --> exit
     std::fprintf(stderr, "\n*** Exit\n");
     ::exit(1);
