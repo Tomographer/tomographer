@@ -442,7 +442,7 @@ struct SigHandlerStatusReporter : public SignalHandler
             "                                              (hit Ctrl+C quickly again to interrupt)\n"
             "  Total Completed Runs: %d/%d: %5.2f%%\n"
             "  %s total elapsed\n"
-            "Current Run(s) information (threads %d working / %d spawned):\n",
+            "Current Run(s) information (threads working/spawned %d/%d):\n",
             report.num_completed, report.num_total_runs,
             (double)report.num_completed/report.num_total_runs*100.0,
             elapsed.c_str(), report.num_active_working_threads,

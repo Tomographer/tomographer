@@ -62,5 +62,10 @@ function analyze_tomorun_histogram(histfname, varargin)
   plot(xx, exp(thefitfunc(thefit.a, thefit.b, thefit.c, xx)), 'r-');
   set(gca, 'YScale', 'log');
   
+  % ---
+  % plot the fit back onto the first figure
+  mynamedfigure('intgr-fid-epsilon');
+  hold on;
+  plot(xx, exp(thefitfunc(thefit.a, thefit.b, thefit.c, xx)), 'r-');
 
 end
