@@ -116,6 +116,18 @@ SimpleFoutLogger logger(stdout, Logger::INFO, false);
 
 // ------------------------------------------------------------------------------
 
+class bad_options : public std::exception
+{
+  std::string _msg;
+public:
+  bad_options(const std::string& msg) : _msg(msg) { }
+  virtual ~bad_options() throw() { }
+
+  virtual const char * what() const throw() {
+    return (std::string("Bad program options: ") + _msg).c_str();
+  }
+};
+
 void parse_options(ProgOptions * opt, int argc, char **argv)
 {
   // read the options
@@ -125,7 +137,10 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
 
   std::string fidhiststr;
 
-  options_description desc("Allowed Options");
+  std::string configfname;
+  bool write_histogram_from_config_file_name = false;
+
+  options_description desc("Options");
   desc.add_options()
     ("help", "Print Help Message")
     ("data-file-name", value<std::string>(& opt->data_file_name)->default_value("testfile.mat"),
@@ -156,6 +171,13 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
      "to avoid renicing.")
     ("log", value<std::string>(& flogname),
      "Redirect standard output (log) to the given file. Use '-' for stdout. If file exists, will append.")
+    ("config", value<std::string>(),
+     "Read options from the given file. Use lines with syntax \"key=value\".")
+    ("write-histogram-from-config-file-name",
+     bool_switch(&write_histogram_from_config_file_name)->default_value(false),
+     "Same as --write-histogram=tomorun-<config-file>, where <config-file> is the file name passed to "
+     "the option --config. This option can only be used in conjunction with --config and may not "
+     "be used with --write-histogram.")
     ;
 
   try {
@@ -167,10 +189,18 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
       ::exit(1);
     }
 
+    // see http://www.boost.org/doc/libs/1_57_0/doc/html/program_options/howto.html#idp343356848
+    if (vm.count("config")) {
+      // load the file, and include options from that file
+      configfname = vm["config"].as<std::string>();
+      logger.info("parse_options()", "Loading options from file %s\n", configfname.c_str());
+      // this will not overwrite options already given on the command line
+      store(parse_config_file<char>(configfname.c_str(), desc), vm);
+    }
+
     notify(vm);
   } catch (const std::exception& e) {
-    std::cerr << "Error: " << e.what() << "\n";
-    ::exit(255);
+    throw bad_options(streamstr("Error parsing program options: " << e.what()));
   }
 
   // set up logging
@@ -179,8 +209,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
   } else {
     opt->flog = fopen(flogname.c_str(), "a");
     if (opt->flog == NULL) {
-      logger.error("parse_options()", "Can't open file %s for logging: %s", flogname.c_str(), strerror(errno));
-      ::exit(255);
+      throw bad_options(streamstr("Can't open file "<<flogname<<" for logging: " << strerror(errno)));
     }
     logger.info("parse_options()", "Output is now being redirected to %s.", flogname.c_str());
 
@@ -205,13 +234,23 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
   // set up log level
   logger.setLevel(opt->loglevel);
 
+  // set up write histogram file name from config file name
+  if (write_histogram_from_config_file_name) {
+    if (!configfname.size()) {
+      throw bad_options("--write-histogram-from-config-file-name may only be used with --config");
+    }
+    if (opt->write_histogram.size()) {
+      throw bad_options("--write-histogram-from-config-file-name may not be used with --write-histogram");
+    }
+    opt->write_histogram = std::string("tomorun-") + configfname;
+  }
+
+  // set up fidelity histogram parameters
   if (fidhiststr.size()) {
     double fmin, fmax;
     int nbins = 100;
     if (std::sscanf(fidhiststr.c_str(), "%lf:%lf/%d", &fmin, &fmax, &nbins) < 2) {
-      logger.error("parse_options()",
-                   "Error: --fidelity-hist expects an argument of format MIN:MAX[/NPOINTS]");
-      ::exit(255);
+      throw bad_options("--fidelity-hist expects an argument of format MIN:MAX[/NPOINTS]");
     }
 
     opt->fid_min = fmin;
@@ -284,7 +323,12 @@ int main(int argc, char **argv)
 {
   ProgOptions opt;
 
-  parse_options(&opt, argc, argv);
+  try {
+    parse_options(&opt, argc, argv);
+  } catch (const bad_options& e) {
+    fprintf(stderr, "%s\n", e.what());
+    return 127;
+  }
 
   logger.info(
       // origin
