@@ -13,7 +13,7 @@
 #include <tomographer/qit/matrq.h>
 #include <tomographer/qit/param_herm_x.h>
 #include <tomographer/tomoproblem.h>
-#include <tomographer/loggers.h>
+//#include <tomographer/tools/loggers.h>
 
 
 namespace Tomographer {
@@ -446,8 +446,8 @@ public:
     _log.longdebug("MHRandomWalk",
                    "%s%3u: %s a=%-7.2g, newptval=%5.4g [llh=%.4g], curptval=%5.4g [llh=%.4g]   accept_ratio=%s",
                    (is_thermalizing?"T":"#"),
-                   k, accept?"AC":"RJ", a, newptval, -2*newptval, curptval, -2*curptval,
-                   (!is_thermalizing?fmts("%.2g", acceptance_ratio()).c_str():"N/A"));
+                   k, accept?"AC":"RJ", (double)a, (double)newptval, -2.0*newptval, (double)curptval, -2.0*curptval,
+                   (!is_thermalizing?Tools::fmts("%.2g", acceptance_ratio()).c_str():"N/A"));
 
     if (accept) {
       // update the internal state of the random walk

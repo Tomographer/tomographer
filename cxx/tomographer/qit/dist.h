@@ -36,7 +36,7 @@ inline ValueType fidelity(const Eigen::MatrixBase<Derived>& rho, const Eigen::Ma
  * \f[
  *    F(T_1 T_1^\dagger, T_2 T_2^\dagger)
  *        = \left\Vert\rho^{1/2}\sigma^{1/2}\right\Vert_1
- *        = \left\Vert T_1^\dagger * T_2\right\Vert_1 .
+ *        = \left\Vert T_1^\dagger T_2\right\Vert_1 .
  * \f]
  *
  * \note This is the Nielsen & Chuang fidelity, also called "root fidelity."

@@ -57,6 +57,9 @@ inline void param_x_to_herm(Eigen::MatrixBase<Derived1>& Herm, const Eigen::Dens
  * See also \ref param_x_to_herm().
  * 
  * \note This function only accesses lower triangular part of \c Herm.
+ *
+ * \bug There is a problem if we pass as second parameter here an expression. Use
+ *      Eigen::Ref instead?
  */
 template<typename Derived1, typename Derived2>
 inline void param_herm_to_x(Eigen::DenseBase<Derived1>& x, const Eigen::MatrixBase<Derived2>& Herm)

@@ -194,6 +194,10 @@ namespace MultiProc {
    *     keep in mind that each of these methods will be called from a local thread.
    *
    *     <ul>
+   *     <li> <code>typedef &lt;Custom-Type> ResultType;</code>
+   *          an alias for the type of, e.g. a structure, which contains the result of
+   *          the given task. See <code>Task::getResult()</code>.
+   *
    *     <li> <code>static Task::get_input(unsigned int k, const ConstantDataType * pcdata)</code>
    *          should provide input to a new task. \c k is the task iteration number
    *          and \c pcdata is a pointer to the shared const data.
@@ -218,6 +222,10 @@ namespace MultiProc {
    *          and provide a status report if requested to do so via
    *          <code>tmgriface->status_report(const TaskStatusReportType &)</code>. See documentation
    *          for \ref request_status_report().
+   *
+   *     <li> <code>Task::ResultType Task::getResult()</code>
+   *          to return a custom type which holds the result for the given task. This will be
+   *          given to the result collector.
    *     </ul>
    *
    * <li> \c ResultsCollector takes care of collecting the results from each task run. It
@@ -229,9 +237,12 @@ namespace MultiProc {
    *         will be called before the tasks are run, and before starting the parallel
    *         section.
    *
-   *     <li> <code>void ResultsCollector::collect_results(const Task& task)</code> is
-   *         called each time a task has finished. It is called <b>from a \c critical
+   *     <li> <code>void ResultsCollector::collect_result(unsigned int task_no,
+   *                                                      const Task::ResultType& taskresult)</code>
+   *         is called each time a task has finished. It is called <b>from a \c critical
    *         OMP section</b>, meaning that it may safely access and write shared data.
+   *
+   *     <li><code> void ResultsCollector::runs_finished(...)</code> .............
    *     </ul>
    *
    * <li> \c Logger is a logger type derived from \ref LoggerBase, for example
@@ -283,6 +294,7 @@ namespace MultiProc {
           results(results_),
           logger(logger_),
           status_report_underway(false),
+	  status_report_initialized(false),
           status_report_counter(0),
           status_report_numreportsrecieved(0),
           status_report_full(),
@@ -386,7 +398,7 @@ namespace MultiProc {
               shared_data->status_report_full.tasks_reports.clear();
               shared_data->status_report_full.tasks_running.resize(num_threads, false);
               shared_data->status_report_full.tasks_reports.resize(num_threads);
-              logger->debug("OMPTaskDispather::request_status_report", "vectors resized to %lu & %lu, resp.",
+              logger->debug("OMPTaskDispatcher/taskmanageriface", "vectors resized to %lu & %lu, resp.",
                            shared_data->status_report_full.tasks_running.size(),
                            shared_data->status_report_full.tasks_reports.size());
               shared_data->status_report_numreportsrecieved = 0;
@@ -401,6 +413,8 @@ namespace MultiProc {
             //
             // Report the data corresponding to this thread.
             //
+	    logger->debug("OMPTaskDispatcher/taskmanageriface", "threadnum=%ld, tasks_reports.size()=%ld",
+			  (long)threadnum, (long)shared_data->status_report_full.tasks_reports.size());
 
             assert(0 <= threadnum && (std::size_t)threadnum < shared_data->status_report_full.tasks_reports.size());
 
@@ -481,7 +495,7 @@ namespace MultiProc {
 
 #pragma omp critical
           {
-            shdat->results->collect_results(t);
+            shdat->results->collect_result(k, t.getResult(), shdat->pcdata);
 
             if ((int)privdat.local_status_report_counter != (int)shdat->status_report_counter) {
               // status report request missed by task... do as if we had provided a
@@ -495,7 +509,7 @@ namespace MultiProc {
         }
       }
     
-      shared_data.results->run_finished();
+      shared_data.results->runs_finished(num_total_runs, shared_data.pcdata);
     }
 
 

@@ -7,6 +7,7 @@
 #include <ctime>
 #include <cerrno>
 
+#include <libgen.h> // dirname, basename
 #include <signal.h>
 #include <unistd.h>
 
@@ -31,13 +32,14 @@
 #  include <omp.h>
 //#endif
 
+#include <tomographer/tools/util.h>
+#include <tomographer/tools/loggers.h>
 #include <tomographer/qit/matrq.h>
 #include <tomographer/qit/util.h>
 #include <tomographer/qit/param_herm_x.h>
-#include <tomographer/loggers.h>
 #include <tomographer/tomoproblem.h>
 #include <tomographer/integrator.h>
-#include <tomographer/dmintegrator.h>
+#include <tomographer/dmllhintegrator.h>
 #include <tomographer/multiprocomp.h>
 
 
@@ -47,8 +49,8 @@
 //#define DO_SLOW_POVM_CONSISTENCY_CHECKS
 
 
-//#define TimerClock std::chrono::high_resolution_clock
-#define TimerClock std::chrono::system_clock
+//typedef std::chrono::high_resolution_clock TimerClock;
+typedef std::chrono::system_clock TimerClock;
 
 
 
@@ -134,10 +136,13 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
   using namespace boost::program_options;
 
   std::string flogname;
+  bool flogname_from_config_file_name = false;
 
   std::string fidhiststr;
 
   std::string configfname;
+  std::string configdir;
+  std::string configbasename;
   bool write_histogram_from_config_file_name = false;
 
   options_description desc("Options");
@@ -171,6 +176,10 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
      "to avoid renicing.")
     ("log", value<std::string>(& flogname),
      "Redirect standard output (log) to the given file. Use '-' for stdout. If file exists, will append.")
+    ("log-from-config-file-name", bool_switch(& flogname_from_config_file_name)->default_value(false),
+     "Same as --log=tomorun-<config-file>.log, where <config-file> is the file name passed to the"
+     "option --config. This option can only be used in conjunction with --config and may not be used"
+     "with --log.")
     ("config", value<std::string>(),
      "Read options from the given file. Use lines with syntax \"key=value\".")
     ("write-histogram-from-config-file-name",
@@ -196,14 +205,50 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
       logger.info("parse_options()", "Loading options from file %s\n", configfname.c_str());
       // this will not overwrite options already given on the command line
       store(parse_config_file<char>(configfname.c_str(), desc), vm);
+
+      // for options --write-histogram-from-config-file-name and --log-from-config-file-name:
+      char *tmpbuf = new char[configfname.size()+1];
+      strcpy(tmpbuf, configfname.c_str());
+      configdir = std::string(dirname(tmpbuf)); // deep copy result to a std::string()
+      strcpy(tmpbuf, configfname.c_str()); // dirname/basename may modify their argument.
+      configbasename = std::string(basename(tmpbuf)); // deep copy result to a std::string()
+      // clean up
+      delete[] tmpbuf;
+
+      /** \todo In a future version, maybe we will support running config files in
+       * different directories. But for now, since a config file may refer to e.g. a data
+       * file with a relative path, we'll just require that the config file be in the same
+       * dir. makes things much easier, reduces the number of possible bugs and unexpected
+       * behavior risks. Same thing for log file and histogram write file.
+       */
+      if (configdir != ".") {
+	throw bad_options(streamstr("Config file must reside in current working directory: " << configfname));
+      }
+
+      // debug
+      //logger.debug("parse_options()", [=](std::ostream& s) { s << "configdir=" << configdir; });
+      //logger.debug("parse_options()", [=](std::ostream& s) { s << "configbasename=" << configbasename; });
     }
 
     notify(vm);
+  } catch (const bad_options&) {
+    throw;
   } catch (const std::exception& e) {
     throw bad_options(streamstr("Error parsing program options: " << e.what()));
   }
 
-  // set up logging
+  // set up logging.
+  // maybe set up log file name from config file name
+  if (flogname_from_config_file_name) {
+    if (!configfname.size()) {
+      throw bad_options("--log-from-config-file-name may only be used with --config");
+    }
+    if (flogname.size()) {
+      throw bad_options("--log-from-config-file-name may not be used with --log");
+    }
+    flogname = configdir + "/" + std::string("tomorun-") + configbasename + std::string(".log");
+  }
+  // prepare log file, and maybe write out header
   if (flogname.size() == 0 || flogname == "-") {
     opt->flog = stdout;
   } else {
@@ -242,7 +287,8 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
     if (opt->write_histogram.size()) {
       throw bad_options("--write-histogram-from-config-file-name may not be used with --write-histogram");
     }
-    opt->write_histogram = std::string("tomorun-") + configfname;
+    // "--histogram.csv" is appended later anyway
+    opt->write_histogram = configdir + "/" + std::string("tomorun-") + configbasename;
   }
 
   // set up fidelity histogram parameters
@@ -293,23 +339,6 @@ void display_parameters(ProgOptions * opt)
       (double)(opt->Nrun*opt->Nrepeats)
       );
 }
-
-
-// --------------------------------------------------
-
-template<typename Duration>
-std::string fmt_duration(Duration dt)
-{
-  // delta-time, in seconds and fraction of seconds
-  double seconds = (double)dt.count() * Duration::period::num / Duration::period::den ;
-
-  // split `seconds' into integral part and fractional part
-  double dt_i_d;
-  double dt_f = std::modf(seconds, &dt_i_d);
-  int dt_i = (int)(dt_i_d+0.5);
-
-  return fmts("%d:%02d:%02d.%03d", dt_i/3600, (dt_i/60)%60, dt_i%60, (int)(dt_f*1000+0.5));
-};
 
 
 
@@ -389,10 +418,10 @@ int main(int argc, char **argv)
     ::exit(1);
   }
 
-  auto delete_matf = finally([matf] {
-                               logger.debug("main()", "Freeing input file resource");
-                               delete matf;
-                             });
+  auto delete_matf = Tools::finally([matf] {
+      logger.debug("main()", "Freeing input file resource");
+      delete matf;
+    });
 
   logger.debug("main()", "Data file opened, dim = %u", dim);
 
@@ -479,7 +508,7 @@ struct SigHandlerStatusReporter : public SignalHandler
   //
   void intermediate_progress_report(const typename OMPTaskDispatcher::FullStatusReportType& report)
   {
-    std::string elapsed = fmt_duration(TimerClock::now() - time_start);
+    std::string elapsed = Tools::fmt_duration(TimerClock::now() - time_start);
     fprintf(stderr,
             "\n"
             "=========================== Intermediate Progress Report ============================\n"
@@ -641,10 +670,10 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logge
   // Data has now been successfully read. Now, create the OMP Task Manager and run.
   //
 
-  typedef DMIntegratorTasks::CData<OurTomoProblem> OurCData;
+  typedef DMLLHIntegratorTasks::CData<OurTomoProblem> OurCData;
   typedef MultiProc::OMPTaskLogger<Logger> OurTaskLogger;
-  typedef DMIntegratorTasks::MHRandomWalkTask<OurTomoProblem,OurTaskLogger> OurMHRandomWalkTask;
-  typedef DMIntegratorTasks::MHRandomWalkResultsCollector<
+  typedef DMLLHIntegratorTasks::MHRandomWalkTask<OurTomoProblem,OurTaskLogger> OurMHRandomWalkTask;
+  typedef DMLLHIntegratorTasks::MHRandomWalkResultsCollector<
       typename OurMHRandomWalkTask::FidelityHistogramMHRWStatsCollectorType::HistogramType
       >
     OurResultsCollector;
@@ -691,7 +720,7 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logge
   logger.debug("tomorun()", "Random walks done.");
 
   // delta-time, in seconds and fraction of seconds
-  std::string elapsed_s = fmt_duration(time_end - time_start);
+  std::string elapsed_s = Tools::fmt_duration(time_end - time_start);
 
   logger.info(
       "tomorun()", [&results](std::ostream & str) {

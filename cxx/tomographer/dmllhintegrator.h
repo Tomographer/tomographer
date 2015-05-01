@@ -1,6 +1,6 @@
 
-#ifndef DMINTEGRATOR_H
-#define DMINTEGRATOR_H
+#ifndef DMLLHINTEGRATOR_H
+#define DMLLHINTEGRATOR_H
 
 #include <cstddef>
 #include <cmath>
@@ -11,8 +11,9 @@
 
 #include <tomographer/qit/util.h>
 #include <tomographer/qit/dist.h>
+#include <tomographer/tools/fmt.h>
+#include <tomographer/tools/loggers.h>
 #include <tomographer/integrator.h>
-#include <tomographer/loggers.h>
 #include <tomographer/histogram.h>
 #include <tomographer/multiproc.h>
 
@@ -36,7 +37,7 @@ namespace Tomographer {
  */
 template<typename TomoProblem, typename Rng, typename MHRWStatsCollector, typename Log,
          typename CountIntType = unsigned int>
-class DMStateSpaceRandomWalk
+class DMStateSpaceLLHRandomWalk
 {
 public:
   //! The data types of our problem
@@ -71,7 +72,7 @@ private:
 
   Log & _log;
   
-  typedef MHRandomWalk<Rng,DMStateSpaceRandomWalk<TomoProblem,Rng,MHRWStatsCollector,Log>,MHRWStatsCollector,
+  typedef MHRandomWalk<Rng,DMStateSpaceLLHRandomWalk<TomoProblem,Rng,MHRWStatsCollector,Log>,MHRWStatsCollector,
                        Log,CountIntType>
           OurMHRandomWalk;
 
@@ -84,7 +85,7 @@ public:
    * If you provide a zero \a startpt here, then a random starting point will be chosen
    * using the \a rng random number generator to generate a random point on the sphere.
    */
-  DMStateSpaceRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run, RealScalar step_size,
+  DMStateSpaceLLHRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run, RealScalar step_size,
                          const MatrixType & startpt, const TomoProblem & tomo, Rng & rng, MHRWStatsCollector & stats,
                          Log & log_)
     : _tomo(tomo),
@@ -119,7 +120,7 @@ public:
 
       _mhrw.set_curpt(T);
     }
-    _log.debug("DMStateSpaceRandomWalk", "Starting random walk");
+    _log.debug("DMStateSpaceLLHRandomWalk", "Starting random walk");
   }
 
   //! Callback for after thermalizing is done. No-op.
@@ -184,7 +185,7 @@ public:
 };
 
 
-/** \brief Instantiate an object of type \ref DMStateSpaceRandomWalk.
+/** \brief Instantiate an object of type \ref DMStateSpaceLLHRandomWalk.
  *
  * This is useful to avoid having to spell out the full template parameters, and let the
  * function call deduce them.
@@ -192,26 +193,26 @@ public:
  * Example:
  * 
  * \code
- *   DMStateSpaceRandomWalk<MyTomoProblem,MyRng,MyMHRWStatsCollector,MyLog,
+ *   DMStateSpaceLLHRandomWalk<MyTomoProblem,MyRng,MyMHRWStatsCollector,MyLog,
  *                          MyCountIntType>  myDmStateSpaceRandomWalk(
  *          n_sweep, n_therm, n_run, step_size, startpt, tomo, rng, stats, log
  *       );
  *   // is equivalent to:
- *   auto myDmStateSpaceRandomWalk = makeDMStateSpaceRandomWalk(
+ *   auto myDmStateSpaceRandomWalk = makeDMStateSpaceLLHRandomWalk(
  *          n_sweep, n_therm, n_run, step_size, startpt, tomo, rng, stats, log
  *       );
  * \endcode
  */
 template<typename TomoProblem, typename Rng, typename MHRWStatsCollector, typename Log,
          typename CountIntType = unsigned int>
-DMStateSpaceRandomWalk<TomoProblem,Rng,MHRWStatsCollector,Log,CountIntType>
-makeDMStateSpaceRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run,
+DMStateSpaceLLHRandomWalk<TomoProblem,Rng,MHRWStatsCollector,Log,CountIntType>
+makeDMStateSpaceLLHRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run,
                            typename TomoProblem::MatrQ::RealScalar step_size,
                            const typename TomoProblem::MatrQ::MatrixType & startpt,
                            const TomoProblem & tomo, Rng & rng, MHRWStatsCollector & stats,
                            Log & log_)
 {
-  return DMStateSpaceRandomWalk<TomoProblem,Rng,MHRWStatsCollector,Log,CountIntType>(
+  return DMStateSpaceLLHRandomWalk<TomoProblem,Rng,MHRWStatsCollector,Log,CountIntType>(
       n_sweep, n_therm, n_run, step_size, startpt, tomo, rng, stats, log_
       );
 }
@@ -357,7 +358,7 @@ public:
  * pageTaskManagerDispatcher).
  *
  */
-namespace DMIntegratorTasks
+namespace DMLLHIntegratorTasks
 {
 
   /** \brief Data needed to be accessible to the working code
@@ -404,7 +405,7 @@ namespace DMIntegratorTasks
    *
    * This class can be used with \ref MultiProc::OMPTaskDispatcher, for example.
    */
-  template<typename TomoProblem, typename Logger, typename Rng = std::mt19937,
+  template<typename TomoProblem, typename LoggerType, typename Rng = std::mt19937,
            typename FidelityValueType = double, typename CountIntType = unsigned int>
   struct MHRandomWalkTask
   {
@@ -415,7 +416,7 @@ namespace DMIntegratorTasks
      *
      * This is for use with, for example, \ref OMPTaskDispatcher::request_status_report().
      */
-    struct StatusReport : MultiProc::StatusReport
+    struct StatusReport : public MultiProc::StatusReport
     {
       /** \brief Constructor which initializes all fields */
       StatusReport(double fdone = 0.0, const std::string & msg = std::string(),
@@ -456,22 +457,33 @@ namespace DMIntegratorTasks
      */
     typedef StatusReport StatusReportType;
 
-    /** \brief convenience typedef for the \ref DMIntegratorTasks::CData which we will use */
+    /** \brief convenience typedef for the \ref DMLLHIntegratorTasks::CData which we will use */
     typedef CData<TomoProblem, FidelityValueType> CDataType;
 
     /** \brief convenience typedef for our \ref FidelityHistogramMHRWStatsCollector which we use here */
-    typedef FidelityHistogramMHRWStatsCollector<typename TomoProblem::MatrQ, FidelityValueType, Logger>
+    typedef FidelityHistogramMHRWStatsCollector<typename TomoProblem::MatrQ, FidelityValueType, LoggerType>
     /*..*/ FidelityHistogramMHRWStatsCollectorType;
+
+    struct Result {
+      typename FidelityHistogramMHRWStatsCollectorType::HistogramType histogram;
+    };
+    typedef Result ResultType;
 
   private:
     /** \brief how to seed the random number generator for this particular task (input) */
     typename Rng::result_type _seed;
 
     /** \brief a logger to which we can log messages */
-    Logger _log;
+    LoggerType & _log;
 
     /** \brief our \ref FidelityHistogramMHRWStatsCollector instance */
     FidelityHistogramMHRWStatsCollectorType fidstats;
+
+    /** \brief the struct in which we hold formally the results of the current task
+     *
+     * This is none other than the histogram gathered by \ref fidstats.
+     */
+    Result result;
 
   public:
 
@@ -493,7 +505,7 @@ namespace DMIntegratorTasks
      * You should never need to call this directly, except if you're writing a task
      * manager/dispatcher (e.g. \ref OMPTaskDispatcher)
      */
-    MHRandomWalkTask(int inputseed, const CDataType * pcdata, Logger & log)
+    MHRandomWalkTask(int inputseed, const CDataType * pcdata, LoggerType & log)
       : _seed(inputseed),
         _log(log),
         fidstats(pcdata->histogram_params, pcdata->prob.T_MLE, pcdata->prob.matq, _log)
@@ -502,7 +514,7 @@ namespace DMIntegratorTasks
 
     /** \brief Run this task
      *
-     * Runs this task, i.e. instantiates a \ref DMStateSpaceRandomWalk with the provided
+     * Runs this task, i.e. instantiates a \ref DMStateSpaceLLHRandomWalk with the provided
      * inputs and data, and runs it.
      *
      * This also takes care to call the task manager interface's
@@ -510,7 +522,7 @@ namespace DMIntegratorTasks
      * e.g. \ref OMPTaskDispatcher::request_status_report().
      */
     template<typename TaskManagerIface>
-    inline void run(const CDataType * pcdata, Logger & /*log*/, TaskManagerIface * tmgriface)
+    inline void run(const CDataType * pcdata, LoggerType & /*log*/, TaskManagerIface * tmgriface)
     {
       Rng rng(_seed); // seeded random number generator
 
@@ -521,7 +533,7 @@ namespace DMIntegratorTasks
       MultipleMHRWStatsCollectors<FidelityHistogramMHRWStatsCollectorType, OurStatusReportCheck>
         statscollectors(fidstats, statreportcheck);
 
-      auto rwalk = makeDMStateSpaceRandomWalk(
+      auto rwalk = makeDMStateSpaceLLHRandomWalk(
           // MH random walk parameters
           pcdata->n_sweep,
           pcdata->n_therm,
@@ -537,12 +549,13 @@ namespace DMIntegratorTasks
           _log);
       
       rwalk.run();
+
+      result.histogram = fidstats.histogram();
     }
 
-
-    inline const FidelityHistogramMHRWStatsCollectorType & get_fid_stats() const
+    inline const Result & getResult() const
     {
-      return fidstats;
+      return result;
     }
 
   private:
@@ -578,7 +591,7 @@ namespace DMIntegratorTasks
           CountIntType totiters = rw.n_sweep()*(rw.n_therm()+rw.n_run());
           double fdone = (double)k/totiters;
           std::string msg;
-          msg = fmts(
+          msg = Tools::fmts(
               "iteration %s %lu/(%lu=%lu*(%lu+%lu)) : %5.2f%% done  [accept ratio=%.2f]",
               (is_thermalizing ? "[T]" : "   "),
               (unsigned long)k, (unsigned long)totiters, (unsigned long)rw.n_sweep(),
@@ -603,6 +616,8 @@ namespace DMIntegratorTasks
    *
    * This is meant to be used in a task dispatcher environment, e.g. 
    * \ref MultiProc::OMPTaskDispatcher.
+   *
+   * \bug USE AveragedHistogram here!!! CODE DUPLICATED!!
    */
   template<typename HistogramType_>
   struct MHRandomWalkResultsCollector
@@ -629,7 +644,8 @@ namespace DMIntegratorTasks
       off_chart = 0;
     }
 
-    inline void run_finished()
+    template<typename... Args>
+    inline void runs_finished(Args...)
     {
       final_histogram /= num_histograms;
       std_dev /= num_histograms;
@@ -640,12 +656,14 @@ namespace DMIntegratorTasks
       std_dev = ( (std_dev - finhist2) / num_histograms ).sqrt();
     }
 
-    template<typename TomoProblem, typename Rng, typename FidelityValueType>
-    inline void collect_results(const MHRandomWalkTask<TomoProblem,Rng,FidelityValueType>& t)
+    template<typename TomoProblem, typename Rng, typename FidelityValueType, typename CData>
+    inline void collect_result(int k,
+			       const typename MHRandomWalkTask<TomoProblem,Rng,FidelityValueType>::ResultType& t,
+			       const CData * /*pcdata*/)
     {
       // final_histogram collects the sum of the histograms
       // std_dev for now collects the sum of squares. std_dev will be normalized in run_finished().
-      auto& histogram = t.get_fid_stats().histogram();
+      auto& histogram = t.histogram;
       auto newbins = histogram.bins.template cast<double>();
       final_histogram += newbins;
       std_dev += newbins * newbins ; // for arrays, this is c-wise product : square of each value
@@ -689,14 +707,14 @@ namespace DMIntegratorTasks
         fill_str_len(sline, 0.0, final_histogram(k) - std_dev(k), '*', '*');
         fill_str_len(sline, final_histogram(k) - std_dev(k), final_histogram(k) + std_dev(k), '-', '|');
 
-        s += fmts("%-6.4g | %s    %5.1f +- %5.1f\n",
-                  params.min + k*(params.max-params.min)/Ntot,
-                  sline.c_str(),
-                  final_histogram(k), std_dev(k)
-                  );
+        s += Tools::fmts("%-6.4g | %s    %5.1f +- %5.1f\n",
+			 params.min + k*(params.max-params.min)/Ntot,
+			 sline.c_str(),
+			 final_histogram(k), std_dev(k)
+	    );
       }
       if (off_chart > 1e-6) {
-        s += fmts("   ... with another (average) %.4g points off chart.\n", (double)off_chart);
+        s += Tools::fmts("   ... with another (average) %.4g points off chart.\n", (double)off_chart);
       }
       return s;
     }

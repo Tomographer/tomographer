@@ -75,11 +75,20 @@
 
 /** \page pageInterfaceMHWalker MHWalker Interface
  *
- * Must provide the following types:
+ * A \a MHWalker compliant type describes a particular Metropolis-Hastings walk on some
+ * state space. It takes care for example of providing candidate new points (jump
+ * function), and calculating the probability ratio for the jump.
+ *
+ * \a MHWalker types are used in particular by:
+ *  - \refitem Tomographer::MHRandomWalk.
+ *
+ * A type implementing the \a MHWalker interface must provide the following types:
  *
  * \par typedef ... PointType
  *     The type needed to represent a point in state space in which we are performing a
- *     random walk.
+ *     random walk. An object of such type is never default-constructed, but always
+ *     copy-constructed from another \a PointType. One should also be able to assign a \a
+ *     PointType to another \c PointType (e.g. <code>curpt = other_point</code>).
  *
  * \par typedef ... RealScalar
  *     The type needed to represent a step size. This will most likely be a \c double
@@ -91,7 +100,7 @@
  *     type. You do not need to provide this typedef if \c UseFnSyntaxType is set to \c
  *     MHUseFnRelativeValue.
  *
- * Must provide the following constant enumeration values:
+ * A \a MHWalker must provide the following constant enumeration values:
  *
  * \par enum { UseFnSyntaxType = ... }
  *     Specifies how we calculate the function probability ratio of two points in the
@@ -145,6 +154,9 @@
  * The \a RandomWalk type is responsible for actually implementing the random walk. It
  * should keep the current state of the random walk in memory and update it when the \c
  * move() function is called.
+ *
+ * \a RandomWalk types are used in particular by:
+ *  - \refitem Tomographer::RandomWalkBase.
  *
  * The \a RandomWalk type should provide the following typedef member:
  *

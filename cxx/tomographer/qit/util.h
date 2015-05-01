@@ -8,47 +8,6 @@
 
 
 // -----------------------------------------------------------------------------
-// Some C++ helpers
-// -----------------------------------------------------------------------------
-
-namespace Tomographer {
-
-  // taken from http://stackoverflow.com/a/25510879/1694896
-
-  namespace tomo_internal {
-    template <typename F>
-    struct FinalAction {
-      FinalAction(F f) : clean_{f} {}
-      ~FinalAction() { clean_(); }
-      F clean_;
-    };
-  } // namespace tomo_internal
-
-
-  /** \brief implementation of a \c finally clause, somewhat like in Python
-   *
-   * Example Usage:
-   * \code
-   *   SomeResource * ptr = new SomeResource(..)
-   *   auto delete_ptr = finally([ptr] { delete ptr; });
-   *   // Now, the pointer ptr will be 'delete'd at end of the current block.
-   *   ...
-   *
-   * \endcode
-   */
-  template <typename F>
-  tomo_internal::FinalAction<F> finally(F f)
-  {
-    return tomo_internal::FinalAction<F>(f);
-  }
-  
-} // namespace Tomographer
-
-
-
-
-
-// -----------------------------------------------------------------------------
 // Random matrices in Eigen
 // -----------------------------------------------------------------------------
 

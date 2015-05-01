@@ -218,7 +218,7 @@ public:
  * as per the great tradition of \c Eigen types.
  *
  * This function inherits, and thus publicly exposes, the types defined in \ref MatrQBase
- * and the initializer methods efined in \ref MatrQBaseDimStore.
+ * and the initializer methods defined in \ref MatrQBaseDimStore.
  */
 template<int FixedDim_, int FixedMaxParamList_, typename RealScalar_, typename IntFreqType_>
 struct MatrQ
