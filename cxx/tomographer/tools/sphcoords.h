@@ -5,39 +5,49 @@
 #include <Eigen/Eigen>
 #include <cmath>
 
-using namespace Eigen;
-using namespace std;
+/** \file sphcoords.h
+ *
+ * \brief spherical coordinates conversion routines, with jacobian etc.
+ *
+ * conventions:
+ *
+ * cart: cartesian coordinates x, y, z...
+ *
+ * rtheta: [r, theta_1, theta_2, ..., theta_{ds}]  with   [ds=N-1=dimension of sphere]
+ *         theta_{ds} = 0..2pi
+ *         theta_{i} = 0..pi   [ for 1 <= i <= ds-1 ]
+ *
+ *
+ * NOTE: In the special case of the 2-sphere, this does not map back to usuall 3-D
+ * spherical coordinates, with theta=0 at (X=0,Y=0,Z=1), theta=pi at (X=0,Y=0,Z=-1), and
+ * theta=pi/2,phi=0 for (X=1,Y=0,Z=0)
+ *
+ * In fact, it is mapped to:
+ *
+ *    X = r Cos[theta1]                   -- what we normally call Z
+ *    Y = r Sin[theta1] * Cos[Theta2]     -- what we normally call X
+ *    Z = r Sin[theta1] * Sin[Theta1]     -- what we normally call Y
+ *
+ * So effectively, the angles count from (X=+1,Y=0,Z=0) and theta1 increases to
+ * (X=-1,Y=0,Z=0); then theta2 wraps around, with theta2=0 corresponding to the direction
+ * in which Y=+1.
+ *
+ */
 
 
-// conventions:
-//
-// cart: cartesian coordinates x, y, z...
-//
-// rtheta: [r, theta_1, theta_2, ..., theta_{ds}]  with   [ds=N-1=dimension of sphere]
-//         theta_{ds} = 0..2pi
-//         theta_{i} = 0..pi   [ for 1 <= i <= ds-1 ]
-//
-//
-// NOTE: In the special case of the 2-sphere, this does not map back to usuall 3-D
-// spherical coordinates, with theta=0 at (X=0,Y=0,Z=1), theta=pi at (X=0,Y=0,Z=-1), and
-// theta=pi/2,phi=0 for (X=1,Y=0,Z=0)
-//
-// In fact, it is mapped to:
-//
-//    X = r Cos[theta1]                   -- what we normally call Z
-//    Y = r Sin[theta1] * Cos[Theta2]     -- what we normally call X
-//    Z = r Sin[theta1] * Sin[Theta1]     -- what we normally call Y
-//
-// So effectively, the angles count from (X=+1,Y=0,Z=0) and theta1 increases to
-// (X=-1,Y=0,Z=0); then theta2 wraps around, with theta2=0 corresponding to the direction
-// in which Y=+1.
-//
+
+namespace Tomographer
+{
+namespace Tools
+{
 
 
 /** \brief Convert Cartesian coordinates to spherical coordinates in N dimensions
  *
  * The transformation is as the one given in
  * http://en.wikipedia.org/wiki/N-sphere#Spherical_coordinates .
+ *
+ * See \ref sphcoords.h for information about the conventions.
  *
  * \param rtheta (output), vector of \i N entries, will store the R and Theta values
  *        corresponding to the spherical coordinates representation of \c cart. 
@@ -49,9 +59,9 @@ using namespace std;
  *        the point to transform.
  */
 template<typename Der1, typename Der2>
-void cart_to_sph(MatrixBase<Der2>& rtheta, const MatrixBase<Der1>& cart)
+void cart_to_sph(Eigen::MatrixBase<Der2>& rtheta, const Eigen::MatrixBase<Der1>& cart)
 {
-  typedef typename MatrixBase<Der1>::Scalar Scalar;
+  typedef typename Eigen::MatrixBase<Der1>::Scalar Scalar;
 
   eigen_assert(cart.cols() == 1 && rtheta.cols() == 1);
   eigen_assert(cart.rows() == rtheta.rows());
@@ -101,6 +111,8 @@ void cart_to_sph(MatrixBase<Der2>& rtheta, const MatrixBase<Der1>& cart)
  * The transformation is as the one given in
  * http://en.wikipedia.org/wiki/N-sphere#Spherical_coordinates .
  *
+ * See \ref sphcoords.h for information about the conventions.
+ *
  * \param cart (output) is a vector of \i N entries, which will be set to the cartesian
  *        coordinates of the point represented by \c rtheta.
  *
@@ -110,13 +122,13 @@ void cart_to_sph(MatrixBase<Der2>& rtheta, const MatrixBase<Der1>& cart)
  *
  */
 template<typename Der1, typename Der2>
-inline void sphsurf_to_cart(MatrixBase<Der2>& cart, const MatrixBase<Der1>& theta,
-                            const typename MatrixBase<Der1>::Scalar R = 1.0)
+inline void sphsurf_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<Der1>& theta,
+                            const typename Eigen::MatrixBase<Der1>::Scalar R = 1.0)
 {
   // same as sph_to_cart, except that only the angles are given, and R is given
   // separately, defaulting to 1.
 
-  //  typedef typename MatrixBase<Der1>::Scalar Scalar;
+  //  typedef typename Eigen::MatrixBase<Der1>::Scalar Scalar;
 
   eigen_assert(cart.cols() == 1 && theta.cols() == 1);
   eigen_assert(cart.rows() == theta.rows() + 1);
@@ -135,9 +147,9 @@ inline void sphsurf_to_cart(MatrixBase<Der2>& cart, const MatrixBase<Der1>& thet
 }
 
 template<typename Der1, typename Der2>
-void sph_to_cart(MatrixBase<Der2>& cart, const MatrixBase<Der1>& rtheta)
+void sph_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<Der1>& rtheta)
 {
-  //  typedef typename MatrixBase<Der1>::Scalar Scalar;
+  //  typedef typename Eigen::MatrixBase<Der1>::Scalar Scalar;
 
   eigen_assert(cart.cols() == 1 && rtheta.cols() == 1);
   eigen_assert(cart.rows() == rtheta.rows());
@@ -153,10 +165,10 @@ void sph_to_cart(MatrixBase<Der2>& cart, const MatrixBase<Der1>& rtheta)
 
 // volume element of hypersphere
 template<typename Der1>
-typename MatrixBase<Der1>::Scalar cart_to_sph_jacobian(const MatrixBase<Der1>& rtheta)
+typename Eigen::MatrixBase<Der1>::Scalar cart_to_sph_jacobian(const Eigen::MatrixBase<Der1>& rtheta)
 {
   const size_t ds = rtheta.rows()-1; // dimension of the sphere
-  typename MatrixBase<Der1>::Scalar jac = pow(rtheta(0), (int)ds); // r^{n-1}
+  typename Eigen::MatrixBase<Der1>::Scalar jac = pow(rtheta(0), (int)ds); // r^{n-1}
 
   size_t i;
   for (i = 0; i < ds-1; ++i) {
@@ -172,11 +184,11 @@ typename MatrixBase<Der1>::Scalar cart_to_sph_jacobian(const MatrixBase<Der1>& r
 // Note that here only the vector of theta's is given, no R
 //
 template<typename Der1>
-typename MatrixBase<Der1>::Scalar surf_sph_jacobian(const MatrixBase<Der1>& theta)
+typename Eigen::MatrixBase<Der1>::Scalar surf_sph_jacobian(const Eigen::MatrixBase<Der1>& theta)
 {
   const size_t ds = theta.rows();
 
-  typename MatrixBase<Der1>::Scalar jac = 1;
+  typename Eigen::MatrixBase<Der1>::Scalar jac = 1;
 
   size_t i;
   for (i = 0; i < ds-1; ++i) {
@@ -196,9 +208,9 @@ typename MatrixBase<Der1>::Scalar surf_sph_jacobian(const MatrixBase<Der1>& thet
 // For this & the 2nd derivatives, see [Drafts&Calculations Vol. V 13.02.2015 (~60%)]
 //
 template<typename Der1, typename Der2>
-void sphsurf_diffjac(ArrayBase<Der1> & dxdtheta, const MatrixBase<Der2>& theta)
+void sphsurf_diffjac(Eigen::ArrayBase<Der1> & dxdtheta, const Eigen::MatrixBase<Der2>& theta)
 {
-  typedef typename ArrayBase<Der1>::Scalar Scalar;
+  typedef typename Eigen::ArrayBase<Der1>::Scalar Scalar;
 
   // FIXME: this is highly ineffective, we calculate the same product of sines all the time...
 
@@ -265,9 +277,9 @@ void sphsurf_diffjac(ArrayBase<Der1> & dxdtheta, const MatrixBase<Der2>& theta)
 // ddxddtheta(k,i+ds*j) is the expression \frac{\partial^2 x_k}{\partial \theta_i \partial \theta_j}
 //
 template<typename Der1, typename Der2>
-void sphsurf_diffjac2(ArrayBase<Der1> & ddxddtheta, const MatrixBase<Der2>& theta)
+void sphsurf_diffjac2(Eigen::ArrayBase<Der1> & ddxddtheta, const Eigen::MatrixBase<Der2>& theta)
 {
-  typedef typename ArrayBase<Der1>::Scalar Scalar;
+  typedef typename Eigen::ArrayBase<Der1>::Scalar Scalar;
 
   // FIXME: this is highly ineffective, we calculate the same product of sines all the time...
 
@@ -348,6 +360,9 @@ void sphsurf_diffjac2(ArrayBase<Der1> & ddxddtheta, const MatrixBase<Der2>& thet
   }
 }
 
+
+}
+}
 
 
 #endif

@@ -5,7 +5,10 @@
 #include <cstdarg>
 
 #include <string>
+#include <sstream> // stringstream
 #include <iostream>
+
+#include <tomographer/tools/util.h> // PRINTFN_ARGS_SAFE
 
 
 namespace Tomographer

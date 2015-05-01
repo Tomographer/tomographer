@@ -332,6 +332,8 @@ public:
       _log(log_),
       curpt(startpt)
   {
+    _log.debug("MHRandomWalk", "constructor(). n_sweep=%lu, n_therm=%lu, n_run=%lu, step_size=%g",
+	       (unsigned long)n_sweep, (unsigned long)n_therm, (unsigned long)n_run, (double)step_size);
   }
 
   //! Required for \ref pageInterfaceRandomWalk. Number of iterations in a sweep.

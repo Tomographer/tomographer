@@ -656,10 +656,8 @@ namespace DMLLHIntegratorTasks
       std_dev = ( (std_dev - finhist2) / num_histograms ).sqrt();
     }
 
-    template<typename TomoProblem, typename Rng, typename FidelityValueType, typename CData>
-    inline void collect_result(int k,
-			       const typename MHRandomWalkTask<TomoProblem,Rng,FidelityValueType>::ResultType& t,
-			       const CData * /*pcdata*/)
+    template<typename CountIntType, typename ResultType, typename CData>
+    inline void collect_result(CountIntType /*k*/, const ResultType& t, const CData * /*pcdata*/)
     {
       // final_histogram collects the sum of the histograms
       // std_dev for now collects the sum of squares. std_dev will be normalized in run_finished().

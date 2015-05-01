@@ -5,10 +5,10 @@
 #include <iostream>
 
 #include <tomographer/qit/matrq.h>
-#include <tomographer/loggers.h>
+#include <tomographer/tools/loggers.h>
 #include <tomographer/tomoproblem.h>
 #include <tomographer/integrator.h>
-#include <tomographer/dmintegrator.h>
+#include <tomographer/dmllhintegrator.h>
 
 int main()
 {
@@ -65,8 +65,8 @@ int main()
 
   OurMultiMHRWStatsCollector multistats(fidstats, fidstats2);
 
-  typedef DMStateSpaceRandomWalk<IndepMeasTomoProblem<QubitPaulisMatrQ>,std::mt19937,
-                                 OurMultiMHRWStatsCollector,SimpleFoutLogger>
+  typedef DMStateSpaceLLHRandomWalk<IndepMeasTomoProblem<QubitPaulisMatrQ>,std::mt19937,
+				    OurMultiMHRWStatsCollector,SimpleFoutLogger>
     MyRandomWalk;
 
   std::cout << "About to create the randomwalk object ...\n";

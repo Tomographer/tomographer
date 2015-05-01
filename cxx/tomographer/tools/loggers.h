@@ -2,10 +2,12 @@
 #ifndef LOGGERS_H
 #define LOGGERS_H
 
+#include <cassert>
 #include <cstdio>
 #include <cstdarg>
 
 #include <string>
+#include <sstream> // stringstream
 #include <iostream>
 #include <functional>
 #include <type_traits>
@@ -75,7 +77,36 @@ namespace Logger
      */
     LONGDEBUG
   };
-};
+
+  /** \brief helper to compare severity levels
+   *
+   * Returns \c true if the given \a level is at least as severe (equal severity or higher
+   * severity) as \a baselevel (for example, if <code>level == Logger::ERROR</code> and
+   * <code>baselevel == Logger::INFO</code>).
+   *
+   * Just to make sure we don't confuse the numerical ordering of the levels, we should
+   * always use this helper function to see whether a level is at least of a given
+   * severity.
+   */
+  inline bool is_at_least_of_severity(int level, int baselevel)
+  {
+    return (level <= baselevel);
+  }
+
+  /** \brief helper for statically determining if Level is at least as severe as BaseLevel.
+   *
+   * The member \a value is statically defined to \c 1 if \a Level is at least as severe
+   * as \a BaseLevel, otherwise it is defined to \c 0.
+   *
+   * See also is_at_least_of_severity().
+   */
+  template<int Level, int BaseLevel>
+  struct static_is_at_least_of_severity {
+    enum {
+      value = (Level <= BaseLevel)
+    };
+  };
+} // namespace Logger
 
 
 /** \brief Traits for Logger classes.
@@ -84,13 +115,17 @@ namespace Logger
  * such as whether it is thread-safe by specializing this traits class, e.g.:
  * \code
  *   template<>
- *   struct LoggerTraits<MyCustomLogger>
+ *   struct LoggerTraits<MyCustomLogger> : public Tomographer::DefaultLoggerTraits
  *   {
  *     enum {
- *       IsThreadSafe = 1
+ *       IsThreadSafe = 1,
+ *       StaticMinimumImportanceLevel = -1
  *     };
  *   };
  * \endcode
+ *
+ * It's a good idea to inherit from \ref DefaultLoggerTraits, so that if additional traits
+ * are added in the future, then your code will still compile.
  */
 template<typename Logger>
 struct LoggerTraits
@@ -112,10 +147,87 @@ struct LoggerTraits
      * message logged with strictly lesser importance level will automatically be
      * discarded, regardless of the level the logger is given at run-time.
      */
-    StaticMinimumImportanceLevel = -1
+    StaticMinimumImportanceLevel = -1,
+
+    /** \brief Whether the logger class can provide its own level
+     *
+     * If set to 0 (the default), then the base logger stores the level given in the
+     * constructor and uses that as the logger's level. It also provides a level() method
+     * which returns the current level. Subclasses may set the level by assining an
+     * integer to the protected \c _level property.
+     *
+     * If set to 1, then any time the base logging engine needs to know the current
+     * logger's level, it will call the method \c level() on the derived logger object to
+     * obtain the current level.
+     */
+    HasOwnGetLevel = 0,
+
+    /** \brief Whether the logger has a filter based on the given 'origin'
+     *
+     * This flag may be set to either \c 0 (no filtering) or \c 1 (filtering).
+     *
+     * If filtering is activated, then before formatting and emitting messages the logging
+     * engine will test the logger object's <code>filter_by_origin(int level, const char *
+     * origin)</code>. The message will only be emitted if this function returns \c true.
+     */
+    HasFilterByOrigin = 0
   };
 };
 
+/** \brief Default logger traits.
+ *
+ * When defining your own \ref LoggerTraits, inherit from this type to get the default
+ * traits. This way, if we add traits in the future, your code still compiles without any
+ * changes.
+ */
+typedef LoggerTraits<int>  DefaultLoggerTraits;
+
+
+
+namespace tomo_internal {
+/** A small helper that stores a level if it's supposed to store a level, or that does
+ * nothing if the derived logger object anyway provides its own level() method.
+ */
+template<bool hasOwnGetLevel>
+class LoggerHelperRuntimeLevel {
+public:
+  LoggerHelperRuntimeLevel(int level)
+    : _level(level)
+  {
+  }
+
+  //  template<typename Derived>
+  inline int getLevel(/* const Derived * d */) const
+  {
+    return _level;
+  }
+  
+  inline void setLevel(int level)
+  {
+    _level = level;
+  }
+private:
+  int _level;
+};
+//
+// Specialization for those classes which provide their own level() method. Do nothing.
+//
+template<>
+class LoggerHelperRuntimeLevel<true> {
+public:
+  LoggerHelperRuntimeLevel(int /*level*/)
+  {
+  }
+  //  template<typename Derived>
+  //  inline int getLevel(const Derived * d) const
+  //  {
+  //    return d->level();
+  //  }
+  inline void setLevel(int) {
+    assert(0 && "Call to setLevel() for Logger which defines HasOwnGetLevel=1!");
+  }
+};
+}
 
 
 /** \brief Base logger class.
@@ -128,9 +240,19 @@ struct LoggerTraits
  *
  * See also \ref SimpleFoutLogger.
  *
- * \note For subclasses: \c _level is protected, in case you might want to provide a
- * function \c setLevel(). That function is not provided here in case your logger's level
+ * A logger always has a level set at run-time, which can always be retrieved by calling
+ * \c level(). By default, this class stores the level given to the constructor. If you
+ * want your derived class to store its own level, or simply to relay log messages to a
+ * further logger and inherit its level, then you should declare \a HasOwnGetLevel=1 in
+ * your logger traits (see \ref LoggerTraits), and provide your own \a level() method,
+ * which should be \c const and return an \c int.
+ *
+ * Also, by default there is no public \c setLevel() method, in case your logger's level
  * is statically fixed or otherwise can't be changed, or if you need a thread-safe logger.
+ * Derived classes may set the logger's level (again, only if \a HasOwnGetLevel=0) by
+ * calling the protected \ref setLogLevel(int). You may of course then also expose a
+ * public function such as \c setLevel() which calls setLogLevel(), if you want (see, for
+ * example, \ref SimpleFoutLogger).
  */
 template<typename Derived>
 class LoggerBase
@@ -141,6 +263,10 @@ public:
    *
    * The logging level is set to \a level, by default \ref Logger::INFO. Any messages with
    * lesser importance will be automatically discarded.
+   *
+   * Note that if the derived logger class provides its own \c logger() method, and
+   * declares it with \a LoggerTraits<Derived>::HasOwnGetLevel, then the level provided
+   * here is discarded and ignored.
    */
   LoggerBase(int level = Logger::INFO)
     : _level(level)
@@ -373,8 +499,22 @@ public:
   static inline bool statically_enabled_for(int level)
   {
     return ( (LoggerTraits<Derived>::StaticMinimumImportanceLevel == -1) ||
-             (level <= LoggerTraits<Derived>::StaticMinimumImportanceLevel) );
+             (Logger::is_at_least_of_severity(level, LoggerTraits<Derived>::StaticMinimumImportanceLevel)) );
   }
+
+  /** \brief Static version of statically_enabled_for()
+   *
+   */
+  template<int Level>
+  static inline bool statically_enabled_for()
+  {
+    return ( (LoggerTraits<Derived>::StaticMinimumImportanceLevel == -1) ||
+             (Logger::static_is_at_least_of_severity<
+	          Level,
+	          LoggerTraits<Derived>::StaticMinimumImportanceLevel
+	          >::value) );
+  }
+
   /** \brief Check whether messages at the given log level are enabled
    *
    * This function returns \c true if a message at the given level will be emitted, i.e. 
@@ -387,16 +527,71 @@ public:
    */
   inline bool enabled_for(int level) const
   {
-    return statically_enabled_for(level) && (level <= _level);
+    return statically_enabled_for(level) && Logger::is_at_least_of_severity(level, getLevel());
   };
 
   /** \brief Get the log level set for this logger
    *
-   * This is the log level given to the constructor at run-time.
+   * This is the log level given to the constructor at run-time, or set with the protected
+   * \c setLogLevel() method.
+   *
+   * This method is provided for if your own derived class doesn't provide it already,
+   * i.e. if the logger traits of your derived class declares \a HasOwnGetLevel to \c 0 or
+   * doesn't declare it. If you call this function with \a HasOwnGetLevel set to \c 1,
+   * then the derived class' method will be called. So if you override this method in the
+   * derived class with \c HasOwnGetLevel=1, then don't call the base implementation!
+   *
+   * Just ignore the \a dummy template parameter, which is just there so that we can make
+   * C++ template SFINAE kick in...
    */
-  inline int level() const { return _level; }
+  template<bool dummy = true>
+  inline typename std::enable_if< dummy && ! LoggerTraits<Derived>::HasOwnGetLevel , int >::type
+    level() const
+  {
+    return getLevel();
+  }
+  
 
 protected:
+
+  // version in case we store our own level
+  template<bool dummy = true>
+  inline typename std::enable_if< dummy && ! LoggerTraits<Derived>::HasOwnGetLevel , int >::type
+    getLevel() const
+  {
+    return _level.getLevel();
+  }
+  // version in case we delegate to derived class' level()
+  template<bool dummy = true>
+  inline typename std::enable_if< dummy && LoggerTraits<Derived>::HasOwnGetLevel , int >::type
+    getLevel() const
+  {
+    return static_cast<const Derived*>(this)->level();
+  }
+
+  /** \brief Store a new run-time log level
+   *
+   * See also \ref level().
+   *
+   * The base class does not provide a public <code>setLevel()</code> function, in case
+   * your logger does not support setting any level, or in case you need your logger to be
+   * completely thread-safe, or for any other reason.
+   *
+   * Subclasses may, however, change the log level by explicily calling this method. This
+   * method however should ONLY be used if your derived class doesn't define its own \c
+   * level() method and thus only if the logger traits \a HasOwnGetLogger is \c
+   * false. (You'll get an assert(false) otherwise.)
+   */
+  inline void setLogLevel(int level)
+  {
+    assert(! LoggerTraits<Derived>::HasOwnGetLevel);
+    _level.setLevel(level);
+  }
+
+private:
+  typedef tomo_internal::LoggerHelperRuntimeLevel<LoggerTraits<Derived>::HasOwnGetLevel>
+    RuntimeLevel;
+  
   /** \brief The stored run-time-given log level. See \ref level().
    *
    * The base class does not provide a <code>setLevel()</code> function, in case your
@@ -405,10 +600,32 @@ protected:
    *
    * Subclasses may, however, change the log level by explicily assigning to \c _level.
    */
-  int _level;
+  RuntimeLevel _level;
 };
 
 namespace tomo_internal {
+  /** Helper to invoke the logger's filter_by_origin() method, if applicable.
+   */
+  template<typename Derived, bool derivedHasFilterByOrigin>
+  struct LoggerBaseHelperFilterByOrigin {
+    static inline bool test_logger_filter(LoggerBase<Derived> * /*loggerbase*/, int /*level*/,
+					  const char * /*origin*/)
+    {
+      // do nothing by default
+      return true;
+    }
+  };
+  //
+  // specialization for loggers with filtering by origin
+  //
+  template<typename Derived>
+  struct LoggerBaseHelperFilterByOrigin<Derived, true> {
+    static inline bool test_logger_filter(LoggerBase<Derived> * loggerbase, int level,
+					  const char * origin)
+    {
+      return static_cast<const Derived*>(loggerbase)->filter_by_origin(level, origin);
+    }
+  };
   /**
    * Helper to decide whether to emit log entry or not for a given log level. This is
    * separate from \c LoggerBase really only because otherwise it would have needed to be
@@ -429,10 +646,22 @@ namespace tomo_internal {
                 level, origin, e.what());
       }
     }
+    static inline bool test_should_emit(LoggerBase<Derived> * loggerbase, int level, const char * origin)
+    {
+      if ( ! static_cast<const Derived*>(loggerbase)->enabled_for(level) ) {
+	return false;
+      }
+      if ( ! LoggerBaseHelperFilterByOrigin<Derived, LoggerTraits<Derived>::HasFilterByOrigin>
+	   ::test_logger_filter(loggerbase, level, origin) ) {
+	return false;
+      }
+      return true;
+    }
+
     static inline void test_and_call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin,
                                               const std::string & msg) throw()
     {
-      if ( ! loggerbase->enabled_for(level) ) {
+      if ( ! test_should_emit(loggerbase, level, origin) ) {
         return;
       }
 
@@ -441,7 +670,7 @@ namespace tomo_internal {
     static inline void test_and_call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin,
                                               const char * fmt, va_list ap) throw()
     {
-      if ( ! loggerbase->enabled_for(level) ) {
+      if ( ! test_should_emit(loggerbase, level, origin) ) {
         return;
       }
 
@@ -460,7 +689,7 @@ namespace tomo_internal {
     ENABLE_IF_Fn_CALLABLE_OSTREAM
     test_and_call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin, Fn f) throw()
     {
-      if ( ! loggerbase->enabled_for(level) ) {
+      if ( ! test_should_emit(loggerbase, level, origin) ) {
         return;
       }
 
@@ -526,7 +755,7 @@ namespace tomo_internal {
   };
   
 
-};
+} // namespace tomo_internal
 
 
 template<typename Derived>
@@ -672,6 +901,19 @@ LoggerBase<Derived>::log(int level, const char * origin, Fn f)
 
 
 
+//
+// Traits for SimpleFoutLogger -- fprintf is actually thread-safe, that's good :)
+//
+class SimpleFoutLogger;
+template<>
+struct LoggerTraits<SimpleFoutLogger> : public DefaultLoggerTraits
+{
+  enum {
+    IsThreadSafe = 1,
+    StaticMinimumImportanceLevel = -1
+  };
+};
+
 /** \brief Simple logger class which logs everything into a given FILE pointer
  *
  * The \c FILE may be any C \c FILE* pointer, in particular \c stdin or \c stderr. If it
@@ -703,7 +945,7 @@ public:
    */
   inline void setLevel(int level)
   {
-    _level = level;
+    setLogLevel(level);
   }
 
   inline void emit_log(int level, const char * origin, const std::string & msg)
@@ -735,20 +977,21 @@ private:
 };
 
 
+
+
+
 //
-// Traits for SimpleFoutLogger -- fprintf is actually thread-safe, that's good :)
+// Traits for VacuumLogger -- is a NOOP thread-safe? yeah probably.
 //
+class VacuumLogger;
 template<>
-struct LoggerTraits<SimpleFoutLogger>
+struct LoggerTraits<VacuumLogger> : public DefaultLoggerTraits
 {
   enum {
     IsThreadSafe = 1,
-    StaticMinimumImportanceLevel = -1
+    StaticMinimumImportanceLevel = Logger::ERROR // discard all messages
   };
 };
-
-
-
 
 /** \brief Logger that discards all messages.
  *
@@ -763,21 +1006,20 @@ public:
 };
 
 
+
+
+
 //
-// Traits for VacuumLogger -- is a NOOP thread-safe? yeah probably.
+// Traits for BufferLogger -- not thread-safe
 //
+class BufferLogger;
 template<>
-struct LoggerTraits<VacuumLogger>
+struct LoggerTraits<BufferLogger> : public DefaultLoggerTraits
 {
   enum {
-    IsThreadSafe = 1,
-    StaticMinimumImportanceLevel = Logger::ERROR // discard all messages
+    IsThreadSafe = 0
   };
 };
-
-
-
-
 
 /** \brief Log messages into an internal memory buffer
  *
@@ -822,13 +1064,38 @@ public:
 
 
 
+
+//
+// Traits for MinimumImportanceLogger<BaseLogger,Level>
+//
+template<typename, int> class MinimumImportanceLogger;
+template<typename BaseLogger, int Level>
+struct LoggerTraits<MinimumImportanceLogger<BaseLogger,Level> > : public LoggerTraits<BaseLogger>
+{
+  enum {
+    // discard all messages less important than the given level
+    StaticMinimumImportanceLevel = Level,
+    // delegate calls for current level() to base logger
+    HasOwnGetLevel = 1
+  };
+};
+
+/** \brief Logger which statically discards any messages less important than a fixed
+ * severity
+ *
+ * This logger interfaces another logger of type \a BaseLogger, but will only log messages
+ * that are at least of severity \a Level. Other messages are discarded at compile-time,
+ * hopefully speeding up your code, also.
+ *
+ * If \a BaseLogger is thread-safe, then this logger is also thread-safe.
+ */
 template<typename BaseLogger, int Level>
 class MinimumImportanceLogger : public LoggerBase<MinimumImportanceLogger<BaseLogger,Level> >
 {
   BaseLogger & baselogger;
 public:
-  MinimumImportanceLogger(BaseLogger & baselogger_, int level = Logger::INFO)
-    : LoggerBase<MinimumImportanceLogger<BaseLogger,Level> >(level), baselogger(baselogger_)
+  MinimumImportanceLogger(BaseLogger & baselogger_)
+    : LoggerBase<MinimumImportanceLogger<BaseLogger,Level> >(), baselogger(baselogger_)
   {
   }
 
@@ -836,20 +1103,19 @@ public:
   {
     baselogger.emit_log(level, origin, msg);
   }
-};
 
-//
-// Traits for MinimumImportanceLogger<BaseLogger,Level>
-//
-template<typename BaseLogger, int Level>
-struct LoggerTraits<MinimumImportanceLogger<BaseLogger,Level> >
-{
-  enum {
-    IsThreadSafe = LoggerTraits<BaseLogger>::IsThreadSafe,
-    StaticMinimumImportanceLevel = Level // discard all messages less important than the given level
-  };
-};
+  inline int level() const
+  {
+    return baselogger.level();
+  }
 
+  template<bool dummy = true>
+  inline std::enable_if<dummy && LoggerTraits<BaseLogger>::HasFilterByOrigin, bool>
+  filter_by_origin(int level, const char * origin)
+  {
+    return baselogger.filter_by_origin(level, origin);
+  }
+};
 
 
 

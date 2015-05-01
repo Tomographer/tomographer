@@ -20,24 +20,29 @@ namespace Tools
  *
  * fn has signature void fn(MatrixBase & result, const MatrixBase & point), where result
  * is of shape (valdims x 1)
+ *
+ * \return TRUE if all was OK, or FALSE if there were significant differences detected
+ * (more than the given tolerance)
  */
 template<typename Der1, typename Der2, typename fnType>
-void check_derivatives(const ArrayBase<Der1> & derivatives, const MatrixBase<Der2> & point,
+bool check_derivatives(const Eigen::ArrayBase<Der1> & derivatives, const Eigen::MatrixBase<Der2> & point,
                        fnType fn, size_t valdims,
-                       typename MatrixBase<Der1>::Scalar delta = 1e-6,
-                       typename MatrixBase<Der1>::Scalar rel_tol = 1e-6
+                       typename Eigen::MatrixBase<Der1>::Scalar delta = 1e-6,
+                       typename Eigen::MatrixBase<Der1>::Scalar rel_tol = 1e-6
                        )
 {
+  bool ok = true;
+
   const size_t n = derivatives.rows();
   const size_t ds = derivatives.cols();
   eigen_assert(point.rows() == (int)ds);
   eigen_assert(point.cols() == (int)1);
 
-  VectorXd val0(valdims);
-  VectorXd dval1(valdims);
-  VectorXd dvalFromDer(valdims);
+  Eigen::VectorXd val0(valdims);
+  Eigen::VectorXd dval1(valdims);
+  Eigen::VectorXd dvalFromDer(valdims);
 
-  VectorXd dir(point.rows());
+  Eigen::VectorXd dir(point.rows());
 
   // calculate the base point
   fn(val0, point);
@@ -58,6 +63,7 @@ void check_derivatives(const ArrayBase<Der1> & derivatives, const MatrixBase<Der
 
     if (thediff/delta > rel_tol ) {
       // Error in the derivative
+      ok = false;
       std::cerr << "Error in derivative check: Derivative wrong in direction\n"
 		<< "dir = " << dir.transpose() << "   [basis vector #"<<i<<"]\n"
 		<< "\tpoint = \t" << point.transpose() << "\n"
@@ -69,6 +75,8 @@ void check_derivatives(const ArrayBase<Der1> & derivatives, const MatrixBase<Der
 		<< "--> difference [relative to delta]: \t" << thediff/delta << "\n\n";
     }
   }
+
+  return ok;
 }
 
 

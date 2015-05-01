@@ -34,9 +34,19 @@ namespace MultiProc
     {
 #pragma omp critical
       {
-        //printf("OMPThreadSanitizerLoggerHelper::emit_log(%d, %s, %s) -- CRITICAL\n", level, origin, msg.c_str());
+        //printf("OMPThreadSanitizerLoggerHelper::emit_log(%d, %s, %s) -- OMP CRITICAL\n", level, origin, msg.c_str());
         baselogger.emit_log(level, origin, msg);
       }
+    }
+    static inline bool filter_by_origin(BaseLogger & baselogger, int level, const char * origin)
+    {
+      bool ok = true;
+#pragma omp critical
+      {
+        //printf("OMPThreadSanitizerLoggerHelper::filter_by_origin(%d, %s) -- OMP CRITICAL\n", level, origin);
+        ok = baselogger.filter_by_origin(level, origin);
+      }
+      return ok;
     }
   };
 
@@ -51,6 +61,11 @@ namespace MultiProc
     {
       //printf("OMPThreadSanitizerLoggerHelper::emit_log(%d, %s, %s) -- NORMAL\n", level, origin, msg.c_str());
       baselogger.emit_log(level, origin, msg);
+    }
+    static inline bool filter_by_origin(BaseLogger & baselogger, int level, const char * origin)
+    {
+      //printf("OMPThreadSanitizerLoggerHelper::filter_by_origin(%d, %s) -- NORMAL\n", level, origin);
+      return baselogger.filter_by_origin(level, origin);
     }
   };
 
@@ -67,6 +82,14 @@ namespace MultiProc
    *
    * \bug WE SHOULD BUFFER LOG ENTRIES, and emit them only every N seconds. Currently we
    *      emit the logs as they come.
+   *
+   * \warning The runtime level of this logger is fixed to the level of the base logger at
+   * the moment of instanciation. Any changes to the level of the base logger afterwards
+   * will not be reflected here. This is for thread-safety reasons.
+   *
+   * \warning If your base logger has a \a filter_by_origin() mechanism and is not
+   * thread-safe, this might be very slow because a OMP critical section is opened on each
+   * log message which needs to be tested for its origin.
    *
    * Example usage:
    * \code
@@ -120,7 +143,17 @@ namespace MultiProc
       OMPThreadSanitizerLoggerHelper<BaseLogger, LoggerTraits<BaseLogger>::IsThreadSafe>
         ::emit_log(
             _baselogger, level, origin, msg
-          );
+	    );
+    }
+
+    template<bool dummy = true>
+    inline typename std::enable_if<dummy && LoggerTraits<BaseLogger>::HasFilterByOrigin, bool>::type
+      filter_by_origin(int level, const char * origin) const
+    {
+      return OMPThreadSanitizerLoggerHelper<BaseLogger, LoggerTraits<BaseLogger>::IsThreadSafe>
+        ::filter_by_origin(
+            _baselogger, level, origin
+	    );
     }
   };
 
@@ -140,11 +173,11 @@ namespace MultiProc
 // logger traits for OMPThreadSanitizerLogger and OMPTaskLogger 
 //
 template<typename BaseLogger>
-struct LoggerTraits<MultiProc::OMPThreadSanitizerLogger<BaseLogger> >
+struct LoggerTraits<MultiProc::OMPThreadSanitizerLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
 {
   enum {
-    IsThreadSafe = 1,
-    StaticMinimumImportanceLevel = LoggerTraits<BaseLogger>::StaticMinimumImportanceLevel
+    HasOwnGetLevel = 0, // explicitly require our logger instance to store its level
+    IsThreadSafe = 1
   };
 };
 template<typename BaseLogger>
