@@ -92,13 +92,13 @@ tomo_internal::FinalAction<F> finally(F f)
  * >= 0 is always true'.
  */
 template<typename X>
-inline std::enable_if<std::is_unsigned<X>::value, bool> is_positive(X val)
+inline typename std::enable_if<std::is_unsigned<X>::value, bool>::type is_positive(const X /* val */)
 {
   return true;
 }
 //! See \ref is_positive()
 template<typename X>
-inline std::enable_if<!std::is_unsigned<X>::value, bool> is_positive(X val)
+inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type is_positive(const X val)
 {
   return val >= 0;
 }
