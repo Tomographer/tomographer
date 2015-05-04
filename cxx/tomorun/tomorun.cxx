@@ -22,11 +22,6 @@
 
 #include <Eigen/Core>
 
-#define EZMATIO_EIGEN_TYPES
-#define EZMATIO_MORE_UTILS
-#include "ezmatio.h"
-
-
 //#ifdef TOMOGRAPHER_HAVE_OMP
 // yes, OMP multithreading ROCKS!
 #  include <omp.h>
@@ -34,6 +29,8 @@
 
 #include <tomographer/tools/util.h>
 #include <tomographer/tools/loggers.h>
+#include <tomographer/tools/ezmatio.h>
+#include <tomographer/tools/signal_status_report.h>
 #include <tomographer/qit/matrq.h>
 #include <tomographer/qit/util.h>
 #include <tomographer/qit/param_herm_x.h>
@@ -345,7 +342,7 @@ void display_parameters(ProgOptions * opt)
 // ------------------------------------------------------------------------------
 
 template<int FixedDim, int FixedMaxPOVMEffects, typename Logger>
-inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logger & logger);
+inline void tomorun(unsigned int dim, ProgOptions * opt, Tomographer::MAT::File * matf, Logger & logger);
 
 
 int main(int argc, char **argv)
@@ -457,126 +454,6 @@ int main(int argc, char **argv)
 }
 
 
-
-
-
-
-
-//
-// Some ugly workaround to be able to call code within the templated tomorun() from our
-// signal handler.
-//
-struct SignalHandler
-{
-  SignalHandler() { }
-  virtual ~SignalHandler() { }
-
-  virtual void handle_signal(int) = 0;
-};
-
-static SignalHandler * signal_handler = NULL;
-
-
-//
-// A generic handler which requests a status report from an OMPTaskDispatcher
-//
-template<typename OMPTaskDispatcher, typename Logger>
-struct SigHandlerStatusReporter : public SignalHandler
-{
-  SigHandlerStatusReporter(OMPTaskDispatcher * tasks_, Logger & logger_)
-    : tasks(tasks_), logger(logger_), time_start()
-  {
-    tasks->set_status_report_handler(
-        [this](const typename OMPTaskDispatcher::FullStatusReportType& report) {
-          logger.debug("SigHandlerStatusReporter/lambda", "intermediate progress report lambda called");
-          this->intermediate_progress_report(report);
-        });
-  }
-  
-  OMPTaskDispatcher * tasks;
-  Logger & logger;
-
-  TimerClock::time_point time_start;
-
-  virtual void handle_signal(int /*sig*/)
-  {
-    tasks->request_status_report();
-  }
-
-  //
-  // Format a nice intermediate progress report.
-  //
-  void intermediate_progress_report(const typename OMPTaskDispatcher::FullStatusReportType& report)
-  {
-    std::string elapsed = Tools::fmt_duration(TimerClock::now() - time_start);
-    fprintf(stderr,
-            "\n"
-            "=========================== Intermediate Progress Report ============================\n"
-            "                                              (hit Ctrl+C quickly again to interrupt)\n"
-            "  Total Completed Runs: %d/%d: %5.2f%%\n"
-            "  %s total elapsed\n"
-            "Current Run(s) information (threads working/spawned %d/%d):\n",
-            report.num_completed, report.num_total_runs,
-            (double)report.num_completed/report.num_total_runs*100.0,
-            elapsed.c_str(), report.num_active_working_threads,
-            report.num_threads
-            );
-    // calculate padding needed to align results
-    //    typedef typename OMPTaskDispatcher::TaskStatusReportType TaskStatusReportType;
-    //    auto elem = std::max_element(report.tasks_reports.begin(), report.tasks_reports.end(),
-    //                                 [](const TaskStatusReportType& a, const TaskStatusReportType& b) -> bool {
-    //                                   return a.msg.size() < b.msg.size();
-    //                                 });
-    //    std::size_t maxmsgwid = (*elem).msg.size();
-    for (int k = 0; k < report.num_threads; ++k) {
-      std::string msg = report.tasks_running[k] ? report.tasks_reports[k].msg : std::string("<idle>");
-      //      if (msg.size() < maxmsgwid) {
-      //        msg.insert(0, maxmsgwid - msg.size(), ' ');
-      //      }
-      fprintf(stderr, "=== Thread #%2d: %s\n", k, msg.c_str());
-    }
-    fprintf(stderr,
-            "=====================================================================================\n\n");
-  };
-
-};
-
-template<typename OMPTaskDispatcher, typename Logger>
-SigHandlerStatusReporter<OMPTaskDispatcher, Logger>
-makeSigHandlerStatusReporter(OMPTaskDispatcher * tasks, Logger & logger)
-{
-  // yes, RVO better kick in
-  return SigHandlerStatusReporter<OMPTaskDispatcher, Logger>(tasks, logger);
-}
-
-
-
-
-//const std::time_t SIG_HIT_REPEAT_EXIT_DELAY = 0; // set this only for debugging the signal interrupt
-const std::time_t SIG_HIT_REPEAT_EXIT_DELAY = 2;
-
-
-static std::time_t last_sig_hit_time = 0;
-
-void sig_int_handler(int signal)
-{
-  std::fprintf(stderr, "\n*** interrupt\n");
-  std::time_t now;
-  time(&now);
-  if ( (now - last_sig_hit_time) < SIG_HIT_REPEAT_EXIT_DELAY ) {
-    // two interrupts within two seconds --> exit
-    std::fprintf(stderr, "\n*** Exit\n");
-    ::exit(1);
-    return;
-  }
-  last_sig_hit_time = now;
-
-  if (signal_handler != NULL) {
-    signal_handler->handle_signal(signal);
-  } else {
-    fprintf(stderr, "Warning: sig_handle: no signal handler set (got signal %d)\n", signal);
-  }
-}
 
 //
 // Here goes the actual program. This is templated, because then we can let Eigen use
@@ -700,12 +577,11 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logge
       );
 
   // set up signal handling
-
-  auto srep = makeSigHandlerStatusReporter(&tasks, logger);
-
-  signal_handler = &srep;
-
-  signal(SIGINT, sig_int_handler);
+  auto srep = Tools::makeSigHandlerTaskDispatcherStatusReporter(&tasks, logger);
+  Tools::installSignalStatusReportHandler(SIGINT, &srep);
+  //  auto srep = makeSigHandlerStatusReporter(&tasks, logger);
+  //  signal_handler = &srep;
+  //  signal(SIGINT, sig_int_handler);
 
   // and run our tomo process
 

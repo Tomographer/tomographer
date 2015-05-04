@@ -7,9 +7,19 @@
 #include <Eigen/Eigenvalues>
 
 
-namespace SolveCLyap {
+extern "C" void ztrsyl_(char *TRANA, char *TRANB, int *ISGN, int *M, int *N,
+                        double *A, int *lda, double *B, int *ldb,
+                        double *C, int *ldc, double *scale, int *info);
 
+namespace Tomographer
+{
+namespace SolveCLyap
+{
 
+/** \brief Error while attempting to solve complex Lyapunov/Sylvester equation
+ *
+ * See \ref solve().
+ */
 class SolveError : public std::exception {
   std::string p_msg;
 public:
@@ -23,18 +33,13 @@ public:
   }
 };
 
+namespace tomo_internal {
 
-extern "C" void ztrsyl_(char *TRANA, char *TRANB, int *ISGN, int *M, int *N,
-                        double *A, int *lda, double *B, int *ldb,
-                        double *C, int *ldc, double *scale, int *info);
-
-std::string ztrsyl_argnames[] = {
-  "TRANA", "TRANB", "ISGN", "M", "N", "A", "lda", "B", "ldb", "C", "ldc", "scale", "info"
-};
+  static const std::string ztrsyl_argnames[] = {
+    "TRANA", "TRANB", "ISGN", "M", "N", "A", "lda", "B", "ldb", "C", "ldc", "scale", "info"
+  };
 
 
-
-namespace internal {
   template<bool debug_perform_check>
   struct solve_check_helper {
     template<typename XT, typename AT, typename CT, typename Log>
@@ -62,7 +67,8 @@ namespace internal {
       }
     }
   };
-};
+
+} // namespace tomo_internal
 
 
 /** \brief Solve complex Lyapunov equation of the form <code>A'*X + X*A == C</code>
@@ -162,9 +168,10 @@ void solve(Eigen::MatrixBase<DerX> & X, const Eigen::MatrixBase<DerA> & A,
   }
 
   // error with argument # (-info)
-  throw SolveError("Argument " + ztrsyl_argnames[(-info)-1] + " to ztrsyl_ was invalid.");
+  throw SolveError("Argument " + tomo_internal::ztrsyl_argnames[(-info)-1] + " to ztrsyl_ was invalid.");
 }
 
-}
+} // namespace SolveCLyap
+} // namespace Tomographer
 
 #endif

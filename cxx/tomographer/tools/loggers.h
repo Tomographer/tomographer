@@ -149,15 +149,15 @@ struct LoggerTraits
      */
     StaticMinimumImportanceLevel = -1,
 
-    /** \brief Whether the logger class can provide its own level
+    /** \brief Whether the logger class can provide its own run-time level
      *
      * If set to 0 (the default), then the base logger stores the level given in the
      * constructor and uses that as the logger's level. It also provides a level() method
-     * which returns the current level. Subclasses may set the level by assining an
-     * integer to the protected \c _level property.
+     * which returns the current level. Subclasses may set the level by calling the
+     * protected method \ref LoggerBase::setLogLevel().
      *
      * If set to 1, then any time the base logging engine needs to know the current
-     * logger's level, it will call the method \c level() on the derived logger object to
+     * logger's level, it will call the method \a level() on the derived logger object to
      * obtain the current level.
      */
     HasOwnGetLevel = 0,
@@ -168,7 +168,10 @@ struct LoggerTraits
      *
      * If filtering is activated, then before formatting and emitting messages the logging
      * engine will test the logger object's <code>filter_by_origin(int level, const char *
-     * origin)</code>. The message will only be emitted if this function returns \c true.
+     * origin)</code>. The message will only be emitted if this function returns \c
+     * true. Note that messages may have already been discarded if their severity was less
+     * important that the runtime level of the logger, and those messages don't even reach
+     * this filtering function call.
      */
     HasFilterByOrigin = 0
   };

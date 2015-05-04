@@ -15,6 +15,8 @@ extern "C" {
 #include <matio.h>
 }
 
+#include <tomographer/tools/fmt.h>
+
 
 namespace Tomographer
 {
@@ -44,7 +46,7 @@ public:
 class VarReadError : public VarError {
 public:
   VarReadError(const std::string& varname)
-    : VarError(EZ_MAKE_STRING("Can't read variable `"<<varname<<"`"))
+    : VarError(streamstr("Can't read variable `"<<varname<<"`"))
   {
   }
   virtual ~VarReadError() throw() { }
@@ -52,7 +54,7 @@ public:
 class VarTypeError : public VarError {
 public:
   VarTypeError(const std::string& varname, const std::string& expected)
-    : VarError(EZ_MAKE_STRING("Expected "<<expected<<" for variable `"<<varname<<"`"))
+    : VarError(streamstr("Expected "<<expected<<" for variable `"<<varname<<"`"))
   {
     fprintf(stderr, "varname=%s\n", varname.c_str());
   }
@@ -285,12 +287,12 @@ class ComplexValueAccessor : public VarDataAccessor<OutComplexT> {
 public:
   ComplexValueAccessor(const MatInnerT *, const MatInnerT *)
   {
-    throw VarTypeError("unknown", EZ_MAKE_STRING("Got unexpected complex type, expected "
-						 <<typeid(OutComplexT).name()) );
+    throw VarTypeError("unknown", streamstr("Got unexpected complex type, expected "
+					    <<typeid(OutComplexT).name()) );
   }
   OutComplexT operator()(int) const {
-    throw VarTypeError("unknown", EZ_MAKE_STRING("Got unexpected complex type, expected "
-						 <<typeid(OutComplexT).name()) );
+    throw VarTypeError("unknown", streamstr("Got unexpected complex type, expected "
+					    <<typeid(OutComplexT).name()) );
     return OutComplexT();
   }
 };
@@ -348,8 +350,8 @@ template<>  struct MatType<MAT_T_UINT8> { typedef uint8_t Type; };
     case MAT_T_UINT16: { typedef typename MatType<MAT_T_UINT16>::Type Type; { __VA_ARGS__; } break; } \
     case MAT_T_UINT8: { typedef typename MatType<MAT_T_UINT8>::Type Type; { __VA_ARGS__; } break; } \
     default:                                                            \
-      throw VarMatTypeError( EZ_MAKE_STRING("Uknown/unsupported encoded type from matio: " \
-                                            <<(typ)) );			\
+      throw VarMatTypeError( streamstr("Uknown/unsupported encoded type from matio: " \
+				       <<(typ)) );			\
     }                                                                   \
   }
 #define MAT_SWITCH_COMPLEXABLE_TYPE(typ, ...)                           \
@@ -357,8 +359,8 @@ template<>  struct MatType<MAT_T_UINT8> { typedef uint8_t Type; };
     case MAT_T_DOUBLE: { typedef typename MatType<MAT_T_DOUBLE>::Type Type; { __VA_ARGS__; } break; } \
     case MAT_T_SINGLE: { typedef typename MatType<MAT_T_SINGLE>::Type Type; { __VA_ARGS__; } break; } \
     default:                                                            \
-      throw VarMatTypeError( EZ_MAKE_STRING("Uknown/unsupported encoded type from matio: " \
-                                            <<(typ)) );			\
+      throw VarMatTypeError( streamstr("Uknown/unsupported encoded type from matio: " \
+				       <<(typ)) );			\
     }                                                                   \
   }
       

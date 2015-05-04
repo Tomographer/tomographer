@@ -102,7 +102,7 @@ namespace MultiProc
    *     // it may not be safe to log to `logger`, because it might not be
    *     // thread-safe. So create a OMPThreadSanitizerLogger to which we can
    *     // safely log and pass to sub-routines that want a logger.
-   *     OMPThreadSanitizerLogger<SomeLogger> threadsafelogger;
+   *     OMPThreadSanitizerLogger<SomeLogger> threadsafelogger(logger);
    *
    *     threadsafelogger.longdebug( ... ); // safe
    *
