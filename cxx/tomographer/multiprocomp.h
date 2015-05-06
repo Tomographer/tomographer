@@ -292,12 +292,6 @@ namespace MultiProc {
    *
    * </ul>
    *
-   * \bug TODO: FIXME: BUG: the ResultsCollector should not have to query the Task
-   * directly. Rather, the task should return an (in principle serializable) object which
-   * is accepted by the ResultsCollector. This doesn't make any difference here, but it
-   * will make a big difference if we want to write an MPI implementation.
-   *
-   *
    */
   template<typename Task_, typename ConstantDataType_, typename ResultsCollector_,
            typename Logger_, typename CountIntType_>

@@ -85,9 +85,10 @@ public:
    * If you provide a zero \a startpt here, then a random starting point will be chosen
    * using the \a rng random number generator to generate a random point on the sphere.
    */
-  DMStateSpaceLLHRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run, RealScalar step_size,
-                         const MatrixType & startpt, const TomoProblem & tomo, Rng & rng, MHRWStatsCollector & stats,
-                         Log & log_)
+  DMStateSpaceLLHRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run,
+			    RealScalar step_size, const MatrixType & startpt,
+			    const TomoProblem & tomo, Rng & rng, MHRWStatsCollector & stats,
+			    Log & log_)
     : _tomo(tomo),
       _rng(rng),
       _normal_distr_rnd(0.0, 1.0),
@@ -219,73 +220,162 @@ makeDMStateSpaceLLHRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountI
 
 
 
-
-
-/** \brief Stores information about how to acquire a fidelity histogram (e.g. during a
- * random walk).
- *
- * See \ref FidelityHistogramMHRWStatsCollector
- */
-template<typename MatrQ, typename FidelityValueType>
-struct FidelityHistogramMHRWStatsCollectorTraits
+template<typename TomoProblem_, typename FidValueType_ = double>
+class FidelityToRefCalculator
 {
-  //! The matrix type with which we need to calculate fidelities
+public:
+  typedef TomoProblem_ TomoProblem;
+  typedef typename TomoProblem::MatrQ MatrQ;
   typedef typename MatrQ::MatrixType MatrixType;
+
+  //! For TomoValueCalculator interface : value type
+  typedef FidValueType_ ValueType;
+
+private:
+  MatrixType _ref_T;
+
+public:
+  FidelityToRefCalculator(const TomoProblem & tomo)
+    : _ref_T(tomo.matq.initMatrixType())
+  {
+    _ref_T = tomo.T_MLE;
+  }
+
+  inline ValueType getValueT(const MatrixType & T) const
+  {
+    return fidelity_T<ValueType>(T, _ref_T);
+  }
+};
+
+template<typename TomoProblem_, typename TrDistValueType_ = double>
+class TrDistToRefCalculator
+{
+public:
+  typedef TomoProblem_ TomoProblem;
+  typedef typename TomoProblem::MatrQ MatrQ;
+  typedef typename MatrQ::MatrixType MatrixType;
+
+  //! For TomoValueCalculator interface : value type
+  typedef TrDistValueType_ ValueType;
+
+private:
+  MatrixType _ref_rho;
+
+public:
+  TrDistToRefCalculator(const TomoProblem & tomo)
+    : _ref_rho(tomo.matq.initMatrixType())
+  {
+    _ref_rho = tomo.rho_MLE;
+  }
+
+  inline ValueType getValueRho(const MatrixType & rho) const
+  {
+    return 0.5 * (rho - _ref_rho).jacobiSvd().singularValues().sum();
+  }
+};
+
+
+
+namespace tomo_internal
+{
+
+template<typename TomoValueCalculator, typename MatrixType>
+inline auto callTomoValueCalculator(TomoValueCalculator & vcalc, const MatrixType & T)
+  -> decltype(vcalc.getValueT(T)) // SFINAE: enables this prototype only if getValueT() exists.
+{
+  return vcalc.getValueT(T);
+}
+
+template<typename TomoValueCalculator, typename MatrixType>
+inline auto callTomoValueCalculator(TomoValueCalculator & vcalc, const MatrixType & T)
+  -> decltype(vcalc.getValueRho(T)) // SFINAE: enables this prototype only if vcalc.getValueRho() exists.
+{
+  return vcalc.getValueRho(T*T.adjoint());
+}
+
+} // namespace tomo_internal
+
+/** \brief Stores types information for a \ref ValueHistogramMHRWStatsCollector.
+ *
+ * See \ref ValueHistogramMHRWStatsCollector
+ */
+template<typename MatrQ, typename TomoValueCalculator_>
+struct ValueHistogramMHRWStatsCollectorTraits
+{
+  //! The matrix type with which we need to calculate e.g. fidelities
+  typedef typename MatrQ::MatrixType MatrixType;
+  /** \brief The type which calculates the interesting value. Should be of type interface \ref
+   * pageInterfaceTomoValueCalculator.
+   */
+  typedef TomoValueCalculator_ TomoValueCalculator;
+  //! The type to use to represent a calculated distance
+  typedef typename TomoValueCalculator::ValueType ValueType;
   //! The histogram type. This is a \ref UniformBinsHistogram.
-  typedef UniformBinsHistogram<FidelityValueType> HistogramType;
+  typedef UniformBinsHistogram<ValueType> HistogramType;
   /** \brief The structure which holds the parameters (range, number of bins) of the
    * histogram we're recording
    */
   typedef typename HistogramType::Params HistogramParams;
 };
 
-/** \brief A StatsCollector which builds a histogram of fidelities to a reference point
+
+/** \brief A StatsCollector which builds a histogram of values calculated with a
+ * ValueCalculator for each data sample point
  *
  * This stats collector is suitable for tracking statistics during a \ref MHRandomWalk.
+ *
+ * The TomoValueCalculator is a type expected to implement the \ref
+ * pageInterfaceTomoValueCalculator.
+ *
  */
-template<typename MatrQ_, typename FidelityValueType_, typename Log>
-class FidelityHistogramMHRWStatsCollector
+template<typename MatrQ_, typename TomoValueCalculator_, typename Log>
+class ValueHistogramMHRWStatsCollector
 {
 public:
   //! The data types we're dealing with
   typedef MatrQ_ MatrQ;
-  //! The floating-point value with which to calculate the fidelity.
-  typedef FidelityValueType_ FidelityValueType;
+  /** \brief The type which calculates the interesting value. Should be of type interface \ref
+   * pageInterfaceTomoValueCalculator.
+   */
+  typedef TomoValueCalculator_ TomoValueCalculator;
 
   //! Matrix type we have to deal with (calculate fidelities with)
-  typedef typename FidelityHistogramMHRWStatsCollectorTraits<MatrQ, FidelityValueType>::MatrixType MatrixType;
-  //! The type of the histogram. A \ref UniformBinsHistogram with \a FidelityValueType range type
-  typedef typename FidelityHistogramMHRWStatsCollectorTraits<MatrQ, FidelityValueType>::HistogramType HistogramType;
+  typedef typename ValueHistogramMHRWStatsCollectorTraits<MatrQ, TomoValueCalculator>::MatrixType MatrixType;
+  //! The type to use to represent a calculated distance
+  typedef typename ValueHistogramMHRWStatsCollectorTraits<MatrQ, TomoValueCalculator>::ValueType ValueType;
+  //! The type of the histogram. A \ref UniformBinsHistogram with \a ValueType range type
+  typedef typename ValueHistogramMHRWStatsCollectorTraits<MatrQ, TomoValueCalculator>::HistogramType HistogramType;
   //! Structure which holds the parameters of the histogram we're recording
-  typedef typename FidelityHistogramMHRWStatsCollectorTraits<MatrQ, FidelityValueType>::HistogramParams HistogramParams;
+  typedef typename ValueHistogramMHRWStatsCollectorTraits<MatrQ, TomoValueCalculator>::HistogramParams HistogramParams;
 
 private:
 
   HistogramType _histogram;
 
-  /** \brief The reference state we are calculating the fidelity to. This is stored in its
-   * T-representation.
+  /** \brief The value calculator which we will invoke to get the interesting value.
+   *
+   * The type should implement the \ref pageInterfaceTomoValueCalculator interface.
    */
-  MatrixType _ref_T;
+  TomoValueCalculator & _vcalc;
 
   Log & _log;
 
 public:
   //! Simple constructor, initializes with the given values
-  FidelityHistogramMHRWStatsCollector(FidelityValueType fid_min, FidelityValueType fid_max, int num_bins,
-                                      const MatrixType & ref_T, MatrQ /*mq*/,
-                                      Log & logger)
+  ValueHistogramMHRWStatsCollector(ValueType fid_min, ValueType fid_max, int num_bins,
+				   TomoValueCalculator & vcalc, MatrQ /*mq*/,
+				   Log & logger)
     : _histogram(fid_min, fid_max, num_bins),
-      _ref_T(ref_T),
+      _vcalc(vcalc),
       _log(logger)
   {
   }
   //! Simple alternative constructor, initializes with the given values
-  FidelityHistogramMHRWStatsCollector(HistogramParams histogram_params,
-                                      const MatrixType & ref_T, MatrQ /*mq*/,
-                                      Log & logger)
+  ValueHistogramMHRWStatsCollector(HistogramParams histogram_params,
+				   TomoValueCalculator & vcalc, MatrQ /*mq*/,
+				   Log & logger)
     : _histogram(histogram_params),
-      _ref_T(ref_T),
+      _vcalc(vcalc),
       _log(logger)
   {
   }
@@ -312,8 +402,8 @@ public:
   inline void done()
   {
     if (_log.enabled_for(Logger::LONGDEBUG)) {
-      // _log.longdebug("FidelityHistogramMHRWStatsCollector", "done()");
-      _log.longdebug("FidelityHistogramMHRWStatsCollector",
+      // _log.longdebug("ValueHistogramMHRWStatsCollector", "done()");
+      _log.longdebug("ValueHistogramMHRWStatsCollector",
                      "Done walking & collecting stats. Here's the histogram:\n"
                      + _histogram.pretty_print());
     }
@@ -325,21 +415,21 @@ public:
                 double /*a*/, const MatrixType & /*newpt*/, LLHValueType /*newptval*/,
                 const MatrixType & /*curpt*/, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
-    _log.longdebug("FidelityHistogramMHRWStatsCollector", "raw_move(): k=%lu", (unsigned long)k);
+    _log.longdebug("ValueHistogramMHRWStatsCollector", "raw_move(): k=%lu", (unsigned long)k);
   }
 
   //! Part of the \ref pageInterfaceMHRWStatsCollector. Records the sample in the histogram.
   template<typename LLHValueType, typename MHRandomWalk>
   void process_sample(unsigned int k, const MatrixType & curpt, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
-    FidelityValueType fid = fidelity_T<FidelityValueType>(curpt, _ref_T);
+    ValueType val = tomo_internal::callTomoValueCalculator<TomoValueCalculator>(_vcalc, curpt);
 
-    _log.longdebug("FidelityHistogramMHRWStatsCollector", "in process_sample(): k=%lu, fid=%.4g",
-                   (unsigned long)k, fid);
+    _log.longdebug("ValueHistogramMHRWStatsCollector", "in process_sample(): k=%lu, val=%.4g",
+                   (unsigned long)k, val);
 
-    _histogram.record(fid);
+    _histogram.record(val);
 
-    //_log.longdebug("FidelityHistogramMHRWStatsCollector", "process_sample() finished");
+    //_log.longdebug("ValueHistogramMHRWStatsCollector", "process_sample() finished");
   }
  
 
@@ -366,11 +456,11 @@ namespace DMLLHIntegratorTasks
    * Stores the tomography data, as well as parameters to the random walk and ranges for
    * the fidelity histgram to take.
    */
-  template<typename TomoProblem, typename FidelityValueType = double>
+  template<typename TomoProblem, typename TomoValueCalculator>
   struct CData
   {
-    typedef typename FidelityHistogramMHRWStatsCollectorTraits<typename TomoProblem::MatrQ,
-                                                               FidelityValueType>::HistogramParams
+    typedef typename ValueHistogramMHRWStatsCollectorTraits<typename TomoProblem::MatrQ,
+							    TomoValueCalculator>::HistogramParams
     /*..*/  HistogramParams;
     
     CData(const TomoProblem &prob_, int base_seed_ = 0,
@@ -405,8 +495,9 @@ namespace DMLLHIntegratorTasks
    *
    * This class can be used with \ref MultiProc::OMPTaskDispatcher, for example.
    */
-  template<typename TomoProblem, typename LoggerType, typename Rng = std::mt19937,
-           typename FidelityValueType = double, typename CountIntType = unsigned int>
+  template<typename TomoProblem, typename TomoValueCalculator,
+	   typename LoggerType, typename Rng = std::mt19937,
+           typename CountIntType = unsigned int>
   struct MHRandomWalkTask
   {
     /** \brief Status Report for a \ref MHRandomWalkTask
@@ -458,14 +549,14 @@ namespace DMLLHIntegratorTasks
     typedef StatusReport StatusReportType;
 
     /** \brief convenience typedef for the \ref DMLLHIntegratorTasks::CData which we will use */
-    typedef CData<TomoProblem, FidelityValueType> CDataType;
+    typedef CData<TomoProblem, TomoValueCalculator> CDataType;
 
-    /** \brief convenience typedef for our \ref FidelityHistogramMHRWStatsCollector which we use here */
-    typedef FidelityHistogramMHRWStatsCollector<typename TomoProblem::MatrQ, FidelityValueType, LoggerType>
-    /*..*/ FidelityHistogramMHRWStatsCollectorType;
+    /** \brief convenience typedef for our \ref ValueHistogramMHRWStatsCollector which we use here */
+    typedef ValueHistogramMHRWStatsCollector<typename TomoProblem::MatrQ, TomoValueCalculator, LoggerType>
+    /*..*/ ValueHistogramMHRWStatsCollectorType;
 
     struct Result {
-      typename FidelityHistogramMHRWStatsCollectorType::HistogramType histogram;
+      typename ValueHistogramMHRWStatsCollectorType::HistogramType histogram;
     };
     typedef Result ResultType;
 
@@ -476,12 +567,15 @@ namespace DMLLHIntegratorTasks
     /** \brief a logger to which we can log messages */
     LoggerType & _log;
 
-    /** \brief our \ref FidelityHistogramMHRWStatsCollector instance */
-    FidelityHistogramMHRWStatsCollectorType fidstats;
+    /** \brief our \ref TomoValueCalculator instance */
+    TomoValueCalculator valcalc;
+
+    /** \brief our \ref ValueHistogramMHRWStatsCollector instance */
+    ValueHistogramMHRWStatsCollectorType valstats;
 
     /** \brief the struct in which we hold formally the results of the current task
      *
-     * This is none other than the histogram gathered by \ref fidstats.
+     * This is none other than the histogram gathered by \ref valstats.
      */
     Result result;
 
@@ -508,7 +602,10 @@ namespace DMLLHIntegratorTasks
     MHRandomWalkTask(int inputseed, const CDataType * pcdata, LoggerType & log)
       : _seed(inputseed),
         _log(log),
-        fidstats(pcdata->histogram_params, pcdata->prob.T_MLE, pcdata->prob.matq, _log)
+	valcalc(pcdata->prob),
+        valstats(pcdata->histogram_params,
+		 valcalc,
+		 pcdata->prob.matq, _log)
     {
     }
 
@@ -530,8 +627,8 @@ namespace DMLLHIntegratorTasks
 
       OurStatusReportCheck statreportcheck(this, tmgriface);
       
-      MultipleMHRWStatsCollectors<FidelityHistogramMHRWStatsCollectorType, OurStatusReportCheck>
-        statscollectors(fidstats, statreportcheck);
+      MultipleMHRWStatsCollectors<ValueHistogramMHRWStatsCollectorType, OurStatusReportCheck>
+        statscollectors(valstats, statreportcheck);
 
       auto rwalk = makeDMStateSpaceLLHRandomWalk(
           // MH random walk parameters
@@ -550,7 +647,7 @@ namespace DMLLHIntegratorTasks
       
       rwalk.run();
 
-      result.histogram = fidstats.histogram();
+      result.histogram = valstats.histogram();
     }
 
     inline const Result & getResult() const

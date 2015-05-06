@@ -67,9 +67,10 @@ struct ProgOptions
     Nsweep(std::max(10, int(1/step_size))),
     Ntherm(500),
     Nrun(5000),
-    fid_min(0.97),
-    fid_max(1.0),
-    fid_nbins(50),
+    val_type("fidelity"),
+    val_min(0.97),
+    val_max(1.0),
+    val_nbins(50),
     start_seed(std::chrono::system_clock::now().time_since_epoch().count()),
     Nrepeats(256),
     Nchunk(1),
@@ -91,9 +92,11 @@ struct ProgOptions
   unsigned int Ntherm;
   unsigned int Nrun;
 
-  double fid_min;
-  double fid_max;
-  std::size_t fid_nbins;
+  std::string val_type;
+
+  double val_min;
+  double val_max;
+  std::size_t val_nbins;
 
   int start_seed;
 
@@ -127,6 +130,43 @@ public:
   }
 };
 
+//
+// see http://stackoverflow.com/a/8822627/1694896
+// custom validation for types in boost::program_options
+//
+struct valtype
+{
+  valtype(std::string const& val):
+    value(val)
+  { }
+  std::string value;
+};
+
+void validate(boost::any& v, std::vector<std::string> const& values,
+              valtype* /* target_type */,
+              int)
+{
+  using namespace boost::program_options;
+
+  // Make sure no previous assignment to 'v' was made.
+  validators::check_first_occurrence(v);
+
+  // Extract the first string from 'values'. If there is more than
+  // one string, it's an error, and exception will be thrown.
+  std::string const& s = validators::get_single_string(values);
+
+  if (s == "fidelity" || s == "tr-dist") {
+    v = boost::any(valtype(s));
+  } else {
+    throw validation_error(validation_error::invalid_option_value);
+  }
+}
+
+inline std::ostream & operator<<(std::ostream & str, const valtype & val)
+{
+  return str << val.value;
+}
+
 void parse_options(ProgOptions * opt, int argc, char **argv)
 {
   // read the options
@@ -135,20 +175,25 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
   std::string flogname;
   bool flogname_from_config_file_name = false;
 
-  std::string fidhiststr;
+  std::string valhiststr;
 
   std::string configfname;
   std::string configdir;
   std::string configbasename;
   bool write_histogram_from_config_file_name = false;
 
+  valtype val_type(opt->val_type);
+
   options_description desc("Options");
   desc.add_options()
     ("help", "Print Help Message")
     ("data-file-name", value<std::string>(& opt->data_file_name)->default_value("testfile.mat"),
      "specify .mat data file name")
-    ("fidelity-hist", value<std::string>(&fidhiststr),
-     "Do a histogram for different fidelity values, format MIN:MAX/NPOINTS")
+    ("value-type", value<valtype>(& val_type)->default_value(val_type),
+     "Which value to acquire histogram of, e.g. fidelity to MLE. Possible values are 'fidelity'"
+     " or 'tr-dist'")
+    ("value-hist", value<std::string>(&valhiststr),
+     "Do a histogram for different measured values (e.g. fidelity to MLE), format MIN:MAX/NPOINTS")
     ("step-size", value<double>(& opt->step_size)->default_value(opt->step_size),
      "the step size for the region")
     ("n-sweep", value<unsigned int>(& opt->Nsweep)->default_value(opt->Nsweep),
@@ -276,6 +321,8 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
   // set up log level
   logger.setLevel(opt->loglevel);
 
+  opt->val_type = val_type.value;
+
   // set up write histogram file name from config file name
   if (write_histogram_from_config_file_name) {
     if (!configfname.size()) {
@@ -288,17 +335,17 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
     opt->write_histogram = configdir + "/" + std::string("tomorun-") + configbasename;
   }
 
-  // set up fidelity histogram parameters
-  if (fidhiststr.size()) {
+  // set up value histogram parameters
+  if (valhiststr.size()) {
     double fmin, fmax;
     int nbins = 100;
-    if (std::sscanf(fidhiststr.c_str(), "%lf:%lf/%d", &fmin, &fmax, &nbins) < 2) {
-      throw bad_options("--fidelity-hist expects an argument of format MIN:MAX[/NPOINTS]");
+    if (std::sscanf(valhiststr.c_str(), "%lf:%lf/%d", &fmin, &fmax, &nbins) < 2) {
+      throw bad_options("--value-hist expects an argument of format MIN:MAX[/NPOINTS]");
     }
 
-    opt->fid_min = fmin;
-    opt->fid_max = fmax;
-    opt->fid_nbins = nbins;
+    opt->val_min = fmin;
+    opt->val_max = fmax;
+    opt->val_nbins = nbins;
   }
 }
 
@@ -312,7 +359,8 @@ void display_parameters(ProgOptions * opt)
       // message
       "\n"
       "Using  data from file     = %s  (measurements x%.3g)\n"
-      "       fid. histogram     = [%.2g, %.2g] (%lu bins)\n"
+      "       value type         = %s\n"
+      "       val. histogram     = [%.2g, %.2g] (%lu bins)\n"
       "       step size          = %.6f\n"
       "       sweep size         = %lu\n"
       "       # therm sweeps     = %lu\n"
@@ -322,9 +370,9 @@ void display_parameters(ProgOptions * opt)
       "\n"
       "       --> total no. of live samples = %lu  (%.2e)\n"
       "\n",
-      opt->data_file_name.c_str(),
-      opt->NMeasAmplifyFactor,
-      opt->fid_min, opt->fid_max, (unsigned long)opt->fid_nbins,
+      opt->data_file_name.c_str(), opt->NMeasAmplifyFactor,
+      opt->val_type.c_str(),
+      opt->val_min, opt->val_max, (unsigned long)opt->val_nbins,
       opt->step_size,
       (unsigned long)opt->Nsweep,
       (unsigned long)opt->Ntherm,
@@ -342,7 +390,7 @@ void display_parameters(ProgOptions * opt)
 // ------------------------------------------------------------------------------
 
 template<int FixedDim, int FixedMaxPOVMEffects, typename Logger>
-inline void tomorun(unsigned int dim, ProgOptions * opt, Tomographer::MAT::File * matf, Logger & logger);
+inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::MAT::File * matf, Logger & logger);
 
 
 int main(int argc, char **argv)
@@ -435,17 +483,17 @@ int main(int argc, char **argv)
 
   //  try {
     if (dim == 2 && n_povms <= 6) {
-      tomorun<2, 6>(dim, &opt, matf, mlog);
-    } else if (dim == 2 && n_povms <= 64) {
-      tomorun<2, 64>(dim, &opt, matf, mlog);
-    } else if (dim == 2) {
-      tomorun<2, Eigen::Dynamic>(dim, &opt, matf, mlog);
-    } else if (dim == 4 && n_povms <= 64) {
-      tomorun<4, 64>(dim, &opt, matf, mlog);
-    } else if (dim == 4) {
-      tomorun<4, Eigen::Dynamic>(dim, &opt, matf, mlog);
+      tomorun_dispatch<2, 6>(dim, &opt, matf, mlog);
+      /*    } else if (dim == 2 && n_povms <= 64) {
+	    tomorun<2, 64>(dim, &opt, matf, mlog); */
+      /*    } else if (dim == 2) {
+	    tomorun<2, Eigen::Dynamic>(dim, &opt, matf, mlog); */
+      /*    } else if (dim == 4 && n_povms <= 64) {
+	    tomorun<4, 64>(dim, &opt, matf, mlog); */
+      /*    } else if (dim == 4) {
+	    tomorun<4, Eigen::Dynamic>(dim, &opt, matf, mlog); */
     } else {
-      tomorun<Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
+      tomorun_dispatch<Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
     }
     //  } catch (const std::exception& e) {
     //    logger.error("main()", "Caught exception: %s", e.what());
@@ -454,15 +502,14 @@ int main(int argc, char **argv)
 }
 
 
+template<typename ValueCalculator, typename OurTomoProblem, typename Logger>
+inline void tomorun(OurTomoProblem & tomodat, ProgOptions * opt, Logger & logger);
 
-//
-// Here goes the actual program. This is templated, because then we can let Eigen use
-// allocation on the stack rather than malloc'ing 2x2 matrices...
-//
+
 template<int FixedDim, int FixedMaxPOVMEffects, typename Logger>
-inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logger & logger)
+inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::MAT::File * matf, Logger & logger)
 {
-  logger.debug("tomorun()", "Running tomography program! FixedDim=%d and FixedMaxPOVMEffects=%d",
+  logger.debug("tomorun_dispatch()", "Running tomography program! FixedDim=%d and FixedMaxPOVMEffects=%d",
                FixedDim, FixedMaxPOVMEffects);
 
   //
@@ -493,7 +540,7 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logge
       ++Npovmeffects;
     }
   }
-  logger.debug("tomorun()", "Npovmeffects=%d", Npovmeffects);
+  logger.debug("tomorun_dispatch()", "Npovmeffects=%d", Npovmeffects);
   tomodat.Exn.resize(Npovmeffects, dim*dim);
   tomodat.Nx.resize(Npovmeffects);
   j = 0;
@@ -503,7 +550,7 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logge
     }
     // do some tests: positive semidefinite and non-zero
 #ifdef DO_SLOW_POVM_CONSISTENCY_CHECKS
-    logger.longdebug("tomorun()", [&](std::ostream & str) {
+    logger.longdebug("tomorun_dispatch()", [&](std::ostream & str) {
                        str << "Emn["<<k<<"] = \n" << Emn[k] << "\n"
                            << "\tEV=" << Emn[k].eigenvalues().transpose().real() << "\n"
                            << "\tnorm=" << double(Emn[k].norm()) << "\n" ;
@@ -511,7 +558,7 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logge
     eigen_assert(double( (Emn[k] - Emn[k].adjoint()).norm() ) < 1e-8); // Hermitian
     eigen_assert(double(Emn[k].eigenvalues().real().minCoeff()) >= -1e-12); // Pos semidef
     eigen_assert(double(Emn[k].norm()) > 1e-6);
-    logger.debug("tomorun()", "Consistency checks passed for Emn[%u].", k);
+    logger.debug("tomorun_dispatch()", "Consistency checks passed for Emn[%u].", k);
 #endif
 
     // don't need to reset `row` to zero, param_herm_to_x doesn't require it
@@ -522,7 +569,7 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logge
   }
   // done.
 
-  logger.debug("tomorun()", [&](std::ostream & ss) {
+  logger.debug("tomorun_dispatch()", [&](std::ostream & ss) {
                  ss << "\n\nExn: size="<<tomodat.Exn.size()<<"\n"
                     << tomodat.Exn << "\n";
                  ss << "\n\nNx: size="<<tomodat.Nx.size()<<"\n"
@@ -544,22 +591,47 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logge
   tomodat.NMeasAmplifyFactor = opt->NMeasAmplifyFactor;
 
   //
-  // Data has now been successfully read. Now, create the OMP Task Manager and run.
+  // Data has now been successfully read. Now, dispatch to the correct template function
+  // for futher processing.
   //
 
-  typedef DMLLHIntegratorTasks::CData<OurTomoProblem> OurCData;
+  if (opt->val_type == "fidelity") {
+    tomorun<FidelityToRefCalculator<OurTomoProblem, double> >(tomodat, opt, logger);
+  } else if (opt->val_type == "tr-dist") {
+    tomorun<TrDistToRefCalculator<OurTomoProblem, double> >(tomodat, opt, logger);
+  } else {
+    throw std::logic_error((std::string("Unknown value type: ")+opt->val_type).c_str());
+  }
+}
+
+
+
+
+//
+// Here goes the actual program. This is templated, because then we can let Eigen use
+// allocation on the stack rather than malloc'ing 2x2 matrices...
+//
+template<typename ValueCalculator, typename OurTomoProblem, typename Logger>
+inline void tomorun(OurTomoProblem & tomodat, ProgOptions * opt, Logger & logger)
+{
+  //
+  // create the OMP Task Manager and run.
+  //
+
+  typedef DMLLHIntegratorTasks::CData<OurTomoProblem, ValueCalculator> OurCData;
   typedef MultiProc::OMPTaskLogger<Logger> OurTaskLogger;
-  typedef DMLLHIntegratorTasks::MHRandomWalkTask<OurTomoProblem,OurTaskLogger> OurMHRandomWalkTask;
+  typedef DMLLHIntegratorTasks::MHRandomWalkTask<OurTomoProblem,ValueCalculator,OurTaskLogger>
+    OurMHRandomWalkTask;
   typedef DMLLHIntegratorTasks::MHRandomWalkResultsCollector<
-      typename OurMHRandomWalkTask::FidelityHistogramMHRWStatsCollectorType::HistogramType
+      typename OurMHRandomWalkTask::ValueHistogramMHRWStatsCollectorType::HistogramType
       >
     OurResultsCollector;
 
   OurCData taskcdat(tomodat);
   // seed for random number generator
   taskcdat.base_seed = std::chrono::system_clock::now().time_since_epoch().count();
-  // parameters for the fidelity histogram
-  taskcdat.histogram_params = typename OurCData::HistogramParams(opt->fid_min, opt->fid_max, opt->fid_nbins);
+  // parameters for the value histogram
+  taskcdat.histogram_params = typename OurCData::HistogramParams(opt->val_min, opt->val_max, opt->val_nbins);
   // parameters of the random walk
   taskcdat.n_sweep = opt->Nsweep;
   taskcdat.n_therm = opt->Ntherm;
@@ -617,7 +689,7 @@ inline void tomorun(unsigned int dim, ProgOptions * opt, MAT::File * matf, Logge
     std::string csvfname = opt->write_histogram+"-histogram.csv";
     std::ofstream outf;
     outf.open(csvfname);
-    outf << "Fidelity\tAvgCounts\tError\n"
+    outf << "Value\tAvgCounts\tError\n"
          << std::scientific << std::setprecision(10);
     for (int kk = 0; kk < results.final_histogram.size(); ++kk) {
       outf << (double)results.params.bin_lower_value(kk) << "\t"

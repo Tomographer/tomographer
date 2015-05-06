@@ -13,6 +13,7 @@
  *  - \subpage pageInterfaceRandomWalk
  *  - \subpage pageInterfaceMHWalker
  *  - \subpage pageInterfaceMHRWStatsCollector
+ *  - \subpage pageInterfaceTomoValueCalculator
  *  - \subpage pageTaskManagerDispatcher
  *
  */
@@ -203,4 +204,10 @@
  *          Is called after the random walk is finished. This happens after the given
  *          number of iterations were reached.
  *
+ */
+
+
+/** \page pageInterfaceTomoValueCalculator TomoValueCalculator Interface
+ *
+ * \todo ............ doc. ..................
  */

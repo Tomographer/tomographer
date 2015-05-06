@@ -15,3 +15,17 @@
  * Do not access&mdash;the API might change at anytime!
  *
  */
+
+
+/** \namespace Tomographer::Tools
+ *
+ * \brief Various useful tools.
+ *
+ */
+
+
+/** \namespace Tomographer::MAT
+ *
+ * \brief Utilities to read MATLAB \c *.mat files.
+ *
+ */

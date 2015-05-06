@@ -151,11 +151,12 @@ int main()
 
   // MHRandomWalkTask<TomoProblem, typename Rng = std::mt19937, typename FidelityValueType = double>
 
-  typedef DMLLHIntegratorTasks::CData<OurTomoProblem> MyCData;
+  typedef DMLLHIntegratorTasks::CData<OurTomoProblem,FidelityToRefCalculator<OurTomoProblem> > MyCData;
   typedef MultiProc::OMPTaskLogger<OurLogger> MyTaskLogger;
-  typedef DMLLHIntegratorTasks::MHRandomWalkTask<OurTomoProblem,MyTaskLogger> MyMHRandomWalkTask;
+  typedef DMLLHIntegratorTasks::MHRandomWalkTask<OurTomoProblem,FidelityToRefCalculator<OurTomoProblem>,
+						 MyTaskLogger> MyMHRandomWalkTask;
   typedef DMLLHIntegratorTasks::MHRandomWalkResultsCollector<
-    MyMHRandomWalkTask::FidelityHistogramMHRWStatsCollectorType::HistogramType
+    MyMHRandomWalkTask::ValueHistogramMHRWStatsCollectorType::HistogramType
     >  MyResultsCollector;
 
   // ---------------

@@ -19,6 +19,10 @@ function dat = analyze_tomorun_histogram(histfname, varargin)
                       'bin values. Use this option to center the bins, i.e. move the x ' ...
                       'axis so that the x label corresponds to the center of a bin, and ' ...
                       'not the lower limit.'];
+  optdefs.XIsOneMinus = struct('switch', true);
+  optdefs.XIsOneMinus.help = ['If this option is set (the default), then the X data is ' ...
+                      'calculated as 1 - (x-value). This makes sense for example for the ' ...
+                      'fidelity, which lies close to 1.'];
   optdefs.FigHandleP = struct(...
       'arg', 'any', 'default', [], ...
       'validator', @(x) get_figure_handle(x, 'intgr-fid-epsilon'));
@@ -64,7 +68,13 @@ function dat = analyze_tomorun_histogram(histfname, varargin)
     Fidelity = Fidelity + (Fidelity(2)-Fidelity(1)) ./ 2.0;
   end
 
-  OneMinusFidelity = 1 - Fidelity;
+  if (opts.XIsOneMinus)
+    OneMinusFidelity = 1 - Fidelity;
+    flipsign = -1;
+  else
+    OneMinusFidelity = Fidelity;
+    flipsign = 1;
+  end
 
   if (any(OneMinusFidelity==0))
     warning('analyze_tomorun_histogram:zeroInOneMinusFidelity', ['Found a zero value in ' ...
@@ -72,8 +82,8 @@ function dat = analyze_tomorun_histogram(histfname, varargin)
   end
 
   % Normalize to probability density
-  P = AvgCounts/trapz(-OneMinusFidelity,AvgCounts);
-  ErrorP = Error/trapz(-OneMinusFidelity,AvgCounts);
+  P = AvgCounts/trapz(flipsign*OneMinusFidelity,AvgCounts);
+  ErrorP = Error/trapz(flipsign*OneMinusFidelity,AvgCounts);
   
   % get the "support" of P -- where P != 0
   P_IndNonZero = find(P>0);
