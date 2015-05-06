@@ -1006,8 +1006,15 @@ public:
   inline void emit_log(int /*level*/, const char * /*origin*/, const std::string & /*msg*/)
   {
   }
+
 };
 
+/** \brief A VacuumLogger instance which can be used as an LVALUE
+ *
+ * This instance may be used as an LVALUE, for example in default function arguments. A
+ * VacuumLogger doesn't do anything, anyway.
+ */
+static VacuumLogger vacuum_logger;
 
 
 
