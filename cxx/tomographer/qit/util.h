@@ -2,10 +2,72 @@
 #ifndef QIT_UTIL_H
 #define QIT_UTIL_H
 
+#include <complex>
+#include <vector>
 
 #include <Eigen/Core>
 #include <Eigen/Dense>
+#include <Eigen/StdVector>
 
+
+
+// -----------------------------------------------------------------------------
+// C++ Helper for Complex Type
+// -----------------------------------------------------------------------------
+
+namespace Tomographer
+{
+namespace Tools
+{
+
+/** \brief statically determine whether a type is complex
+ *
+ * This class provides an enum memeber named \a value which is either set to \c 1 if
+ * the type \a Scalar is of type \a std::complex<>, or else set to \c 0.
+ */
+template<typename Scalar>
+struct is_complex {
+  enum { value = 0 };
+};
+template<typename T>
+struct is_complex<std::complex<T> > {
+  enum { value = 1 };
+};
+
+} // namespace Tools
+} // namespace Tomographer
+
+
+
+// -----------------------------------------------------------------------------
+// Eigen and std::vector
+// -----------------------------------------------------------------------------
+
+namespace Tomographer {
+namespace Tools {
+
+/** \brief Use this if you need an \a std::vector of any Eigen type
+ *
+ * See <a href="http://eigen.tuxfamily.org/dox-devel/group__TopicStlContainers.html">this
+ * discussion in Eigen's documentation</a> about using Eigen with C++ STL containers.
+ *
+ * This struct defines a helper type, which is the right type to use if you want an
+ * std::vector of any Eigen type. Example:
+ *
+ * \code
+ *   Tomographer::Tools::eigen_std_vector<Matrix4d>::type v(...);
+ *   v[0].resize(...);
+ *   // ... use as if std::vector<Matrix4d>
+ * \endcode
+ */
+template<typename EigenType>
+struct eigen_std_vector
+{
+  typedef std::vector<EigenType, Eigen::aligned_allocator<EigenType> > type;
+};
+
+} // namespace Tools
+} // namespace Tomographer
 
 // -----------------------------------------------------------------------------
 // Random matrices in Eigen

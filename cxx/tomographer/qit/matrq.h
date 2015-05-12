@@ -1,6 +1,7 @@
 #ifndef QUTIL_H
 #define QUTIL_H
 
+#include <cstddef> // std::size_t
 #include <complex>
 
 #include <Eigen/Core>
@@ -55,6 +56,7 @@ namespace tomo_internal
      */
     typedef IntFreqType_ IntFreqType;
   };
+
 };
 
 
@@ -69,7 +71,8 @@ struct MatrQBase
 {
   enum {
     FixedDim = tomo_internal::matrq_traits<Derived>::FixedDim,
-    FixedDim2 = ((FixedDim!=Eigen::Dynamic)?FixedDim*FixedDim : Eigen::Dynamic),
+    FixedDim2 = ((FixedDim!=Eigen::Dynamic) ? FixedDim*FixedDim : Eigen::Dynamic),
+    FixedNdof = ((FixedDim2!=Eigen::Dynamic) ? FixedDim2-1 : Eigen::Dynamic),
     FixedMaxParamList = tomo_internal::matrq_traits<Derived>::FixedMaxParamList
   };
   typedef typename tomo_internal::matrq_traits<Derived>::RealScalar RealScalar;
@@ -81,6 +84,9 @@ struct MatrQBase
   
   /** \brief Real dim*dim Vector */
   typedef Eigen::Matrix<RealScalar, FixedDim2, 1> VectorParamType;
+
+  /** \brief Real dim*dim-1 Vector */
+  typedef Eigen::Matrix<RealScalar, FixedNdof, 1> VectorParamNdofType;
   
   /** \brief dynamic Matrix with rows = dim*dim Vectors (row-major)
    * [maximum FixedMaxParamList rows, or Dynamic]
@@ -92,6 +98,7 @@ struct MatrQBase
    */
   typedef Eigen::Array<IntFreqType, Eigen::Dynamic, 1, 0 /*Options*/,
                        FixedMaxParamList, 1> FreqListType;
+
 };
 
 
@@ -115,6 +122,8 @@ template<typename Derived, bool has_fixed_dim>
 struct MatrQBaseDimStore : public MatrQBase<Derived>
 {
   inline std::size_t dim() const { return MatrQBase<Derived>::FixedDim; }
+  inline std::size_t dim2() const { return MatrQBase<Derived>::FixedDim2; }
+  inline std::size_t ndof() const { return MatrQBase<Derived>::FixedNdof; }
 
   /** Constructor. If a fixed dimension is given (\c has_fixed_dim is \c true), then we
    *  assert that the given dimension matches the compile-time fixed dimension \ref
@@ -152,6 +161,17 @@ struct MatrQBaseDimStore : public MatrQBase<Derived>
     return MatrQBase<Derived>::VectorParamType::Zero();
   }
 
+  /** \brief Zero initializer for a VectorParamNdofType
+   *
+   * This function returns an initializer, which when assigned to a \ref
+   * VectorParamNdofType, should initialize it with zeros.
+   */
+  inline typename MatrQBase<Derived>::VectorParamNdofType::ConstantReturnType
+  initVectorParamNdofType() const
+  {
+    return MatrQBase<Derived>::VectorParamNdofType::Zero();
+  }
+
   /** \brief Zero initializer for a VectorParamListType
    *
    * This function returns an initializer, which when assigned to a \ref
@@ -185,6 +205,8 @@ private:
 public:
 
   inline std::size_t dim() const { return _dim; }
+  inline std::size_t dim2() const { return _dim*_dim; }
+  inline std::size_t ndof() const { return _dim*_dim - 1; }
 
   MatrQBaseDimStore(std::size_t dim_)
     : _dim(dim_)
@@ -199,6 +221,10 @@ public:
   inline typename MatrQBase<Derived>::VectorParamType::ConstantReturnType initVectorParamType() const
   {
     return MatrQBase<Derived>::VectorParamType::Zero(_dim*_dim);
+  }
+  inline typename MatrQBase<Derived>::VectorParamNdofType::ConstantReturnType initVectorParamNdofType() const
+  {
+    return MatrQBase<Derived>::VectorParamNdofType::Zero(_dim*_dim-1);
   }
   inline typename MatrQBase<Derived>::VectorParamListType::ConstantReturnType initVectorParamListType(std::size_t len) const
   {

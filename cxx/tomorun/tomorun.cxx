@@ -526,7 +526,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   OurMatrQ matq(dim);
   OurTomoProblem tomodat(matq);
 
-  std::vector<typename OurMatrQ::MatrixType> Emn;
+  typename Tools::eigen_std_vector<typename OurMatrQ::MatrixType>::type Emn;
   MAT::getListOfEigenMatrices(matf->var("Emn"), & Emn, true);
   Eigen::VectorXi Nm;
   MAT::getEigenMatrix(matf->var("Nm"), & Nm);

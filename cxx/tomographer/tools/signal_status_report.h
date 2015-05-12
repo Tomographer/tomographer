@@ -26,8 +26,6 @@ struct SignalHandler
   virtual void handle_signal(int) = 0;
 };
   
-static SignalHandler * signal_handler = NULL;
-
 
 /** \brief A generic handler which requests a status report from an OMPTaskDispatcher
  */
@@ -132,6 +130,15 @@ namespace tomo_internal {
   }
 }
 
+
+/** \brief Installs the given signal handler to catch the signal \a signum
+ *
+ * \warning This will replace any previous signal handlers set, including for other
+ * signals!
+ *
+ * \bug Don't replace the signal handlers for other signals...
+ *
+ */
 template<typename SigHandler>
 void installSignalStatusReportHandler(int signum, SigHandler * sobj)
 {

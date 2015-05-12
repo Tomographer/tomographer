@@ -7,33 +7,10 @@
 
 /** \file sphcoords.h
  *
- * \brief spherical coordinates conversion routines, with jacobian etc.
- *
- * conventions:
- *
- * cart: cartesian coordinates x, y, z...
- *
- * rtheta: [r, theta_1, theta_2, ..., theta_{ds}]  with   [ds=N-1=dimension of sphere]
- *         theta_{ds} = 0..2pi
- *         theta_{i} = 0..pi   [ for 1 <= i <= ds-1 ]
- *
- *
- * NOTE: In the special case of the 2-sphere, this does not map back to usuall 3-D
- * spherical coordinates, with theta=0 at (X=0,Y=0,Z=1), theta=pi at (X=0,Y=0,Z=-1), and
- * theta=pi/2,phi=0 for (X=1,Y=0,Z=0)
- *
- * In fact, it is mapped to:
- *
- *    X = r Cos[theta1]                   -- what we normally call Z
- *    Y = r Sin[theta1] * Cos[Theta2]     -- what we normally call X
- *    Z = r Sin[theta1] * Sin[Theta1]     -- what we normally call Y
- *
- * So effectively, the angles count from (X=+1,Y=0,Z=0) and theta1 increases to
- * (X=-1,Y=0,Z=0); then theta2 wraps around, with theta2=0 corresponding to the direction
- * in which Y=+1.
+ * \brief spherical coordinates conversion routines, with jacobian etc. See \ref
+ * pageParamsSphericalCoords.
  *
  */
-
 
 
 namespace Tomographer
@@ -44,23 +21,24 @@ namespace Tools
 
 /** \brief Convert Cartesian coordinates to spherical coordinates in N dimensions
  *
- * The transformation is as the one given in
- * http://en.wikipedia.org/wiki/N-sphere#Spherical_coordinates .
+ * See \ref pageParamsSphericalCoords for information about the conventions and ranges of
+ * the coordinates.
  *
- * See \ref sphcoords.h for information about the conventions.
+ * \param rtheta (output), vector of \a N entries, will store the \f$ r\f$ and
+ *        \f$\theta_i\f$ values corresponding to the spherical coordinates representation
+ *        of the point represented by \a cart. The value <em>rtheta(0)</em> is the \f$r\f$
+ *        coordinate and <em>rtheta(1),..,rtheta(N-1)</em> are the angle coordinates,
+ *        corresponding respectively to \f$\theta_1\ldots\theta_{N-1}\f$. All \f$ \theta_i
+ *        \f$ 's but the last range from \f$0..\pi\f$, while \f$\theta_{N-1}\f$ ranges
+ *        from \f$-\pi\f$ to \f$+\pi\f$.
  *
- * \param rtheta (output), vector of \i N entries, will store the R and Theta values
- *        corresponding to the spherical coordinates representation of \c cart. 
- *        `rtheta(0)` is the R coordinate and `rtheta(1),..,rtheta(N-1)` are the angle
- *        coordinates; all but the last range from `0..pi`, the last ranges from -pi to
- *        pi.
- *
- * \param cart is a vector of \i N entries, corresponding to the cartesian coordinates of
+ * \param cart is a vector of \a N entries, corresponding to the cartesian coordinates of
  *        the point to transform.
  */
 template<typename Der1, typename Der2>
 void cart_to_sph(Eigen::MatrixBase<Der2>& rtheta, const Eigen::MatrixBase<Der1>& cart)
 {
+  { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(Der2); }
   typedef typename Eigen::MatrixBase<Der1>::Scalar Scalar;
 
   eigen_assert(cart.cols() == 1 && rtheta.cols() == 1);
@@ -106,25 +84,32 @@ void cart_to_sph(Eigen::MatrixBase<Der2>& rtheta, const Eigen::MatrixBase<Der1>&
 }
 
 
-/** \brief Convert spherical coordinates to Cartesian coordinates in N dimensions
+/** \brief Convert spherical angles to Cartesian coordinates in N dimensions
  *
- * The transformation is as the one given in
- * http://en.wikipedia.org/wiki/N-sphere#Spherical_coordinates .
+ * See \ref pageParamsSphericalCoords for information about the conventions and ranges of
+ * the coordinates.
  *
- * See \ref sphcoords.h for information about the conventions.
+ * This function behaves exactly like \ref sph_to_cart(), but takes the \a theta arguments
+ * separately from the \a R argument. This is useful if you only have angle coordinates
+ * that parameterize a fixed-radius hypersphere.
  *
- * \param cart (output) is a vector of \i N entries, which will be set to the cartesian
- *        coordinates of the point represented by \c rtheta.
+ * \param cart (output) is a vector of \a N entries, which will be set to the cartesian
+ *        coordinates of the point represented by the spherical coordinates (\a R, \a
+ *        theta).
  *
- * \param rtheta vector of \i N entries which specifies the R and Theta spherical
- *        coordinates to transform. `rtheta(0)` is the R coordinate and
- *        `rtheta(1),..,rtheta(N-1)` are the angle coordinates.
+ * \param theta vector of <em>N-1</em> entries which specifies the \f$\theta_i\f$
+ *        spherical coordinates to transform. The value <em>theta(0)</em> is
+ *        \f$\theta_1\f$, and so on.
+ *
+ * \param R the radial coordinate part of the hyperspherical coordinates of the point to
+ *        transform.
  *
  */
 template<typename Der1, typename Der2>
 inline void sphsurf_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<Der1>& theta,
                             const typename Eigen::MatrixBase<Der1>::Scalar R = 1.0)
 {
+  { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(Der2); }
   // same as sph_to_cart, except that only the angles are given, and R is given
   // separately, defaulting to 1.
 
@@ -146,9 +131,24 @@ inline void sphsurf_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBa
   }
 }
 
+/** \brief Convert spherical coordinates to Cartesian coordinates in N dimensions
+ *
+ * See \ref pageParamsSphericalCoords for information about the conventions and ranges of
+ * the coordinates.
+ *
+ * \param cart (output) is a vector of \a N entries, which will be set to the cartesian
+ *        coordinates of the point represented by \a rtheta.
+ *
+ * \param rtheta vector of \a N entries which specifies the \f$r\f$ and \f$\theta_i\f$
+ *        spherical coordinates to transform. <em>rtheta(0)</em> is the \f$r\f$ coordinate
+ *        and <em>rtheta(1),..,rtheta(N-1)</em> are the angle coordinates, corresponding
+ *        respectively to \f$\theta_1\ldots\theta_{N-1}\f$.
+ *
+ */
 template<typename Der1, typename Der2>
 void sph_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<Der1>& rtheta)
 {
+  { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(Der2); }
   //  typedef typename Eigen::MatrixBase<Der1>::Scalar Scalar;
 
   eigen_assert(cart.cols() == 1 && rtheta.cols() == 1);
@@ -163,7 +163,22 @@ void sph_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<Der1>& r
 
 
 
-// volume element of hypersphere
+/** \brief Volume element of the hypersphere
+ *
+ * Calculates the <a href="http://en.wikipedia.org/wiki/N-sphere#Spherical_volume_element"
+ * target="_blank">volume element</a>, or Jacobian, of the conversion from cartesian
+ * coordinates to spherical coordinates. More precisely, this function computes
+ * \f[
+ *   J = \left\lvert\det \frac{\partial(x_i)}{\partial(r,\theta_j)}\right\rvert
+ *     = r^{N-1} \sin^{N-2}\left(\theta_1\right)\sin^{N-3}\left(\theta_2\right)
+ *       \ldots\sin\left(\theta_{N-2}\right)\ ,
+ * \f]
+ * where \a N is the dimension of the Euclidean space in which the <em>N-1</em>-sphere is
+ * embedded.
+ *
+ * See \ref pageParamsSphericalCoords for more info and conventions.
+ * 
+ */
 template<typename Der1>
 typename Eigen::MatrixBase<Der1>::Scalar cart_to_sph_jacobian(const Eigen::MatrixBase<Der1>& rtheta)
 {
@@ -178,11 +193,26 @@ typename Eigen::MatrixBase<Der1>::Scalar cart_to_sph_jacobian(const Eigen::Matri
   return jac;
 }
 
-// surface element of sphere; (think like the volume element but with r integrated out
-// with a delta function at r=1)
-//
-// Note that here only the vector of theta's is given, no R
-//
+/** \brief Surface element of the hypersphere
+ *
+ * Calculates the <a href="http://en.wikipedia.org/wiki/N-sphere#Spherical_volume_element"
+ * target="_blank">volume element</a>, or Jacobian, of the conversion from cartesian
+ * coordinates to spherical coordinates <em>on the surface of the hypersphere of fixed
+ * radius R=1</em>. More precisely, this function computes
+ * \f[
+ *   \left\lvert J\right\rvert_{r=1}
+ *     = \left\lvert\det \frac{\partial(x_i)}{\partial(r,\theta_j)}\right\rvert_{r=1}
+ *     = \sin^{N-2}\left(\theta_1\right)\sin^{N-3}\left(\theta_2\right)
+ *       \ldots\sin\left(\theta_{N-2}\right)\ ,
+ * \f]
+ * where \a N is the dimension of the Euclidean space in which the <em>N-1</em>-sphere is
+ * embedded.
+ *
+ * See \ref pageParamsSphericalCoords for more info and conventions.
+ * 
+ * \param theta is the vector of the <em>N-1</em> spherical angles,
+ *        \f$\theta_1\ldots\theta_{N-1}\f$.
+ */
 template<typename Der1>
 typename Eigen::MatrixBase<Der1>::Scalar surf_sph_jacobian(const Eigen::MatrixBase<Der1>& theta)
 {
@@ -199,20 +229,32 @@ typename Eigen::MatrixBase<Der1>::Scalar surf_sph_jacobian(const Eigen::MatrixBa
 }
 
 
-
-//
-// The differential of the coordinate change theta -> x for the sphere of radius R = 1
-//
-// dxdtheta(k,i) is the expression \frac{\partial x_k}{\partial \theta_i}
-//
-// For this & the 2nd derivatives, see [Drafts&Calculations Vol. V 13.02.2015 (~60%)]
-//
+/** \brief The differential of passing from spherical to cartesian coordinates on the
+ * sphere of unit radius.
+ *
+ * The input parameter \a theta is a list of spherical angles, with <em>theta(i-1)</em>
+ * (C/C++ offset) corresponding to \f$ \theta_i \f$. The coordinate \f$ r\f$ is set equal
+ * to one. The dimension \a N of the Euclidian space is given by the length of the \a
+ * theta vector plus one.
+ *
+ * After this function returns, <em>dxdtheta(k-1,i-1)</em> (C/C++ offsets) is set to the
+ * value of
+ * \f[
+ *   \frac{\partial x_k}{\partial \theta_i} ,
+ * \f]
+ * with <em>k=1,...,N</em>, and <em>i=1,..,N-1</em>.
+ *
+ */
 template<typename Der1, typename Der2>
 void sphsurf_diffjac(Eigen::ArrayBase<Der1> & dxdtheta, const Eigen::MatrixBase<Der2>& theta)
 {
-  typedef typename Eigen::ArrayBase<Der1>::Scalar Scalar;
+  //
+  // For this calculation & the 2nd derivatives, see [Drafts&Calculations, Vol. V,
+  // 13.02.2015 (~60%)]
+  //
 
-  // FIXME: this is highly ineffective, we calculate the same product of sines all the time...
+  { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(Der1); }
+  typedef typename Eigen::ArrayBase<Der1>::Scalar Scalar;
 
   const size_t ds = theta.rows();
   const size_t n = ds + 1;
@@ -221,67 +263,82 @@ void sphsurf_diffjac(Eigen::ArrayBase<Der1> & dxdtheta, const Eigen::MatrixBase<
   eigen_assert(dxdtheta.rows() == (int)n);
   eigen_assert(dxdtheta.cols() == (int)ds);
 
+  Eigen::Array<Scalar, Der2::RowsAtCompileTime, 1> sintheta(theta.rows());
+  sintheta = theta.array().sin();
+  Eigen::Array<Scalar, Der2::RowsAtCompileTime, 1> costheta(theta.rows());
+  costheta = theta.array().cos();
+
   size_t i, k, mm;
   for (i = 0; i < ds; ++i) {
     for (k = 0; k < n; ++k) {
-      //cout << "k,i = "<< k<< ", "<< i << "\n";
+      //std::cout << "k,i = "<< k<< ", "<< i << "\n";
       Scalar val = 0.0;
       // pick the right case
       if (i > k) {
-        //cout << "[situation i>k]\n";
+        //std::cout << "[situation i>k]\n";
         val = 0.0;
       } else if (i == k && k < n - 1) {
-        //cout << "[situation i == k && k < n-1]\n";
+        //std::cout << "[situation i == k && k < n-1]\n";
         val = -1;
         for (mm = 0; mm <= i; ++mm) {
-          val *= sin(theta(mm));
+          val *= sintheta(mm);
         }
       } else if (i == k && k == n-1) {
-        //cout << "[situation i == k && k == n-1]\n";
-        val = cos(theta(i));
+        //std::cout << "[situation i == k && k == n-1]\n";
+        val = costheta(i);
         for (mm = 0; mm < i; ++mm) {
-          val *= sin(theta(mm));
+          val *= sintheta(mm);
         }
       } else if (i < k && k < n-1) {
-        //cout << "[situation i < k && k < n-1]\n";
-        val = cos(theta(i)) * cos(theta(k));
+        //std::cout << "[situation i < k && k < n-1]\n";
+        val = costheta(i) * costheta(k);
         for (mm = 0; mm < k; ++mm) {
           if (mm == i) {
             continue;
           }
-          val *= sin(theta(mm));
+          val *= sintheta(mm);
         }
       } else { // i < k && k == n-1
-        //cout << "[else: {situation i < k && k == n-1}]\n";
-        val = cos(theta(i));
+        //std::cout << "[else: {situation i < k && k == n-1}]\n";
+        val = costheta(i);
         for (mm = 0; mm < n-1; ++mm) {
           if (mm == i) {
             continue;
           }
-          val *= sin(theta(mm));
+          val *= sintheta(mm);
         }
       }
       dxdtheta(k,i) = val;
-      //cout << "dxdtheta(k="<<k<<",i="<<i<<") = "<< val << "\n";
+      //std::cout << "dxdtheta(k="<<k<<",i="<<i<<") = "<< val << "\n";
     }
   }
 }
 
-//
-// The second differential of the coordinate change theta -> x for the sphere of radius R = 1
-//
-// n = number of cartesian dimensions = number of spherical dimensions + 1
-// ds = number of spherical dimensions = n - 1
-// (i.e. k = 0..(n-1),  i = 0..(n-2) = 0..(ds-1) )
-//
-// ddxddtheta(k,i+ds*j) is the expression \frac{\partial^2 x_k}{\partial \theta_i \partial \theta_j}
-//
+/** \brief The second order differential of passing from spherical to cartesian
+ * coordinates on the sphere of unit radius.
+ *
+ * The input parameter \a theta is a list of spherical angles, with <em>theta(i-1)</em>
+ * (C/C++ offset) corresponding to \f$ \theta_i \f$. The coordinate \f$ r\f$ is set equal
+ * to one. The dimension \a N of the Euclidian space is given by the length of the \a
+ * theta vector plus one.
+ *
+ * After this function returns, <em>ddxddtheta(k-1,(i-1)+(N-1)*(j-1))</em> (C/C++ offsets)
+ * is set to the value of
+ * \f[
+ *   \frac{\partial^2 x_k}{\partial \theta_i \partial \theta_j}\ ,
+ * \f]
+ * with <em>k = 1,...,N</em>, and <em>i,j = 1,..,N-1</em>.
+ */
 template<typename Der1, typename Der2>
 void sphsurf_diffjac2(Eigen::ArrayBase<Der1> & ddxddtheta, const Eigen::MatrixBase<Der2>& theta)
 {
-  typedef typename Eigen::ArrayBase<Der1>::Scalar Scalar;
+  //
+  // For this calculation & the 2nd derivatives, see [Drafts&Calculations, Vol. V,
+  // 13.02.2015 (~60%)]
+  //
 
-  // FIXME: this is highly ineffective, we calculate the same product of sines all the time...
+  { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(Der1); }
+  typedef typename Eigen::ArrayBase<Der1>::Scalar Scalar;
 
   const size_t ds = theta.rows();
   const size_t n = ds + 1;
@@ -290,71 +347,76 @@ void sphsurf_diffjac2(Eigen::ArrayBase<Der1> & ddxddtheta, const Eigen::MatrixBa
   eigen_assert(ddxddtheta.rows() == (int)n);
   eigen_assert(ddxddtheta.cols() == (int)(ds*ds));
 
+  Eigen::Array<Scalar, Der2::RowsAtCompileTime, 1> sintheta(theta.rows());
+  sintheta = theta.array().sin();
+  Eigen::Array<Scalar, Der2::RowsAtCompileTime, 1> costheta(theta.rows());
+  costheta = theta.array().cos();
+
   size_t i, j, k, mm;
   for (k = 0; k < n; ++k) {
     for (i = 0; i < ds; ++i) {
       for (j = 0; j <= i; ++j) {
-        //cout << "k,i,j = "<< k<< ", "<< i << ", " << j << "\n";
+        //std::cout << "k,i,j = "<< k<< ", "<< i << ", " << j << "\n";
         Scalar val = 0.0;
         if (i > k) {
           val = 0.0;
         } else if (i == k && k < n-1) {
-          val = -cos(theta(j));
+          val = -costheta(j);
           for (mm = 0; mm <= i; ++mm) {
             if (mm == j) {
               continue;
             }
-            val *= sin(theta(mm));
+            val *= sintheta(mm);
           }
         } else if (i == k && k == n-1) {
           if (j == i) {
             val = -1.0;
             for (mm = 0; mm <= i; ++mm) {
-              val *= sin(theta(mm));
+              val *= sintheta(mm);
             }
           } else { // j < i
-            val = cos(theta(i))*cos(theta(j));
+            val = costheta(i)*costheta(j);
             for (mm = 0; mm < i; ++mm) { // i not included
               if (mm == j) {
                 continue;
               }
-              val *= sin(theta(mm));
+              val *= sintheta(mm);
             }
           }
         } else if (i < k && k < n-1) {
           if (j == i) {
-            val = -cos(theta(k));
+            val = -costheta(k);
             for (mm = 0; mm < k; ++mm) {
-              val *= sin(theta(mm));
+              val *= sintheta(mm);
             }
           } else { // j < i
-            val = cos(theta(j))*cos(theta(i))*cos(theta(k));
+            val = costheta(j)*costheta(i)*costheta(k);
             for (mm = 0; mm < k; ++mm) {
               if (mm == j || mm == i) {
                 continue;
               }
-              val *= sin(theta(mm));
+              val *= sintheta(mm);
             }
           }
         } else { // i < k && k == n-1
           if (j == i) {
             val = -1.0;
             for (mm = 0; mm < n-1; ++mm) {
-              val *= sin(theta(mm));
+              val *= sintheta(mm);
             }
           } else { // j < i
-            val = cos(theta(i))*cos(theta(j));
+            val = costheta(i)*costheta(j);
             for (mm = 0; mm < n-1; ++mm) {
               if (mm == i || mm == j) {
                 continue;
               }
-              val *= sin(theta(mm));
+              val *= sintheta(mm);
             }
           }
         }
         // set the calculated value
         ddxddtheta(k, i+ds*j) = val;
-        ddxddtheta(k, j+ds*i) = val; // symmetric
+	ddxddtheta(k, j+ds*i) = val; // symmetric
       }
     }
   }

@@ -14,6 +14,9 @@ function dat = analyze_tomorun_histogram(histfname, varargin)
   optdefs.IgnoreStartPoints = struct('arg', 'n', 'default', 0);
   optdefs.IgnoreStartPoints.help = ['A number of points which should be ignored, starting ' ...
                       'from the f=0 side.'];
+  optdefs.IgnoreEndPoints = struct('arg', 'n', 'default', 0);
+  optdefs.IgnoreEndPoints.help = ['A number of points which should be ignored, starting ' ...
+                      'from the f=max side.'];
   optdefs.CenterBins = struct('switch', true);
   optdefs.CenterBins.help = ['tomorun produces Fidelity values which correspond to lower ' ...
                       'bin values. Use this option to center the bins, i.e. move the x ' ...
@@ -39,6 +42,9 @@ function dat = analyze_tomorun_histogram(histfname, varargin)
   optdefs.ClearFigures = struct('switch', true);
   optdefs.ClearFigures.help = ['If set, then a figure will be cleared of any previous ' ...
                       'content before drawing to it (the default).'];
+  optdefs.PlotFitFnRes = struct('arg', 'n', 'default', 200);
+  optdefs.PlotFitFnRes.help = ['When plotting the fitted function, the number of points ' ...
+                      'to use to display the fitted function.'];
   optdefs.CustomFit = struct('switch', false);
   optdefs.CustomFit.help = ['Set to true if you have a custom model to fit. (This is ' ...
                       'implied by ''FitModel'', ''FitWhich'' or ''FitOptions''.)'];
@@ -127,7 +133,20 @@ function dat = analyze_tomorun_histogram(histfname, varargin)
   % --- prepare data for the fit ---
   [MaxP, MaxPInd] = max(P);
   FitDataIdx = (P > opts.FitThresFrac*MaxP);
-  FitDataIdx = FitDataIdx(1:end-opts.IgnoreStartPoints);
+  if (opts.XIsOneMinus)
+    % reverse direction of x data points because of 1-Fid
+    ignore_end_points = opts.IgnoreStartPoints;
+    ignore_start_points = opts.IgnoreEndPoints;
+  else
+    ignore_start_points = opts.IgnoreStartPoints;
+    ignore_end_points = opts.IgnoreEndPoints;
+  end
+  if (ignore_start_points > 0)
+    FitDataIdx(1:0+ignore_start_points) = logical(0);
+  end
+  if (ignore_end_points > 0)
+    FitDataIdx(end-(ignore_end_points):end) = logical(0);
+  end
   % --- prepare fit data x, y and weights ---
   FitDataX = OneMinusFidelity(FitDataIdx);
   if (fitlogp)
@@ -189,7 +208,7 @@ function dat = analyze_tomorun_histogram(histfname, varargin)
     plot(FitDataX, P(FitDataIdx), 'rx');
     xxmin = min(OneMinusFidelity(P_IndNonZero));
     xxmax = max(OneMinusFidelity(P_IndNonZero));
-    xx = linspace(xxmin, xxmax, 200);
+    xx = linspace(xxmin, xxmax, opts.PlotFitFnRes);
     plot(xx, evalfitp(xx), 'r-');
     set(gca, 'YScale', 'log');
   end

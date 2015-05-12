@@ -3,6 +3,7 @@
  *
  * Specific Topics:
  *   - \subpage pageTypeInterfaces
+ *   - \subpage pageParams
  *   - \subpage pageLoggers
  *
  */

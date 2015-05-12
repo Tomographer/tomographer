@@ -8,19 +8,21 @@
 #include <Eigen/Core>
 
 #include <tomographer/qit/util.h>
+#include <tomographer/tools/loggers.h>
 
 
-static Tomographer::VacuumLogger vacuum_logger;
+namespace Tomographer
+{
 
 
 template<typename Der1, typename Rng, typename Log>
-inline void random_unitary(Eigen::MatrixBase<Der1> & U, Rng & rng, Log & /*logger*/)
+inline void random_unitary(Eigen::MatrixBase<Der1> & U, Rng & rng, Log & logger = vacuum_logger)
 {
   assert(U.rows() == U.cols());
   const int n = U.rows();
 
-  //  logger.debug("random_unitary", "n = %d", n);
-
+  logger.longdebug("random_unitary()", "n = %d", n);
+  
   typedef typename Der1::Scalar Scalar;
   typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
   typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorType;
@@ -31,7 +33,7 @@ inline void random_unitary(Eigen::MatrixBase<Der1> & U, Rng & rng, Log & /*logge
   std::normal_distribution<> normdist(0.0, 1.0);
   A = Tomographer::dense_random<MatrixType>(rng, normdist, n, n);
 
-  //  logger.debug("random_unitary", [&](std::ostream& str) {
+  //  logger.longdebug("random_unitary()", [&](std::ostream& str) {
   //      str << "got A = \n" << A;
   //    });
 
@@ -50,18 +52,18 @@ inline void random_unitary(Eigen::MatrixBase<Der1> & U, Rng & rng, Log & /*logge
 
     U.col(j) = v / v.norm();
 
-    //    logger.debug("random_unitary", [&](std::ostream & str) {
+    //    logger.longdebug("random_unitary()", [&](std::ostream & str) {
     //	str << "dealt with column " << j << " = " << v.transpose() << "\n"
     //	    << "\t--> " << U.col(j).transpose() << "\n"
     //	    << "\tnorm = " << U.col(j).squaredNorm() << " == " << U.col(j).adjoint() * U.col(j);
     //      });
   }
 
-  //  logger.debug("random_unitary", [&](std::ostream& str) {
-  //      str << "random_unitary: got U = \n" << U << "\n"
-  //	  << "Check: U*U.adjoint() ==\n" << U*U.adjoint() << "\n"
-  //	  << "Check: U.adjoint()*U ==\n" << U.adjoint()*U;
-  //    });
+  logger.longdebug("random_unitary()", [&](std::ostream& str) {
+      str << "random_unitary: got U = \n" << U << "\n"
+  	  << "Check: U*U.adjoint() ==\n" << U*U.adjoint() << "\n"
+  	  << "Check: U.adjoint()*U ==\n" << U.adjoint()*U;
+    });
 }
 
 template<typename Der1, typename Rng>
@@ -71,5 +73,7 @@ inline void random_unitary(Eigen::MatrixBase<Der1> & U, Rng & rng)
 }
 
 
+
+} // namespace Tomographer
 
 #endif

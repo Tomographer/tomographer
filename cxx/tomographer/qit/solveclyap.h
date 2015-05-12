@@ -13,6 +13,10 @@ extern "C" void ztrsyl_(char *TRANA, char *TRANB, int *ISGN, int *M, int *N,
 
 namespace Tomographer
 {
+/** \brief Definitions for solving the Complex Lyapunov Equation
+ *
+ * See \ref SolveCLyap::solve().
+ */
 namespace SolveCLyap
 {
 
@@ -163,7 +167,7 @@ void solve(Eigen::MatrixBase<DerX> & X, const Eigen::MatrixBase<DerA> & A,
     X.noalias() = W * Z * W.adjoint() / scale;
 
     // maybe do some debug consistency check
-    internal::solve_check_helper<debug_perform_check>::check(X, A, C, logger);
+    tomo_internal::solve_check_helper<debug_perform_check>::check(X, A, C, logger);
     return;
   }
 

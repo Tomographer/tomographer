@@ -21,14 +21,14 @@ namespace Tomographer {
  * Splits the range of values \f$[\text{min},\text{max}]\f$ into \c num_bins number of
  * bins, and keeps counts of how many samples fell in which bin.
  */
-template<typename Scalar_, typename CountIntType_ = unsigned int>
+template<typename Scalar_, typename CountType_ = unsigned int>
 struct UniformBinsHistogram
 {
   //! The scalar type of the "X"-axis of the histogram (usually \c double)
   typedef Scalar_ Scalar;
 
   //! The type that serves to count how many hits in each bin
-  typedef CountIntType_ CountIntType;
+  typedef CountType_ CountType;
 
   /** \brief The parameters of a \ref UniformBinsHistogram
    *
@@ -67,6 +67,18 @@ struct UniformBinsHistogram
         throw std::out_of_range(streamstr("UniformBinsHistogram::Params: Value "<<value
 					  <<" out of range ["<<min<<","<<max<<"["));
       }
+      return bin_index_unsafe(value);
+    }
+    /** \brief Returns which bin this value should be counted in.
+     *
+     * This function blindly assumes its argument is within bounds, i.e. it must satisfy
+     * <code>is_within_bounds(value)</code>.
+     *
+     * Use this function only if you're sure the value is within bounds, otherwise call
+     * \ref bin_index().
+     */
+    inline std::size_t bin_index_unsafe(Scalar value) const
+    {
       return (std::size_t)((value-min) / (max-min) * num_bins);
     }
     /** \brief Returns the value which a given bin index represents (lower bin value
@@ -93,20 +105,20 @@ struct UniformBinsHistogram
   //! Parameters of this histogram (range and # of bins)
   Params params;
   //! The counts for each bin
-  Eigen::Array<CountIntType, Eigen::Dynamic, 1> bins;
+  Eigen::Array<CountType, Eigen::Dynamic, 1> bins;
   //! The number of points that fell outside of the given range
-  CountIntType off_chart;
+  CountType off_chart;
 
   //! Constructor: stores the parameters and initializes the histogram to zero counts everywhere
   UniformBinsHistogram(Params p = Params())
-    : params(p), bins(Eigen::Array<CountIntType,Eigen::Dynamic,1>::Zero(p.num_bins)),
+    : params(p), bins(Eigen::Array<CountType,Eigen::Dynamic,1>::Zero(p.num_bins)),
       off_chart(0)
   {
   }
 
   //! Constructor: stores the parameters and initializes the histogram to zero counts everywhere
   UniformBinsHistogram(Scalar min_, Scalar max_, std::size_t num_bins)
-    : params(min_, max_, num_bins), bins(Eigen::Array<CountIntType,Eigen::Dynamic,1>::Zero(num_bins)),
+    : params(min_, max_, num_bins), bins(Eigen::Array<CountType,Eigen::Dynamic,1>::Zero(num_bins)),
       off_chart(0)
   {
   }
@@ -125,7 +137,7 @@ struct UniformBinsHistogram
   }
 
   //! Shorthand for <code>bins(i)</code>
-  inline CountIntType count(std::size_t i) const
+  inline CountType count(std::size_t i) const
   {
     return bins(i);
   }
@@ -151,14 +163,37 @@ struct UniformBinsHistogram
     return params.bin_resolution();
   }
 
-  //! Record a new value in the histogram
+  /** \brief Record a new value in the histogram
+   *
+   * This adds one to the bin corresponding to the given \a value.
+   *
+   * If the value is out of the histogram range, then \a off_chart is incremented by one.
+   */
   inline void record(Scalar value)
   {
     if ( !is_within_bounds(value) ) {
       ++off_chart;
       return;
     }
-    ++bins( (int)((value-params.min) / (params.max-params.min) * bins.size()) );
+    // calling bin_index_unsafe because we have already checked that value is in range.
+    ++bins( params.bin_index_unsafe(value) );
+  }
+
+  /** \brief Record a new value in the histogram, with a certain weight.
+   *
+   * This adds \a weight to the histogram bin corresponding to the given \a value.
+   *
+   * If the value is out of the histogram range, then \a off_chart is incremented by \a
+   * weight.
+   */
+  inline void record(Scalar value, CountType weight)
+  {
+    if ( !is_within_bounds(value) ) {
+      off_chart += weight;
+      return;
+    }
+    // calling bin_index_unsafe because we have already checked that value is in range.
+    bins( params.bin_index_unsafe(value) ) += weight;
   }
 
   //! Pretty-print the histogram and return it as a string with horizontal bars

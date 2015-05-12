@@ -717,8 +717,7 @@ inline void _mat_helper_get_eigen_matrix(const Var& var, size_t data_offset, Eig
 
   const bool rowmajor = (bool)(EigMatrix::Options & Eigen::RowMajor);
 
-  // ### FIXME: UGLY: using internals... :(  better way?
-  typedef typename Eigen::internal::traits<EigMatrix>::Scalar Scalar;
+  typedef typename EigMatrix::Scalar Scalar;
 
   if (!mvar->isComplex) {
     MAT_SWITCH_TYPE(mvar->data_type,
@@ -751,8 +750,7 @@ inline void _mat_helper_get_eigen_matrix(const Var& var, size_t data_offset, Eig
 template<class EigMatrix>
 inline void getEigenMatrix(const Var& var, EigMatrix * matrix)
 {
-  // ### FIXME: UGLY: using internals... :(  better way?
-  typedef typename Eigen::internal::traits<EigMatrix>::Scalar Scalar;
+  typedef typename EigMatrix::Scalar Scalar;
 
   DimList wantdims;
   wantdims << ((EigMatrix::RowsAtCompileTime != Eigen::Dynamic) ? EigMatrix::RowsAtCompileTime : -1)
@@ -769,8 +767,7 @@ inline void getListOfEigenMatrices(const Var& var, std::vector<EigMatrix,Alloc> 
 {
   const DimList dims = var.dims();
 
-  // ### FIXME: UGLY: using internals... :(  better way?
-  typedef typename Eigen::internal::traits<EigMatrix>::Scalar Scalar;
+  typedef typename EigMatrix::Scalar Scalar;
 
   int inner_ndims = -1;
   DimList innerwantdims;

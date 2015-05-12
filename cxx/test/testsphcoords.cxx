@@ -202,7 +202,8 @@ void test_jacdiff()
 
   Eigen::Matrix<double, DEF_N, 1> x;
   Tomographer::Tools::sphsurf_to_cart(x, theta);
-  std::cout << "x(theta) = "<< x.transpose()<< "\n";
+  std::cout << "x(theta) = "<< x.transpose()<< "\n"
+	    << "About to check_derivatives. Don't worry, you'll get warnings if there's something wrong.\n";
 
   Tomographer::Tools::check_derivatives(dxdtheta, // derivatives
 					theta, // point
@@ -224,7 +225,8 @@ void test_jacdiff()
     }
   }
 
-  std::cout << "about to check second derivatives\n";
+  std::cout << "about to check second derivatives\n"
+	    << "(You'll get warnings if there's something wrong.)\n";
 
   Tomographer::Tools::check_derivatives(ddxddtheta_reshaped, // derivatives of the derivatives :)
 					theta, // point
