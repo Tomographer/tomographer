@@ -161,7 +161,7 @@ int main()
 
   // ---------------
 
-  MyCData taskcdat(dat);
+  MyCData taskcdat(dat, FidelityToRefCalculator<OurTomoProblem>(dat));
   // seed for random number generator
   taskcdat.base_seed = std::chrono::system_clock::now().time_since_epoch().count();
   // parameters for the fidelity histogram

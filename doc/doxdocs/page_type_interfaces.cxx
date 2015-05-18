@@ -8,7 +8,7 @@
  * These pages document <em>type interfaces</em>: i.e. types which may appear as template
  * parameters, and which must conform to some standard in order to complete their tasks.
  *
- * Documented Type Interfaces in the Tomographer framwork are:
+ * Documented Type Interfaces in the %Tomographer framwork are:
  *
  *  - \subpage pageInterfaceRandomWalk
  *  - \subpage pageInterfaceMHWalker
@@ -210,4 +210,7 @@
 /** \page pageInterfaceTomoValueCalculator TomoValueCalculator Interface
  *
  * \todo ............ doc. ..................
+ *
+ * NOTE: must be copy-constructible, and different threads must be able to operate safely
+ * on different copies.
  */

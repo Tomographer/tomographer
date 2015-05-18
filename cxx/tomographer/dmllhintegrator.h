@@ -220,6 +220,9 @@ makeDMStateSpaceLLHRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountI
 
 
 
+/** \brief Calculate the fidelity to a reference state for each sample
+ *
+ */
 template<typename TomoProblem_, typename FidValueType_ = double>
 class FidelityToRefCalculator
 {
@@ -235,10 +238,17 @@ private:
   MatrixType _ref_T;
 
 public:
+  //! Constructor, take the reference state to be the MLE
   FidelityToRefCalculator(const TomoProblem & tomo)
     : _ref_T(tomo.matq.initMatrixType())
   {
     _ref_T = tomo.T_MLE;
+  }
+  //! Constructor, the reference state is T_ref (in \ref pageParamsT)
+  FidelityToRefCalculator(const TomoProblem & tomo, const MatrixType & T_ref)
+    : _ref_T(tomo.matq.initMatrixType())
+  {
+    _ref_T = T_ref;
   }
 
   inline ValueType getValueT(const MatrixType & T) const
@@ -247,6 +257,9 @@ public:
   }
 };
 
+/** \brief Calculate the trace distance to a reference state for each sample
+ *
+ */
 template<typename TomoProblem_, typename TrDistValueType_ = double>
 class TrDistToRefCalculator
 {
@@ -262,15 +275,70 @@ private:
   MatrixType _ref_rho;
 
 public:
+  //! Constructor, take the reference state to be the MLE
   TrDistToRefCalculator(const TomoProblem & tomo)
     : _ref_rho(tomo.matq.initMatrixType())
   {
     _ref_rho = tomo.rho_MLE;
   }
+  //! Constructor, the reference state is \a rho_ref
+  TrDistToRefCalculator(const TomoProblem & tomo, const MatrixType& rho_ref)
+    : _ref_rho(tomo.matq.initMatrixType())
+  {
+    _ref_rho = rho_ref;
+  }
 
   inline ValueType getValueRho(const MatrixType & rho) const
   {
     return 0.5 * (rho - _ref_rho).jacobiSvd().singularValues().sum();
+  }
+};
+
+/** \brief Calculate expectation value of an observable for each sample
+ *
+ */
+template<typename TomoProblem_>
+class ObservableValueCalculator
+{
+public:
+  typedef TomoProblem_ TomoProblem;
+  typedef typename TomoProblem::MatrQ MatrQ;
+  typedef typename MatrQ::MatrixType MatrixType;
+  typedef typename MatrQ::VectorParamType VectorParamType;
+
+  //! For TomoValueCalculator interface : value type
+  typedef typename MatrQ::RealScalar ValueType;
+
+private:
+  const TomoProblem & _tomo;
+
+  //! The observable we wish to watch the exp value with (in \ref pageParamsX)
+  VectorParamType _A_x;
+
+  //  MatrixType _A; // not needed
+
+public:
+  //! Constructor directly accepting \a A as a hermitian matrix
+  ObservableValueCalculator(const TomoProblem & tomo, const MatrixType & A)
+    : _tomo(tomo),
+      _A_x(tomo.matq.initVectorParamType())
+  {
+    param_herm_to_x(_A_x, A);
+  }
+
+  //! Constructor directly accepting the X parameterization of \a A
+  ObservableValueCalculator(const TomoProblem & tomo, const VectorParamType & A_x)
+    : _tomo(tomo),
+      _A_x(tomo.matq.initVectorParamType())
+  {
+    _A_x = A_x;
+  }
+
+  inline ValueType getValueRho(const MatrixType & rho) const
+  {
+    VectorParamType x = _tomo.matq.initVectorParamType();
+    param_herm_to_x(x, rho);
+    return _A_x.transpose() * x;
   }
 };
 
@@ -463,9 +531,10 @@ namespace DMLLHIntegratorTasks
 							    TomoValueCalculator>::HistogramParams
     /*..*/  HistogramParams;
     
-    CData(const TomoProblem &prob_, int base_seed_ = 0,
-          HistogramParams hparams = HistogramParams())
-      : prob(prob_), base_seed(base_seed_), histogram_params(hparams)
+    CData(const TomoProblem &prob_, TomoValueCalculator value_calculator_,
+	  int base_seed_ = 0, HistogramParams hparams = HistogramParams())
+      : prob(prob_), base_seed(base_seed_),
+	value_calculator(value_calculator_), histogram_params(hparams)
     {
     }
     
@@ -485,6 +554,9 @@ namespace DMLLHIntegratorTasks
 
     //! A base random seed from which each run seed will be derived
     int base_seed;
+
+    //! The value calculator which interests us
+    TomoValueCalculator value_calculator;
 
     //! Which histogram to record (min, max, numbins)
     HistogramParams histogram_params;
@@ -602,7 +674,7 @@ namespace DMLLHIntegratorTasks
     MHRandomWalkTask(int inputseed, const CDataType * pcdata, LoggerType & log)
       : _seed(inputseed),
         _log(log),
-	valcalc(pcdata->prob),
+	valcalc(pcdata->value_calculator),
         valstats(pcdata->histogram_params,
 		 valcalc,
 		 pcdata->prob.matq, _log)
@@ -687,17 +759,24 @@ namespace DMLLHIntegratorTasks
           // prepare & provide status report
           CountIntType totiters = rw.n_sweep()*(rw.n_therm()+rw.n_run());
           double fdone = (double)k/totiters;
-          std::string msg;
-          msg = Tools::fmts(
-              "iteration %s %lu/(%lu=%lu*(%lu+%lu)) : %5.2f%% done  [accept ratio=%.2f]",
+	  double accept_ratio = std::numeric_limits<double>::quiet_NaN();
+	  bool warn_accept_ratio = false;
+	  if (rw.has_acceptance_ratio()) {
+	    accept_ratio = rw.acceptance_ratio();
+	    warn_accept_ratio = (accept_ratio > 0.35 || accept_ratio < 0.2);
+	  }
+	  std::string msg = Tools::fmts(
+              "iteration %s %lu/(%lu=%lu*(%lu+%lu)) : %5.2f%% done  [%saccept ratio=%.2f%s]",
               (is_thermalizing ? "[T]" : "   "),
               (unsigned long)k, (unsigned long)totiters, (unsigned long)rw.n_sweep(),
               (unsigned long)rw.n_therm(), (unsigned long)rw.n_run(),
               fdone*100.0,
-              (rw.has_acceptance_ratio() ? rw.acceptance_ratio() : std::numeric_limits<double>::quiet_NaN())
+	      warn_accept_ratio ? "!!** " : "",
+	      accept_ratio,
+	      warn_accept_ratio ? " **!!" : ""
               );
           tmgriface->submit_status_report(StatusReport(fdone, msg, k, rw.n_sweep(), rw.n_therm(),
-                                                       rw.n_run(), rw.acceptance_ratio()));
+                                                       rw.n_run(), accept_ratio));
         }
         //        fprintf(stderr, "StatusReportCheck::raw_move(): done\n");
       }

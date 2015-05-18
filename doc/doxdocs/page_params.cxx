@@ -7,7 +7,9 @@
 /** \page pageParams Some Useful Parameterizations
  *
  *  - \subpage pageParamsSphericalCoords
- *
+ *  - \subpage pageParamsX
+ *  - \subpage pageParamsT
+ *  - \subpage pageParamsA
  */
 
 
@@ -60,4 +62,28 @@
  * increases to <em>(X=-1,Y=0,Z=0)</em>; then \f$\theta_2\f$ wraps around, with
  * \f$\theta_2=0\f$ corresponding to the direction in which <em>Y=+1</em>.
  *
+ */
+
+
+
+/** \page pageParamsX \a X parameterization
+ *
+ * See e.g. \ref Tomographer::Tools::param_herm_to_x()
+ *
+ * \todo DOC............
+ */
+
+/** \page pageParamsT \a T parameterization
+ *
+ * Parameterization such that \f$ \rho = T T^\dagger \f$.
+ *
+ * Unless specified otherwise, \a T is chosen to be positive semidefinite.
+ * 
+ * \todo DOC.............................
+ */
+
+
+/** \page pageParamsA \a A parameterization
+ *
+ * \todo DOC...............................
  */

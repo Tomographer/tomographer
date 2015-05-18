@@ -130,6 +130,25 @@ public:
   }
 };
 
+class invalid_input : public std::exception
+{
+  std::string _msg;
+public:
+  invalid_input(const std::string& msg) : _msg(msg) { }
+  virtual ~invalid_input() throw() { }
+
+  virtual const char * what() const throw() {
+    return (std::string("Invalid Input: ") + _msg).c_str();
+  }
+};
+
+#define ensure_valid_input(condition, msg)	\
+  do { if (!(condition)) {			\
+    throw invalid_input(msg);	\
+  } } while (0)
+
+
+
 //
 // see http://stackoverflow.com/a/8822627/1694896
 // custom validation for types in boost::program_options
@@ -155,7 +174,7 @@ void validate(boost::any& v, std::vector<std::string> const& values,
   // one string, it's an error, and exception will be thrown.
   std::string const& s = validators::get_single_string(values);
 
-  if (s == "fidelity" || s == "tr-dist") {
+  if (s == "fidelity" || s == "tr-dist" || s == "obs-value") {
     v = boost::any(valtype(s));
   } else {
     throw validation_error(validation_error::invalid_option_value);
@@ -190,8 +209,10 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
     ("data-file-name", value<std::string>(& opt->data_file_name)->default_value("testfile.mat"),
      "specify .mat data file name")
     ("value-type", value<valtype>(& val_type)->default_value(val_type),
-     "Which value to acquire histogram of, e.g. fidelity to MLE. Possible values are 'fidelity'"
-     " or 'tr-dist'")
+     "Which value to acquire histogram of, e.g. fidelity to MLE. Possible values are 'fidelity', "
+     "'tr-dist' or 'obs-value'. If 'obs-value' (hermitian observable value)  is specified, the "
+     "given \".mat\" data-file (see --data-file-name) must also define a variable Observable "
+     "as a dim x dim hermitian matrix.")
     ("value-hist", value<std::string>(&valhiststr),
      "Do a histogram for different measured values (e.g. fidelity to MLE), format MIN:MAX/NPOINTS")
     ("step-size", value<double>(& opt->step_size)->default_value(opt->step_size),
@@ -219,14 +240,14 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
     ("log", value<std::string>(& flogname),
      "Redirect standard output (log) to the given file. Use '-' for stdout. If file exists, will append.")
     ("log-from-config-file-name", bool_switch(& flogname_from_config_file_name)->default_value(false),
-     "Same as --log=tomorun-<config-file>.log, where <config-file> is the file name passed to the"
+     "Same as --log=<config-file>.log, where <config-file> is the file name passed to the"
      "option --config. This option can only be used in conjunction with --config and may not be used"
      "with --log.")
     ("config", value<std::string>(),
      "Read options from the given file. Use lines with syntax \"key=value\".")
     ("write-histogram-from-config-file-name",
      bool_switch(&write_histogram_from_config_file_name)->default_value(false),
-     "Same as --write-histogram=tomorun-<config-file>, where <config-file> is the file name passed to "
+     "Same as --write-histogram=<config-file>, where <config-file> is the file name passed to "
      "the option --config. This option can only be used in conjunction with --config and may not "
      "be used with --write-histogram.")
     ;
@@ -288,7 +309,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
     if (flogname.size()) {
       throw bad_options("--log-from-config-file-name may not be used with --log");
     }
-    flogname = configdir + "/" + std::string("tomorun-") + configbasename + std::string(".log");
+    flogname = configdir + "/" + configbasename + std::string(".log");
   }
   // prepare log file, and maybe write out header
   if (flogname.size() == 0 || flogname == "-") {
@@ -332,7 +353,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
       throw bad_options("--write-histogram-from-config-file-name may not be used with --write-histogram");
     }
     // "--histogram.csv" is appended later anyway
-    opt->write_histogram = configdir + "/" + std::string("tomorun-") + configbasename;
+    opt->write_histogram = configdir + "/" + configbasename;
   }
 
   // set up value histogram parameters
@@ -456,7 +477,7 @@ int main(int argc, char **argv)
     matf = new MAT::File(opt.data_file_name);
     dim = MAT::value<int>(matf->var("dim"));
     n_povms = matf->var("Nm").numel();
-  } catch(const std::exception& e) {
+  } catch (const std::exception& e) {
     logger.error("main()", [&opt, &e](std::ostream & str){
                    str << "Failed to read data from file "<< opt.data_file_name << "\n\t" << e.what() << "\n";
                  });
@@ -468,7 +489,7 @@ int main(int argc, char **argv)
       delete matf;
     });
 
-  logger.debug("main()", "Data file opened, dim = %u", dim);
+  logger.debug("main()", "Data file opened, found dim = %u", dim);
 
   //
   // ---------------------------------------------------------------------------
@@ -502,9 +523,9 @@ int main(int argc, char **argv)
 }
 
 
-template<typename ValueCalculator, typename OurTomoProblem, typename Logger>
-inline void tomorun(OurTomoProblem & tomodat, ProgOptions * opt, Logger & logger);
-
+template<typename OurTomoProblem, typename FnMakeValueCalculator, typename Logger>
+inline void tomorun(OurTomoProblem & tomodat, ProgOptions * opt,
+		    FnMakeValueCalculator makeValueCalculator, Logger & logger);
 
 template<int FixedDim, int FixedMaxPOVMEffects, typename Logger>
 inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::MAT::File * matf, Logger & logger)
@@ -530,7 +551,12 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   MAT::getListOfEigenMatrices(matf->var("Emn"), & Emn, true);
   Eigen::VectorXi Nm;
   MAT::getEigenMatrix(matf->var("Nm"), & Nm);
-  assert((int)Emn.size() == Nm.size());
+  ensure_valid_input((int)Emn.size() == Nm.size(),
+		     "number of POVM effects in `Emn' doesn't match length of `Nm'");
+  if (Emn.size() > 0) {
+    ensure_valid_input(Emn[0].cols() == dim && Emn[0].rows() == dim,
+		       Tools::fmts("POVM effects don't have dimension %d x %d", dim, dim));
+  }
 
   // convert to x-parameterization
   unsigned int k, j;
@@ -555,9 +581,12 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
                            << "\tEV=" << Emn[k].eigenvalues().transpose().real() << "\n"
                            << "\tnorm=" << double(Emn[k].norm()) << "\n" ;
                      });
-    eigen_assert(double( (Emn[k] - Emn[k].adjoint()).norm() ) < 1e-8); // Hermitian
-    eigen_assert(double(Emn[k].eigenvalues().real().minCoeff()) >= -1e-12); // Pos semidef
-    eigen_assert(double(Emn[k].norm()) > 1e-6);
+    ensure_valid_input(double( (Emn[k] - Emn[k].adjoint()).norm() ) < 1e-8,
+		       Tools::fmts("POVM effect #%d is not hermitian!", k)); // Hermitian
+    ensure_valid_input(double(Emn[k].eigenvalues().real().minCoeff()) >= -1e-12,
+		       Tools::fmts("POVM effect #%d is not positive semidefinite!")); // Pos semidef
+    ensure_valid_input(double(Emn[k].norm()) > 1e-6,
+		       Tools::fmts("POVM effect #%d is zero!"));
     logger.debug("tomorun_dispatch()", "Consistency checks passed for Emn[%u].", k);
 #endif
 
@@ -578,6 +607,9 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 
   MAT::getEigenMatrix(matf->var("rho_MLE"), &tomodat.rho_MLE);
 
+  ensure_valid_input(tomodat.rho_MLE.cols() == dim && tomodat.rho_MLE.rows() == dim,
+		     Tools::fmts("rho_MLE is expected to be a square matrix %d x %d", dim, dim));
+
   tomodat.x_MLE = matq.initVectorParamType();
   param_herm_to_x(tomodat.x_MLE, tomodat.rho_MLE);
 
@@ -596,9 +628,29 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   //
 
   if (opt->val_type == "fidelity") {
-    tomorun<FidelityToRefCalculator<OurTomoProblem, double> >(tomodat, opt, logger);
+    tomorun(tomodat, opt,
+	    [](const OurTomoProblem & tomo) {
+	      return FidelityToRefCalculator<OurTomoProblem, double>(tomo);
+	    },
+	    logger);
   } else if (opt->val_type == "tr-dist") {
-    tomorun<TrDistToRefCalculator<OurTomoProblem, double> >(tomodat, opt, logger);
+    tomorun(tomodat, opt,
+	    [](const OurTomoProblem & tomo) {
+	      return TrDistToRefCalculator<OurTomoProblem, double>(tomo);
+	    },
+	    logger);
+  } else if (opt->val_type == "obs-value") {
+    // load the observable
+    typename OurMatrQ::MatrixType A = tomodat.matq.initMatrixType();
+    MAT::getEigenMatrix(matf->var("Observable"), &A);
+    ensure_valid_input(A.cols() == dim && A.rows() == dim,
+		       Tools::fmts("Observable is expected to be a square matrix %d x %d", dim, dim));
+    // and run our main program
+    tomorun(tomodat, opt,
+	    [&A](const OurTomoProblem & tomo) {
+	      return ObservableValueCalculator<OurTomoProblem>(tomo, A);
+	    },
+	    logger);
   } else {
     throw std::logic_error((std::string("Unknown value type: ")+opt->val_type).c_str());
   }
@@ -611,23 +663,26 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 // Here goes the actual program. This is templated, because then we can let Eigen use
 // allocation on the stack rather than malloc'ing 2x2 matrices...
 //
-template<typename ValueCalculator, typename OurTomoProblem, typename Logger>
-inline void tomorun(OurTomoProblem & tomodat, ProgOptions * opt, Logger & logger)
+template<typename OurTomoProblem, typename FnMakeValueCalculator, typename Logger>
+inline void tomorun(OurTomoProblem & tomodat, ProgOptions * opt,
+		    FnMakeValueCalculator makeValueCalculator, Logger & logger)
 {
   //
   // create the OMP Task Manager and run.
   //
 
-  typedef DMLLHIntegratorTasks::CData<OurTomoProblem, ValueCalculator> OurCData;
+  auto valcalc = makeValueCalculator(tomodat);
+
+  typedef DMLLHIntegratorTasks::CData<OurTomoProblem, decltype(valcalc)> OurCData;
   typedef MultiProc::OMPTaskLogger<Logger> OurTaskLogger;
-  typedef DMLLHIntegratorTasks::MHRandomWalkTask<OurTomoProblem,ValueCalculator,OurTaskLogger>
+  typedef DMLLHIntegratorTasks::MHRandomWalkTask<OurTomoProblem,decltype(valcalc),OurTaskLogger>
     OurMHRandomWalkTask;
   typedef DMLLHIntegratorTasks::MHRandomWalkResultsCollector<
       typename OurMHRandomWalkTask::ValueHistogramMHRWStatsCollectorType::HistogramType
       >
     OurResultsCollector;
 
-  OurCData taskcdat(tomodat);
+  OurCData taskcdat(tomodat, valcalc);
   // seed for random number generator
   taskcdat.base_seed = std::chrono::system_clock::now().time_since_epoch().count();
   // parameters for the value histogram
