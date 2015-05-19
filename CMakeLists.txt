@@ -34,7 +34,7 @@ find_package(MatIO REQUIRED)
 # ... which requires the libz library
 find_package(ZLIB REQUIRED)
 
-# Find boost::program_options
+# Find boost::program_options and boost::math
 find_package(Boost 1.40 COMPONENTS program_options REQUIRED)
 
 
