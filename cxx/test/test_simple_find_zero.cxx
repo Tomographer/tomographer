@@ -1,5 +1,6 @@
 
 #include <cmath>
+#include <limits>
 #include <iostream>
 
 #include <tomographer/tools/loggers.h>
@@ -42,7 +43,7 @@ void test2()
   const double x2 = 0.2;
   const double tol = 1e-10;
 
-  double final_value = nan("");
+  double final_value = std::numeric_limits<double>::quiet_NaN();
   int final_iters = -1;
 
   double pt = Tomographer::Tools::simpleFindZero<double, double>(f2, x1, x2, 50, tol,
@@ -69,7 +70,7 @@ void test3()
   const double x2 = .5;
   const double tol = 1e-10;
 
-  double final_value = nan("");
+  double final_value = std::numeric_limits<double>::quiet_NaN();
 
   double pt = Tomographer::Tools::simpleFindZero<double, double>(f3, x1, x2, 50, tol, &final_value);
 
@@ -84,7 +85,7 @@ void test3()
 double f4(double x)
 {
   if (x > 1.3) {
-    return std::nan("");
+    return std::numeric_limits<double>::quiet_NaN();
   }
   return f1(x);
 }
@@ -94,7 +95,7 @@ void test4()
   const double x2 = 40;
   const double tol = 1e-15;
 
-  double final_value = nan("");
+  double final_value = std::numeric_limits<double>::quiet_NaN();
   int final_iters = -1;
 
   double pt = Tomographer::Tools::simpleFindZero<double, double>(f4, x1, x2, 50, tol,
@@ -116,7 +117,7 @@ void test5()
   const double x2 = 4;
   const double tol = 1e-8;
 
-  double final_value = nan("");
+  double final_value = std::numeric_limits<double>::quiet_NaN();
   int final_iters = -1;
 
   double pt = Tomographer::Tools::simpleFindZero<double, double>(
