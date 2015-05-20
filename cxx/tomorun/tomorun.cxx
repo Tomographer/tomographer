@@ -68,6 +68,7 @@ struct ProgOptions
     Ntherm(500),
     Nrun(5000),
     val_type("fidelity"),
+    use_ref_state(false), // use MLE by default
     val_min(0.97),
     val_max(1.0),
     val_nbins(50),
@@ -93,6 +94,8 @@ struct ProgOptions
   unsigned int Nrun;
 
   std::string val_type;
+  //! If \c true, use \a rho_ref; if \c false, use \a rho_MLE .
+  bool use_ref_state;
 
   double val_min;
   double val_max;
@@ -213,6 +216,10 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
      "'tr-dist' or 'obs-value'. If 'obs-value' (hermitian observable value)  is specified, the "
      "given \".mat\" data-file (see --data-file-name) must also define a variable Observable "
      "as a dim x dim hermitian matrix.")
+    ("use-ref-state", bool_switch(& opt->use_ref_state)->default_value(opt->use_ref_state),
+     "If --value-type is 'fidelity' or 'tr-dist', then read the variable named 'rho_ref' in the "
+     "data file (--data-file-name) and calculate the histogram of fidelity or trace distance to "
+     "that state, instead of the MLE estimate (as by default).")
     ("value-hist", value<std::string>(&valhiststr),
      "Do a histogram for different measured values (e.g. fidelity to MLE), format MIN:MAX/NPOINTS")
     ("step-size", value<double>(& opt->step_size)->default_value(opt->step_size),
@@ -252,9 +259,12 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
      "be used with --write-histogram.")
     ;
 
+  // no positional options accepted
+  positional_options_description p;
+
   try {
     variables_map vm;
-    store(parse_command_line(argc, argv, desc), vm);
+    store(command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
 
     if (vm.count("help")) {
       std::cout << desc;
@@ -622,6 +632,12 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 
   tomodat.NMeasAmplifyFactor = opt->NMeasAmplifyFactor;
 
+  const bool use_ref_state = opt->use_ref_state;
+  typename OurMatrQ::MatrixType rho_ref = matq.initMatrixType();
+  if (use_ref_state) {
+    MAT::getEigenMatrix(matf->var("rho_ref"), &rho_ref);
+  }
+
   //
   // Data has now been successfully read. Now, dispatch to the correct template function
   // for futher processing.
@@ -629,14 +645,22 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 
   if (opt->val_type == "fidelity") {
     tomorun(tomodat, opt,
-	    [](const OurTomoProblem & tomo) {
-	      return FidelityToRefCalculator<OurTomoProblem, double>(tomo);
+	    [use_ref_state,&rho_ref](const OurTomoProblem & tomo) -> FidelityToRefCalculator<OurTomoProblem, double> {
+	      if (use_ref_state) {
+		return FidelityToRefCalculator<OurTomoProblem, double>(tomo, rho_ref);
+	      } else {
+		return FidelityToRefCalculator<OurTomoProblem, double>(tomo);
+	      }
 	    },
 	    logger);
   } else if (opt->val_type == "tr-dist") {
     tomorun(tomodat, opt,
-	    [](const OurTomoProblem & tomo) {
-	      return TrDistToRefCalculator<OurTomoProblem, double>(tomo);
+	    [use_ref_state,&rho_ref](const OurTomoProblem & tomo) -> TrDistToRefCalculator<OurTomoProblem, double> {
+	      if (use_ref_state) {
+ 		return TrDistToRefCalculator<OurTomoProblem, double>(tomo, rho_ref);
+	      } else {
+ 		return TrDistToRefCalculator<OurTomoProblem, double>(tomo);
+	      }
 	    },
 	    logger);
   } else if (opt->val_type == "obs-value") {
