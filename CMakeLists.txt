@@ -35,7 +35,7 @@ find_package(MatIO REQUIRED)
 find_package(ZLIB REQUIRED)
 
 # Find boost::program_options and boost::math
-find_package(Boost 1.40 COMPONENTS program_options REQUIRED)
+find_package(Boost 1.40 COMPONENTS program_options unit_test_framework REQUIRED)
 
 
 # activate warning flags on debug builds
