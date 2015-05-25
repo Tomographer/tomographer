@@ -257,6 +257,48 @@ public:
   }
 };
 
+/** \brief Calculate the "purified distance" to a reference state for each sample
+ *
+ * The purified distance \f$ P(\rho,\sigma) \f$ for two normalized states is defined as
+ * \f[
+ *   P\left(\rho,\sigma\right) = \sqrt{1 - F^2\left(\rho,\sigma\right)}\ .
+ * \f]
+ */
+template<typename TomoProblem_, typename ValueType_ = double>
+class PurifDistToRefCalculator
+{
+public:
+  typedef TomoProblem_ TomoProblem;
+  typedef typename TomoProblem::MatrQ MatrQ;
+  typedef typename MatrQ::MatrixType MatrixType;
+
+  //! For TomoValueCalculator interface : value type
+  typedef ValueType_ ValueType;
+
+private:
+  MatrixType _ref_T;
+
+public:
+  //! Constructor, take the reference state to be the MLE
+  PurifDistToRefCalculator(const TomoProblem & tomo)
+    : _ref_T(tomo.matq.initMatrixType())
+  {
+    _ref_T = tomo.T_MLE;
+  }
+  //! Constructor, the reference state is T_ref (in \ref pageParamsT)
+  PurifDistToRefCalculator(const TomoProblem & tomo, const MatrixType & T_ref)
+    : _ref_T(tomo.matq.initMatrixType())
+  {
+    _ref_T = T_ref;
+  }
+
+  inline ValueType getValueT(const MatrixType & T) const
+  {
+    auto F = fidelity_T<ValueType>(T, _ref_T);
+    return std::sqrt(1.0 - F*F);
+  }
+};
+
 /** \brief Calculate the trace distance to a reference state for each sample
  *
  */
@@ -766,8 +808,10 @@ namespace DMLLHIntegratorTasks
 	    warn_accept_ratio = (accept_ratio > 0.35 || accept_ratio < 0.2);
 	  }
 	  std::string msg = Tools::fmts(
-              "iteration %s %lu/(%lu=%lu*(%lu+%lu)) : %5.2f%% done  [%saccept ratio=%.2f%s]",
-              (is_thermalizing ? "[T]" : "   "),
+              "%s %lu/(%lu=%lu*(%lu+%lu)) : %5.2f%% done  [%saccept ratio=%.2f%s]",
+              ( ! is_thermalizing
+		? "iteration"
+		: "[therm.] "),
               (unsigned long)k, (unsigned long)totiters, (unsigned long)rw.n_sweep(),
               (unsigned long)rw.n_therm(), (unsigned long)rw.n_run(),
               fdone*100.0,

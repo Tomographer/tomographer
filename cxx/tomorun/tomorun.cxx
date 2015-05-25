@@ -177,7 +177,7 @@ void validate(boost::any& v, std::vector<std::string> const& values,
   // one string, it's an error, and exception will be thrown.
   std::string const& s = validators::get_single_string(values);
 
-  if (s == "fidelity" || s == "tr-dist" || s == "obs-value") {
+  if (s == "fidelity" || s == "purif-dist" || s == "tr-dist" || s == "obs-value") {
     v = boost::any(valtype(s));
   } else {
     throw validation_error(validation_error::invalid_option_value);
@@ -213,12 +213,12 @@ void parse_options(ProgOptions * opt, int argc, char **argv)
      "specify .mat data file name")
     ("value-type", value<valtype>(& val_type)->default_value(val_type),
      "Which value to acquire histogram of, e.g. fidelity to MLE. Possible values are 'fidelity', "
-     "'tr-dist' or 'obs-value'. If 'obs-value' (hermitian observable value)  is specified, the "
-     "given \".mat\" data-file (see --data-file-name) must also define a variable Observable "
-     "as a dim x dim hermitian matrix.")
+     "'purif-dist', 'tr-dist' or 'obs-value'. If 'obs-value' (hermitian observable value)  is "
+     "specified, the given \".mat\" data-file (see --data-file-name) must also define a variable "
+     "Observable as a dim x dim hermitian matrix.")
     ("use-ref-state", bool_switch(& opt->use_ref_state)->default_value(opt->use_ref_state),
-     "If --value-type is 'fidelity' or 'tr-dist', then read the variable named 'rho_ref' in the "
-     "data file (--data-file-name) and calculate the histogram of fidelity or trace distance to "
+     "If --value-type is 'fidelity', 'purif-dist' or 'tr-dist', then read the variable named 'rho_ref' "
+     "in the data file (--data-file-name) and calculate the histogram of fidelity or trace distance to "
      "that state, instead of the MLE estimate (as by default).")
     ("value-hist", value<std::string>(&valhiststr),
      "Do a histogram for different measured values (e.g. fidelity to MLE), format MIN:MAX/NPOINTS")
@@ -513,23 +513,24 @@ int main(int argc, char **argv)
   auto & mlog = logger;
 
   //  try {
-    if (dim == 2 && n_povms <= 6) {
-      tomorun_dispatch<2, 6>(dim, &opt, matf, mlog);
-      /*    } else if (dim == 2 && n_povms <= 64) {
-	    tomorun<2, 64>(dim, &opt, matf, mlog); */
-      /*    } else if (dim == 2) {
-	    tomorun<2, Eigen::Dynamic>(dim, &opt, matf, mlog); */
-      /*    } else if (dim == 4 && n_povms <= 64) {
-	    tomorun<4, 64>(dim, &opt, matf, mlog); */
-      /*    } else if (dim == 4) {
-	    tomorun<4, Eigen::Dynamic>(dim, &opt, matf, mlog); */
-    } else {
-      tomorun_dispatch<Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
-    }
-    //  } catch (const std::exception& e) {
-    //    logger.error("main()", "Caught exception: %s", e.what());
-    //    return 2;
-    //  }
+  if (dim == 2 && n_povms <= 6) {
+    tomorun_dispatch<2, 6>(dim, &opt, matf, mlog);
+/* speed up a bit compilation times by removing some cases here */
+/*} else if (dim == 2 && n_povms <= 64) {
+    tomorun_dispatch<2, 64>(dim, &opt, matf, mlog); */
+  } else if (dim == 2) {
+    tomorun_dispatch<2, Eigen::Dynamic>(dim, &opt, matf, mlog);
+/*} else if (dim == 4 && n_povms <= 64) {
+    tomorun_dispatch<4, 64>(dim, &opt, matf, mlog); */
+  } else if (dim == 4) {
+    tomorun_dispatch<4, Eigen::Dynamic>(dim, &opt, matf, mlog);
+  } else {
+    tomorun_dispatch<Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
+  }
+  //  } catch (const std::exception& e) {
+  //    logger.error("main()", "Caught exception: %s", e.what());
+  //    return 2;
+  //  }
 }
 
 
@@ -634,8 +635,10 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 
   const bool use_ref_state = opt->use_ref_state;
   typename OurMatrQ::MatrixType rho_ref = matq.initMatrixType();
+  typename OurMatrQ::MatrixType T_ref = matq.initMatrixType();
   if (use_ref_state) {
     MAT::getEigenMatrix(matf->var("rho_ref"), &rho_ref);
+    T_ref = rho_ref.sqrt();
   }
 
   //
@@ -645,11 +648,21 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 
   if (opt->val_type == "fidelity") {
     tomorun(tomodat, opt,
-	    [use_ref_state,&rho_ref](const OurTomoProblem & tomo) -> FidelityToRefCalculator<OurTomoProblem, double> {
+	    [use_ref_state,&T_ref](const OurTomoProblem & tomo) -> FidelityToRefCalculator<OurTomoProblem, double> {
 	      if (use_ref_state) {
-		return FidelityToRefCalculator<OurTomoProblem, double>(tomo, rho_ref);
+		return FidelityToRefCalculator<OurTomoProblem, double>(tomo, T_ref);
 	      } else {
 		return FidelityToRefCalculator<OurTomoProblem, double>(tomo);
+	      }
+	    },
+	    logger);
+  } else if (opt->val_type == "purif-dist") {
+    tomorun(tomodat, opt,
+	    [use_ref_state,&T_ref](const OurTomoProblem & tomo) -> PurifDistToRefCalculator<OurTomoProblem, double> {
+	      if (use_ref_state) {
+		return PurifDistToRefCalculator<OurTomoProblem, double>(tomo, T_ref);
+	      } else {
+		return PurifDistToRefCalculator<OurTomoProblem, double>(tomo);
 	      }
 	    },
 	    logger);
