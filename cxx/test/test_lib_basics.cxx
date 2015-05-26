@@ -2,6 +2,7 @@
 #undef NDEBUG
 
 #include <iostream>
+#include <iomanip>
 #include <stdexcept>
 
 // we want `eigen_assert()` to raise an `eigen_assert_exception` here
@@ -102,83 +103,54 @@ struct test_matrq_fixture {
   }
 };
 
-BOOST_FIXTURE_TEST_CASE(default_matrq, test_matrq_fixture)
+BOOST_FIXTURE_TEST_SUITE(test_impl_matrq, test_matrq_fixture)
+
+BOOST_AUTO_TEST_CASE(default_matrq)
 {
-  BOOST_CHECKPOINT("Testing DefaultMatrQ(5,100)");
   test_matrq<Tomographer::DefaultMatrQ>(5, 100);
-  BOOST_CHECKPOINT("Testing DefaultMatrQ(2,50)");
+}
+BOOST_AUTO_TEST_CASE(default_matrq_2)
+{
   test_matrq<Tomographer::DefaultMatrQ>(2, 50);
-  BOOST_CHECKPOINT("Testing QubitParulisMatrQ(2,6)");
+}
+BOOST_AUTO_TEST_CASE(qubitpaulis_matrq)
+{
   test_matrq<Tomographer::QubitPaulisMatrQ>(2, 6);
 }
 
+BOOST_AUTO_TEST_SUITE_END()
 
-/*
 
-int main()
+BOOST_AUTO_TEST_SUITE(test_tomoproblem)
+
+BOOST_AUTO_TEST_CASE(indep_meas_tomo_problem)
 {
-  using namespace Tomographer;
-
-  {
-    std::cout << "testing DefaultMatrQ ...\n";
-    
-    DefaultMatrQ::RealScalar a = 1.0;
-    std::cout << "a = " << a << "\n";
-    
-    DefaultMatrQ matrq(5);
-    
-    DefaultMatrQ::MatrixType rho = matrq.initMatrixType();
-    
-    rho(1,4) = DefaultMatrQ::ComplexScalar(0.0, 1.0);
-    
-    std::cout << "rho = \n" << rho << "\n";
-  }
-
-  // -------------------------------------------------------
-
-  {
-    std::cout << "testing QubitPaulisMatrQ ...\n";
-    
-    QubitPaulisMatrQ qmq(2);
-    
-    QubitPaulisMatrQ::VectorParamType a = qmq.initVectorParamType();
-
-    std::cout << "a = " << a << "\n";
+  Tomographer::QubitPaulisMatrQ qmq(2);
   
-  }
+  Tomographer::IndepMeasTomoProblem<Tomographer::QubitPaulisMatrQ> dat(qmq);
 
-  // -------------------------------------------------------
+  dat.Exn = qmq.initVectorParamListType(6);
+  //std::cout << "Exn.size = " << dat.Exn.rows() << " x " << dat.Exn.cols() << "\n";
+  dat.Exn <<
+    0.5, 0.5,  0.707107,  0,
+    0.5, 0.5, -0.707107,  0,
+    0.5, 0.5,  0,         0.707107,
+    0.5, 0.5,  0,        -0.707107,
+    1,   0,    0,         0,
+    0,   1,    0,         0
+    ;
+  dat.Nx = qmq.initFreqListType(6);
+  dat.Nx << 1500, 800, 300, 300, 10, 30;
 
-  {
-    std::cout << "testing IndepMeasTomoProblem ... \n";
+  Tomographer::QubitPaulisMatrQ::VectorParamType x = qmq.initVectorParamType();
+  x << 0.5, 0.5, 0, 0; // maximally mixed state
+  
+  Tomographer::QubitPaulisMatrQ::RealScalar value = dat.calc_llh(x);
+  
+  BOOST_CHECK_CLOSE(value, 4075.70542169248, 1e-4);
 
-    QubitPaulisMatrQ qmq(2);
-
-    IndepMeasTomoProblem<QubitPaulisMatrQ> dat(qmq);
-
-    dat.Exn = qmq.initVectorParamListType(6);
-    std::cout << "Exn.size = " << dat.Exn.rows() << " x " << dat.Exn.cols() << "\n";
-    dat.Exn <<
-      0.5, 0.5,  0.707107,  0,
-      0.5, 0.5, -0.707107,  0,
-      0.5, 0.5,  0,         0.707107,
-      0.5, 0.5,  0,        -0.707107,
-      1,   0,    0,         0,
-      0,   1,    0,         0
-      ;
-    dat.Nx = qmq.initFreqListType(6);
-    dat.Nx << 1500, 800, 300, 300, 10, 30;
-
-    QubitPaulisMatrQ::VectorParamType x = qmq.initVectorParamType();
-    x << 0.5, 0.5, 0, 0; // maximally mixed state
-
-    QubitPaulisMatrQ::RealScalar value = dat.calc_llh(x);
-
-    std::cout << "llh @ mixed state = " << value << "\n";
-
-  }
-
-  return 0;
+  //std::cout << "llh @ mixed state = " << std::setprecision(15) << value << "\n";
+  
 }
 
-*/
+BOOST_AUTO_TEST_SUITE_END()
