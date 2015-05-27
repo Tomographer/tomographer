@@ -25,7 +25,7 @@
 // MatrQ
 // =============================================================================
 
-/** \page pageInterfaceMatrQ Interface
+/** \page pageInterfaceMatrQ MatrQ Interface
  *
  * Declares types for dealing with quantum states and POVMs of a fixed dimension which
  * we'll call here \a dim. See also \ref Tomographer::MatrQ.
@@ -89,7 +89,7 @@
 // TomoProblem
 // =============================================================================
 
-/** \page pageInterfaceTomoProblem Interface
+/** \page pageInterfaceTomoProblem TomoProblem Interface
  *
  * Stores the data relevant for a tomography problem. Includes:
  *
@@ -148,7 +148,7 @@
  * \par LLHValueType calc_llh(const typename MatrQ::VectorParamType & x) const;
  * Calculate the loglikelihood function, defined as
  * \f[
- *   \lambda\left(\rho\right) = -2\,\ln\,\tr\left[B^n\,\rho^{\otimes n}\right]\ .
+ *   \lambda\left(\rho\right) = -2\,\ln\,\mathrm{tr}\left[B^n\,\rho^{\otimes n}\right]\ .
  * \f]
  * The argument \a x is the \ref pageParamsX of the density matrix at which the
  * loglikelihood function should be evaluated.
