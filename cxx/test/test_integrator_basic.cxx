@@ -36,27 +36,31 @@ int main()
   // try to reproduce the nice "1qubit-test9-pureup-extreme-onlyupmeas" curve
   dat.Nx << 0, 0, 0, 0, 250, 0;
 
+  dat.rho_MLE << 1.0, 0, 0, 0;
+  dat.T_MLE << 1.0, 0, 0, 0;
   dat.x_MLE << 1.0, 0, 0, 0; // pure up state
 
 
   // now, prepare the integrator.
-  std::mt19937 rng(std::chrono::system_clock::now().time_since_epoch().count()); // seeded random number generator
+  std::mt19937 rng(0); // seeded random number generator
 
   //  std::cout << "about to create a SimpleFoutLogger object...\n";
 
-  SimpleFoutLogger flog(stdout, Logger::LONGDEBUG); // just log normally to STDOUT
+  //  SimpleFoutLogger flog(stdout, Logger::INFO); // just log normally to STDOUT
+  VacuumLogger flog;
+  typedef decltype(flog) OurLogger;
 
   //  std::cout << "about to create a SimpleFoutLogger object... done\n";
 
   QubitPaulisMatrQ::MatrixType start_T = qmq.initMatrixType();
   start_T << 1.0/sqrt(2.0), 0, 0, 1.0/sqrt(2.0);
 
-  QubitPaulisMatrQ::MatrixType ref_T = qmq.initMatrixType();
-  ref_T << 1.0, 0, 0, 0;
+  //  QubitPaulisMatrQ::MatrixType ref_T = qmq.initMatrixType();
+  //  ref_T << 1.0, 0, 0, 0;
 
   typedef IndepMeasTomoProblem<QubitPaulisMatrQ> OurTomoProblem;
 
-  typedef ValueHistogramMHRWStatsCollector<QubitPaulisMatrQ,FidelityToRefCalculator<OurTomoProblem>,SimpleFoutLogger>
+  typedef ValueHistogramMHRWStatsCollector<QubitPaulisMatrQ,FidelityToRefCalculator<OurTomoProblem>,OurLogger>
     OurValMHRWStatsCollector;
 
   typedef MultipleMHRWStatsCollectors<OurValMHRWStatsCollector,OurValMHRWStatsCollector>
@@ -69,20 +73,22 @@ int main()
   OurMultiMHRWStatsCollector multistats(fidstats, fidstats2);
 
   typedef DMStateSpaceLLHRandomWalk<OurTomoProblem,std::mt19937,
-				    OurMultiMHRWStatsCollector,SimpleFoutLogger>
+				    OurMultiMHRWStatsCollector,OurLogger>
     MyRandomWalk;
 
-  std::cout << "About to create the randomwalk object ...\n";
+  //  std::cout << "About to create the randomwalk object ...\n";
 
-  //  MyRandomWalk rwalk(20, 300, 5000, 0.05, start_T, dat, rng, fidstats, flog);
-  MyRandomWalk rwalk(4, 20, 50, 0.06, Eigen::Matrix2cd::Zero(), dat, rng, multistats, flog);
+  MyRandomWalk rwalk(20, 300, 5000, 0.05, start_T, dat, rng, multistats, flog);
 
-  std::cout << "About to run the randomwalk object ...\n";
+  //  std::cout << "About to run the randomwalk object ...\n";
 
   rwalk.run();
 
-  std::cout << "FINAL HISTOGRAM (1)\n" << fidstats.histogram().pretty_print() << "\n";
-  std::cout << "FINAL HISTOGRAM (2)\n" << fidstats2.histogram().pretty_print() << "\n";
+  std::string hist1 = fidstats.histogram().pretty_print();
+  std::string hist2 = fidstats.histogram().pretty_print();
+
+  //  std::cout << "FINAL HISTOGRAM (1)\n" << fidstats.histogram().pretty_print() << "\n";
+  //  std::cout << "FINAL HISTOGRAM (2)\n" << fidstats2.histogram().pretty_print() << "\n";
   
   return 0;
 }

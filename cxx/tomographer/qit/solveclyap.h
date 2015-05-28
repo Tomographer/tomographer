@@ -2,6 +2,7 @@
 #ifndef SOLVECLYAP_H
 #define SOLVECLYAP_H
 
+#include <string>
 
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>

@@ -24,11 +24,12 @@ namespace Tools
  * \return TRUE if all was OK, or FALSE if there were significant differences detected
  * (more than the given tolerance)
  */
-template<typename Der1, typename Der2, typename fnType>
+template<typename Der1, typename Der2, typename fnType, typename ErrorStream>
 bool check_derivatives(const Eigen::ArrayBase<Der1> & derivatives, const Eigen::MatrixBase<Der2> & point,
                        fnType fn, size_t valdims,
                        typename Eigen::MatrixBase<Der1>::Scalar delta = 1e-6,
-                       typename Eigen::MatrixBase<Der1>::Scalar rel_tol = 1e-6
+                       typename Eigen::MatrixBase<Der1>::Scalar rel_tol = 1e-6,
+		       ErrorStream & error_stream = std::cerr
                        )
 {
   bool ok = true;
@@ -64,15 +65,16 @@ bool check_derivatives(const Eigen::ArrayBase<Der1> & derivatives, const Eigen::
     if (thediff/delta > rel_tol ) {
       // Error in the derivative
       ok = false;
-      std::cerr << "Error in derivative check: Derivative wrong in direction\n"
-		<< "dir = " << dir.transpose() << "   [basis vector #"<<i<<"]\n"
-		<< "\tpoint = \t" << point.transpose() << "\n"
-		<< "\tval0  = \t" << val0.transpose() << "\n"
-		<< "\tdval1 = \t" << dval1.transpose() << "\n"
-		<< "\tdvalFromDer = \t"<<dvalFromDer.transpose() << "\n"
-		<< "\tderivative in this direction =\n\t\t\t\t" << derivatives.transpose().block(i,0,1,n) << "\n"
-		<< "--> difference: \t" << thediff << "\n"
-		<< "--> difference [relative to delta]: \t" << thediff/delta << "\n\n";
+      error_stream
+	<< "Error in derivative check: Derivative wrong in direction\n"
+	<< "dir = " << dir.transpose() << "   [basis vector #"<<i<<"]\n"
+	<< "\tpoint = \t" << point.transpose() << "\n"
+	<< "\tval0  = \t" << val0.transpose() << "\n"
+	<< "\tdval1 = \t" << dval1.transpose() << "\n"
+	<< "\tdvalFromDer = \t"<<dvalFromDer.transpose() << "\n"
+	<< "\tderivative in this direction =\n\t\t\t\t" << derivatives.transpose().block(i,0,1,n) << "\n"
+	<< "--> difference: \t" << thediff << "\n"
+	<< "--> difference [relative to delta]: \t" << thediff/delta << "\n\n";
     }
   }
 

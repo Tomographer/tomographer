@@ -1,6 +1,4 @@
 
-#undef NDEBUG
-
 #include <iostream>
 #include <iomanip>
 #include <stdexcept>
@@ -14,12 +12,12 @@
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 
-#define BOOST_TEST_MODULE test_lib_basics
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
 
-const double tol = 1e-12;
+// tolerance, in *PERCENT*
+const double tol_percent = 1e-12;
 
 
 struct test_matrq_fixture {
@@ -35,8 +33,8 @@ struct test_matrq_fixture {
     typename TheMatrQ::RealScalar a = 1.0;
     typename TheMatrQ::ComplexScalar z(3.0, 4.0);
     
-    BOOST_CHECK_CLOSE(a, 1.0, tol);
-    BOOST_CHECK_CLOSE(std::abs(z), 5.0, tol);
+    BOOST_CHECK_CLOSE(a, 1.0, tol_percent);
+    BOOST_CHECK_CLOSE(std::abs(z), 5.0, tol_percent);
     
     TheMatrQ matq(dim);
 
@@ -60,17 +58,17 @@ struct test_matrq_fixture {
     BOOST_CHECK_EQUAL(rho.rows(), dim);
 
     // initializes to zero
-    BOOST_CHECK_CLOSE(rho.norm(), 0, tol);
+    BOOST_CHECK_CLOSE(rho.norm(), 0, tol_percent);
 
     // rho is a superposition of the two first basis states
     rho(0,0) = typename TheMatrQ::ComplexScalar(.5, 0.0);
     rho(0,1) = typename TheMatrQ::ComplexScalar(0.0, .5);
     rho(1,0) = typename TheMatrQ::ComplexScalar(0.0, -.5);
     rho(1,1) = typename TheMatrQ::ComplexScalar(.5, 0.0);
-    BOOST_CHECK_CLOSE(rho(0,1).imag(), .5, tol);
-    BOOST_CHECK_CLOSE(rho.trace().real(), 1.0, tol);
-    BOOST_CHECK_CLOSE(rho.trace().imag(), 0.0, tol);
-    BOOST_CHECK_CLOSE(rho.eigenvalues().real().maxCoeff(), 1.0, tol);
+    BOOST_CHECK_CLOSE(rho(0,1).imag(), .5, tol_percent);
+    BOOST_CHECK_CLOSE(rho.trace().real(), 1.0, tol_percent);
+    BOOST_CHECK_CLOSE(rho.trace().imag(), 0.0, tol_percent);
+    BOOST_CHECK_CLOSE(rho.eigenvalues().real().maxCoeff(), 1.0, tol_percent);
 
     // vector param type
     BOOST_CHECKPOINT("Testing VectorParamType");
@@ -78,21 +76,21 @@ struct test_matrq_fixture {
     typename TheMatrQ::VectorParamType x = matq.initVectorParamType();
     BOOST_CHECK_EQUAL(x.cols(), 1);
     BOOST_CHECK_EQUAL(x.rows(), dim*dim);
-    BOOST_CHECK_CLOSE(x.norm(), 0, tol);
+    BOOST_CHECK_CLOSE(x.norm(), 0, tol_percent);
     
     // vector param Ndof type
     BOOST_CHECKPOINT("Testing VectorParamNdofType");
     typename TheMatrQ::VectorParamNdofType x2 = matq.initVectorParamNdofType();
     BOOST_CHECK_EQUAL(x2.cols(), 1);
     BOOST_CHECK_EQUAL(x2.rows(), dim*dim-1);
-    BOOST_CHECK_CLOSE(x2.norm(), 0, tol);
+    BOOST_CHECK_CLOSE(x2.norm(), 0, tol_percent);
 
     // vector param list type
     BOOST_CHECKPOINT("Testing VectorParamListType");
     typename TheMatrQ::VectorParamListType xl = matq.initVectorParamListType(npovms);
     BOOST_CHECK_EQUAL(xl.cols(), dim*dim);
     BOOST_CHECK_EQUAL(xl.rows(), npovms);
-    BOOST_CHECK_CLOSE(xl.norm(), 0, tol);
+    BOOST_CHECK_CLOSE(xl.norm(), 0, tol_percent);
 
     // frequency list type
     BOOST_CHECKPOINT("Testing FreqListType");
