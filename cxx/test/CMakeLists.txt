@@ -16,9 +16,16 @@ set(tests_SRCS
   test_integrator_basic.cxx
 )
 
+# we need to access the expected output patterns. Trailing slash needed.
+set(TOMOGRAPHER_TEST_PATTERNS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patterns/"
+  CACHE STRING "path to the expected test results patterns")
+add_definitions(-DTOMOGRAPHER_TEST_PATTERNS_DIR="${TOMOGRAPHER_TEST_PATTERNS_DIR}")
+
+
 # the test binary
 add_executable(test_tomographer ${tests_SRCS})
 target_link_libraries(test_tomographer ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+
 
 
 # additional, non-boost tests not yet converted to Boost/UnitTestFramework

@@ -106,14 +106,14 @@ BOOST_AUTO_TEST_CASE(test_integrator_basic1)
   std::string hist1 = fidstats.histogram().pretty_print();
   BOOST_MESSAGE("FINAL HISTOGRAM(1):\n" << hist1);
 
-  boost::test_tools::output_test_stream output1("patterns/test_integrator_basic/hist1.txt", true);
+  boost::test_tools::output_test_stream output1(TOMOGRAPHER_TEST_PATTERNS_DIR "test_integrator_basic/hist1.txt", true);
   output1 << hist1;
   BOOST_CHECK(output1.match_pattern());
 
   std::string hist2 = fidstats2.histogram().pretty_print();
   BOOST_MESSAGE("FINAL HISTOGRAM(2):\n" << hist2);
 
-  boost::test_tools::output_test_stream output2("patterns/test_integrator_basic/hist2.txt", true);
+  boost::test_tools::output_test_stream output2(TOMOGRAPHER_TEST_PATTERNS_DIR "test_integrator_basic/hist2.txt", true);
   output2 << hist2;
   BOOST_CHECK(output2.match_pattern());
 }
