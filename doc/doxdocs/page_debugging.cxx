@@ -3,6 +3,8 @@
  *
  * <b>CORE Files & GDB/DDD</b>
  *
+ *   - Don't forget to compile code with <code>gcc -g</code> to include debugging information
+ *
  *   - <code>ulimit -c unlimited</code> &mdash; generate \c core files
  *
  *   - <code>./path/to/program</code> &mdash; if it crashes, generates \c core file

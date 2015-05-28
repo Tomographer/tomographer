@@ -7,6 +7,7 @@
 #include <tomographer/tools/eigen_assert_exception.h>
 
 #include <tomographer/qit/matrq.h>
+#include <tomographer/qit/random_unitary.h>
 #include <tomographer/tomoproblem.h>
 
 #include <Eigen/Core>
@@ -18,6 +19,7 @@
 
 // tolerance, in *PERCENT*
 const double tol_percent = 1e-12;
+const double tol = tol_percent * 0.01;
 
 
 struct test_matrq_fixture {
@@ -149,6 +151,34 @@ BOOST_AUTO_TEST_CASE(indep_meas_tomo_problem)
 
   //std::cout << "llh @ mixed state = " << std::setprecision(15) << value << "\n";
   
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+
+// -----------------------------------------------------------------------------
+
+BOOST_AUTO_TEST_SUITE(test_random_unitary)
+
+BOOST_AUTO_TEST_CASE(test_random_unitary_basic)
+{
+  Eigen::MatrixXcd U(7,7);
+  
+  std::mt19937 rng(43423); // seeded, deterministic random number generator
+
+  Tomographer::random_unitary(U, rng);
+  
+  // check that the given U is unitary
+
+  BOOST_CHECK_SMALL( (U * U.adjoint() - Eigen::MatrixXcd::Identity(7,7)).norm(), tol);
+  BOOST_CHECK_SMALL( (U.adjoint() * U - Eigen::MatrixXcd::Identity(7,7)).norm(), tol);
+}
+
+// TODO: check that the unitary is indeed Haar-distributed. For example, if we average
+// many unitaries, we should get the identity
+BOOST_AUTO_TEST_CASE(test_random_unitary_distr)
+{
+  BOOST_MESSAGE("TODO: check that the random_unitary is indeed Haar-distributed");
+  BOOST_CHECK(true);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

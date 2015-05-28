@@ -1,8 +1,11 @@
 
 #include <cstdio>
 #include <random>
-#include <chrono>
 #include <iostream>
+#include <vector>
+
+// we want `eigen_assert()` to raise an `eigen_assert_exception` here
+#include <tomographer/tools/eigen_assert_exception.h>
 
 #include <tomographer/qit/matrq.h>
 #include <tomographer/tools/loggers.h>
@@ -10,18 +13,26 @@
 #include <tomographer/integrator.h>
 #include <tomographer/dmllhintegrator.h>
 
-int main()
+#include <boost/test/unit_test.hpp>
+#include <boost/test/floating_point_comparison.hpp>
+#include <boost/test/output_test_stream.hpp>
+
+//#include <boost/algorithm/string.hpp>
+
+
+
+BOOST_AUTO_TEST_SUITE(test_integrator_basic)
+
+BOOST_AUTO_TEST_CASE(test_integrator_basic1)
 {
-  using namespace Tomographer;
+  //std::cout << "testing our integrator with Pauli meas. on a qubit ... \n";
 
-  std::cout << "testing our integrator with Pauli meas. on a qubit ... \n";
-
-  QubitPaulisMatrQ qmq(2);
+  Tomographer::QubitPaulisMatrQ qmq(2);
   
-  IndepMeasTomoProblem<QubitPaulisMatrQ> dat(qmq);
+  Tomographer::IndepMeasTomoProblem<Tomographer::QubitPaulisMatrQ> dat(qmq);
 
   dat.Exn = qmq.initVectorParamListType(6);
-  std::cout << "Exn.size = " << dat.Exn.rows() << " x " << dat.Exn.cols() << "\n";
+  //std::cout << "Exn.size = " << dat.Exn.rows() << " x " << dat.Exn.cols() << "\n";
   dat.Exn <<
     0.5, 0.5,  0.707107,  0,
     0.5, 0.5, -0.707107,  0,
@@ -40,40 +51,45 @@ int main()
   dat.T_MLE << 1.0, 0, 0, 0;
   dat.x_MLE << 1.0, 0, 0, 0; // pure up state
 
-
   // now, prepare the integrator.
   std::mt19937 rng(0); // seeded random number generator
 
   //  std::cout << "about to create a SimpleFoutLogger object...\n";
 
   //  SimpleFoutLogger flog(stdout, Logger::INFO); // just log normally to STDOUT
-  VacuumLogger flog;
+  Tomographer::VacuumLogger flog;
   typedef decltype(flog) OurLogger;
 
   //  std::cout << "about to create a SimpleFoutLogger object... done\n";
 
-  QubitPaulisMatrQ::MatrixType start_T = qmq.initMatrixType();
+  Tomographer::QubitPaulisMatrQ::MatrixType start_T = qmq.initMatrixType();
   start_T << 1.0/sqrt(2.0), 0, 0, 1.0/sqrt(2.0);
 
   //  QubitPaulisMatrQ::MatrixType ref_T = qmq.initMatrixType();
   //  ref_T << 1.0, 0, 0, 0;
 
-  typedef IndepMeasTomoProblem<QubitPaulisMatrQ> OurTomoProblem;
+  typedef Tomographer::IndepMeasTomoProblem<Tomographer::QubitPaulisMatrQ> OurTomoProblem;
 
-  typedef ValueHistogramMHRWStatsCollector<QubitPaulisMatrQ,FidelityToRefCalculator<OurTomoProblem>,OurLogger>
+  typedef Tomographer::ValueHistogramMHRWStatsCollector<
+    Tomographer::QubitPaulisMatrQ,Tomographer::FidelityToRefCalculator<OurTomoProblem>,
+    OurLogger
+    >
     OurValMHRWStatsCollector;
 
-  typedef MultipleMHRWStatsCollectors<OurValMHRWStatsCollector,OurValMHRWStatsCollector>
+  typedef Tomographer::MultipleMHRWStatsCollectors<
+    OurValMHRWStatsCollector,
+    OurValMHRWStatsCollector
+    >
     OurMultiMHRWStatsCollector;
 
-  FidelityToRefCalculator<OurTomoProblem> fidcalc(dat);
+  Tomographer::FidelityToRefCalculator<OurTomoProblem> fidcalc(dat);
   OurValMHRWStatsCollector fidstats(0.98, 1.0, 50, fidcalc, qmq, flog);
   OurValMHRWStatsCollector fidstats2(0.96, 0.98, 10, fidcalc, qmq, flog);
 
   OurMultiMHRWStatsCollector multistats(fidstats, fidstats2);
 
-  typedef DMStateSpaceLLHRandomWalk<OurTomoProblem,std::mt19937,
-				    OurMultiMHRWStatsCollector,OurLogger>
+  typedef Tomographer::DMStateSpaceLLHRandomWalk<OurTomoProblem,std::mt19937,
+						 OurMultiMHRWStatsCollector,OurLogger>
     MyRandomWalk;
 
   //  std::cout << "About to create the randomwalk object ...\n";
@@ -84,11 +100,23 @@ int main()
 
   rwalk.run();
 
-  std::string hist1 = fidstats.histogram().pretty_print();
-  std::string hist2 = fidstats.histogram().pretty_print();
+  // because we used a seeded RNG, we should get exactly reproducible results, i.e. the
+  // exact same histograms.
 
-  //  std::cout << "FINAL HISTOGRAM (1)\n" << fidstats.histogram().pretty_print() << "\n";
-  //  std::cout << "FINAL HISTOGRAM (2)\n" << fidstats2.histogram().pretty_print() << "\n";
-  
-  return 0;
+  std::string hist1 = fidstats.histogram().pretty_print();
+  BOOST_MESSAGE("FINAL HISTOGRAM(1):\n" << hist1);
+
+  boost::test_tools::output_test_stream output1("patterns/test_integrator_basic/hist1.txt", true);
+  output1 << hist1;
+  BOOST_CHECK(output1.match_pattern());
+
+  std::string hist2 = fidstats2.histogram().pretty_print();
+  BOOST_MESSAGE("FINAL HISTOGRAM(2):\n" << hist2);
+
+  boost::test_tools::output_test_stream output2("patterns/test_integrator_basic/hist2.txt", true);
+  output2 << hist2;
+  BOOST_CHECK(output2.match_pattern());
 }
+
+BOOST_AUTO_TEST_SUITE_END()
+

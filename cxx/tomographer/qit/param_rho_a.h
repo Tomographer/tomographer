@@ -197,8 +197,8 @@ public:
       ++count;
     }
     // got them all?
-    assert(count == lambda.size());
-    assert(count == (std::size_t)matq.ndof());
+    eigen_assert(count == lambda.size());
+    eigen_assert(count == (std::size_t)matq.ndof());
   }
 
   inline const MatrixType & getLambda(std::size_t genindex) const
@@ -208,9 +208,9 @@ public:
 
   inline void rhoToA(Eigen::Ref<VectorParamNdofType> a, const Eigen::Ref<const MatrixType> & rho)
   {
-    assert((std::size_t)a.size() == matq.ndof());
-    assert((std::size_t)rho.rows() == matq.dim());
-    assert((std::size_t)rho.cols() == matq.dim());
+    eigen_assert((std::size_t)a.size() == matq.ndof());
+    eigen_assert((std::size_t)rho.rows() == matq.dim());
+    eigen_assert((std::size_t)rho.cols() == matq.dim());
     for (std::size_t n = 0; n < lambda.size(); ++n) {
       a(n) = (rho * lambda[n]).real().trace() / sqrt(2.0);
     }
@@ -218,9 +218,9 @@ public:
 
   inline void aToRho(Eigen::Ref<MatrixType> rho, const Eigen::Ref<const VectorParamNdofType> & a)
   {
-    assert((std::size_t)a.size() == matq.ndof());
-    assert((std::size_t)rho.rows() == matq.dim());
-    assert((std::size_t)rho.cols() == matq.dim());
+    eigen_assert((std::size_t)a.size() == matq.ndof());
+    eigen_assert((std::size_t)rho.rows() == matq.dim());
+    eigen_assert((std::size_t)rho.cols() == matq.dim());
     rho = MatrixType::Identity(rho.rows(), rho.cols()) / matq.dim();
     for (std::size_t n = 0; n < lambda.size(); ++n) {
       rho += a(n) * lambda[n] / sqrt(2.0);
