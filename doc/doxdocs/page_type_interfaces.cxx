@@ -15,7 +15,8 @@
  *  - \subpage pageInterfaceRandomWalk
  *  - \subpage pageInterfaceMHWalker
  *  - \subpage pageInterfaceMHRWStatsCollector
- *  - \subpage pageInterfaceTomoValueCalculator
+ *  - \subpage pageInterfaceValueCalculator
+ *  - \subpage pageInterfaceMHRandomWalkTaskCData
  *  - \subpage pageTaskManagerDispatcher
  *
  */
@@ -166,6 +167,10 @@
  * statistics from samples during a Metropolis-Hastings random walk (see \ref
  * Tomographer::MHRandomWalk).
  *
+ * \par typedef .. Result
+ *    This typedef should describe a type which contains the results of all the stats
+ *    collecting. This can be eg. a histogram type.
+ *
  * This type must provide the following members. The members, or the class itself, must be
  * templates with type parameters \c CountIntType, \c PointType, \c FnValueType, and \c
  * MHRandomWalk. (It is usually most convenient to template the methods themselves, so
@@ -201,6 +206,10 @@
  *     Similarly \c curpt and \c curptval are the current point and function value. The
  *     object \c rw is a reference to the random walk object instance.
  * 
+ * \par Result getResult()
+ *     Return a result type containing the results of the stats collecting. This is only
+ *     required to return a valid value after the method \a done() was called.
+ *
  *
  */
 
@@ -251,6 +260,8 @@
  * And must provide the following members:
  *
  * \par void init()
+ *
+ * \par PointType startpoint()
  *
  * \par void thermalizing_done()
  *
@@ -344,10 +355,33 @@
  */
 
 
-/** \page pageInterfaceTomoValueCalculator TomoValueCalculator Interface
+/** \page pageInterfaceValueCalculator ValueCalculator Interface
  *
  * \todo ............ doc. ..................
  *
  * NOTE: must be copy-constructible, and different threads must be able to operate safely
  * on different copies.
+ */
+
+
+/** \page pageInterfaceMHRandomWalkTaskCData MHRandomWalkTaskCData Interface
+ *
+ * \todo ............ DOC .................
+ *
+ * NOTE: must be copy-constructible, and different threads must be able to operate safely
+ * on different copies.
+ *
+ *
+ * \par typedef .. CountIntType
+ *
+ * \par typedef .. MHRWStatsCollectorType
+ *
+ * \par typedef .. MHWalkerType
+ *
+ * \par MHRWStatsCollectorType-initializer createStatsCollector()
+ *     The return type may be anything which may be an initializer for the
+ *     MHRWStatsCollectortype (using C++11 brace initialization).
+ *
+ * \par MHWalker-initializer createMHWalker()
+ *
  */

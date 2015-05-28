@@ -22,11 +22,6 @@
 
 #include <Eigen/Core>
 
-//#ifdef TOMOGRAPHER_HAVE_OMP
-// yes, OMP multithreading ROCKS!
-#  include <omp.h>
-//#endif
-
 #include <tomographer/tools/util.h>
 #include <tomographer/tools/loggers.h>
 #include <tomographer/tools/ezmatio.h>

@@ -112,6 +112,9 @@ private:
 
 
 
+// -----------------
+
+
 
 enum {
   /** \brief Provides the MH function value at each point (see \ref
@@ -245,7 +248,6 @@ namespace tomo_internal {
 
 
 
-
 /** \brief A Metropolis-Hastings Random Walk
  *
  * Implements a <a
@@ -322,7 +324,7 @@ public:
 
   //! Simple constructor, initializes the given fields
   MHRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run, RealScalar step_size,
-               const PointType & startpt, MHWalker & mhwalker, MHRWStatsCollector & stats,
+	       MHWalker & mhwalker, MHRWStatsCollector & stats,
                Rng & rng, Log & log_)
     : _n_sweep(n_sweep), _n_therm(n_therm), _n_run(n_run),
       _step_size(step_size),
@@ -330,7 +332,7 @@ public:
       _mhwalker(mhwalker),
       _stats(stats),
       _log(log_),
-      curpt(startpt)
+      curpt()
   {
     _log.debug("MHRandomWalk", "constructor(). n_sweep=%lu, n_therm=%lu, n_run=%lu, step_size=%g",
 	       (unsigned long)n_sweep, (unsigned long)n_therm, (unsigned long)n_run, (double)step_size);
@@ -351,6 +353,8 @@ public:
     num_accepted = 0;
     num_live_points = 0;
 
+    // starting point
+    curpt = _mhwalker.startpoint();
     curptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, curpt);
 
     _mhwalker.init();
@@ -481,7 +485,20 @@ public:
     _stats.process_sample(k, curpt, curptval, *this);
   }
  
+
+  inline void run()
+  {
+    RandomWalkBase<MHRandomWalk>::run(*this);
+  }
 };
+
+
+
+
+
+// -----------------
+
+
 
 
 
@@ -616,6 +633,123 @@ public:
   }
 
 };
+
+
+
+
+// -----------------
+
+
+
+/** \brief A StatsCollector which builds a histogram of values calculated with a
+ * ValueCalculator for each data sample point
+ *
+ * This stats collector is suitable for tracking statistics during a \ref MHRandomWalk.
+ *
+ * The TomoValueCalculator is a type expected to implement the \ref
+ * pageInterfaceTomoValueCalculator.
+ *
+ */
+template<typename ValueCalculator_,
+	 typename HistogramType_ = UniformBinsHistogram<typename ValueCalculator::ValueType>,
+	 typename Log>
+class ValueHistogramMHRWStatsCollector
+{
+public:
+  /** \brief The type which calculates the interesting value. Should be of type interface \ref
+   * pageInterfaceValueCalculator.
+   */
+  typedef ValueCalculator_ ValueCalculator;
+
+  //! The type to use to represent a calculated distance
+  typedef typename TomoValueCalculator::ValueType ValueType;
+
+  //! The type of the histogram. A \ref UniformBinsHistogram with \a ValueType range type
+  typedef HistogramType_ HistogramType;
+
+  //! Structure which holds the parameters of the histogram we're recording
+  typedef HistogramType::HistogramParams HistogramParams;
+
+private:
+
+  //! Store the histogram
+  HistogramType _histogram;
+
+  /** \brief The value calculator which we will invoke to get the interesting value.
+   *
+   * The type should implement the \ref pageInterfaceValueCalculator interface.
+   */
+  ValueCalculator & _vcalc;
+
+  Log & _log;
+
+public:
+  //! Simple constructor, initializes with the given values
+  ValueHistogramMHRWStatsCollector(HistogramParams histogram_params,
+				   ValueCalculator & vcalc,
+				   Log & logger)
+    : _histogram(histogram_params),
+      _vcalc(vcalc),
+      _log(logger)
+  {
+  }
+
+  //! Get the histogram data collected so far. Returns a \ref UniformBinsHistogram.
+  inline const HistogramType & histogram() const
+  {
+    return _histogram;
+  }
+
+  // stats collector part
+
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. Initializes the histogram to zeros.
+  inline void init()
+  {
+    // reset our array
+    _histogram.reset();
+  }
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
+  inline void thermalizing_done()
+  {
+  }
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
+  inline void done()
+  {
+    if (_log.enabled_for(Logger::LONGDEBUG)) {
+      // _log.longdebug("ValueHistogramMHRWStatsCollector", "done()");
+      _log.longdebug("ValueHistogramMHRWStatsCollector",
+                     "Done walking & collecting stats. Here's the histogram:\n"
+                     + _histogram.pretty_print());
+    }
+  }
+
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
+  template<typename CountIntType, typename PointType, typename LLHValueType, typename MHRandomWalk>
+  void raw_move(CountIntType k, bool /*is_thermalizing*/, bool /*is_live_iter*/, bool /*accepted*/,
+                double /*a*/, const PointType & /*newpt*/, LLHValueType /*newptval*/,
+                const PointType & /*curpt*/, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
+  {
+    _log.longdebug("ValueHistogramMHRWStatsCollector", "raw_move(): k=%lu", (unsigned long)k);
+  }
+
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. Records the sample in the histogram.
+  template<typename CountIntType, typename PointType, typename LLHValueType, typename MHRandomWalk>
+  void process_sample(CountIntType k, const PointType & curpt, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
+  {
+    ValueType val = _vcalc.getValue(curpt);
+
+    _log.longdebug("ValueHistogramMHRWStatsCollector", "in process_sample(): k=%lu, val=%.4g",
+                   (unsigned long)k, val);
+
+    _histogram.record(val);
+
+    //_log.longdebug("ValueHistogramMHRWStatsCollector", "process_sample() finished");
+  }
+ 
+
+};
+
+
 
 
 
