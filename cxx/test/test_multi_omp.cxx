@@ -31,11 +31,11 @@ public:
   {
   }
 
-  void setDomainLevel(const std::string& s, int level)
+  inline void setDomainLevel(const std::string& s, int level)
   {
     levels_set[s] = level;
   }
-  void removeDomainSetting(const std::string& s)
+  inline void removeDomainSetting(const std::string& s)
   {
     auto it = levels_set.find(s);
     if (it == levels_set.end()) {
@@ -137,16 +137,16 @@ struct MyResultsCollector {
   {
   }
 
-  void init(unsigned int /*num_total_runs*/, unsigned int /*n_chunk*/,
-	    const MyCData * pcdata)
+  inline void init(unsigned int /*num_total_runs*/, unsigned int /*n_chunk*/,
+		   const MyCData * pcdata)
   {
     finalhistogram.reset(pcdata->histogram_params);
   }
-  void collect_result(unsigned int /*task_no*/, const OurHistogramType& taskresult, const MyCData *)
+  inline void collect_result(unsigned int /*task_no*/, const OurHistogramType& taskresult, const MyCData *)
   {
     finalhistogram.add_histogram(taskresult);
   }
-  void runs_finished(unsigned int, const MyCData *)
+  inline void runs_finished(unsigned int, const MyCData *)
   {
     finalhistogram.finalize();
   }

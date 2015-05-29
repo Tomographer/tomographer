@@ -201,8 +201,20 @@ struct UniformBinsHistogram
    * \param max_bar_width is the maximum width (in number of characters) a full bar should
    * occupy.
    */
-  inline std::string pretty_print(const int max_bar_width = 80) const
+  inline std::string pretty_print(int max_bar_width = 0) const
   {
+    if (max_bar_width == 0) {
+      // decide of a maximum width to display
+      max_bar_width = 80; // default maximum width
+      // If the user provided a value for the terminal width, use it. Note that $COLUMNS is
+      // not in the environment usually, so you have to set it manually with e.g.
+      //    shell> export COLUMNS=$COLUMNS
+      const char * cols_s = std::getenv("COLUMNS");
+      if (cols_s != NULL) {
+	max_bar_width = std::atoi(cols_s) - 20;
+      }
+    }
+
     std::string s;
     assert(bins.size() >= 0);
     std::size_t Ntot = (std::size_t)bins.size();
