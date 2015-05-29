@@ -190,17 +190,38 @@ struct LoggerTraits<MultiProc::OMPTaskLogger<BaseLogger> >
 namespace MultiProc {
   
   
+  /** \brief A complete status report of currently running threads.
+   */
   template<typename TaskStatusReportType>
   struct OMPFullStatusReport
   {
     OMPFullStatusReport() : tasks_running(), tasks_reports() { }
 
+    //! Number of completed tasks
     int num_completed;
+    //! Total number of tasks to perform
     int num_total_runs;
+    //! Number of currently active threads (which are actively solving a task)
     int num_active_working_threads;
+    //! Number of spawned threads (some may be idle)
     int num_threads;
     
+    /** \brief List of length \a num_threads, specifying for each spawned thread whether
+     * it is active or not
+     *
+     * If <em>tasks_running[k]</em> is \c true, then thread number \a k is currently
+     * running a task. Otherwise, it is waiting (because of chunking of tasks, for
+     * example, or because there are are no new tasks to start)
+     */
     std::vector<bool> tasks_running;
+    /** \brief List of length \a num_threads with the raw report submitted from each
+     * individual thread.
+     *
+     * If thread number \a k is active and currently running a task, then
+     * <em>tasks_reports[k]</em> is the raw status report that was submitted by that
+     * thread. If the thread is not running a task, <em>tasks_reports[k]</em> is an
+     * invalid, or default-constructed value.
+     */
     std::vector<TaskStatusReportType> tasks_reports;
   };
 
@@ -496,6 +517,9 @@ namespace MultiProc {
      * This function remembers the given \a fnstatus callable, so that each time that \ref
      * request_status_report() is called at any later point, then this callback will be
      * invoked.
+     *
+     * The callback, when invoked, will be called with a single parameter of type \ref
+     * OMPFullStatusReport<TaskStatusReportType>.
      *
      * \par How Tasks should handle status reports.
      * Task's must regularly check whether a status report has been requested as they run. 

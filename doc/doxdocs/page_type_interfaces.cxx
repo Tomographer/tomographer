@@ -15,6 +15,7 @@
  *  - \subpage pageInterfaceRandomWalk
  *  - \subpage pageInterfaceMHWalker
  *  - \subpage pageInterfaceMHRWStatsCollector
+ *  - \subpage pageInterfaceResultable
  *  - \subpage pageInterfaceValueCalculator
  *  - \subpage pageInterfaceMHRandomWalkTaskCData
  *  - \subpage pageTaskManagerDispatcher
@@ -213,7 +214,7 @@
 /** \page pageInterfaceResultable Resultable Interface
  *
  * This abstract type interface describes a type which results in some output. This might
- * be for example some forms of \ref pageInterfaceMHRWStatsCollectors such as \ref
+ * be for example some forms of \ref pageInterfaceMHRWStatsCollector 's such as \ref
  * Tomographer::ValueHistogramMHRWStatsCollector which results in a histogram.
  *
  * \par typedef .. Result
