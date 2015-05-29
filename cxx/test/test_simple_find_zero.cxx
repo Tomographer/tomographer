@@ -3,31 +3,39 @@
 #include <limits>
 #include <iostream>
 
+// we want `eigen_assert()` to raise an `eigen_assert_exception` here
+#include <tomographer/tools/eigen_assert_exception.h>
+
 #include <tomographer/tools/loggers.h>
 #include <tomographer/qit/simple_find_zero.h>
 
+#include <boost/test/unit_test.hpp>
+#include <boost/test/floating_point_comparison.hpp>
 
-Tomographer::SimpleFoutLogger flog(stdout, Tomographer::Logger::LONGDEBUG);
 
 
 // -----------------------------------------------------------------------------
 
+BOOST_AUTO_TEST_SUITE(test_simple_find_zero)
+
+// this is referenced later by f4()
 double f1(double x)
 {
   // zero at x = 1.2 (by construction)
   return std::exp(0.5*x) - std::exp(0.5*1.2);
-}
-void test1()
+};
+
+BOOST_AUTO_TEST_CASE(test_simple_find_zero_1)
 {
   const double x1 = -1;
   const double x2 = 10;
   const double tol = 1e-15;
 
-  double pt = Tomographer::Tools::simpleFindZero<double, double>(f1, x1, x2, 50, tol, NULL, NULL, flog);
+  double pt = Tomographer::Tools::simpleFindZero<double, double>(f1, x1, x2, 50, tol, NULL, NULL);
 
-  flog.info("test1", [&](std::ostream& str) {
-      str << "Point is = " << pt << " [tol="<<tol<<"]    (known to be = 1.2)";
-    });
+  BOOST_MESSAGE("Point is = " << pt << " [tol="<<tol<<"]    (known to be = 1.2)");
+  BOOST_CHECK_CLOSE(pt, 1.2, 1e-8 /* PERCENT */);
+  // no final value returned to check
 }
 
 // -----------------------------------------------------------------------------
@@ -37,8 +45,10 @@ double f2(double x)
   // zero found at x = 0.511578
   return std::exp(0.5*x) + 3 - 6*std::sqrt(std::fabs(x));
 }
-void test2()
+
+BOOST_AUTO_TEST_CASE(test_simple_find_zero_2)
 {
+  // set up x1 and x2 so that the root at 0.511578 is picked up
   const double x1 = 0.1;
   const double x2 = 0.2;
   const double tol = 1e-10;
@@ -47,25 +57,24 @@ void test2()
   int final_iters = -1;
 
   double pt = Tomographer::Tools::simpleFindZero<double, double>(f2, x1, x2, 50, tol,
-								 &final_value, &final_iters,
-								 flog);
+								 &final_value, &final_iters);
 
-  flog.info("test2", [&](std::ostream& str) {
-      str << "Point is = " << pt << ", final_value = " << final_value << " [tol="<<tol<<"]"
-	  << "  final_iters="<<final_iters;
-    });
+  BOOST_MESSAGE("Point is = " << pt << ", final_value = " << final_value << " [tol="<<tol<<"]"
+		<< "  final_iters="<<final_iters);
+  BOOST_CHECK_CLOSE(pt, 0.51157781220155718, 1e-5 /*PERCENT*/);
+  BOOST_CHECK_SMALL(final_value, tol /* abs tol */);
 }
 
 // -----------------------------------------------------------------------------
 
-double f3(double x)
+BOOST_AUTO_TEST_CASE(test_simple_find_zero_3)
 {
-  // zero at 0, but over a large interval is *really* small: our algorithm finds a
-  // suitable zero at  x = 0.264675
-  return exp(-1/(x*x));
-}
-void test3()
-{
+  auto f3 = [](double x){
+    // zero at 0, but over a large interval is *really* small: our algorithm finds a
+    // suitable zero at  x = 0.264675
+    return exp(-1/(x*x));
+  };
+
   const double x1 = 1;
   const double x2 = .5;
   const double tol = 1e-10;
@@ -74,23 +83,27 @@ void test3()
 
   double pt = Tomographer::Tools::simpleFindZero<double, double>(f3, x1, x2, 50, tol, &final_value);
 
-  flog.info("test3", [&](std::ostream& str) {
-      str << "(no log) Point is = " << pt << ", final_value = " << final_value << "\n";
-    });
+  BOOST_MESSAGE("Point is = " << pt << ", final_value = " << final_value);
+  // the value of pt won't be of interest, as the function is really really almost zero
+  // over a finite interval (don't believe me? run "Plot[Exp[-(1/x^2)], {x, -1, 1}]" in
+  // Mathematica)
+  //
+  // So just check for the final_value, which should be small.
+  BOOST_CHECK_SMALL(final_value, tol /* abs tol */);
 }
 
 // -----------------------------------------------------------------------------
 
-// recovering from function returning NaN ?
-double f4(double x)
+BOOST_AUTO_TEST_CASE(test_simple_find_zero_4)
 {
-  if (x > 1.3) {
-    return std::numeric_limits<double>::quiet_NaN();
-  }
-  return f1(x);
-}
-void test4()
-{
+  // recovering from function returning NaN ?
+  auto f4 = [](double x) {
+    if (x > 1.3) {
+      return std::numeric_limits<double>::quiet_NaN();
+    }
+    return f1(x);
+  };
+
   const double x1 = -1;
   const double x2 = 40;
   const double tol = 1e-15;
@@ -98,27 +111,33 @@ void test4()
   double final_value = std::numeric_limits<double>::quiet_NaN();
   int final_iters = -1;
 
+  Tomographer::BufferLogger logger(Tomographer::Logger::LONGDEBUG);
+
   double pt = Tomographer::Tools::simpleFindZero<double, double>(f4, x1, x2, 50, tol,
 								 &final_value, &final_iters,
-								 flog);
+								 logger);
 
-  flog.info("test4", [&](std::ostream& str) {
-      str << "Point is = " << pt << ", final_value = " << final_value << " [tol="<<tol<<"]"
-	  << "  final_iters="<<final_iters;
-    });
+  BOOST_MESSAGE(logger.get_contents());
+  BOOST_MESSAGE("Point is = " << pt << ", final_value = " << final_value << " [tol="<<tol<<"]"
+		<< "  final_iters="<<final_iters);
+  BOOST_CHECK_CLOSE(pt, 1.2, 1e-10 /* PERCENT */);
+  BOOST_CHECK_SMALL(final_value, tol);
 }
 
 // -----------------------------------------------------------------------------
 
-// recovering from function returning NaN, test #2
-void test5()
+BOOST_AUTO_TEST_CASE(test_simple_find_zero_5)
 {
+  // recovering from function returning NaN, test #2
+
   const double x1 = 0.1;
   const double x2 = 4;
   const double tol = 1e-8;
 
   double final_value = std::numeric_limits<double>::quiet_NaN();
   int final_iters = -1;
+
+  Tomographer::BufferLogger logger(Tomographer::Logger::LONGDEBUG);
 
   double pt = Tomographer::Tools::simpleFindZero<double, double>(
       [](double x) -> double {
@@ -130,22 +149,15 @@ void test5()
       tol,
       &final_value,
       &final_iters,
-      flog
+      logger
       );
 
-  flog.info("test5", [&](std::ostream& str) {
-      str << "Point is = " << pt << ", final_value = " << final_value << " [tol="<<tol<<"]"
-	  << "  final_iters="<<final_iters;
-    });
+  BOOST_MESSAGE(logger.get_contents());
+  BOOST_MESSAGE("Point is = " << pt << ", final_value = " << final_value << " [tol="<<tol<<"]"
+		<< "  final_iters="<<final_iters);
+  BOOST_CHECK_SMALL(pt, 1e-8);
+  BOOST_CHECK_SMALL(final_value, tol);
 }
 
 
-int main()
-{
-  test1();
-  test2();
-  test3();
-  test4();
-  test5();
-  return 0;
-}
+BOOST_AUTO_TEST_SUITE_END()

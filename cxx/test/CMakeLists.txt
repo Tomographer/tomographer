@@ -20,6 +20,7 @@ set(tests_SRCS
   test_lib_basics.cxx
   test_param.cxx
   test_integrator_basic.cxx
+  test_simple_find_zero.cxx
 )
 
 # the test binary
@@ -31,8 +32,8 @@ target_link_libraries(test_tomographer ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 # additional, non-boost tests not yet converted to Boost/UnitTestFramework
 
 # test the simple zero finder
-add_executable(test_simple_find_zero test_simple_find_zero.cxx)
-target_link_libraries(test_simple_find_zero ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+#add_executable(test_simple_find_zero test_simple_find_zero.cxx)
+#target_link_libraries(test_simple_find_zero ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
 # parameterizations
 #add_executable(test_param test_param.cxx)
