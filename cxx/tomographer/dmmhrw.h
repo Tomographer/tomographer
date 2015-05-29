@@ -5,18 +5,13 @@
 #include <cstddef>
 #include <cmath>
 
-#include <string>
 #include <random>
-#include <limits>
 
 #include <tomographer/qit/util.h>
 #include <tomographer/qit/dist.h>
-#include <tomographer/tools/fmt.h>
+#include <tomographer/tomoproblem.h>
 #include <tomographer/tools/loggers.h>
-#include <tomographer/integrator.h>
-#include <tomographer/histogram.h>
-#include <tomographer/multiproc.h>
-
+#include <tomographer/mhrw.h>
 
 namespace Tomographer {
 
@@ -37,7 +32,7 @@ namespace Tomographer {
  *      pageInterfaceMHRWStatsCollector)
  */
 template<typename TomoProblem, typename Rng, typename Log>
-class DMStateSpaceLLHRandomWalk
+class DMStateSpaceLLHMHWalker
 {
 public:
   //! The data types of our problem
@@ -81,8 +76,8 @@ public:
    * If you provide a zero \a startpt here, then a random starting point will be chosen
    * using the \a rng random number generator to generate a random point on the sphere.
    */
-  DMStateSpaceLLHRandomWalk(const MatrixType & startpt, const TomoProblem & tomo, Rng & rng,
-			    Log & log_)
+  DMStateSpaceLLHMHWalker(const MatrixType & startpt, const TomoProblem & tomo, Rng & rng,
+			  Log & log_)
     : _tomo(tomo),
       _rng(rng),
       _normal_distr_rnd(0.0, 1.0),
@@ -102,23 +97,27 @@ public:
    */
   inline void init()
   {
-    _log.debug("DMStateSpaceLLHRandomWalk", "Starting random walk");
+    _log.debug("DMStateSpaceLLHMHWalker", "Starting random walk");
   }
 
   //! Return the starting point given in the constructor, or a random start point
-  inline const MatrixType & startpoint() const
+  inline const MatrixType & startpoint()
   {
-    if (_startpt.norm() < 1e-3) {
-      // zero matrix given: means to choose random starting point
-      MatrixType T;// = _tomo.matq.initMatrixType();
-
-      T = dense_random<MatrixType>(
-          _rng, _normal_distr_rnd, _tomo.matq.dim(), _tomo.matq.dim()
-          );
-      _startpt = T/T.norm(); // normalize to be on surface of the sphere
-
-      _log.debug("DMStateSpaceLLHRandomWalk", "Chosen random start point T = \n" << T);
+    if (_startpt.norm() > 1e-3) {
+      // nonzero matrix given: that's the starting point
+      return _startpt;
     }
+
+    // zero matrix given: means to choose random starting point
+    MatrixType T = _tomo.matq.initMatrixType();
+    T = dense_random<MatrixType>(
+	_rng, _normal_distr_rnd, _tomo.matq.dim(), _tomo.matq.dim()
+	);
+    _startpt = T/T.norm(); // normalize to be on surface of the sphere
+
+    _log.debug("DMStateSpaceLLHMHWalker", [&T](std::ostream & str) {
+	str << "Chosen random start point T = \n" << T;
+      });
 
     // return start point
     return _startpt;

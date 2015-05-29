@@ -9,11 +9,13 @@
 #include <random>
 #include <tuple>
 #include <utility>
+#include <type_traits>
 
 #include <tomographer/qit/matrq.h>
 #include <tomographer/qit/param_herm_x.h>
 #include <tomographer/tomoproblem.h>
-//#include <tomographer/tools/loggers.h>
+#include <tomographer/histogram.h>
+#include <tomographer/tools/loggers.h>
 
 
 namespace Tomographer {
@@ -450,9 +452,10 @@ public:
     _stats.raw_move(k, is_thermalizing, is_live_iter, accept, a, newpt, newptval, curpt, curptval, *this);
 
     _log.longdebug("MHRandomWalk",
-                   "%s%3u: %s a=%-7.2g, newptval=%5.4g [llh=%.4g], curptval=%5.4g [llh=%.4g]   accept_ratio=%s",
+                   "%s%3lu: %s a=%-7.2g, newptval=%5.4g [llh=%.4g], curptval=%5.4g [llh=%.4g]   accept_ratio=%s",
                    (is_thermalizing?"T":"#"),
-                   k, accept?"AC":"RJ", (double)a, (double)newptval, -2.0*newptval, (double)curptval, -2.0*curptval,
+                   (unsigned long)k, accept?"AC":"RJ", (double)a, (double)newptval, -2.0*newptval,
+		   (double)curptval, -2.0*curptval,
                    (!is_thermalizing?Tools::fmts("%.2g", acceptance_ratio()).c_str():"N/A"));
 
     if (accept) {
@@ -644,15 +647,19 @@ public:
 /** \brief A StatsCollector which builds a histogram of values calculated with a
  * ValueCalculator for each data sample point
  *
+ * \a ValueHistogramMHRWStatsCollector complies both with the \ref
+ * pageInterfaceMHRWStatsCollector and the \ref pageInterfaceResultable.
+ *
  * This stats collector is suitable for tracking statistics during a \ref MHRandomWalk.
  *
- * The TomoValueCalculator is a type expected to implement the \ref
- * pageInterfaceTomoValueCalculator.
+ * The ValueCalculator is a type expected to implement the \ref
+ * pageInterfaceValueCalculator.
  *
  */
 template<typename ValueCalculator_,
-	 typename HistogramType_ = UniformBinsHistogram<typename ValueCalculator::ValueType>,
-	 typename Log>
+	 typename Log = VacuumLogger,
+	 typename HistogramType_ = UniformBinsHistogram<typename ValueCalculator_::ValueType>
+	 >
 class ValueHistogramMHRWStatsCollector
 {
 public:
@@ -662,13 +669,16 @@ public:
   typedef ValueCalculator_ ValueCalculator;
 
   //! The type to use to represent a calculated distance
-  typedef typename TomoValueCalculator::ValueType ValueType;
+  typedef typename ValueCalculator::ValueType ValueType;
 
   //! The type of the histogram. A \ref UniformBinsHistogram with \a ValueType range type
   typedef HistogramType_ HistogramType;
 
+  //! Required for compliance with \ref pageInterfaceResultable type
+  typedef HistogramType_ Result;
+
   //! Structure which holds the parameters of the histogram we're recording
-  typedef HistogramType::HistogramParams HistogramParams;
+  typedef typename HistogramType::Params HistogramParams;
 
 private:
 
@@ -679,14 +689,14 @@ private:
    *
    * The type should implement the \ref pageInterfaceValueCalculator interface.
    */
-  ValueCalculator & _vcalc;
+  ValueCalculator _vcalc;
 
   Log & _log;
 
 public:
   //! Simple constructor, initializes with the given values
   ValueHistogramMHRWStatsCollector(HistogramParams histogram_params,
-				   ValueCalculator & vcalc,
+				   const ValueCalculator & vcalc,
 				   Log & logger)
     : _histogram(histogram_params),
       _vcalc(vcalc),
@@ -696,6 +706,14 @@ public:
 
   //! Get the histogram data collected so far. Returns a \ref UniformBinsHistogram.
   inline const HistogramType & histogram() const
+  {
+    return _histogram;
+  }
+
+  /** \brief Get the histogram data collected so far. This method is needed for \ref
+   * pageInterfaceResultable compliance.
+   */
+  inline const Result & getResult() const
   {
     return _histogram;
   }

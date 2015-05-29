@@ -6,6 +6,12 @@
 
 add_definitions(-DBOOST_TEST_DYN_LINK)
 
+# we need to access the expected output patterns. Trailing slash needed.
+set(TOMOGRAPHER_TEST_PATTERNS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patterns/"
+  CACHE STRING "path to the expected test results patterns")
+add_definitions(-DTOMOGRAPHER_TEST_PATTERNS_DIR="${TOMOGRAPHER_TEST_PATTERNS_DIR}")
+
+
 # test suite
 set(tests_SRCS
   # list of sources containing test cases:
@@ -15,12 +21,6 @@ set(tests_SRCS
   test_param.cxx
   test_integrator_basic.cxx
 )
-
-# we need to access the expected output patterns. Trailing slash needed.
-set(TOMOGRAPHER_TEST_PATTERNS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patterns/"
-  CACHE STRING "path to the expected test results patterns")
-add_definitions(-DTOMOGRAPHER_TEST_PATTERNS_DIR="${TOMOGRAPHER_TEST_PATTERNS_DIR}")
-
 
 # the test binary
 add_executable(test_tomographer ${tests_SRCS})

@@ -253,9 +253,19 @@ struct AveragedHistogram
     reset(params);
   }
 
+  //! Resets the data and sets new params.
   inline void reset(const HistogramParamsType& params_)
   {
     params = params_;
+    final_histogram = Eigen::ArrayXd::Zero(params.num_bins);
+    std_dev = Eigen::ArrayXd::Zero(params.num_bins);
+    off_chart = 0.0;
+    num_histograms = 0;
+  }
+
+  //! Resets the data keeping the exisiting params.
+  inline void reset()
+  {
     final_histogram = Eigen::ArrayXd::Zero(params.num_bins);
     std_dev = Eigen::ArrayXd::Zero(params.num_bins);
     off_chart = 0.0;
@@ -267,9 +277,9 @@ struct AveragedHistogram
     // final_histogram collects the sum of the histograms
     // std_dev for now collects the sum of squares. std_dev will be normalized in run_finished().
 
-    eigen_assert(histogram.num_bins() == params.num_bins);
-    eigen_assert(histogram.num_bins() == final_histogram.rows());
-    eigen_assert(histogram.num_bins() == std_dev.rows());
+    eigen_assert((typename HistogramType::CountType)histogram.num_bins() == params.num_bins);
+    eigen_assert((typename HistogramType::CountType)histogram.num_bins() == final_histogram.rows());
+    eigen_assert((typename HistogramType::CountType)histogram.num_bins() == std_dev.rows());
 
     for (std::size_t k = 0; k < histogram.num_bins(); ++k) {
       RealAvgType binvalue = histogram.count(k);

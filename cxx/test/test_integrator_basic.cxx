@@ -10,8 +10,9 @@
 #include <tomographer/qit/matrq.h>
 #include <tomographer/tools/loggers.h>
 #include <tomographer/tomoproblem.h>
-#include <tomographer/integrator.h>
-#include <tomographer/dmllhintegrator.h>
+#include <tomographer/mhrw.h>
+#include <tomographer/mhrwtasks.h>
+#include <tomographer/dmmhrw.h>
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
@@ -58,6 +59,7 @@ BOOST_AUTO_TEST_CASE(test_integrator_basic1)
 
   //  SimpleFoutLogger flog(stdout, Logger::INFO); // just log normally to STDOUT
   Tomographer::VacuumLogger flog;
+
   typedef decltype(flog) OurLogger;
 
   //  std::cout << "about to create a SimpleFoutLogger object... done\n";
@@ -70,9 +72,12 @@ BOOST_AUTO_TEST_CASE(test_integrator_basic1)
 
   typedef Tomographer::IndepMeasTomoProblem<Tomographer::QubitPaulisMatrQ> OurTomoProblem;
 
+  typedef Tomographer::FidelityToRefCalculator<OurTomoProblem> OurValueCalculator;
+  typedef Tomographer::UniformBinsHistogram<typename OurValueCalculator::ValueType> OurHistogramType;
   typedef Tomographer::ValueHistogramMHRWStatsCollector<
-    Tomographer::QubitPaulisMatrQ,Tomographer::FidelityToRefCalculator<OurTomoProblem>,
-    OurLogger
+    OurValueCalculator,
+    OurLogger,
+    OurHistogramType
     >
     OurValMHRWStatsCollector;
 
@@ -83,18 +88,19 @@ BOOST_AUTO_TEST_CASE(test_integrator_basic1)
     OurMultiMHRWStatsCollector;
 
   Tomographer::FidelityToRefCalculator<OurTomoProblem> fidcalc(dat);
-  OurValMHRWStatsCollector fidstats(0.98, 1.0, 50, fidcalc, qmq, flog);
-  OurValMHRWStatsCollector fidstats2(0.96, 0.98, 10, fidcalc, qmq, flog);
+  OurValMHRWStatsCollector fidstats(OurHistogramType::Params(0.98, 1.0, 50), fidcalc, flog);
+  OurValMHRWStatsCollector fidstats2(OurHistogramType::Params(0.96, 0.98, 10), fidcalc, flog);
 
   OurMultiMHRWStatsCollector multistats(fidstats, fidstats2);
 
-  typedef Tomographer::DMStateSpaceLLHRandomWalk<OurTomoProblem,std::mt19937,
-						 OurMultiMHRWStatsCollector,OurLogger>
-    MyRandomWalk;
+  typedef Tomographer::DMStateSpaceLLHMHWalker<OurTomoProblem,std::mt19937,OurLogger>
+    MyMHWalker;
+
+  MyMHWalker mhwalker(start_T, dat, rng, flog);
 
   //  std::cout << "About to create the randomwalk object ...\n";
-
-  MyRandomWalk rwalk(20, 300, 5000, 0.05, start_T, dat, rng, multistats, flog);
+  Tomographer::MHRandomWalk<std::mt19937,MyMHWalker,OurMultiMHRWStatsCollector,OurLogger,long>
+    rwalk(20, 300, 5000, 0.05, mhwalker, multistats, rng, flog);
 
   //  std::cout << "About to run the randomwalk object ...\n";
 
@@ -103,14 +109,14 @@ BOOST_AUTO_TEST_CASE(test_integrator_basic1)
   // because we used a seeded RNG, we should get exactly reproducible results, i.e. the
   // exact same histograms.
 
-  std::string hist1 = fidstats.histogram().pretty_print();
+  std::string hist1 = fidstats.histogram().pretty_print(100);
   BOOST_MESSAGE("FINAL HISTOGRAM(1):\n" << hist1);
 
   boost::test_tools::output_test_stream output1(TOMOGRAPHER_TEST_PATTERNS_DIR "test_integrator_basic/hist1.txt", true);
   output1 << hist1;
   BOOST_CHECK(output1.match_pattern());
 
-  std::string hist2 = fidstats2.histogram().pretty_print();
+  std::string hist2 = fidstats2.histogram().pretty_print(100);
   BOOST_MESSAGE("FINAL HISTOGRAM(2):\n" << hist2);
 
   boost::test_tools::output_test_stream output2(TOMOGRAPHER_TEST_PATTERNS_DIR "test_integrator_basic/hist2.txt", true);

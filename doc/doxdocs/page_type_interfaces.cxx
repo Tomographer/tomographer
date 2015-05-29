@@ -167,10 +167,6 @@
  * statistics from samples during a Metropolis-Hastings random walk (see \ref
  * Tomographer::MHRandomWalk).
  *
- * \par typedef .. Result
- *    This typedef should describe a type which contains the results of all the stats
- *    collecting. This can be eg. a histogram type.
- *
  * This type must provide the following members. The members, or the class itself, must be
  * templates with type parameters \c CountIntType, \c PointType, \c FnValueType, and \c
  * MHRandomWalk. (It is usually most convenient to template the methods themselves, so
@@ -206,14 +202,27 @@
  *     Similarly \c curpt and \c curptval are the current point and function value. The
  *     object \c rw is a reference to the random walk object instance.
  * 
- * \par Result getResult()
- *     Return a result type containing the results of the stats collecting. This is only
- *     required to return a valid value after the method \a done() was called.
- *
  *
  */
 
 
+// =============================================================================
+// Resultable
+// =============================================================================
+
+/** \page pageInterfaceResultable Resultable Interface
+ *
+ * This abstract type interface describes a type which results in some output. This might
+ * be for example some forms of \ref pageInterfaceMHRWStatsCollectors such as \ref
+ * Tomographer::ValueHistogramMHRWStatsCollector which results in a histogram.
+ *
+ * \par typedef .. Result
+ *    The type that the result has
+ *
+ * \par Result getResult()
+ *    Obtain the said result. The return type must be anything that may be assigned to a
+ *    \a Result type, or a value that the \a ResultType accepts in a constructor.
+ */
 
 
 // =============================================================================
@@ -371,17 +380,21 @@
  * NOTE: must be copy-constructible, and different threads must be able to operate safely
  * on different copies.
  *
+ * Must inherit Tomographer::MHRWTasks::CDataBase<CountIntType,RealType> .
  *
- * \par typedef .. CountIntType
  *
- * \par typedef .. MHRWStatsCollectorType
+ * \par typedef .. MHRWStatsCollectorResultType
  *
- * \par typedef .. MHWalkerType
+ * \par MHRWStatsCollectorType createStatsCollector() const
+ *     Create an \a MHRWStatsCollector -type instance to use. This must be a type which
+ *     compiles both with the \ref pageInstanceMHRWStatsCollectorType and the \ref
+ *     pageInstanceResultable. It must have as its \a Result the type given as \a
+ *     MHRWStatsColelctorResultType.
  *
- * \par MHRWStatsCollectorType-initializer createStatsCollector()
- *     The return type may be anything which may be an initializer for the
- *     MHRWStatsCollectortype (using C++11 brace initialization).
- *
- * \par MHWalker-initializer createMHWalker()
+ * \par MHWalker createMHWalker(Rng & rng, LoggerType & logger) const
+ *     Create an \a MHWalker -type instance. This may be any \ref pageInterfaceMHWalker
+ *     -compliant type. The \a Rng parameter is the same type as provided to the
+ *     MHRWTasks::MHRandomWalkTask template parameter, use a template argument for this
+ *     function in case. Use a template parameter for \a LoggerType.
  *
  */

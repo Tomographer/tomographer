@@ -4,11 +4,11 @@
 #include <map>
 #include <chrono>
 
-//#include <tomographer/qit/matrq.h>
+#include <tomographer/qit/matrq.h>
 #include <tomographer/tools/loggers.h>
-//#include <tomographer/tomoproblem.h>
-//#include <tomographer/integrator.h>
-#include <tomographer/dmllhintegrator.h>
+#include <tomographer/tomoproblem.h>
+#include <tomographer/mhrwtasks.h>
+#include <tomographer/dmmhrw.h>
 #include <tomographer/multiprocomp.h>
 
 
@@ -80,6 +80,83 @@ struct LoggerTraits<OriginFilteredLogger<BaseLogger> > : public LoggerTraits<Bas
 }
 
 
+// -----------------------------------------------------------------------------
+
+
+
+
+typedef Tomographer::IndepMeasTomoProblem<Tomographer::QubitPaulisMatrQ> OurTomoProblem;
+
+typedef Tomographer::FidelityToRefCalculator<OurTomoProblem> OurValueCalculator;
+
+typedef Tomographer::UniformBinsHistogram<OurValueCalculator::ValueType> OurHistogramType;
+
+struct MyCData : public Tomographer::MHRWTasks::CDataBase<> {
+  MyCData(const OurTomoProblem & tomo_)
+    : tomo(tomo_), vcalc(tomo_), histogram_params()
+  {
+  }
+
+  OurTomoProblem tomo;
+  OurValueCalculator vcalc;
+
+  OurHistogramType::Params histogram_params;
+
+  typedef OurHistogramType MHRWStatsCollectorResultType;
+
+  template<typename LoggerType>
+  inline Tomographer::ValueHistogramMHRWStatsCollector<OurValueCalculator,LoggerType,OurHistogramType>
+  createStatsCollector(LoggerType & logger) const
+  {
+    return Tomographer::ValueHistogramMHRWStatsCollector<OurValueCalculator,LoggerType,OurHistogramType>(
+	histogram_params,
+	vcalc,
+	logger
+	);
+  }
+
+  template<typename Rng, typename LoggerType>
+  inline Tomographer::DMStateSpaceLLHMHWalker<OurTomoProblem,Rng,LoggerType>
+  createMHWalker(Rng & rng, LoggerType & log) const
+  {
+    return Tomographer::DMStateSpaceLLHMHWalker<OurTomoProblem,Rng,LoggerType>(
+	tomo.matq.initMatrixType(),
+	tomo,
+	rng,
+	log
+	);
+  }
+
+};
+
+struct MyResultsCollector {
+  Tomographer::AveragedHistogram<OurHistogramType, double> finalhistogram;
+
+  MyResultsCollector()
+    : finalhistogram(OurHistogramType::Params())
+  {
+  }
+
+  void init(unsigned int /*num_total_runs*/, unsigned int /*n_chunk*/,
+	    const MyCData * pcdata)
+  {
+    finalhistogram.reset(pcdata->histogram_params);
+  }
+  void collect_result(unsigned int /*task_no*/, const OurHistogramType& taskresult, const MyCData *)
+  {
+    finalhistogram.add_histogram(taskresult);
+  }
+  void runs_finished(unsigned int, const MyCData *)
+  {
+    finalhistogram.finalize();
+  }
+};
+
+
+
+// -----------------------------------------------------------------------------
+
+
 
 int main()
 {
@@ -118,8 +195,6 @@ int main()
 
   QubitPaulisMatrQ qmq(2);
   
-  typedef IndepMeasTomoProblem<QubitPaulisMatrQ> OurTomoProblem;
-
   OurTomoProblem dat(qmq);
 
   dat.Exn = qmq.initVectorParamListType(6);
@@ -151,35 +226,28 @@ int main()
 
   // MHRandomWalkTask<TomoProblem, typename Rng = std::mt19937, typename FidelityValueType = double>
 
-  typedef DMLLHIntegratorTasks::CData<OurTomoProblem,FidelityToRefCalculator<OurTomoProblem> > MyCData;
-  typedef MultiProc::OMPTaskLogger<OurLogger> MyTaskLogger;
-  typedef DMLLHIntegratorTasks::MHRandomWalkTask<OurTomoProblem,FidelityToRefCalculator<OurTomoProblem>,
-						 MyTaskLogger> MyMHRandomWalkTask;
-  typedef DMLLHIntegratorTasks::MHRandomWalkResultsCollector<
-    MyMHRandomWalkTask::ValueHistogramMHRWStatsCollectorType::HistogramType
-    >  MyResultsCollector;
-
   // ---------------
 
-  MyCData taskcdat(dat, FidelityToRefCalculator<OurTomoProblem>(dat));
+  MyCData taskcdat(dat);
   // seed for random number generator
   taskcdat.base_seed = std::chrono::system_clock::now().time_since_epoch().count();
   // parameters for the fidelity histogram
-  taskcdat.histogram_params = MyCData::HistogramParams(0.98, 1.0, 50);
+  taskcdat.histogram_params = OurHistogramType::Params(0.98, 1.0, 50);
   // parameters of the random walk
   taskcdat.n_sweep = 20;
   taskcdat.n_therm = 100;
   taskcdat.n_run = 1000;
   taskcdat.step_size = 0.05;
 
-  MyResultsCollector results(taskcdat.histogram_params);
+  MyResultsCollector results;
 
-//#define clock std::chrono::high_resolution_clock
   typedef std::chrono::system_clock clock;
 
   auto time_start = clock::now();
 
-  MultiProc::makeOMPTaskDispatcher<MyMHRandomWalkTask>(
+  typedef Tomographer::MHRWTasks::MHRandomWalkTask<MyCData, std::mt19937> OurMHRWTask;
+
+  MultiProc::makeOMPTaskDispatcher<OurMHRWTask>(
       &taskcdat, &results, flog, 128 /* num_runs */, 1 /* n_chunk */
       ).run();
 
@@ -196,7 +264,7 @@ int main()
       str << "Integration finished.";
     });
 
-  std::cout << "FINAL HISTOGRAM\n" << results.pretty_print() << "\n";
+  std::cout << "FINAL HISTOGRAM\n" << results.finalhistogram.pretty_print(120) << "\n";
 
   std::cout << Tools::fmts("Total elapsed time: %d:%02d:%02d.%03d\n\n",
 			   dt_i/3600, (dt_i/60)%60, dt_i%60, (int)(dt_f*1000+0.5)).c_str();
