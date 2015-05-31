@@ -15,7 +15,7 @@
 
 namespace Tomographer
 {
-namespace Tools
+namespace SphCoords
 {
 
 
@@ -169,7 +169,7 @@ void sph_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<Der1>& r
  * target="_blank">volume element</a>, or Jacobian, of the conversion from cartesian
  * coordinates to spherical coordinates. More precisely, this function computes
  * \f[
- *   J = \left\lvert\det \frac{\partial(x_i)}{\partial(r,\theta_j)}\right\rvert
+ *   J = \left\vert\det \frac{\partial(x_i)}{\partial(r,\theta_j)}\right\vert
  *     = r^{N-1} \sin^{N-2}\left(\theta_1\right)\sin^{N-3}\left(\theta_2\right)
  *       \ldots\sin\left(\theta_{N-2}\right)\ ,
  * \f]
@@ -200,8 +200,8 @@ typename Eigen::MatrixBase<Der1>::Scalar cart_to_sph_jacobian(const Eigen::Matri
  * coordinates to spherical coordinates <em>on the surface of the hypersphere of fixed
  * radius R=1</em>. More precisely, this function computes
  * \f[
- *   \left\lvert J\right\rvert_{r=1}
- *     = \left\lvert\det \frac{\partial(x_i)}{\partial(r,\theta_j)}\right\rvert_{r=1}
+ *   \left\vert J\right\vert_{r=1}
+ *     = \left\vert\det \frac{\partial(x_i)}{\partial(r,\theta_j)}\right\vert_{r=1}
  *     = \sin^{N-2}\left(\theta_1\right)\sin^{N-3}\left(\theta_2\right)
  *       \ldots\sin\left(\theta_{N-2}\right)\ ,
  * \f]

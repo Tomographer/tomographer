@@ -77,7 +77,8 @@
  *
  * Parameterization such that \f$ \rho = T T^\dagger \f$.
  *
- * Unless specified otherwise, \a T is chosen to be positive semidefinite.
+ * Often, \a T is chosen to be positive semidefinite. But this is not always the case, and
+ * you should double-check.
  * 
  * \todo DOC.............................
  */

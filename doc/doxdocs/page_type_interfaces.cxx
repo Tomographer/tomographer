@@ -367,21 +367,39 @@
 
 /** \page pageInterfaceValueCalculator ValueCalculator Interface
  *
- * \todo ............ doc. ..................
+ * A \a ValueCalculator is responsible for calculating a particular value at a particular
+ * point. This might be, for example, calculating the value of a figure of merit at
+ * various point samples during a Metropolis-Hastings random walk.
  *
- * NOTE: must be copy-constructible, and different threads must be able to operate safely
- * on different copies.
+ * The type represented by \a PointType depends on the use of the \a ValueCalculator, and
+ * is should be documented by whoever uses it. For example, a \ref
+ * Tomographer::ValueHistogramMHRWStatsCollector will call the \a ValueCalculator using
+ * the \a PointType of the random walk (see \ref pageInterfaceMHWalker).
+ *
+ * A \a ValueCalculator must be <em>copy-constructible</em>, and different threads must be
+ * able to operate safely on different copies.
+ *
+ * \par typedef .. ValueType
+ *     The type of the returned value.
+ * 
+ * \par ValueType getValue(PointType pt)
+ *     Get the value corresponding to a particular point \a pt.
+ *
  */
 
 
 /** \page pageInterfaceMHRandomWalkTaskCData MHRandomWalkTaskCData Interface
  *
- * \todo ............ DOC .................
+ * A \a MHRandomWalkTaskCData is an object which provides data about how to conduct a
+ * repetition of random walks, while collecting statistics. It may store constant global
+ * data.
  *
- * NOTE: must be copy-constructible, and different threads must be able to operate safely
- * on different copies.
+ * A \a MHRandomWalkTaskCData must inherit \ref
+ * Tomographer::MHRWTasks::CDataBase<CountIntType,RealType>, in order to expose some basic
+ * types and functions.
  *
- * Must inherit Tomographer::MHRWTasks::CDataBase<CountIntType,RealType> .
+ * A \a MHRandomWalkTaskCData must be copy-constructible, and different threads must be
+ * able to operate safely on different copies.
  *
  *
  * \par typedef .. MHRWStatsCollectorResultType
