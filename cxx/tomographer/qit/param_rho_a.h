@@ -206,7 +206,7 @@ public:
     return lambda[genindex];
   }
 
-  inline void rhoToA(Eigen::Ref<VectorParamNdofType> a, const Eigen::Ref<const MatrixType> & rho)
+  inline void rhoToA(Eigen::Ref<VectorParamNdofType> a, const Eigen::Ref<const MatrixType> & rho) const
   {
     eigen_assert((std::size_t)a.size() == matq.ndof());
     eigen_assert((std::size_t)rho.rows() == matq.dim());
@@ -216,12 +216,13 @@ public:
     }
   }
 
-  inline void aToRho(Eigen::Ref<MatrixType> rho, const Eigen::Ref<const VectorParamNdofType> & a)
+  inline void aToRho(Eigen::Ref<MatrixType> rho, const Eigen::Ref<const VectorParamNdofType> & a,
+		     typename MatrQ::RealScalar trace = 1.0) const
   {
     eigen_assert((std::size_t)a.size() == matq.ndof());
     eigen_assert((std::size_t)rho.rows() == matq.dim());
     eigen_assert((std::size_t)rho.cols() == matq.dim());
-    rho = MatrixType::Identity(rho.rows(), rho.cols()) / matq.dim();
+    rho = trace * MatrixType::Identity(rho.rows(), rho.cols()) / matq.dim();
     for (std::size_t n = 0; n < lambda.size(); ++n) {
       rho += a(n) * lambda[n] / sqrt(2.0);
     }

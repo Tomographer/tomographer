@@ -27,12 +27,20 @@ namespace Tools
  */
 template<typename Scalar>
 struct is_complex {
+  // use Eigen's existing implementation
+  enum { value = Eigen::NumTraits<Scalar>::IsComplex };
+};
+
+  /*
+template<typename Scalar>
+struct is_complex {
   enum { value = 0 };
 };
 template<typename T>
 struct is_complex<std::complex<T> > {
   enum { value = 1 };
 };
+  */
 
 } // namespace Tools
 } // namespace Tomographer

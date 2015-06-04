@@ -5,6 +5,9 @@
 #include <cmath>
 #include <cstdlib>
 
+#include <iostream>
+#include <iomanip> // std::setprecision
+#include <sstream> // std::stringstream
 #include <stdexcept> // std::out_of_range
 
 #include <Eigen/Core>
@@ -130,6 +133,60 @@ struct UniformBinsHistogram
     off_chart = 0;
   }
 
+  /** \brief Load data for the histogram. Uses current histogram parameters, just sets the bin
+   * counts.
+   *
+   * \param x is an Eigen Vector or 1-D Array from which to load the data. It must be
+   *     dense, have one column and exactly \ref num_bins() rows.
+   *
+   * \param off_chart if provided, then set the \ref off_chart count to this
+   *     number. Otherwise, reset the \ref off_chart counts to zero.
+   */
+  template<typename EigenType>
+  inline void load(const Eigen::DenseBase<EigenType> & x, CountType off_chart_ = 0)
+  {
+    eigen_assert(x.cols() == 1);
+    eigen_assert((std::size_t)x.rows() == params.num_bins);
+    bins = x.derived().template cast<CountType>();
+    off_chart = off_chart_;
+  }
+
+  /** \brief Add data to the histogram.
+   *
+   * \param x is an Eigen Vector or 1-D Array from which to load data to add to the
+   *     histogram counts. It must be dense, have one column and exactly \ref num_bins()
+   *     rows.
+   *
+   * \param off_chart if provided, add this amount to the \ref off_chart counts.
+   */
+  template<typename EigenType>
+  inline void add(const Eigen::DenseBase<EigenType> & x, CountType off_chart_ = 0)
+  {
+    eigen_assert(x.cols() == 1);
+    eigen_assert((std::size_t)x.rows() == params.num_bins);
+    bins += x.derived().template cast<CountType>();
+    off_chart += off_chart_;
+  }
+
+  /** \brief Add data to the histogram.
+   *
+   * Adds the values contained in the other histogram \a x to the current histogram. This
+   * also updates the \ref off_chart counts.
+   *
+   * \warning The histogram \a x must have the same params as the current one. An
+   * assertion check is performed that this is the case (up to some small tolerance).
+   */
+  template<typename OtherScalar, typename OtherCountType>
+  inline void add(const UniformBinsHistogram<OtherScalar,OtherCountType> & x)
+  {
+    eigen_assert(x.bins.cols() == 1);
+    eigen_assert((std::size_t)x.bins.rows() == params.num_bins);
+    eigen_assert(std::fabs(x.params.min - params.min) < 1e-8);
+    eigen_assert(std::fabs(x.params.max - params.max) < 1e-8);
+    bins += x.bins.template cast<CountType>();
+    off_chart += x.off_chart;
+  }
+
   //! Shorthand for <code>params.num_bins</code>
   inline std::size_t num_bins() const
   {
@@ -203,6 +260,12 @@ struct UniformBinsHistogram
    */
   inline std::string pretty_print(int max_bar_width = 0) const
   {
+    assert(Tools::is_positive(params.num_bins));
+
+    if (params.num_bins == 0) {
+      return std::string("<empty histogram: no bins>\n");
+    }
+
     if (max_bar_width == 0) {
       // decide of a maximum width to display
       max_bar_width = 80; // default maximum width
@@ -215,20 +278,40 @@ struct UniformBinsHistogram
       }
     }
 
-    std::string s;
     assert(bins.size() >= 0);
     std::size_t Ntot = (std::size_t)bins.size();
-    double barscale = (1.0+bins.maxCoeff()) / max_bar_width; // full bar is 80 chars wide
+    double barscale = 1.0;
+    if (bins.maxCoeff() > 0) {
+      // if all values are zero, the division later by barscale gives a division by zero
+      // and crashes stuff
+      barscale = (double)bins.maxCoeff() / max_bar_width; // full bar is 80 chars wide
+    }
+    std::stringstream s;
     for (std::size_t k = 0; k < Ntot; ++k) {
-      assert(Tools::is_positive(bins(k)));
-      s += Tools::fmts("%-6.4g | %3d %s\n",
-		       params.min + k*(params.max-params.min)/Ntot,
-		       bins(k), std::string((int)(bins(k)/barscale+0.5), '*').c_str());
+      //assert(Tools::is_positive(bins(k))); // don't abort() because of this...
+      s.width(6);
+      s << std::setprecision(4) << std::left << (double)(params.min + k*(params.max-params.min)/Ntot);
+      s << " | ";
+      s.width(3);
+      s << std::setprecision(2) << std::right << bins(k) << " ";
+      s.width(0);
+      int strwid = (int)(bins(k)/barscale + 0.5);
+      if (strwid < 0) {
+	strwid = 0;
+      } else if (strwid > max_bar_width) {
+	strwid = max_bar_width;
+      }
+      s << std::string(strwid >= 0 ? strwid : 0, '*') << "\n";
+
+      //      s += Tools::fmts("%-6.4g | %3ld %s\n",
+      //		       (double)(params.min + k*(params.max-params.min)/Ntot),
+      //		       (long)bins(k), std::string((int)(bins(k)/barscale+0.5), '*').c_str());
     }
     if (off_chart > 0) {
-      s += Tools::fmts("   ... with another %lu points off chart.\n", (unsigned long)off_chart);
+      //      s += Tools::fmts("   ... with another %lu points off chart.\n", (unsigned long)off_chart);
+      s << "   ... with another " << off_chart << " points off chart.\n";
     }
-    return s;
+    return s.str();
   }
 
 };

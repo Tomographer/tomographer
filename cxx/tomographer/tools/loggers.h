@@ -643,10 +643,10 @@ namespace tomo_internal {
         //printf("Calling emit_log(%d,\"%s\",\"%s\") on object %p\n", level, origin, msg.c_str(), loggerbase);
         static_cast<Derived*>(loggerbase)->emit_log(level, origin, msg);
       } catch (const std::exception & e) {
-        fprintf(stderr,
-                "Warning in LoggerBaseHelperDynamic::call_emit_log(%d, \"%s\", msg):"
-                " Exception caught: %s\n",
-                level, origin, e.what());
+        std::fprintf(stderr,
+		     "Warning in LoggerBaseHelperDynamic::call_emit_log(%d, \"%s\", msg):"
+		     " Exception caught: %s\n",
+		     level, origin, e.what());
       }
     }
     static inline bool test_should_emit(LoggerBase<Derived> * loggerbase, int level, const char * origin)
@@ -681,10 +681,10 @@ namespace tomo_internal {
         std::string msg = Tools::vfmts(fmt, ap);
         test_and_call_emit_log(loggerbase, level, origin, msg);
       } catch (const std::exception & e) {
-        fprintf(stderr,
-                "Warning in LoggerBase::test_and_call_emit_log(%d, \"%s\", \"%s\", ...):"
-                " Exception caught for vfmts(): %s\n",
-                level, origin, fmt, e.what());
+        std::fprintf(stderr,
+		     "Warning in LoggerBase::test_and_call_emit_log(%d, \"%s\", \"%s\", ...):"
+		     " Exception caught for vfmts(): %s\n",
+		     level, origin, fmt, e.what());
       }
     }
     template<typename Fn>
@@ -701,9 +701,9 @@ namespace tomo_internal {
         f(sstr);
         test_and_call_emit_log(loggerbase, level, origin, sstr.str());
       } catch (const std::exception & e) {
-        fprintf(stderr, "Warning in LoggerBase::test_and_call_emit_log(%d, \"%s\", f(ostream)):"
-                " Exception caught: %s\n",
-                level, origin, e.what());
+        std::fprintf(stderr, "Warning in LoggerBase::test_and_call_emit_log(%d, \"%s\", f(ostream)):"
+		     " Exception caught: %s\n",
+		     level, origin, e.what());
       }
     }
   };
@@ -744,7 +744,7 @@ namespace tomo_internal {
     {
       // call the default or specialized version of our second helper, which will either
       // relay the call the dynamic version or discard the message.
-      //fprintf(stderr,
+      //std::fprintf(stderr,
       //        "LoggerBaseHelperStatic<Derived,Level=%d>::test_and_call_emit_log(...). StaticMinimumImportanceLevel=%d\n",
       //        (int)Level, (int)(LoggerTraits<Derived>::StaticMinimumImportanceLevel));
       LoggerBaseHelperStatic2<
@@ -966,11 +966,11 @@ public:
         );
 
     // display the log message
-    fprintf(fp, "%s\n", finalmsg.c_str());
+    std::fprintf(fp, "%s\n", finalmsg.c_str());
 
     // force output also on stderr for warnings and errors if we are being redirected to a file
     if (fp != stdout && fp != stderr && level <= Logger::WARNING) {
-      fprintf(stderr, "%s\n", finalmsg.c_str());
+      std::fprintf(stderr, "%s\n", finalmsg.c_str());
     }
   }
 
