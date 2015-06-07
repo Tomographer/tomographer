@@ -222,7 +222,7 @@
  *
  * \par Result getResult()
  *    Obtain the said result. The return type must be anything that may be assigned to a
- *    \a Result type, or a value that the \a ResultType accepts in a constructor.
+ *    \a Result type, or a value that the \a Result accepts in a constructor.
  */
 
 
