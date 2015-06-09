@@ -123,7 +123,7 @@ struct TestFixtureQuditPure0 : public TestParamsFixture<Tomographer::MatrQ<Dim,1
   TestFixtureQuditPure0()
     : matq(Dim), rho(matq.initMatrixType())
   {
-    typedef typename TheMatrQ::ComplexScalar CD;
+    //    typedef typename TheMatrQ::ComplexScalar CD; // unused
     rho.setZero();
     rho(0,0) = 1.0;
   }
