@@ -29,7 +29,7 @@ namespace Tools
  * point, and which are to be checked against numerically-calculated finite
  * differences. \a derivatives is an Eigen \a Array type such that
  * \f[
- *     \texttt{derivatives[i][k]} = \frac{\partial f_i}{\partial x_k}
+ *     \texttt{derivatives(i,k)} = \frac{\partial f_i}{\partial x_k}
  * \f]
  *
  * \param point the point at which to calculate the function derivatives. It should be a

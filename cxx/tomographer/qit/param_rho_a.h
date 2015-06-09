@@ -212,7 +212,7 @@ public:
     eigen_assert((std::size_t)rho.rows() == matq.dim());
     eigen_assert((std::size_t)rho.cols() == matq.dim());
     for (std::size_t n = 0; n < lambda.size(); ++n) {
-      a(n) = (rho * lambda[n]).real().trace() / sqrt(2.0);
+      a(n) = (rho * lambda[n]).real().trace() * boost::math::constants::half_root_two<RealScalar>();
     }
   }
 
@@ -224,7 +224,7 @@ public:
     eigen_assert((std::size_t)rho.cols() == matq.dim());
     rho = trace * MatrixType::Identity(rho.rows(), rho.cols()) / matq.dim();
     for (std::size_t n = 0; n < lambda.size(); ++n) {
-      rho += a(n) * lambda[n] / sqrt(2.0);
+      rho += a(n) * lambda[n] * boost::math::constants::half_root_two<RealScalar>();;
     }
   }
 

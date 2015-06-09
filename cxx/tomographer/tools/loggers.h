@@ -140,8 +140,9 @@ struct LoggerTraits
 
     /** \brief A statically-determined minimum importance logging level
      *
-     * If set to \c -1, then all messages will be decided at runtime whether to be emitted
-     * or not, depending on the level the logger instance was set to at run-time.
+     * If set to \c -1 (the default), then all messages will be decided at runtime whether
+     * to be emitted or not, depending on the level the logger instance was set to at
+     * run-time.
      *
      * If a logger defines a minimum importance level different than \c -1, then any
      * message logged with strictly lesser importance level will automatically be
@@ -164,13 +165,14 @@ struct LoggerTraits
 
     /** \brief Whether the logger has a filter based on the given 'origin'
      *
-     * This flag may be set to either \c 0 (no filtering) or \c 1 (filtering).
+     * This flag may be set to either \c 0 (no filtering, the default) or \c 1
+     * (filtering).
      *
      * If filtering is activated, then before formatting and emitting messages the logging
      * engine will test the logger object's <code>filter_by_origin(int level, const char *
      * origin)</code>. The message will only be emitted if this function returns \c
      * true. Note that messages may have already been discarded if their severity was less
-     * important that the runtime level of the logger, and those messages don't even reach
+     * important than the runtime level of the logger: those messages don't even reach
      * this filtering function call.
      */
     HasFilterByOrigin = 0

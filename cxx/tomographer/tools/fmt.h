@@ -133,7 +133,7 @@ inline std::string fmts(const char * fmt, ...)
  * This formats the duration, given in seconds, into a human-readable string with hours,
  * minutes seconds and milliseconds.
  *
- * \param dt the duration in seconds
+ * \param seconds the duration in seconds
  */
 inline std::string fmt_duration(double seconds)
 {
@@ -145,12 +145,12 @@ inline std::string fmt_duration(double seconds)
   return fmts("%d:%02d:%02d.%03d", dt_i/3600, (dt_i/60)%60, dt_i%60, (int)(dt_f*1000+0.5));
 };
 
-/** \brief Format a std::chrono::duration into a human-readable string
+/** \brief Format a \a std::chrono::duration into a human-readable string
  *
  * This formats the duration into a human-readable string with hours, minutes seconds and
  * milliseconds.
  *
- * \param dt the duration, a std::chrono::duration 
+ * \param dt the duration, a \a std::chrono::duration 
  *
  * See also \ref fmt_duration(double)
  */

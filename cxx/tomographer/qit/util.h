@@ -56,7 +56,7 @@ namespace Tools {
 
 /** \brief Use this if you need an \a std::vector of any Eigen type
  *
- * See <a href="http://eigen.tuxfamily.org/dox-devel/group__TopicStlContainers.html">this
+ * See <a href="http://eigen.tuxfamily.org/dox/group__TopicStlContainers.html">this
  * discussion in Eigen's documentation</a> about using Eigen with C++ STL containers.
  *
  * This struct defines a helper type, which is the right type to use if you want an

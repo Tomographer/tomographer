@@ -78,7 +78,7 @@ namespace tomo_internal {
  * \endcode
  */
 template <typename F>
-tomo_internal::FinalAction<F> finally(F f)
+inline tomo_internal::FinalAction<F> finally(F f)
 {
   return tomo_internal::FinalAction<F>(f);
 }
