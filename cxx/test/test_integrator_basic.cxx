@@ -55,14 +55,14 @@ BOOST_AUTO_TEST_CASE(test_integrator_basic1)
   // now, prepare the integrator.
   std::mt19937 rng(0); // seeded random number generator
 
-  //  std::cout << "about to create a SimpleFoutLogger object...\n";
+  //  std::cout << "about to create a FileLogger object...\n";
 
-  //  SimpleFoutLogger flog(stdout, Logger::INFO); // just log normally to STDOUT
-  Tomographer::VacuumLogger flog;
+  //  FileLogger flog(stdout, Logger::INFO); // just log normally to STDOUT
+  Tomographer::Logger::VacuumLogger flog;
 
   typedef decltype(flog) OurLogger;
 
-  //  std::cout << "about to create a SimpleFoutLogger object... done\n";
+  //  std::cout << "about to create a FileLogger object... done\n";
 
   Tomographer::QubitPaulisMatrQ::MatrixType start_T = qmq.initMatrixType();
   start_T << 1.0/sqrt(2.0), 0, 0, 1.0/sqrt(2.0);

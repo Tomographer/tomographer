@@ -14,32 +14,6 @@ namespace Tomographer
 namespace Tools
 {
 
-/* * \brief a no-op static callback class.
- *
- * For use, for example, with \ref simpleFindZero().
- *
- */ /*
-struct EmptyCallback {
-  EmptyCallback() { }
-  template<typename... Args>
-  inline void call(Args... args) { }
-};
-
-
-template<typename LoggerType>
-struct SimpleFindZeroLoggerCallback {
-  LoggerType & logger;
-  SimpleFindZeroLoggerCallback(LoggerType & logger_) : logger(logger_) { }
-
-  template<typename PointType, typename ValueType>
-  inline void call(int k, PointType x, ValueType y) const
-  {
-    logger.longdebug("simpleFindZero()", [&](std::ostream& str) {
-	str << "Iter #" << k << ": x = " << x << "   y = " << y;
-      });
-  }
-};
-    */
 
 /** \brief Simple zero-finding algorithm
  *
@@ -54,13 +28,13 @@ struct SimpleFindZeroLoggerCallback {
  * callback object is called for each iteration, with the arguments \a k = iteration
  * number, \a newpt = the new X point, \a newval = the function value at the new point.
  */
-template<typename ValueType, typename PointType, typename Fn, typename LoggerType = VacuumLogger>
+template<typename ValueType, typename PointType, typename Fn, typename LoggerType = Logger::VacuumLogger>
 inline static PointType simpleFindZero(const Fn & fn, PointType pt1, PointType pt2,
 				       int maxiters = 50,
 				       ValueType valtolerance = 1e-6,
 				       ValueType * final_value = NULL,
 				       int * final_numiters = NULL,
-				       LoggerType & logger = vacuum_logger)
+				       LoggerType & logger = Logger::vacuum_logger)
 {
   int num_recover_iters = 0;
   int max_recover_iters = 10*maxiters;

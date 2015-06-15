@@ -66,13 +66,17 @@
  *   }
  * \endcode
  *
- * You may also query directly the level of a logger, but this information should only be
- * used to propagate a level further, e.g. to some proxy logger:
- * \code
- *   ProxyLogger proxy(&logger, logger.level());
- * \endcode
- * Don't rely on <code>logger.level()</code> directly to know whether a message will be
- * emitted: the <code>enabled_for(level)</code> approach is more flexible.
+ * Most loggers store their own level. This might not be the case, however, for example
+ * for a proxy logger which relays calls to another logger. Such loggers don't "store"
+ * their runtime level but are capable of querying it. This is controlled by the logger
+ * traits, see \ref pageCustomLogger.
+ * 
+ * The level of a logger, stored or queried, may be obtained with the \ref
+ * Tomographer::Logger::LoggerBase<Derived>::level() method. But <b>don't abuse</b> of
+ * this, usually there is no need to query the level of a logger, and it is much
+ * preferable to see if the logger is enabled for a particular level with \ref
+ * Tomographer::Logger::LoggerBase<Derived>::enabled_for().
+ *
  *
  * Specific topics:
  *  - \subpage pageCustomLogger

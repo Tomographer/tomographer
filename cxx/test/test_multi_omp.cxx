@@ -16,7 +16,7 @@
 // test a customized logger with origin filtering
 
 template<typename BaseLogger>
-class OriginFilteredLogger : public Tomographer::LoggerBase<OriginFilteredLogger<BaseLogger> >
+class OriginFilteredLogger : public Tomographer::Logger::LoggerBase<OriginFilteredLogger<BaseLogger> >
 {
   BaseLogger & baselogger;
 
@@ -25,7 +25,7 @@ public:
   OriginFilteredLogger(BaseLogger & baselogger_)
     :
     // defualt level is the level of the base logger, set LONGDEBUG here.
-    Tomographer::LoggerBase<OriginFilteredLogger<BaseLogger> >(Tomographer::Logger::LONGDEBUG),
+    Tomographer::Logger::LoggerBase<OriginFilteredLogger<BaseLogger> >(Tomographer::Logger::LONGDEBUG),
     baselogger(baselogger_),
     levels_set()
   {
@@ -68,7 +68,7 @@ public:
 
 };
 
-namespace Tomographer {
+namespace Tomographer { namespace Logger {
 template<typename BaseLogger>
 struct LoggerTraits<OriginFilteredLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
 {
@@ -77,7 +77,8 @@ struct LoggerTraits<OriginFilteredLogger<BaseLogger> > : public LoggerTraits<Bas
     HasFilterByOrigin = 1 // we have customized origin filtering
   };
 };
-}
+} // Logger
+} // Tomographer
 
 
 // -----------------------------------------------------------------------------
@@ -168,9 +169,9 @@ int main()
   
   // first, independently, test OMPTaskLogger:      --- WORKS!
 
-  BufferLogger buflog(Logger::DEBUG);
+  Logger::BufferLogger buflog(Logger::DEBUG);
   
-  MultiProc::OMPTaskLogger<BufferLogger> testtasklogger(buflog);
+  MultiProc::OMPTaskLogger<Logger::BufferLogger> testtasklogger(buflog);
   
   testtasklogger.debug("main()", "test task logger: log something to our bufferlogger");
   testtasklogger.longdebug("main()", "test task logger: log something to our bufferlogger on longdebug level");
@@ -179,9 +180,9 @@ int main()
 
   // ---------------
 
-  SimpleFoutLogger flog1(stdout);//, Logger::DEBUG);
+  Logger::FileLogger flog1(stdout);//, Logger::DEBUG);
 
-  typedef OriginFilteredLogger<SimpleFoutLogger> OurLogger;
+  typedef OriginFilteredLogger<Logger::FileLogger> OurLogger;
 
   OurLogger flog(flog1);
 

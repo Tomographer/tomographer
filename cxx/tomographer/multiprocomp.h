@@ -21,7 +21,7 @@ namespace MultiProc
    *
    * This helper is meant to be called as
    * \code
-   *      OMPThreadSanitizerLoggerHelper<BaseLogger, LoggerTraits<BaseLogger>::IsThreadSafe>
+   *      OMPThreadSanitizerLoggerHelper<BaseLogger, Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
    *        ::emit_log(
    *            baselogger, level, origin, msg
    *          );
@@ -117,13 +117,13 @@ namespace MultiProc
    * 
    */
   template<typename BaseLogger>
-  class OMPThreadSanitizerLogger : public LoggerBase<OMPThreadSanitizerLogger<BaseLogger> >
+  class OMPThreadSanitizerLogger : public Logger::LoggerBase<OMPThreadSanitizerLogger<BaseLogger> >
   {
     BaseLogger & _baselogger;
   public:
 
     OMPThreadSanitizerLogger(BaseLogger & logger)
-      : LoggerBase<OMPThreadSanitizerLogger<BaseLogger> >(logger.level()),
+      : Logger::LoggerBase<OMPThreadSanitizerLogger<BaseLogger> >(logger.level()),
         _baselogger(logger)
     {
       // when you have to debug the log mechanism.... lol
@@ -140,17 +140,17 @@ namespace MultiProc
     inline void emit_log(int level, const char * origin, const std::string& msg)
     {
       //printf("OMPThreadSanitizerLogger::emit_log(%d, %s, %s)\n", level, origin, msg.c_str());
-      OMPThreadSanitizerLoggerHelper<BaseLogger, LoggerTraits<BaseLogger>::IsThreadSafe>
+      OMPThreadSanitizerLoggerHelper<BaseLogger, Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
         ::emit_log(
             _baselogger, level, origin, msg
 	    );
     }
 
     template<bool dummy = true>
-    inline typename std::enable_if<dummy && LoggerTraits<BaseLogger>::HasFilterByOrigin, bool>::type
+    inline typename std::enable_if<dummy && Logger::LoggerTraits<BaseLogger>::HasFilterByOrigin, bool>::type
       filter_by_origin(int level, const char * origin) const
     {
-      return OMPThreadSanitizerLoggerHelper<BaseLogger, LoggerTraits<BaseLogger>::IsThreadSafe>
+      return OMPThreadSanitizerLoggerHelper<BaseLogger, Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
         ::filter_by_origin(
             _baselogger, level, origin
 	    );
@@ -169,27 +169,28 @@ namespace MultiProc
 
 }
 
-//
-// logger traits for OMPThreadSanitizerLogger and OMPTaskLogger 
-//
-template<typename BaseLogger>
-struct LoggerTraits<MultiProc::OMPThreadSanitizerLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
-{
-  enum {
-    HasOwnGetLevel = 0, // explicitly require our logger instance to store its level
-    IsThreadSafe = 1
+namespace Logger {
+  //
+  // logger traits for OMPThreadSanitizerLogger and OMPTaskLogger 
+  //
+  template<typename BaseLogger>
+  struct LoggerTraits<MultiProc::OMPThreadSanitizerLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
+  {
+    enum {
+      HasOwnGetLevel = 0, // explicitly require our logger instance to store its level
+      IsThreadSafe = 1
+    };
   };
-};
-template<typename BaseLogger>
-struct LoggerTraits<MultiProc::OMPTaskLogger<BaseLogger> >
-  : public LoggerTraits<MultiProc::OMPThreadSanitizerLogger<BaseLogger> >
-{
-};
+  template<typename BaseLogger>
+  struct LoggerTraits<MultiProc::OMPTaskLogger<BaseLogger> >
+    : public LoggerTraits<MultiProc::OMPThreadSanitizerLogger<BaseLogger> >
+  {
+  };
+} // namespace Logger
 
 
 namespace MultiProc {
-  
-  
+    
   /** \brief A complete status report of currently running threads.
    */
   template<typename TaskStatusReportType>
@@ -248,7 +249,7 @@ namespace MultiProc {
    * <li> \a ResultsCollector_ must be a \ref pageInterfaceResultsCollector compliant type 
    *
    * <li> \c Logger is a logger type derived from \ref LoggerBase, for example
-   *      \ref SimpleFoutLogger.
+   *      \ref FileLogger.
    *
    *      The logger which will be provided to tasks inside the parallel section will be
    *      a thread-local instance of \c OMPTaskLogger<Logger>, which ensures that the

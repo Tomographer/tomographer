@@ -657,7 +657,7 @@ public:
  *
  */
 template<typename ValueCalculator_,
-	 typename Log = VacuumLogger,
+	 typename Log = Logger::VacuumLogger,
 	 typename HistogramType_ = UniformBinsHistogram<typename ValueCalculator_::ValueType>
 	 >
 class ValueHistogramMHRWStatsCollector
