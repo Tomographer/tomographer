@@ -148,10 +148,13 @@ namespace Tomographer {
  *   the sizes of the dense object to return.
  */
 template<typename Der, typename Rng, typename RndDist, typename... IndexTypes>
-inline const Eigen::CwiseNullaryOp<tomo_internal::random_generator<Rng, RndDist, typename Eigen::internal::traits<Der>::Scalar>, Der>
-dense_random(Rng & rng, RndDist &rnddist, IndexTypes... sizes)
+inline auto dense_random(Rng & rng, RndDist &rnddist, IndexTypes... sizes)
+  -> const Eigen::CwiseNullaryOp<
+    tomo_internal::random_generator<Rng, RndDist, typename Eigen::internal::traits<Der>::Scalar>,
+    Der
+    >
 {
-  typedef typename Eigen::internal::traits<Der>::Scalar Scalar;
+  typedef typename Der::Scalar Scalar;
 
   return Eigen::DenseBase<Der>::NullaryExpr(
       sizes..., tomo_internal::random_generator<Rng, RndDist, Scalar>(rng, rnddist)
