@@ -7,11 +7,10 @@
 #include <cstdarg>
 
 #include <string>
-#include <sstream> // stringstream
+#include <sstream> // std::stringstream
 #include <iostream>
 #include <functional> // std::function
-#include <algorithm> // max_element
-#include <type_traits>
+#include <type_traits> // std::enable_if
 #include <map>
 
 #include <tomographer/tools/fmt.h>
@@ -284,10 +283,14 @@ public:
  * example, \ref FileLogger).
  */
 template<typename Derived>
-class LoggerBase : public tomo_internal::LoggerRuntimeLevel<LoggerTraits<Derived>::HasOwnGetLevel>
+class LoggerBase
+#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
+  : public tomo_internal::LoggerRuntimeLevel<LoggerTraits<Derived>::HasOwnGetLevel>
+#endif
 {
 public:
-  // get these from traits
+  /** \brief Shortcuts to properties defined in the traits class
+   */
   enum {
     //! See LoggerTraits<Derived> and DefaultLoggerTraits
     IsThreadSafe = LoggerTraits<Derived>::IsThreadSafe,

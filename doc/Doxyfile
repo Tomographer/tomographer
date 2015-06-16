@@ -864,6 +864,8 @@ EXCLUDE_PATTERNS       =
 
 EXCLUDE_SYMBOLS        = Tomographer::tomo_internal \
 		         Tomographer::Tools::tomo_internal \
+		         Tomographer::Logger::tomo_internal \
+		         Tomographer::MultiProc::tomo_internal \
 			 Tomographer::SolveCLyap::tomo_internal
 
 # The EXAMPLE_PATH tag can be used to specify one or more files or directories

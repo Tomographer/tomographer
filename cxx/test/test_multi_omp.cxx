@@ -101,18 +101,18 @@ BOOST_AUTO_TEST_SUITE(test_multi_omp);
 
 // =============================================================================
 
-BOOST_AUTO_TEST_SUITE(OMPTaskLogger);
+BOOST_AUTO_TEST_SUITE(OMPThreadSanitizerLogger);
 
 BOOST_AUTO_TEST_CASE(wbuflog)
 {
   // 
   // Make sure that the output of the log is not mangled. We sort the lines because of
   // course the order is undefined, but each line should be intact (thanks to
-  // OMPTaskLogger's wrapping into "#pragma omp critical" sections).
+  // OMPThreadSanitizerLogger's wrapping into "#pragma omp critical" sections).
   //
 
   Tomographer::Logger::BufferLogger buflog(Tomographer::Logger::DEBUG);
-  Tomographer::MultiProc::OMPTaskLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
+  Tomographer::MultiProc::OMPThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
   
 #pragma omp parallel
   {

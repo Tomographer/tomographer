@@ -13,6 +13,8 @@ namespace Tomographer {
 namespace MultiProc
 {
 
+  namespace tomo_internal {
+
   /** \brief Internal. Helper for \ref OMPThreadSanitizerLogger
    *
    * Emits the log to \c baselogger. This template is specialized for
@@ -69,6 +71,8 @@ namespace MultiProc
     }
   };
 
+  } // namespace tomo_internal
+  
 
   /** \brief Wrapper logger to call non-thread-safe loggers from a multithreaded environment.
    *
@@ -122,7 +126,8 @@ namespace MultiProc
     BaseLogger & _baselogger;
   public:
 
-    OMPThreadSanitizerLogger(BaseLogger & logger)
+    template<typename... MoreArgs>
+    OMPThreadSanitizerLogger(BaseLogger & logger, MoreArgs...)
       : Logger::LoggerBase<OMPThreadSanitizerLogger<BaseLogger> >(),
         _baselogger(logger)
     {
@@ -140,7 +145,8 @@ namespace MultiProc
     inline void emit_log(int level, const char * origin, const std::string& msg)
     {
       //printf("OMPThreadSanitizerLogger::emit_log(%d, %s, %s)\n", level, origin, msg.c_str());
-      OMPThreadSanitizerLoggerHelper<BaseLogger, Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
+      tomo_internal::OMPThreadSanitizerLoggerHelper<BaseLogger,
+                                                    Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
         ::emit_log(
             _baselogger, level, origin, msg
 	    );
@@ -150,28 +156,19 @@ namespace MultiProc
     inline typename std::enable_if<dummy && Logger::LoggerTraits<BaseLogger>::HasFilterByOrigin, bool>::type
       filter_by_origin(int level, const char * origin) const
     {
-      return OMPThreadSanitizerLoggerHelper<BaseLogger, Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
+      return tomo_internal::OMPThreadSanitizerLoggerHelper<BaseLogger,
+                                                           Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
         ::filter_by_origin(
             _baselogger, level, origin
 	    );
     }
   };
 
-  /** \brief Thread-safe logger for OMP tasks
-   *
-   * This is the type of the logger that tasks will be guaranteed to be given within
-   * \ref OMPTaskDispatcher.
-   */
-  template<typename BaseLogger>
-  struct OMPTaskLogger : public OMPThreadSanitizerLogger<BaseLogger> {
-    OMPTaskLogger(BaseLogger & baselogger) : OMPThreadSanitizerLogger<BaseLogger>(baselogger) { }
-  };
-
 }
 
 namespace Logger {
   //
-  // logger traits for OMPThreadSanitizerLogger and OMPTaskLogger 
+  // logger traits for OMPThreadSanitizerLogger
   //
   template<typename BaseLogger>
   struct LoggerTraits<MultiProc::OMPThreadSanitizerLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
@@ -180,11 +177,6 @@ namespace Logger {
       HasOwnGetLevel = 0, // explicitly require our logger instance to store its level
       IsThreadSafe = 1
     };
-  };
-  template<typename BaseLogger>
-  struct LoggerTraits<MultiProc::OMPTaskLogger<BaseLogger> >
-    : public LoggerTraits<MultiProc::OMPThreadSanitizerLogger<BaseLogger> >
-  {
   };
 } // namespace Logger
 
@@ -237,7 +229,7 @@ namespace MultiProc {
    * for OpenMP</a>.
    *
    * <ul>
-   * <li> \a Task_ must be a \ref pageInterfaceTask compliant type 
+   * <li> \a Task must be a \ref pageInterfaceTask compliant type 
    *
    * <li> \a ConstantDataType may be any struct which contains all the information
    *     which needs to be accessed by the task. It should be read-only, i.e. the task
@@ -246,28 +238,43 @@ namespace MultiProc {
    *
    *     There is no particular structure imposed on \c ConstantDataType.
    *
-   * <li> \a ResultsCollector_ must be a \ref pageInterfaceResultsCollector compliant type 
+   * <li> \a ResultsCollector must be a \ref pageInterfaceResultsCollector compliant type 
    *
-   * <li> \c Logger is a logger type derived from \ref LoggerBase, for example
-   *      \ref FileLogger.
+   * <li> \a %Logger is a logger type derived from \ref LoggerBase, for example \ref
+   *      FileLogger. This is the type of a logger defined in the caller's scope (and
+   *      given as constructor argument here) to which messages should be logged to.
    *
-   *      The logger which will be provided to tasks inside the parallel section will be
-   *      a thread-local instance of \c OMPTaskLogger<Logger>, which ensures that the
-   *      logging is thread-safe. See \c OMPTaskLogger<Logger>, which is nothing else than
-   *      a synonym for an appropriate \ref OMPThreadSanitizerLogger.
+   * <li> \a TaskLogger is the type of the logger which will be provided to tasks inside
+   *      the parallel section. Such logger should ensure that the logging is
+   *      thread-safe. By default \a TaskLogger is nothing else than an appropriate \ref
+   *      OMPThreadSanitizerLogger.
    *
-   *      Note that if the originally given \c logger is thread-safe (see
+   *      (Note that if the originally given \c logger is thread-safe (see
    *      \ref LoggerTraits), then \ref OMPThreadSanitizerLogger directly relays calls
-   *      without wrapping them into OMP critical sections.
+   *      without wrapping them into OMP critical sections.)
    *
-   * <li> \a CountIntType_ should be a type to use to count the number of tasks. Usually
+   *      For each task, a new \a TaskLogger will be created. The constructor is expected
+   *      to accept the following arguments:
+   *      \code
+   *         TaskLogger(Logger & baselogger, const ConstantDataType * pcdata, CountIntType k)
+   *      \endcode
+   *      where \a baselogger is the logger given to the \a OMPTaskDispatcher constructor,
+   *      \a pcdata is the constant shared data pointer also given to the constructor, and
+   *      \a k is the task number (which may range from 0 to the total number of tasks -
+   *      1). The task logger is NOT constructed in a thread-safe code region, so use \c
+   *      "#pragma omp critical" if necessary. You may use \a omp_get_thread_num() and \a
+   *      omp_get_num_threads() to get the current thread number and the total number of
+   *      threads, respectively.
+   *
+   * <li> \a CountIntType should be a type to use to count the number of tasks. Usually
    *      there's no reason not to use an \c int.
    *
    * </ul>
    *
    */
   template<typename Task_, typename ConstantDataType_, typename ResultsCollector_,
-           typename Logger_, typename CountIntType_ = int>
+           typename Logger_, typename CountIntType_ = int,
+           typename TaskLogger_ = OMPThreadSanitizerLogger<Logger_> >
   class OMPTaskDispatcher
   {
   public:
@@ -277,14 +284,12 @@ namespace MultiProc {
     typedef ResultsCollector_ ResultsCollector;
     typedef Logger_ Logger;
     typedef CountIntType_ CountIntType;
+    typedef TaskLogger_ TaskLogger;
     typedef OMPFullStatusReport<TaskStatusReportType> FullStatusReportType;
 
     typedef std::function<void(const FullStatusReportType&)> FullStatusReportCallbackType;
 
   private:
-
-    //    typedef std::function<void(int, const TaskStatusReportType&, OMPTaskLogger<Logger>*)>
-    //      ThreadStatReportFnType;
 
     //! thread-shared variables
     struct thread_shared_data {
@@ -326,7 +331,7 @@ namespace MultiProc {
     {
       thread_shared_data * shared_data;
 
-      OMPTaskLogger<Logger> * logger;
+      TaskLogger * logger;
 
       CountIntType kiter;
       CountIntType local_status_report_counter;
@@ -479,7 +484,7 @@ namespace MultiProc {
           }
 
           // construct a thread-safe logger we can use
-          OMPTaskLogger<Logger> threadsafelogger(shdat->logger);
+          TaskLogger threadsafelogger(shdat->logger, shdat->pcdata, k);
 
           // set up our thread-private data
           privdat.kiter = k;
