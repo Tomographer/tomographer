@@ -295,8 +295,8 @@ public:
   inline ValueType getValue(const MatrixType & T) const
   {
     return boost::math::constants::half<ValueType>() *
-      (T*T.adjoint() - _ref_rho.template selfadjointView<Eigen::Lower>())
-      .jacobiSvd().singularValues().sum();
+      (T*T.adjoint() - _ref_rho).template selfadjointView<Eigen::Lower>()
+      .eigenvalues().cwiseAbs().sum();
   }
 };
 

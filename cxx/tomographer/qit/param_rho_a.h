@@ -215,7 +215,7 @@ public:
     eigen_assert((std::size_t)rho.rows() == matq.dim());
     eigen_assert((std::size_t)rho.cols() == matq.dim());
     for (std::size_t n = 0; n < lambda.size(); ++n) {
-      a(n) = (rho.template selfadjointView<Eigen::Lower>() * lambda[n].template selfadjointView<Eigen::Lower>())
+      a(n) = (rho * lambda[n].template selfadjointView<Eigen::Lower>())
 	.real().trace() * boost::math::constants::half_root_two<RealScalar>();
     }
   }
