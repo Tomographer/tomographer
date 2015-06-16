@@ -2028,7 +2028,8 @@ PREDEFINED             = ENABLE_IF_Fn_CALLABLE_OSTREAM=void \
                          PRINTF1_ARGS_SAFE= \
                          PRINTF2_ARGS_SAFE= \
                          PRINTF3_ARGS_SAFE= \
-                         PRINTF4_ARGS_SAFE=
+                         PRINTF4_ARGS_SAFE= \
+                         TOMOGRAPHER_PARSED_BY_DOXYGEN=1
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this
 # tag can be used to specify a list of macro names that should be expanded. The

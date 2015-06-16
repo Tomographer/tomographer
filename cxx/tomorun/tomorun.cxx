@@ -40,7 +40,7 @@
 #include "tomorun_dispatch.h"
 
 
-Tomographer::SimpleFoutLogger logger(stdout, Tomographer::Logger::INFO, false);
+Tomographer::Logger::FileLogger logger(stdout, Tomographer::Logger::INFO, false);
 
 
 // ------------------------------------------------------------------------------
@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 
   // Maybe use statically instantiated size for some predefined sizes.
 
-  //  MinimumImportanceLogger<SimpleFoutLogger, Logger::INFO> mlog(logger);
+  //  Logger::MinimumImportanceLogger<Logger::FileLogger, Logger::INFO> mlog(logger);
   auto & mlog = logger;
 
   //  try {

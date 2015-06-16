@@ -16,7 +16,7 @@ namespace Tomographer {
  *
  * \note This is the Nielsen & Chuang fidelity, also called "root fidelity."
  */
-template<typename ValueType = double, typename Derived, typename Derived2>
+template<typename ValueType, typename Derived, typename Derived2>
 inline ValueType fidelity(const Eigen::MatrixBase<Derived>& rho, const Eigen::MatrixBase<Derived2>& sigma)
 {
   // The Schatten one-norm is the sum of the singular values.
@@ -41,7 +41,7 @@ inline ValueType fidelity(const Eigen::MatrixBase<Derived>& rho, const Eigen::Ma
  *
  * \note This is the Nielsen & Chuang fidelity, also called "root fidelity."
  */
-template<typename ValueType = double, typename Der1, typename Der2>
+template<typename ValueType, typename Der1, typename Der2>
 inline ValueType fidelity_T(const Eigen::MatrixBase<Der1>& T1, const Eigen::MatrixBase<Der2>& T2)
 {
   // Calculate ||sigma^{1/2} rho^{1/2}||_1 == || T1^\dagger * T2 ||_1

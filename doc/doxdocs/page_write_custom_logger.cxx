@@ -7,14 +7,15 @@
  *
  *  - define logger traits to characterize your logger.
  *
- * A simplistic example (simplified version of \ref Tomographer::SimpleFoutLogger) of a
- * logger is given below.
+ * A simplistic example (simplified version of \ref Tomographer::Logger::FileLogger)
+ * of a logger is given below.
  *
  * \code
- *   class StderrLogger : public Tomographer::LoggerBase<StderrLogger>
+ *   class StderrLogger : public Tomographer::Logger::LoggerBase<StderrLogger>
  *   {
  *   public:
- *     StderrLogger(int level = Logger::INFO) : Tomographer::LoggerBase<StderrLogger>(level)
+ *     StderrLogger(int level = Logger::INFO)
+ *       : Tomographer::Logger::LoggerBase<StderrLogger>(level)
  *     {
  *     }
  *
@@ -24,11 +25,12 @@
  *     //
  *     inline void setLevel(int level)
  *     {
- *       // change the protected LoggerBase<StderrLogger>::_level
- *       _level = level;
+ *       // call the protected LoggerBase<StderrLogger>::setLogLevel()
+ *       setLogLevel(level);
  *     }
  *   
- *     inline void emit_log(int level, const char * origin, const std::string & msg)
+ *     inline void emit_log(int level, const char * origin,
+ *                          const std::string & msg)
  *     {
  *       std::string finalmsg;
  *
@@ -45,10 +47,10 @@
  *     }
  *   };
  *
- *   namespace Tomographer {
+ *   namespace Tomographer { namespace Logger {
  *     // Traits for StderrLogger
  *     template<>
- *     struct LoggerTraits<StderrLogger>
+ *     struct LoggerTraits<StderrLogger> : DefaultLoggerTraits
  *     {
  *       enum {
  *         // fprintf is actually thread-safe, so our logger is thread-safe
@@ -58,7 +60,8 @@
  *         StaticMinimumImportanceLevel = -1
  *       };
  *     };
- *   }
+ *   } } // namespaces
  * \endcode
+ *
  */
 

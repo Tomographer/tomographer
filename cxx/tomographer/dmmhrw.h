@@ -13,6 +13,8 @@
 #include <tomographer/tools/loggers.h>
 #include <tomographer/mhrw.h>
 
+#include <boost/math/constants/constants.hpp>
+
 namespace Tomographer {
 
 
@@ -147,7 +149,7 @@ public:
     VectorParamType x = _tomo.matq.initVectorParamType();
     param_herm_to_x(x, rho);
 
-    LLHValueType llhval = -0.5 * _tomo.calc_llh(x);
+    LLHValueType llhval = -boost::math::constants::half<RealScalar>() * _tomo.calc_llh(x);
     // _log.longdebug("fnlogval(%s) = %g\n", streamcstr(x.transpose()), llhval);
     return llhval;
   }
@@ -292,7 +294,9 @@ public:
 
   inline ValueType getValue(const MatrixType & T) const
   {
-    return 0.5 * (T*T.adjoint() - _ref_rho).jacobiSvd().singularValues().sum();
+    return boost::math::constants::half<ValueType>() *
+      (T*T.adjoint() - _ref_rho.template selfadjointView<Eigen::Lower>())
+      .jacobiSvd().singularValues().sum();
   }
 };
 

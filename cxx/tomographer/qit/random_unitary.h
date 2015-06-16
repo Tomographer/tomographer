@@ -15,15 +15,17 @@ namespace Tomographer
 {
 
 
-template<typename Der1, typename Rng, typename Log>
-inline void random_unitary(Eigen::MatrixBase<Der1> & U, Rng & rng, Log & logger = vacuum_logger)
+template<typename DerU, typename Rng, typename Log>
+inline void random_unitary(Eigen::MatrixBase<DerU> & U, Rng & rng, Log & logger)
 {
+  { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(DerU); }
+
   assert(U.rows() == U.cols());
   const int n = U.rows();
 
   logger.longdebug("random_unitary()", "n = %d", n);
   
-  typedef typename Der1::Scalar Scalar;
+  typedef typename DerU::Scalar Scalar;
   typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
   typedef Eigen::Matrix<Scalar, Eigen::Dynamic, 1> VectorType;
 
@@ -69,7 +71,7 @@ inline void random_unitary(Eigen::MatrixBase<Der1> & U, Rng & rng, Log & logger 
 template<typename Der1, typename Rng>
 inline void random_unitary(Eigen::MatrixBase<Der1> & U, Rng & rng)
 {
-  random_unitary<Der1, Rng>(U, rng, vacuum_logger);
+  random_unitary<Der1, Rng>(U, rng, Logger::vacuum_logger);
 }
 
 

@@ -11,6 +11,7 @@
 #include <tomographer/qit/matrq.h>
 #include <tomographer/qit/util.h>
 
+#include <boost/math/constants/constants.hpp>
 
 
 namespace Tomographer
@@ -80,6 +81,7 @@ struct GenGellMannFunctor3
   typedef GenGellMannFunctor3<MatrQ_> type;
 
   typedef MatrQ_ MatrQ;
+  typedef typename MatrQ::RealScalar RealScalar;
   typedef typename MatrQ::MatrixType::Index MatIndex;
 
   GenGellMannFunctor3(MatrQ matq_, MatIndex l_)
@@ -87,12 +89,12 @@ struct GenGellMannFunctor3
       l(l_)
   {
     // remember: l = 0, 1, ..., d-2   and not: 1, ..., d-1
-    normalization = std::sqrt( 2.0 / ((l+1)*(l+2)) );
+    normalization = std::sqrt( RealScalar(2) / ((l+1)*(l+2)) );
     eigen_assert(l < (MatIndex)matq.dim()-1);
   }
   MatrQ matq;
   MatIndex l;
-  typename MatrQ::RealScalar normalization;
+  RealScalar normalization;
 
   template<typename Index>
   inline const typename MatrQ::ComplexScalar operator() (Index row, Index col) const
@@ -152,6 +154,7 @@ public:
   typedef MatrQ_ MatrQ;
   typedef typename MatrQ::MatrixType MatrixType;
   typedef typename MatrQ::VectorParamNdofType VectorParamNdofType;
+  typedef typename MatrQ::RealScalar RealScalar;
 
 private:
   MatrQ matq;
@@ -212,19 +215,21 @@ public:
     eigen_assert((std::size_t)rho.rows() == matq.dim());
     eigen_assert((std::size_t)rho.cols() == matq.dim());
     for (std::size_t n = 0; n < lambda.size(); ++n) {
-      a(n) = (rho * lambda[n]).real().trace() * boost::math::constants::half_root_two<RealScalar>();
+      a(n) = (rho.template selfadjointView<Eigen::Lower>() * lambda[n].template selfadjointView<Eigen::Lower>())
+	.real().trace() * boost::math::constants::half_root_two<RealScalar>();
     }
   }
 
   inline void aToRho(Eigen::Ref<MatrixType> rho, const Eigen::Ref<const VectorParamNdofType> & a,
-		     typename MatrQ::RealScalar trace = 1.0) const
+		     RealScalar trace = 1.0) const
   {
     eigen_assert((std::size_t)a.size() == matq.ndof());
     eigen_assert((std::size_t)rho.rows() == matq.dim());
     eigen_assert((std::size_t)rho.cols() == matq.dim());
     rho = trace * MatrixType::Identity(rho.rows(), rho.cols()) / matq.dim();
     for (std::size_t n = 0; n < lambda.size(); ++n) {
-      rho += a(n) * lambda[n] * boost::math::constants::half_root_two<RealScalar>();;
+      rho += a(n) * lambda[n].template selfadjointView<Eigen::Lower>()
+	* boost::math::constants::half_root_two<RealScalar>();;
     }
   }
 
