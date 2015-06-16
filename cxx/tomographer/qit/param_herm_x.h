@@ -5,6 +5,8 @@
 #include <cmath>
 #include <complex>
 
+#include <boost/math/constants/constants.hpp>
+
 #include <Eigen/Core>
 
 
@@ -14,8 +16,7 @@ namespace Tomographer {
 /** \brief Get the Hermitian matrix parameterized by the "X-parameter" vector \c x
  *
  * This calculates the hermitian matrix which is parameterized by \c x.
- *
- * ................... X-param. ..........................
+ * See \ref pageParamsX.
  */
 template<bool OnlyLowerTri=false, typename Derived1=Eigen::MatrixXd, typename Derived2=Eigen::MatrixXd>
 inline void param_x_to_herm(Eigen::MatrixBase<Derived1>& Herm, const Eigen::DenseBase<Derived2>& x)
@@ -27,8 +28,8 @@ inline void param_x_to_herm(Eigen::MatrixBase<Derived1>& Herm, const Eigen::Dens
   eigen_assert(dim == Herm.cols()); // assert Herm is (dim x dim)
   eigen_assert(x.rows() == dim*dim && x.cols() == 1); // assert x is (dim*dim x 1)
 
-  typedef typename Derived::Scalar Scalar;
-  typedef Eigen::NumTraits<Scalar>::Real RealScalar;
+  typedef typename Derived1::Scalar Scalar;
+  typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
   
   Herm.diagonal().real() = x.block(0,0,dim,1);
   Herm.diagonal().imag().setZero();
@@ -50,7 +51,7 @@ inline void param_x_to_herm(Eigen::MatrixBase<Derived1>& Herm, const Eigen::Dens
 
 /** \brief Get the X-parameterization corresponding to a given hermitian matrix
  *
- * See also \ref param_x_to_herm().
+ * See also \ref pageParamsX and \ref param_x_to_herm().
  * 
  * \note This function only accesses lower triangular part of \c Herm.
  *
@@ -67,8 +68,8 @@ inline void param_herm_to_x(Eigen::DenseBase<Derived1>& x, const Eigen::MatrixBa
   eigen_assert(dim == Herm.cols()); // assert Herm is (dim x dim)
   eigen_assert(x.rows() == dim*dim && x.cols() == 1); // assert x is (dim*dim x 1)
 
-  typedef typename Derived::Scalar Scalar;
-  typedef Eigen::NumTraits<Scalar>::Real RealScalar;
+  typedef typename Derived1::Scalar Scalar;
+  typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
   
   x.block(0,0,dim,1) = Herm.real().diagonal();
 
