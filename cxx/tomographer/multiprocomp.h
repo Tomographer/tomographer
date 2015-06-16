@@ -123,7 +123,7 @@ namespace MultiProc
   public:
 
     OMPThreadSanitizerLogger(BaseLogger & logger)
-      : Logger::LoggerBase<OMPThreadSanitizerLogger<BaseLogger> >(logger.level()),
+      : Logger::LoggerBase<OMPThreadSanitizerLogger<BaseLogger> >(),
         _baselogger(logger)
     {
       // when you have to debug the log mechanism.... lol

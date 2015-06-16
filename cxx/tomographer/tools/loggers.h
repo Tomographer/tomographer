@@ -9,8 +9,10 @@
 #include <string>
 #include <sstream> // stringstream
 #include <iostream>
-#include <functional>
+#include <functional> // std::function
+#include <algorithm> // max_element
 #include <type_traits>
+#include <map>
 
 #include <tomographer/tools/fmt.h>
 
@@ -76,10 +78,25 @@ enum {
    *
    * Use this level for messages that are generated very often.
    */
-  LONGDEBUG
+  LONGDEBUG,
+
+
+  /** \brief Highest severity possible.
+   *
+   * Don't use as a level. Use, rather, as value e.g. for \ref
+   * LoggerTraits<LoggerType>::StaticMinimumSeverityLevel.
+   */
+  HIGHEST_SEVERITY_LEVEL = 0,
+
+  /** \brief Lowest severity possible.
+   *
+   * Don't use as a level. Use, rather, as value e.g. for \ref
+   * LoggerTraits<LoggerType>::StaticMinimumSeverityLevel.
+   */
+  LOWEST_SEVERITY_LEVEL = 0x7fffffff
 };
 
-/** \brief helper to compare severity levels
+/** \brief Helper to compare severity levels.
  *
  * Returns \c true if the given \a level is at least as severe (equal severity or higher
  * severity) as \a baselevel (for example, if <code>level == Logger::ERROR</code> and
@@ -94,7 +111,7 @@ inline bool is_at_least_of_severity(int level, int baselevel)
   return (level <= baselevel);
 }
 
-/** \brief helper for statically determining if Level is at least as severe as BaseLevel.
+/** \brief Helper for statically determining if Level is at least as severe as BaseLevel.
  *
  * The member \a value is statically defined to \c 1 if \a Level is at least as severe
  * as \a BaseLevel, otherwise it is defined to \c 0.
@@ -120,7 +137,7 @@ struct static_is_at_least_of_severity {
  *   {
  *     enum {
  *       IsThreadSafe = 1,
- *       StaticMinimumImportanceLevel = DefaultLoggerTraits::NoStaticMinimumImportance
+ *       StaticMinimumSeverityLevel = LOWEST_SEVERITY_LEVEL
  *     };
  *   };
  *   } } // namespaces
@@ -131,15 +148,6 @@ struct static_is_at_least_of_severity {
  */
 struct DefaultLoggerTraits
 {
-  /** \brief This should not be overridden.
-   *
-   * This value may be used by specializations to ensure that no static minimum level is
-   * set.
-   */
-  static constexpr int NoStaticMinimumImportance = 0x7fffffff;
-  // ^^ declared constexpr to avoid GCC warnings about comparisions between different enums
-
-
   enum {
     /** \brief Whether a same logger instance may be called from different threads
      * simultaneously
@@ -148,20 +156,19 @@ struct DefaultLoggerTraits
      */
     IsThreadSafe = 0,
 
-    /** \brief A statically-determined minimum importance logging level
+    /** \brief A statically-determined minimum severity logging level
      *
-     * If set to \ref NoStaticMinimumImportance, then all messages will be decided at
-     * runtime whether to be emitted or not, depending on the level the logger instance
-     * was set to at run-time.
+     * The logger will automatically discard at compile-time any message with severity
+     * level strictly lesser than this level (regardless of the runtime level). Of course,
+     * the runtime level of the logger will be observed, but the runtime level cannot be
+     * set to a lower severity level than \a StaticMinimumSeverityLevel.
      *
-     * If a logger defines a minimum importance level different than \ref
-     * NoStaticMinimumImportance, then any message logged with strictly lesser importance
-     * level will automatically be discarded, regardless of the level the logger is given
-     * at run-time.
+     * If set to \ref LOWEST_SEVERITY_LEVEL, no messages are discarded at compile-time,
+     * and all messages are processed at runtime.
      *
      * If set to \a -1, all messages are discarded (cf. \ref VacuumLogger).
      */
-    StaticMinimumImportanceLevel = NoStaticMinimumImportance,
+    StaticMinimumSeverityLevel = LOWEST_SEVERITY_LEVEL,
 
     /** \brief Whether the logger class can provide its own run-time level
      *
@@ -285,7 +292,7 @@ public:
     //! See LoggerTraits<Derived> and DefaultLoggerTraits
     IsThreadSafe = LoggerTraits<Derived>::IsThreadSafe,
     //! See LoggerTraits<Derived> and DefaultLoggerTraits
-    StaticMinimumImportanceLevel = LoggerTraits<Derived>::StaticMinimumImportanceLevel,
+    StaticMinimumSeverityLevel = LoggerTraits<Derived>::StaticMinimumSeverityLevel,
     //! See LoggerTraits<Derived> and DefaultLoggerTraits
     HasOwnGetLevel = LoggerTraits<Derived>::HasOwnGetLevel,
     //! See LoggerTraits<Derived> and DefaultLoggerTraits
@@ -295,7 +302,7 @@ public:
   /** \brief Construct the base logger object
    *
    * The logging level is set to \a level, by default \ref Logger::INFO. Any messages with
-   * lesser importance will be automatically discarded.
+   * lesser severity will be automatically discarded.
    *
    * Note that if the derived logger class provides its own \c logger() method, and
    * declares it with \a LoggerTraits<Derived>::HasOwnGetLevel, then the level provided
@@ -522,7 +529,7 @@ public:
    * \tparam Level the log level to test for.
    *
    * \return \c false if the logger was explicitly disabled for the level \a Level via
-   * LoggerTraits<Derived>::StaticMinimumImportanceLevel, otherwise returns \c true.
+   * LoggerTraits<Derived>::StaticMinimumSeverityLevel, otherwise returns \c true.
    *
    * If \c true was returned, this does not yet mean that a log message at the given level
    * will necessarily be produced; in this case, rather, the message is not expliclty
@@ -531,9 +538,7 @@ public:
    */
   static inline bool statically_enabled_for(int level)
   {
-    return ( (StaticMinimumImportanceLevel
-              == DefaultLoggerTraits::NoStaticMinimumImportance) ||
-             (is_at_least_of_severity(level, StaticMinimumImportanceLevel)) );
+    return ( is_at_least_of_severity(level, StaticMinimumSeverityLevel) );
   }
 
   /** \brief Static version of statically_enabled_for()
@@ -542,12 +547,10 @@ public:
   template<int Level>
   static inline bool statically_enabled_for()
   {
-    return ( (StaticMinimumImportanceLevel
-              == DefaultLoggerTraits::NoStaticMinimumImportance) ||
-             (static_is_at_least_of_severity<
+    return ( static_is_at_least_of_severity<
 	          Level,
-	          StaticMinimumImportanceLevel
-	          >::value) );
+	          StaticMinimumSeverityLevel
+	          >::value ) ;
   }
 
   /** \brief Check whether messages at the given log level are enabled
@@ -556,7 +559,7 @@ public:
    * transmitted to the underlying logger implementation.
    *
    * The condition for a log message to be emitted is that the message's log level not be
-   * explicitly disabled by LoggerTraits::StaticMinimumImportanceLevel, and that the
+   * explicitly disabled by LoggerTraits::StaticMinimumSeverityLevel, and that the
    * message's log level be at least as important as the current level set for this logger
    * (see \ref level()).
    */
@@ -784,16 +787,14 @@ namespace tomo_internal {
       // call the default or specialized version of our second helper, which will either
       // relay the call the dynamic version or discard the message.
       //std::fprintf(stderr,
-      //        "LoggerBaseHelperStatic<Derived,Level=%d>::test_and_call_emit_log(...). StaticMinimumImportanceLevel=%d\n",
-      //        (int)Level, (int)(LoggerTraits<Derived>::StaticMinimumImportanceLevel));
+      //        "LoggerBaseHelperStatic<Derived,Level=%d>::test_and_call_emit_log(...). StaticMinimumSeverityLevel=%d\n",
+      //        (int)Level, (int)(LoggerTraits<Derived>::StaticMinimumSeverityLevel));
       LoggerBaseHelperStatic2<
-          Derived, Level,
-          ((LoggerTraits<Derived>::StaticMinimumImportanceLevel
-            != DefaultLoggerTraits::NoStaticMinimumImportance) &&
-           (LoggerTraits<Derived>::StaticMinimumImportanceLevel < Level))
-          >::test_and_call_emit_log(
-              loggerbase, origin, args...
-              );
+	Derived, Level,
+	! static_is_at_least_of_severity<Level, LoggerTraits<Derived>::StaticMinimumSeverityLevel>::value
+	>::test_and_call_emit_log(
+	    loggerbase, origin, args...
+	    );
     }
   };
   
@@ -952,8 +953,7 @@ template<>
 struct LoggerTraits<FileLogger> : public DefaultLoggerTraits
 {
   enum {
-    IsThreadSafe = 1,
-    StaticMinimumImportanceLevel = NoStaticMinimumImportance
+    IsThreadSafe = 1
   };
 };
 
@@ -1032,7 +1032,7 @@ struct LoggerTraits<VacuumLogger> : public DefaultLoggerTraits
 {
   enum {
     IsThreadSafe = 1,
-    StaticMinimumImportanceLevel = -1 // discard all messages
+    StaticMinimumSeverityLevel = -1 // discard all messages
   };
 };
 
@@ -1117,16 +1117,16 @@ public:
 
 
 //
-// Traits for MinimumImportanceLogger<BaseLogger,Level>
+// Traits for MinimumSeverityLogger<BaseLogger,Level>
 //
-template<typename, int> class MinimumImportanceLogger;
+template<typename, int> class MinimumSeverityLogger;
 template<typename BaseLogger, int Level>
-struct LoggerTraits<MinimumImportanceLogger<BaseLogger,Level> > : public LoggerTraits<BaseLogger>
+struct LoggerTraits<MinimumSeverityLogger<BaseLogger,Level> > : public LoggerTraits<BaseLogger>
 {
   enum {
 
     // discard all messages less important than the given level
-    StaticMinimumImportanceLevel = Level,
+    StaticMinimumSeverityLevel = Level,
 
     // delegate calls for current level() to base logger
     HasOwnGetLevel = 1
@@ -1146,12 +1146,12 @@ struct LoggerTraits<MinimumImportanceLogger<BaseLogger,Level> > : public LoggerT
  * If \a BaseLogger is thread-safe, then this logger is also thread-safe.
  */
 template<typename BaseLogger, int Level>
-class MinimumImportanceLogger : public LoggerBase<MinimumImportanceLogger<BaseLogger,Level> >
+class MinimumSeverityLogger : public LoggerBase<MinimumSeverityLogger<BaseLogger,Level> >
 {
   BaseLogger & baselogger;
 public:
-  MinimumImportanceLogger(BaseLogger & baselogger_)
-    : LoggerBase<MinimumImportanceLogger<BaseLogger,Level> >(), baselogger(baselogger_)
+  MinimumSeverityLogger(BaseLogger & baselogger_)
+    : LoggerBase<MinimumSeverityLogger<BaseLogger,Level> >(), baselogger(baselogger_)
   {
   }
 
@@ -1172,6 +1172,149 @@ public:
     return baselogger.filter_by_origin(level, origin);
   }
 };
+
+
+namespace tomo_internal {
+  
+inline int matched_length(const std::string & s, const std::string & pattern)
+{
+  int k = 0;
+  while (s[k] == pattern[k]) {
+    ++k;
+  }
+  return k;
+}
+
+} // namespace tomo_internal
+
+//
+// Specialization of LoggerTraits<LoggerType> for OriginFilteredLogger.
+//
+template<typename BaseLogger> class OriginFilteredLogger;
+template<typename BaseLogger>
+struct LoggerTraits<OriginFilteredLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
+{
+  enum {
+    HasOwnGetLevel = 1, // delegates level() to base logger
+    HasFilterByOrigin = 1 // we have customized origin filtering
+  };
+};
+/** \brief A logger which filters entries according to where they originated from.
+ *
+ * This logger implementation logs messages at specific severity levels depending on the
+ * \a origin of the messages.
+ *
+ * Use \ref setDomainLevel() to set specific log levels to particular origin
+ * patterns. Each pattern given to \ref setDomainLevel() is a string: if the origin of a
+ * particular messages <em>starts with this string</em>, then the log level is applied. If
+ * no rules apply, the level of the base logger (the one we act as proxy to) is used.
+ *
+ * This logger acts as a proxy for another logger implementation. For example, you can do:
+ * \code
+ *    Logger::FileLogger flog1(stdout, Logger::INFO);
+ *    Logger::OriginFilteredLogger<Logger::FileLogger> logger(flog1);
+ *    // set a specific log level rule
+ *    logger.setDomainLevel("my_origin_class", Logger::DEBUG);
+ *    // this message will be displayed to stdout:
+ *    logger.debug("my_origin_class::mymethod()", "this is a message. Hello World!");
+ * \endcode
+ */
+template<typename BaseLogger>
+class OriginFilteredLogger : public Tomographer::Logger::LoggerBase<OriginFilteredLogger<BaseLogger> >
+{
+  BaseLogger & baselogger;
+
+  std::map<std::string,int> levels_set;
+public:
+  OriginFilteredLogger(BaseLogger & baselogger_)
+    : Tomographer::Logger::LoggerBase<OriginFilteredLogger<BaseLogger> >(),
+      baselogger(baselogger_),
+      levels_set()
+  {
+  }
+
+  /** \brief Set a rule to log messages based on their origin.
+   *
+   * Messages whose \a origin start with the substring \a origin_pattern will be emitted
+   * only if they are at least of severity \a level. (The rule corresponding to the
+   * longest pattern, i.e. the most specific pattern, is always the one which is applied.)
+   *
+   * Calling this function several times with the same pattern replaces the previous
+   * setting.
+   */
+  inline void setDomainLevel(const std::string& origin_pattern, int level)
+  {
+    levels_set[origin_pattern] = level;
+  }
+  /** \brief Remove a rule set by \ref setDomainLevel()
+   *
+   * \param s the origin pattern corresponding to the rule to erase. This must be a
+   *     pattern previously passed to \ref setDomainLevel().
+   */
+  inline void removeDomainSetting(const std::string& s)
+  {
+    auto it = levels_set.find(s);
+    if (it == levels_set.end()) {
+      this->warning("OriginFilteredLogger<BaseLogger>::removeDomainSetting", "domain not set: `%s'", s.c_str());
+      return;
+    }
+    levels_set.erase(it);
+  }
+
+  /** \brief Unconditionally return \ref LOWEST_SEVERITY_LEVEL for the underlying logging
+   * engine.
+   *
+   * This level() is used to pre-filter all the log messages, before our \a
+   * filter_by_origin() gets called. So we return \ref LOWEST_SEVERITY_LEVEL here to
+   * "trick" the logging engine, and use the base logger's level() only in \ref
+   * filter_by_origin().
+   */
+  inline int level() const
+  {
+    return LOWEST_SEVERITY_LEVEL;
+  }
+
+  /** \brief Emit a log message (relay to base logger).
+   *
+   * Simply relay the call to the base logger instance's \a emit_log().
+   */
+  inline void emit_log(int level, const char * origin, const std::string& msg)
+  {
+    baselogger.emit_log(level, origin, msg);
+  }
+
+  /** \brief Message filtering by origin implementation.
+   *
+   * This function returns \c true if the message should be emitted, given the set of
+   * rules set by previous calls to \ref setDomainLevel().
+   *
+   * See also \ref LoggerTraits<BaseLogger>::HasFilterByOrigin.
+   */
+  inline bool filter_by_origin(int level, const char * origin) const
+  {
+    typedef std::map<std::string, int>::const_iterator ConstIterator;
+
+    std::string s(origin);
+
+    int loglevel = -1;
+    int last_matched_length = 0;
+    for (ConstIterator it = levels_set.begin(); it != levels_set.end(); ++it) {
+      const int mlen = tomo_internal::matched_length((*it).first, s);
+      if (mlen > last_matched_length) {
+	loglevel = (*it).second;
+	last_matched_length = mlen;
+      }
+    }
+    if (loglevel == -1) {
+      // default logger level
+      loglevel = baselogger.level();
+    }
+    return is_at_least_of_severity(level, loglevel);
+  }
+
+};
+
+
 
 
 

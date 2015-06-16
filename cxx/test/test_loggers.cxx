@@ -6,9 +6,9 @@
 // we want `eigen_assert()` to raise an `eigen_assert_exception` here
 #include <tomographer/tools/eigen_assert_exception.h>
 
-#include <tomographer/tools/loggers.h>
-
 #include <Eigen/Core>
+
+#include <tomographer/tools/loggers.h>
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
@@ -85,9 +85,9 @@ struct DummyLoggerImplementation : public Tomographer::Logger::LoggerBase<Derive
 
 
 
-DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinImportance, enum {
+DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinSeverity, enum {
     IsThreadSafe = 0,
-    StaticMinimumImportanceLevel = Tomographer::Logger::WARNING,
+    StaticMinimumSeverityLevel = Tomographer::Logger::WARNING,
     HasOwnGetLevel = 0,
     HasFilterByOrigin = 0
   });
@@ -111,11 +111,11 @@ DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerOriginFilter, enum {
 
 
 
-// =============================================================================
+BOOST_AUTO_TEST_SUITE(test_loggers);
 
-BOOST_AUTO_TEST_SUITE(test_loggers_basic);
 
 // -----------------------------------------------------------------------------
+
 
 struct fixture_bufferlogger {
   fixture_bufferlogger() : logger(Tomographer::Logger::DEBUG) { }
@@ -124,15 +124,15 @@ struct fixture_bufferlogger {
   Tomographer::Logger::BufferLogger logger;
 };
 
-BOOST_FIXTURE_TEST_SUITE(test_bufferlogger, fixture_bufferlogger);
+BOOST_FIXTURE_TEST_SUITE(bufferlogger, fixture_bufferlogger);
 
-BOOST_AUTO_TEST_CASE(test_bufferlogger_logging)
+BOOST_AUTO_TEST_CASE(basiclogging)
 {
   logger.longdebug("origin1", "long debug message");
   logger.debug("origin2", "debug message");
-  logger.debug("origin3", "info message");
-  logger.debug("origin4", "warning message");
-  logger.debug("origin5", "error message");
+  logger.info("origin3", "info message");
+  logger.warning("origin4", "warning message");
+  logger.error("origin5", "error message");
 
   std::string contents = logger.get_contents();
   BOOST_CHECK_EQUAL(contents, std::string("[origin2] debug message\n"
@@ -141,7 +141,7 @@ BOOST_AUTO_TEST_CASE(test_bufferlogger_logging)
                                           "[origin5] error message\n"));
 }
 
-BOOST_AUTO_TEST_CASE(test_bufferlogger_formats)
+BOOST_AUTO_TEST_CASE(formats)
 {
   const char * pstr1 = "test string";
   std::string str2 = "another test string";
@@ -179,7 +179,7 @@ BOOST_AUTO_TEST_CASE(test_bufferlogger_formats)
                         ));
 }
 
-BOOST_AUTO_TEST_CASE(test_bufferlogger_levelfunc)
+BOOST_AUTO_TEST_CASE(levelfunc)
 {
   BOOST_CHECK_EQUAL(logger.level(), Tomographer::Logger::DEBUG);
   BOOST_CHECK(!logger.enabled_for(Tomographer::Logger::LONGDEBUG));
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(test_bufferlogger_levelfunc)
   BOOST_CHECK(logger2.enabled_for(Tomographer::Logger::ERROR));
 }
 
-BOOST_AUTO_TEST_CASE(test_bufferlogger_optimized_formatting)
+BOOST_AUTO_TEST_CASE(optimized_formatting)
 {
   // formatting should only occur if the message is going to be emitted.
   Tomographer::Logger::BufferLogger logger2(Tomographer::Logger::ERROR);
@@ -224,24 +224,27 @@ BOOST_AUTO_TEST_CASE(test_bufferlogger_optimized_formatting)
   BOOST_CHECK_EQUAL(logger2.get_contents(), std::string(""));
 }
 
-// -----------------------------------------------------------------------------
 
 
 BOOST_AUTO_TEST_SUITE_END(); // test_bufferlogger
 
-  
-// =============================================================================
 
+
+
+// -----------------------------------------------------------------------------
+
+  
 // can't call DEFINE_DUMMY_LOGGER_WITH_TRAITS here, because BOOST test suites are in fact
 // class or namespaces declarations, and here we're inside a class/namespace declaration.
 
-BOOST_AUTO_TEST_SUITE(test_loggertraits);
+
+BOOST_AUTO_TEST_SUITE(loggertraits);
 
 // needed because if there is a single comma in the string passed to BOOST_CHECK, then the
 // preprocessor thinks it's two macro arguments (!!)
 #define MY_BOOST_CHECK(...) { auto check = [&]() -> bool { return __VA_ARGS__; }; BOOST_CHECK(check()); }
 
-BOOST_AUTO_TEST_CASE(test_loggertraits_helpers)
+BOOST_AUTO_TEST_CASE(helpers)
 {
   using namespace Tomographer::Logger;
   
@@ -275,11 +278,11 @@ BOOST_AUTO_TEST_CASE(test_loggertraits_helpers)
   MY_BOOST_CHECK(! is_at_least_of_severity(LONGDEBUG, DEBUG));
   MY_BOOST_CHECK(is_at_least_of_severity(LONGDEBUG, LONGDEBUG));
 
-  MY_BOOST_CHECK(! is_at_least_of_severity(DefaultLoggerTraits::NoStaticMinimumImportance, ERROR));
-  MY_BOOST_CHECK(! is_at_least_of_severity(DefaultLoggerTraits::NoStaticMinimumImportance, WARNING));
-  MY_BOOST_CHECK(! is_at_least_of_severity(DefaultLoggerTraits::NoStaticMinimumImportance, INFO));
-  MY_BOOST_CHECK(! is_at_least_of_severity(DefaultLoggerTraits::NoStaticMinimumImportance, DEBUG));
-  MY_BOOST_CHECK(! is_at_least_of_severity(DefaultLoggerTraits::NoStaticMinimumImportance, LONGDEBUG));
+  MY_BOOST_CHECK(! is_at_least_of_severity(LOWEST_SEVERITY_LEVEL, ERROR));
+  MY_BOOST_CHECK(! is_at_least_of_severity(LOWEST_SEVERITY_LEVEL, WARNING));
+  MY_BOOST_CHECK(! is_at_least_of_severity(LOWEST_SEVERITY_LEVEL, INFO));
+  MY_BOOST_CHECK(! is_at_least_of_severity(LOWEST_SEVERITY_LEVEL, DEBUG));
+  MY_BOOST_CHECK(! is_at_least_of_severity(LOWEST_SEVERITY_LEVEL, LONGDEBUG));
   
   MY_BOOST_CHECK(static_is_at_least_of_severity<ERROR, ERROR>::value);
   MY_BOOST_CHECK(static_is_at_least_of_severity<ERROR, WARNING>::value);
@@ -311,32 +314,32 @@ BOOST_AUTO_TEST_CASE(test_loggertraits_helpers)
   MY_BOOST_CHECK(! static_is_at_least_of_severity<LONGDEBUG, DEBUG>::value);
   MY_BOOST_CHECK(static_is_at_least_of_severity<LONGDEBUG, LONGDEBUG>::value);
 
-  MY_BOOST_CHECK(! static_is_at_least_of_severity<DefaultLoggerTraits::NoStaticMinimumImportance, ERROR>::value);
-  MY_BOOST_CHECK(! static_is_at_least_of_severity<DefaultLoggerTraits::NoStaticMinimumImportance, WARNING>::value);
-  MY_BOOST_CHECK(! static_is_at_least_of_severity<DefaultLoggerTraits::NoStaticMinimumImportance, INFO>::value);
-  MY_BOOST_CHECK(! static_is_at_least_of_severity<DefaultLoggerTraits::NoStaticMinimumImportance, DEBUG>::value);
-  MY_BOOST_CHECK(! static_is_at_least_of_severity<DefaultLoggerTraits::NoStaticMinimumImportance, LONGDEBUG>::value);
+  MY_BOOST_CHECK(! static_is_at_least_of_severity<LOWEST_SEVERITY_LEVEL, ERROR>::value);
+  MY_BOOST_CHECK(! static_is_at_least_of_severity<LOWEST_SEVERITY_LEVEL, WARNING>::value);
+  MY_BOOST_CHECK(! static_is_at_least_of_severity<LOWEST_SEVERITY_LEVEL, INFO>::value);
+  MY_BOOST_CHECK(! static_is_at_least_of_severity<LOWEST_SEVERITY_LEVEL, DEBUG>::value);
+  MY_BOOST_CHECK(! static_is_at_least_of_severity<LOWEST_SEVERITY_LEVEL, LONGDEBUG>::value);
   
 }
 
-BOOST_AUTO_TEST_CASE(test_loggertraits_minimportance)
+BOOST_AUTO_TEST_CASE(minseverity)
 {
   std::string recorded;
-  DummyLoggerMinImportance logger(Tomographer::Logger::DEBUG, &recorded);
+  DummyLoggerMinSeverity logger(Tomographer::Logger::DEBUG, &recorded);
   
-  BOOST_CHECK_EQUAL(Tomographer::Logger::LoggerTraits<DummyLoggerMinImportance>::StaticMinimumImportanceLevel,
+  BOOST_CHECK_EQUAL(Tomographer::Logger::LoggerTraits<DummyLoggerMinSeverity>::StaticMinimumSeverityLevel,
                     Tomographer::Logger::WARNING); // what we declared above
 
-  BOOST_CHECK(DummyLoggerMinImportance::statically_enabled_for<Tomographer::Logger::ERROR>());
-  BOOST_CHECK(DummyLoggerMinImportance::statically_enabled_for<Tomographer::Logger::WARNING>());
-  BOOST_CHECK(!DummyLoggerMinImportance::statically_enabled_for<Tomographer::Logger::INFO>());
-  BOOST_CHECK(!DummyLoggerMinImportance::statically_enabled_for<Tomographer::Logger::DEBUG>());
-  BOOST_CHECK(!DummyLoggerMinImportance::statically_enabled_for<Tomographer::Logger::LONGDEBUG>());
-  BOOST_CHECK(DummyLoggerMinImportance::statically_enabled_for(Tomographer::Logger::ERROR));
-  BOOST_CHECK(DummyLoggerMinImportance::statically_enabled_for(Tomographer::Logger::WARNING));
-  BOOST_CHECK(!DummyLoggerMinImportance::statically_enabled_for(Tomographer::Logger::INFO));
-  BOOST_CHECK(!DummyLoggerMinImportance::statically_enabled_for(Tomographer::Logger::DEBUG));
-  BOOST_CHECK(!DummyLoggerMinImportance::statically_enabled_for(Tomographer::Logger::LONGDEBUG));
+  BOOST_CHECK(DummyLoggerMinSeverity::statically_enabled_for<Tomographer::Logger::ERROR>());
+  BOOST_CHECK(DummyLoggerMinSeverity::statically_enabled_for<Tomographer::Logger::WARNING>());
+  BOOST_CHECK(!DummyLoggerMinSeverity::statically_enabled_for<Tomographer::Logger::INFO>());
+  BOOST_CHECK(!DummyLoggerMinSeverity::statically_enabled_for<Tomographer::Logger::DEBUG>());
+  BOOST_CHECK(!DummyLoggerMinSeverity::statically_enabled_for<Tomographer::Logger::LONGDEBUG>());
+  BOOST_CHECK(DummyLoggerMinSeverity::statically_enabled_for(Tomographer::Logger::ERROR));
+  BOOST_CHECK(DummyLoggerMinSeverity::statically_enabled_for(Tomographer::Logger::WARNING));
+  BOOST_CHECK(!DummyLoggerMinSeverity::statically_enabled_for(Tomographer::Logger::INFO));
+  BOOST_CHECK(!DummyLoggerMinSeverity::statically_enabled_for(Tomographer::Logger::DEBUG));
+  BOOST_CHECK(!DummyLoggerMinSeverity::statically_enabled_for(Tomographer::Logger::LONGDEBUG));
 
   BOOST_CHECK(logger.enabled_for(Tomographer::Logger::ERROR));
   BOOST_CHECK(logger.enabled_for(Tomographer::Logger::WARNING));
@@ -363,12 +366,10 @@ BOOST_AUTO_TEST_CASE(test_loggertraits_minimportance)
   BOOST_CHECK(Tomographer::Logger::FileLogger::statically_enabled_for(Tomographer::Logger::INFO));
   BOOST_CHECK(Tomographer::Logger::FileLogger::statically_enabled_for(Tomographer::Logger::DEBUG));
   BOOST_CHECK(Tomographer::Logger::FileLogger::statically_enabled_for(Tomographer::Logger::LONGDEBUG));
-  BOOST_CHECK(Tomographer::Logger::FileLogger::statically_enabled_for(
-                  Tomographer::Logger::DefaultLoggerTraits::NoStaticMinimumImportance
-                  ));
+  BOOST_CHECK(Tomographer::Logger::FileLogger::statically_enabled_for(Tomographer::Logger::LOWEST_SEVERITY_LEVEL));
 }
 
-BOOST_AUTO_TEST_CASE(test_loggertraits_ownlevel)
+BOOST_AUTO_TEST_CASE(ownlevel)
 {
   {
     std::string recorded;
@@ -410,7 +411,7 @@ BOOST_AUTO_TEST_CASE(test_loggertraits_ownlevel)
 }
 
 
-BOOST_AUTO_TEST_CASE(test_loggertraits_originfilter)
+BOOST_AUTO_TEST_CASE(originfilter)
 {
   std::string recorded;
   DummyLoggerOriginFilter logger(Tomographer::Logger::INFO, &recorded);
@@ -466,6 +467,98 @@ BOOST_AUTO_TEST_SUITE_END();
 
 
 
-// =============================================================================
+
+// -----------------------------------------------------------------------------
+
+
+struct fixture_originfilteredlogger {
+  Tomographer::Logger::BufferLogger buflog;
+  Tomographer::Logger::OriginFilteredLogger<Tomographer::Logger::BufferLogger> logger;
+
+  fixture_originfilteredlogger() : buflog(Tomographer::Logger::INFO), logger(buflog) {
+    logger.setDomainLevel("my_origin_class", Tomographer::Logger::DEBUG);
+    logger.setDomainLevel("my_origin_class::mymethod()", Tomographer::Logger::LONGDEBUG);
+    logger.setDomainLevel("my_origin_class::mymethod2()", Tomographer::Logger::WARNING);
+    logger.setDomainLevel("my_other_origin_class::nested_class", Tomographer::Logger::ERROR);
+  }
+  ~fixture_originfilteredlogger() { }
+
+  void produce_logs_with_origin(const char * origin) {
+    logger.longdebug(origin, "longdebug level");
+    logger.debug(origin, "debug level");
+    logger.info(origin, "info level");
+    logger.warning(origin, "warning level");
+    logger.error(origin, "error level");
+  }
+};
+
+BOOST_FIXTURE_TEST_SUITE(originfilteredlogger, fixture_originfilteredlogger);
+
+BOOST_AUTO_TEST_CASE(origin1)
+{
+  produce_logs_with_origin("my_origin_class");
+  BOOST_CHECK_EQUAL(
+      buflog.get_contents(),
+      "[my_origin_class] debug level\n"
+      "[my_origin_class] info level\n"
+      "[my_origin_class] warning level\n"
+      "[my_origin_class] error level\n"
+      );
+}
+
+BOOST_AUTO_TEST_CASE(origin2)
+{
+  produce_logs_with_origin("my_origin_class::mymethod()");
+  BOOST_CHECK_EQUAL(
+      buflog.get_contents(),
+      "[my_origin_class::mymethod()] longdebug level\n"
+      "[my_origin_class::mymethod()] debug level\n"
+      "[my_origin_class::mymethod()] info level\n"
+      "[my_origin_class::mymethod()] warning level\n"
+      "[my_origin_class::mymethod()] error level\n"
+      );
+}
+
+BOOST_AUTO_TEST_CASE(origin3)
+{
+  produce_logs_with_origin("my_origin_class::mymethod2()");
+  BOOST_CHECK_EQUAL(
+      buflog.get_contents(),
+      "[my_origin_class::mymethod2()] warning level\n"
+      "[my_origin_class::mymethod2()] error level\n"
+      );
+}
+
+BOOST_AUTO_TEST_CASE(origin4)
+{
+  produce_logs_with_origin("my_other_origin_class::nested_class");
+  BOOST_CHECK_EQUAL(
+      buflog.get_contents(),
+      "[my_other_origin_class::nested_class] error level\n"
+      );
+}
+
+BOOST_AUTO_TEST_CASE(origin_norule)
+{
+  produce_logs_with_origin("origin::with::no::rule::set()");
+  BOOST_CHECK_EQUAL(
+      buflog.get_contents(),
+      "[origin::with::no::rule::set()] info level\n"
+      "[origin::with::no::rule::set()] warning level\n"
+      "[origin::with::no::rule::set()] error level\n"
+      );
+}
+
+
+BOOST_AUTO_TEST_SUITE_END();
+
+
+
+
+
+// -----------------------------------------------------------------------------
+
+
+
 
 BOOST_AUTO_TEST_SUITE_END() // test_loggers_basic

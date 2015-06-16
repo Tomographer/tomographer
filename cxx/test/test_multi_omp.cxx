@@ -1,8 +1,16 @@
 
 #include <cstdio>
+#include <cstring>
 #include <random>
 #include <map>
 #include <chrono>
+#include <algorithm>
+#include <string>
+
+// we want `eigen_assert()` to raise an `eigen_assert_exception` here
+#include <tomographer/tools/eigen_assert_exception.h>
+
+#include <Eigen/Core>
 
 #include <tomographer/qit/matrq.h>
 #include <tomographer/tools/loggers.h>
@@ -11,79 +19,14 @@
 #include <tomographer/dmmhrw.h>
 #include <tomographer/multiprocomp.h>
 
+#include <boost/test/unit_test.hpp>
+#include <boost/test/floating_point_comparison.hpp>
+#include <boost/test/output_test_stream.hpp>
 
 
-// test a customized logger with origin filtering
-
-template<typename BaseLogger>
-class OriginFilteredLogger : public Tomographer::Logger::LoggerBase<OriginFilteredLogger<BaseLogger> >
-{
-  BaseLogger & baselogger;
-
-  std::map<std::string,int> levels_set;
-public:
-  OriginFilteredLogger(BaseLogger & baselogger_)
-    :
-    // defualt level is the level of the base logger, set LONGDEBUG here.
-    Tomographer::Logger::LoggerBase<OriginFilteredLogger<BaseLogger> >(Tomographer::Logger::LONGDEBUG),
-    baselogger(baselogger_),
-    levels_set()
-  {
-  }
-
-  inline void setDomainLevel(const std::string& s, int level)
-  {
-    levels_set[s] = level;
-  }
-  inline void removeDomainSetting(const std::string& s)
-  {
-    auto it = levels_set.find(s);
-    if (it == levels_set.end()) {
-      this->warning("OriginFilteredLogger<>::removeDomainSetting", "domain not set: `%s'", s.c_str());
-      return;
-    }
-    levels_set.erase(s);
-  }
-
-  inline int level() const
-  {
-    return Tomographer::Logger::LONGDEBUG;
-  }
-
-  inline void emit_log(int level, const char * origin, const std::string& msg)
-  {
-    baselogger.emit_log(level, origin, msg);
-  }
-
-  inline bool filter_by_origin(int level, const char * origin) const
-  {
-    //    std::cout << "filter_by_origin("<<level<<", "<< origin<<");\n";
-    auto it = levels_set.find(std::string(origin));
-    if (it == levels_set.end()) {
-      // rely on default setting
-      return Tomographer::Logger::is_at_least_of_severity(level, baselogger.level());
-    }
-    return Tomographer::Logger::is_at_least_of_severity(level, it->second);
-  }
-
-};
-
-namespace Tomographer { namespace Logger {
-template<typename BaseLogger>
-struct LoggerTraits<OriginFilteredLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
-{
-  enum {
-    HasOwnGetLevel = 1, // delegates level() to base logger
-    HasFilterByOrigin = 1 // we have customized origin filtering
-  };
-};
-} // Logger
-} // Tomographer
 
 
 // -----------------------------------------------------------------------------
-
-
 
 
 typedef Tomographer::IndepMeasTomoProblem<Tomographer::QubitPaulisMatrQ> OurTomoProblem;
@@ -154,52 +97,80 @@ struct MyResultsCollector {
 };
 
 
+BOOST_AUTO_TEST_SUITE(test_multi_omp);
+
+// =============================================================================
+
+BOOST_AUTO_TEST_SUITE(OMPTaskLogger);
+
+BOOST_AUTO_TEST_CASE(wbuflog)
+{
+  // 
+  // Make sure that the output of the log is not mangled. We sort the lines because of
+  // course the order is undefined, but each line should be intact (thanks to
+  // OMPTaskLogger's wrapping into "#pragma omp critical" sections).
+  //
+
+  Tomographer::Logger::BufferLogger buflog(Tomographer::Logger::DEBUG);
+  Tomographer::MultiProc::OMPTaskLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
+  
+#pragma omp parallel
+  {
+    testtasklogger.debug("main()", "test task logger from core #%06d of %06d",
+			 omp_get_thread_num(), omp_get_num_threads());
+  }
+
+  std::vector<std::string> lines;
+  std::stringstream ss(buflog.get_contents());
+  std::string line;
+  while (std::getline(ss, line, '\n')) {
+    lines.push_back(line);
+  }
+
+  std::sort(lines.begin(), lines.end()); // std::string's operator< does lexicographical comparision
+
+  std::ostringstream sorted_stream;
+  std::copy(lines.begin(), lines.end(), std::ostream_iterator<std::string>(sorted_stream, "\n"));
+  std::string sorted = sorted_stream.str();
+
+
+  std::string reference_str;
+  for (int k = 0; k < (int)lines.size(); ++k) {
+    reference_str += Tomographer::Tools::fmts("[main()] test task logger from core #%06d of %06d\n",
+					      k, (int)lines.size());
+  }
+
+  BOOST_CHECK_EQUAL(sorted, reference_str);
+}
+
+
+BOOST_AUTO_TEST_SUITE_END();
 
 // -----------------------------------------------------------------------------
 
 
-
-int main()
+BOOST_AUTO_TEST_CASE(dmmhrwtask)
 {
   using namespace Tomographer;
 
-  // loggers
-
-  // ---------------
-  
-  // first, independently, test OMPTaskLogger:      --- WORKS!
-
+  // use a strict logging mechanism (statically discard messages below WARNING). Change
+  // this for debugging.
   Logger::BufferLogger buflog(Logger::DEBUG);
-  
-  MultiProc::OMPTaskLogger<Logger::BufferLogger> testtasklogger(buflog);
-  
-  testtasklogger.debug("main()", "test task logger: log something to our bufferlogger");
-  testtasklogger.longdebug("main()", "test task logger: log something to our bufferlogger on longdebug level");
-  
-  std::cout << "[WRITTEN DIRECTLY TO STDOUT: TEST BUFFERLOGGER:]\n" << buflog.get_contents() << "\n";
-
-  // ---------------
-
-  Logger::FileLogger flog1(stdout);//, Logger::DEBUG);
-
-  typedef OriginFilteredLogger<Logger::FileLogger> OurLogger;
-
-  OurLogger flog(flog1);
-
-  flog1.setLevel(Logger::INFO);
-  flog.setDomainLevel("main()", Logger::LONGDEBUG);
-  flog.setDomainLevel("MHRandomWalk", Logger::DEBUG);
+  Logger::MinimumSeverityLogger<Logger::BufferLogger, Logger::WARNING> logger(buflog);
+  // for debugging, use e.g. this:
+  //Logger::BufferLogger buflog(Logger::LONGDEBUG);
+  //auto & logger = buflog;
 
   // some initializations
 
-  flog.info("main()", "testing our integrator with Pauli meas. on a qubit ... ");
+  logger.info("main()", "testing our integrator with Pauli meas. on a qubit ... ");
 
   QubitPaulisMatrQ qmq(2);
   
   OurTomoProblem dat(qmq);
 
   dat.Exn = qmq.initVectorParamListType(6);
-  flog.debug("main()", [&](std::ostream& str) {
+  logger.debug("main()", [&](std::ostream& str) {
       str << "Exn.size = " << dat.Exn.rows() << " x " << dat.Exn.cols() << "\n";
     });
   dat.Exn <<
@@ -211,7 +182,6 @@ int main()
     0,   1,    0,         0
     ;
   dat.Nx = qmq.initFreqListType(6);
-  //  dat.Nx << 1500, 800, 300, 300, 10, 30;
 
   // try to reproduce the nice "1qubit-test9-pureup-extreme-onlyupmeas" curve
   dat.Nx << 0, 0, 0, 0, 250, 0;
@@ -223,15 +193,14 @@ int main()
 
   // NOW, RUN THE MH TASKS:
 
-  flog.debug("main()", "Starting to log stuff.");
-
-  // MHRandomWalkTask<TomoProblem, typename Rng = std::mt19937, typename FidelityValueType = double>
+  logger.debug("main()", "Starting to log stuff.");
 
   // ---------------
 
   MyCData taskcdat(dat);
   // seed for random number generator
-  taskcdat.base_seed = std::chrono::system_clock::now().time_since_epoch().count();
+  taskcdat.base_seed = 1000; // fixed seed for deterministic results in this test case.
+  //taskcdat.base_seed = std::chrono::system_clock::now().time_since_epoch().count();
   // parameters for the fidelity histogram
   taskcdat.histogram_params = OurHistogramType::Params(0.98, 1.0, 50);
   // parameters of the random walk
@@ -242,33 +211,35 @@ int main()
 
   MyResultsCollector results;
 
-  typedef std::chrono::system_clock clock;
-
-  auto time_start = clock::now();
-
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<MyCData, std::mt19937> OurMHRWTask;
 
   MultiProc::makeOMPTaskDispatcher<OurMHRWTask>(
-      &taskcdat, &results, flog, 128 /* num_runs */, 1 /* n_chunk */
+      &taskcdat, &results, logger, 64 /* num_runs */, 1 /* n_chunk */
       ).run();
 
-  auto time_end = clock::now();
-
-  // delta-time, in seconds and fraction of seconds
-  double dt = (double)(time_end - time_start).count() * clock::period::num / clock::period::den ;
-  // integral part and fractional part
-  double dt_i_d;
-  double dt_f = std::modf(dt, &dt_i_d);
-  int dt_i = (int)(dt_i_d+0.5);
-
-  flog.longdebug("main()", [&](std::ostream& str) {
+  logger.longdebug("main()", [&](std::ostream& str) {
       str << "Integration finished.";
     });
 
-  std::cout << "FINAL HISTOGRAM\n" << results.finalhistogram.pretty_print(120) << "\n";
+  logger.info("main()", [&](std::ostream & str) {
+      str << "FINAL HISTOGRAM\n" << results.finalhistogram.pretty_print(120) << "\n";
+    });
 
-  std::cout << Tools::fmts("Total elapsed time: %d:%02d:%02d.%03d\n\n",
-			   dt_i/3600, (dt_i/60)%60, dt_i%60, (int)(dt_f*1000+0.5)).c_str();
-  
-  return 0;
+  BOOST_MESSAGE(buflog.get_contents());
+
+  const std::string hist = results.finalhistogram.pretty_print(100);
+  BOOST_MESSAGE("FINAL HISTOGRAM:\n" << hist);
+
+  boost::test_tools::output_test_stream output(TOMOGRAPHER_TEST_PATTERNS_DIR
+					       "test_multi_omp/hist_dmmhrwtask.txt", true);
+  output << hist;
+  BOOST_CHECK(output.match_pattern());
 }
+
+
+
+// =============================================================================
+
+BOOST_AUTO_TEST_SUITE_END();
+
+

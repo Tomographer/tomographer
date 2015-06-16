@@ -131,7 +131,7 @@ int main(int argc, char **argv)
 
   // Maybe use statically instantiated size for some predefined sizes.
 
-  //  Logger::MinimumImportanceLogger<Logger::FileLogger, Logger::INFO> mlog(logger);
+  //  Logger::MinimumSeverityLogger<Logger::FileLogger, Logger::INFO> mlog(logger);
   auto & mlog = logger;
 
   //  try {
