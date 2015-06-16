@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <string>
 
+#include <omp.h>
+
 // we want `eigen_assert()` to raise an `eigen_assert_exception` here
 #include <tomographer/tools/eigen_assert_exception.h>
 
@@ -103,7 +105,41 @@ BOOST_AUTO_TEST_SUITE(test_multi_omp);
 
 BOOST_AUTO_TEST_SUITE(OMPThreadSanitizerLogger);
 
-BOOST_AUTO_TEST_CASE(wbuflog)
+BOOST_AUTO_TEST_CASE(relays_logs)
+{
+  Tomographer::Logger::BufferLogger buflog(Tomographer::Logger::DEBUG);
+  Tomographer::MultiProc::OMPThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
+  testtasklogger.longdebug("origin", "longdebug level");
+  testtasklogger.debug("origin", "debug level");
+  testtasklogger.info("origin", "info level");
+  testtasklogger.warning("origin", "warning level");
+  testtasklogger.error("origin", "error level");
+  
+  BOOST_CHECK_EQUAL(
+      buflog.get_contents(),
+      "[origin] debug level\n"
+      "[origin] info level\n"
+      "[origin] warning level\n"
+      "[origin] error level\n"
+      );
+}
+
+BOOST_AUTO_TEST_CASE(fixes_level)
+{
+  Tomographer::Logger::BufferLogger buflog(Tomographer::Logger::LONGDEBUG);
+
+  Tomographer::MultiProc::OMPThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
+
+  // this should NOT have any effect for testtasklogger, because OMPThreadSanitizerLogger
+  // should fix the level at construction time for thread-safety/consistency reasons.
+  buflog.setLevel(Tomographer::Logger::WARNING);
+
+  testtasklogger.longdebug("origin", "test message");
+  
+  BOOST_CHECK_EQUAL(buflog.get_contents(), "[origin] test message\n");
+}
+
+BOOST_AUTO_TEST_CASE(parallel)
 {
   // 
   // Make sure that the output of the log is not mangled. We sort the lines because of
@@ -111,17 +147,22 @@ BOOST_AUTO_TEST_CASE(wbuflog)
   // OMPThreadSanitizerLogger's wrapping into "#pragma omp critical" sections).
   //
 
-  Tomographer::Logger::BufferLogger buflog(Tomographer::Logger::DEBUG);
-  Tomographer::MultiProc::OMPThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
+  Tomographer::Logger::BufferLogger buflog(Tomographer::Logger::LONGDEBUG);
   
-#pragma omp parallel
+#pragma omp parallel shared(buflog)
   {
-    testtasklogger.debug("main()", "test task logger from core #%06d of %06d",
-			 omp_get_thread_num(), omp_get_num_threads());
+    Tomographer::MultiProc::OMPThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
+    testtasklogger.longdebug("main()", "test task logger from core #%06d of %06d",
+			     omp_get_thread_num(), omp_get_num_threads());
   }
 
+  std::string buflog_str = buflog.get_contents();
+
+  BOOST_MESSAGE("buflog contents: \n" << buflog_str);
+  BOOST_CHECK(buflog_str.size());
+
   std::vector<std::string> lines;
-  std::stringstream ss(buflog.get_contents());
+  std::stringstream ss(buflog_str);
   std::string line;
   while (std::getline(ss, line, '\n')) {
     lines.push_back(line);

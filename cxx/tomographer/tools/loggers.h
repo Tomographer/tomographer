@@ -587,9 +587,6 @@ public:
    * doesn't declare it. If you call this function with \a HasOwnGetLevel set to \c 1,
    * then the derived class' method will be called. So if you override this method in the
    * derived class with \c HasOwnGetLevel=1, then don't call the base implementation!
-   *
-   * Just ignore the \a dummy template parameter, which is just there so that we can make
-   * C++ template SFINAE kick in...
    */
   inline int level() const
   {
@@ -1092,6 +1089,15 @@ public:
   {
     buffer << (origin&&origin[0] ? "["+std::string(origin)+"] " : std::string())
            << msg.c_str() << "\n";
+  }
+
+  /** \brief Changes the runtime log level to a new value.
+   *
+   * New messages will be emitted according to the new log level \a level.
+   */
+  inline void setLevel(int level)
+  {
+    setLogLevel(level);
   }
 
   /** \brief Clears the internal memory buffer.

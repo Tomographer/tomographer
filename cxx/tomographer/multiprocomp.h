@@ -89,7 +89,7 @@ namespace MultiProc
    *
    * \warning The runtime level of this logger is fixed to the level of the base logger at
    * the moment of instanciation. Any changes to the level of the base logger afterwards
-   * will not be reflected here. This is for thread-safety reasons.
+   * will not be reflected here. This is for thread-safety/consistency reasons.
    *
    * \warning If your base logger has a \a filter_by_origin() mechanism and is not
    * thread-safe, this might be very slow because a OMP critical section is opened on each
@@ -128,7 +128,9 @@ namespace MultiProc
 
     template<typename... MoreArgs>
     OMPThreadSanitizerLogger(BaseLogger & logger, MoreArgs...)
-      : Logger::LoggerBase<OMPThreadSanitizerLogger<BaseLogger> >(),
+      // NOTE: pass the baselogger's level on here. The ThreadSanitizerLogger's level is
+      // this one, and is fixed and cannot be changed while running.
+      : Logger::LoggerBase<OMPThreadSanitizerLogger<BaseLogger> >(logger.level()),
         _baselogger(logger)
     {
       // when you have to debug the log mechanism.... lol
@@ -174,7 +176,9 @@ namespace Logger {
   struct LoggerTraits<MultiProc::OMPThreadSanitizerLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
   {
     enum {
-      HasOwnGetLevel = 0, // explicitly require our logger instance to store its level
+      // explicitly require our logger instance to store its level. The level cannot be
+      // changed.
+      HasOwnGetLevel = 0,
       IsThreadSafe = 1
     };
   };
