@@ -137,7 +137,7 @@ struct DefaultLoggerTraits
    * set.
    */
   static constexpr int NoStaticMinimumImportance = 0x7fffffff;
-  // (declared constexpr to avoid GCC warnings about comparisions between different enums)
+  // ^^ declared constexpr to avoid GCC warnings about comparisions between different enums
 
 
   enum {
@@ -197,6 +197,9 @@ struct DefaultLoggerTraits
  * It is mandatory to specialize the logger traits for your class. This is simply to ease
  * debugging: this way you know your traits are being seen (e.g. declared in the right
  * namespace, etc.).
+ *
+ * Your specialized traits should inherit from \ref DefaultLoggerTraits. That way, if
+ * future traits are added you get the defaults for free and your code still compiles.
  */
 template<typename LoggerType>
 struct LoggerTraits
