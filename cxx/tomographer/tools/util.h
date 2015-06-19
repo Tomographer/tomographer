@@ -105,6 +105,68 @@ inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type is_posit
 
 
 
+
+// -----------------------------------------------------------------------------
+
+
+/** \brief A type which stores a value possibly known at compile-time.
+ *
+ * This is an implementation inspired by Eigen's mechanism of compile-time known
+ * matrix/vector sizes.
+ *
+ * This class declares a private member property which stores a dynamic value given to the
+ * constructor, except if a value was already given as template parameter in which case we
+ * take for granted that this value will always be the one we want at runtime.
+ *
+ * \tparam T the type of the value to store.
+ * \tparam Value the (integer) value to store at compile-time. If this value is \a
+ *         Eigen::Dynamic, then the value will be stored at runtime.
+ *
+ */
+template<typename T_, int Value>
+class static_or_dynamic
+{
+public:
+  typedef T_ T;
+  static constexpr T ValueAtCTime = Value;
+
+  inline static_or_dynamic() { }
+  inline explicit static_or_dynamic(T val) { assert(val == ValueAtCTime); }
+
+  inline T value() const { return ValueAtCTime; }
+  inline T operator()() const { return ValueAtCTime; }
+};
+
+template<typename T_>
+class static_or_dynamic<T_, Eigen::Dynamic>
+{
+public:
+  typedef T_ T;
+  static constexpr T ValueAtCTime = Eigen::Dynamic;
+  
+  static_or_dynamic() = delete;  // no default constructor.
+  inline explicit static_or_dynamic(T val) : _dyn_value(val) { }
+
+  inline T value() const { return _dyn_value; }
+  inline T operator()() const { return value(); }
+private:
+  const T _dyn_value;
+};
+
+
+
+
+// -----------------------------------------------------------------------------
+
+/** \brief Return true if the argument is a power of two, false otherwise.
+ */
+inline constexpr bool is_power_of_two(int N)
+{
+  // taken from http://stackoverflow.com/q/10585450/1694896
+  return N && !(N & (N - 1));
+}
+
+
 } // namespace Tools
 } // namespace Tomographer
 

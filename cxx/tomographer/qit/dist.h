@@ -4,6 +4,7 @@
 
 
 #include <Eigen/Core>
+#include <Eigen/Eigenvalues>
 #include <Eigen/SVD>
 #include <unsupported/Eigen/MatrixFunctions>
 
@@ -20,7 +21,9 @@ template<typename ValueType, typename Derived, typename Derived2>
 inline ValueType fidelity(const Eigen::MatrixBase<Derived>& rho, const Eigen::MatrixBase<Derived2>& sigma)
 {
   // The Schatten one-norm is the sum of the singular values.
-  return (rho.sqrt()*sigma.sqrt()).template cast<std::complex<ValueType> >().jacobiSvd().singularValues().sum();
+  Eigen::SelfAdjointEigenSolver<Derived> rho_eig(rho);
+  Eigen::SelfAdjointEigenSolver<Derived2> sigma_eig(sigma);
+  return ValueType( (rho_eig.operatorSqrt()*sigma_eig.operatorSqrt()).jacobiSvd().singularValues().sum() );
 }
 
 /** \brief Fidelity between two \c T-parameterizations of quantum states

@@ -22,6 +22,7 @@ set(tests_SRCS
   test_param.cxx
   test_integrator_basic.cxx
   test_simple_find_zero.cxx
+  test_mhrw_bin_err.cxx
   test_multi_omp.cxx
 )
 

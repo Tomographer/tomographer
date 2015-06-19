@@ -21,10 +21,6 @@
 namespace Tomographer {
 
 
-
-
-
-
 /** \brief Base class performing an abstract random walk
  *
  * This class takes care to update the state of a random walk for it to perform

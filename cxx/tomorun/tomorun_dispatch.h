@@ -291,7 +291,8 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   //  P = ldlt.transpositionsP().transpose() * OurMatrQ::MatrixType::Identity(dim,dim);
   //  tomodat.T_MLE.noalias() = P * ldlt.matrixL() * ldlt.vectorD().cwiseSqrt().asDiagonal();
 
-  tomodat.T_MLE = tomodat.rho_MLE.sqrt();
+  Eigen::SelfAdjointEigenSolver<typename OurMatrQ::MatrixType> rho_MLE_eig(tomodat.rho_MLE);
+  tomodat.T_MLE = rho_MLE_eig.operatorSqrt();
 
   tomodat.NMeasAmplifyFactor = opt->NMeasAmplifyFactor;
 
@@ -300,7 +301,11 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   typename OurMatrQ::MatrixType T_ref = matq.initMatrixType();
   if (use_ref_state) {
     Tomographer::MAT::getEigenMatrix(matf->var("rho_ref"), &rho_ref);
-    T_ref = rho_ref.sqrt();
+    Eigen::SelfAdjointEigenSolver<typename OurMatrQ::MatrixType> rho_ref_eig(rho_ref);
+    T_ref = rho_ref_eig.operatorSqrt();
+    logger.debug("tomorun_dispatch()", [&](std::ostream & str) {
+	str << "Using rho_ref = \n" << rho_ref << "\n\t-> T_ref = \n" << T_ref << "\n";
+      });
   }
 
   //

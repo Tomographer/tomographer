@@ -1,13 +1,15 @@
-function dat = analyze_tomorun_histogram(histfname, varargin)
+function dat = analyze_tomorun_histogram(varargin)
 %
 % Analyze a histogram produced by tomorun C++ integrator
 % 
 % dat = analyze_tomorun_histogram(histogramfilename, ...)
 %
-% Run analyze_tomorun_histogram('', 'Help') for more information.
+% Run analyze_tomorun_histogram('Help') for more information.
 %
 
   optdefs = struct;
+  optdefs.opt_allow_args = true;
+  optdefs.opt_args_check = 1;
   optdefs.FitThresFrac = struct('arg', 'n', 'default', 1e-3);
   optdefs.FitThresFrac.help = ['Fraction of maximum value above which to consider points ' ...
                       'for fit. Points below this threshold will be ignored.'];
@@ -22,19 +24,19 @@ function dat = analyze_tomorun_histogram(histfname, varargin)
                       'bin values. Use this option to center the bins, i.e. move the x ' ...
                       'axis so that the x label corresponds to the center of a bin, and ' ...
                       'not the lower limit.'];
-  optdefs.XIsOneMinus = struct('switch', true);
-  optdefs.XIsOneMinus.help = ['If this option is set (the default), then the X data is ' ...
+  optdefs.XIsOneMinus = struct('switch', false);
+  optdefs.XIsOneMinus.help = ['If you set this option to true, then the X data is ' ...
                       'calculated as 1 - (x-value). This makes sense for example for the ' ...
                       'fidelity, which lies close to 1.'];
   optdefs.FigHandleP = struct(...
-      'arg', 'any', 'default', [], ...
-      'validator', @(x) get_figure_handle(x, 'intgr-fid-epsilon'));
+      'arg', 'any', 'default', [] ...
+      );
   optdefs.FigHandleP.help = ['Figure to use for plotting the probability density. Specify ' ...
                       'a figure handle, a name for mynamedfigure(), leave empty for ' ...
                       'default, or specify -1 to not produce figures.'];
   optdefs.FigHandleLogP = struct(...
-      'arg', 'any', 'default', [], ...
-      'validator', @(x) get_figure_handle(x, 'fit-intgr-fid-epsilon'));
+      'arg', 'any', 'default', [] ...
+      );
   optdefs.FigHandleLogP.help = ['Figure to use for plotting the logarithm of the ' ...
                       'probability density. Specify a figure handle, a name for ' ...
                       'mynamedfigure(), leave empty for default, or specify -1 to not ' ...
@@ -45,6 +47,9 @@ function dat = analyze_tomorun_histogram(histfname, varargin)
   optdefs.PlotFitFnRes = struct('arg', 'n', 'default', 200);
   optdefs.PlotFitFnRes.help = ['When plotting the fitted function, the number of points ' ...
                       'to use to display the fitted function.'];
+  optdefs.PlotFitPoints = struct('switch', true);
+  optdefs.PlotFitPoints.help = ['Display with red crosses which points where used for ' ...
+                      'the fit, in the log(p) plot'];
   optdefs.CustomFit = struct('switch', false);
   optdefs.CustomFit.help = ['Set to true if you have a custom model to fit. (This is ' ...
                       'implied by ''FitModel'', ''FitWhich'' or ''FitOptions''.)'];
@@ -62,7 +67,12 @@ function dat = analyze_tomorun_histogram(histfname, varargin)
   optdefs.FitOptions.help = ['A cell array of options which will be forwarded as is to ' ...
                       'fit(). Use this, for example, to specify limits or starting points.'];
 
-  [opts, ~] = parse_opts(optdefs, varargin);
+  [opts, args] = parse_opts(optdefs, varargin);
+  
+  histfname = args{1};
+  
+  opts.FigHandleP = get_figure_handle(opts.FigHandleP, histfname, 'p');
+  opts.FigHandleLogP = get_figure_handle(opts.FigHandleLogP, histfname, 'logp');
   
   data = importdata(histfname);
   
@@ -205,7 +215,9 @@ function dat = analyze_tomorun_histogram(histfname, varargin)
     %plot(thefit, OneMinusFidelity, log(P));
     errorbar(OneMinusFidelity(P_IndNonZero), P(P_IndNonZero), ErrorP(P_IndNonZero), ...
              'Marker', '.', 'LineStyle', 'none', 'Color', [0.6, 0.6, 1.0]);
-    plot(FitDataX, P(FitDataIdx), 'rx');
+    if (opts.PlotFitPoints)
+      plot(FitDataX, P(FitDataIdx), 'rx');
+    end
     xxmin = min(OneMinusFidelity(P_IndNonZero));
     xxmax = max(OneMinusFidelity(P_IndNonZero));
     xx = linspace(xxmin, xxmax, opts.PlotFitFnRes);
@@ -244,14 +256,30 @@ function dat = analyze_tomorun_histogram(histfname, varargin)
     dat.evalfitlogp = evalfitlogp; % always log(P)
     dat.evalfitp = evalfitp; % always P
     dat.thefit = thefit;
+    dat.FigHandleP = opts.FigHandleP;
+    dat.FigHandleLogP = opts.FigHandleLogP;
   end
 
 end
 
 
-function figh = get_figure_handle(val, defaultnamedfigure)
+function figh = get_figure_handle(val, histfname, whichplot)
   if (isempty(val))
-    figh = mynamedfigure(defaultnamedfigure);
+    % get default name from histogram file name. Remove "-histogram.csv" from histogram
+    % fname first.
+    if (numel(histfname) >= 14 && strcmp(histfname((end-13):end), '-histogram.csv'))
+      histfname = histfname(1:(end-14));
+    elseif (numel(histfname) >= 4 && strcmp(histfname((end-3):end), '.csv'))
+      histfname = histfname(1:(end-4));
+    end
+    if (strcmp(whichplot, 'p'))
+      figh = mynamedfigure(['figp-' histfname]);
+    elseif (strcmp(whichplot, 'logp'))
+      figh = mynamedfigure(['figlogp-' histfname]);
+    else
+      error('analyze_tomorun_histogram:get_figure_handle:badwhichplot', ...
+            'internal error: unknown whichplot=%s', whichplot);
+    end
   elseif (isnumeric(val))
     % including -1
     figh = val;
