@@ -28,35 +28,37 @@ struct helper_samples_size<NumLevels,true> {
 
 template<typename ValueType_, typename LoggerType_,
 	 int NumTrackValues_ = Eigen::Dynamic, int NumLevels_ = Eigen::Dynamic,
-	 typename CountIntType_ = int>
+         bool StoreBinMeans_ = true, typename CountIntType_ = int>
 class BinningAnalysis
 {
 public:
   typedef ValueType_ ValueType;
   typedef CountIntType_ CountIntType;
 
-  enum {
-    NumTrackValuesCTime = NumTrackValues_,
-    NumLevelsCTime = NumLevels_,
-    SamplesSizeCTime = tomo_internal::helper_samples_size<NumLevels_, (NumLevels_ > 0 && NumLevels_ < 10)>::value
-  };
+  static constexpr int NumTrackValuesCTime = NumTrackValues_;
+  static constexpr int NumLevelsCTime = NumLevels_;
+  static constexpr int SamplesSizeCTime =
+    tomo_internal::helper_samples_size<NumLevels_, (NumLevels_ > 0 && NumLevels_ < 10)>::value;
+  static constexpr bool StoreBinMeans = StoreBinMeans_;
+
+  typedef Eigen::Array<ValueType, NumTrackValuesCTime, SamplesSizeCTime> SamplesArray;
+  typedef Eigen::Array<ValueType, NumTrackValuesCTime, 1> BinMeansArray;
+  typedef Eigen::Array<ValueType, NumTrackValuesCTime, NumLevelsCTime> BinSqMeansArray;
 
   typedef LoggerType_ LoggerType;
 
-private:
-  typedef Eigen::Array<ValueType, NumTrackValuesCTime, SamplesSizeCTime> SamplesArray;
-  typedef Eigen::Array<ValueType, NumTrackValuesCTime, 1> BinMeanArray;
-  typedef Eigen::Array<ValueType, NumTrackValuesCTime, NumLevelsCTime> BinSqMeansArray;
 
   const Tools::static_or_dynamic<int, NumTrackValuesCTime> num_track_values;
   const Tools::static_or_dynamic<int, NumLevelsCTime> num_levels;
   const Tools::static_or_dynamic<CountIntType, SamplesSizeCTime> samples_size;
 
+private:
+
   SamplesArray samples; // shape = (num_tracking, num_samples)
 
   // where we store the flushed values
   CountIntType n_flushes;
-  BinMeanArray bin_means;   // shape = (num_tracking, num_levels)
+  Tools::store_if_enabled<BinMeansArray,StoreBinMeans> bin_means;   // shape = (num_tracking, num_levels)
   BinSqMeansArray bin_sqmeans; // shape = (num_tracking, num_levels)
 
   LoggerType & logger;
@@ -69,7 +71,7 @@ public:
       samples_size(1 << num_levels()),
       samples(num_track_values(), samples_size()),
       n_flushes(0),
-      bin_means(BinMeanArray::Zero(num_track_values())),
+      bin_means{BinMeansArray::Zero(num_track_values())},
       bin_sqmeans(BinSqMeansArray::Zero(num_track_values(), num_levels())),
       logger(logger_)
   {
@@ -81,7 +83,7 @@ public:
   inline void reset()
   {
     n_flushes = 0;
-    bin_means = BinMeanArray::Zero(num_track_values());
+    helper_reset_bin_means();
     bin_sqmeans = BinSqMeansArray::Zero(num_track_values(), num_levels());
     logger.longdebug("BinningAnalysis::reset()", "ready to go.");
   }
@@ -138,7 +140,8 @@ public:
 	binnedsize >>= 1;
       }
 
-      bin_means = (samples.col(0) + (n_flushes)*bin_means) / (n_flushes+1);
+      //bin_means = (samples.col(0) + (n_flushes)*bin_means) / (n_flushes+1);
+      helper_update_bin_means();
 
       logger.longdebug("BinningAnalysis::process_new_values()", [&](std::ostream & str) {
 	  str << "Flushing #" << n_flushes << " done. bin_means is = \n" << bin_means << "\n"
@@ -149,13 +152,104 @@ public:
     }
 
   }
+private:
+
+  template<bool dummy = true,
+           typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
+  inline void helper_reset_bin_means()
+  {
+    bin_means.value = BinMeansArray::Zero(num_track_values());
+  }
+  template<bool dummy = true,
+           typename std::enable_if<(dummy && !StoreBinMeans), bool>::type dummy2 = true>
+  inline void helper_reset_bin_means() { }
+
+  template<bool dummy = true,
+           typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
+  inline void helper_update_bin_means()
+  {
+    bin_means.value = (samples.col(0) + (n_flushes)*bin_means.value) / (n_flushes+1);
+  }
+  template<bool dummy = true,
+           typename std::enable_if<(dummy && !StoreBinMeans), bool>::type dummy2 = true>
+  inline void helper_update_bin_means() { }
+
+
+public:
 
   // retrieve results.
 
+  /** \brief Return the number of times the collected samples were flushed.
+   *
+   * This corresponds to the number of values from which the most coarse-grained binned
+   * averaging consists of.
+   */
   inline CountIntType get_n_flushes() const { return n_flushes; }
-  inline const BinMeanArray & get_bin_means() const { return bin_means; }
+
+  /** \brief Get the average of each tracked value observed.
+   *
+   */
+  template<bool dummy = true,
+           typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
+  inline const BinMeansArray & get_bin_means() const { return bin_means.value; }
+
+  /** \brief Get the raw average of the squared values observed, for each binning level.
+   *
+   * The vector <em>bin_sqmeans.col(0)</em> contains the raw average of the squares of the
+   * raw values observed, <em>bin_sqmeans.col(1)</em> the raw average of the squares of
+   * the values averaged 2 by 2 (i.e. at the first binning level), and so on.
+   */
   inline const BinSqMeansArray & get_bin_sqmeans() const { return  bin_sqmeans; }
 
+  /** \brief Calculate the standard deviations of samples at different binning levels.
+   *
+   * Return an array of shape <em>(num_track_values, num_levels)</em> where element
+   * <em>(i,k)</em> corresponds to the standard deviation of the \a i -th value at binning
+   * level \a k. Binning level \a k=0 corresponds to the standard deviation of the samples
+   * (no binning).
+   *
+   * Use this variant of the function if this class doesn't store the bin means. If so,
+   * you need to provide the value of the means explicitly to the parameter \a means.
+   */
+  template<typename Derived, bool dummy = true,
+           typename std::enable_if<dummy && (NumLevelsCTime != Eigen::Dynamic), bool>::type dummy2 = true>
+  inline BinMeansArray calc_stddev_levels(const Eigen::ArrayBase<Derived> & means) const {
+    eigen_assert(means.rows() == num_track_values());
+    eigen_assert(means.cols() == 1);
+    BinSqMeansArray a(num_track_values(), num_levels());
+    a = (bin_sqmeans - (means.cwiseProduct(means)).template replicate<1, NumLevelsCTime>()).cwiseSqrt();
+    return a;
+  }
+
+  template<typename Derived, bool dummy = true,
+           typename std::enable_if<dummy && (NumLevelsCTime == Eigen::Dynamic), bool>::type dummy2 = true>
+  inline BinMeansArray calc_stddev_levels(const Eigen::ArrayBase<Derived> & means) const {
+    eigen_assert(means.rows() == num_track_values());
+    eigen_assert(means.cols() == 1);
+    BinSqMeansArray a(num_track_values(), num_levels());
+    std::cerr << "(means.cwiseProduct(means)).replicate(1, num_levels()) = \n"
+              << (means.cwiseProduct(means)).replicate(1, num_levels()) << "\n";
+    a = (bin_sqmeans - (means.cwiseProduct(means)).replicate(1, num_levels())).cwiseSqrt();
+    return a;
+  }
+
+  /** \brief Calculate the standard deviations of samples at different binning levels.
+   *
+   * Return an array of shape <em>(num_track_values, num_levels)</em> where element
+   * <em>(i,k)</em> corresponds to the standard deviation of the \a i -th value at binning
+   * level \a k. Binning level \a k=0 corresponds to the standard deviation of the samples
+   * (no binning).
+   *
+   * Use this variant of the function if this class stores the bin means. If this is not
+   * the case, you will need to call the variant \ref calc_stddev_levels(const
+   * Eigen::ArrayBase<Derived> & means) with the values of the means.
+   */
+  template<bool dummy = true,
+           typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
+  inline BinMeansArray calc_stddev_levels() const {
+    return calc_stddev_levels(bin_means.value);
+  }
+  
 };
 
 

@@ -18,8 +18,8 @@ class eigen_assert_exception : public std::exception
 {
   std::string _msg;
 public:
-  eigen_assert_exception(const std::string& msg)
-    : _msg("eigen_assert() failed: `" + msg + "'")
+  eigen_assert_exception(const std::string& msg, const std::string& file, const std::size_t line)
+    : _msg("eigen_assert() failed: `" + msg + "' at " + file + ", line " + std::to_string(line))
   {
   }
   virtual ~eigen_assert_exception() noexcept {}
@@ -34,7 +34,7 @@ public:
 // override Eigen's eigen_assert() macro
 #undef eigen_assert
 #define eigen_assert(x) \
-  if (!(x)) { throw (::Tomographer::Tools::eigen_assert_exception(#x)); }
+  if (!(x)) { throw (::Tomographer::Tools::eigen_assert_exception(#x, __FILE__, __LINE__)); }
 
 
 #include <Eigen/Core>

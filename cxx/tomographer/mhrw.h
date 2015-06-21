@@ -16,6 +16,7 @@
 #include <tomographer/tomoproblem.h>
 #include <tomographer/histogram.h>
 #include <tomographer/tools/loggers.h>
+//#include <tomographer/mhrw_bin_err.h>
 
 
 namespace Tomographer {
@@ -762,7 +763,6 @@ public:
  
 
 };
-
 
 
 

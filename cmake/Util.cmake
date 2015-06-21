@@ -25,3 +25,20 @@ macro(SetOpenMPTarget target)
     message(WARNING "OpenMP not found. `${target}' will run serially with no parallelization.")
   endif()
 endmacro(SetOpenMPTarget)
+
+
+
+macro(RemoveFlag str_out str_in flag)
+  # first, escape the flag to a valid regex pattern. Just backslash all chars.
+  string(REGEX REPLACE "(.)" "\\\\\\1" flag_escaped "${flag}")
+  # now, remove the flag from str_in.
+  string(REGEX REPLACE "${flag}( |\$)" "" ${str_out} "${str_in}")
+
+  message(STATUS "Removed flag '${flag}' from '${str_in}': flag_escaped='${flag_escaped}', str_out='${${str_out}}'")
+endmacro(RemoveFlag)
+
+macro(RemoveFlagTarget tgt prop flag)
+  get_target_property(compile_flags ${tgt} ${prop})
+  RemoveFlag(compile_flags_new "${compile_flags}" "-DNDEBUG")
+  set_target_properties(${tgt} PROPERTIES ${prop} "${compile_flags_new}")
+endmacro(RemoveFlagTarget)

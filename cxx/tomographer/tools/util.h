@@ -131,7 +131,10 @@ public:
   static constexpr T ValueAtCTime = Value;
 
   inline static_or_dynamic() { }
-  inline explicit static_or_dynamic(T val) { assert(val == ValueAtCTime); }
+  inline explicit static_or_dynamic(T val) {
+    assert(val == ValueAtCTime);
+    (void)val; // silence "unused parameter" warning
+  }
 
   inline T value() const { return ValueAtCTime; }
   inline T operator()() const { return ValueAtCTime; }
@@ -153,6 +156,42 @@ private:
   const T _dyn_value;
 };
 
+
+// -----------------------------------------------------------------------------
+
+
+/** \brief Utility that stores a data type if a compile-time flag is enabled.
+ *
+ * If \a enabled is \c true, then this type defines a public member \a value of type \a T.
+ *
+ */
+template<typename T_, bool enabled>
+struct store_if_enabled
+{
+  typedef T_ T;
+  static constexpr bool is_enabled = false;
+
+  template<typename... Args>
+  explicit store_if_enabled(Args...) { }
+};
+template<typename T_>
+struct store_if_enabled<T_, true>
+{
+  typedef T_ T;
+  static constexpr bool is_enabled = true;
+  T value;
+};
+
+template<typename T>
+inline std::ostream & operator<<(std::ostream & str, store_if_enabled<T, false> /*val*/)
+{
+  return str << "[-]";
+}
+template<typename T>
+inline std::ostream & operator<<(std::ostream & str, store_if_enabled<T, true> val)
+{
+  return str << val.value;
+}
 
 
 
