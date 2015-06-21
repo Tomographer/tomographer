@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#define TOMOGRAPHER_TEST_EIGEN_ASSERT_ASSERT // throw assert() failure for debugging.
+//#define TOMOGRAPHER_TEST_EIGEN_ASSERT_ASSERT // throw assert() failure for debugging.
 // definitions for Tomographer test framework -- this must be included before any
 // <tomographer/...> header
 #include "test_tomographer.h"
@@ -90,13 +90,9 @@ BOOST_AUTO_TEST_CASE(basic)
   Eigen::Array<double,4,2> stddev_levels;
   stddev_levels = (bin_sqmeans - (bin_means.cwiseProduct(bin_means)).replicate<1,2>()).cwiseSqrt();
 
-  std::cout << "stddev_levels = \n" << stddev_levels << "\n";
-
   Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger>::BinSqMeansArray
     stddev_levels_calc(4,2);
   stddev_levels_calc = bina.calc_stddev_levels();
-
-  std::cout << "stddev_levels_calc = \n" << stddev_levels_calc << "\n";
 
   MY_BOOST_CHECK_EIGEN_EQUAL(stddev_levels_calc, stddev_levels, tol);
 }
@@ -114,7 +110,7 @@ BOOST_AUTO_TEST_CASE(no_bin_means)
   bina.process_new_values(3, inline_vector(0.0, 0.0, 1.0, 3.0));
 
   BOOST_MESSAGE(logger.get_contents());
-  BOOST_CHECK_EQUAL(bina.get_n_flushes(), 2);
+  BOOST_CHECK_EQUAL(bina.get_n_flushes(), 1);
 
   Eigen::Matrix<double, 4, 2> bin_sqmeans;
   bin_sqmeans <<

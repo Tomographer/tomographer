@@ -164,6 +164,9 @@ private:
  *
  * If \a enabled is \c true, then this type defines a public member \a value of type \a T.
  *
+ * The constructor always accepts any number of arguments. They are either ignored (if
+ * nothing is stored), or relayed on to the \a value's constructor.
+ *
  */
 template<typename T_, bool enabled>
 struct store_if_enabled
@@ -179,7 +182,11 @@ struct store_if_enabled<T_, true>
 {
   typedef T_ T;
   static constexpr bool is_enabled = true;
+
   T value;
+
+  template<typename... ArgTypes>
+  explicit store_if_enabled(const ArgTypes& ...  args) : value(args...) { }
 };
 
 template<typename T>

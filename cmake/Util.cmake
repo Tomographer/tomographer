@@ -34,7 +34,7 @@ macro(RemoveFlag str_out str_in flag)
   # now, remove the flag from str_in.
   string(REGEX REPLACE "${flag}( |\$)" "" ${str_out} "${str_in}")
 
-  message(STATUS "Removed flag '${flag}' from '${str_in}': flag_escaped='${flag_escaped}', str_out='${${str_out}}'")
+  #message(STATUS "Removed flag '${flag}' from '${str_in}': flag_escaped='${flag_escaped}', str_out='${${str_out}}'")
 endmacro(RemoveFlag)
 
 macro(RemoveFlagTarget tgt prop flag)

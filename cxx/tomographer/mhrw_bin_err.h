@@ -21,7 +21,7 @@ struct helper_samples_size {
 template<int NumLevels>
 struct helper_samples_size<NumLevels,true> {
   enum {
-    value = 1 << (NumLevels - 1)
+    value = (1 << NumLevels)
   };
 };
 }
@@ -58,7 +58,7 @@ private:
 
   // where we store the flushed values
   CountIntType n_flushes;
-  Tools::store_if_enabled<BinMeansArray,StoreBinMeans> bin_means;   // shape = (num_tracking, num_levels)
+  Tools::store_if_enabled<BinMeansArray, StoreBinMeans> bin_means;   // shape = (num_tracking, num_levels)
   BinSqMeansArray bin_sqmeans; // shape = (num_tracking, num_levels)
 
   LoggerType & logger;
@@ -71,12 +71,14 @@ public:
       samples_size(1 << num_levels()),
       samples(num_track_values(), samples_size()),
       n_flushes(0),
-      bin_means{BinMeansArray::Zero(num_track_values())},
+      bin_means(BinMeansArray::Zero(num_track_values())),
       bin_sqmeans(BinSqMeansArray::Zero(num_track_values(), num_levels())),
       logger(logger_)
   {
+    assert(Tools::is_positive(num_levels()));
     assert(Tools::is_power_of_two(samples_size()));
     assert(std::fabs(std::pow(num_levels(), 2) - samples_size()) < 1e-8);
+
     reset();
   }
 
@@ -213,24 +215,18 @@ public:
    */
   template<typename Derived, bool dummy = true,
            typename std::enable_if<dummy && (NumLevelsCTime != Eigen::Dynamic), bool>::type dummy2 = true>
-  inline BinMeansArray calc_stddev_levels(const Eigen::ArrayBase<Derived> & means) const {
+  inline BinSqMeansArray calc_stddev_levels(const Eigen::ArrayBase<Derived> & means) const {
     eigen_assert(means.rows() == num_track_values());
     eigen_assert(means.cols() == 1);
-    BinSqMeansArray a(num_track_values(), num_levels());
-    a = (bin_sqmeans - (means.cwiseProduct(means)).template replicate<1, NumLevelsCTime>()).cwiseSqrt();
-    return a;
+    return (bin_sqmeans - (means.cwiseProduct(means)).template replicate<1, NumLevelsCTime>()).cwiseSqrt();
   }
 
   template<typename Derived, bool dummy = true,
            typename std::enable_if<dummy && (NumLevelsCTime == Eigen::Dynamic), bool>::type dummy2 = true>
-  inline BinMeansArray calc_stddev_levels(const Eigen::ArrayBase<Derived> & means) const {
+  inline BinSqMeansArray calc_stddev_levels(const Eigen::ArrayBase<Derived> & means) const {
     eigen_assert(means.rows() == num_track_values());
     eigen_assert(means.cols() == 1);
-    BinSqMeansArray a(num_track_values(), num_levels());
-    std::cerr << "(means.cwiseProduct(means)).replicate(1, num_levels()) = \n"
-              << (means.cwiseProduct(means)).replicate(1, num_levels()) << "\n";
-    a = (bin_sqmeans - (means.cwiseProduct(means)).replicate(1, num_levels())).cwiseSqrt();
-    return a;
+    return (bin_sqmeans - (means.cwiseProduct(means)).replicate(1, num_levels())).cwiseSqrt();
   }
 
   /** \brief Calculate the standard deviations of samples at different binning levels.
@@ -246,7 +242,7 @@ public:
    */
   template<bool dummy = true,
            typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
-  inline BinMeansArray calc_stddev_levels() const {
+  inline BinSqMeansArray calc_stddev_levels() const {
     return calc_stddev_levels(bin_means.value);
   }
   
