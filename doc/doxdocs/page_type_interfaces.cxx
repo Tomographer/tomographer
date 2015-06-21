@@ -182,9 +182,14 @@
  * \par void done()
  * is called after the random walk is finished.
  *
- * \par void process_sample(CountIntType, const PointType & pt, FnValueType fnval, MHRandomWalk & rw)
- *     is called at the end of each sweep, after the thermalization sweeps have finished. 
- *     This function is meant to actually take live samples.
+ * \par void process_sample(CountIntType k, CountIntType n, const PointType & pt, FnValueType fnval, MHRandomWalk & rw)
+ *     is called at the end of each sweep, after the thermalization sweeps have finished.
+ *     This function is meant to actually take live samples. \a k is the raw iteration
+ *     number, \a is the sample number (= number of live samples already taken), \a pt the
+ *     current point of the walk, \a fnval the value of the function at this point (this
+ *     may be the value of the MH jump function, its logarithm, or a dummy value,
+ *     depending on the random walk's MHWalker::UseFnSyntaxType, see \ref
+ *     pageInterfaceMHWalker).
  *
  * \par void raw_move(CountIntType k, bool is_thermalizing, bool is_live_iter, bool accepted, double a, const PointType & newpt, FnValueType newptval, const PointType & curpt, FnValueType curptval, MHRandomWalk & rw)
  *     is called after each move during the random walk. Note that if you want to take

@@ -267,7 +267,7 @@ namespace MHRWTasks
       }
 
       template<typename PointType, typename FnValueType, typename MHRandomWalk>
-      inline void process_sample(CountIntType, const PointType &, FnValueType, MHRandomWalk &)
+      inline void process_sample(CountIntType, CountIntType, const PointType &, FnValueType, MHRandomWalk &)
       {
       }
     };

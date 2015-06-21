@@ -225,15 +225,20 @@ struct UniformBinsHistogram
    * This adds one to the bin corresponding to the given \a value.
    *
    * If the value is out of the histogram range, then \a off_chart is incremented by one.
+   *
+   * Returns the index of the bin in which the value was added, or \a
+   * "std::numeric_limits<std::size_t>::max()" if off-chart.
    */
-  inline void record(Scalar value)
+  inline std::size_t record(Scalar value)
   {
     if ( !is_within_bounds(value) ) {
       ++off_chart;
-      return;
+      return std::numeric_limits<std::size_t>::max();
     }
     // calling bin_index_unsafe because we have already checked that value is in range.
-    ++bins( params.bin_index_unsafe(value) );
+    const std::size_t index = params.bin_index_unsafe(value);
+    ++bins( index );
+    return index;
   }
 
   /** \brief Record a new value in the histogram, with a certain weight.
@@ -242,15 +247,21 @@ struct UniformBinsHistogram
    *
    * If the value is out of the histogram range, then \a off_chart is incremented by \a
    * weight.
+   *
+   * Returns the index of the bin in which the value was added, or \a
+   * "std::numeric_limits<std::size_t>::max()" if off-chart.
    */
-  inline void record(Scalar value, CountType weight)
+  inline std::size_t record(Scalar value, CountType weight)
   {
     if ( !is_within_bounds(value) ) {
       off_chart += weight;
-      return;
+      return std::numeric_limits<std::size_t>::max();
     }
-    // calling bin_index_unsafe because we have already checked that value is in range.
-    bins( params.bin_index_unsafe(value) ) += weight;
+    // calling bin_index_unsafe is safe here because we have already checked that value is
+    // in range.
+    const std::size_t index = params.bin_index_unsafe(value);
+    bins(index) += weight;
+    return index;
   }
 
   //! Pretty-print the histogram and return it as a string with horizontal bars
@@ -336,9 +347,9 @@ struct AveragedHistogram
   typedef typename HistogramType::Params HistogramParamsType;
 
   HistogramParamsType params;
-  Eigen::ArrayXd final_histogram;
-  Eigen::ArrayXd std_dev;
-  double off_chart;
+  Eigen::Array<RealAvgType, Eigen::Dynamic, 1> final_histogram;
+  Eigen::Array<RealAvgType, Eigen::Dynamic, 1> std_dev;
+  RealAvgType off_chart;
 
   int num_histograms;
 

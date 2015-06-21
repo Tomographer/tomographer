@@ -5,7 +5,6 @@
 
 #include <tomographer/tools/util.h>
 #include <tomographer/tools/loggers.h>
-#include <tomographer/mhrw.h>
 
 
 namespace Tomographer {
@@ -24,7 +23,7 @@ struct helper_samples_size<NumLevels,true> {
     value = (1 << NumLevels)
   };
 };
-}
+} // namespace tomo_internal
 
 template<typename ValueType_, typename LoggerType_,
 	 int NumTrackValues_ = Eigen::Dynamic, int NumLevels_ = Eigen::Dynamic,
@@ -229,6 +228,13 @@ public:
     return (bin_sqmeans - (means.cwiseProduct(means)).replicate(1, num_levels())).cwiseSqrt();
   }
 
+  template<typename Derived>
+  inline BinSqMeansArray calc_stddev_lastlevel(const Eigen::ArrayBase<Derived> & means) const {
+    eigen_assert(means.rows() == num_track_values());
+    eigen_assert(means.cols() == 1);
+    return (bin_sqmeans.col(num_levels()-1) - (means.cwiseProduct(means))).cwiseSqrt();
+  }
+  
   /** \brief Calculate the standard deviations of samples at different binning levels.
    *
    * Return an array of shape <em>(num_track_values, num_levels)</em> where element
@@ -244,6 +250,12 @@ public:
            typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
   inline BinSqMeansArray calc_stddev_levels() const {
     return calc_stddev_levels(bin_means.value);
+  }
+
+  template<bool dummy = true,
+           typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
+  inline BinSqMeansArray calc_stddev_lastlevel() const {
+    return calc_stddev_lastlevel(bin_means.value);
   }
   
 };

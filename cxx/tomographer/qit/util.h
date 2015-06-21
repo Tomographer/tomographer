@@ -161,6 +161,81 @@ inline auto dense_random(Rng & rng, RndDist &rnddist, IndexTypes... sizes)
       );
 }
 
+
+
+// ---------------------------
+
+
+
+namespace tomo_internal {
+  template<typename Scalar, typename IndexType>
+  struct can_basis_vec_generator
+  {
+    typedef Scalar result_type;
+
+    IndexType k;
+    IndexType j;
+
+    can_basis_vec_generator(IndexType k_, IndexType j_ = 0)
+      : k(k_), j(j_)
+    {
+    }
+
+    template<typename Index>
+    inline const result_type operator() (Index a, Index b = 0) const {
+      return (a==k) && (b==j) ? result_type(1) : result_type(0);
+    }
+  };
+} // namespace tomo_internal
+} // namespace Tomographer
+namespace Eigen {
+  namespace internal {
+    /** \internal */
+    template<typename Scalar, typename IndexType>
+    struct functor_traits<Tomographer::tomo_internal::can_basis_vec_generator<Scalar, IndexType> >
+    { enum { Cost = 2 * NumTraits<Scalar>::MulCost, PacketAccess = false, IsRepeatable = true }; };
+  }
+} // end namespace Eigen
+
+namespace Tomographer {
+
+
+/** \brief Expression for the k-th canonical basis vector of given dimension
+ *
+ */
+template<typename Der, typename IndexType>
+inline auto can_basis_vec(IndexType k, IndexType size)
+  -> const Eigen::CwiseNullaryOp<
+    tomo_internal::can_basis_vec_generator<typename Eigen::internal::traits<Der>::Scalar, IndexType>,
+    Der
+    >
+{
+  typedef typename Der::Scalar Scalar;
+
+  return Eigen::DenseBase<Der>::NullaryExpr(
+      size, tomo_internal::can_basis_vec_generator<Scalar, IndexType>(k)
+      );
+}
+
+template<typename Der, typename IndexType>
+inline auto can_basis_vec(IndexType k, IndexType j, IndexType rows, IndexType cols)
+  -> const Eigen::CwiseNullaryOp<
+    tomo_internal::can_basis_vec_generator<typename Eigen::internal::traits<Der>::Scalar, IndexType>,
+    Der
+    >
+{
+  typedef typename Der::Scalar Scalar;
+
+  return Eigen::DenseBase<Der>::NullaryExpr(
+      rows, cols, tomo_internal::can_basis_vec_generator<Scalar, IndexType>(k, j)
+      );
+}
+
+
+
+
+
+
 } // namespace Tomographer
 
 

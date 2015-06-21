@@ -12,11 +12,12 @@
 #include <type_traits>
 
 #include <tomographer/qit/matrq.h>
+#include <tomographer/qit/util.h>
 #include <tomographer/qit/param_herm_x.h>
 #include <tomographer/tomoproblem.h>
 #include <tomographer/histogram.h>
 #include <tomographer/tools/loggers.h>
-//#include <tomographer/mhrw_bin_err.h>
+#include <tomographer/mhrw_bin_err.h>
 
 
 namespace Tomographer {
@@ -84,6 +85,8 @@ struct RandomWalkBase
 
     const CountIntType num_run = Nsweep*Nrun;
 
+    CountIntType n = 0; // number of live samples
+
     for (k = 0; k < num_run; ++k) {
 
       bool is_live_iter = ((k+1) % Nsweep == 0);
@@ -92,7 +95,8 @@ struct RandomWalkBase
       rw.move(k, false, is_live_iter);
 
       if (is_live_iter) {
-        rw.process_sample(k);
+        rw.process_sample(k, n);
+        ++n;
       }
 
     }
@@ -480,9 +484,9 @@ public:
   /** \brief Required for \ref pageInterfaceRandomWalk. Process a new live sample in the
    * random walk. Relays the call to the \a MHRWStatsCollector.
    */
-  inline void process_sample(CountIntType k)
+  inline void process_sample(CountIntType k, CountIntType n)
   {
-    _stats.process_sample(k, curpt, curptval, *this);
+    _stats.process_sample(k, n, curpt, curptval, *this);
   }
  
 
@@ -618,16 +622,16 @@ public:
 
   template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
   inline typename std::enable_if<I < NumStatColl, void>::type process_sample(
-      CountIntType k, const PointType & curpt, FnValueType curptval, MHRandomWalk & rw
+      CountIntType k, CountIntType n, const PointType & curpt, FnValueType curptval, MHRandomWalk & rw
       )
   {
-    std::get<I>(statscollectors).process_sample(k, curpt, curptval, rw);
-    process_sample<CountIntType, PointType, FnValueType, MHRandomWalk, I+1>(k, curpt, curptval, rw);
+    std::get<I>(statscollectors).process_sample(k, n, curpt, curptval, rw);
+    process_sample<CountIntType, PointType, FnValueType, MHRandomWalk, I+1>(k, n, curpt, curptval, rw);
   }
 
   template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
   inline typename std::enable_if<I == NumStatColl, void>::type process_sample(
-      CountIntType, const PointType &, FnValueType, MHRandomWalk &
+      CountIntType, CountIntType, const PointType &, FnValueType, MHRandomWalk &
       )
   {
   }
@@ -668,7 +672,7 @@ public:
   //! The type to use to represent a calculated distance
   typedef typename ValueCalculator::ValueType ValueType;
 
-  //! The type of the histogram. A \ref UniformBinsHistogram with \a ValueType range type
+  //! The type of the histogram. Usually a \ref UniformBinsHistogram with \a ValueType range type
   typedef HistogramType_ HistogramType;
 
   //! Required for compliance with \ref pageInterfaceResultable type
@@ -701,7 +705,7 @@ public:
   {
   }
 
-  //! Get the histogram data collected so far. Returns a \ref UniformBinsHistogram.
+  //! Get the histogram data collected so far. See \ref HistogramType.
   inline const HistogramType & histogram() const
   {
     return _histogram;
@@ -749,14 +753,15 @@ public:
 
   //! Part of the \ref pageInterfaceMHRWStatsCollector. Records the sample in the histogram.
   template<typename CountIntType, typename PointType, typename LLHValueType, typename MHRandomWalk>
-  void process_sample(CountIntType k, const PointType & curpt, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
+  std::size_t process_sample(CountIntType k, CountIntType n, const PointType & curpt,
+                             LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
     ValueType val = _vcalc.getValue(curpt);
 
-    _log.longdebug("ValueHistogramMHRWStatsCollector", "in process_sample(): k=%lu, val=%.4g",
-                   (unsigned long)k, val);
+    _log.longdebug("ValueHistogramMHRWStatsCollector", "in process_sample(): k=%lu, n=%lu, val=%.4g",
+                   (unsigned long)k, (unsigned long)n, val);
 
-    _histogram.record(val);
+    return _histogram.record(val);
 
     //_log.longdebug("ValueHistogramMHRWStatsCollector", "process_sample() finished");
   }
@@ -765,6 +770,153 @@ public:
 };
 
 
+
+/** \brief Collect a histogram of values from a MH random walk, with binning analysis.
+ *
+ * \bug \a TrackSelectedindices does not work yet.
+ */
+template<typename ValueCalculator_,
+	 typename LoggerType_ = Logger::VacuumLogger,
+         typename CountIntType = int,
+         typename CountRealAvgType = double,
+         int NumTrackValues_ = Eigen::Dynamic,
+         int NumLevels_ = Eigen::Dynamic,
+         bool TrackSelectedIndices_ = false
+	 >
+class ValueHistogramWithBinningMHRWStatsCollector
+{
+public:
+  typedef ValueCalculator_ ValueCalculator;
+  typedef LoggerType_ LoggerType;
+  typedef UniformBinsHistogram<typename ValueCalculator_::ValueType, CountIntType> HistogramType;
+  typedef typename HistogramType::Params HistogramParams;
+    
+  typedef ValueHistogramMHRWStatsCollector<ValueCalculator, LoggerType, HistogramType>
+  ValueHistogramMHRWStatsCollectorType;
+  
+  typedef typename ValueCalculator::ValueType ValueType;
+  
+  typedef BinningAnalysis<ValueType,LoggerType,NumTrackValues_,NumLevels_,false,CountIntType>
+  BinningAnalysisType;
+    
+  static constexpr int NumTrackValuesCTime = BinningAnalysisType::NumTrackValuesCTime;
+  static constexpr int NumLevelsCTime = BinningAnalysisType::NumLevelsCTime;
+
+  static constexpr bool TrackSelectedIndices = TrackSelectedIndices_;
+
+  typedef AveragedHistogram<HistogramType, CountRealAvgType> Result;
+    
+private:
+    
+  ValueHistogramMHRWStatsCollectorType value_histogram;
+
+  BinningAnalysisType binning_analysis;
+
+  Tools::store_if_enabled<Eigen::Array<CountIntType, Eigen::Dynamic, 1>, TrackSelectedIndices>
+  selected_indices;
+
+  LoggerType & logger;
+
+public:
+    
+  template<bool dummy = true,
+           typename std::enable_if<(dummy && !TrackSelectedIndices), bool>::type dummy2 = true
+           >
+  ValueHistogramWithBinningMHRWStatsCollector(HistogramParams histogram_params,
+                                              const ValueCalculator & vcalc,
+                                              int num_levels,
+                                              LoggerType & logger_)
+    : value_histogram(histogram_params, vcalc, logger_),
+      binning_analysis(histogram_params.num_bins(), num_levels, logger_),
+      selected_indices(),
+      logger(logger_)
+  {
+  }
+  
+  template<typename Derived, bool dummy = true,
+           typename std::enable_if<(dummy && TrackSelectedIndices), bool>::type dummy2 = true
+           >
+  ValueHistogramWithBinningMHRWStatsCollector(HistogramParams histogram_params,
+                                              const ValueCalculator & vcalc,
+                                              const Eigen::ArrayBase<Derived> & which_indices,
+                                              int num_levels,
+                                              LoggerType & logger_)
+    : value_histogram(histogram_params, vcalc, logger_),
+      binning_analysis(histogram_params.num_bins(), num_levels, logger_),
+      selected_indices(which_indices),
+      logger(logger_)
+  {
+    assert(false && "TrackSelectedIndices : NOT YET IMPLEMENTED");
+  }
+
+
+  //! Get the histogram data collected so far. See \ref HistogramType.
+  inline const HistogramType & histogram() const
+  {
+    return value_histogram.histogram();
+  }
+
+  inline const BinningAnalysisType & get_binning_analysis() const
+  {
+    return binning_analysis;
+  }
+
+  /** \brief Get the histogram data collected so far. This method is needed for \ref
+   * pageInterfaceResultable compliance.
+   */
+  inline const Result & getResult() const
+  {
+    Result r;
+    const HistogramType & h = value_histogram.histogram();
+    r.params = h.params;
+    CountRealAvgType normalization = h.bins.sum();
+    r.final_histogram = h.bins / normalization;
+    r.std_dev = binning_analysis.calc_stddev_lastlevel(r.final_histogram);
+    r.off_chart = h.off_chart / normalization;
+    return value_histogram.histogram();
+  }
+
+  // stats collector part
+
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. Initializes the histogram to zeros.
+  inline void init()
+  {
+    value_histogram.init();
+  }
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
+  inline void thermalizing_done()
+  {
+    value_histogram.thermalizing_done();
+  }
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
+  inline void done()
+  {
+    value_histogram.done();
+    logger.longdebug("ValueHistogramWithBinningMHRWStatsCollector", [&,this](std::ostream & str) {
+        str << "Binning analysis: standard deviations at different binning levels are:\n"
+            << binning_analysis.get_bin_sqmeans() << "\n";
+      });
+  }
+
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
+  template<typename CountIntType2, typename PointType, typename LLHValueType, typename MHRandomWalk>
+  void raw_move(CountIntType2 k, bool is_thermalizing, bool is_live_iter, bool accepted,
+                double a, const PointType & newpt, LLHValueType newptval,
+                const PointType & curpt, LLHValueType curptval, MHRandomWalk & mh)
+  {
+    value_histogram.raw_move(k, is_thermalizing, is_live_iter, accepted, a, newpt, newptval, curpt, curptval, mh);
+  }
+
+  //! Part of the \ref pageInterfaceMHRWStatsCollector. Records the sample in the histogram.
+  template<typename CountIntType2, typename PointType, typename LLHValueType, typename MHRandomWalk>
+  void process_sample(CountIntType2 k, CountIntType n, const PointType & curpt,
+                      LLHValueType curptval, MHRandomWalk & mh)
+  {
+    std::size_t histindex = value_histogram.process_sample(k, n, curpt, curptval, mh);
+    binning_analysis.process_sample(n, can_basis_vec(histindex, value_histogram.histogram().num_bins()));
+  }
+
+};
 
 
 
