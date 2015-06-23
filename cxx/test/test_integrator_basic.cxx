@@ -124,5 +124,80 @@ BOOST_AUTO_TEST_CASE(test_integrator_basic1)
   BOOST_CHECK(output2.match_pattern());
 }
 
+
+
+
+
+BOOST_AUTO_TEST_CASE(binning_analysis)
+{
+  typedef Tomographer::IndepMeasTomoProblem<Tomographer::QubitPaulisMatrQ> OurTomoProblem;
+
+  typedef Tomographer::Logger::BufferLogger LoggerType;
+  //typedef Tomographer::Logger::FileLogger LoggerType;
+
+  // -----
+
+  Tomographer::QubitPaulisMatrQ qmq(2);
+  
+  OurTomoProblem dat(qmq);
+
+  dat.Exn = qmq.initVectorParamListType(2);
+  dat.Exn <<
+    1,   0,    0,         0,
+    0,   1,    0,         0
+    ;
+  dat.Nx = qmq.initFreqListType(2);
+
+  dat.Nx << 250, 0;
+
+  dat.rho_MLE << 1.0, 0, 0, 0;
+  dat.T_MLE << 1.0, 0, 0, 0;
+  dat.x_MLE << 1.0, 0, 0, 0; // pure up state
+
+  // --------
+
+  LoggerType buflog(Tomographer::Logger::DEBUG);
+  //LoggerType buflog(stderr, Tomographer::Logger::LONGDEBUG) ;
+
+  typedef Tomographer::FidelityToRefCalculator<OurTomoProblem> OurValueCalculator;
+  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<
+    OurValueCalculator,
+    LoggerType,
+    int,
+    float> ValWBinningMHRWStatsCollectorType;
+
+  typedef ValWBinningMHRWStatsCollectorType::HistogramParams HistogramParams;
+  typedef Tomographer::DMStateSpaceLLHMHWalker<OurTomoProblem,std::mt19937,LoggerType> MHWalkerType;
+  typedef Tomographer::MHRandomWalk<std::mt19937, MHWalkerType, ValWBinningMHRWStatsCollectorType,
+				    LoggerType, int> MHRandomWalkType;
+  OurValueCalculator fidcalc(dat);
+
+  // N levels -> samples_size = 2^N
+  const int num_levels = 7;
+
+  ValWBinningMHRWStatsCollectorType vhist(HistogramParams(0.98f, 1.0f, 20), fidcalc, num_levels, buflog);
+
+  std::mt19937 rng(0); // seeded rng, deterministic results
+
+  Tomographer::QubitPaulisMatrQ::MatrixType start_T = qmq.initMatrixType();
+  start_T << 1.0/sqrt(2.0), 0, 0, 1.0/sqrt(2.0);
+
+  MHWalkerType mhwalker(start_T, dat, rng, buflog);
+
+  //  std::cout << "About to create the randomwalk object ...\n";
+  Tomographer::MHRandomWalk<std::mt19937,MHWalkerType,ValWBinningMHRWStatsCollectorType,LoggerType,unsigned long>
+    rwalk(20, 300, 5000, 0.05, mhwalker, vhist, rng, buflog);
+
+  rwalk.run();
+
+  BOOST_MESSAGE(buflog.get_contents());
+
+  const ValWBinningMHRWStatsCollectorType::Result & result = vhist.getResult();
+
+  //.........
+}
+
+
+
 BOOST_AUTO_TEST_SUITE_END()
 

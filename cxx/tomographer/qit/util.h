@@ -246,9 +246,16 @@ namespace tomo_internal {
     powers_of_two_generator() { }
 
     template<typename IndexType>
-    inline const result_type operator() (IndexType a, IndexType /*b*/ = 0) const {
+    inline const result_type operator() (IndexType a) const {
       return std::ldexp(result_type(1), a);
     }
+
+    template<typename IndexType>
+    inline const result_type operator() (IndexType a, IndexType b) const {
+      eigen_assert(b == 0 && "powers_of_two_generator may only be used with 1-D objects!"); (void)b;
+      return std::ldexp(result_type(1), a);
+    }
+
   };
 } // namespace tomo_internal
 } // namespace Tomographer
@@ -258,6 +265,10 @@ namespace Eigen {
     template<typename Scalar>
     struct functor_traits<Tomographer::tomo_internal::powers_of_two_generator<Scalar> >
     { enum { Cost = 8 * NumTraits<Scalar>::MulCost, PacketAccess = false, IsRepeatable = true }; };
+
+  //    template<typename Scalar>
+  //    struct functor_has_linear_access<Tomographer::tomo_internal::powers_of_two_generator<Scalar> >
+  //    { enum { ret = 0 }; };
   }
 } // end namespace Eigen
 

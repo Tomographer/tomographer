@@ -31,6 +31,9 @@ struct helper_samples_size<NumLevels,true> {
 
 /** \brief Simple binning analysis for determining error bars.
  *
+ *
+ * \todo OPTIMIZE THE WAY WE STORE STUFF!!! TAKE MORE IDEAS FROM ALPS'
+ * simplebinning.h. [Store sum of squares, not its mean, etc.]
  */
 template<typename ValueType_, typename LoggerType_,
 	 int NumTrackValues_ = Eigen::Dynamic, int NumLevels_ = Eigen::Dynamic,
@@ -95,7 +98,7 @@ public:
   {
     assert(Tools::is_positive(num_levels()));
     assert(Tools::is_power_of_two(samples_size()));
-    assert(std::fabs(std::pow(num_levels(), 2) - samples_size()) < 1e-8);
+    assert( (1<<num_levels()) == samples_size() );
 
     reset();
   }
@@ -104,7 +107,7 @@ public:
   {
     n_flushes = 0;
     helper_reset_bin_means();
-    bin_sqmeans = BinSqMeansArray::Zero(num_track_values(), num_levels());
+    bin_sqmeans = BinSqMeansArray::Zero(num_track_values(), num_levels()+1);
     logger.longdebug("BinningAnalysis::reset()", "ready to go.");
   }
   
@@ -172,6 +175,7 @@ public:
     }
 
   }
+
 private:
 
   template<bool dummy = true,
@@ -222,18 +226,18 @@ public:
   inline const BinSqMeansArray & get_bin_sqmeans() const { return  bin_sqmeans; }
 
 
-  /** \brief Calculate the standard deviations of samples at different binning levels.
+  /** \brief Calculate the error bars of samples at different binning levels.
    *
    * Return an array of shape <em>(num_track_values, num_levels)</em> where element
-   * <em>(i,k)</em> corresponds to the standard deviation of the \a i -th value at binning
-   * level \a k. Binning level \a k=0 corresponds to the standard deviation of the samples
-   * (no binning).
+   * <em>(i,k)</em> corresponds to the error of the \a i -th value at binning level \a
+   * k. Binning level \a k=0 corresponds to the naive error bar from of the samples (no
+   * binning).
    *
    * Use this variant of the function if this class doesn't store the bin means. If so,
    * you need to provide the value of the means explicitly to the parameter \a means.
    */
   template<typename Derived>
-  inline BinSqMeansArray calc_stddev_levels(const Eigen::ArrayBase<Derived> & means) const
+  inline BinSqMeansArray calc_error_levels(const Eigen::ArrayBase<Derived> & means) const
   {
     eigen_assert(means.rows() == num_track_values());
     eigen_assert(means.cols() == 1);
@@ -245,22 +249,26 @@ public:
             // replicated by:
             1, n_levels_plus_one
             )
-	).cwiseQuotient(
+	).cwiseMax(0).cwiseQuotient(
+	    // divide by the number of samples from which these bin-means were obtained, minus one.
 	    replicated<NumTrackValuesCTime,1>(
-		powers_of_two<Eigen::Array<ValueType, 1, NumLevelsPlusOneCTime> >(num_levels()+1)
-		.reverse(),
+		powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
+		.transpose().reverse(),
 		// replicated by:
 		n_track_values, 1
 		) * n_flushes
+	    - Eigen::Array<ValueType, NumTrackValuesCTime, NumLevelsPlusOneCTime>::Constant(
+		num_track_values(), num_levels()+1,
+		1 // the constant...
+		)
 	    ).cwiseSqrt();
   }
 
 
-  /** \brief Calculate the standard deviations of samples at the last binning level.
+  /** \brief Calculate the error bar of samples (from the last binning level).
    *
    * Return a vector of \a num_track_values elements, where the \a i -th item corresponds
-   * to the standard deviation of the \a i -th value at binning level \a
-   * num_levels.
+   * to the error bar of the \a i -th value determined from binning level \a num_levels.
    *
    * If the error bars converged (see \ref determine_error_convergence()), this should be
    * a good estimate of the error bars on the corresponding values.
@@ -269,62 +277,68 @@ public:
    * you need to provide the value of the means explicitly to the parameter \a means.
    */
   template<typename Derived>
-  inline BinMeansArray calc_stddev_lastlevel(const Eigen::ArrayBase<Derived> & means) const {
+  inline BinMeansArray calc_error_lastlevel(const Eigen::ArrayBase<Derived> & means) const {
     eigen_assert(means.rows() == num_track_values());
     eigen_assert(means.cols() == 1);
     return (
 	bin_sqmeans.col(num_levels()) - means.cwiseProduct(means).template cast<ValueType>()
-	).cwiseSqrt() / std::sqrt(n_flushes);
+	).cwiseMax(0).cwiseSqrt() / std::sqrt(n_flushes-1);
   }
   
-  /** \brief Calculate the standard deviations of samples at different binning levels.
+  /** \brief Calculate the error bars of samples at different binning levels.
    *
    * Return an array of shape <em>(num_track_values, num_levels)</em> where element
-   * <em>(i,k)</em> corresponds to the standard deviation of the \a i -th value at binning
-   * level \a k. Binning level \a k=0 corresponds to the standard deviation of the samples
-   * (no binning).
+   * <em>(i,k)</em> corresponds to the error of the \a i -th value at binning level \a
+   * k. Binning level \a k=0 corresponds to the naive error bar from of the samples (no
+   * binning).
    *
    * Use this variant of the function if this class stores the bin means. If this is not
-   * the case, you will need to call the variant \ref calc_stddev_levels(const
+   * the case, you will need to call the variant \ref calc_error_levels(const
    * Eigen::ArrayBase<Derived> & means) with the values of the means.
    */
   template<bool dummy = true,
            typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
-  inline BinSqMeansArray calc_stddev_levels() const {
-    return calc_stddev_levels(bin_means.value);
+  inline BinSqMeansArray calc_error_levels() const {
+    return calc_error_levels(bin_means.value);
   }
 
-  /** \brief Calculate the standard deviations of samples at the last binning level.
+  /** \brief Calculate the error bar of samples (from the last binning level).
    *
    * Return a vector of \a num_track_values elements, where the \a i -th item corresponds
-   * to the standard deviation of the \a i -th value at binning level \a
-   * num_levels.
+   * to the error bar of the \a i -th value determined from binning level \a num_levels.
    *
    * If the error bars converged (see \ref determine_error_convergence()), this should be
    * a good estimate of the error bars on the corresponding values.
    *
    * Use this variant of the function if this class stores the bin means. If this is not
-   * the case, you will need to call the variant \ref calc_stddev_lastlevel(const
+   * the case, you will need to call the variant \ref calc_error_lastlevel(const
    * Eigen::ArrayBase<Derived> & means) with the values of the means.
    */
   template<bool dummy = true,
            typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
-  inline BinMeansArray calc_stddev_lastlevel() const {
-    return calc_stddev_lastlevel(bin_means.value);
+  inline BinMeansArray calc_error_lastlevel() const {
+    return calc_error_lastlevel(bin_means.value);
   }
   
   /** \brief Attempt to determine if the error bars have converged.
    *
-   * Call this method after calculating the standard deviations for each level with \ref
-   * calc_stddev_levels(). Use the return value of that function to feed in the input
+   * Call this method after calculating the error bars for each level with \ref
+   * calc_error_levels(). Use the return value of that function to feed in the input
    * here.
    *
    * \returns an array of integers, of length \a num_track_values, each set to one of \ref
    * CONVERGED, \ref NOT_CONVERGED or \ref CONVERGENCE_UNKNOWN.
    */
-  inline Eigen::ArrayXi determine_error_convergence(const Eigen::Ref<const BinSqMeansArray> & stddev_levels)
+  inline Eigen::ArrayXi determine_error_convergence(const Eigen::Ref<const BinSqMeansArray> & error_levels)
   {
-    Eigen::ArrayXi converged_status; // RVO will help
+    Eigen::ArrayXi converged_status(num_track_values()); // RVO will help
+
+    eigen_assert(error_levels.rows() == num_track_values());
+    eigen_assert(error_levels.cols() == num_levels() + 1);
+
+    logger.longdebug("BinningAnalysis::determine_error_convergence", [&](std::ostream & str) {
+	str << "error_levels = \n" << error_levels << "\n";
+      });
 
     // verify that indeed the errors have converged. Inspired from ALPS code, see
     // https://alps.comp-phys.org/svn/alps1/trunk/alps/src/alps/alea/simplebinning.h
@@ -332,30 +346,43 @@ public:
     const int range = 4;
     if (num_levels() < range-1) {
 
-      converged_status = Eigen::ArrayXi::Constant(UNKNOWN_CONVERGENCE, num_track_values());
+      converged_status = Eigen::ArrayXi::Constant(num_track_values(), UNKNOWN_CONVERGENCE);
 
     } else {
 
-      converged_status = Eigen::ArrayXi::Constant(CONVERGED, num_track_values());
+      converged_status = Eigen::ArrayXi::Constant(num_track_values(), CONVERGED);
 
-      const auto & stddevs = stddev_levels.col(num_levels());
+      const auto & errors = error_levels.col(num_levels());
 
-      for (int level = num_levels()+1 - range; level <= num_levels(); ++level) {
+      for (int level = num_levels()+1 - range; level < num_levels(); ++level) {
 
-	const auto & stddevs_thislevel = stddev_levels.col(level);
+	const auto & errors_thislevel = error_levels.col(level);
+
+	logger.longdebug("BinningAnalysis::determine_error_convergence", [&](std::ostream & str) {
+	    str << "About to study level " << level << ": at this point, converged_status = \n"
+		<< converged_status << "\nand errors_thislevel = \n" << errors_thislevel;
+	  });
+
 	for (int val_it = 0; val_it < num_track_values(); ++val_it) {
-	  if (stddevs_thislevel(val_it) >= stddevs(val_it)) {
+	  if (errors_thislevel(val_it) >= errors(val_it) &&
+	      converged_status(val_it) != NOT_CONVERGED) {
 	    converged_status(val_it) = CONVERGED;
-	  } else if (stddevs_thislevel(val_it) < 0.824 * stddevs(val_it)) {
+	  } else if (errors_thislevel(val_it) < 0.824 * errors(val_it)) {
 	    converged_status(val_it) = NOT_CONVERGED;
-	  } else if ((stddevs_thislevel(val_it) < 0.9 * stddevs(val_it)) &&
+	  } else if ((errors_thislevel(val_it) < 0.9 * errors(val_it)) &&
 		     converged_status(val_it) != NOT_CONVERGED) {
 	    converged_status(val_it) = UNKNOWN_CONVERGENCE;
 	  }
 	}
 
       }
+
     }
+
+    logger.longdebug("BinningAnalysis::determine_error_convergence", [&](std::ostream & str) {
+	str << "Done. converged_status [0=UNNOWN,1=CONVERGED,2=NOT CONVERGED] = \n"
+	    << converged_status;
+      });
 
     return converged_status;
   }

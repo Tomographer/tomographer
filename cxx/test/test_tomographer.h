@@ -5,6 +5,8 @@
 #ifndef TEST_TOMOGRAPHER_H
 #define TEST_TOMOGRAPHER_H
 
+#define EIGEN_INITIALIZE_MATRICES_BY_NAN
+
 #ifndef TOMOGRAPHER_TEST_EIGEN_ASSERT_ASSERT
 // we want `eigen_assert()` to raise an `eigen_assert_exception` here
 #include <tomographer/tools/eigen_assert_exception.h>

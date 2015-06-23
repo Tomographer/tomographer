@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 
+#define TOMOGRAPHER_TEST_EIGEN_ASSERT_ASSERT
 // definitions for Tomographer test framework -- this must be included before any
 // <tomographer/...> header
 #include "test_tomographer.h"
@@ -16,17 +17,6 @@
 #include <tomographer/qit/matrq.h>
 
 
-
-template<typename T>
-struct has_get_bin_means_method
-{
-  template<typename U, std::size_t (U::*)() const> struct SFINAE {};
-  template<typename U> static inline char Test(SFINAE<U, &U::get_bin_means> *) { return 0; }
-  template<typename U> static inline long Test(int) { return 0; }
-  enum {
-    value = (sizeof(Test<T>(0)) == sizeof(char))
-  };
-};
 
 
 struct test_norm_value_calculator
@@ -55,7 +45,7 @@ struct test_hypercube_mhwalker
   std::uniform_real_distribution<double> dist;
 
   // constructor
-  test_hypercube_mhwalker() : rng(0), dist(0.0, 1.0) { }
+  test_hypercube_mhwalker() : rng(0), dist(-1.0, 1.0) { }
 
   inline void init() { }
 
@@ -63,9 +53,16 @@ struct test_hypercube_mhwalker
 
   inline void thermalizing_done() { }
   inline void done() { }
-  inline PointType jump_fn(const PointType & /*curpt*/, RealScalar /*step_size*/)
+  inline PointType jump_fn(const PointType & curpt, RealScalar step_size)
   {
-    return Tomographer::dense_random<PointType>(rng, dist);
+    PointType newpt;
+    newpt = curpt + step_size*Tomographer::dense_random<PointType>(rng, dist);
+    // do the random walk on the torus, i.e. modulo 1.0
+    for (int i = 0; i < Dim; ++i) {
+      if (newpt(i) < 0) { newpt(i) += 1.0; }
+      if (newpt(i) > 1) { newpt(i) -= 1.0; }
+    }
+    return newpt;
   }
 
   inline FnValueType fnval(const PointType & /*curpt*/)
@@ -91,7 +88,10 @@ Eigen::Array<double,4,1> inline_vector(double a1, double a2, double a3, double a
 BOOST_AUTO_TEST_CASE(basic)
 {
   Tomographer::Logger::BufferLogger logger(Tomographer::Logger::LONGDEBUG);
-  Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger> bina(4, 2, logger);
+  typedef Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger> OurBinningAnalysis;
+  OurBinningAnalysis bina(4, 2, logger);
+
+  logger.debug("basic()", "Starting to feed samples to the binning analysis object");
 
   bina.process_new_values(0, inline_vector(0.0, 0.0,   1.0, 1.0));
   bina.process_new_values(1, inline_vector(0.0, 0.0,   0.0, 2.0));
@@ -107,24 +107,53 @@ BOOST_AUTO_TEST_CASE(basic)
   bina.process_new_values(9, inline_vector(1.0, 140.0,  1e20, 10.0));
 
   Eigen::Array<double,4,1> bin_means;
-  bin_means = inline_vector(1.0/8, 4*100.0/8, (1+1+1+2+0.5)/8.0, (8*(8+1)/2.0)/8.0);
+  bin_means = inline_vector(1.0/8, // == 0.125
+			    4*100.0/8, // == 50
+			    (1+1+1+2+0.5)/8.0, // == 0.6875
+			    (8*(8+1)/2.0)/8.0); // == 4.5
   Eigen::Array<double,4,3> bin_sqmeans;
-  bin_sqmeans.col(0) = inline_vector(1/8.0,
-                                     4*(100*100)/8.0,
-                                     (1+1+1+4+0.25)/8.0,
-                                     (1+4+9+16+25+36+49+64)/8.0);
-  bin_sqmeans.col(1) = inline_vector((0+0+0+0.5*0.5)/4.0,
-                                     2*(100*100)/4.0,
-                                     (0.5*0.5 + 0.5*0.5 + 0.5*0.5 + pow((2.0+0.5)/2,2))/4.0,
-                                     (1.5*1.5 + 3.5*3.5 + 5.5*5.5 + 7.5*7.5)/4.0);
-  bin_sqmeans.col(2) = inline_vector((0+0.25*0.25)/2.0,
-                                     (100*100)/2.0,
-                                     (0.5*0.5 + (3.5/4)*(3.5/4))/2.0,
-                                     (2.5*2.5 + 6.5*6.5)/2.0);
+  bin_sqmeans.col(0) = inline_vector(1/8.0, // == 0.125
+                                     4*(100*100)/8.0, // == 5000
+                                     (1+1+1+4+0.25)/8.0, // == 0.90625
+                                     (1+4+9+16+25+36+49+64)/8.0); // == 25.5
+  bin_sqmeans.col(1) = inline_vector((0+0+0+0.5*0.5)/4.0, // == 0.0625
+                                     2*(100*100)/4.0, // == 5000
+                                     (0.5*0.5 + 0.5*0.5 + 0.5*0.5 + pow((2.0+0.5)/2,2))/4.0, // == 0.578125
+                                     (1.5*1.5 + 3.5*3.5 + 5.5*5.5 + 7.5*7.5)/4.0); // == 25.25
+  bin_sqmeans.col(2) = inline_vector((0+0.25*0.25)/2.0, // == 0.03125
+                                     (100*100)/2.0, // == 5000
+                                     (0.5*0.5 + (3.5/4)*(3.5/4))/2.0, // == 0.5078125
+                                     (2.5*2.5 + 6.5*6.5)/2.0); // == 24.25
+
+  Eigen::Array<double,4,3> error_levels;
+  // binning analysis: don't forget to divide by sqrt(num_samples_seen_by_this_bin_level - 1)
+  // See http://arxiv.org/abs/0906.0943
+  error_levels <<
+    (0.125 - 0.125*0.125)/(2*4-1),       (0.0625-0.125*0.125)/(2*2-1),   (0.03125 - 0.125*0.125)/1,
+    (5000.-50*50)/(2*4-1),                      (5000.-50*50)/(2*2-1),   (5000.-50*50)/1,
+    (0.90625-0.6875*0.6875)/(2*4-1), (0.578125-0.6875*0.6875)/(2*2-1),   (0.5078125-0.6875*0.6875)/1,
+    (25.5-4.5*4.5)/(2*4-1),                   (25.25-4.5*4.5)/(2*2-1),   (24.25-4.5*4.5)/1 ;
+  error_levels = error_levels.cwiseSqrt();
+ // = (bin_sqmeans - (bin_means.cwiseProduct(bin_means)).replicate<1,3>()).cwiseSqrt();
+ //  error_levels.col(0) /= std::sqrt( bina.get_n_flushes() * 4.0 );
+ //  error_levels.col(1) /= std::sqrt( bina.get_n_flushes() * 2.0 );
+ //  error_levels.col(2) /= std::sqrt( bina.get_n_flushes() * 1.0 );
 
   logger.debug("test_mhrw_bin_err::binning_analysis::basic", [&](std::ostream & str) {
       str << "we should obtain bin_means = \n" << bin_means << "\n"
           << "\tand bin_sqmeans = \n" << bin_sqmeans << "\n";
+    });
+
+  logger.debug("test_mhrw_bin_err::binning_analysis::basic", [&](std::ostream & str) {
+      str << "Debug: binning analysis uses powers_of_two matrix for normalization: \n"
+	  << Tomographer::replicated<OurBinningAnalysis::NumTrackValuesCTime,1>(
+	      Tomographer::powers_of_two<Eigen::Array<OurBinningAnalysis::ValueType,
+						      OurBinningAnalysis::NumLevelsPlusOneCTime,
+						      1> >(bina.num_levels()+1)
+	      .transpose().reverse(),
+	      // replicated by:
+	      bina.num_track_values(), 1
+	      ) << "\n";
     });
 
   BOOST_MESSAGE(logger.get_contents());
@@ -135,28 +164,24 @@ BOOST_AUTO_TEST_CASE(basic)
   BOOST_CHECK_EQUAL(bina.num_track_values(), 4);
   BOOST_CHECK_EQUAL(bina.num_levels(), 2);
 
-  Eigen::Array<double,4,3> stddev_levels;
-  // binning analysis: don't forget to divide by sqrt(num_flushes)
-  stddev_levels = (bin_sqmeans - (bin_means.cwiseProduct(bin_means)).replicate<1,3>()).cwiseSqrt();
-  stddev_levels.col(0) /= std::sqrt( bina.get_n_flushes() * 4.0 );
-  stddev_levels.col(1) /= std::sqrt( bina.get_n_flushes() * 2.0 );
-  stddev_levels.col(2) /= std::sqrt( bina.get_n_flushes() * 1.0 );
-
   Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger>::BinSqMeansArray
-    stddev_levels_calc(4,3);
-  stddev_levels_calc = bina.calc_stddev_levels();
+    error_levels_calc(4,3);
+  error_levels_calc = bina.calc_error_levels();
 
-  BOOST_CHECK(has_get_bin_means_method<decltype(bina)>::value) ;
-  MY_BOOST_CHECK_EIGEN_EQUAL(stddev_levels_calc, stddev_levels, tol);
-  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_stddev_lastlevel(), stddev_levels.col(1), tol);
+  BOOST_MESSAGE("reported error_levels = \n" << error_levels_calc);
+
+  BOOST_CHECK(OurBinningAnalysis::StoreBinMeans) ;
+  MY_BOOST_CHECK_EIGEN_EQUAL(error_levels_calc, error_levels, tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_error_lastlevel(), error_levels.col(2), tol);
 }
 
 
 BOOST_AUTO_TEST_CASE(no_bin_means)
 {
   Tomographer::Logger::BufferLogger logger(Tomographer::Logger::LONGDEBUG);
-  Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger, 4, 2, false /*StoreBinMeans_*/>
-    bina(4, 2, logger);
+  typedef Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger, 4, 2, false /*StoreBinMeans_*/>
+    OurBinningAnalysis;
+  OurBinningAnalysis bina(4, 2, logger);
 
   bina.process_new_values(0, inline_vector(0.0, 0.0, 1.0, 0.0));
   bina.process_new_values(1, inline_vector(0.0, 0.0, 1.0, 1.0));
@@ -168,10 +193,10 @@ BOOST_AUTO_TEST_CASE(no_bin_means)
 
   Eigen::Matrix<double, 4, 3> bin_sqmeans;
   bin_sqmeans <<
-    0, 0,
-    0.25, 0.125,
-    1, 1,
-    (1*1+2*2+3*3)/4.0, (0.5*0.5 + 2.5*2.5)/2.0
+    0, 0, 0,
+    0.25, 0.125, 0.25*0.25,
+    1, 1, 1,
+    (1*1+2*2+3*3)/4.0, (0.5*0.5 + 2.5*2.5)/2.0, 1.5*1.5
     ;
 
   MY_BOOST_CHECK_EIGEN_EQUAL(bina.get_bin_sqmeans(), bin_sqmeans, tol);
@@ -179,16 +204,16 @@ BOOST_AUTO_TEST_CASE(no_bin_means)
   Eigen::Array<double,4,1> means;
   means << 0, 0.25, 1, (3*4/2)/4.0;
 
-  Eigen::Array<double,4,3> stddev_levels;
-  stddev_levels = (bin_sqmeans.array() - (means.cwiseProduct(means)).replicate<1,3>()).cwiseSqrt();
+  Eigen::Array<double,4,3> error_levels;
+  error_levels = (bin_sqmeans.array() - (means.cwiseProduct(means)).replicate<1,3>()).cwiseSqrt();
   // divide by sqrt(num-samples)
-  stddev_levels.col(0) /= std::sqrt( bina.get_n_flushes() * 4.0 );
-  stddev_levels.col(1) /= std::sqrt( bina.get_n_flushes() * 2.0 );
-  stddev_levels.col(2) /= std::sqrt( bina.get_n_flushes() * 1.0 );
+  error_levels.col(0) /= std::sqrt( bina.get_n_flushes() * 4.0 - 1);
+  error_levels.col(1) /= std::sqrt( bina.get_n_flushes() * 2.0 - 1);
+  error_levels.col(2) /= std::sqrt( bina.get_n_flushes() * 1.0 - 1);
 
-  BOOST_CHECK(!has_get_bin_means_method<decltype(bina)>::value) ;
-  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_stddev_levels(means), stddev_levels, tol);
-  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_stddev_lastlevel(means), stddev_levels.col(1), tol);
+  BOOST_CHECK(! OurBinningAnalysis::StoreBinMeans) ;
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_error_levels(means), error_levels, tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_error_lastlevel(means), error_levels.col(2), tol);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -199,9 +224,10 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(valuehistogramwithbinning)
 
-BOOST_AUTO_TEST_CASE(basic)
+BOOST_AUTO_TEST_CASE(simple)
 {
   typedef Tomographer::Logger::BufferLogger LoggerType;
+  //typedef Tomographer::Logger::FileLogger LoggerType;
   typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<
     test_norm_value_calculator,
     LoggerType,
@@ -209,28 +235,35 @@ BOOST_AUTO_TEST_CASE(basic)
     float> ValWBinningMHRWStatsCollectorType;
 
   typedef ValWBinningMHRWStatsCollectorType::HistogramParams HistogramParams;
-  typedef test_hypercube_mhwalker<double, 2 /* Dim */> MHWalkerType;
+  typedef test_hypercube_mhwalker<double, 3 /* Dim */> MHWalkerType;
   typedef Tomographer::MHRandomWalk<std::mt19937, MHWalkerType, ValWBinningMHRWStatsCollectorType,
 				    LoggerType, int> MHRandomWalkType;
 
-  LoggerType buflog(Tomographer::Logger::LONGDEBUG);
+  LoggerType buflog(Tomographer::Logger::DEBUG);
+  //LoggerType buflog(stderr, Tomographer::Logger::LONGDEBUG) ;
 
   test_norm_value_calculator vcalc;
 
-  // 4 levels -> samples_size = 2^4 == 16
-  const int num_levels = 4;
-  ValWBinningMHRWStatsCollectorType vhist(HistogramParams(0.f, 1.f, 20), vcalc, num_levels, buflog);
+  // N levels -> samples_size = 2^N,  2^11 == 2048
+  const int num_levels = 11;
+  //const int num_levels = 4;
+  ValWBinningMHRWStatsCollectorType vhist(HistogramParams(0.f, 2.0f, 20), vcalc, num_levels, buflog);
 
-  std::mt19937 rng(0);
+  std::mt19937 rng(0); // seeded rng, deterministic results
 
   MHWalkerType mhwalker;
-  MHRandomWalkType rwalk(100, 500, 1000, 0.77, mhwalker, vhist, rng, buflog);
+  MHRandomWalkType rwalk(10, 50, 100000, 0.03, mhwalker, vhist, rng, buflog);
 
   rwalk.run();
 
   BOOST_MESSAGE(buflog.get_contents());
 
+  const ValWBinningMHRWStatsCollectorType::Result & result = vhist.getResult();
+
+  // TODO: FIXME: WHY ARE THE ERROR BAR CURVES GOING LIKE CRAZY?
 }
+
+
 
 BOOST_AUTO_TEST_SUITE_END()
 

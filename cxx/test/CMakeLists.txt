@@ -25,6 +25,7 @@ set(tests_SRCS
   # list of sources containing test cases:
   test_tomographer.cxx
   testsphcoords.cxx
+  test_misc.cxx
   test_loggers.cxx
   test_lib_basics.cxx
   test_param.cxx
