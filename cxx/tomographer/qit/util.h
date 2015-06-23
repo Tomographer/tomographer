@@ -290,7 +290,7 @@ inline auto powers_of_two(IndexTypes... sizes)
 /** \brief Replicate a Eigen Dense object; same call for compile-time & run-time
  * dimensions
  *
- * Allow our libraries to use the same syntax
+ * Allow our libraries to use the same syntax, for example
  * \code
  *   Eigen::Matrix<...> m_replicated = replicated<1,ColFactorAtCompileTime>(matrix, 1, col_factor);
  * \endcode
@@ -302,8 +302,9 @@ inline auto powers_of_two(IndexTypes... sizes)
  * runtime argument (done as an \a eigen_assert() check, i.e. this is compiled out if \a
  * -DNDEBUG is used)
  */
-template<typename Derived, int RowFactorCTime, int ColFactorCTime,
-	 typename std::enable_if<(RowFactorCTime == Eigen::Dynamic || ColFactorCTime == Eigen::Dynamic)>::type
+
+template<int RowFactorCTime, int ColFactorCTime, typename Derived,
+	 typename std::enable_if<(RowFactorCTime == Eigen::Dynamic || ColFactorCTime == Eigen::Dynamic), bool>::type
 	 dummy = true>
 inline auto replicated(const Eigen::DenseBase<Derived> & x, int row_factor, int col_factor)
   -> const typename Eigen::DenseBase<Derived>::ReplicateReturnType
@@ -311,10 +312,13 @@ inline auto replicated(const Eigen::DenseBase<Derived> & x, int row_factor, int 
   eigen_assert(RowFactorCTime == Eigen::Dynamic || row_factor == RowFactorCTime);
   eigen_assert(ColFactorCTime == Eigen::Dynamic || col_factor == ColFactorCTime);
   return x.replicate(row_factor, col_factor);
-}
+};
 
-template<typename Derived, int RowFactorCTime, int ColFactorCTime,
-	 typename std::enable_if<(RowFactorCTime != Eigen::Dynamic && ColFactorCTime != Eigen::Dynamic)>::type
+//
+// Implementation for fixed RowFactorCTime and ColFactorCTime.
+//
+template<int RowFactorCTime, int ColFactorCTime, typename Derived,
+	 typename std::enable_if<(RowFactorCTime != Eigen::Dynamic && ColFactorCTime != Eigen::Dynamic), bool>::type
 	 dummy = true>
 inline auto replicated(const Eigen::DenseBase<Derived> & x, int row_factor, int col_factor)
   -> const Eigen::Replicate<Derived, RowFactorCTime, ColFactorCTime>
@@ -322,8 +326,53 @@ inline auto replicated(const Eigen::DenseBase<Derived> & x, int row_factor, int 
   eigen_assert(row_factor == RowFactorCTime); (void)row_factor; // "unused argument" warning
   eigen_assert(col_factor == ColFactorCTime); (void)col_factor; // "unused argument" warning
   return x.template replicate<RowFactorCTime, ColFactorCTime>();
-}
+};
 
+/* second attempt, after I couldn't find the bug in the above..... not needed in the end.
+
+namespace tomo_internal {
+
+template<int RowFactorCTime, int ColFactorCTime, bool KnownAtCompileTime>
+struct replicator_helper {
+  template<typename Derived>
+  static inline auto impl(const Eigen::DenseBase<Derived> & x, int row_factor, int col_factor)
+    -> const typename Eigen::DenseBase<Derived>::ReplicateReturnType
+  {
+    eigen_assert(RowFactorCTime == Eigen::Dynamic || row_factor == RowFactorCTime);
+    eigen_assert(ColFactorCTime == Eigen::Dynamic || col_factor == ColFactorCTime);
+    return x.replicate(row_factor, col_factor);
+  }
+};
+
+template<int RowFactorCTime, int ColFactorCTime>
+struct replicator_helper {
+  template<typename Derived>
+  static inline auto impl(const Eigen::DenseBase<Derived> & x, int row_factor, int col_factor)
+    -> const Eigen::Replicate<Derived, RowFactorCTime, ColFactorCTime>
+  {
+    eigen_assert(row_factor == RowFactorCTime); (void)row_factor; // "unused argument" warning
+    eigen_assert(col_factor == ColFactorCTime); (void)col_factor; // "unused argument" warning
+    return x.template replicate<RowFactorCTime, ColFactorCTime>();
+  }
+};
+
+} // tomo_internal
+
+
+template<int RowFactorCTime, int ColFactorCTime>
+struct replicator {
+  template<typename Derived>
+  static inline auto impl(const Eigen::DenseBase<Derived> & x, int row_factor, int col_factor)
+    -> decltype(tomo_internal::replicator_helper<RowFactorCTime,ColFactorCTime,KnownAtCompileTime>::impl(
+                    x, row_factor, col_factor
+                    ))
+  {
+    return tomo_internal::replicator_helper<RowFactorCTime,ColFactorCTime,KnownAtCompileTime>::impl(
+        x, row_factor, col_factor
+        );
+  }
+};
+*/
 
 
 

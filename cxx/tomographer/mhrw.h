@@ -818,7 +818,7 @@ public:
     Result(HistogramParams p, const BinningAnalysisType & b)
       : hist(p),
 	stddev_levels(b.num_track_values(), b.num_levels()),
-	converged_status(Eigen::ArrayXi(BinningAnalysisType::UNKNOWN_CONVERGENCE, b.num_track_values()))
+	converged_status(Eigen::ArrayXi::Constant(BinningAnalysisType::UNKNOWN_CONVERGENCE, b.num_track_values()))
     {
     }
 
@@ -914,9 +914,10 @@ public:
     const HistogramType & h = value_histogram.histogram();
     result.hist.params = h.params;
     CountRealAvgType normalization = h.bins.sum();
-    result.hist.final_histogram = h.bins / normalization;
-    result.stddev_levels = binning_analysis.calc_stddev_levels(result.final_histogram);
-    result.hist.std_dev = result.stddev_levels.col(binning_analysis.num_levels()-1);
+    result.hist.final_histogram = h.bins.template cast<CountRealAvgType>() / normalization;
+    result.stddev_levels = binning_analysis.calc_stddev_levels(result.hist.final_histogram);
+    result.hist.std_dev = result.stddev_levels.col(binning_analysis.num_levels()-1)
+      .template cast<CountRealAvgType>();
     result.hist.off_chart = h.off_chart / normalization;
 
     result.converged_status = binning_analysis.determine_error_convergence(result.stddev_levels);
@@ -928,12 +929,12 @@ public:
 	    << result.stddev_levels << "\n"
 	    << "\t-> convergence analysis: \n";
 	for (int k = 0; k < binning_analysis.num_track_values(); ++k) {
-	  str << "\t    val["<<k<<"] = " << result.final_histogram << " +- " << result.hist.std_dev;
+	  str << "\t    val["<<k<<"] = " << result.hist.final_histogram(k) << " +- " << result.hist.std_dev(k);
 	  if (result.converged_status(k) == BinningAnalysisType::CONVERGED) {
 	    str << "[CONVERGED]";
 	  } else if (result.converged_status(k) == BinningAnalysisType::NOT_CONVERGED) {
 	    str << "[NOT CONVERGED]";
-	  } else if (result.converged_status(k) == BinningAnalysisType::CONVERGENCE_UNKNOWN) {
+	  } else if (result.converged_status(k) == BinningAnalysisType::UNKNOWN_CONVERGENCE) {
 	    str << "[UNKNOWN]";
 	  } else {
 	    str << "[UNKNOWN CONVERGENCE STATUS: " << result.converged_status(k) << "]";

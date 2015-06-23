@@ -363,8 +363,8 @@ struct AveragedHistogram
   inline void reset(const HistogramParamsType& params_)
   {
     params = params_;
-    final_histogram = Eigen::ArrayXd::Zero(params.num_bins);
-    std_dev = Eigen::ArrayXd::Zero(params.num_bins);
+    final_histogram = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
+    std_dev = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
     off_chart = 0.0;
     num_histograms = 0;
   }
@@ -372,8 +372,8 @@ struct AveragedHistogram
   //! Resets the data keeping the exisiting params.
   inline void reset()
   {
-    final_histogram = Eigen::ArrayXd::Zero(params.num_bins);
-    std_dev = Eigen::ArrayXd::Zero(params.num_bins);
+    final_histogram = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
+    std_dev = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
     off_chart = 0.0;
     num_histograms = 0;
   }

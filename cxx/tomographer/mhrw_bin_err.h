@@ -239,9 +239,12 @@ public:
     eigen_assert(means.cols() == 1);
     const int n_levels_plus_one = num_levels()+1;
     const int n_track_values = num_track_values();
-    BinMeansArray means_sq(means.cwiseProduct(means));
     return (
-	bin_sqmeans - replicated<1,NumLevelsPlusOneCTime>(means_sq, 1, n_levels_plus_one)
+	bin_sqmeans - replicated<1,NumLevelsPlusOneCTime>(
+            means.cwiseProduct(means).template cast<ValueType>(),
+            // replicated by:
+            1, n_levels_plus_one
+            )
 	).cwiseQuotient(
 	    replicated<NumTrackValuesCTime,1>(
 		powers_of_two<Eigen::Array<ValueType, 1, NumLevelsPlusOneCTime> >(num_levels()+1)
@@ -270,7 +273,7 @@ public:
     eigen_assert(means.rows() == num_track_values());
     eigen_assert(means.cols() == 1);
     return (
-	bin_sqmeans.col(num_levels()) - means.cwiseProduct(means)
+	bin_sqmeans.col(num_levels()) - means.cwiseProduct(means).template cast<ValueType>()
 	).cwiseSqrt() / std::sqrt(n_flushes);
   }
   
@@ -335,12 +338,12 @@ public:
 
       converged_status = Eigen::ArrayXi::Constant(CONVERGED, num_track_values());
 
-      const auto & stddevs = stddev_levels.col(num_levels);
+      const auto & stddevs = stddev_levels.col(num_levels());
 
-      for (int level = num_levels()+1 - range; level <= num_levels; ++level) {
+      for (int level = num_levels()+1 - range; level <= num_levels(); ++level) {
 
 	const auto & stddevs_thislevel = stddev_levels.col(level);
-	for (int val_it = 0; val_it < num_track_values; ++val_it) {
+	for (int val_it = 0; val_it < num_track_values(); ++val_it) {
 	  if (stddevs_thislevel(val_it) >= stddevs(val_it)) {
 	    converged_status(val_it) = CONVERGED;
 	  } else if (stddevs_thislevel(val_it) < 0.824 * stddevs(val_it)) {
