@@ -731,14 +731,23 @@ public:
   inline void thermalizing_done()
   {
   }
-  //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
+  /** \brief Part of the \ref pageInterfaceMHRWStatsCollector.
+   *
+   * If you call this function with \a PrintHistogram=true (the default), then this will
+   * display the final histogram in the logger at logging level \a Logger::LONGDEBUG.
+   *
+   * If this function is called with \a PrintHistogram=false, then this is a no-op.
+   */
+  template<bool PrintHistogram = true>
   inline void done()
   {
-    if (_log.enabled_for(Logger::LONGDEBUG)) {
-      // _log.longdebug("ValueHistogramMHRWStatsCollector", "done()");
-      _log.longdebug("ValueHistogramMHRWStatsCollector",
-                     "Done walking & collecting stats. Here's the histogram:\n"
-                     + _histogram.pretty_print());
+    if (PrintHistogram) {
+      if (_log.enabled_for(Logger::LONGDEBUG)) {
+	// _log.longdebug("ValueHistogramMHRWStatsCollector", "done()");
+	_log.longdebug("ValueHistogramMHRWStatsCollector",
+		       "Done walking & collecting stats. Here's the histogram:\n"
+		       + _histogram.pretty_print());
+      }
     }
   }
 
@@ -804,7 +813,19 @@ public:
 
   static constexpr bool TrackSelectedIndices = TrackSelectedIndices_;
 
-  typedef AveragedHistogram<HistogramType, CountRealAvgType> Result;
+  struct Result {
+
+    Result(HistogramParams p, const BinningAnalysisType & b)
+      : hist(p),
+	stddev_levels(b.num_track_values(), b.num_levels()),
+	converged_status(Eigen::ArrayXi(BinningAnalysisType::UNKNOWN_CONVERGENCE, b.num_track_values()))
+    {
+    }
+
+    AveragedHistogram<HistogramType, CountRealAvgType> hist;
+    typename BinningAnalysisType::BinSqMeansArray stddev_levels;
+    Eigen::ArrayXi converged_status;
+  };
     
 private:
     
@@ -817,6 +838,8 @@ private:
 
   LoggerType & logger;
 
+  Result result;
+
 public:
     
   template<bool dummy = true,
@@ -827,9 +850,10 @@ public:
                                               int num_levels,
                                               LoggerType & logger_)
     : value_histogram(histogram_params, vcalc, logger_),
-      binning_analysis(histogram_params.num_bins(), num_levels, logger_),
+      binning_analysis(histogram_params.num_bins, num_levels, logger_),
       selected_indices(),
-      logger(logger_)
+      logger(logger_),
+      result(histogram_params, binning_analysis)
   {
   }
   
@@ -842,9 +866,10 @@ public:
                                               int num_levels,
                                               LoggerType & logger_)
     : value_histogram(histogram_params, vcalc, logger_),
-      binning_analysis(histogram_params.num_bins(), num_levels, logger_),
+      binning_analysis(histogram_params.num_bins, num_levels, logger_),
       selected_indices(which_indices),
-      logger(logger_)
+      logger(logger_),
+      result(histogram_params, binning_analysis)
   {
     assert(false && "TrackSelectedIndices : NOT YET IMPLEMENTED");
   }
@@ -866,14 +891,7 @@ public:
    */
   inline const Result & getResult() const
   {
-    Result r;
-    const HistogramType & h = value_histogram.histogram();
-    r.params = h.params;
-    CountRealAvgType normalization = h.bins.sum();
-    r.final_histogram = h.bins / normalization;
-    r.std_dev = binning_analysis.calc_stddev_lastlevel(r.final_histogram);
-    r.off_chart = h.off_chart / normalization;
-    return value_histogram.histogram();
+    return result;
   }
 
   // stats collector part
@@ -891,10 +909,38 @@ public:
   //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
   inline void done()
   {
-    value_histogram.done();
+    value_histogram.template done<false>();
+
+    const HistogramType & h = value_histogram.histogram();
+    result.hist.params = h.params;
+    CountRealAvgType normalization = h.bins.sum();
+    result.hist.final_histogram = h.bins / normalization;
+    result.stddev_levels = binning_analysis.calc_stddev_levels(result.final_histogram);
+    result.hist.std_dev = result.stddev_levels.col(binning_analysis.num_levels()-1);
+    result.hist.off_chart = h.off_chart / normalization;
+
+    result.converged_status = binning_analysis.determine_error_convergence(result.stddev_levels);
+
     logger.longdebug("ValueHistogramWithBinningMHRWStatsCollector", [&,this](std::ostream & str) {
-        str << "Binning analysis: standard deviations at different binning levels are:\n"
-            << binning_analysis.get_bin_sqmeans() << "\n";
+        str << "Binning analysis: bin sqmeans at different binning levels are:\n"
+            << binning_analysis.get_bin_sqmeans() << "\n"
+	    << "\t-> so the standard deviations at different binning levels are:\n"
+	    << result.stddev_levels << "\n"
+	    << "\t-> convergence analysis: \n";
+	for (int k = 0; k < binning_analysis.num_track_values(); ++k) {
+	  str << "\t    val["<<k<<"] = " << result.final_histogram << " +- " << result.hist.std_dev;
+	  if (result.converged_status(k) == BinningAnalysisType::CONVERGED) {
+	    str << "[CONVERGED]";
+	  } else if (result.converged_status(k) == BinningAnalysisType::NOT_CONVERGED) {
+	    str << "[NOT CONVERGED]";
+	  } else if (result.converged_status(k) == BinningAnalysisType::CONVERGENCE_UNKNOWN) {
+	    str << "[UNKNOWN]";
+	  } else {
+	    str << "[UNKNOWN CONVERGENCE STATUS: " << result.converged_status(k) << "]";
+	  }
+	  str << "\n";
+	}
+	str << "\t... and just for you, here is the final histogram:\n" << result.hist.pretty_print() << "\n";
       });
   }
 
@@ -913,7 +959,10 @@ public:
                       LLHValueType curptval, MHRandomWalk & mh)
   {
     std::size_t histindex = value_histogram.process_sample(k, n, curpt, curptval, mh);
-    binning_analysis.process_sample(n, can_basis_vec(histindex, value_histogram.histogram().num_bins()));
+    binning_analysis.process_new_values(
+	n,
+	can_basis_vec<Eigen::Array<ValueType,Eigen::Dynamic,1> >(histindex, value_histogram.histogram().num_bins())
+	);
   }
 
 };

@@ -181,9 +181,8 @@ namespace tomo_internal {
     {
     }
 
-    template<typename Index>
-    inline const result_type operator() (Index a, Index b = 0) const {
-      return (a==k) && (b==j) ? result_type(1) : result_type(0);
+    inline const result_type operator() (IndexType a, IndexType b = 0) const {
+      return (a == k) && (b == j) ? result_type(1) : result_type(0);
     }
   };
 } // namespace tomo_internal
@@ -232,6 +231,98 @@ inline auto can_basis_vec(IndexType k, IndexType j, IndexType rows, IndexType co
 }
 
 
+
+
+// ---------------------------
+
+
+
+namespace tomo_internal {
+  template<typename Scalar>
+  struct powers_of_two_generator
+  {
+    typedef typename Eigen::NumTraits<Scalar>::Real result_type;
+
+    powers_of_two_generator() { }
+
+    template<typename IndexType>
+    inline const result_type operator() (IndexType a, IndexType /*b*/ = 0) const {
+      return std::ldexp(result_type(1), a);
+    }
+  };
+} // namespace tomo_internal
+} // namespace Tomographer
+namespace Eigen {
+  namespace internal {
+    /** \internal */
+    template<typename Scalar>
+    struct functor_traits<Tomographer::tomo_internal::powers_of_two_generator<Scalar> >
+    { enum { Cost = 8 * NumTraits<Scalar>::MulCost, PacketAccess = false, IsRepeatable = true }; };
+  }
+} // end namespace Eigen
+
+namespace Tomographer {
+
+
+/** \brief Expression for the k-th canonical basis vector of given dimension
+ *
+ */
+template<typename Der, typename... IndexTypes>
+inline auto powers_of_two(IndexTypes... sizes)
+  -> const Eigen::CwiseNullaryOp<
+    tomo_internal::powers_of_two_generator<typename Eigen::internal::traits<Der>::Scalar>,
+    Der
+    >
+{
+  typedef typename Der::Scalar Scalar;
+
+  return Eigen::DenseBase<Der>::NullaryExpr(
+      sizes..., tomo_internal::powers_of_two_generator<Scalar>()
+      );
+}
+
+
+
+
+
+// -----------------------------------------------------------------------------
+
+/** \brief Replicate a Eigen Dense object; same call for compile-time & run-time
+ * dimensions
+ *
+ * Allow our libraries to use the same syntax
+ * \code
+ *   Eigen::Matrix<...> m_replicated = replicated<1,ColFactorAtCompileTime>(matrix, 1, col_factor);
+ * \endcode
+ * for replicating a matrix for which one might, or might not, know the factor at compile
+ * time.
+ *
+ * The corresponding factor template parameter should be either \a Eigen::Dynamic or a
+ * fixed value. If a fixed value is given, you need to specify the \a same value in the
+ * runtime argument (done as an \a eigen_assert() check, i.e. this is compiled out if \a
+ * -DNDEBUG is used)
+ */
+template<typename Derived, int RowFactorCTime, int ColFactorCTime,
+	 typename std::enable_if<(RowFactorCTime == Eigen::Dynamic || ColFactorCTime == Eigen::Dynamic)>::type
+	 dummy = true>
+inline auto replicated(const Eigen::DenseBase<Derived> & x, int row_factor, int col_factor)
+  -> const typename Eigen::DenseBase<Derived>::ReplicateReturnType
+{
+  eigen_assert(RowFactorCTime == Eigen::Dynamic || row_factor == RowFactorCTime);
+  eigen_assert(ColFactorCTime == Eigen::Dynamic || col_factor == ColFactorCTime);
+  return x.replicate(row_factor, col_factor);
+}
+
+template<typename Derived, int RowFactorCTime, int ColFactorCTime,
+	 typename std::enable_if<(RowFactorCTime != Eigen::Dynamic && ColFactorCTime != Eigen::Dynamic)>::type
+	 dummy = true>
+inline auto replicated(const Eigen::DenseBase<Derived> & x, int row_factor, int col_factor)
+  -> const Eigen::Replicate<Derived, RowFactorCTime, ColFactorCTime>
+{
+  eigen_assert(row_factor == RowFactorCTime); (void)row_factor; // "unused argument" warning
+  eigen_assert(col_factor == ColFactorCTime); (void)col_factor; // "unused argument" warning
+  return x.template replicate<RowFactorCTime, ColFactorCTime>();
+}
 
 
 

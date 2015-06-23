@@ -3,14 +3,17 @@
 #define TOMOGRAPHER_MHRW_BIN_ERR_H
 
 
+#include <tomographer/qit/util.h>
 #include <tomographer/tools/util.h>
 #include <tomographer/tools/loggers.h>
 
 
 namespace Tomographer {
 
-
 namespace tomo_internal {
+//
+// internal helper to silence "left shift is negative" GCC warnings
+//
 template<int NumLevels, bool calculate>
 struct helper_samples_size {
   enum {
@@ -25,6 +28,10 @@ struct helper_samples_size<NumLevels,true> {
 };
 } // namespace tomo_internal
 
+
+/** \brief Simple binning analysis for determining error bars.
+ *
+ */
 template<typename ValueType_, typename LoggerType_,
 	 int NumTrackValues_ = Eigen::Dynamic, int NumLevels_ = Eigen::Dynamic,
          bool StoreBinMeans_ = true, typename CountIntType_ = int>
@@ -36,20 +43,32 @@ public:
 
   static constexpr int NumTrackValuesCTime = NumTrackValues_;
   static constexpr int NumLevelsCTime = NumLevels_;
+  static constexpr int NumLevelsPlusOneCTime = (NumLevelsCTime == Eigen::Dynamic
+						? Eigen::Dynamic
+						: (NumLevelsCTime + 1));
   static constexpr int SamplesSizeCTime =
-    tomo_internal::helper_samples_size<NumLevels_, (NumLevels_ > 0 && NumLevels_ < 10)>::value;
+    tomo_internal::helper_samples_size<NumLevelsCTime, (NumLevelsCTime > 0 && NumLevelsCTime < 7)>::value;
   static constexpr bool StoreBinMeans = StoreBinMeans_;
 
   typedef Eigen::Array<ValueType, NumTrackValuesCTime, SamplesSizeCTime> SamplesArray;
   typedef Eigen::Array<ValueType, NumTrackValuesCTime, 1> BinMeansArray;
-  typedef Eigen::Array<ValueType, NumTrackValuesCTime, NumLevelsCTime> BinSqMeansArray;
-
-  typedef LoggerType_ LoggerType;
-
+  typedef Eigen::Array<ValueType, NumTrackValuesCTime, NumLevelsPlusOneCTime> BinSqMeansArray;
 
   const Tools::static_or_dynamic<int, NumTrackValuesCTime> num_track_values;
   const Tools::static_or_dynamic<int, NumLevelsCTime> num_levels;
   const Tools::static_or_dynamic<CountIntType, SamplesSizeCTime> samples_size;
+
+  //! Constants for error bar convergence analysis.  
+  enum {
+    //! Unable to determine whether the error bars have converged.
+    UNKNOWN_CONVERGENCE = 0,
+    //! The error bars appear to have converged.
+    CONVERGED,
+    //! The error bars don't seem to have converged.
+    NOT_CONVERGED
+  };
+
+  typedef LoggerType_ LoggerType;
 
 private:
 
@@ -57,8 +76,8 @@ private:
 
   // where we store the flushed values
   CountIntType n_flushes;
-  Tools::store_if_enabled<BinMeansArray, StoreBinMeans> bin_means;   // shape = (num_tracking, num_levels)
-  BinSqMeansArray bin_sqmeans; // shape = (num_tracking, num_levels)
+  Tools::store_if_enabled<BinMeansArray, StoreBinMeans> bin_means;   // shape = (num_tracking, 1)
+  BinSqMeansArray bin_sqmeans; // shape = (num_tracking, num_levels+1)
 
   LoggerType & logger;
 
@@ -71,7 +90,7 @@ public:
       samples(num_track_values(), samples_size()),
       n_flushes(0),
       bin_means(BinMeansArray::Zero(num_track_values())),
-      bin_sqmeans(BinSqMeansArray::Zero(num_track_values(), num_levels())),
+      bin_sqmeans(BinSqMeansArray::Zero(num_track_values(), num_levels()+1)),
       logger(logger_)
   {
     assert(Tools::is_positive(num_levels()));
@@ -116,9 +135,10 @@ public:
 
       // the size of the samples at the current level of binning. Starts at samples_size,
       // and decreases by half at each higher level.
-      int binnedsize = samples_size();
 
-      for (int level = 0; level < num_levels(); ++level) {
+      for (int level = 0; level <= num_levels(); ++level) {
+
+	const int binnedsize = 1 << (num_levels()-level);
 
 	// mean and sqmean are already averages over this number of stored values [we'll
 	// add another `binnedsize` now]
@@ -138,7 +158,6 @@ public:
 	  }
 	}
 
-	binnedsize >>= 1;
       }
 
       //bin_means = (samples.col(0) + (n_flushes)*bin_means) / (n_flushes+1);
@@ -202,6 +221,7 @@ public:
    */
   inline const BinSqMeansArray & get_bin_sqmeans() const { return  bin_sqmeans; }
 
+
   /** \brief Calculate the standard deviations of samples at different binning levels.
    *
    * Return an array of shape <em>(num_track_values, num_levels)</em> where element
@@ -212,27 +232,46 @@ public:
    * Use this variant of the function if this class doesn't store the bin means. If so,
    * you need to provide the value of the means explicitly to the parameter \a means.
    */
-  template<typename Derived, bool dummy = true,
-           typename std::enable_if<dummy && (NumLevelsCTime != Eigen::Dynamic), bool>::type dummy2 = true>
-  inline BinSqMeansArray calc_stddev_levels(const Eigen::ArrayBase<Derived> & means) const {
-    eigen_assert(means.rows() == num_track_values());
-    eigen_assert(means.cols() == 1);
-    return (bin_sqmeans - (means.cwiseProduct(means)).template replicate<1, NumLevelsCTime>()).cwiseSqrt();
-  }
-
-  template<typename Derived, bool dummy = true,
-           typename std::enable_if<dummy && (NumLevelsCTime == Eigen::Dynamic), bool>::type dummy2 = true>
-  inline BinSqMeansArray calc_stddev_levels(const Eigen::ArrayBase<Derived> & means) const {
-    eigen_assert(means.rows() == num_track_values());
-    eigen_assert(means.cols() == 1);
-    return (bin_sqmeans - (means.cwiseProduct(means)).replicate(1, num_levels())).cwiseSqrt();
-  }
-
   template<typename Derived>
-  inline BinSqMeansArray calc_stddev_lastlevel(const Eigen::ArrayBase<Derived> & means) const {
+  inline BinSqMeansArray calc_stddev_levels(const Eigen::ArrayBase<Derived> & means) const
+  {
     eigen_assert(means.rows() == num_track_values());
     eigen_assert(means.cols() == 1);
-    return (bin_sqmeans.col(num_levels()-1) - (means.cwiseProduct(means))).cwiseSqrt();
+    const int n_levels_plus_one = num_levels()+1;
+    const int n_track_values = num_track_values();
+    BinMeansArray means_sq(means.cwiseProduct(means));
+    return (
+	bin_sqmeans - replicated<1,NumLevelsPlusOneCTime>(means_sq, 1, n_levels_plus_one)
+	).cwiseQuotient(
+	    replicated<NumTrackValuesCTime,1>(
+		powers_of_two<Eigen::Array<ValueType, 1, NumLevelsPlusOneCTime> >(num_levels()+1)
+		.reverse(),
+		// replicated by:
+		n_track_values, 1
+		) * n_flushes
+	    ).cwiseSqrt();
+  }
+
+
+  /** \brief Calculate the standard deviations of samples at the last binning level.
+   *
+   * Return a vector of \a num_track_values elements, where the \a i -th item corresponds
+   * to the standard deviation of the \a i -th value at binning level \a
+   * num_levels.
+   *
+   * If the error bars converged (see \ref determine_error_convergence()), this should be
+   * a good estimate of the error bars on the corresponding values.
+   *
+   * Use this variant of the function if this class doesn't store the bin means. If so,
+   * you need to provide the value of the means explicitly to the parameter \a means.
+   */
+  template<typename Derived>
+  inline BinMeansArray calc_stddev_lastlevel(const Eigen::ArrayBase<Derived> & means) const {
+    eigen_assert(means.rows() == num_track_values());
+    eigen_assert(means.cols() == 1);
+    return (
+	bin_sqmeans.col(num_levels()) - means.cwiseProduct(means)
+	).cwiseSqrt() / std::sqrt(n_flushes);
   }
   
   /** \brief Calculate the standard deviations of samples at different binning levels.
@@ -252,12 +291,71 @@ public:
     return calc_stddev_levels(bin_means.value);
   }
 
+  /** \brief Calculate the standard deviations of samples at the last binning level.
+   *
+   * Return a vector of \a num_track_values elements, where the \a i -th item corresponds
+   * to the standard deviation of the \a i -th value at binning level \a
+   * num_levels.
+   *
+   * If the error bars converged (see \ref determine_error_convergence()), this should be
+   * a good estimate of the error bars on the corresponding values.
+   *
+   * Use this variant of the function if this class stores the bin means. If this is not
+   * the case, you will need to call the variant \ref calc_stddev_lastlevel(const
+   * Eigen::ArrayBase<Derived> & means) with the values of the means.
+   */
   template<bool dummy = true,
            typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
-  inline BinSqMeansArray calc_stddev_lastlevel() const {
+  inline BinMeansArray calc_stddev_lastlevel() const {
     return calc_stddev_lastlevel(bin_means.value);
   }
   
+  /** \brief Attempt to determine if the error bars have converged.
+   *
+   * Call this method after calculating the standard deviations for each level with \ref
+   * calc_stddev_levels(). Use the return value of that function to feed in the input
+   * here.
+   *
+   * \returns an array of integers, of length \a num_track_values, each set to one of \ref
+   * CONVERGED, \ref NOT_CONVERGED or \ref CONVERGENCE_UNKNOWN.
+   */
+  inline Eigen::ArrayXi determine_error_convergence(const Eigen::Ref<const BinSqMeansArray> & stddev_levels)
+  {
+    Eigen::ArrayXi converged_status; // RVO will help
+
+    // verify that indeed the errors have converged. Inspired from ALPS code, see
+    // https://alps.comp-phys.org/svn/alps1/trunk/alps/src/alps/alea/simplebinning.h
+
+    const int range = 4;
+    if (num_levels() < range-1) {
+
+      converged_status = Eigen::ArrayXi::Constant(UNKNOWN_CONVERGENCE, num_track_values());
+
+    } else {
+
+      converged_status = Eigen::ArrayXi::Constant(CONVERGED, num_track_values());
+
+      const auto & stddevs = stddev_levels.col(num_levels);
+
+      for (int level = num_levels()+1 - range; level <= num_levels; ++level) {
+
+	const auto & stddevs_thislevel = stddev_levels.col(level);
+	for (int val_it = 0; val_it < num_track_values; ++val_it) {
+	  if (stddevs_thislevel(val_it) >= stddevs(val_it)) {
+	    converged_status(val_it) = CONVERGED;
+	  } else if (stddevs_thislevel(val_it) < 0.824 * stddevs(val_it)) {
+	    converged_status(val_it) = NOT_CONVERGED;
+	  } else if ((stddevs_thislevel(val_it) < 0.9 * stddevs(val_it)) &&
+		     converged_status(val_it) != NOT_CONVERGED) {
+	    converged_status(val_it) = UNKNOWN_CONVERGENCE;
+	  }
+	}
+
+      }
+    }
+
+    return converged_status;
+  }
 };
 
 

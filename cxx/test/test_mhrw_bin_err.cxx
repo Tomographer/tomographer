@@ -4,7 +4,6 @@
 #include <iostream>
 #include <vector>
 
-//#define TOMOGRAPHER_TEST_EIGEN_ASSERT_ASSERT // throw assert() failure for debugging.
 // definitions for Tomographer test framework -- this must be included before any
 // <tomographer/...> header
 #include "test_tomographer.h"
@@ -29,6 +28,51 @@ struct has_get_bin_means_method
   };
 };
 
+
+struct test_norm_value_calculator
+{
+  typedef double ValueType;
+
+  template<typename Derived>
+  inline ValueType getValue(const Eigen::MatrixBase<Derived> & pt)
+  {
+    return pt.norm();
+  }
+};
+
+template<typename RealScalar_, int Dim = 4>
+struct test_hypercube_mhwalker
+{
+  typedef RealScalar_ RealScalar;
+  typedef Eigen::Matrix<RealScalar, Dim, 1> PointType;
+
+  typedef float FnValueType;
+
+  enum { UseFnSyntaxType = Tomographer::MHUseFnValue };
+
+  // random number generator, etc.
+  std::mt19937 rng;
+  std::uniform_real_distribution<double> dist;
+
+  // constructor
+  test_hypercube_mhwalker() : rng(0), dist(0.0, 1.0) { }
+
+  inline void init() { }
+
+  auto startpoint() -> decltype(PointType::Zero()) { return PointType::Zero(); }
+
+  inline void thermalizing_done() { }
+  inline void done() { }
+  inline PointType jump_fn(const PointType & /*curpt*/, RealScalar /*step_size*/)
+  {
+    return Tomographer::dense_random<PointType>(rng, dist);
+  }
+
+  inline FnValueType fnval(const PointType & /*curpt*/)
+  {
+    return 1.0;
+  }
+};
 
 
 BOOST_AUTO_TEST_SUITE(test_mhrw_bin_err)
@@ -64,7 +108,7 @@ BOOST_AUTO_TEST_CASE(basic)
 
   Eigen::Array<double,4,1> bin_means;
   bin_means = inline_vector(1.0/8, 4*100.0/8, (1+1+1+2+0.5)/8.0, (8*(8+1)/2.0)/8.0);
-  Eigen::Array<double,4,2> bin_sqmeans;
+  Eigen::Array<double,4,3> bin_sqmeans;
   bin_sqmeans.col(0) = inline_vector(1/8.0,
                                      4*(100*100)/8.0,
                                      (1+1+1+4+0.25)/8.0,
@@ -73,6 +117,10 @@ BOOST_AUTO_TEST_CASE(basic)
                                      2*(100*100)/4.0,
                                      (0.5*0.5 + 0.5*0.5 + 0.5*0.5 + pow((2.0+0.5)/2,2))/4.0,
                                      (1.5*1.5 + 3.5*3.5 + 5.5*5.5 + 7.5*7.5)/4.0);
+  bin_sqmeans.col(2) = inline_vector((0+0.25*0.25)/2.0,
+                                     (100*100)/2.0,
+                                     (0.5*0.5 + (3.5/4)*(3.5/4))/2.0,
+                                     (2.5*2.5 + 6.5*6.5)/2.0);
 
   logger.debug("test_mhrw_bin_err::binning_analysis::basic", [&](std::ostream & str) {
       str << "we should obtain bin_means = \n" << bin_means << "\n"
@@ -87,14 +135,20 @@ BOOST_AUTO_TEST_CASE(basic)
   BOOST_CHECK_EQUAL(bina.num_track_values(), 4);
   BOOST_CHECK_EQUAL(bina.num_levels(), 2);
 
-  Eigen::Array<double,4,2> stddev_levels;
-  stddev_levels = (bin_sqmeans - (bin_means.cwiseProduct(bin_means)).replicate<1,2>()).cwiseSqrt();
+  Eigen::Array<double,4,3> stddev_levels;
+  // binning analysis: don't forget to divide by sqrt(num_flushes)
+  stddev_levels = (bin_sqmeans - (bin_means.cwiseProduct(bin_means)).replicate<1,3>()).cwiseSqrt();
+  stddev_levels.col(0) /= std::sqrt( bina.get_n_flushes() * 4.0 );
+  stddev_levels.col(1) /= std::sqrt( bina.get_n_flushes() * 2.0 );
+  stddev_levels.col(2) /= std::sqrt( bina.get_n_flushes() * 1.0 );
 
   Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger>::BinSqMeansArray
-    stddev_levels_calc(4,2);
+    stddev_levels_calc(4,3);
   stddev_levels_calc = bina.calc_stddev_levels();
 
+  BOOST_CHECK(has_get_bin_means_method<decltype(bina)>::value) ;
   MY_BOOST_CHECK_EIGEN_EQUAL(stddev_levels_calc, stddev_levels, tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_stddev_lastlevel(), stddev_levels.col(1), tol);
 }
 
 
@@ -112,7 +166,7 @@ BOOST_AUTO_TEST_CASE(no_bin_means)
   BOOST_MESSAGE(logger.get_contents());
   BOOST_CHECK_EQUAL(bina.get_n_flushes(), 1);
 
-  Eigen::Matrix<double, 4, 2> bin_sqmeans;
+  Eigen::Matrix<double, 4, 3> bin_sqmeans;
   bin_sqmeans <<
     0, 0,
     0.25, 0.125,
@@ -125,14 +179,60 @@ BOOST_AUTO_TEST_CASE(no_bin_means)
   Eigen::Array<double,4,1> means;
   means << 0, 0.25, 1, (3*4/2)/4.0;
 
-  Eigen::Array<double,4,2> stddev_levels;
-  stddev_levels = (bin_sqmeans.array() - (means.cwiseProduct(means)).replicate<1,2>()).cwiseSqrt();
+  Eigen::Array<double,4,3> stddev_levels;
+  stddev_levels = (bin_sqmeans.array() - (means.cwiseProduct(means)).replicate<1,3>()).cwiseSqrt();
+  // divide by sqrt(num-samples)
+  stddev_levels.col(0) /= std::sqrt( bina.get_n_flushes() * 4.0 );
+  stddev_levels.col(1) /= std::sqrt( bina.get_n_flushes() * 2.0 );
+  stddev_levels.col(2) /= std::sqrt( bina.get_n_flushes() * 1.0 );
 
   BOOST_CHECK(!has_get_bin_means_method<decltype(bina)>::value) ;
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_stddev_levels(means), stddev_levels, tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_stddev_lastlevel(means), stddev_levels.col(1), tol);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
 
+
+// =============================================================================
+
+
+BOOST_AUTO_TEST_SUITE(valuehistogramwithbinning)
+
+BOOST_AUTO_TEST_CASE(basic)
+{
+  typedef Tomographer::Logger::BufferLogger LoggerType;
+  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<
+    test_norm_value_calculator,
+    LoggerType,
+    int,
+    float> ValWBinningMHRWStatsCollectorType;
+
+  typedef ValWBinningMHRWStatsCollectorType::HistogramParams HistogramParams;
+  typedef test_hypercube_mhwalker<double, 2 /* Dim */> MHWalkerType;
+  typedef Tomographer::MHRandomWalk<std::mt19937, MHWalkerType, ValWBinningMHRWStatsCollectorType,
+				    LoggerType, int> MHRandomWalkType;
+
+  LoggerType buflog(Tomographer::Logger::LONGDEBUG);
+
+  test_norm_value_calculator vcalc;
+
+  // 4 levels -> samples_size = 2^4 == 16
+  const int num_levels = 4;
+  ValWBinningMHRWStatsCollectorType vhist(HistogramParams(0.f, 1.f, 20), vcalc, num_levels, buflog);
+
+  std::mt19937 rng(0);
+
+  MHWalkerType mhwalker;
+  MHRandomWalkType rwalk(100, 500, 1000, 0.77, mhwalker, vhist, rng, buflog);
+
+  rwalk.run();
+
+  BOOST_MESSAGE(buflog.get_contents());
+
+}
+
+BOOST_AUTO_TEST_SUITE_END()
 
 // =============================================================================
 
