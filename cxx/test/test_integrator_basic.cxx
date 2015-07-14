@@ -168,8 +168,8 @@ BOOST_AUTO_TEST_CASE(binning_analysis)
 
   typedef ValWBinningMHRWStatsCollectorType::HistogramParams HistogramParams;
   typedef Tomographer::DMStateSpaceLLHMHWalker<OurTomoProblem,std::mt19937,LoggerType> MHWalkerType;
-  typedef Tomographer::MHRandomWalk<std::mt19937, MHWalkerType, ValWBinningMHRWStatsCollectorType,
-				    LoggerType, int> MHRandomWalkType;
+  //  typedef Tomographer::MHRandomWalk<std::mt19937, MHWalkerType, ValWBinningMHRWStatsCollectorType,
+  //				    LoggerType, int> MHRandomWalkType;
   OurValueCalculator fidcalc(dat);
 
   // N levels -> samples_size = 2^N
