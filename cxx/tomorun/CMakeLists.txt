@@ -3,6 +3,12 @@
 # Add our executable
 # ==============================================================================
 
+
+# already parallelized application, so disable Eigen's own parallelization (see
+# http://eigen.tuxfamily.org/dox/TopicMultiThreading.html)
+add_definitions(-DEIGEN_DONT_PARALLELIZE)
+
+
 add_executable(tomorun tomorun.cxx)
 
 SetOpenMPTarget(tomorun)

@@ -244,15 +244,15 @@ BOOST_AUTO_TEST_CASE(simple)
 
   test_norm_value_calculator vcalc;
 
-  // N levels -> samples_size = 2^N,  2^11 == 2048
-  const int num_levels = 11;
+  // N levels -> samples_size = 2^N,  2^10 == 1024
+  const int num_levels = 10;
   //const int num_levels = 4;
   ValWBinningMHRWStatsCollectorType vhist(HistogramParams(0.f, 2.0f, 20), vcalc, num_levels, buflog);
 
   std::mt19937 rng(0); // seeded rng, deterministic results
 
   MHWalkerType mhwalker;
-  MHRandomWalkType rwalk(10, 50, 100000, 0.03, mhwalker, vhist, rng, buflog);
+  MHRandomWalkType rwalk(5, 50, 500000, 0.03, mhwalker, vhist, rng, buflog);
 
   rwalk.run();
 

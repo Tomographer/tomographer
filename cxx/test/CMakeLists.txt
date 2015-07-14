@@ -15,6 +15,7 @@ RemoveFlag(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}"  "-DNDEBUG")
 
 add_definitions(-DBOOST_TEST_DYN_LINK)
 
+
 # we need to access the expected output patterns. Trailing slash needed.
 set(TOMOGRAPHER_TEST_PATTERNS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patterns/"
   CACHE STRING "path to the expected test results patterns")
