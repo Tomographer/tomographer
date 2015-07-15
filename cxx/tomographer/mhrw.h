@@ -537,17 +537,28 @@ public:
 template<typename... MHRWStatsCollectors>
 class MultipleMHRWStatsCollectors
 {
-  std::tuple<MHRWStatsCollectors&...>  statscollectors;
+public:
+  typedef std::tuple<MHRWStatsCollectors&...> MHRWStatsCollectorsRefTupleType;
+  typedef std::tuple<MHRWStatsCollectors...> MHRWStatsCollectorsTupleType;
 
-  enum {
-    //! The number of stats collectors we are tracking
-    NumStatColl = sizeof...(MHRWStatsCollectors)
-  };
+  //! The number of stats collectors we are tracking
+  static constexpr int NumStatColl = sizeof...(MHRWStatsCollectors);
+
+private:
+  MHRWStatsCollectorsRefTupleType statscollectors;
 
 public:
+
   MultipleMHRWStatsCollectors(MHRWStatsCollectors&... statscollectors_)
     : statscollectors(statscollectors_...)
   {
+  }
+
+  // method to get a particular stats collector
+  template<int I>
+  inline const typename std::tuple_element<I, MHRWStatsCollectorsTupleType>::type & getStatsCollector()
+  {
+    return std::get<I>(statscollectors);
   }
 
   // init() callback
@@ -917,8 +928,8 @@ public:
     const HistogramType & h = value_histogram.histogram();
     result.hist.params = h.params;
     CountRealAvgType normalization = h.bins.sum();
-    result.hist.final_histogram = h.bins.template cast<CountRealAvgType>() / normalization;
-    result.error_levels = binning_analysis.calc_error_levels(result.hist.final_histogram);
+    result.hist.bins = h.bins.template cast<CountRealAvgType>() / normalization;
+    result.error_levels = binning_analysis.calc_error_levels(result.hist.bins);
     result.hist.std_dev = result.error_levels.col(binning_analysis.num_levels()).template cast<CountRealAvgType>();
     result.hist.off_chart = h.off_chart / normalization;
 
@@ -932,7 +943,7 @@ public:
 	    << "\t-> convergence analysis: \n";
 	for (int k = 0; k < binning_analysis.num_track_values(); ++k) {
 	  str << "\t    val[" << std::setw(3) << k << "] = "
-	      << std::setw(12) << result.hist.final_histogram(k)
+	      << std::setw(12) << result.hist.bins(k)
 	      << " +- " << std::setw(12) << result.hist.std_dev(k);
 	  if (result.converged_status(k) == BinningAnalysisType::CONVERGED) {
 	    str << "  [CONVERGED]";
@@ -972,6 +983,133 @@ public:
 
 };
 
+
+
+
+
+
+/** \brief Template, specializable class to get status reports from stats collectors.
+ *
+ * Specialize this class for your stats collector to be able to provide a short status
+ * report. Just provide 2-3 lines with the most important information enough to provide a
+ * very basic overview, not a full-length report.
+ */
+template<typename MHRWStatsCollector_>
+struct MHRWStatsCollectorStatus
+{
+  typedef MHRWStatsCollector_ MHRWStatsCollector;
+
+  static constexpr bool CanProvideStatus = false;
+
+  /** \brief Prepare a string which reports the status of the given stats collector
+   *
+   * Don't end your string with a newline, it will be added automatically.
+   */
+  static inline std::string getStatus(const MHRWStatsCollector * stats)
+  {
+    return std::string();
+  }
+};
+
+
+
+/** \brief Provide status reporting for a MultipleMHRWStatsCollectors
+ *
+ */
+template<typename... Args>
+struct MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >
+{
+  typedef MultipleMHRWStatsCollectors<Args... > MHRWStatsCollector;
+
+  static constexpr int NumStatColl = MHRWStatsCollector::NumStatColl;
+  
+  static constexpr bool CanProvideStatus = true;
+
+  template<int I = 0, typename std::enable_if<(I < NumStatColl), bool>::type dummy = true>
+  static inline std::string getStatus(const MHRWStatsCollector * stats)
+  {
+    return MHRWStatsCollectorStatus<
+        typename std::tuple_element<I, typename MHRWStatsCollector::MHRWStatsCollectorsTupleType>::type
+      >::getStatus(stats.template getStatsCollector<I>())
+      + ((I < (NumStatColl-1)) ? std::string("\n") : std::string())
+      + getStatus<I+1>(stats);
+  };
+
+  template<int I = 0, typename std::enable_if<(I == NumStatColl), bool>::type dummy = true>
+  static inline std::string getStatus(const MHRWStatsCollector * stats)
+  {
+    return std::string();
+  }
+
+};
+
+/** \brief Provide status reporting for a ValueHistogramMHRWStatsCollector
+ *
+ */
+template<typename... Args>
+struct MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<Args... > >
+{
+  typedef ValueHistogramMHRWStatsCollector<Args... > MHRWStatsCollector;
+  
+  static constexpr bool CanProvideStatus = true;
+
+  static inline std::string getStatus(const MHRWStatsCollector * stats)
+  {
+    const int maxbarwidth = 50;
+    std::string s = "Histogram: ";
+
+    typedef typename MHRWStatsCollector::HistogramType HistogramType;
+    typedef typename HistogramType::CountType CountType;
+
+    const HistogramType & histogram = stats->histogram();
+    const CountType max = histogram.bins.maxCoeff();
+
+    int numdiv = (int)(std::ceil((float)histogram.num_bins() / maxbarwidth) + 0.5);
+    int barwidth = (int)(std::ceil(histogram.num_bins() / numdiv) + 0.5);
+
+    Eigen::ArrayXi vec(barwidth);
+    Eigen::ArrayXf veclog(barwidth);
+
+    int k;
+    float minlogval = 0;
+    float maxlogval = 0;
+    for (k = 0; k < barwidth; ++k) {
+      vec(k) = histogram.bins.segment(numdiv*k, std::min((std::size_t)numdiv,
+                                                         (std::size_t)(histogram.bins.size()-numdiv*k))).sum();
+      if (vec(k) > 0) {
+        veclog(k) = std::log((float)vec(k));
+        if (k == 0 || minlogval > veclog(k)) {
+          minlogval = veclog(k);
+        }
+        if (k == 0 || maxlogval < veclog(k)) {
+          maxlogval = veclog(k) + 1e-6f;
+        }
+      } else {
+        veclog(k) = 0.f;
+      }
+    }
+
+    // now, prepare string
+    s += Tools::fmts("%.2g|", (double)histogram.bin_lower_value(0));
+    const std::string chars = ".-+ox%#";
+    for (k = 0; k < barwidth; ++k) {
+      if (vec(k) <= 0) {
+        s += ' ';
+      } else {
+        int i = (int)(chars.size() * (veclog(k) - minlogval) / (maxlogval - minlogval));
+        if (i < 0) { i = 0; }
+        if (i >= (int)chars.size()) { i = chars.size()-1; }
+        s += chars[i];
+      }
+    }
+    s += Tools::fmts("|%.2g", (double)histogram.bin_upper_value(histogram.num_bins()-1));
+    if (histogram.off_chart > 0) {
+      s += Tools::fmts(" [+%.1g off]", (double)histogram.off_chart);
+    }
+
+    return s;
+  }
+};
 
 
 

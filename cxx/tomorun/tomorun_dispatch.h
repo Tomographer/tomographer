@@ -2,6 +2,7 @@
 #ifndef TOMORUN_DISPATCH
 #define TOMORUN_DISPATCH
 
+#include <tomographer/qit/pos_semidef_util.h>
 
 // -----------------------------------------------------------------------------
 
@@ -168,9 +169,9 @@ inline void tomorun(OurTomoProblem & tomodat, ProgOptions * opt,
     outf.open(csvfname);
     outf << "Value\tAvgCounts\tError\n"
          << std::scientific << std::setprecision(10);
-    for (int kk = 0; kk < results.finalhistogram.final_histogram.size(); ++kk) {
+    for (int kk = 0; kk < results.finalhistogram.bins.size(); ++kk) {
       outf << (double)results.finalhistogram.params.bin_lower_value(kk) << "\t"
-           << (double)results.finalhistogram.final_histogram(kk) << "\t"
+           << (double)results.finalhistogram.bins(kk) << "\t"
            << (double)results.finalhistogram.std_dev(kk) << "\n";
     }
     logger.info("tomorun()", "Wrote histogram to CSV file %s", csvfname.c_str());
@@ -301,8 +302,18 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   typename OurMatrQ::MatrixType T_ref = matq.initMatrixType();
   if (use_ref_state) {
     Tomographer::MAT::getEigenMatrix(matf->var("rho_ref"), &rho_ref);
-    Eigen::SelfAdjointEigenSolver<typename OurMatrQ::MatrixType> rho_ref_eig(rho_ref);
-    T_ref = rho_ref_eig.operatorSqrt();
+
+    typedef typename Eigen::SelfAdjointEigenSolver<typename OurMatrQ::MatrixType>::RealVectorType RealVectorType;
+
+    Eigen::SelfAdjointEigenSolver<typename OurMatrQ::MatrixType> eig_rho_ref( rho_ref );
+    auto U = eig_rho_ref.eigenvectors();
+    auto d = eig_rho_ref.eigenvalues();
+    
+    Tomographer::Tools::force_pos_vec_keepsum<RealVectorType>(d, 1e-12);
+    
+    rho_ref = U * d.asDiagonal() * U.adjoint();
+    T_ref = U * d.cwiseSqrt().asDiagonal() * U.adjoint();
+
     logger.debug("tomorun_dispatch()", [&](std::ostream & str) {
 	str << "Using rho_ref = \n" << rho_ref << "\n\t-> T_ref = \n" << T_ref << "\n";
       });

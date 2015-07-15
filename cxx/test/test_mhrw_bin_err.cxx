@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-#define TOMOGRAPHER_TEST_EIGEN_ASSERT_ASSERT
+//#define TOMOGRAPHER_TEST_EIGEN_ASSERT_ASSERT
 // definitions for Tomographer test framework -- this must be included before any
 // <tomographer/...> header
 #include "test_tomographer.h"

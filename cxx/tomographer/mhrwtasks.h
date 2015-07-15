@@ -5,6 +5,7 @@
 #include <string>
 #include <limits>
 #include <random>
+#include <regex>
 
 #include <tomographer/tools/fmt.h>
 #include <tomographer/mhrw.h>
@@ -174,8 +175,8 @@ namespace MHRWTasks
       typedef decltype(stats) MHRWStatsCollectorType;
 
       // our own "stats collector" which checks if we need to send a status report back
-      typedef StatusReportCheck<TaskManagerIface> OurStatusReportCheck;
-      OurStatusReportCheck statreportcheck(this, tmgriface);
+      typedef StatusReportCheck<TaskManagerIface, MHRWStatsCollectorType> OurStatusReportCheck;
+      OurStatusReportCheck statreportcheck(this, &stats, tmgriface);
       
       typedef MultipleMHRWStatsCollectors<MHRWStatsCollectorType, OurStatusReportCheck>
 	OurStatsCollectors;
@@ -216,14 +217,15 @@ namespace MHRWTasks
      *
      * This is in fact a StatsCollector.
      */
-    template<typename TaskManagerIface>
+    template<typename TaskManagerIface, typename MHRWStatsCollectorType>
     struct StatusReportCheck
     {
-      StatusReportCheck(MHRandomWalkTask * mhrwtask_, TaskManagerIface *tmgriface_)
-        : mhrwtask(mhrwtask_), tmgriface(tmgriface_)
+      StatusReportCheck(MHRandomWalkTask * mhrwtask_, MHRWStatsCollectorType * stats_, TaskManagerIface *tmgriface_)
+        : mhrwtask(mhrwtask_), stats(stats_), tmgriface(tmgriface_)
       { }
 
       MHRandomWalkTask *mhrwtask;
+      MHRWStatsCollectorType *stats;
       TaskManagerIface *tmgriface;
 
       inline void init() { }
@@ -260,6 +262,12 @@ namespace MHRWTasks
 	      accept_ratio,
 	      warn_accept_ratio ? " **!!" : ""
               );
+          typedef MHRWStatsCollectorStatus<MHRWStatsCollectorType> MHRWStatsCollectorStatusType;
+          if (MHRWStatsCollectorStatusType::CanProvideStatus) {
+            std::string nlindent = "\n    ";
+            msg += nlindent +
+              std::regex_replace(MHRWStatsCollectorStatusType::getStatus(stats), std::regex("\n"), nlindent);
+          }
           tmgriface->submit_status_report(StatusReport(fdone, msg, k, rw.n_sweep(), rw.n_therm(),
                                                        rw.n_run(), accept_ratio));
         }

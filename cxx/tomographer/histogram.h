@@ -10,6 +10,8 @@
 #include <sstream> // std::stringstream
 #include <stdexcept> // std::out_of_range
 
+#include <boost/math/constants/constants.hpp>
+
 #include <Eigen/Core>
 
 #include <tomographer/tools/fmt.h>
@@ -87,13 +89,40 @@ struct UniformBinsHistogram
     /** \brief Returns the value which a given bin index represents (lower bin value
      * limit)
      *
+     * This is the value at the left edge of the bin.
+     *
      * \note The index must be valid, i.e. <code>index >= 0 && index < num_bins</code>,
      * or you might get an <code>assert()</code> failure in your face.
      */
     inline Scalar bin_lower_value(std::size_t index) const
     {
-      assert(/*index >= 0 && */ (std::size_t)index < num_bins);
+      assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
       return min + index * (max-min) / num_bins;
+    }
+    /** \brief Returns the value which a given bin index represents (center bin value)
+     *
+     * This is the value at the center of the bin.
+     *
+     * \note The index must be valid, i.e. <code>index >= 0 && index < num_bins</code>,
+     * or you might get an <code>assert()</code> failure in your face.
+     */
+    inline Scalar bin_center_value(std::size_t index) const
+    {
+      assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
+      return min + (index+boost::math::constants::half<Scalar>()) * (max-min) / num_bins;
+    }
+    /** \brief Returns the value which a given bin index represents (upper bin value
+     * limit)
+     *
+     * This is the value at the right edge of the bin.
+     *
+     * \note The index must be valid, i.e. <code>index >= 0 && index < num_bins</code>,
+     * or you might get an <code>assert()</code> failure in your face.
+     */
+    inline Scalar bin_upper_value(std::size_t index) const
+    {
+      assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
+      return min + (index+1) * (max-min) / num_bins;
     }
     /** \brief Returns the width of a bin
      *
@@ -212,8 +241,19 @@ struct UniformBinsHistogram
   //! Shorthand for <code>params.bin_lower_value(index)</code>
   inline Scalar bin_lower_value(int index) const
   {
-    params.bin_lower_value(index);
+    return params.bin_lower_value(index);
   }
+  //! Shorthand for <code>params.bin_center_value(index)</code>
+  inline Scalar bin_center_value(std::size_t index) const
+  {
+    return params.bin_center_value(index);
+  }
+  //! Shorthand for <code>params.bin_upper_value(index)</code>
+  inline Scalar bin_upper_value(std::size_t index) const
+  {
+    return params.bin_upper_value(index);
+  }
+
   //! Shorthand for <code>params.bin_resolution()</code>
   inline Scalar bin_resolution() const
   {
@@ -336,7 +376,7 @@ struct UniformBinsHistogram
  *
  * \note Check out the source how this works. First call the constructor, or reset(), then
  * call add_histogram() as much as you need, DON'T FORGET TO CALL finalize(), and then you
- * may read out meaningful results in final_histogram, std_dev, off_chart and
+ * may read out meaningful results in bins, std_dev, off_chart and
  * num_histograms.
  *  
  */
@@ -347,7 +387,7 @@ struct AveragedHistogram
   typedef typename HistogramType::Params HistogramParamsType;
 
   HistogramParamsType params;
-  Eigen::Array<RealAvgType, Eigen::Dynamic, 1> final_histogram;
+  Eigen::Array<RealAvgType, Eigen::Dynamic, 1> bins;
   Eigen::Array<RealAvgType, Eigen::Dynamic, 1> std_dev;
   RealAvgType off_chart;
 
@@ -363,7 +403,7 @@ struct AveragedHistogram
   inline void reset(const HistogramParamsType& params_)
   {
     params = params_;
-    final_histogram = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
+    bins = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
     std_dev = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
     off_chart = 0.0;
     num_histograms = 0;
@@ -372,7 +412,7 @@ struct AveragedHistogram
   //! Resets the data keeping the exisiting params.
   inline void reset()
   {
-    final_histogram = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
+    bins = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
     std_dev = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
     off_chart = 0.0;
     num_histograms = 0;
@@ -380,16 +420,16 @@ struct AveragedHistogram
 
   inline void add_histogram(const HistogramType& histogram)
   {
-    // final_histogram collects the sum of the histograms
+    // bins collects the sum of the histograms
     // std_dev for now collects the sum of squares. std_dev will be normalized in run_finished().
 
     eigen_assert((typename HistogramType::CountType)histogram.num_bins() == params.num_bins);
-    eigen_assert((typename HistogramType::CountType)histogram.num_bins() == final_histogram.rows());
+    eigen_assert((typename HistogramType::CountType)histogram.num_bins() == bins.rows());
     eigen_assert((typename HistogramType::CountType)histogram.num_bins() == std_dev.rows());
 
     for (std::size_t k = 0; k < histogram.num_bins(); ++k) {
       RealAvgType binvalue = histogram.count(k);
-      final_histogram(k) += binvalue;
+      bins(k) += binvalue;
       std_dev(k) += binvalue * binvalue;
     }
 
@@ -399,12 +439,12 @@ struct AveragedHistogram
 
   inline void finalize()
   {
-    final_histogram /= num_histograms;
+    bins /= num_histograms;
     std_dev /= num_histograms;
     off_chart /= num_histograms;
 
     // std_dev = sqrt(< X^2 > - < X >^2) / sqrt(Nrepeats)
-    auto finhist2 = final_histogram*final_histogram; // for array, this is c-wise product
+    auto finhist2 = bins*bins; // for array, this is c-wise product
     std_dev = ( (std_dev - finhist2) / num_histograms ).sqrt();
   }
 
@@ -423,11 +463,11 @@ struct AveragedHistogram
     }
 
     std::string s;
-    assert(final_histogram.size() >= 0);
-    std::size_t Ntot = (std::size_t)final_histogram.size();
+    assert(bins.size() >= 0);
+    std::size_t Ntot = (std::size_t)bins.size();
     // max_width - formatting widths (see below) - some leeway
     const unsigned int max_bar_width = max_width - (6+3+4+5+4+5) - 5;
-    double barscale = (1.0+final_histogram.maxCoeff()) / max_bar_width; // full bar is max_bar_width chars wide
+    double barscale = (1.0+bins.maxCoeff()) / max_bar_width; // full bar is max_bar_width chars wide
     assert(barscale > 0);
     auto val_to_bar_len = [max_bar_width,barscale](double val) -> unsigned int {
       if (val < 0) {
@@ -451,15 +491,15 @@ struct AveragedHistogram
     };
     
     for (std::size_t k = 0; k < Ntot; ++k) {
-      assert(final_histogram(k) >= 0);
+      assert(bins(k) >= 0);
       std::string sline(max_bar_width, ' ');
-      fill_str_len(sline, 0.0, final_histogram(k) - std_dev(k), '*', '*');
-      fill_str_len(sline, final_histogram(k) - std_dev(k), final_histogram(k) + std_dev(k), '-', '|');
+      fill_str_len(sline, 0.0, bins(k) - std_dev(k), '*', '*');
+      fill_str_len(sline, bins(k) - std_dev(k), bins(k) + std_dev(k), '-', '|');
       
       s += Tools::fmts("%-6.4g | %s    %5.1f +- %5.1f\n",
 		       params.min + k*(params.max-params.min)/Ntot,
 		       sline.c_str(),
-		       final_histogram(k), std_dev(k)
+		       bins(k), std_dev(k)
 	  );
     }
     if (off_chart > 1e-6) {
