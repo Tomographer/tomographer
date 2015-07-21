@@ -226,6 +226,30 @@ public:
   inline const BinSqMeansArray & get_bin_sqmeans() const { return  bin_sqmeans; }
 
 
+  /** \brief Get the sum of each tracked value observed.
+   *
+   */
+  template<bool dummy = true,
+           typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
+  inline const BinMeansArray get_bin_sum() const { return bin_means.value * n_flushes * samples_size(); }
+
+  /** \brief Get the raw average of the squared values observed, for each binning level.
+   *
+   * The vector <em>bin_sqmeans.col(0)</em> contains the raw average of the squares of the
+   * raw values observed, <em>bin_sqmeans.col(1)</em> the raw average of the squares of
+   * the values averaged 2 by 2 (i.e. at the first binning level), and so on.
+   */
+  inline const BinSqMeansArray get_bin_sumsq() const {
+    return bin_sqmeans * n_flushes *
+      replicated<NumTrackValuesCTime,1>(
+          powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
+          .transpose().reverse(),
+          // replicated by:
+          num_track_values(), 1
+          );
+  }
+
+
   /** \brief Calculate the error bars of samples at different binning levels.
    *
    * Return an array of shape <em>(num_track_values, num_levels)</em> where element
@@ -252,7 +276,7 @@ public:
 	).cwiseMax(0).cwiseQuotient(
 	    // divide by the number of samples from which these bin-means were obtained, minus one.
 	    replicated<NumTrackValuesCTime,1>(
-		powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
+		powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(n_levels_plus_one)
 		.transpose().reverse(),
 		// replicated by:
 		n_track_values, 1

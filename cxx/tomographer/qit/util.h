@@ -275,8 +275,13 @@ namespace Eigen {
 namespace Tomographer {
 
 
-/** \brief Expression for the k-th canonical basis vector of given dimension
+/** \brief Expression for a 1-D expression of powers of two
  *
+ * An Eigen template expression yielding powers of two as a column vector. The \f$ i\f$
+ * -th item is \f$ 2^i \f$.
+ *
+ * \param sizes You may either specify the length of the vector (1 parameter), or the size
+ *        of a column matrix (2 parameters, the second being equal to one).
  */
 template<typename Der, typename... IndexTypes>
 inline auto powers_of_two(IndexTypes... sizes)
