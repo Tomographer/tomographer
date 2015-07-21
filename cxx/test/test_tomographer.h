@@ -7,10 +7,76 @@
 
 #define EIGEN_INITIALIZE_MATRICES_BY_NAN
 
-#ifndef TOMOGRAPHER_TEST_EIGEN_ASSERT_ASSERT
-// we want `eigen_assert()` to raise an `eigen_assert_exception` here
+#include <cstdlib>
+
+// define the exception class, but don't override eigen's eigen_assert() macro itself
 #include <tomographer/tools/eigen_assert_exception.h>
-#endif
+
+
+/** 
+ * \brief Tool to dynamically request eigen_assert() to either assert() or to throw an
+ *        exception.
+ *
+ * We want true failures to cause an assert() failure, because they can be traced much
+ * more easily (core dump). However, sometimes we want to test that an eigen_assert() is
+ * truly triggered. In that case, we dynamically request eigen_assert() to trigger an
+ * exception.
+ *
+ * An exception can be triggered in a scope by using the idiom
+ * \code
+ *  {
+ *    // new code block
+ *    EigenAssertTest::setting_scope scopevar(true); // true -> throw exception, false -> assert()
+ *    ... // eigen_assert() here throws an exception
+ *  }
+ *  // setting is popped to previous value
+ * \endcode
+ */
+
+
+namespace EigenAssertTest {
+
+struct setting_scope;
+extern setting_scope * setting_scope_ptr;
+
+
+struct setting_scope
+{
+  setting_scope(bool throws)
+    : throws_exception(throws), parent_scope(setting_scope_ptr)
+  {
+    std::fprintf(stderr, "(): setting_scope_ptr=%p, throws_exception=%d\n", (void*)::EigenAssertTest::setting_scope_ptr, (::EigenAssertTest::setting_scope_ptr ? (int)::EigenAssertTest::setting_scope_ptr->throws_exception : 999999)); \
+    setting_scope_ptr = this;
+  }
+
+  ~setting_scope()
+  {
+    std::fprintf(stderr, "~(): setting_scope_ptr=%p, throws_exception=%d\n", (void*)::EigenAssertTest::setting_scope_ptr, (::EigenAssertTest::setting_scope_ptr ? (int)::EigenAssertTest::setting_scope_ptr->throws_exception : 999999)); \
+    setting_scope_ptr = parent_scope;
+  }
+
+  const bool throws_exception;
+private:
+  setting_scope * parent_scope;
+};
+
+
+} // namespace EigenAssertTest
+
+
+#define eigen_assert(x)                                                 \
+  do {                                                                  \
+    std::fprintf(stderr, "setting_scope_ptr=%p, throws_exception=%d\n", (void*)::EigenAssertTest::setting_scope_ptr, (int)(::EigenAssertTest::setting_scope_ptr ? ::EigenAssertTest::setting_scope_ptr->throws_exception : 999999)); \
+    if (::EigenAssertTest::setting_scope_ptr && ::EigenAssertTest::setting_scope_ptr->throws_exception) { \
+      std::fprintf(stderr, "an eigen_assert() failure will cause an exception!\n"); \
+      if (!(x)) {                                                       \
+        throw (::Tomographer::Tools::eigen_assert_exception(#x, __FILE__, __LINE__)); \
+      }                                                                 \
+    } else {                                                            \
+      assert((x) && "eigen_assert() failure");                          \
+    }                                                                   \
+  } while (false)
+
 
 #include <Eigen/Core>
 

@@ -7,6 +7,8 @@
 #include <tomographer/tools/util.h>
 #include <tomographer/tools/loggers.h>
 
+#include <boost/math/constants/constants.hpp>
+
 
 namespace Tomographer {
 
@@ -37,7 +39,7 @@ struct helper_samples_size<NumLevels,true> {
  */
 template<typename ValueType_, typename LoggerType_,
 	 int NumTrackValues_ = Eigen::Dynamic, int NumLevels_ = Eigen::Dynamic,
-         bool StoreBinMeans_ = true, typename CountIntType_ = int>
+         bool StoreBinSums_ = true, typename CountIntType_ = int>
 class BinningAnalysis
 {
 public:
@@ -51,11 +53,11 @@ public:
 						: (NumLevelsCTime + 1));
   static constexpr int SamplesSizeCTime =
     tomo_internal::helper_samples_size<NumLevelsCTime, (NumLevelsCTime > 0 && NumLevelsCTime < 7)>::value;
-  static constexpr bool StoreBinMeans = StoreBinMeans_;
+  static constexpr bool StoreBinSums = StoreBinSums_;
 
   typedef Eigen::Array<ValueType, NumTrackValuesCTime, SamplesSizeCTime> SamplesArray;
-  typedef Eigen::Array<ValueType, NumTrackValuesCTime, 1> BinMeansArray;
-  typedef Eigen::Array<ValueType, NumTrackValuesCTime, NumLevelsPlusOneCTime> BinSqMeansArray;
+  typedef Eigen::Array<ValueType, NumTrackValuesCTime, 1> BinSumArray;
+  typedef Eigen::Array<ValueType, NumTrackValuesCTime, NumLevelsPlusOneCTime> BinSumSqArray;
 
   const Tools::static_or_dynamic<int, NumTrackValuesCTime> num_track_values;
   const Tools::static_or_dynamic<int, NumLevelsCTime> num_levels;
@@ -75,13 +77,52 @@ public:
 
 private:
 
-  SamplesArray samples; // shape = (num_tracking, num_samples)
+  /** \brief The array in which we store samples that arrive from the simulation.
+   *
+   * This array has size \a samples_size() (for each tracking value). Once this array is
+   * filled, it is <em>flushed</em>, i.e. the values are processed and stored as
+   * appropriate in \ref bin_sum and \ref bin_sumsq.
+   *
+   * This array has \a num_tracking_values() rows and \a samples_size() columns.
+   */
+  SamplesArray samples;
 
   // where we store the flushed values
+  
+  /** \brief Number of samples seen.
+   *
+   * This is equal to the number of times \ref process_new_values() was called.
+   */
+  CountIntType n_samples;
+  /** \brief Number of flushes.
+   *
+   * A flush corresponds to having filled all the samples in the sample vector (of size \a
+   * samples_size()), and pushing new values into \ref bin_sum and \ref bin_sumsq.
+   */
   CountIntType n_flushes;
-  Tools::store_if_enabled<BinMeansArray, StoreBinMeans> bin_means;   // shape = (num_tracking, 1)
-  BinSqMeansArray bin_sqmeans; // shape = (num_tracking, num_levels+1)
+  /** \brief Sum of all values seen.
+   *
+   * This is a column vector of \a num_tracking_values() entries.
+   *
+   * \note This member is only available if the template parameter \a StoreBinSums is set
+   * to \c true.
+   *
+   * \note values are added to this array as soon as they are seen, not when the samples
+   * array is flushed. In particular, if the total number of values is not a multiple of
+   * \a samples_size(), then there will be samples counted into \a bin_sum but not into \a
+   * bin_sumsq.
+   */
+  Tools::store_if_enabled<BinSumArray, StoreBinSums> bin_sum;
+  /** \brief Sum of the squares of all flushed & processed values, at different binning
+   * levels.
+   *
+   * This is a matrix of \a num_tracking_values() rows and <em>num_levels()+1</em>
+   * columns.
+   *
+   */
+  BinSumSqArray bin_sumsq;
 
+  //! Just a boring logger...
   LoggerType & logger;
 
 public:
@@ -92,8 +133,8 @@ public:
       samples_size(1 << num_levels()),
       samples(num_track_values(), samples_size()),
       n_flushes(0),
-      bin_means(BinMeansArray::Zero(num_track_values())),
-      bin_sqmeans(BinSqMeansArray::Zero(num_track_values(), num_levels()+1)),
+      bin_sum(BinSumArray::Zero(num_track_values())),
+      bin_sumsq(BinSumSqArray::Zero(num_track_values(), num_levels()+1)),
       logger(logger_)
   {
     assert(Tools::is_positive(num_levels()));
@@ -106,34 +147,40 @@ public:
   inline void reset()
   {
     n_flushes = 0;
-    helper_reset_bin_means();
-    bin_sqmeans = BinSqMeansArray::Zero(num_track_values(), num_levels()+1);
+    n_samples = 0;
+    helper_reset_bin_sum();
+    bin_sumsq = BinSumSqArray::Zero(num_track_values(), num_levels()+1);
     logger.longdebug("BinningAnalysis::reset()", "ready to go.");
   }
   
   template<typename CalcValType, bool dummy = true, 
 	   typename std::enable_if<dummy && (NumTrackValuesCTime == 1), bool>::type dummy2 = true>
-  inline void process_new_value(const CountIntType k, const CalcValType val)
+  inline void process_new_value(const CalcValType val)
   {
     // for a single value
-    process_new_values(k, Eigen::Map<const Eigen::Array<CalcValType,1,1> >(&val));
+    process_new_values(Eigen::Map<const Eigen::Array<CalcValType,1,1> >(&val));
   }
 
   template<typename Derived>
-  inline void process_new_values(const CountIntType k, const Eigen::DenseBase<Derived> & vals)
+  inline void process_new_values(const Eigen::DenseBase<Derived> & vals)
   {
-    const int ninbin = k % samples_size();
+    const int ninbin = n_samples % samples_size();
+
+    ++n_samples;
 
     // store the new values in the bins  [also if ninbin == 0]
     samples.col(ninbin) = vals;
 
+    // add to our sum of values, if applicable.
+    helper_update_bin_sum(samples.col(ninbin));
+
     // see if we have to flush the bins (equivalent to `ninbin == samples_size()-1`)
-    if ( (k+1) % samples_size() == 0) {
+    if ( ninbin == samples_size() - 1 ) {
       
       // we have filled all bins. Flush them. Re-use the beginning of the samples[] array
       // to store the reduced bins while flushing them.
       logger.longdebug("BinningAnalysis::process_new_values()", [&](std::ostream & str) {
-	  str << "Reached k = " << k << "; flushing bins. samples_size() = " << samples_size();
+	  str << "n_samples is now " << n_samples << "; flushing bins. samples_size() = " << samples_size();
 	});
 
       // the size of the samples at the current level of binning. Starts at samples_size,
@@ -143,32 +190,25 @@ public:
 
 	const int binnedsize = 1 << (num_levels()-level);
 
-	// mean and sqmean are already averages over this number of stored values [we'll
-	// add another `binnedsize` now]
-	const int n = binnedsize * n_flushes; 
-
 	logger.longdebug("BinningAnalysis::process_new_values()", [&](std::ostream & str) {
-	    str << "Processing binning level = " << level << ": binnedsize="<<binnedsize<<", "
-		<< "n=" << n << "; n_flushes=" << n_flushes << "\n";
+	    str << "Processing binning level = " << level << ": binnedsize="<<binnedsize
+                << "; n_flushes=" << n_flushes << "\n";
 	    str << "\tbinned samples = \n" << samples.block(0,0,num_track_values(),binnedsize);
 	  });
 
 	for (int ksample = 0; ksample < binnedsize; ++ksample) {
-	  bin_sqmeans.col(level) = (samples.col(ksample).cwiseProduct(samples.col(ksample))
-				   + (n+ksample) * bin_sqmeans.col(level)) / (n+ksample+1);
+	  bin_sumsq.col(level) += samples.col(ksample).cwiseProduct(samples.col(ksample));
 	  if (ksample % 2 == 0 && binnedsize > 1) {
-	    samples.col(ksample/2) = 0.5*(samples.col(ksample)+samples.col(ksample+1));
+	    samples.col(ksample/2) = boost::math::constants::half<ValueType>() *
+              (samples.col(ksample) + samples.col(ksample+1));
 	  }
 	}
 
       }
 
-      //bin_means = (samples.col(0) + (n_flushes)*bin_means) / (n_flushes+1);
-      helper_update_bin_means();
-
       logger.longdebug("BinningAnalysis::process_new_values()", [&](std::ostream & str) {
-	  str << "Flushing #" << n_flushes << " done. bin_means is = \n" << bin_means << "\n"
-	      << "\tbin_sqmeans is = \n" << bin_sqmeans << "\n";
+	  str << "Flushing #" << n_flushes << " done. bin_sum is = \n" << bin_sum << "\n"
+	      << "\tbin_sumsq is = \n" << bin_sumsq << "\n";
 	});
 
       ++n_flushes;
@@ -179,24 +219,26 @@ public:
 private:
 
   template<bool dummy = true,
-           typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
-  inline void helper_reset_bin_means()
+           typename std::enable_if<(dummy && StoreBinSums), bool>::type dummy2 = true>
+  inline void helper_reset_bin_sum()
   {
-    bin_means.value = BinMeansArray::Zero(num_track_values());
+    bin_sum.value = BinSumArray::Zero(num_track_values());
   }
   template<bool dummy = true,
-           typename std::enable_if<(dummy && !StoreBinMeans), bool>::type dummy2 = true>
-  inline void helper_reset_bin_means() { }
+           typename std::enable_if<(dummy && !StoreBinSums), bool>::type dummy2 = true>
+  inline void helper_reset_bin_sum() { }
 
   template<bool dummy = true,
-           typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
-  inline void helper_update_bin_means()
+           typename std::enable_if<(dummy && StoreBinSums), bool>::type dummy2 = true>
+  inline void helper_update_bin_sum(const Eigen::Ref<const Eigen::Array<ValueType, NumTrackValuesCTime, 1> > &
+                                    new_samples)
   {
-    bin_means.value = (samples.col(0) + (n_flushes)*bin_means.value) / (n_flushes+1);
+    bin_sum.value += new_samples;
   }
-  template<bool dummy = true,
-           typename std::enable_if<(dummy && !StoreBinMeans), bool>::type dummy2 = true>
-  inline void helper_update_bin_means() { }
+  template<typename Derived,
+           bool dummy = true,
+           typename std::enable_if<(dummy && !StoreBinSums), bool>::type dummy2 = true>
+  inline void helper_update_bin_sum(const Eigen::DenseBase<Derived> & ) { }
 
 
 public:
@@ -214,8 +256,11 @@ public:
    *
    */
   template<bool dummy = true,
-           typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
-  inline const BinMeansArray & get_bin_means() const { return bin_means.value; }
+           typename std::enable_if<(dummy && StoreBinSums), bool>::type dummy2 = true>
+  inline const auto get_bin_means() const -> decltype(BinSumArray() / ValueType(n_samples))
+  {
+    return bin_sum.value / ValueType(n_samples);
+  }
 
   /** \brief Get the raw average of the squared values observed, for each binning level.
    *
@@ -223,30 +268,39 @@ public:
    * raw values observed, <em>bin_sqmeans.col(1)</em> the raw average of the squares of
    * the values averaged 2 by 2 (i.e. at the first binning level), and so on.
    */
-  inline const BinSqMeansArray & get_bin_sqmeans() const { return  bin_sqmeans; }
+  inline const auto get_bin_sqmeans() const -> decltype(
+      bin_sumsq.cwiseQuotient(n_flushes * replicated<NumTrackValuesCTime,1>(
+                             powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
+                             .transpose().reverse(),
+                             // replicated by:
+                             num_track_values(), 1
+                             ))
+      )
+  {
+    return bin_sumsq.cwiseQuotient(n_flushes * replicated<NumTrackValuesCTime,1>(
+                                  powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
+                                  .transpose().reverse(),
+                                  // replicated by:
+                                  num_track_values(), 1
+                                  ));
+  }
 
 
   /** \brief Get the sum of each tracked value observed.
    *
    */
   template<bool dummy = true,
-           typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
-  inline const BinMeansArray get_bin_sum() const { return bin_means.value * n_flushes * samples_size(); }
+           typename std::enable_if<(dummy && StoreBinSums), bool>::type dummy2 = true>
+  inline const BinSumArray & get_bin_sum() const { return bin_sum.value; }
 
-  /** \brief Get the raw average of the squared values observed, for each binning level.
+  /** \brief Get the raw sums of the squared values observed, at each binning level.
    *
-   * The vector <em>bin_sqmeans.col(0)</em> contains the raw average of the squares of the
-   * raw values observed, <em>bin_sqmeans.col(1)</em> the raw average of the squares of
+   * The vector <em>bin_sumsq.col(0)</em> contains the raw sum of the squares of the
+   * raw values observed, <em>bin_sumsq.col(1)</em> the raw sum of the squares of
    * the values averaged 2 by 2 (i.e. at the first binning level), and so on.
    */
-  inline const BinSqMeansArray get_bin_sumsq() const {
-    return bin_sqmeans * n_flushes *
-      replicated<NumTrackValuesCTime,1>(
-          powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
-          .transpose().reverse(),
-          // replicated by:
-          num_track_values(), 1
-          );
+  inline const BinSumSqArray & get_bin_sumsq() const {
+    return bin_sumsq;
   }
 
 
@@ -261,14 +315,19 @@ public:
    * you need to provide the value of the means explicitly to the parameter \a means.
    */
   template<typename Derived>
-  inline BinSqMeansArray calc_error_levels(const Eigen::ArrayBase<Derived> & means) const
+  inline BinSumSqArray calc_error_levels(const Eigen::ArrayBase<Derived> & means) const
   {
     eigen_assert(means.rows() == num_track_values());
     eigen_assert(means.cols() == 1);
     const int n_levels_plus_one = num_levels()+1;
     const int n_track_values = num_track_values();
+
+    /** \todo this should be optimizable, using directly bin_sumsq and not effectively
+     *        repeating the powers_of_two constants...
+     */
+
     return (
-	bin_sqmeans - replicated<1,NumLevelsPlusOneCTime>(
+	get_bin_sqmeans() - replicated<1,NumLevelsPlusOneCTime>(
             means.cwiseProduct(means).template cast<ValueType>(),
             // replicated by:
             1, n_levels_plus_one
@@ -301,12 +360,12 @@ public:
    * you need to provide the value of the means explicitly to the parameter \a means.
    */
   template<typename Derived>
-  inline BinMeansArray calc_error_lastlevel(const Eigen::ArrayBase<Derived> & means) const {
+  inline BinSumArray calc_error_lastlevel(const Eigen::ArrayBase<Derived> & means) const {
     eigen_assert(means.rows() == num_track_values());
     eigen_assert(means.cols() == 1);
     return (
-	bin_sqmeans.col(num_levels()) - means.cwiseProduct(means).template cast<ValueType>()
-	).cwiseMax(0).cwiseSqrt() / std::sqrt(n_flushes-1);
+	bin_sumsq.col(num_levels()) / ValueType(n_flushes) - means.cwiseProduct(means).template cast<ValueType>()
+	).cwiseMax(0).cwiseSqrt() / std::sqrt(ValueType(n_flushes-1));
   }
   
   /** \brief Calculate the error bars of samples at different binning levels.
@@ -321,9 +380,10 @@ public:
    * Eigen::ArrayBase<Derived> & means) with the values of the means.
    */
   template<bool dummy = true,
-           typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
-  inline BinSqMeansArray calc_error_levels() const {
-    return calc_error_levels(bin_means.value);
+           typename std::enable_if<(dummy && StoreBinSums), bool>::type dummy2 = true>
+  inline BinSumSqArray calc_error_levels() const {
+    BinSumArray means = get_bin_means();
+    return calc_error_levels(means);
   }
 
   /** \brief Calculate the error bar of samples (from the last binning level).
@@ -339,9 +399,10 @@ public:
    * Eigen::ArrayBase<Derived> & means) with the values of the means.
    */
   template<bool dummy = true,
-           typename std::enable_if<(dummy && StoreBinMeans), bool>::type dummy2 = true>
-  inline BinMeansArray calc_error_lastlevel() const {
-    return calc_error_lastlevel(bin_means.value);
+           typename std::enable_if<(dummy && StoreBinSums), bool>::type dummy2 = true>
+  inline BinSumArray calc_error_lastlevel() const {
+    BinSumArray means = get_bin_means();
+    return calc_error_lastlevel(means);
   }
   
   /** \brief Attempt to determine if the error bars have converged.
@@ -353,7 +414,7 @@ public:
    * \returns an array of integers, of length \a num_track_values, each set to one of \ref
    * CONVERGED, \ref NOT_CONVERGED or \ref CONVERGENCE_UNKNOWN.
    */
-  inline Eigen::ArrayXi determine_error_convergence(const Eigen::Ref<const BinSqMeansArray> & error_levels)
+  inline Eigen::ArrayXi determine_error_convergence(const Eigen::Ref<const BinSumSqArray> & error_levels)
   {
     Eigen::ArrayXi converged_status(num_track_values()); // RVO will help
 

@@ -2,7 +2,13 @@
 #ifndef TOMOGRAPHER_TOOLS_EIGEN_ASSERT_EXCEPTION_H
 #define TOMOGRAPHER_TOOLS_EIGEN_ASSERT_EXCEPTION_H
 
-// must be included BEFORE any Eigen header
+/** \file
+ *
+ * \brief Define tools for Eigen's \a eigen_assert() to throw an exception instead of
+ * assert'ing.
+ *
+ * \note This header must be included BEFORE any Eigen header!
+ */
 
 #include <string>
 #include <stdexcept>
@@ -31,13 +37,16 @@ public:
 } // namespace Tomographer
 
 
+
+#define eigen_assert_throw_exception(x)         \
+  if (!(x)) { throw (::Tomographer::Tools::eigen_assert_exception(#x, __FILE__, __LINE__)); }
+  
+
+#ifdef TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION
 // override Eigen's eigen_assert() macro
 #undef eigen_assert
-#define eigen_assert(x) \
-  if (!(x)) { throw (::Tomographer::Tools::eigen_assert_exception(#x, __FILE__, __LINE__)); }
-
-
-#include <Eigen/Core>
+#define eigen_assert(x) eigen_assert_throw_exception(x)
+#endif
 
 
 #endif

@@ -4,6 +4,8 @@
 
 #include <type_traits>
 
+#include <Eigen/Core> // Eigen::Dynamic
+
 // -----------------------------------------------------------------------------
 // Define functions with printf-safe arguments, with compiler-generated warnings
 // -----------------------------------------------------------------------------

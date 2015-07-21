@@ -5,3 +5,7 @@
 
 #define BOOST_TEST_MODULE test_tomographer
 #include <boost/test/unit_test.hpp>
+
+#include "test_tomographer.h"
+
+EigenAssertTest::setting_scope * EigenAssertTest::setting_scope_ptr = NULL;

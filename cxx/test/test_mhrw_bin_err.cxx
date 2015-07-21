@@ -4,7 +4,7 @@
 #include <iostream>
 #include <vector>
 
-//#define TOMOGRAPHER_TEST_EIGEN_ASSERT_ASSERT
+
 // definitions for Tomographer test framework -- this must be included before any
 // <tomographer/...> header
 #include "test_tomographer.h"
@@ -15,7 +15,6 @@
 #include <tomographer/mhrw.h>
 #include <tomographer/tomoproblem.h>
 #include <tomographer/qit/matrq.h>
-
 
 
 
@@ -93,26 +92,26 @@ BOOST_AUTO_TEST_CASE(basic)
 
   logger.debug("basic()", "Starting to feed samples to the binning analysis object");
 
-  bina.process_new_values(0, inline_vector(0.0, 0.0,   1.0, 1.0));
-  bina.process_new_values(1, inline_vector(0.0, 0.0,   0.0, 2.0));
-  bina.process_new_values(2, inline_vector(0.0, 0.0,   1.0, 3.0));
-  bina.process_new_values(3, inline_vector(0.0, 0.0,   0.0, 4.0));
-  bina.process_new_values(4, inline_vector(0.0, 100.0, 0.0, 5.0));
-  bina.process_new_values(5, inline_vector(0.0, 100.0, 1.0, 6.0));
-  bina.process_new_values(6, inline_vector(0.0, 100.0, 2.0, 7.0));
-  bina.process_new_values(7, inline_vector(1.0, 100.0, 0.5, 8.0));
-  // these will only partially fill the next bin, and thus not be included in the
-  // analysis:
-  bina.process_new_values(8, inline_vector(0.5, 101.4,   2.0, 9.0));
-  bina.process_new_values(9, inline_vector(1.0, 140.0,  1e20, 10.0));
+  bina.process_new_values(inline_vector(0.0, 0.0,   1.0, 1.0));
+  bina.process_new_values(inline_vector(0.0, 0.0,   0.0, 2.0));
+  bina.process_new_values(inline_vector(0.0, 0.0,   1.0, 3.0));
+  bina.process_new_values(inline_vector(0.0, 0.0,   0.0, 4.0));
+  bina.process_new_values(inline_vector(0.0, 100.0, 0.0, 5.0));
+  bina.process_new_values(inline_vector(0.0, 100.0, 1.0, 6.0));
+  bina.process_new_values(inline_vector(0.0, 100.0, 2.0, 7.0));
+  bina.process_new_values(inline_vector(1.0, 100.0, 0.5, 8.0));
+  // these will only partially fill the next bin. This will contribute to the *sum*, but
+  // not the *sumsq* which is calculated during the flush:
+  bina.process_new_values(inline_vector(.125, 0.0,   0.6875, 0.0));
+  bina.process_new_values(inline_vector(.125, 100.0, 0.6875, 9.0));
 
   Eigen::Array<double,4,1> bin_sum;
-  bin_sum = inline_vector(1.0, // (...)/8 == 0.125
-                          4*100.0, // (...)/8 == 50
-                          (1+1+1+2+0.5), // (...)/8 == 0.6875
-                          (8*(8+1)/2.0)); // (...)/8 == 4.5
+  bin_sum = inline_vector(1.25, // (...)/10 == .125
+                          5*100.0, // (...)/10 == 50
+                          (1+1+1+2+0.5+2*0.6875), // (...)/10 == 0.6875
+                          (8*(8+1)/2.0)+9.0); // (...)/10 == 4.5
   Eigen::Array<double,4,1> bin_means;
-  bin_means = bin_sum / 8.0;
+  bin_means = bin_sum / 10.0;
   
   Eigen::Array<double,4,3> bin_sumsq;
   bin_sumsq.col(0) = inline_vector(1, // (...)/8 == 0.125
@@ -176,13 +175,13 @@ BOOST_AUTO_TEST_CASE(basic)
   BOOST_CHECK_EQUAL(bina.num_track_values(), 4);
   BOOST_CHECK_EQUAL(bina.num_levels(), 2);
 
-  Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger>::BinSqMeansArray
+  Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger>::BinSumSqArray
     error_levels_calc(4,3);
   error_levels_calc = bina.calc_error_levels();
 
   BOOST_MESSAGE("reported error_levels = \n" << error_levels_calc);
 
-  BOOST_CHECK(OurBinningAnalysis::StoreBinMeans) ;
+  BOOST_CHECK(OurBinningAnalysis::StoreBinSums) ;
   MY_BOOST_CHECK_EIGEN_EQUAL(error_levels_calc, error_levels, tol);
   MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_error_lastlevel(), error_levels.col(2), tol);
 }
@@ -191,14 +190,14 @@ BOOST_AUTO_TEST_CASE(basic)
 BOOST_AUTO_TEST_CASE(no_bin_means)
 {
   Tomographer::Logger::BufferLogger logger(Tomographer::Logger::LONGDEBUG);
-  typedef Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger, 4, 1, false /*StoreBinMeans_*/>
+  typedef Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger, 4, 1, false /*StoreBinSums_*/>
     OurBinningAnalysis;
   OurBinningAnalysis bina(4, 1, logger);
 
-  bina.process_new_values(0, inline_vector(0.0, 0.0, 1.0, 0.0));
-  bina.process_new_values(1, inline_vector(0.0, 0.0, 1.0, 1.0));
-  bina.process_new_values(2, inline_vector(0.0, 1.0, 1.0, 2.0));
-  bina.process_new_values(3, inline_vector(0.0, 0.0, 1.0, 3.0));
+  bina.process_new_values(inline_vector(0.0, 0.0, 1.0, 0.0));
+  bina.process_new_values(inline_vector(0.0, 0.0, 1.0, 1.0));
+  bina.process_new_values(inline_vector(0.0, 1.0, 1.0, 2.0));
+  bina.process_new_values(inline_vector(0.0, 0.0, 1.0, 3.0));
 
   BOOST_MESSAGE(logger.get_contents());
   BOOST_CHECK_EQUAL(bina.get_n_flushes(), 2);
@@ -222,7 +221,7 @@ BOOST_AUTO_TEST_CASE(no_bin_means)
   error_levels.col(0) /= std::sqrt( bina.get_n_flushes() * 2.0 - 1);
   error_levels.col(1) /= std::sqrt( bina.get_n_flushes() * 1.0 - 1);
 
-  BOOST_CHECK(! OurBinningAnalysis::StoreBinMeans) ;
+  BOOST_CHECK(! OurBinningAnalysis::StoreBinSums) ;
   MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_error_levels(means), error_levels, tol);
   MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_error_lastlevel(means), error_levels.col(1), tol);
 }
@@ -235,10 +234,18 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_AUTO_TEST_SUITE(valuehistogramwithbinning)
 
-BOOST_AUTO_TEST_CASE(simple)
+BOOST_AUTO_TEST_CASE(simple1)
 {
+  //<<<<<<<<<<<
   typedef Tomographer::Logger::BufferLogger LoggerType;
-  //typedef Tomographer::Logger::FileLogger LoggerType;
+  LoggerType buflog(Tomographer::Logger::DEBUG);
+  //-----------
+  // in this case, comment out BOOST_MESSAGE(... .get_contents()) below
+  //  typedef Tomographer::Logger::FileLogger LoggerType;
+  //  LoggerType buflog(stderr, Tomographer::Logger::LONGDEBUG) ;
+  //>>>>>>>>>>>
+
+
   typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<
     test_norm_value_calculator,
     LoggerType,
@@ -249,9 +256,6 @@ BOOST_AUTO_TEST_CASE(simple)
   typedef test_hypercube_mhwalker<double, 3 /* Dim */> MHWalkerType;
   typedef Tomographer::MHRandomWalk<std::mt19937, MHWalkerType, ValWBinningMHRWStatsCollectorType,
 				    LoggerType, int> MHRandomWalkType;
-
-  LoggerType buflog(Tomographer::Logger::DEBUG);
-  //LoggerType buflog(stderr, Tomographer::Logger::LONGDEBUG) ;
 
   test_norm_value_calculator vcalc;
 
@@ -271,7 +275,18 @@ BOOST_AUTO_TEST_CASE(simple)
 
   const ValWBinningMHRWStatsCollectorType::Result & result = vhist.getResult();
 
-  // TODO: FIXME: WHY ARE THE ERROR BAR CURVES GOING LIKE CRAZY?
+  // Todo: Fixme: Why are the error bar curves going like crazy?
+  // ----> ok if we have enough samples it seems.
+
+  // TODO: CHECK THAT THE VALUES ARE CORRECT, ALONG WITH THE ERRORS.
+
+  MY_BOOST_CHECK_EIGEN_EQUAL(result.converged_status,
+                             Eigen::ArrayXi::Constant(
+                                 vhist.get_binning_analysis().num_track_values(),
+                                 ValWBinningMHRWStatsCollectorType::BinningAnalysisType::CONVERGED
+                                 ),
+                             tol) ;
+
 }
 
 

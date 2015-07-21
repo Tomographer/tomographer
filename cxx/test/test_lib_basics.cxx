@@ -18,6 +18,31 @@
 BOOST_AUTO_TEST_SUITE(test_lib_basics);
 // =============================================================================
 
+BOOST_AUTO_TEST_SUITE(test_eigen_assert_dyn);
+
+// test the eigen_assert dynamic functionality
+BOOST_AUTO_TEST_CASE(setting)
+{
+  assert(EigenAssertTest::setting_scope_ptr == NULL);
+  {
+    //    fprintf(stderr, "entering block...\n");
+    EigenAssertTest::setting_scope mysettingvar(true); // eigen_assert() should throw an exception.
+    //    fprintf(stderr, "instanciated mysettingvar\n");
+    assert(EigenAssertTest::setting_scope_ptr != NULL);
+    assert(EigenAssertTest::setting_scope_ptr->throws_exception);
+    eigen_assert(true);
+    //    fprintf(stderr, "leaving block.\n");
+  }
+  assert(EigenAssertTest::setting_scope_ptr == NULL);
+}
+
+
+BOOST_AUTO_TEST_SUITE_END();
+
+
+// -----------------------------------------------------------------------------
+
+
 
 struct test_matrq_fixture {
   test_matrq_fixture()
@@ -43,10 +68,14 @@ struct test_matrq_fixture {
     // if has fixed dim, make sure that if we attempt to construct a bad dimension,
     // something explodes
     if (TheMatrQ::FixedDim != Eigen::Dynamic) {
+      //      fprintf(stderr, "entering block of interest...\n");
+      EigenAssertTest::setting_scope settingvariable(true); // eigen_assert() should throw an exception.
+      //      fprintf(stderr, "initialized setting variable\n");
       BOOST_CHECK_THROW(
      	  TheMatrQ badmatq(dim+1),
      	  ::Tomographer::Tools::eigen_assert_exception
      	  );
+      //      fprintf(stderr, "exiting block of interest\n");
     }
     
     // matrix type

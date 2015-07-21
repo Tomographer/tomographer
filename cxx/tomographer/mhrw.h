@@ -835,7 +835,7 @@ public:
     }
 
     AveragedHistogram<HistogramType, CountRealAvgType> hist;
-    typename BinningAnalysisType::BinSqMeansArray error_levels;
+    typename BinningAnalysisType::BinSumSqArray error_levels;
     Eigen::ArrayXi converged_status;
   };
     
@@ -845,8 +845,8 @@ private:
 
   BinningAnalysisType binning_analysis;
 
-  Tools::store_if_enabled<Eigen::Array<CountIntType, Eigen::Dynamic, 1>, TrackSelectedIndices>
-  selected_indices;
+  //  Tools::store_if_enabled<Eigen::Array<CountIntType, Eigen::Dynamic, 1>, TrackSelectedIndices>
+  //  selected_indices;
 
   LoggerType & logger;
 
@@ -863,12 +863,14 @@ public:
                                               LoggerType & logger_)
     : value_histogram(histogram_params, vcalc, logger_),
       binning_analysis(histogram_params.num_bins, num_levels, logger_),
-      selected_indices(),
+      //      selected_indices(),
       logger(logger_),
       result(histogram_params, binning_analysis)
   {
+    logger.longdebug("ValueHistogramWithBinningMHRWStatsCollector", "constructor()");
   }
   
+  /*
   template<typename Derived, bool dummy = true,
            typename std::enable_if<(dummy && TrackSelectedIndices), bool>::type dummy2 = true
            >
@@ -879,12 +881,13 @@ public:
                                               LoggerType & logger_)
     : value_histogram(histogram_params, vcalc, logger_),
       binning_analysis(histogram_params.num_bins, num_levels, logger_),
-      selected_indices(which_indices),
+      //      selected_indices(which_indices),
       logger(logger_),
       result(histogram_params, binning_analysis)
   {
     assert(false && "TrackSelectedIndices : NOT YET IMPLEMENTED");
   }
+  */
 
 
   //! Get the histogram data collected so far. See \ref HistogramType.
@@ -976,7 +979,6 @@ public:
   {
     std::size_t histindex = value_histogram.process_sample(k, n, curpt, curptval, mh);
     binning_analysis.process_new_values(
-	n,
 	can_basis_vec<Eigen::Array<ValueType,Eigen::Dynamic,1> >(histindex, value_histogram.histogram().num_bins())
 	);
   }
