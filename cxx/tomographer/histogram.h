@@ -25,6 +25,8 @@ namespace Tomographer {
  *
  * Splits the range of values \f$[\text{min},\text{max}]\f$ into \c num_bins number of
  * bins, and keeps counts of how many samples fell in which bin.
+ * 
+ * Does not store any form of error bars. Compiles with the \ref pageInterfaceHistogram.
  */
 template<typename Scalar_, typename CountType_ = unsigned int>
 struct UniformBinsHistogram
@@ -34,6 +36,9 @@ struct UniformBinsHistogram
 
   //! The type that serves to count how many hits in each bin
   typedef CountType_ CountType;
+
+  //! This histogram type does not provide error bars (see \ref pageInterfaceHistogram)
+  static constexpr bool HasErrorBars = false;
 
   /** \brief The parameters of a \ref UniformBinsHistogram
    *
@@ -45,6 +50,15 @@ struct UniformBinsHistogram
       : min(min_), max(max_), num_bins(num_bins_)
     {
     }
+    //! Copy constructor, from any other UniformBinsHistogram::Params type.
+    template<typename OtherParams/*,
+             typename std::enable_if<(tomo_internal::is_histogram_params_type<OtherParams>::value), bool>::type
+             dummy2 = true*/>
+    Params(const OtherParams& other)
+      : min(other.min), max(other.max), num_bins(other.num_bins)
+    {
+    }
+
     //! Lower range value
     Scalar min;
     //! Upper range value
@@ -369,84 +383,53 @@ struct UniformBinsHistogram
 
 
 
-/** \brief Combines several histograms (with same parameters) into an averaged histogram
+/** \brief Stores a histogram along with error bars
  *
- * What is expected from \a HistogramType is type Params with field num_bins, and methods
- * num_bins() and count(i).
- *
- * \note Check out the source how this works. First call the constructor, or reset(), then
- * call add_histogram() as much as you need, DON'T FORGET TO CALL finalize(), and then you
- * may read out meaningful results in bins, std_dev, off_chart and
- * num_histograms.
- *  
+ * Builds on top of \ref UniformBinsHistogram<Scalar,CountType> to store error bars
+ * corresponding to each bin.
  */
-template<typename HistogramType_, typename RealAvgType = double>
-struct AveragedHistogram
+template<typename Scalar_, typename CountType_ = double>
+struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, CountType_>
 {
-  typedef HistogramType_ HistogramType;
-  typedef typename HistogramType::Params HistogramParamsType;
+  typedef Scalar_ Scalar;
+  typedef CountType_ CountType;
 
-  HistogramParamsType params;
-  Eigen::Array<RealAvgType, Eigen::Dynamic, 1> bins;
-  Eigen::Array<RealAvgType, Eigen::Dynamic, 1> std_dev;
-  RealAvgType off_chart;
+  typedef UniformBinsHistogram<Scalar_, CountType_> Base_;
+  typedef typename Base_::Params Params;
+  
+  static constexpr bool HasErrorBars = true;
 
-  int num_histograms;
+  //! The error bars associated with each histogram bin
+  Eigen::Array<CountType, Eigen::Dynamic, 1> delta;
 
-  AveragedHistogram(const HistogramParamsType& params_ = HistogramParamsType())
-    : params(params_)
+  UniformBinsHistogramWithErrorBars(Params p = Params())
+    : Base_(p), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero(p.num_bins))
   {
-    reset(params);
   }
 
-  //! Resets the data and sets new params.
-  inline void reset(const HistogramParamsType& params_)
+  UniformBinsHistogramWithErrorBars(Scalar min, Scalar max, std::size_t num_bins)
+    : Base_(min, max, num_bins), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero(num_bins))
   {
-    params = params_;
-    bins = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
-    std_dev = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
-    off_chart = 0.0;
-    num_histograms = 0;
   }
 
-  //! Resets the data keeping the exisiting params.
+  /** \brief Resets the histogram to zero counts everywhere, and zero error bars.
+   *
+   * \warning the corresponding base class has NO virtual methods. So don't see this class
+   * inheritance as object polymorphism. If you need to reset a uniform bins histogram
+   * with error bars, you need to know its type.
+   */
   inline void reset()
   {
-    bins = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
-    std_dev = Eigen::Array<RealAvgType, Eigen::Dynamic, 1>::Zero(params.num_bins);
-    off_chart = 0.0;
-    num_histograms = 0;
+    Base_::reset();
+    delta.setZero();
   }
+  
 
-  inline void add_histogram(const HistogramType& histogram)
+  inline CountType errorbar(std::size_t i) const
   {
-    // bins collects the sum of the histograms
-    // std_dev for now collects the sum of squares. std_dev will be normalized in run_finished().
-
-    eigen_assert((typename HistogramType::CountType)histogram.num_bins() == params.num_bins);
-    eigen_assert((typename HistogramType::CountType)histogram.num_bins() == bins.rows());
-    eigen_assert((typename HistogramType::CountType)histogram.num_bins() == std_dev.rows());
-
-    for (std::size_t k = 0; k < histogram.num_bins(); ++k) {
-      RealAvgType binvalue = histogram.count(k);
-      bins(k) += binvalue;
-      std_dev(k) += binvalue * binvalue;
-    }
-
-    off_chart += histogram.off_chart;
-    ++num_histograms;
+    return delta(i);
   }
 
-  inline void finalize()
-  {
-    bins /= num_histograms;
-    std_dev /= num_histograms;
-    off_chart /= num_histograms;
-
-    // std_dev = sqrt(< X^2 > - < X >^2) / sqrt(Nrepeats)
-    auto finhist2 = bins*bins; // for array, this is c-wise product
-    std_dev = ( (std_dev - finhist2) / num_histograms ).sqrt();
-  }
 
   std::string pretty_print(int max_width = 0) const
   {
@@ -463,11 +446,11 @@ struct AveragedHistogram
     }
 
     std::string s;
-    assert(bins.size() >= 0);
-    std::size_t Ntot = (std::size_t)bins.size();
+    assert(Base_::bins.size() >= 0);
+    std::size_t Ntot = (std::size_t)Base_::bins.size();
     // max_width - formatting widths (see below) - some leeway
     const unsigned int max_bar_width = max_width - (6+3+4+5+4+5) - 5;
-    double barscale = (1.0+bins.maxCoeff()) / max_bar_width; // full bar is max_bar_width chars wide
+    double barscale = (1.0+Base_::bins.maxCoeff()) / max_bar_width; // full bar is max_bar_width chars wide
     assert(barscale > 0);
     auto val_to_bar_len = [max_bar_width,barscale](double val) -> unsigned int {
       if (val < 0) {
@@ -491,22 +474,154 @@ struct AveragedHistogram
     };
     
     for (std::size_t k = 0; k < Ntot; ++k) {
-      assert(bins(k) >= 0);
+      assert(Base_::bins(k) >= 0);
       std::string sline(max_bar_width, ' ');
-      fill_str_len(sline, 0.0, bins(k) - std_dev(k), '*', '*');
-      fill_str_len(sline, bins(k) - std_dev(k), bins(k) + std_dev(k), '-', '|');
+      fill_str_len(sline, 0.0, Base_::bins(k) - delta(k), '*', '*');
+      fill_str_len(sline, Base_::bins(k) - delta(k), Base_::bins(k) + delta(k), '-', '|');
       
       s += Tools::fmts("%-6.4g | %s    %5.1f +- %5.1f\n",
-		       params.min + k*(params.max-params.min)/Ntot,
+		       (double)(Base_::params.min + k*(Base_::params.max-Base_::params.min)/Ntot),
 		       sline.c_str(),
-		       bins(k), std_dev(k)
+		       (double)Base_::bins(k), (double)delta(k)
 	  );
     }
-    if (off_chart > 1e-6) {
-      s += Tools::fmts("   ... with another (average) %.4g points off chart.\n", (double)off_chart);
+    if (Base_::off_chart > 1e-6) {
+      s += Tools::fmts("   ... with another (average) %.4g points off chart.\n", (double)Base_::off_chart);
     }
     return s;
   }
+  
+};
+
+
+
+
+
+
+
+/** \brief Combines several histograms (with same parameters) into an averaged histogram
+ *
+ * The \a HistogramType is expected to be a \ref pageInterfaceHistogram -compliant
+ * type. It may, or may not, come with its own error bars. If this is the case, then the
+ * error bars are properly combined.
+ *
+ * \note Check out the source how this works. First call the constructor, or reset(), then
+ * call add_histogram() as much as you need, DON'T FORGET TO CALL finalize(), and then you
+ * may read out meaningful results in bins, delta, off_chart and
+ * num_histograms.
+ *  
+ */
+template<typename HistogramType_, typename RealAvgType = double>
+struct AveragedHistogram
+  : public UniformBinsHistogramWithErrorBars<typename HistogramType_::Scalar, RealAvgType>
+{
+  typedef HistogramType_ HistogramType;
+  typedef UniformBinsHistogramWithErrorBars<typename HistogramType_::Scalar, RealAvgType> Base_;
+
+  typedef typename Base_::Params Params;
+  typedef typename Base_::Scalar Scalar;
+  typedef typename Base_::CountType CountType;
+
+  static constexpr bool HasErrorBars = true;
+
+  int num_histograms;
+
+  AveragedHistogram(const Params& params = Params())
+    : Base_(params), num_histograms(0)
+  {
+  }
+
+  /** \brief Resets the data and sets new params.
+   *
+   * \warning the corresponding base class has NO virtual methods. So don't see this class
+   * inheritance as object polymorphism. If you need to reset a uniform bins histogram
+   * with error bars, you need to know its type.
+   */
+  inline void reset(const Params& params_)
+  {
+    Base_::params = params_;
+    Base_::reset();
+    num_histograms = 0;
+  }
+
+  /** \brief Resets the data keeping the exisiting params.
+   *
+   * \warning the corresponding base class has NO virtual methods. So don't see this class
+   * inheritance as object polymorphism. If you need to reset a uniform bins histogram
+   * with error bars, you need to know its type.
+   */
+  inline void reset()
+  {
+    Base_::reset();
+    num_histograms = 0;
+  }
+
+  // ---------------------------------------------------------------------------
+  // Implementation in case the added histograms don't have their own error bars
+  // ---------------------------------------------------------------------------
+
+  template<bool dummy = true,
+           typename std::enable_if<dummy && (!HistogramType::HasErrorBars), bool>::type dummy2 = true>
+  inline void add_histogram(const HistogramType& histogram)
+  {
+    // bins collects the sum of the histograms
+    // delta for now collects the sum of squares. delta will be normalized in run_finished().
+
+    eigen_assert((typename HistogramType::CountType)histogram.num_bins() == Base_::num_bins());
+
+    for (std::size_t k = 0; k < histogram.num_bins(); ++k) {
+      RealAvgType binvalue = histogram.count(k);
+      Base_::bins(k) += binvalue;
+      Base_::delta(k) += binvalue * binvalue;
+    }
+
+    Base_::off_chart += histogram.off_chart;
+    ++num_histograms;
+  }
+  template<bool dummy = true,
+           typename std::enable_if<dummy && (!HistogramType::HasErrorBars), bool>::type dummy2 = true>
+  inline void finalize()
+  {
+    Base_::bins /= num_histograms;
+    Base_::delta /= num_histograms;
+    Base_::off_chart /= num_histograms;
+
+    // delta = sqrt(< X^2 > - < X >^2) / sqrt(Nrepeats-1)
+    auto finhist2 = Base_::bins*Base_::bins; // for array, this is c-wise product
+    Base_::delta = ( (Base_::delta - finhist2) / (num_histograms-1) ).sqrt();
+  }
+
+  // ---------------------------------------------------------------------------
+  // Implementation in case the added histograms do have their own error bars
+  // ---------------------------------------------------------------------------
+
+  template<bool dummy = true,
+           typename std::enable_if<dummy && (HistogramType::HasErrorBars), bool>::type dummy2 = true>
+  inline void add_histogram(const HistogramType& histogram)
+  {
+    // bins collects the sum of the histograms
+    // delta for now collects the sum of squares. delta will be normalized in run_finished().
+
+    eigen_assert((typename HistogramType::CountType)histogram.num_bins() == Base_::num_bins());
+
+    for (std::size_t k = 0; k < histogram.num_bins(); ++k) {
+      RealAvgType binvalue = histogram.count(k);
+      Base_::bins(k) += binvalue;
+      RealAvgType delta = histogram.errorbar(k);
+      Base_::delta(k) += Base_::delta * Base_::delta;
+    }
+
+    Base_::off_chart += histogram.off_chart;
+    ++num_histograms;
+  }
+  template<bool dummy = true,
+           typename std::enable_if<dummy && (HistogramType::HasErrorBars), bool>::type dummy2 = true>
+  inline void finalize()
+  {
+    Base_::delta = Base_::delta.sqrt();
+    Base_::delta /= num_histograms;
+  }
+
 };
 
 

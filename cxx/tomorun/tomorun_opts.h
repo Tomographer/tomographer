@@ -19,6 +19,7 @@ struct ProgOptions
     val_min(0.97),
     val_max(1.0),
     val_nbins(50),
+    binning_analysis_error_bars(true), // error bars from binning analysis
     start_seed(std::chrono::system_clock::now().time_since_epoch().count()),
     Nrepeats(256),
     Nchunk(1),
@@ -47,6 +48,8 @@ struct ProgOptions
   double val_min;
   double val_max;
   std::size_t val_nbins;
+
+  bool binning_analysis_error_bars;
 
   int start_seed;
 
@@ -174,6 +177,10 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
      "that state, instead of the MLE estimate (as by default).")
     ("value-hist", value<std::string>(&valhiststr),
      "Do a histogram for different measured values (e.g. fidelity to MLE), format MIN:MAX/NPOINTS")
+    ("binning-analysis-error-bars", bool_switch(& opt->binning_analysis_error_bars)
+     ->default_value(opt->binning_analysis_error_bars),
+     "Produce error bars from a binning analysis (cf. [Ambegaokar/Troyer AJP 2010, 0906.0943]) "
+     "for each histogram bin")
     ("step-size", value<double>(& opt->step_size)->default_value(opt->step_size),
      "the step size for the region")
     ("n-sweep", value<unsigned int>(& opt->Nsweep)->default_value(opt->Nsweep),

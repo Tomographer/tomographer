@@ -161,10 +161,11 @@ BOOST_AUTO_TEST_CASE(binning_analysis)
 
   typedef Tomographer::FidelityToRefCalculator<OurTomoProblem> OurValueCalculator;
   typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<
-    OurValueCalculator,
-    LoggerType,
-    int,
-    float> ValWBinningMHRWStatsCollectorType;
+    Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<OurValueCalculator,
+                                                                   int,
+                                                                   float>,
+    LoggerType
+    > ValWBinningMHRWStatsCollectorType;
 
   typedef ValWBinningMHRWStatsCollectorType::HistogramParams HistogramParams;
   typedef Tomographer::DMStateSpaceLLHMHWalker<OurTomoProblem,std::mt19937,LoggerType> MHWalkerType;

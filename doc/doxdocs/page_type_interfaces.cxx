@@ -19,6 +19,7 @@
  *  - \subpage pageInterfaceValueCalculator
  *  - \subpage pageInterfaceMHRandomWalkTaskCData
  *  - \subpage pageTaskManagerDispatcher
+ *  - \subpage pageInterfaceHistogram
  *
  */
 
@@ -421,4 +422,34 @@
  *     MHRWTasks::MHRandomWalkTask template parameter, use a template argument for this
  *     function in case. Use a template parameter for \a LoggerType.
  *
+ */
+
+
+/** \page pageInterfaceHistogram Histogram Interface
+ *
+ * \par typedef .. Scalar
+ *      Type used to quantify the quantity which is binned into separate bins
+ * 
+ * \par typedef .. CountType
+ *      Type used to count the number of hits in each bin
+ *
+ * \par static constexpr bool HasErrorBars = ..
+ *      Whether this Histogram type can provide error bars (e.g. obtained e.g. through
+ *      binning analysis, or by averaging several histograms)
+ *
+ * In the following, we use \a std::size_t as indexing type, but it can be replaced by any
+ * other integral type. You should use \a std::size_t if you store your histogram as a
+ * dense object (that's the type which can hold the size of the largest possible object
+ * which can be stored in memory).
+ *
+ * \par std::size_t num_bins() const
+ *      The number of bins in this histogram.
+ *
+ * \par CountType count(std::size_t i) const
+ *      Number of counts in the bin #i
+ *
+ * \par CountType errorbar(std::size_t i) const
+ *      <em>(Only if <code>HasErrorBars = true</code>)</em> Error bar (standard deviation)
+ *      associated to the bin #i.
+ * 
  */

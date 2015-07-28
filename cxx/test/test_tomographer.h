@@ -45,13 +45,13 @@ struct setting_scope
   setting_scope(bool throws)
     : throws_exception(throws), parent_scope(setting_scope_ptr)
   {
-    std::fprintf(stderr, "(): setting_scope_ptr=%p, throws_exception=%d\n", (void*)::EigenAssertTest::setting_scope_ptr, (::EigenAssertTest::setting_scope_ptr ? (int)::EigenAssertTest::setting_scope_ptr->throws_exception : 999999)); \
+    /*std::fprintf(stderr, "(): setting_scope_ptr=%p, throws_exception=%d\n", (void*)::EigenAssertTest::setting_scope_ptr, (::EigenAssertTest::setting_scope_ptr ? (int)::EigenAssertTest::setting_scope_ptr->throws_exception : 999999));*/  \
     setting_scope_ptr = this;
   }
 
   ~setting_scope()
   {
-    std::fprintf(stderr, "~(): setting_scope_ptr=%p, throws_exception=%d\n", (void*)::EigenAssertTest::setting_scope_ptr, (::EigenAssertTest::setting_scope_ptr ? (int)::EigenAssertTest::setting_scope_ptr->throws_exception : 999999)); \
+    /*std::fprintf(stderr, "~(): setting_scope_ptr=%p, throws_exception=%d\n", (void*)::EigenAssertTest::setting_scope_ptr, (::EigenAssertTest::setting_scope_ptr ? (int)::EigenAssertTest::setting_scope_ptr->throws_exception : 999999));*/ \
     setting_scope_ptr = parent_scope;
   }
 
@@ -66,9 +66,9 @@ private:
 
 #define eigen_assert(x)                                                 \
   do {                                                                  \
-    std::fprintf(stderr, "setting_scope_ptr=%p, throws_exception=%d\n", (void*)::EigenAssertTest::setting_scope_ptr, (int)(::EigenAssertTest::setting_scope_ptr ? ::EigenAssertTest::setting_scope_ptr->throws_exception : 999999)); \
+    /*std::fprintf(stderr, "setting_scope_ptr=%p, throws_exception=%d\n", (void*)::EigenAssertTest::setting_scope_ptr, (int)(::EigenAssertTest::setting_scope_ptr ? ::EigenAssertTest::setting_scope_ptr->throws_exception : 999999));*/ \
     if (::EigenAssertTest::setting_scope_ptr && ::EigenAssertTest::setting_scope_ptr->throws_exception) { \
-      std::fprintf(stderr, "an eigen_assert() failure will cause an exception!\n"); \
+      /*std::fprintf(stderr, "an eigen_assert() failure will cause an exception!\n");*/ \
       if (!(x)) {                                                       \
         throw (::Tomographer::Tools::eigen_assert_exception(#x, __FILE__, __LINE__)); \
       }                                                                 \

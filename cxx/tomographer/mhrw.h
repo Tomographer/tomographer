@@ -791,41 +791,43 @@ public:
 
 
 
-/** \brief Collect a histogram of values from a MH random walk, with binning analysis.
+/** \brief Traits-like class for ValueHistogramWithBinningMHRWStatsCollector.
  *
- * \bug \a TrackSelectedindices does not work yet.
+ * Collects the template parameters for use with \ref
+ * ValueHistogramWithBinningMHRWStatsCollector.
+ *
+ * Provides also some trait properties, such as the corresponding result type \ref Result.
  */
 template<typename ValueCalculator_,
-	 typename LoggerType_ = Logger::VacuumLogger,
-         typename CountIntType = int,
-         typename CountRealAvgType = double,
+         typename CountIntType_ = int,
+         typename CountRealAvgType_ = double,
          int NumTrackValues_ = Eigen::Dynamic,
          int NumLevels_ = Eigen::Dynamic,
          bool TrackSelectedIndices_ = false
 	 >
-class ValueHistogramWithBinningMHRWStatsCollector
+struct ValueHistogramWithBinningMHRWStatsCollectorParams
 {
-public:
   typedef ValueCalculator_ ValueCalculator;
-  typedef LoggerType_ LoggerType;
-  typedef UniformBinsHistogram<typename ValueCalculator_::ValueType, CountIntType> HistogramType;
-  typedef typename HistogramType::Params HistogramParams;
-    
-  typedef ValueHistogramMHRWStatsCollector<ValueCalculator, LoggerType, HistogramType>
-  ValueHistogramMHRWStatsCollectorType;
-  
-  typedef typename ValueCalculator::ValueType ValueType;
-  
-  typedef BinningAnalysis<ValueType,LoggerType,NumTrackValues_,NumLevels_,false,CountIntType>
-  BinningAnalysisType;
-    
-  static constexpr int NumTrackValuesCTime = BinningAnalysisType::NumTrackValuesCTime;
-  static constexpr int NumLevelsCTime = BinningAnalysisType::NumLevelsCTime;
-
+  typedef CountIntType_ CountIntType;
+  typedef CountRealAvgType_ CountRealAvgType;
+  static constexpr int NumTrackValues = NumTrackValues_;
+  static constexpr int NumLevels = NumLevels_;
   static constexpr bool TrackSelectedIndices = TrackSelectedIndices_;
 
-  struct Result {
+  typedef typename ValueCalculator::ValueType ValueType;
+  
+  typedef BinningAnalysisParams<ValueType,NumTrackValues,NumLevels,false/*StoreBinSums*/,CountIntType>
+  BinningAnalysisParamsType;
 
+  typedef UniformBinsHistogram<typename ValueCalculator::ValueType, CountIntType> BaseHistogramType;
+  typedef typename BaseHistogramType::Params HistogramParams;
+
+  /** \brief Result type of the corresponding ValueHistogramWithBinningMHRWStatsCollector
+   *
+   */
+  struct Result
+  {
+    template<typename BinningAnalysisType>
     Result(HistogramParams p, const BinningAnalysisType & b)
       : hist(p),
 	error_levels(b.num_track_values(), b.num_levels()+1),
@@ -834,11 +836,53 @@ public:
       eigen_assert(converged_status.rows() == b.num_track_values() && converged_status.cols() == 1);
     }
 
-    AveragedHistogram<HistogramType, CountRealAvgType> hist;
-    typename BinningAnalysisType::BinSumSqArray error_levels;
+    AveragedHistogram<BaseHistogramType, CountRealAvgType> hist;
+    typename BinningAnalysisParamsType::BinSumSqArray error_levels;
     Eigen::ArrayXi converged_status;
   };
+
+};
+
+/** \brief Collect a histogram of values from a MH random walk, with binning analysis.
+ *
+ * The \a Params template parameter must be a
+ * ValueHistogramWithBinningMHRWStatsCollectorParams with the relevant template
+ * parameters.
+ *
+ * \bug \a TrackSelectedindices does not work yet.
+ */
+template<typename Params,
+	 typename LoggerType_ = Logger::VacuumLogger
+         >
+class ValueHistogramWithBinningMHRWStatsCollector
+{
+public:
+  typedef typename Params::ValueCalculator ValueCalculator;
+  typedef typename Params::CountIntType CountIntType;
+  typedef typename Params::CountRealAvgType CountRealAvgType;
+  
+  typedef LoggerType_ LoggerType;
+
+  typedef typename Params::BaseHistogramType BaseHistogramType;
+  typedef typename Params::HistogramParams HistogramParams;
     
+  typedef typename Params::ValueType ValueType;
+  
+  typedef typename Params::BinningAnalysisParamsType BinningAnalysisParamsType;
+  typedef BinningAnalysis<BinningAnalysisParamsType, LoggerType> BinningAnalysisType;
+    
+  static constexpr int NumTrackValuesCTime = Params::NumTrackValuesCTime;
+  static constexpr int NumLevelsCTime = Params::NumLevelsCTime;
+  static constexpr bool TrackSelectedIndices = Params::TrackSelectedIndices;
+
+  typedef typename Params::Result Result;
+
+  typedef ValueHistogramMHRWStatsCollector<
+    ValueCalculator,
+    LoggerType,
+    BaseHistogramType
+    > ValueHistogramMHRWStatsCollectorType;
+  
 private:
     
   ValueHistogramMHRWStatsCollectorType value_histogram;
@@ -891,7 +935,7 @@ public:
 
 
   //! Get the histogram data collected so far. See \ref HistogramType.
-  inline const HistogramType & histogram() const
+  inline const BaseHistogramType & histogram() const
   {
     return value_histogram.histogram();
   }
@@ -901,8 +945,11 @@ public:
     return binning_analysis;
   }
 
-  /** \brief Get the histogram data collected so far. This method is needed for \ref
+  /** \brief Get the final histogram data. This method is needed for \ref
    * pageInterfaceResultable compliance.
+   *
+   * This will only yield a valid value AFTER the all the data has been collected and \ref
+   * done() was called.
    */
   inline const Result & getResult() const
   {
@@ -928,12 +975,12 @@ public:
 
     value_histogram.template done<false>();
 
-    const HistogramType & h = value_histogram.histogram();
+    const BaseHistogramType & h = value_histogram.histogram();
     result.hist.params = h.params;
     CountRealAvgType normalization = h.bins.sum();
     result.hist.bins = h.bins.template cast<CountRealAvgType>() / normalization;
     result.error_levels = binning_analysis.calc_error_levels(result.hist.bins);
-    result.hist.std_dev = result.error_levels.col(binning_analysis.num_levels()).template cast<CountRealAvgType>();
+    result.hist.delta = result.error_levels.col(binning_analysis.num_levels()).template cast<CountRealAvgType>();
     result.hist.off_chart = h.off_chart / normalization;
 
     result.converged_status = binning_analysis.determine_error_convergence(result.error_levels);
@@ -947,7 +994,7 @@ public:
 	for (int k = 0; k < binning_analysis.num_track_values(); ++k) {
 	  str << "\t    val[" << std::setw(3) << k << "] = "
 	      << std::setw(12) << result.hist.bins(k)
-	      << " +- " << std::setw(12) << result.hist.std_dev(k);
+	      << " +- " << std::setw(12) << result.hist.delta(k);
 	  if (result.converged_status(k) == BinningAnalysisType::CONVERGED) {
 	    str << "  [CONVERGED]";
 	  } else if (result.converged_status(k) == BinningAnalysisType::NOT_CONVERGED) {

@@ -87,7 +87,8 @@ Eigen::Array<double,4,1> inline_vector(double a1, double a2, double a3, double a
 BOOST_AUTO_TEST_CASE(basic)
 {
   Tomographer::Logger::BufferLogger logger(Tomographer::Logger::LONGDEBUG);
-  typedef Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger> OurBinningAnalysis;
+  typedef Tomographer::BinningAnalysis<Tomographer::BinningAnalysisParams<double>,
+                                       Tomographer::Logger::BufferLogger> OurBinningAnalysis;
   OurBinningAnalysis bina(4, 2, logger);
 
   logger.debug("basic()", "Starting to feed samples to the binning analysis object");
@@ -175,7 +176,8 @@ BOOST_AUTO_TEST_CASE(basic)
   BOOST_CHECK_EQUAL(bina.num_track_values(), 4);
   BOOST_CHECK_EQUAL(bina.num_levels(), 2);
 
-  Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger>::BinSumSqArray
+  Tomographer::BinningAnalysis<Tomographer::BinningAnalysisParams<double>,
+                               Tomographer::Logger::BufferLogger>::BinSumSqArray
     error_levels_calc(4,3);
   error_levels_calc = bina.calc_error_levels();
 
@@ -190,7 +192,8 @@ BOOST_AUTO_TEST_CASE(basic)
 BOOST_AUTO_TEST_CASE(no_bin_means)
 {
   Tomographer::Logger::BufferLogger logger(Tomographer::Logger::LONGDEBUG);
-  typedef Tomographer::BinningAnalysis<double, Tomographer::Logger::BufferLogger, 4, 1, false /*StoreBinSums_*/>
+  typedef Tomographer::BinningAnalysis<Tomographer::BinningAnalysisParams<double, 4, 1, false /*StoreBinSums_*/>,
+                                       Tomographer::Logger::BufferLogger>
     OurBinningAnalysis;
   OurBinningAnalysis bina(4, 1, logger);
 
@@ -247,10 +250,11 @@ BOOST_AUTO_TEST_CASE(simple1)
 
 
   typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<
-    test_norm_value_calculator,
-    LoggerType,
-    int,
-    float> ValWBinningMHRWStatsCollectorType;
+    Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<test_norm_value_calculator,
+                                                                   int,
+                                                                   float>,
+    LoggerType
+    > ValWBinningMHRWStatsCollectorType;
 
   typedef ValWBinningMHRWStatsCollectorType::HistogramParams HistogramParams;
   typedef test_hypercube_mhwalker<double, 3 /* Dim */> MHWalkerType;

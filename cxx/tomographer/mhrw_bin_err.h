@@ -31,18 +31,14 @@ struct helper_samples_size<NumLevels,true> {
 } // namespace tomo_internal
 
 
-/** \brief Simple binning analysis for determining error bars.
+
+/** \brief Group template parameters for BinningAnalysis
  *
- *
- * \todo OPTIMIZE THE WAY WE STORE STUFF!!! TAKE MORE IDEAS FROM ALPS'
- * simplebinning.h. [Store sum of squares, not its mean, etc.]
  */
-template<typename ValueType_, typename LoggerType_,
-	 int NumTrackValues_ = Eigen::Dynamic, int NumLevels_ = Eigen::Dynamic,
+template<typename ValueType_, int NumTrackValues_ = Eigen::Dynamic, int NumLevels_ = Eigen::Dynamic,
          bool StoreBinSums_ = true, typename CountIntType_ = int>
-class BinningAnalysis
+struct BinningAnalysisParams
 {
-public:
   typedef ValueType_ ValueType;
   typedef CountIntType_ CountIntType;
 
@@ -59,10 +55,6 @@ public:
   typedef Eigen::Array<ValueType, NumTrackValuesCTime, 1> BinSumArray;
   typedef Eigen::Array<ValueType, NumTrackValuesCTime, NumLevelsPlusOneCTime> BinSumSqArray;
 
-  const Tools::static_or_dynamic<int, NumTrackValuesCTime> num_track_values;
-  const Tools::static_or_dynamic<int, NumLevelsCTime> num_levels;
-  const Tools::static_or_dynamic<CountIntType, SamplesSizeCTime> samples_size;
-
   //! Constants for error bar convergence analysis.  
   enum {
     //! Unable to determine whether the error bars have converged.
@@ -71,6 +63,48 @@ public:
     CONVERGED,
     //! The error bars don't seem to have converged.
     NOT_CONVERGED
+  };
+  
+};
+
+/** \brief Simple binning analysis for determining error bars.
+ *
+ * \tparam Params must be a BinningAnalysisParams-based type
+ * \tparam LoggerType a logger type as usual
+ *
+ * \todo OPTIMIZE THE WAY WE STORE STUFF!!! TAKE MORE IDEAS FROM ALPS'
+ * simplebinning.h. [Store sum of squares, not its mean, etc.] ********* Working on
+ * this. Check that it's fine????
+ */
+template<typename Params, typename LoggerType_>
+class BinningAnalysis
+{
+public:
+  typedef typename Params::ValueType ValueType;
+  typedef typename Params::CountIntType CountIntType;
+
+  static constexpr int NumTrackValuesCTime = Params::NumTrackValuesCTime;
+  static constexpr int NumLevelsCTime = Params::NumLevelsCTime;
+  static constexpr int NumLevelsPlusOneCTime = Params::NumLevelsPlusOneCTime;
+  static constexpr int SamplesSizeCTime = Params::SamplesSizeCTime;
+  static constexpr bool StoreBinSums = Params::StoreBinSums;
+
+  typedef typename Params::SamplesArray SamplesArray;
+  typedef typename Params::BinSumArray BinSumArray;
+  typedef typename Params::BinSumSqArray BinSumSqArray;
+
+  const Tools::static_or_dynamic<int, NumTrackValuesCTime> num_track_values;
+  const Tools::static_or_dynamic<int, NumLevelsCTime> num_levels;
+  const Tools::static_or_dynamic<CountIntType, SamplesSizeCTime> samples_size;
+
+  //! Constants for error bar convergence analysis.  
+  enum {
+    //! Unable to determine whether the error bars have converged.
+    UNKNOWN_CONVERGENCE = Params::UNKNOWN_CONVERGENCE,
+    //! The error bars appear to have converged.
+    CONVERGED = Params::CONVERGED,
+    //! The error bars don't seem to have converged.
+    NOT_CONVERGED = Params::NOT_CONVERGED
   };
 
   typedef LoggerType_ LoggerType;

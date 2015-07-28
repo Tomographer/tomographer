@@ -8,36 +8,20 @@
 
 
 template<typename TomoProblem_, typename ValueCalculator_>
-struct TomorunCData : public Tomographer::MHRWTasks::CDataBase<>
+struct TomorunCDataBase : public Tomographer::MHRWTasks::CDataBase<>
 {
   typedef TomoProblem_ TomoProblem;
   typedef ValueCalculator_ ValueCalculator;
-  typedef typename Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator>::Result HistogramType;
-  typedef typename HistogramType::Params HistogramParams;
 
+  typedef HistogramType_ HistogramType;
 
   TomorunCData(TomoProblem & tomo_, const ValueCalculator & vcalc_)
-    : tomo(tomo_), vcalc(vcalc_), histogram_params()
+    : tomo(tomo_), vcalc(vcalc_)
   {
   }
 
   TomoProblem tomo;
   ValueCalculator vcalc;
-
-  typename HistogramType::Params histogram_params;
-
-  typedef HistogramType MHRWStatsCollectorResultType;
-
-  template<typename LoggerType>
-  inline Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>
-  createStatsCollector(LoggerType & logger) const
-  {
-    return Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>(
-	histogram_params,
-	vcalc,
-	logger
-	);
-  }
 
   template<typename Rng, typename LoggerType>
   inline Tomographer::DMStateSpaceLLHMHWalker<TomoProblem,Rng,LoggerType>
@@ -53,65 +37,183 @@ struct TomorunCData : public Tomographer::MHRWTasks::CDataBase<>
 
 };
 
+
+// -----------------------------------------------------------------------------
+// Version without binning analysis
+// -----------------------------------------------------------------------------
+
 template<typename TomoProblem_, typename ValueCalculator_>
-struct TomorunResultsCollector {
-  typedef TomoProblem_ TomoProblem;
-  typedef ValueCalculator_ ValueCalculator;
-  typedef typename Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator>::Result HistogramType;
+struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculator_>
+{
+  typedef typename Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator_>::Result
+  MHRWStatsCollectorResultType;
+  typedef MHRWStatsCollectorResultType HistogramType;
   typedef typename HistogramType::Params HistogramParams;
 
-  Tomographer::AveragedHistogram<HistogramType, double> finalhistogram;
+  HistogramParams histogram_params;
 
-  TomorunResultsCollector()
-    : finalhistogram(HistogramParams())
+  TomorunCDataSimple(TomoProblem & tomo_, const ValueCalculator & vcalc_)
+    : TomorunCDataBase(tomo_, vcalc_), histogram_params()
   {
   }
 
-  template<typename Cnt, typename CData>
-  inline void init(Cnt /*num_total_runs*/, Cnt /*n_chunk*/,
-		   const CData * pcdata)
+  template<typename LoggerType>
+  inline Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>
+  createStatsCollector(LoggerType & logger) const
   {
-    finalhistogram.reset(pcdata->histogram_params);
+    return Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>(
+	histogram_params,
+	vcalc,
+	logger
+	);
   }
-  template<typename Cnt, typename CData>
-  inline void collect_result(Cnt /*task_no*/, const HistogramType& taskresult, const CData *)
+
+
+  // corresponding results collector
+  struct ResultsCollector
   {
+    typedef TomoProblem_ TomoProblem;
+    typedef ValueCalculator_ ValueCalculator;
+    typedef typename Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator>::Result HistogramType;
+    typedef typename HistogramType::Params HistogramParams;
+    
+    Tomographer::AveragedHistogram<HistogramType, double> finalhistogram;
+    
+    TomorunResultsCollectorSimple()
+      : finalhistogram(HistogramParams())
+    {
+    }
+    
+    template<typename Cnt, typename CData>
+    inline void init(Cnt /*num_total_runs*/, Cnt /*n_chunk*/,
+                     const CData * pcdata)
+    {
+      finalhistogram.reset(pcdata->histogram_params);
+    }
+    template<typename Cnt, typename CData>
+    inline void collect_result(Cnt /*task_no*/, const HistogramType& taskresult, const CData *)
+    {
     finalhistogram.add_histogram(taskresult);
-  }
-  template<typename Cnt, typename CData>
-  inline void runs_finished(Cnt, const CData *)
-  {
-    finalhistogram.finalize();
-  }
+    }
+    template<typename Cnt, typename CData>
+    inline void runs_finished(Cnt, const CData *)
+    {
+      finalhistogram.finalize();
+    }
+  };
 };
 
 
-
-
+// -----------------------------------------------------------------------------
+// Version with the Binning Analysis
 // -----------------------------------------------------------------------------
 
+template<typename TomoProblem, typename ValueCalculator>
+struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem, ValueCalculator>
+{
+  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<ValueCalculator>
+  BinningMHRWStatsCollectorParams;
+  typedef typename BinningMHRWStatsCollectorParams::Result MHRWStatsCollectorResultType;
+  typedef typename BinningMHRWStatsCollectorParams::HistogramType HistogramType;
+  typedef typename BinningMHRWStatsCollectorParams::HistogramParams HistogramParams;
+
+  HistogramParams histogram_params;
+
+  typedef BinningMHRWStatsCollector::Result MHRWStatsCollectorResultType;
+
+  TomorunCDataBinning(TomoProblem & tomo_, const ValueCalculator & vcalc_)
+    : TomorunCDataBase(tomo_, vcalc_), histogram_params()
+  {
+  }
+
+  template<typename LoggerType>
+  inline Tomographer::ValueHistogramWithBinningMHRWStatsCollector<BinningMHRWStatsCollectorParams,LoggerType>
+  createStatsCollector(LoggerType & logger) const
+  {
+    return Tomographer::ValueHistogramWithBinningMHRWStatsCollector<BinningMHRWStatsCollectorParams,LoggerType>(
+	histogram_params,
+	vcalc,
+	logger
+	);
+  }
+
+
+  // corresponding results collector
+  struct ResultsCollector {
+    typedef TomoProblem_ TomoProblem;
+    typedef ValueCalculator_ ValueCalculator;
+    typedef typename ValueHistogramWithBinningMHRWStatsCollectorParams<ValueCalculator>::Result HistogramType;
+    typedef typename HistogramType::Params HistogramParams;
+    
+    Tomographer::AveragedHistogram<HistogramType, double> finalhistogram;
+    
+    ResultsCollector()
+      : finalhistogram(HistogramParams())
+    {
+    }
+    
+    template<typename Cnt, typename CData>
+    inline void init(Cnt /*num_total_runs*/, Cnt /*n_chunk*/,
+                     const CData * pcdata)
+    {
+      finalhistogram.reset(pcdata->histogram_params);
+    }
+    template<typename Cnt, typename CData>
+    inline void collect_result(Cnt /*task_no*/, const HistogramType& taskresult, const CData *)
+    {
+      // because taskresult is a histogram WITH error bars, add_histogram will do the right
+      // thing and take them into account.
+      finalhistogram.add_histogram(taskresult);
+    }
+    template<typename Cnt, typename CData>
+    inline void runs_finished(Cnt, const CData *)
+    {
+      finalhistogram.finalize();
+    }
+  };
+};
+
+
+// =============================================================================
+
+template<bool BinningAnalysisErrorBars, typename TomoProblem, typename ValueCalculator>
+struct TomorunModeTypes
+{
+};
+
+template<typename TomoProblem, typename ValueCalculator>
+struct TomorunModeTypes<true, TomoProblem, ValueCalculator>
+{
+  typedef TomorunCDataBinning<TomoProblem, ValueCalculator> CData;
+};
+template<typename TomoProblem, typename ValueCalculator>
+struct TomorunModeTypes<false, TomoProblem, ValueCalculator>
+{
+  typedef TomorunCDataSimple<TomoProblem, ValueCalculator> CData;
+};
 
 
 //
 // Here goes the actual program. This is templated, because then we can let Eigen use
 // allocation on the stack rather than malloc'ing 2x2 matrices...
 //
-template<typename OurTomoProblem, typename FnMakeValueCalculator, typename Logger>
-inline void tomorun(OurTomoProblem & tomodat, ProgOptions * opt,
-		    FnMakeValueCalculator makeValueCalculator, Logger & logger)
+template<bool BinningAnalysisErrorBars, typename TomoProblem,
+         typename FnMakeValueCalculator, typename LoggerType>
+inline void tomorun(const TomoProblem & tomodat, ProgOptions * opt,
+		    FnMakeValueCalculator makeValueCalculator, LoggerType & logger)
 {
   //
   // create the OMP Task Manager and run.
   //
 
   auto valcalc = makeValueCalculator(tomodat);
-  typedef decltype(valcalc) OurValueCalculator;
+  typedef decltype(valcalc) ValueCalculator;
 
-  typedef TomorunCData<OurTomoProblem, OurValueCalculator> OurCData;
+  typedef typename TomorunModeTypes<BinningAnalysisErrorBars, TomoProblem, ValueCalculator>::CData OurCData;
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>  OurMHRandomWalkTask;
 
-  typedef TomorunResultsCollector<OurTomoProblem, OurValueCalculator>  OurResultsCollector;
+  typedef CData::ResultsCollector OurResultsCollector;
 
   OurCData taskcdat(tomodat, valcalc);
   // seed for random number generator
@@ -194,13 +296,24 @@ inline void tomorun(OurTomoProblem & tomodat, ProgOptions * opt,
 // -----------------------------------------------------------------------------
 
 
+template<int FixedDim, int FixedMaxPOVMEffects, typename LoggerType>
+inline void tomorun_dispatch_eb(unsigned int dim, ProgOptions * opt, Tomographer::MAT::File * matf, LoggerType & logger)
+{
+  if (opt->binning_analysis_error_bars) {
+    tomorun_dispatch<FixedDim, FixedMaxPOVMEffects, true, LoggerType>(dim, opt, matf, logger);
+  } else {
+    tomorun_dispatch<FixedDim, FixedMaxPOVMEffects, false, LoggerType>(dim, opt, matf, logger);
+  }
+}
+
+
 //
 // And here is the dispatcher. It will call the correct variant of tomorun() (with the
 // correct template parameters), depending on what we were asked to do.
 //
 //
-template<int FixedDim, int FixedMaxPOVMEffects, typename Logger>
-inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::MAT::File * matf, Logger & logger)
+template<int FixedDim, int FixedMaxPOVMEffects, bool BinningAnalysisErrorBars, typename LoggerType>
+inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::MAT::File * matf, LoggerType & logger)
 {
   logger.debug("tomorun_dispatch()", "Running tomography program! FixedDim=%d and FixedMaxPOVMEffects=%d",
                FixedDim, FixedMaxPOVMEffects);
@@ -325,41 +438,44 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   //
 
   if (opt->val_type == "fidelity") {
-    tomorun(tomodat, opt,
-	    [use_ref_state,&T_ref](const OurTomoProblem & tomo)
-	    -> Tomographer::FidelityToRefCalculator<OurTomoProblem, double>
-	    {
-	      if (use_ref_state) {
-		return Tomographer::FidelityToRefCalculator<OurTomoProblem, double>(tomo, T_ref);
-	      } else {
-		return Tomographer::FidelityToRefCalculator<OurTomoProblem, double>(tomo);
-	      }
-	    },
-	    logger);
+    tomorun<BinningAnalysisErrorBars>(
+        tomodat,
+        opt,
+        [use_ref_state,&T_ref](const OurTomoProblem & tomo)
+        -> Tomographer::FidelityToRefCalculator<OurTomoProblem, double> {
+          if (use_ref_state) {
+            return Tomographer::FidelityToRefCalculator<OurTomoProblem, double>(tomo, T_ref);
+          } else {
+            return Tomographer::FidelityToRefCalculator<OurTomoProblem, double>(tomo);
+          }
+        },
+        logger);
   } else if (opt->val_type == "purif-dist") {
-    tomorun(tomodat, opt,
-	    [use_ref_state,&T_ref](const OurTomoProblem & tomo)
-	    -> Tomographer::PurifDistToRefCalculator<OurTomoProblem, double>
-	    {
-	      if (use_ref_state) {
-		return Tomographer::PurifDistToRefCalculator<OurTomoProblem, double>(tomo, T_ref);
-	      } else {
-		return Tomographer::PurifDistToRefCalculator<OurTomoProblem, double>(tomo);
-	      }
-	    },
-	    logger);
+    tomorun<BinningAnalysisErrorBars>(
+        tomodat,
+        opt,
+        [use_ref_state,&T_ref](const OurTomoProblem & tomo)
+        -> Tomographer::PurifDistToRefCalculator<OurTomoProblem, double> {
+          if (use_ref_state) {
+            return Tomographer::PurifDistToRefCalculator<OurTomoProblem, double>(tomo, T_ref);
+          } else {
+            return Tomographer::PurifDistToRefCalculator<OurTomoProblem, double>(tomo);
+          }
+        },
+        logger);
   } else if (opt->val_type == "tr-dist") {
-    tomorun(tomodat, opt,
-	    [use_ref_state,&rho_ref](const OurTomoProblem & tomo)
-	    -> Tomographer::TrDistToRefCalculator<OurTomoProblem, double>
-	    {
-	      if (use_ref_state) {
- 		return Tomographer::TrDistToRefCalculator<OurTomoProblem, double>(tomo, rho_ref);
-	      } else {
- 		return Tomographer::TrDistToRefCalculator<OurTomoProblem, double>(tomo);
-	      }
-	    },
-	    logger);
+    tomorun<BinningAnalysisErrorBars>(
+        tomodat,
+        opt,
+        [use_ref_state,&rho_ref](const OurTomoProblem & tomo)
+        -> Tomographer::TrDistToRefCalculator<OurTomoProblem, double> {
+          if (use_ref_state) {
+            return Tomographer::TrDistToRefCalculator<OurTomoProblem, double>(tomo, rho_ref);
+          } else {
+            return Tomographer::TrDistToRefCalculator<OurTomoProblem, double>(tomo);
+          }
+        },
+        logger);
   } else if (opt->val_type == "obs-value") {
     // load the observable
     typename OurMatrQ::MatrixType A = tomodat.matq.initMatrixType();
@@ -367,11 +483,13 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
     ensure_valid_input(A.cols() == dim && A.rows() == dim,
 		       Tomographer::Tools::fmts("Observable is expected to be a square matrix %d x %d", dim, dim));
     // and run our main program
-    tomorun(tomodat, opt,
-	    [&A](const OurTomoProblem & tomo) {
-	      return Tomographer::ObservableValueCalculator<OurTomoProblem>(tomo, A);
-	    },
-	    logger);
+    tomorun<BinningAnalysisErrorBars>(
+        tomodat,
+        opt,
+        [&A](const OurTomoProblem & tomo) {
+          return Tomographer::ObservableValueCalculator<OurTomoProblem>(tomo, A);
+        },
+        logger);
   } else {
     throw std::logic_error((std::string("Unknown value type: ")+opt->val_type).c_str());
   }
