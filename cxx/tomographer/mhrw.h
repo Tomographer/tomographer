@@ -820,7 +820,8 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
   BinningAnalysisParamsType;
 
   typedef UniformBinsHistogram<typename ValueCalculator::ValueType, CountIntType> BaseHistogramType;
-  typedef typename BaseHistogramType::Params HistogramParams;
+  typedef AveragedHistogram<BaseHistogramType, CountRealAvgType> HistogramType;
+  typedef typename HistogramType::Params HistogramParams;
 
   /** \brief Result type of the corresponding ValueHistogramWithBinningMHRWStatsCollector
    *
@@ -836,7 +837,7 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
       eigen_assert(converged_status.rows() == b.num_track_values() && converged_status.cols() == 1);
     }
 
-    AveragedHistogram<BaseHistogramType, CountRealAvgType> hist;
+    HistogramType hist;
     typename BinningAnalysisParamsType::BinSumSqArray error_levels;
     Eigen::ArrayXi converged_status;
   };
@@ -968,7 +969,7 @@ public:
   {
     value_histogram.thermalizing_done();
   }
-  //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
+  //! Finalize the data collection. Part of the \ref pageInterfaceMHRWStatsCollector.
   inline void done()
   {
     logger.longdebug("ValueHistogramWithBinningMHRWStatsCollector::done()", "finishing up ...");
@@ -1054,7 +1055,7 @@ struct MHRWStatsCollectorStatus
    *
    * Don't end your string with a newline, it will be added automatically.
    */
-  static inline std::string getStatus(const MHRWStatsCollector * stats)
+  static inline std::string getStatus(const MHRWStatsCollector * /*stats*/)
   {
     return std::string();
   }

@@ -20,6 +20,7 @@ struct ProgOptions
     val_max(1.0),
     val_nbins(50),
     binning_analysis_error_bars(true), // error bars from binning analysis
+    binning_analysis_num_levels(8),
     start_seed(std::chrono::system_clock::now().time_since_epoch().count()),
     Nrepeats(256),
     Nchunk(1),
@@ -50,6 +51,7 @@ struct ProgOptions
   std::size_t val_nbins;
 
   bool binning_analysis_error_bars;
+  int binning_analysis_num_levels;
 
   int start_seed;
 
@@ -159,6 +161,8 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
   std::string configbasename;
   bool write_histogram_from_config_file_name = false;
 
+  bool no_binning_analysis_error_bars = ! opt->binning_analysis_error_bars;
+
   valtype val_type(opt->val_type);
 
   options_description desc("Options");
@@ -177,10 +181,15 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
      "that state, instead of the MLE estimate (as by default).")
     ("value-hist", value<std::string>(&valhiststr),
      "Do a histogram for different measured values (e.g. fidelity to MLE), format MIN:MAX/NPOINTS")
-    ("binning-analysis-error-bars", bool_switch(& opt->binning_analysis_error_bars)
-     ->default_value(opt->binning_analysis_error_bars),
-     "Produce error bars from a binning analysis (cf. [Ambegaokar/Troyer AJP 2010, 0906.0943]) "
+    ("no-binning-analysis-error-bars", bool_switch(& no_binning_analysis_error_bars)
+     ->default_value(no_binning_analysis_error_bars),
+     "Don't produce error bars from a binning analysis (cf. [Ambegaokar/Troyer AJP 2010, 0906.0943]) "
      "for each histogram bin")
+    ("binning-analysis-num-levels", value<int>(& opt->binning_analysis_num_levels)
+     ->default_value(opt->binning_analysis_num_levels),
+     "Number of levels of coarse-graining in the binning analysis. See --binning-analysis-error-bars. "
+     "Choose this number such that (n-run)/(2^(binning-num-levels)) is a sufficiently decent sample size "
+     "(say ~100).")
     ("step-size", value<double>(& opt->step_size)->default_value(opt->step_size),
      "the step size for the region")
     ("n-sweep", value<unsigned int>(& opt->Nsweep)->default_value(opt->Nsweep),
@@ -268,6 +277,9 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
   } catch (const std::exception& e) {
     throw bad_options(streamstr("Error parsing program options: " << e.what()));
   }
+
+  // set up the "false-type" boolean switches
+  opt->binning_analysis_error_bars = no_binning_analysis_error_bars;
 
   // set up logging.
   // maybe set up log file name from config file name

@@ -20,7 +20,6 @@
 namespace Tomographer {
 
 
-
 /** \brief Stores a histogram
  *
  * Splits the range of values \f$[\text{min},\text{max}]\f$ into \c num_bins number of
@@ -167,6 +166,14 @@ struct UniformBinsHistogram
     : params(min_, max_, num_bins), bins(Eigen::Array<CountType,Eigen::Dynamic,1>::Zero(num_bins)),
       off_chart(0)
   {
+  }
+
+  //! Constructor: copy another histogram type
+  template<typename HistogramType>
+  UniformBinsHistogram(const HistogramType & other)
+    : params(other.params), bins(other.params.num_bins), off_chart(other.off_chart)
+  {
+    bins = other.bins.template cast<CountType>();
   }
 
   //! Resets the histogram to zero counts everywhere
@@ -402,8 +409,8 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
   //! The error bars associated with each histogram bin
   Eigen::Array<CountType, Eigen::Dynamic, 1> delta;
 
-  UniformBinsHistogramWithErrorBars(Params p = Params())
-    : Base_(p), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero(p.num_bins))
+  UniformBinsHistogramWithErrorBars(Params params = Params())
+    : Base_(params), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero(params.num_bins))
   {
   }
 
@@ -558,6 +565,8 @@ struct AveragedHistogram
 
   // ---------------------------------------------------------------------------
   // Implementation in case the added histograms don't have their own error bars
+  // NOTE: histograms are *AVERAGED*, i.e. if n times the exact same histogram
+  // is given, then the averaged histogram is the same.
   // ---------------------------------------------------------------------------
 
   template<bool dummy = true,
@@ -567,7 +576,8 @@ struct AveragedHistogram
     // bins collects the sum of the histograms
     // delta for now collects the sum of squares. delta will be normalized in run_finished().
 
-    eigen_assert((typename HistogramType::CountType)histogram.num_bins() == Base_::num_bins());
+    eigen_assert((typename HistogramType::CountType)histogram.num_bins() ==
+                 (typename HistogramType::CountType)Base_::num_bins());
 
     for (std::size_t k = 0; k < histogram.num_bins(); ++k) {
       RealAvgType binvalue = histogram.count(k);
@@ -593,6 +603,8 @@ struct AveragedHistogram
 
   // ---------------------------------------------------------------------------
   // Implementation in case the added histograms do have their own error bars
+  // NOTE: histograms are *ADDED*, i.e. counts are added together, with
+  // respective error bars properly combined.
   // ---------------------------------------------------------------------------
 
   template<bool dummy = true,
@@ -607,8 +619,8 @@ struct AveragedHistogram
     for (std::size_t k = 0; k < histogram.num_bins(); ++k) {
       RealAvgType binvalue = histogram.count(k);
       Base_::bins(k) += binvalue;
-      RealAvgType delta = histogram.errorbar(k);
-      Base_::delta(k) += Base_::delta * Base_::delta;
+      RealAvgType bindelta = histogram.errorbar(k);
+      Base_::delta(k) += bindelta*bindelta;
     }
 
     Base_::off_chart += histogram.off_chart;

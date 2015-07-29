@@ -34,6 +34,7 @@ set(tests_SRCS
   test_simple_find_zero.cxx
   test_mhrw_bin_err.cxx
   test_multi_omp.cxx
+  test_histogram.cxx
 )
 
 

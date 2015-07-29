@@ -388,7 +388,7 @@
  * \par typedef .. ValueType
  *     The type of the returned value.
  * 
- * \par ValueType getValue(PointType pt)
+ * \par ValueType getValue(PointType pt) const
  *     Get the value corresponding to a particular point \a pt.
  *
  */

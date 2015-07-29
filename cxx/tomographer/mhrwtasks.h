@@ -124,9 +124,12 @@ namespace MHRWTasks
 
     /** \brief the struct in which we hold formally the results of the current task
      *
-     * This is none other than the histogram gathered by \ref valstats.
+     * This is usually none other than the e.g. histogram gathered by \ref valstats.
+     *
+     * We use a pointer here because we don't want to rely on it having to be
+     * default-constructible. We create the object only when requested.
      */
-    Result result;
+    Result * result;
 
   public:
 
@@ -150,10 +153,18 @@ namespace MHRWTasks
      */
     template<typename LoggerType>
     MHRandomWalkTask(int inputseed, const MHRandomWalkTaskCData * /*pcdata*/, LoggerType & logger)
-      : _seed(inputseed)
+      : _seed(inputseed), result(NULL)
     {
       logger.longdebug("MHRandomWalkTask", "() inputseed=%d", inputseed);
     }
+
+    ~MHRandomWalkTask()
+    {
+      if (result != NULL) {
+        delete result;
+      }
+    }
+
 
     /** \brief Run this task
      *
@@ -203,12 +214,12 @@ namespace MHRWTasks
       
       rwalk.run();
 
-      result = stats.getResult();
+      result = new Result(stats.getResult());
     }
 
     inline const Result & getResult() const
     {
-      return result;
+      return *result;
     }
 
   private:
