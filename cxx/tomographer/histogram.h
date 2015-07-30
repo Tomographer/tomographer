@@ -109,7 +109,7 @@ struct UniformBinsHistogram
      */
     inline Scalar bin_lower_value(std::size_t index) const
     {
-      assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
+      eigen_assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
       return min + index * (max-min) / num_bins;
     }
     /** \brief Returns the value which a given bin index represents (center bin value)
@@ -121,7 +121,7 @@ struct UniformBinsHistogram
      */
     inline Scalar bin_center_value(std::size_t index) const
     {
-      assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
+      eigen_assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
       return min + (index+boost::math::constants::half<Scalar>()) * (max-min) / num_bins;
     }
     /** \brief Returns the value which a given bin index represents (upper bin value
@@ -134,7 +134,7 @@ struct UniformBinsHistogram
      */
     inline Scalar bin_upper_value(std::size_t index) const
     {
-      assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
+      eigen_assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
       return min + (index+1) * (max-min) / num_bins;
     }
     /** \brief Returns the width of a bin
@@ -203,15 +203,18 @@ struct UniformBinsHistogram
 
   /** \brief Add data to the histogram.
    *
-   * \param x is an Eigen Vector or 1-D Array from which to load data to add to the
-   *     histogram counts. It must be dense, have one column and exactly \ref num_bins()
-   *     rows.
+   * \param x is an Eigen Vector or 1-D Array from which to load data to add to
+   *     the histogram counts. It must be (dense) Eigen::ArrayBase-derived type,
+   *     have one column and exactly \ref num_bins() rows.
    *
    * \param off_chart if provided, add this amount to the \ref off_chart counts.
    */
   template<typename EigenType>
-  inline void add(const Eigen::DenseBase<EigenType> & x, CountType off_chart_ = 0)
+  inline void add(const Eigen::ArrayBase<EigenType> & x, CountType off_chart_ = 0)
   {
+    // the argument must be of ArrayBase type (as opposed to load() where we can
+    // also accept MatrixBase types) because Eigen doesn't allow operator+=
+    // between Arrays and Matrices, but has an operator= .
     eigen_assert(x.cols() == 1);
     eigen_assert((std::size_t)x.rows() == params.num_bins);
     bins += x.derived().template cast<CountType>();
@@ -332,7 +335,7 @@ struct UniformBinsHistogram
    */
   inline std::string pretty_print(int max_bar_width = 0) const
   {
-    assert(Tools::is_positive(params.num_bins));
+    eigen_assert(Tools::is_positive(params.num_bins));
 
     if (params.num_bins == 0) {
       return std::string("<empty histogram: no bins>\n");
@@ -350,7 +353,7 @@ struct UniformBinsHistogram
       }
     }
 
-    assert(bins.size() >= 0);
+    eigen_assert(bins.size() >= 0);
     std::size_t Ntot = (std::size_t)bins.size();
     double barscale = 1.0;
     if (bins.maxCoeff() > 0) {
@@ -453,12 +456,12 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
     }
 
     std::string s;
-    assert(Base_::bins.size() >= 0);
+    eigen_assert(Base_::bins.size() >= 0);
     std::size_t Ntot = (std::size_t)Base_::bins.size();
     // max_width - formatting widths (see below) - some leeway
     const unsigned int max_bar_width = max_width - (6+3+4+5+4+5) - 5;
     double barscale = (1.0+Base_::bins.maxCoeff()) / max_bar_width; // full bar is max_bar_width chars wide
-    assert(barscale > 0);
+    eigen_assert(barscale > 0);
     auto val_to_bar_len = [max_bar_width,barscale](double val) -> unsigned int {
       if (val < 0) {
 	val = 0;
@@ -472,7 +475,7 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
     auto fill_str_len = [val_to_bar_len](std::string & s, double valstart, double valend, char c, char cside) {
       unsigned int vs = val_to_bar_len(valstart);
       unsigned int ve = val_to_bar_len(valend);
-      assert(vs < s.size() && ve < s.size());
+      eigen_assert(vs < s.size() && ve < s.size());
       for (unsigned int j = vs+1; j < ve; ++j) {
 	s[j] = c;
       }
@@ -481,7 +484,7 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
     };
     
     for (std::size_t k = 0; k < Ntot; ++k) {
-      assert(Base_::bins(k) >= 0);
+      eigen_assert(Base_::bins(k) >= 0);
       std::string sline(max_bar_width, ' ');
       fill_str_len(sline, 0.0, Base_::bins(k) - delta(k), '*', '*');
       fill_str_len(sline, Base_::bins(k) - delta(k), Base_::bins(k) + delta(k), '-', '|');

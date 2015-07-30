@@ -88,7 +88,7 @@ private:
 template<typename Derived1, typename Derived2>
 boost::test_tools::predicate_result
 check_eigen_dense_equal(const Eigen::DenseBase<Derived1> & a, const Eigen::DenseBase<Derived2> & b,
-                        const double tol)
+                        const double tol) // tol is absolute tolerance
 {
   BOOST_MESSAGE("Comparing two Eigen dense objects.");
 
@@ -136,6 +136,9 @@ check_eigen_dense_equal(const Eigen::DenseBase<Derived1> & a, const Eigen::Dense
 static const double tol_percent = 1e-12;
 static const double tol = tol_percent * 0.01;
 
+
+static const float tol_percent_f = 1e-6f;
+static const float tol_f = tol_percent_f * 0.01f;
 
 
 
