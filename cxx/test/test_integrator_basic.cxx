@@ -217,6 +217,20 @@ BOOST_AUTO_TEST_CASE(binning_analysis)
       );
   output_conv_analysis << conv_analysis;
   BOOST_CHECK(output_conv_analysis.match_pattern());
+
+  boost::test_tools::output_test_stream output_error_bars(
+      TOMOGRAPHER_TEST_PATTERNS_DIR "test_integrator_basic/binning_error_bars.txt",
+      true // true = compare mode, false = write mode
+      );
+  output_error_bars
+    << "--------------------------------------------------------------------------------\n";
+  dump_histogram_test(output_error_bars, result.hist);
+  output_error_bars
+    << "--------------------------------------------------------------------------------\n"
+    << "ERROR BARS @ BINNING LEVELS = \n"
+    << result.error_levels
+    << "\n";
+  BOOST_CHECK(output_error_bars.match_pattern());
 }
 
 
