@@ -9,8 +9,7 @@
 
 #include <omp.h>
 
-// we want `eigen_assert()` to raise an `eigen_assert_exception` here
-#include <tomographer/tools/eigen_assert_exception.h>
+#include "test_tomographer.h"
 
 #include <Eigen/Core>
 
@@ -275,15 +274,16 @@ BOOST_AUTO_TEST_CASE(dmmhrwtask)
       TOMOGRAPHER_TEST_PATTERNS_DIR "test_multi_omp/hist_dmmhrwtask.txt",
       true // true = match mode, false = write mode
       );
-  output
-    << "BINS = \n"
-    << std::setprecision(3)
-    << results.finalhistogram.bins
-    << "\n"
-    << "ERROR BARS = \n"
-    << std::setprecision(3)
-    << results.finalhistogram.delta
-    << "\n";
+  dump_histogram_test(output, results.finalhistogram);
+  // output
+  //   << "BINS = \n"
+  //   << std::setprecision(3)
+  //   << results.finalhistogram.bins
+  //   << "\n"
+  //   << "ERROR BARS = \n"
+  //   << std::setprecision(3)
+  //   << results.finalhistogram.delta
+  //   << "\n";
   BOOST_CHECK(output.match_pattern());
 }
 
