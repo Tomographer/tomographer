@@ -9,6 +9,9 @@
 
 #include <cstdlib>
 
+#include <iostream>
+#include <iomanip>
+
 // define the exception class, but don't override eigen's eigen_assert() macro itself
 #include <tomographer/tools/eigen_assert_exception.h>
 
@@ -139,6 +142,60 @@ static const double tol = tol_percent * 0.01;
 
 static const float tol_percent_f = 1e-4f;
 static const float tol_f = tol_percent_f * 0.01f;
+
+
+
+
+
+
+// utility to check histograms.
+//
+// This dumps the histogram data (with or without error bars depending on the histogram
+// type) in a particular format which will not change, and which may be used to compare to
+// expected results by using simple text comparision.
+//
+template<typename HistogramType>
+struct DumpHistogramTest
+{
+  static inline void dump(std::ostream & str, const HistogramType & histogram)
+  {
+    str << "HISTOGRAM";
+    if (HistogramType::HasErrorBars) {
+      str << " (WITH ERROR BARS)\n";
+    } else {
+      str << "\n";
+    }
+    str << "\n";
+    str << "PARAMS = [" << std::setprecision(3) << histogram.params.min << ", " << histogram.params.max
+	<< "] (" << histogram.num_bins() << " bins)\n"
+	<< "\n";
+    for (std::size_t k = 0; k < (std::size_t)histogram.num_bins(); ++k) {
+      _count_str(str, histogram, k);
+    }
+    str << "\n";
+    str << "OFF CHART = " << histogram.off_chart << "\n";
+  }
+
+private:
+  template<bool dummy = true, typename std::enable_if<dummy && !HistogramType::HasErrorBars, bool>::type dummy2 = true>
+  static inline void _count_str(std::ostream & str, const HistogramType & histogram, std::size_t k)
+  {
+    str << histogram.count(k) << "\n";
+  }
+  template<bool dummy = true, typename std::enable_if<dummy && HistogramType::HasErrorBars, bool>::type dummy2 = true>
+  static inline void _count_str(std::ostream & str, const HistogramType & histogram, std::size_t k)
+  {
+    str << histogram.count(k) << " +- " << histogram.errorbar(k) << "\n";
+  }
+};
+
+// helper function for automatic template type deduction
+template<typename HistogramType>
+void dump_histogram_test(std::ostream & str, const HistogramType & histogram)
+{
+  DumpHistogramTest<HistogramType>::dump(str, histogram);
+}
+
 
 
 
