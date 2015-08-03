@@ -365,8 +365,9 @@ struct UniformBinsHistogram
     std::stringstream s;
     for (std::size_t k = 0; k < Ntot; ++k) {
       //assert(Tools::is_positive(bins(k))); // don't abort() because of this...
+      eigen_assert(Tools::is_positive(bins(k)));
       s.width(6);
-      s << std::setprecision(4) << std::left << (double)(params.min + k*(params.max-params.min)/Ntot);
+      s << std::setprecision(4) << std::left << (params.min + k*(params.max-params.min)/Ntot);
       s << " | ";
       s.width(3);
       s << std::setprecision(2) << std::right << bins(k) << " ";
@@ -413,6 +414,12 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
   //! The error bars associated with each histogram bin
   Eigen::Array<CountType, Eigen::Dynamic, 1> delta;
 
+  // make these accessible without having to use the "Base_::member" syntax all the time
+  using Base_::params;
+  using Base_::bins;
+  using Base_::off_chart;
+
+
   UniformBinsHistogramWithErrorBars(Params params = Params())
     : Base_(params), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero(params.num_bins))
   {
@@ -443,32 +450,35 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
   }
 
 
-  std::string pretty_print(int max_width = 0) const
+  std::string pretty_print(int max_bar_width = 0) const
   {
-    if (max_width == 0) {
+    eigen_assert(Tools::is_positive(params.num_bins));
+
+    if (max_bar_width == 0) {
       // decide of a maximum width to display
-      max_width = 100; // default maximum width
+      max_bar_width = 70; // default maximum width
       // If the user provided a value for the terminal width, use it. Note that $COLUMNS is
       // not in the environment usually, so you have to set it manually with e.g.
       //    shell> export COLUMNS=$COLUMNS
       const char * cols_s = std::getenv("COLUMNS");
       if (cols_s != NULL) {
-	max_width = std::atoi(cols_s);
+	max_bar_width = std::atoi(cols_s) - 30;
       }
     }
 
-    std::string s;
-    eigen_assert(Base_::bins.size() >= 0);
-    std::size_t Ntot = (std::size_t)Base_::bins.size();
-    // max_width - formatting widths (see below) - some leeway
-    const unsigned int max_bar_width = max_width - (6+3+4+5+4+5) - 5;
-    double barscale = (1.0+Base_::bins.maxCoeff()) / max_bar_width; // full bar is max_bar_width chars wide
-    eigen_assert(barscale > 0);
+    eigen_assert(bins.size() >= 0);
+    std::size_t Ntot = (std::size_t)bins.size();
+    double barscale = 1.0;
+    if (bins.maxCoeff() > 0) {
+      // if all values are zero, the division later by barscale gives a division by zero
+      // and a nan/inf mess
+      barscale = (double)bins.maxCoeff() / max_bar_width;
+    }
     auto val_to_bar_len = [max_bar_width,barscale](double val) -> unsigned int {
       if (val < 0) {
 	val = 0;
       }
-      unsigned int l = (unsigned int)(val/barscale+0.5);
+      int l = (int)(val/barscale+0.5);
       if (l >= max_bar_width) {
 	return max_bar_width-1;
       }
@@ -485,20 +495,20 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
       s[ve] = cside;
     };
     
+    std::string s;
     for (std::size_t k = 0; k < Ntot; ++k) {
-      eigen_assert(Base_::bins(k) >= 0);
+      eigen_assert(Tools::is_positive(bins(k)));
       std::string sline(max_bar_width, ' ');
-      fill_str_len(sline, 0.0, Base_::bins(k) - delta(k), '*', '*');
-      fill_str_len(sline, Base_::bins(k) - delta(k), Base_::bins(k) + delta(k), '-', '|');
-      
+      fill_str_len(sline, 0.0, bins(k) - delta(k), '*', '*');
+      fill_str_len(sline, bins(k) - delta(k), bins(k) + delta(k), '-', '|');
       s += Tools::fmts("%-6.4g | %s    %5.1f +- %5.1f\n",
-		       (double)(Base_::params.min + k*(Base_::params.max-Base_::params.min)/Ntot),
+		       (double)(params.min + k*(params.max-params.min)/Ntot),
 		       sline.c_str(),
-		       (double)Base_::bins(k), (double)delta(k)
+		       (double)bins(k), (double)delta(k)
 	  );
     }
-    if (Base_::off_chart > 1e-6) {
-      s += Tools::fmts("   ... with another (average) %.4g points off chart.\n", (double)Base_::off_chart);
+    if (off_chart > 1e-6) {
+      s += Tools::fmts("   ... with another (average) %.4g points off chart.\n", (double)off_chart);
     }
     return s;
   }
@@ -635,6 +645,9 @@ struct AveragedHistogram
            typename std::enable_if<dummy && (HistogramType::HasErrorBars), bool>::type dummy2 = true>
   inline void finalize()
   {
+    Base_::bins /= num_histograms;
+    Base_::off_chart /= num_histograms;
+
     Base_::delta = Base_::delta.sqrt();
     Base_::delta /= num_histograms;
   }

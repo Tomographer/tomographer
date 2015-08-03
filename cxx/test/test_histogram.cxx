@@ -271,6 +271,61 @@ BOOST_AUTO_TEST_CASE(no_underlying_error_bars)
 }
 
 
+BOOST_AUTO_TEST_CASE(with_underlying_error_bars)
+{
+  typedef Tomographer::UniformBinsHistogramWithErrorBars<double, float> BaseHistogramType;
+  typedef Tomographer::AveragedHistogram<BaseHistogramType, float> AvgHistogramType;
+
+  typename BaseHistogramType::Params p(0.0, 1.0, 4);
+
+  AvgHistogramType avghist;
+
+  avghist.reset(p);
+
+  BOOST_CHECK_SMALL(avghist.params.min, tol);
+  BOOST_CHECK_CLOSE(avghist.params.max, 1.0, tol_percent);
+  BOOST_CHECK_EQUAL(avghist.num_bins(), 4);
+
+  { BaseHistogramType hist(p);
+    hist.load( inline_vector_4<double>(15, 45, 42, 12) , 36 ); // sum=150
+    (hist.delta << 1, 1, 1, 1).finished();
+    avghist.add_histogram(hist);
+  }
+  { BaseHistogramType hist(p);
+    hist.load( inline_vector_4<double>(17, 43, 40, 18) , 32 );
+    (hist.delta << 2, 2, 5, 2).finished();
+    avghist.add_histogram(hist);
+  }
+  { BaseHistogramType hist(p);
+    hist.load( inline_vector_4<double>(20, 38, 47, 10) , 35 );
+    (hist.delta << 1, 2, 13, 4).finished();
+    avghist.add_histogram(hist);
+  }
+  { BaseHistogramType hist(p);
+    hist.load( inline_vector_4<double>(18, 44, 43, 13) , 32 );
+    (hist.delta << 2, 1, 24, 3).finished();
+    avghist.add_histogram(hist);
+  }
+
+  avghist.finalize();
+
+  BOOST_CHECK_EQUAL(avghist.num_histograms, 4);
+
+  BOOST_MESSAGE(avghist.pretty_print());
+
+  BOOST_CHECK_CLOSE(avghist.bins.sum() + avghist.off_chart, 150.f, tol_percent_f);
+  auto vecbins = inline_vector_4<float>(70/4.f,170/4.f,172/4.f,53/4.f);
+  MY_BOOST_CHECK_EIGEN_EQUAL(avghist.bins, vecbins, tol_f);
+  auto vecdelta = inline_vector_4<float>(
+      std::sqrt(1.f+4+1+4)/4.f,
+      std::sqrt(1.f+4+4+1)/4.f,
+      std::sqrt(1.f+5*5+13*13+24*24)/4.f,
+      std::sqrt(1.f+4.f+16.f+9.f)/4.f
+      );
+  MY_BOOST_CHECK_EIGEN_EQUAL(avghist.delta, vecdelta, tol_f);
+}
+
+
 BOOST_AUTO_TEST_SUITE_END();
 
 // =============================================================================

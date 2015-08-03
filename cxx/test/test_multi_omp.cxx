@@ -271,9 +271,19 @@ BOOST_AUTO_TEST_CASE(dmmhrwtask)
   const std::string hist = results.finalhistogram.pretty_print(100);
   BOOST_MESSAGE("FINAL HISTOGRAM:\n" << hist);
 
-  boost::test_tools::output_test_stream output(TOMOGRAPHER_TEST_PATTERNS_DIR
-					       "test_multi_omp/hist_dmmhrwtask.txt", true);
-  output << hist;
+  boost::test_tools::output_test_stream output(
+      TOMOGRAPHER_TEST_PATTERNS_DIR "test_multi_omp/hist_dmmhrwtask.txt",
+      true // true = match mode, false = write mode
+      );
+  output
+    << "BINS = \n"
+    << std::setprecision(3)
+    << results.finalhistogram.bins
+    << "\n"
+    << "ERROR BARS = \n"
+    << std::setprecision(3)
+    << results.finalhistogram.delta
+    << "\n";
   BOOST_CHECK(output.match_pattern());
 }
 

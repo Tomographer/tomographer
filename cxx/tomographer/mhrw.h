@@ -825,6 +825,8 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
 
   /** \brief Result type of the corresponding ValueHistogramWithBinningMHRWStatsCollector
    *
+   * Stores a histogram with error bars, detailed information about error bars at different binning
+   * levels, and information about the convergence of these error bars.
    */
   struct Result
   {
@@ -837,9 +839,43 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
       eigen_assert(converged_status.rows() == b.num_track_values() && converged_status.cols() == 1);
     }
 
+    //! Histogram, already with error bars
     HistogramType hist;
+    //! Detailed error bars for all binning levels
     typename BinningAnalysisParamsType::BinSumSqArray error_levels;
+    /** \brief Information of convergence status of the error bars (see e.g. \ref
+     * BinningAnalysisParamsType::CONVERGED)
+     */
     Eigen::ArrayXi converged_status;
+
+    //! Dump values, error bars and convergence status in human-readable form into ostream
+    inline void dump_convergence_analysis(std::ostream & str) const
+    {
+      for (int k = 0; k < converged_status.size(); ++k) {
+	str << "\tval[" << std::setw(3) << k << "] = "
+	    << std::setw(12) << hist.bins(k)
+	    << " +- " << std::setw(12) << hist.delta(k);
+	if (converged_status(k) == BinningAnalysisParamsType::CONVERGED) {
+	  str << "  [CONVERGED]";
+	} else if (converged_status(k) == BinningAnalysisParamsType::NOT_CONVERGED) {
+	  str << "  [NOT CONVERGED]";
+	} else if (converged_status(k) == BinningAnalysisParamsType::UNKNOWN_CONVERGENCE) {
+	  str << "  [UNKNOWN]";
+	} else {
+	  str << "  [UNKNOWN CONVERGENCE STATUS: " << converged_status(k) << "]";
+	}
+	str << "\n";
+      }
+    }
+
+    //! Dump values, error bars and convergence status in human-readable form as string
+    inline std::string dump_convergence_analysis() const
+    {
+      std::stringstream ss;
+      dump_convergence_analysis(ss);
+      return ss.str();
+    }
+
   };
 
 };
@@ -978,7 +1014,8 @@ public:
 
     const BaseHistogramType & h = value_histogram.histogram();
     result.hist.params = h.params;
-    CountRealAvgType normalization = h.bins.sum();
+    CountRealAvgType normalization = h.bins.sum() + h.off_chart; // need ALL samples, because that's
+								 // what the binning analysis sees
     result.hist.bins = h.bins.template cast<CountRealAvgType>() / normalization;
     result.error_levels = binning_analysis.calc_error_levels(result.hist.bins);
     result.hist.delta = result.error_levels.col(binning_analysis.num_levels()).template cast<CountRealAvgType>();
@@ -992,38 +1029,24 @@ public:
 	    << "\t-> so the error bars at different binning levels are:\n"
 	    << result.error_levels << "\n"
 	    << "\t-> convergence analysis: \n";
-	for (int k = 0; k < binning_analysis.num_track_values(); ++k) {
-	  str << "\t    val[" << std::setw(3) << k << "] = "
-	      << std::setw(12) << result.hist.bins(k)
-	      << " +- " << std::setw(12) << result.hist.delta(k);
-	  if (result.converged_status(k) == BinningAnalysisType::CONVERGED) {
-	    str << "  [CONVERGED]";
-	  } else if (result.converged_status(k) == BinningAnalysisType::NOT_CONVERGED) {
-	    str << "  [NOT CONVERGED]";
-	  } else if (result.converged_status(k) == BinningAnalysisType::UNKNOWN_CONVERGENCE) {
-	    str << "  [UNKNOWN]";
-	  } else {
-	    str << "  [UNKNOWN CONVERGENCE STATUS: " << result.converged_status(k) << "]";
-	  }
-	  str << "\n";
-	}
+	result.dump_convergence_analysis(str);
 	str << "\t... and just for you, here is the final histogram:\n" << result.hist.pretty_print() << "\n";
       });
   }
 
   //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
   template<typename CountIntType2, typename PointType, typename LLHValueType, typename MHRandomWalk>
-  void raw_move(CountIntType2 k, bool is_thermalizing, bool is_live_iter, bool accepted,
-                double a, const PointType & newpt, LLHValueType newptval,
-                const PointType & curpt, LLHValueType curptval, MHRandomWalk & mh)
+  inline void raw_move(CountIntType2 k, bool is_thermalizing, bool is_live_iter, bool accepted,
+		       double a, const PointType & newpt, LLHValueType newptval,
+		       const PointType & curpt, LLHValueType curptval, MHRandomWalk & mh)
   {
     value_histogram.raw_move(k, is_thermalizing, is_live_iter, accepted, a, newpt, newptval, curpt, curptval, mh);
   }
 
   //! Part of the \ref pageInterfaceMHRWStatsCollector. Records the sample in the histogram.
   template<typename CountIntType2, typename PointType, typename LLHValueType, typename MHRandomWalk>
-  void process_sample(CountIntType2 k, CountIntType2 n, const PointType & curpt,
-                      LLHValueType curptval, MHRandomWalk & mh)
+  inline void process_sample(CountIntType2 k, CountIntType2 n, const PointType & curpt,
+			     LLHValueType curptval, MHRandomWalk & mh)
   {
     std::size_t histindex = value_histogram.process_sample(k, n, curpt, curptval, mh);
     binning_analysis.process_new_values(
@@ -1096,10 +1119,13 @@ struct MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >
 /** \brief Provide status reporting for a ValueHistogramMHRWStatsCollector
  *
  */
-template<typename... Args>
-struct MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<Args... > >
+template<typename ValueCalculator_,
+	 typename Log_,
+	 typename HistogramType_
+	 >
+struct MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator_, Log_, HistogramType_> >
 {
-  typedef ValueHistogramMHRWStatsCollector<Args... > MHRWStatsCollector;
+  typedef ValueHistogramMHRWStatsCollector<ValueCalculator_, Log_, HistogramType_> MHRWStatsCollector;
   
   static constexpr bool CanProvideStatus = true;
 
@@ -1112,7 +1138,6 @@ struct MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<Args... > >
     typedef typename HistogramType::CountType CountType;
 
     const HistogramType & histogram = stats->histogram();
-    const CountType max = histogram.bins.maxCoeff();
 
     int numdiv = (int)(std::ceil((float)histogram.num_bins() / maxbarwidth) + 0.5);
     int barwidth = (int)(std::ceil(histogram.num_bins() / numdiv) + 0.5);

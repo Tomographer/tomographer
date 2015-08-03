@@ -137,7 +137,7 @@ static const double tol_percent = 1e-12;
 static const double tol = tol_percent * 0.01;
 
 
-static const float tol_percent_f = 1e-6f;
+static const float tol_percent_f = 1e-4f;
 static const float tol_f = tol_percent_f * 0.01f;
 
 

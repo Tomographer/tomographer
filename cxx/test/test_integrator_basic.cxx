@@ -4,8 +4,7 @@
 #include <iostream>
 #include <vector>
 
-// we want `eigen_assert()` to raise an `eigen_assert_exception` here
-#include <tomographer/tools/eigen_assert_exception.h>
+#include "test_tomographer.h"
 
 #include <tomographer/qit/matrq.h>
 #include <tomographer/tools/loggers.h>
@@ -174,7 +173,7 @@ BOOST_AUTO_TEST_CASE(binning_analysis)
   OurValueCalculator fidcalc(dat);
 
   // N levels -> samples_size = 2^N
-  const int num_levels = 7;
+  const int num_levels = 5;
 
   ValWBinningMHRWStatsCollectorType vhist(HistogramParams(0.98f, 1.0f, 20), fidcalc, num_levels, buflog);
 
@@ -187,7 +186,7 @@ BOOST_AUTO_TEST_CASE(binning_analysis)
 
   //  std::cout << "About to create the randomwalk object ...\n";
   Tomographer::MHRandomWalk<std::mt19937,MHWalkerType,ValWBinningMHRWStatsCollectorType,LoggerType,unsigned long>
-    rwalk(20, 300, 5000, 0.05, mhwalker, vhist, rng, buflog);
+    rwalk(20, 300, 8192, 0.05, mhwalker, vhist, rng, buflog);
 
   rwalk.run();
 
@@ -195,7 +194,23 @@ BOOST_AUTO_TEST_CASE(binning_analysis)
 
   const ValWBinningMHRWStatsCollectorType::Result & result = vhist.getResult();
 
-  //.........
+  // all error bars should have converged with these settings
+  MY_BOOST_CHECK_EIGEN_EQUAL(
+      result.converged_status,
+      Eigen::ArrayXi::Constant(result.hist.num_bins(),
+			       ValWBinningMHRWStatsCollectorType::BinningAnalysisParamsType::CONVERGED),
+      tol_f
+      );
+
+  std::string conv_analysis = result.dump_convergence_analysis();
+  BOOST_MESSAGE("Convergence Analysis:\n" << conv_analysis);
+
+  boost::test_tools::output_test_stream output_conv_analysis(
+      TOMOGRAPHER_TEST_PATTERNS_DIR "test_integrator_basic/binning_convergence_analysis.txt",
+      true // true = compare mode, false = write mode
+      );
+  output_conv_analysis << conv_analysis;
+  BOOST_CHECK(output_conv_analysis.match_pattern());
 }
 
 
