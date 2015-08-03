@@ -219,8 +219,59 @@ BOOST_AUTO_TEST_SUITE_END();
 
 // -----------------------------------------------------------------------------
 
+BOOST_AUTO_TEST_SUITE(averaged_histogram);
+
+template<typename T>
+inline Eigen::Matrix<T,4,1> inline_vector_4(T a1, T a2, T a3, T a4)
+{
+  Eigen::Matrix<T,4,1> v;
+  (v << a1, a2, a3, a4).finished();
+  return v;
+}
+
+BOOST_AUTO_TEST_CASE(no_underlying_error_bars)
+{
+  typedef Tomographer::UniformBinsHistogram<double, int> SimpleHistogramType;
+  typedef Tomographer::AveragedHistogram<SimpleHistogramType, float> AvgHistogramType;
+
+  typename SimpleHistogramType::Params p(0.0, 1.0, 4);
+
+  AvgHistogramType avghist;
+
+  avghist.reset(p);
+
+  BOOST_CHECK_SMALL(avghist.params.min, tol);
+  BOOST_CHECK_CLOSE(avghist.params.max, 1.0, tol_percent);
+  BOOST_CHECK_EQUAL(avghist.num_bins(), 4);
+
+  { SimpleHistogramType hist(p);
+    hist.load( inline_vector_4<double>(15, 45, 42, 12) , 36 ); // sum=150
+    avghist.add_histogram(hist);
+  }
+  { SimpleHistogramType hist(p);
+    hist.load( inline_vector_4<double>(17, 43, 40, 18) , 32 );
+    avghist.add_histogram(hist);
+  }
+  { SimpleHistogramType hist(p);
+    hist.load( inline_vector_4<double>(20, 38, 47, 10) , 35 );
+    avghist.add_histogram(hist);
+  }
+  { SimpleHistogramType hist(p);
+    hist.load( inline_vector_4<double>(18, 44, 43, 13) , 32 );
+    avghist.add_histogram(hist);
+  }
+
+  avghist.finalize();
+
+  BOOST_CHECK_EQUAL(avghist.num_histograms, 4);
+
+  BOOST_MESSAGE(avghist.pretty_print());
+
+  BOOST_CHECK_CLOSE(avghist.bins.sum() + avghist.off_chart, 150.0, tol_percent);
+}
 
 
+BOOST_AUTO_TEST_SUITE_END();
 
 // =============================================================================
 BOOST_AUTO_TEST_SUITE_END();

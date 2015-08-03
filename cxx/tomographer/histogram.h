@@ -179,6 +179,7 @@ struct UniformBinsHistogram
   //! Resets the histogram to zero counts everywhere
   inline void reset()
   {
+    bins.resize(params.num_bins);
     bins.setZero();
     off_chart = 0;
   }
@@ -431,6 +432,7 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
   inline void reset()
   {
     Base_::reset();
+    delta.resize(Base_::num_bins());
     delta.setZero();
   }
   

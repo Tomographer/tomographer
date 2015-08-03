@@ -98,7 +98,10 @@ struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculato
     template<typename Cnt, typename CData>
     inline void collect_result(Cnt /*task_no*/, const HistogramType& taskresult, const CData *)
     {
-    finalhistogram.add_histogram(taskresult);
+      logger.debug("TomorunCDataSimple::ResultsCollector::collect_result", [&](std::ostream & str) {
+          str << "Got task result. Histogram is:\n" << taskresult.pretty_print();
+        });
+      finalhistogram.add_histogram(taskresult);
     }
     template<typename Cnt, typename CData>
     inline void runs_finished(Cnt, const CData *)
@@ -202,7 +205,10 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
     template<typename Cnt, typename CData>
     inline void collect_result(Cnt /*task_no*/, const Result& taskresult, const CData *)
     {
-      logger.debug("TomorunCDataBinning::ResultsCollector::collect_result", "()");
+      logger.debug("TomorunCDataBinning::ResultsCollector::collect_result", [&](std::ostream & str) {
+          str << "(). Got task result. Histogram (w/ error bars from binning analysis):\n"
+              << taskresult.hist.pretty_print();
+        });
       typedef typename MHRWStatsCollectorParams::BinningAnalysisParamsType BinningAnalysisParamsType;
 
       if ((taskresult.converged_status !=

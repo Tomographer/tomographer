@@ -279,7 +279,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
   }
 
   // set up the "false-type" boolean switches
-  opt->binning_analysis_error_bars = no_binning_analysis_error_bars;
+  opt->binning_analysis_error_bars = ! no_binning_analysis_error_bars;
 
   // set up logging.
   // maybe set up log file name from config file name
@@ -366,21 +366,25 @@ void display_parameters(ProgOptions * opt, LoggerType & logger)
       "display_parameters()",
       // message
       "\n"
-      "Using  data from file     = %s  (measurements x%.3g)\n"
-      "       value type         = %s\n"
-      "       val. histogram     = [%.2g, %.2g] (%lu bins)\n"
-      "       step size          = %.6f\n"
-      "       sweep size         = %lu\n"
-      "       # therm sweeps     = %lu\n"
-      "       # run sweeps       = %lu\n"
-      "       # intgr. repeats   = %lu   (chunked by %lu/thread)\n"
-      "       write histogram to = %s\n"
+      "Using  data from file :     %s  (measurements x%.3g)\n"
+      "       value type :         %s\n"
+      "       val. histogram :     [%.2g, %.2g] (%lu bins)\n"
+      "       error bars :         %s\n"
+      "       step size :          %.6f\n"
+      "       sweep size :         %lu\n"
+      "       # therm sweeps :     %lu\n"
+      "       # run sweeps :       %lu\n"
+      "       # intgr. repeats :   %lu   (chunked by %lu/thread)\n"
+      "       write histogram to : %s\n"
       "\n"
       "       --> total no. of live samples = %lu  (%.2e)\n"
       "\n",
       opt->data_file_name.c_str(), opt->NMeasAmplifyFactor,
       opt->val_type.c_str(),
       opt->val_min, opt->val_max, (unsigned long)opt->val_nbins,
+      (opt->binning_analysis_error_bars
+       ? Tomographer::Tools::fmts("binning analysis (%d levels)", opt->binning_analysis_num_levels).c_str()
+       : "std. dev. of runs"),
       opt->step_size,
       (unsigned long)opt->Nsweep,
       (unsigned long)opt->Ntherm,
