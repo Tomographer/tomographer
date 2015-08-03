@@ -9,6 +9,7 @@
 #include <iomanip> // std::setprecision
 #include <sstream> // std::stringstream
 #include <stdexcept> // std::out_of_range
+#include <type_traits> // std::enable_if
 
 #include <boost/math/constants/constants.hpp>
 
@@ -334,61 +335,62 @@ struct UniformBinsHistogram
    * \param max_bar_width is the maximum width (in number of characters) a full bar should
    * occupy.
    */
-  inline std::string pretty_print(int max_bar_width = 0) const
+  inline std::string pretty_print(int max_width = 0) const
   {
-    eigen_assert(Tools::is_positive(params.num_bins));
+    return histogram_pretty_print(*this, max_width);
+    // eigen_assert(Tools::is_positive(params.num_bins));
 
-    if (params.num_bins == 0) {
-      return std::string("<empty histogram: no bins>\n");
-    }
+    // if (params.num_bins == 0) {
+    //   return std::string("<empty histogram: no bins>\n");
+    // }
 
-    if (max_bar_width == 0) {
-      // decide of a maximum width to display
-      max_bar_width = 80; // default maximum width
-      // If the user provided a value for the terminal width, use it. Note that $COLUMNS is
-      // not in the environment usually, so you have to set it manually with e.g.
-      //    shell> export COLUMNS=$COLUMNS
-      const char * cols_s = std::getenv("COLUMNS");
-      if (cols_s != NULL) {
-	max_bar_width = std::atoi(cols_s) - 20;
-      }
-    }
+    // if (max_bar_width == 0) {
+    //   // decide of a maximum width to display
+    //   max_bar_width = 80; // default maximum width
+    //   // If the user provided a value for the terminal width, use it. Note that $COLUMNS is
+    //   // not in the environment usually, so you have to set it manually with e.g.
+    //   //    shell> export COLUMNS=$COLUMNS
+    //   const char * cols_s = std::getenv("COLUMNS");
+    //   if (cols_s != NULL) {
+    // 	max_bar_width = std::atoi(cols_s) - 20;
+    //   }
+    // }
 
-    eigen_assert(bins.size() >= 0);
-    std::size_t Ntot = (std::size_t)bins.size();
-    double barscale = 1.0;
-    if (bins.maxCoeff() > 0) {
-      // if all values are zero, the division later by barscale gives a division by zero
-      // and crashes stuff
-      barscale = (double)bins.maxCoeff() / max_bar_width; // full bar is 80 chars wide
-    }
-    std::stringstream s;
-    for (std::size_t k = 0; k < Ntot; ++k) {
-      //assert(Tools::is_positive(bins(k))); // don't abort() because of this...
-      eigen_assert(Tools::is_positive(bins(k)));
-      s.width(6);
-      s << std::setprecision(4) << std::left << (params.min + k*(params.max-params.min)/Ntot);
-      s << " | ";
-      s.width(3);
-      s << std::setprecision(2) << std::right << bins(k) << " ";
-      s.width(0);
-      int strwid = (int)(bins(k)/barscale + 0.5);
-      if (strwid < 0) {
-	strwid = 0;
-      } else if (strwid > max_bar_width) {
-	strwid = max_bar_width;
-      }
-      s << std::string(strwid >= 0 ? strwid : 0, '*') << "\n";
+    // eigen_assert(bins.size() >= 0);
+    // std::size_t Ntot = (std::size_t)bins.size();
+    // double barscale = 1.0;
+    // if (bins.maxCoeff() > 0) {
+    //   // if all values are zero, the division later by barscale gives a division by zero
+    //   // and crashes stuff
+    //   barscale = (double)bins.maxCoeff() / max_bar_width; // full bar is 80 chars wide
+    // }
+    // std::stringstream s;
+    // for (std::size_t k = 0; k < Ntot; ++k) {
+    //   //assert(Tools::is_positive(bins(k))); // don't abort() because of this...
+    //   eigen_assert(Tools::is_positive(bins(k)));
+    //   s.width(6);
+    //   s << std::setprecision(4) << std::left << (params.min + k*(params.max-params.min)/Ntot);
+    //   s << " | ";
+    //   s.width(3);
+    //   s << std::setprecision(2) << std::right << bins(k) << " ";
+    //   s.width(0);
+    //   int strwid = (int)(bins(k)/barscale + 0.5);
+    //   if (strwid < 0) {
+    // 	strwid = 0;
+    //   } else if (strwid > max_bar_width) {
+    // 	strwid = max_bar_width;
+    //   }
+    //   s << std::string(strwid >= 0 ? strwid : 0, '*') << "\n";
 
-      //      s += Tools::fmts("%-6.4g | %3ld %s\n",
-      //		       (double)(params.min + k*(params.max-params.min)/Ntot),
-      //		       (long)bins(k), std::string((int)(bins(k)/barscale+0.5), '*').c_str());
-    }
-    if (off_chart > 0) {
-      //      s += Tools::fmts("   ... with another %lu points off chart.\n", (unsigned long)off_chart);
-      s << "   ... with another " << off_chart << " points off chart.\n";
-    }
-    return s.str();
+    //   //      s += Tools::fmts("%-6.4g | %3ld %s\n",
+    //   //		       (double)(params.min + k*(params.max-params.min)/Ntot),
+    //   //		       (long)bins(k), std::string((int)(bins(k)/barscale+0.5), '*').c_str());
+    // }
+    // if (off_chart > 0) {
+    //   //      s += Tools::fmts("   ... with another %lu points off chart.\n", (unsigned long)off_chart);
+    //   s << "   ... with another " << off_chart << " points off chart.\n";
+    // }
+    // return s.str();
   }
 
 };
@@ -450,67 +452,68 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
   }
 
 
-  std::string pretty_print(int max_bar_width = 0) const
+  std::string pretty_print(int max_width = 0) const
   {
-    eigen_assert(Tools::is_positive(params.num_bins));
+    return histogram_pretty_print(*this, max_width);
+    // eigen_assert(Tools::is_positive(params.num_bins));
 
-    if (max_bar_width == 0) {
-      // decide of a maximum width to display
-      max_bar_width = 70; // default maximum width
-      // If the user provided a value for the terminal width, use it. Note that $COLUMNS is
-      // not in the environment usually, so you have to set it manually with e.g.
-      //    shell> export COLUMNS=$COLUMNS
-      const char * cols_s = std::getenv("COLUMNS");
-      if (cols_s != NULL) {
-	max_bar_width = std::atoi(cols_s) - 30;
-      }
-    }
+    // if (max_bar_width == 0) {
+    //   // decide of a maximum width to display
+    //   max_bar_width = 70; // default maximum width
+    //   // If the user provided a value for the terminal width, use it. Note that $COLUMNS is
+    //   // not in the environment usually, so you have to set it manually with e.g.
+    //   //    shell> export COLUMNS=$COLUMNS
+    //   const char * cols_s = std::getenv("COLUMNS");
+    //   if (cols_s != NULL) {
+    // 	max_bar_width = std::atoi(cols_s) - 30;
+    //   }
+    // }
 
-    eigen_assert(bins.size() >= 0);
-    std::size_t Ntot = (std::size_t)bins.size();
-    double barscale = 1.0;
-    if (bins.maxCoeff() > 0) {
-      // if all values are zero, the division later by barscale gives a division by zero
-      // and a nan/inf mess
-      barscale = (double)bins.maxCoeff() / max_bar_width;
-    }
-    auto val_to_bar_len = [max_bar_width,barscale](double val) -> unsigned int {
-      if (val < 0) {
-	val = 0;
-      }
-      int l = (int)(val/barscale+0.5);
-      if (l >= max_bar_width) {
-	return max_bar_width-1;
-      }
-      return l;
-    };
-    auto fill_str_len = [val_to_bar_len](std::string & s, double valstart, double valend, char c, char cside) {
-      unsigned int vs = val_to_bar_len(valstart);
-      unsigned int ve = val_to_bar_len(valend);
-      eigen_assert(vs < s.size() && ve < s.size());
-      for (unsigned int j = vs+1; j < ve; ++j) {
-	s[j] = c;
-      }
-      s[vs] = cside;
-      s[ve] = cside;
-    };
+    // eigen_assert(bins.size() >= 0);
+    // std::size_t Ntot = (std::size_t)bins.size();
+    // double barscale = 1.0;
+    // if (bins.maxCoeff() > 0) {
+    //   // if all values are zero, the division later by barscale gives a division by zero
+    //   // and a nan/inf mess
+    //   barscale = (double)bins.maxCoeff() / max_bar_width;
+    // }
+    // auto val_to_bar_len = [max_bar_width,barscale](double val) -> unsigned int {
+    //   if (val < 0) {
+    // 	val = 0;
+    //   }
+    //   int l = (int)(val/barscale+0.5);
+    //   if (l >= max_bar_width) {
+    // 	return max_bar_width-1;
+    //   }
+    //   return l;
+    // };
+    // auto fill_str_len = [val_to_bar_len](std::string & s, double valstart, double valend, char c, char cside) {
+    //   unsigned int vs = val_to_bar_len(valstart);
+    //   unsigned int ve = val_to_bar_len(valend);
+    //   eigen_assert(vs < s.size() && ve < s.size());
+    //   for (unsigned int j = vs+1; j < ve; ++j) {
+    // 	s[j] = c;
+    //   }
+    //   s[vs] = cside;
+    //   s[ve] = cside;
+    // };
     
-    std::string s;
-    for (std::size_t k = 0; k < Ntot; ++k) {
-      eigen_assert(Tools::is_positive(bins(k)));
-      std::string sline(max_bar_width, ' ');
-      fill_str_len(sline, 0.0, bins(k) - delta(k), '*', '*');
-      fill_str_len(sline, bins(k) - delta(k), bins(k) + delta(k), '-', '|');
-      s += Tools::fmts("%-6.4g | %s    %5.1f +- %5.1f\n",
-		       (double)(params.min + k*(params.max-params.min)/Ntot),
-		       sline.c_str(),
-		       (double)bins(k), (double)delta(k)
-	  );
-    }
-    if (off_chart > 1e-6) {
-      s += Tools::fmts("   ... with another (average) %.4g points off chart.\n", (double)off_chart);
-    }
-    return s;
+    // std::string s;
+    // for (std::size_t k = 0; k < Ntot; ++k) {
+    //   eigen_assert(Tools::is_positive(bins(k)));
+    //   std::string sline(max_bar_width, ' ');
+    //   fill_str_len(sline, 0.0, bins(k) - delta(k), '*', '*');
+    //   fill_str_len(sline, bins(k) - delta(k), bins(k) + delta(k), '-', '|');
+    //   s += Tools::fmts("%-6.4g | %s    %5.1f +- %5.1f\n",
+    // 		       (double)(params.min + k*(params.max-params.min)/Ntot),
+    // 		       sline.c_str(),
+    // 		       (double)bins(k), (double)delta(k)
+    // 	  );
+    // }
+    // if (off_chart > 1e-6) {
+    //   s += Tools::fmts("   ... with another (average) %.4g points off chart.\n", (double)off_chart);
+    // }
+    // return s;
   }
   
 };
@@ -653,6 +656,326 @@ struct AveragedHistogram
   }
 
 };
+
+
+
+
+
+namespace tomo_internal {
+// internal helpers
+//
+// get labels left of histogram (generic HistogramType interface: no information, just bin #)
+template<typename HistogramType>
+struct histogram_pretty_print_label
+{
+  static inline void getLabels(std::vector<std::string> & labels, const HistogramType & hist)
+  {
+    labels.resize(hist.num_bins());
+    for (std::size_t k = 0; k < hist.num_bins(); ++k) {
+      labels[k] = std::to_string(k);
+    }
+  }
+};
+// get labels left of histogram (UniformBinsHistogram)
+template<typename HistogramType>
+inline void histogram_get_labels_for_hist_params(std::vector<std::string> & labels, const HistogramType& hist)
+{
+  labels.resize(hist.num_bins());
+
+  const double max_label_val = std::max(hist.bin_center_value(0), hist.bin_center_value(hist.num_bins()-1));
+  const int powten = (int)std::floor(std::log10(max_label_val));
+  const int relprecision = 4;
+  const int precision = (powten > relprecision) ? 0 : (relprecision - powten - 1);
+
+  for (std::size_t k = 0; k < hist.num_bins(); ++k) {
+    std::ostringstream ss;
+    ss << std::fixed << std::setprecision(precision) << std::right << hist.bin_center_value(k);
+    labels[k] = ss.str();
+  }
+}
+template<typename Scalar_, typename CountType_>
+struct histogram_pretty_print_label<UniformBinsHistogram<Scalar_, CountType_> >
+{
+  typedef UniformBinsHistogram<Scalar_, CountType_> HistogramType;
+  static inline void getLabels(std::vector<std::string> & labels, const HistogramType & hist)
+  {
+    histogram_get_labels_for_hist_params<HistogramType>(labels, hist);
+  }
+};
+template<typename Scalar_, typename CountType_>
+struct histogram_pretty_print_label<UniformBinsHistogramWithErrorBars<Scalar_, CountType_> >
+{
+  typedef UniformBinsHistogramWithErrorBars<Scalar_, CountType_> HistogramType;
+  static inline void getLabels(std::vector<std::string> & labels, const HistogramType & hist)
+  {
+    histogram_get_labels_for_hist_params<HistogramType>(labels, hist);
+  }
+};
+template<typename BaseHistogramType_, typename RealAvgType_>
+struct histogram_pretty_print_label<AveragedHistogram<BaseHistogramType_, RealAvgType_> >
+{
+  typedef AveragedHistogram<BaseHistogramType_, RealAvgType_> HistogramType;
+  static inline void getLabels(std::vector<std::string> & labels, const HistogramType & hist)
+  {
+    histogram_get_labels_for_hist_params<HistogramType>(labels, hist);
+  }
+};
+
+// format bin counts nicely
+template<typename HistogramType>
+struct histogram_pretty_print_value
+{
+  const HistogramType & hist;
+  histogram_pretty_print_value(const HistogramType & hist_) : hist(hist_) { }
+
+  template<bool dummy = true,
+	   typename std::enable_if<dummy && !HistogramType::HasErrorBars, bool>::type dummy2 = true>
+  static inline void getStrValues(std::vector<std::string> & svalues, const HistogramType & hist)
+  {
+    svalues.resize(hist.num_bins());
+
+    std::size_t k;
+    double max_val = 1.0;
+    for (k = 0; k < hist.num_bins(); ++k) {
+      if (k == 0 || hist.count(k) > max_val) {
+	max_val = hist.count(k);
+      }
+    }
+
+    const int powten = (int)std::floor(std::log10(max_val));
+    const int relprecision = 3;
+    const int precision = abs_precision_for(powten, relprecision);
+    const int w = (precision > 0) ? (precision+powten+1) : (relprecision+2);
+
+    for (std::size_t k = 0; k < hist.num_bins(); ++k) {
+      std::stringstream ss;
+      ss << std::setprecision(precision) << std::fixed << std::right << std::setw(w)
+	 << hist.count(k);
+      svalues[k] = ss.str();
+    }
+  }
+  template<bool dummy = true,
+	   typename std::enable_if<dummy && HistogramType::HasErrorBars, bool>::type dummy2 = true>
+  static inline void getStrValues(std::vector<std::string> & svalues, const HistogramType & hist)
+  {
+    svalues.resize(hist.num_bins());
+
+    std::size_t k;
+    double max_val = 1.0;
+    for (k = 0; k < hist.num_bins(); ++k) {
+      if (k == 0 || hist.count(k) > max_val) {
+	max_val = hist.count(k);
+      }
+    }
+
+    const int powten = (int)std::floor(std::log10(max_val)); // floor of log_{10}(...)
+    const int relprecision = 3;
+    const int precision = abs_precision_for(powten, relprecision);
+    const int w = (precision > 0) ? (precision+powten+1) : (relprecision+2);
+
+    for (k = 0; k < hist.num_bins(); ++k) {
+      std::stringstream ss;
+      ss << std::setprecision(precision) << std::fixed << std::right << std::setw(w)
+	 << hist.count(k)
+	 << " +- "
+	 << std::setprecision(abs_precision_for(powten-1, relprecision-1)) << std::setw(w)
+	 << hist.errorbar(k);
+      svalues[k] = ss.str();
+    }
+  }
+private:
+  static inline int abs_precision_for(const int powten, const int relprecision)
+  {
+    return (powten > relprecision) ? 0 : (relprecision - powten - 1);
+  }
+};
+
+template<typename HistogramType>
+struct histogram_pretty_printer
+{
+  const HistogramType & hist;
+  const int max_width;
+
+  const std::string lsep;
+  const std::string rsep;
+
+  std::vector<std::string> labels;
+  int maxlabelwidth;
+
+  std::vector<std::string> svalues;
+  int maxsvaluewidth;
+
+  double max_value;
+
+  int max_bar_width;
+  double barscale;
+
+  histogram_pretty_printer(const HistogramType & hist_, const int max_width_)
+    : hist(hist_), max_width(max_width_), lsep(" |"), rsep("  ")
+  {
+    // first pass:
+    //  -  determine the maximum value attained in the histogram
+    //  -  determine maximum width of formatted label & value fields.
+
+    labels.resize(hist.num_bins());
+    svalues.resize(hist.num_bins());
+
+    histogram_pretty_print_label<HistogramType>::getLabels(labels, hist);
+    histogram_pretty_print_value<HistogramType>::getStrValues(svalues, hist);
+
+    std::size_t k;
+    for (k = 0; k < hist.num_bins(); ++k) {
+      double val = maxval(k);
+
+      if (k == 0 || val > max_value) {
+	max_value = val;
+      }
+      if (k == 0 || (int)labels[k].size() > maxlabelwidth) {
+	maxlabelwidth = labels[k].size();
+      }
+      if (k == 0 || (int)svalues[k].size() > maxsvaluewidth) {
+	maxsvaluewidth = svalues[k].size();
+      }
+    }
+
+    max_bar_width = max_width - maxlabelwidth - maxsvaluewidth - lsep.size() - rsep.size();
+    if (max_bar_width < 2) {
+      max_bar_width = 2;
+    }
+    barscale = ((max_value > 0) ? (max_value / max_bar_width) : 1.0);
+  }
+
+  inline int value_to_bar_length(double val) const
+  {
+    if (val < 0) {
+      val = 0;
+    }
+    int l = (int)(val/barscale+0.5);
+    if (l >= max_bar_width) {
+      return max_bar_width-1;
+    }
+    return l;
+  }
+
+  inline void fill_str_len(std::string & s, double valstart, double valend,
+			   char c, char clside, char crside) const
+  {
+    int vs = value_to_bar_length(valstart);
+    int ve = value_to_bar_length(valend);
+    eigen_assert(vs >= 0);
+    eigen_assert(vs < (int)s.size());
+    eigen_assert(ve >= 0);
+    eigen_assert(ve < (int)s.size());
+    for (int j = vs; j < ve; ++j) {
+      s[j] = c;
+    }
+    if (clside && crside && clside != crside && vs == ve) {
+      if (ve < (int)s.size()-1) {
+	++ve;
+      } else if (vs > 1) {
+	--vs;
+      }
+    }
+    if (clside) {
+      s[vs] = clside;
+    }
+    if (crside) {
+      s[ve] = crside;
+    }
+  }
+
+  inline void pretty_print(std::ostream & str) const
+  {
+    // perform now second pass:
+    //   - display the histogram line by line, with the calculated widths.
+
+    std::size_t k;
+
+    for (k = 0; k < hist.num_bins(); ++k) {
+      str << std::setw(maxlabelwidth) << labels[k] << lsep
+	  << make_bar(k) << rsep << std::setw(maxsvaluewidth) << svalues[k] << "\n";
+    }
+  }
+
+private:
+  // maxval(k): how much this bar may extend in length
+  template<bool dummy = true,
+	   typename std::enable_if<dummy && !HistogramType::HasErrorBars, bool>::type dummy2 = true>
+  inline double maxval(const std::size_t k) const
+  {
+    return (double)hist.count(k);
+  }
+  template<bool dummy = true,
+	   typename std::enable_if<dummy && HistogramType::HasErrorBars, bool>::type dummy2 = true>
+  inline double maxval(const std::size_t k) const
+  {
+    return (double)(hist.count(k) + hist.errorbar(k));
+  }
+  // make_bar(k): produce the histogram bar in characters...
+  template<bool dummy = true,
+	   typename std::enable_if<dummy && !HistogramType::HasErrorBars, bool>::type dummy2 = true>
+  inline std::string make_bar(std::size_t k) const
+  {
+    std::string sbar(max_bar_width, ' ');
+    fill_str_len(sbar, 0.0, hist.count(k), '*', 0, 0);
+    return sbar;
+  }
+  template<bool dummy = true,
+	   typename std::enable_if<dummy && HistogramType::HasErrorBars, bool>::type dummy2 = true>
+  inline std::string make_bar(std::size_t k) const
+  {
+    std::string sbar(max_bar_width, ' ');
+    const double binval = hist.count(k);
+    const double binerr = hist.errorbar(k);
+    fill_str_len(sbar, 0.0, binval - binerr, '*', '*', '*');
+    fill_str_len(sbar, binval - binerr, binval + binerr, '-', '|', '|');
+    return sbar;
+  }
+};
+
+} // namespace tomo_internal
+
+
+/** \brief pretty-print the given histogram.
+ *
+ * This overload dumps the pretty print into the ostream \a str.
+ */
+template<typename HistogramType>
+inline void histogram_pretty_print(std::ostream & str, const HistogramType & histogram, int max_width = 0)
+{
+  eigen_assert(Tools::is_positive(histogram.params.num_bins));
+
+  if (histogram.params.num_bins == 0) {
+    str << "<empty histogram: no bins>\n";
+    return;
+  }
+
+  if (max_width == 0) {
+    // decide of a maximum width to display
+    max_width = 100; // default maximum width
+    // If the user provided a value for the terminal width, use it. Note that $COLUMNS is
+    // not in the environment usually, so you have to set it manually with e.g.
+    //    shell> export COLUMNS=$COLUMNS
+    const char * cols_s = std::getenv("COLUMNS");
+    if (cols_s != NULL) {
+      max_width = std::atoi(cols_s);
+    }
+  }
+
+  tomo_internal::histogram_pretty_printer<HistogramType>(histogram, max_width).pretty_print(str);
+}
+
+/** \brief Utility to display histograms for humans.
+ *
+ * This version of the function returns a formatted std::string.
+ */
+template<typename HistogramType>
+inline std::string histogram_pretty_print(const HistogramType & histogram, int max_width = 0)
+{
+  std::ostringstream ss;
+  histogram_pretty_print<HistogramType>(ss, histogram, max_width);
+  return ss.str();
+}
 
 
 

@@ -173,6 +173,8 @@ BOOST_AUTO_TEST_CASE(floatcounttype)
   //   0.0  0.1  0.2  0.3  0.4   0.5  0.6    0.7  0.8  0.9
   a <<   0,   0, 1.0,   0,   0, 3.01, 1.2, 381.4,   0,   0;
 
+  BOOST_MESSAGE(hist.pretty_print(100));
+
   MY_BOOST_CHECK_EIGEN_EQUAL(hist.bins, a, tol);
   BOOST_CHECK_CLOSE(hist.off_chart, 120.399, tol_percent);
 }

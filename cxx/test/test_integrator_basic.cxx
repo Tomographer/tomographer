@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(test_integrator_basic1)
   // exact same histograms.
 
   const auto & hist1 = fidstats.histogram();
-  BOOST_MESSAGE("FINAL HISTOGRAM(1):\n" << hist1.pretty_print(80));
+  BOOST_MESSAGE("FINAL HISTOGRAM(1):\n" << hist1.pretty_print(100));
 
   boost::test_tools::output_test_stream output1(
       TOMOGRAPHER_TEST_PATTERNS_DIR "test_integrator_basic/hist1.txt",
@@ -119,7 +119,7 @@ BOOST_AUTO_TEST_CASE(test_integrator_basic1)
   BOOST_CHECK(output1.match_pattern());
 
   const auto & hist2 = fidstats2.histogram();
-  BOOST_MESSAGE("FINAL HISTOGRAM(2):\n" << hist2.pretty_print(80));
+  BOOST_MESSAGE("FINAL HISTOGRAM(2):\n" << hist2.pretty_print(100));
 
   boost::test_tools::output_test_stream output2(
       TOMOGRAPHER_TEST_PATTERNS_DIR "test_integrator_basic/hist2.txt",
