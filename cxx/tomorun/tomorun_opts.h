@@ -1,6 +1,7 @@
 #ifndef TOMORUN_OPTS
 #define TOMORUN_OPTS
 
+#include <tomographer/tomographer_version.h>
 
 
 struct ProgOptions
@@ -168,6 +169,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
   options_description desc("Options");
   desc.add_options()
     ("help", "Print Help Message")
+    ("version", "Print Tomographer/Tomorun version information")
     ("data-file-name", value<std::string>(& opt->data_file_name)->default_value("testfile.mat"),
      "specify .mat data file name")
     ("value-type", value<valtype>(& val_type)->default_value(val_type),
@@ -237,6 +239,12 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
     if (vm.count("help")) {
       std::cout << desc;
       ::exit(1);
+    }
+
+    if (vm.count("version")) {
+      std::cout << "Tomographer/Tomorun " << TOMOGRAPHER_VERSION << "\n"
+		<< "by Philippe Faist, (C) 2015 ETH Zurich\n";
+      ::exit(2);
     }
 
     // see http://www.boost.org/doc/libs/1_57_0/doc/html/program_options/howto.html#idp343356848

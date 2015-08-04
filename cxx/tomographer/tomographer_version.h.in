@@ -1,0 +1,13 @@
+
+//
+// Template File for CMake to fill in version number.
+//
+
+#ifndef zzTOMOGRAPHER_VERSION_H_
+#define zzTOMOGRAPHER_VERSION_H_
+
+
+#define TOMOGRAPHER_VERSION "@TOMOGRAPHER_VERSION@"
+
+
+#endif

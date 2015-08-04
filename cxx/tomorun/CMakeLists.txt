@@ -3,11 +3,13 @@
 # Add our executable
 # ==============================================================================
 
+# for <tomographer/tomographer_version.h> which was auto-generated in the binary
+# dir tree, and is not yet installed.
+include_directories("${CMAKE_BINARY_DIR}/cxx")
 
 # already parallelized application, so disable Eigen's own parallelization (see
 # http://eigen.tuxfamily.org/dox/TopicMultiThreading.html)
 add_definitions(-DEIGEN_DONT_PARALLELIZE)
-
 
 add_executable(tomorun tomorun.cxx)
 

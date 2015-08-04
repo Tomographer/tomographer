@@ -4,6 +4,7 @@ project(tomographer)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+include(TomographerVersion)
 include(Util)
 
 # default to release build with debugging info
