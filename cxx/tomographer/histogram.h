@@ -583,8 +583,6 @@ struct AveragedHistogram
 
   // ---------------------------------------------------------------------------
   // Implementation in case the added histograms don't have their own error bars
-  // NOTE: histograms are *AVERAGED*, i.e. if n times the exact same histogram
-  // is given, then the averaged histogram is the same.
   // ---------------------------------------------------------------------------
 
   template<bool dummy = true,
@@ -621,8 +619,6 @@ struct AveragedHistogram
 
   // ---------------------------------------------------------------------------
   // Implementation in case the added histograms do have their own error bars
-  // NOTE: histograms are *ADDED*, i.e. counts are added together, with
-  // respective error bars properly combined.
   // ---------------------------------------------------------------------------
 
   template<bool dummy = true,

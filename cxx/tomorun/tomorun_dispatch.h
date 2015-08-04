@@ -184,8 +184,13 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
     //! The final histogram, properly averaged
     Tomographer::AveragedHistogram<HistogramType, double> finalhistogram;
 
-    //! The "simple" histogram, as if without binning analysis.
-    typedef typename MHRWStatsCollectorParams::BaseHistogramType SimpleHistogramType;
+    /** \brief The "simple" histogram, as if without binning analysis.
+     *
+     * Note we need a `double` counting type, because the histograms we'll be recording
+     * are normalized.
+     */
+    typedef Tomographer::UniformBinsHistogram<typename HistogramType::Scalar, double> SimpleHistogramType;
+    //typedef typename MHRWStatsCollectorParams::BaseHistogramType SimpleHistogramType;
     Tomographer::AveragedHistogram<SimpleHistogramType, double> simplefinalhistogram;
 
     LoggerType & logger;
@@ -246,8 +251,11 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
 
       // this one is declared for histograms WITHOUT error bars (SimpleHistogramType is a
       // UniformBinsHistogram), so it will just ignore the error bars
-
-      simplefinalhistogram.add_histogram(SimpleHistogramType(taskresult.hist));
+      logger.debug("TomorunCDataBinning::ResultsCollector::collect_result", [&](std::ostream & str) {
+	  str << "Simple histogram is:\n";
+	  Tomographer::histogram_pretty_print<SimpleHistogramType>(str, taskresult.hist);
+	});
+      simplefinalhistogram.add_histogram(taskresult.hist);
       logger.debug("TomorunCDataBinning::ResultsCollector::collect_result", "done.");
     }
     template<typename Cnt, typename CData>

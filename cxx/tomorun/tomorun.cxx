@@ -40,6 +40,11 @@
 #include "tomorun_dispatch.h"
 
 
+
+static const int last_binning_level_warn_min_samples = 128;
+
+
+
 Tomographer::Logger::FileLogger logger(stdout, Tomographer::Logger::INFO, false);
 
 
@@ -95,6 +100,35 @@ int main(int argc, char **argv)
       "SIMD instructions set in use by Eigen: %s",
       Eigen::SimdInstructionSetsInUse()
       );
+
+
+  //
+  // ---------------------------------------------------------------------------
+  // Do some preliminary checks
+  // ---------------------------------------------------------------------------
+  //
+
+  // warn the user if the last binning level comprises too few samples.
+  //
+  // # of samples at last level is = Nrun/(2^{num_binning_levels}).
+  // [note: std::ldexp(x,e) := x * 2^{e} ]
+  //
+  const unsigned long last_level_num_samples = std::ldexp((double)opt.Nrun, - opt.binning_analysis_num_levels);
+  logger.debug("tomorun_dispatch", "last_level_num_samples = %lu", last_level_num_samples);
+  //
+  if ( opt.binning_analysis_error_bars &&
+       ( last_level_num_samples < (unsigned long)last_binning_level_warn_min_samples ) ) {
+    logger.warning(
+	"tomorun_dispatch",
+	"Few samples in the last binning level of binning analysis : "
+	"Nrun=%lu, # of levels=%lu --> %lu samples. [Recommended >= %lu]",
+	(unsigned long)opt.Nrun,
+	(unsigned long)opt.binning_analysis_num_levels,
+	(unsigned long)last_level_num_samples,
+	(unsigned long)last_binning_level_warn_min_samples
+	);
+  }
+
 
   //
   // ---------------------------------------------------------------------------
