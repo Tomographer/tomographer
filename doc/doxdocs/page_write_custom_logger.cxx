@@ -11,6 +11,23 @@
  * of a logger is given below.
  *
  * \code
+ *
+ *   class StderrLogger; // forward declaration
+ *   namespace Tomographer { namespace Logger {
+ *     // Traits for StderrLogger
+ *     template<>
+ *     struct LoggerTraits<StderrLogger> : DefaultLoggerTraits
+ *     {
+ *       enum {
+ *         // fprintf is actually thread-safe, so our logger is thread-safe
+ *         IsThreadSafe = 1,
+ *         // set this to a particular level to unconditinally discard any
+ *         // message logged with strictly lower importance level.
+ *         StaticMinimumImportanceLevel = -1
+ *       };
+ *     };
+ *   } } // namespaces
+ *
  *   class StderrLogger : public Tomographer::Logger::LoggerBase<StderrLogger>
  *   {
  *   public:
@@ -46,21 +63,6 @@
  *       fprintf(fp, "%s\n", finalmsg.c_str());
  *     }
  *   };
- *
- *   namespace Tomographer { namespace Logger {
- *     // Traits for StderrLogger
- *     template<>
- *     struct LoggerTraits<StderrLogger> : DefaultLoggerTraits
- *     {
- *       enum {
- *         // fprintf is actually thread-safe, so our logger is thread-safe
- *         IsThreadSafe = 1,
- *         // set this to a particular level to unconditinally discard any
- *         // message logged with strictly lower importance level.
- *         StaticMinimumImportanceLevel = -1
- *       };
- *     };
- *   } } // namespaces
  * \endcode
  *
  */

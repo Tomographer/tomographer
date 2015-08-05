@@ -1101,10 +1101,13 @@ struct MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >
   template<int I = 0, typename std::enable_if<(I < NumStatColl), bool>::type dummy = true>
   static inline std::string getStatus(const MHRWStatsCollector * stats)
   {
-    return MHRWStatsCollectorStatus<
-        typename std::tuple_element<I, typename MHRWStatsCollector::MHRWStatsCollectorsTupleType>::type
-      >::getStatus(stats.template getStatsCollector<I>())
-      + ((I < (NumStatColl-1)) ? std::string("\n") : std::string())
+    typedef typename std::tuple_element<I, typename MHRWStatsCollector::MHRWStatsCollectorsTupleType>::type
+      ThisStatsCollector;
+    return
+      (MHRWStatsCollectorStatus<ThisStatsCollector>::CanProvideStatus
+       ? (MHRWStatsCollectorStatus<ThisStatsCollector>::getStatus(stats->template getStatsCollector<I>())
+	  + ((I < (NumStatColl-1)) ? std::string("\n") : std::string()))
+       : std::string())
       + getStatus<I+1>(stats);
   };
 
@@ -1115,6 +1118,64 @@ struct MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >
   }
 
 };
+
+
+
+namespace tomo_internal {
+template<typename HistogramType>
+std::string histogram_short_bar_fmt(const HistogramType & histogram, const std::string heading,
+				    const int maxbarwidth)
+{
+  std::string s = heading;
+
+  const int numdiv = (int)(std::ceil((float)histogram.num_bins() / maxbarwidth) + 0.5f);
+  const int barwidth = (int)(std::ceil((float)histogram.num_bins() / numdiv) + 0.5f);
+
+  Eigen::ArrayXi vec(barwidth);
+  Eigen::ArrayXf veclog(barwidth);
+
+  int k;
+  float minlogval = 0;
+  float maxlogval = 0;
+  for (k = 0; k < barwidth; ++k) {
+    vec(k) = histogram.bins.segment(numdiv*k, std::min((std::size_t)numdiv,
+						       (std::size_t)(histogram.bins.size()-numdiv*k))).sum();
+    if (vec(k) > 0) {
+      veclog(k) = std::log((float)vec(k));
+      if (k == 0 || minlogval > veclog(k)) {
+	minlogval = veclog(k);
+      }
+      if (k == 0 || maxlogval < veclog(k)) {
+	maxlogval = veclog(k) + 1e-6f;
+      }
+    } else {
+      veclog(k) = 0.f;
+    }
+  }
+
+  // now, prepare string
+  s += Tools::fmts("%.2g|", (double)histogram.bin_lower_value(0));
+  const std::string chars = ".-+ox%#";
+  for (k = 0; k < barwidth; ++k) {
+    if (vec(k) <= 0) {
+      s += ' ';
+    } else {
+      int i = (int)(chars.size() * (veclog(k) - minlogval) / (maxlogval - minlogval));
+      if (i < 0) { i = 0; }
+      if (i >= (int)chars.size()) { i = chars.size()-1; }
+      s += chars[i];
+    }
+  }
+  s += Tools::fmts("|%.2g", (double)histogram.bin_upper_value(histogram.num_bins()-1));
+  if (histogram.off_chart > 0) {
+    s += Tools::fmts(" [+%.1g off]", (double)histogram.off_chart);
+  }
+
+  return s;  
+}
+
+} // namespace tomo_internal
+
 
 /** \brief Provide status reporting for a ValueHistogramMHRWStatsCollector
  *
@@ -1132,57 +1193,60 @@ struct MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator
   static inline std::string getStatus(const MHRWStatsCollector * stats)
   {
     const int maxbarwidth = 50;
-    std::string s = "Histogram: ";
 
     typedef typename MHRWStatsCollector::HistogramType HistogramType;
-    typedef typename HistogramType::CountType CountType;
 
-    const HistogramType & histogram = stats->histogram();
+    return tomo_internal::histogram_short_bar_fmt<HistogramType>(stats->histogram(), "Histogram: ",
+								 maxbarwidth);
+  }
+};
 
-    int numdiv = (int)(std::ceil((float)histogram.num_bins() / maxbarwidth) + 0.5);
-    int barwidth = (int)(std::ceil(histogram.num_bins() / numdiv) + 0.5);
+/** \brief Provide status reporting for a ValueHistogramWithBinningMHRWStatsCollector
+ *
+ */
+template<typename Params_,
+	 typename LoggerType_
+	 >
+struct MHRWStatsCollectorStatus<ValueHistogramWithBinningMHRWStatsCollector<Params_, LoggerType_> >
+{
+  typedef ValueHistogramWithBinningMHRWStatsCollector<Params_, LoggerType_> MHRWStatsCollector;
+  
+  static constexpr bool CanProvideStatus = true;
 
-    Eigen::ArrayXi vec(barwidth);
-    Eigen::ArrayXf veclog(barwidth);
+  static inline std::string getStatus(const MHRWStatsCollector * stats)
+  {
+    const int maxbarwidth = 50;
 
-    int k;
-    float minlogval = 0;
-    float maxlogval = 0;
-    for (k = 0; k < barwidth; ++k) {
-      vec(k) = histogram.bins.segment(numdiv*k, std::min((std::size_t)numdiv,
-                                                         (std::size_t)(histogram.bins.size()-numdiv*k))).sum();
-      if (vec(k) > 0) {
-        veclog(k) = std::log((float)vec(k));
-        if (k == 0 || minlogval > veclog(k)) {
-          minlogval = veclog(k);
-        }
-        if (k == 0 || maxlogval < veclog(k)) {
-          maxlogval = veclog(k) + 1e-6f;
-        }
+    typedef typename MHRWStatsCollector::BaseHistogramType BaseHistogramType;
+    const BaseHistogramType & histogram = stats->histogram();
+
+    // calculate the error bars at different levels, to determine convergence status.
+    typedef typename MHRWStatsCollector::BinningAnalysisType BinningAnalysisType;
+    //typedef typename MHRWStatsCollector::CountRealAvgType CountRealAvgType;
+    typedef typename BinningAnalysisType::ValueType ValueType;
+    const auto& binning_analysis = stats->get_binning_analysis();
+    Eigen::Array<ValueType, Eigen::Dynamic, 1> binmeans(histogram.num_bins());
+    binmeans = histogram.bins.template cast<ValueType>() /
+      (ValueType)(histogram.bins.sum() + histogram.off_chart);
+
+    auto error_levels = binning_analysis.calc_error_levels(binmeans);
+    auto conv_status = binning_analysis.determine_error_convergence(error_levels);
+
+    int n_cnvg = 0;
+    int n_unknown = 0;
+    int n_not_cnvg = 0;
+    for (std::size_t k = 0; k < (std::size_t)histogram.num_bins(); ++k) {
+      if (conv_status(k) == BinningAnalysisType::CONVERGED) {
+	++n_cnvg;
+      } else if (conv_status(k) == BinningAnalysisType::NOT_CONVERGED) {
+	++n_not_cnvg;
       } else {
-        veclog(k) = 0.f;
+	++n_unknown;
       }
     }
 
-    // now, prepare string
-    s += Tools::fmts("%.2g|", (double)histogram.bin_lower_value(0));
-    const std::string chars = ".-+ox%#";
-    for (k = 0; k < barwidth; ++k) {
-      if (vec(k) <= 0) {
-        s += ' ';
-      } else {
-        int i = (int)(chars.size() * (veclog(k) - minlogval) / (maxlogval - minlogval));
-        if (i < 0) { i = 0; }
-        if (i >= (int)chars.size()) { i = chars.size()-1; }
-        s += chars[i];
-      }
-    }
-    s += Tools::fmts("|%.2g", (double)histogram.bin_upper_value(histogram.num_bins()-1));
-    if (histogram.off_chart > 0) {
-      s += Tools::fmts(" [+%.1g off]", (double)histogram.off_chart);
-    }
-
-    return s;
+    return tomo_internal::histogram_short_bar_fmt<BaseHistogramType>(histogram, "", maxbarwidth)
+      + Tools::fmts("   (cnvg/?/fail): %d/%d/%d", n_cnvg, n_unknown, n_not_cnvg);
   }
 };
 

@@ -5,7 +5,6 @@
 #include <string>
 #include <limits>
 #include <random>
-#include <regex>
 
 #include <tomographer/tools/fmt.h>
 #include <tomographer/mhrw.h>
@@ -276,8 +275,15 @@ namespace MHRWTasks
           typedef MHRWStatsCollectorStatus<MHRWStatsCollectorType> MHRWStatsCollectorStatusType;
           if (MHRWStatsCollectorStatusType::CanProvideStatus) {
             std::string nlindent = "\n    ";
-            msg += nlindent +
-              std::regex_replace(MHRWStatsCollectorStatusType::getStatus(stats), std::regex("\n"), nlindent);
+            msg += nlindent;
+	    std::string s = MHRWStatsCollectorStatusType::getStatus(stats);
+	    for (std::size_t j = 0; j < s.size(); ++j) {
+	      if (s[j] == '\n') {
+		msg += nlindent;
+	      } else {
+		msg += s[j];
+	      }
+	    }
           }
           tmgriface->submit_status_report(StatusReport(fdone, msg, k, rw.n_sweep(), rw.n_therm(),
                                                        rw.n_run(), accept_ratio));

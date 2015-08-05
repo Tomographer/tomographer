@@ -447,8 +447,11 @@ public:
    *
    * \returns an array of integers, of length \a num_track_values, each set to one of \ref
    * CONVERGED, \ref NOT_CONVERGED or \ref CONVERGENCE_UNKNOWN.
+   *
+   * Contains code inspired by ALPS project, see
+   * <a href="https://alps.comp-phys.org/svn/alps1/trunk/alps/src/alps/alea/simplebinning.h">https://alps.comp-phys.org/svn/alps1/trunk/alps/src/alps/alea/simplebinning.h</a>.
    */
-  inline Eigen::ArrayXi determine_error_convergence(const Eigen::Ref<const BinSumSqArray> & error_levels)
+  inline Eigen::ArrayXi determine_error_convergence(const Eigen::Ref<const BinSumSqArray> & error_levels) const
   {
     Eigen::ArrayXi converged_status(num_track_values()); // RVO will help
 
