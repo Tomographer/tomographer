@@ -135,7 +135,7 @@ namespace tomo_internal
       for (k = 0; k < (std::size_t)data->Exn.rows(); ++k) {
         const typename MatrQ::RealScalar thisval = (data->Exn.row(k) * x);
         //std::cout << "k = "<<k<<"; thisval = "<<thisval << "\n";
-        val += data->Nx[k] * log(thisval);
+        val += data->Nx[k] * std::log(thisval);
       }
       //std::cout << "val = " << val << "\n\n";
       return -2 * data->NMeasAmplifyFactor * val;

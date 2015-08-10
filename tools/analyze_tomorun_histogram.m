@@ -134,8 +134,8 @@ function dat = analyze_tomorun_histogram(varargin)
     fitoptions = opts.FitOptions;
   else
     fitlogp = true;
-    thefitfunc = @(a, m, c, x) -a*x + m*log(x) + c;
-    fitoptions = {'StartPoint', [1, 1, 100]};
+    thefitfunc = @(a1, a2, m, c, x) -a2*x^2 - a1*x + m*log(x) + c;
+    fitoptions = {'StartPoint', [1, 0, 1, 100]};
     %thefitfunc = @(a, c, x) -a*x + log(x) + c;
     %fitoptions = {'StartPoint', [1, 100]};
     display(thefitfunc);

@@ -1246,7 +1246,7 @@ struct MHRWStatsCollectorStatus<ValueHistogramWithBinningMHRWStatsCollector<Para
     }
 
     return tomo_internal::histogram_short_bar_fmt<BaseHistogramType>(histogram, "", maxbarwidth)
-      + Tools::fmts("   (cnvg/?/fail): %d/%d/%d", n_cnvg, n_unknown, n_not_cnvg);
+      + Tools::fmts("   err: (cnvg/?/fail) %d/%d/%d", n_cnvg, n_unknown, n_not_cnvg);
   }
 };
 
