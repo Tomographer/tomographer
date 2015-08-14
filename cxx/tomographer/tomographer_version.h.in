@@ -2,6 +2,9 @@
 //
 // Template File for CMake to fill in version number.
 //
+// CMAKE Variables:
+//     - TOMOGRAPHER_VERSION
+//
 
 #ifndef zzTOMOGRAPHER_VERSION_H_
 #define zzTOMOGRAPHER_VERSION_H_

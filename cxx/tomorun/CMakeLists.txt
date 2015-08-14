@@ -12,6 +12,7 @@ include_directories("${CMAKE_BINARY_DIR}/cxx")
 add_definitions(-DEIGEN_DONT_PARALLELIZE)
 
 add_executable(tomorun tomorun.cxx)
+add_dependencies(tomorun tomographer) # in particular tomographer_version.h
 
 SetOpenMPTarget(tomorun)
 
