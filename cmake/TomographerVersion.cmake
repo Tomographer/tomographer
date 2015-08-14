@@ -31,7 +31,7 @@ if(EXISTS "${TomographerVersionFile}")
   
   # not sure we got GIT, don't bother end users because we've got our version from the
   # text file
-  set(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION false)
+  set(_set_git_version_update_hook false)
 
 else(EXISTS "${TomographerVersionFile}")
 
@@ -52,7 +52,7 @@ else(EXISTS "${TomographerVersionFile}")
     
     # Also, add compilation hook that will update the tomographer_version.h whenever the git
     # description changes.
-    set(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION true)
+    set(_set_git_version_update_hook true)
     
   else(_git_all_ok)
 
@@ -60,11 +60,17 @@ else(EXISTS "${TomographerVersionFile}")
     
     set(TOMOGRAPHER_VERSION "<unknown>")
     # don't try to update, won't find git repo
-    set(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION false)
+    set(_set_git_version_update_hook false)
 
   endif(_git_all_ok)
 
 endif(EXISTS "${TomographerVersionFile}")
 
 
+set(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION "${_set_git_version_update_hook}"
+  CACHE BOOL "Whether to automatically update version information from git-describe at each compilation or not.")
+
+if(NOT TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION)
+  mark_as_advanced(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION)
+endif(NOT TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION)
 

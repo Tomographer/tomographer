@@ -30,7 +30,7 @@ if(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION)
   add_custom_target(tomographer_update_git_version_stamp
     COMMAND "${CMAKE_COMMAND}" "-DGitVersionStampFile=${GitVersionStampFile}" "-DGitDescribeGetVersionCommand=${GitDescribeGetVersionCommand}" -P "${CMAKE_SOURCE_DIR}/cmake/UpdateTomographerGitVersion.cmake"
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-    COMMENT "Checking that git describe version stamp is up-to-date."
+    COMMENT "Checking that git-describe version stamp is up-to-date."
     VERBATIM
     )
 
@@ -39,7 +39,7 @@ if(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION)
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
     DEPENDS tomographer_update_git_version_stamp
     DEPENDS "${GitVersionStampFile}"
-    COMMENT "Updating tomographer_version.h header file with output from git-describe"
+    COMMENT "Updating tomographer_version.h header file"
     VERBATIM
     )
 
