@@ -1,8 +1,125 @@
 #ifndef TOMORUN_OPTS
 #define TOMORUN_OPTS
 
+#include <stdexcept>
+
 #include <tomographer/tomographer_version.h>
 
+
+//
+// see http://stackoverflow.com/a/8822627/1694896
+// custom validation for types in boost::program_options
+//
+struct val_type_spec
+{
+  val_type_spec(const std::string & str)
+    : valtype(INVALID),
+      ref_obj_name()
+  {
+    set_value_string(str);
+  }
+
+  enum ValueType {
+    INVALID = 0,
+    OBS_VALUE,
+    TR_DIST,
+    FIDELITY,
+    PURIF_DIST
+  };
+
+
+  ValueType valtype;
+
+  std::string ref_obj_name;
+
+  inline void set_value_string(const std::string & str)
+  {
+    std::size_t k = str.find(':');
+    std::string valtype_str;
+    std::string ref_obj_name_str;
+    if (k == std::string::npos) {
+      // not found
+      valtype_str = str;
+    } else {
+      valtype_str = str.substr(0, k);
+      ref_obj_name_str = str.substr(k+1); // the rest of the string
+    }
+
+    // validate the given value
+    if (valtype_str == "obs-value") {
+      valtype = OBS_VALUE;
+      ref_obj_name = ref_obj_name_str;
+      return;
+    } else if (valtype_str == "tr-dist") {
+      valtype = TR_DIST;
+      ref_obj_name = ref_obj_name_str;
+      return;
+    } else if (valtype_str == "fidelity") {
+      valtype = FIDELITY;
+      ref_obj_name = ref_obj_name_str;
+      return;
+    } else if (valtype_str == "purif-dist") {
+      valtype = PURIF_DIST;
+      ref_obj_name = ref_obj_name_str;
+      return;
+    } else {
+      throw std::invalid_argument(std::string("Invalid argument to val_type_spec: '") + str + std::string("'"));
+    }
+  }
+};
+
+inline std::ostream & operator<<(std::ostream & str, const val_type_spec & val)
+{
+  switch (val.valtype) {
+  case val_type_spec::OBS_VALUE:
+    str << "obs-value";
+    break;
+  case val_type_spec::TR_DIST:
+    str << "tr-dist";
+    break;
+  case val_type_spec::FIDELITY:
+    str << "fidelity";
+    break;
+  case val_type_spec::PURIF_DIST:
+    str << "purif-dist";
+    break;
+  case val_type_spec::INVALID:
+    str << "<invalid>";
+    break;
+  default:
+    str << "<unknown/invalid>";
+    break;
+  }
+
+  if (val.ref_obj_name.size()) {
+    str << ":" << val.ref_obj_name;
+  }
+
+  return str;
+}
+
+void validate(boost::any& v, const std::vector<std::string> & values,
+              val_type_spec * /* target_type */,
+              int)
+{
+  using namespace boost::program_options;
+
+  // Make sure no previous assignment to 'v' was made.
+  validators::check_first_occurrence(v);
+
+  // Extract the first string from 'values'. If there is more than
+  // one string, it's an error, and exception will be thrown.
+  const std::string & s = validators::get_single_string(values);
+
+  try {
+    v = boost::any(val_type_spec(s));
+  } catch (const std::invalid_argument & exc) {
+    throw validation_error(validation_error::invalid_option_value);
+  }
+}
+
+
+// ------------------------------------------------------------------------------
 
 
 struct ProgOptions
@@ -16,8 +133,7 @@ struct ProgOptions
     Nsweep(std::max(10, int(1/step_size))),
     Ntherm(500),
     Nrun(5000),
-    val_type("fidelity"),
-    use_ref_state(false), // use MLE by default
+    valtype("fidelity"),
     val_min(0.97),
     val_max(1.0),
     val_nbins(50),
@@ -44,9 +160,7 @@ struct ProgOptions
   unsigned int Ntherm;
   unsigned int Nrun;
 
-  std::string val_type;
-  //! If \c true, use \a rho_ref; if \c false, use \a rho_MLE .
-  bool use_ref_state;
+  val_type_spec valtype;
 
   double val_min;
   double val_max;
@@ -105,43 +219,6 @@ public:
 
 
 
-//
-// see http://stackoverflow.com/a/8822627/1694896
-// custom validation for types in boost::program_options
-//
-struct valtype
-{
-  valtype(std::string const& val):
-    value(val)
-  { }
-  std::string value;
-};
-
-void validate(boost::any& v, std::vector<std::string> const& values,
-              valtype* /* target_type */,
-              int)
-{
-  using namespace boost::program_options;
-
-  // Make sure no previous assignment to 'v' was made.
-  validators::check_first_occurrence(v);
-
-  // Extract the first string from 'values'. If there is more than
-  // one string, it's an error, and exception will be thrown.
-  std::string const& s = validators::get_single_string(values);
-
-  if (s == "fidelity" || s == "purif-dist" || s == "tr-dist" || s == "obs-value") {
-    v = boost::any(valtype(s));
-  } else {
-    throw validation_error(validation_error::invalid_option_value);
-  }
-}
-
-inline std::ostream & operator<<(std::ostream & str, const valtype & val)
-{
-  return str << val.value;
-}
-
 
 
 // -----------------------------------------------------------------------------
@@ -165,23 +242,20 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
 
   bool no_binning_analysis_error_bars = ! opt->binning_analysis_error_bars;
 
-  valtype val_type(opt->val_type);
-
   options_description desc("Options");
   desc.add_options()
     ("help", "Print Help Message")
     ("version", "Print Tomographer/Tomorun version information")
     ("data-file-name", value<std::string>(& opt->data_file_name)->default_value("testfile.mat"),
      "specify .mat data file name")
-    ("value-type", value<valtype>(& val_type)->default_value(val_type),
+    ("value-type", value<val_type_spec>(& opt->valtype)->default_value(opt->valtype),
      "Which value to acquire histogram of, e.g. fidelity to MLE. Possible values are 'fidelity', "
-     "'purif-dist', 'tr-dist' or 'obs-value'. If 'obs-value' (hermitian observable value)  is "
-     "specified, the given \".mat\" data-file (see --data-file-name) must also define a variable "
-     "Observable as a dim x dim hermitian matrix.")
-    ("use-ref-state", bool_switch(& opt->use_ref_state)->default_value(opt->use_ref_state),
-     "If --value-type is 'fidelity', 'purif-dist' or 'tr-dist', then read the variable named 'rho_ref' "
-     "in the data file (--data-file-name) and calculate the histogram of fidelity or trace distance to "
-     "that state, instead of the MLE estimate (as by default).")
+     "'purif-dist', 'tr-dist' or 'obs-value'. The value type may be followed by ':ObjName' to refer "
+     "to a particular object defined in the datafile. Check out the documentation for more info.")
+    //    ("use-ref-state", bool_switch(& opt->use_ref_state)->default_value(opt->use_ref_state),
+    //     "If --value-type is 'fidelity', 'purif-dist' or 'tr-dist', then read the variable named 'rho_ref' "
+    //     "in the data file (--data-file-name) and calculate the histogram of fidelity or trace distance to "
+    //     "that state, instead of the MLE estimate (as by default).")
     ("value-hist", value<std::string>(&valhiststr),
      "Do a histogram for different measured values (e.g. fidelity to MLE), format MIN:MAX/NPOINTS")
     ("no-binning-analysis-error-bars", bool_switch(& no_binning_analysis_error_bars)
@@ -332,8 +406,6 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
   // set up log level
   logger.setLevel(opt->loglevel);
 
-  opt->val_type = val_type.value;
-
   // set up write histogram file name from config file name
   if (write_histogram_from_config_file_name) {
     if (!configfname.size()) {
@@ -389,7 +461,7 @@ void display_parameters(ProgOptions * opt, LoggerType & logger)
       "       --> total no. of live samples = %lu  (%.2e)\n"
       "\n",
       opt->data_file_name.c_str(), opt->NMeasAmplifyFactor,
-      opt->val_type.c_str(),
+      streamcstr(opt->valtype),
       opt->val_min, opt->val_max, (unsigned long)opt->val_nbins,
       (opt->binning_analysis_error_bars
        ? Tomographer::Tools::fmts("binning analysis (%d levels)", opt->binning_analysis_num_levels).c_str()

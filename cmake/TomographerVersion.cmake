@@ -68,9 +68,4 @@ endif(EXISTS "${TomographerVersionFile}")
 
 
 set(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION "${_set_git_version_update_hook}"
-  CACHE BOOL "Whether to automatically update version information from git-describe at each compilation or not.")
-
-if(NOT TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION)
-  mark_as_advanced(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION)
-endif(NOT TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION)
-
+  CACHE BOOL "[For Developers] Whether to automatically update version information from git-describe at each compilation or not.")

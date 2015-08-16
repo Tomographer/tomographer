@@ -501,15 +501,35 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 
   tomodat.NMeasAmplifyFactor = opt->NMeasAmplifyFactor;
 
-  const bool use_ref_state = opt->use_ref_state;
-  typename OurMatrQ::MatrixType rho_ref = matq.initMatrixType();
-  typename OurMatrQ::MatrixType T_ref = matq.initMatrixType();
-  if (use_ref_state) {
-    Tomographer::MAT::getEigenMatrix(matf->var("rho_ref"), &rho_ref);
 
-    typedef typename Eigen::SelfAdjointEigenSolver<typename OurMatrQ::MatrixType>::RealVectorType RealVectorType;
+  typedef typename OurMatrQ::MatrixType MatrixType;
 
-    Eigen::SelfAdjointEigenSolver<typename OurMatrQ::MatrixType> eig_rho_ref( rho_ref );
+  
+  //
+  // Data has now been successfully read. Now, dispatch to the correct template function
+  // for futher processing.
+  //
+
+  //
+  // One of the distance measures. There might be a reference state.
+  //
+  if (opt->valtype.valtype == val_type_spec::FIDELITY ||
+      opt->valtype.valtype == val_type_spec::TR_DIST ||
+      opt->valtype.valtype == val_type_spec::PURIF_DIST) {
+    
+    MatrixType rho_ref = matq.initMatrixType();
+    MatrixType T_ref = matq.initMatrixType();
+    
+    std::string refname = "rho_MLE";
+    if (opt->valtype.ref_obj_name.size()) {
+      refname = opt->valtype.ref_obj_name;
+    }
+
+    Tomographer::MAT::getEigenMatrix(matf->var(refname), &rho_ref);
+
+    typedef typename Eigen::SelfAdjointEigenSolver<MatrixType>::RealVectorType RealVectorType;
+
+    Eigen::SelfAdjointEigenSolver<MatrixType> eig_rho_ref( rho_ref );
     auto U = eig_rho_ref.eigenvectors();
     auto d = eig_rho_ref.eigenvalues();
     
@@ -521,58 +541,50 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
     logger.debug("tomorun_dispatch()", [&](std::ostream & str) {
 	str << "Using rho_ref = \n" << rho_ref << "\n\t-> T_ref = \n" << T_ref << "\n";
       });
-  }
 
-  //
-  // Data has now been successfully read. Now, dispatch to the correct template function
-  // for futher processing.
-  //
-
-  if (opt->val_type == "fidelity") {
-    tomorun<BinningAnalysisErrorBars>(
-        tomodat,
-        opt,
-        [use_ref_state,&T_ref](const OurTomoProblem & tomo)
-        -> Tomographer::FidelityToRefCalculator<OurTomoProblem, double> {
-          if (use_ref_state) {
+    if (opt->valtype.valtype == val_type_spec::FIDELITY) {
+      tomorun<BinningAnalysisErrorBars>(
+          tomodat,
+          opt,
+          [&T_ref](const OurTomoProblem & tomo) {
             return Tomographer::FidelityToRefCalculator<OurTomoProblem, double>(tomo, T_ref);
-          } else {
-            return Tomographer::FidelityToRefCalculator<OurTomoProblem, double>(tomo);
-          }
-        },
-        logger);
-  } else if (opt->val_type == "purif-dist") {
-    tomorun<BinningAnalysisErrorBars>(
-        tomodat,
-        opt,
-        [use_ref_state,&T_ref](const OurTomoProblem & tomo)
-        -> Tomographer::PurifDistToRefCalculator<OurTomoProblem, double> {
-          if (use_ref_state) {
-            return Tomographer::PurifDistToRefCalculator<OurTomoProblem, double>(tomo, T_ref);
-          } else {
+          },
+          logger);
+    } else if (opt->valtype.valtype == val_type_spec::PURIF_DIST) {
+      tomorun<BinningAnalysisErrorBars>(
+          tomodat,
+          opt,
+          [&T_ref](const OurTomoProblem & tomo) {
             return Tomographer::PurifDistToRefCalculator<OurTomoProblem, double>(tomo);
-          }
-        },
-        logger);
-  } else if (opt->val_type == "tr-dist") {
-    tomorun<BinningAnalysisErrorBars>(
-        tomodat,
-        opt,
-        [use_ref_state,&rho_ref](const OurTomoProblem & tomo)
-        -> Tomographer::TrDistToRefCalculator<OurTomoProblem, double> {
-          if (use_ref_state) {
-            return Tomographer::TrDistToRefCalculator<OurTomoProblem, double>(tomo, rho_ref);
-          } else {
-            return Tomographer::TrDistToRefCalculator<OurTomoProblem, double>(tomo);
-          }
-        },
-        logger);
-  } else if (opt->val_type == "obs-value") {
+          },
+          logger);
+    } else if (opt->valtype.valtype == val_type_spec::TR_DIST) {
+      tomorun<BinningAnalysisErrorBars>(
+          tomodat,
+          opt,
+          [&rho_ref](const OurTomoProblem & tomo) {
+              return Tomographer::TrDistToRefCalculator<OurTomoProblem, double>(tomo, rho_ref);
+          },
+          logger);
+    } else {
+      throw std::logic_error("WTF?? You shouldn't be here!");
+    }
+
+  } else if (opt->valtype.valtype == val_type_spec::OBS_VALUE) {
+    
     // load the observable
-    typename OurMatrQ::MatrixType A = tomodat.matq.initMatrixType();
-    Tomographer::MAT::getEigenMatrix(matf->var("Observable"), &A);
+    MatrixType A = tomodat.matq.initMatrixType();
+
+    std::string obsname = "Observable";
+    if (opt->valtype.ref_obj_name.size()) {
+      obsname = opt->valtype.ref_obj_name;
+    }
+
+    Tomographer::MAT::getEigenMatrix(matf->var(obsname), &A);
+    
     ensure_valid_input(A.cols() == dim && A.rows() == dim,
 		       Tomographer::Tools::fmts("Observable is expected to be a square matrix %d x %d", dim, dim));
+
     // and run our main program
     tomorun<BinningAnalysisErrorBars>(
         tomodat,
@@ -581,8 +593,11 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
           return Tomographer::ObservableValueCalculator<OurTomoProblem>(tomo, A);
         },
         logger);
+
   } else {
-    throw std::logic_error((std::string("Unknown value type: ")+opt->val_type).c_str());
+
+    throw std::logic_error(std::string("Unknown value type: ")+streamstr(opt->valtype));
+
   }
 }
 
