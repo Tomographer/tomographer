@@ -583,7 +583,8 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
     Tomographer::MAT::getEigenMatrix(matf->var(obsname), &A);
     
     ensure_valid_input(A.cols() == dim && A.rows() == dim,
-		       Tomographer::Tools::fmts("Observable is expected to be a square matrix %d x %d", dim, dim));
+		       Tomographer::Tools::fmts("Observable (%s) is expected to be a square matrix %d x %d",
+						obsname.c_str(), dim, dim));
 
     // and run our main program
     tomorun<BinningAnalysisErrorBars>(

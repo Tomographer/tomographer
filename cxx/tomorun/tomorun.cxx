@@ -40,11 +40,6 @@
 #include "tomorun_dispatch.h"
 
 
-
-static const int last_binning_level_warn_min_samples = 128;
-
-
-
 Tomographer::Logger::FileLogger logger(stdout, Tomographer::Logger::INFO, false);
 
 

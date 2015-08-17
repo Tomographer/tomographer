@@ -6,6 +6,12 @@
 #include <tomographer/tomographer_version.h>
 
 
+
+
+static const int last_binning_level_warn_min_samples = 128;
+
+
+
 //
 // see http://stackoverflow.com/a/8822627/1694896
 // custom validation for types in boost::program_options
@@ -224,6 +230,8 @@ public:
 // -----------------------------------------------------------------------------
 
 
+
+
 template<typename LoggerType>
 void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger)
 {
@@ -242,31 +250,26 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
 
   bool no_binning_analysis_error_bars = ! opt->binning_analysis_error_bars;
 
-  options_description desc("Options");
+  const int line_width = 80;
+  options_description desc("OPTIONS", line_width, line_width*2/3);
   desc.add_options()
-    ("help", "Print Help Message")
-    ("version", "Print Tomographer/Tomorun version information")
-    ("data-file-name", value<std::string>(& opt->data_file_name)->default_value("testfile.mat"),
-     "specify .mat data file name")
+    ("data-file-name", value<std::string>(& opt->data_file_name),
+     "specify MATLAB (.mat) file to read data from")
     ("value-type", value<val_type_spec>(& opt->valtype)->default_value(opt->valtype),
      "Which value to acquire histogram of, e.g. fidelity to MLE. Possible values are 'fidelity', "
      "'purif-dist', 'tr-dist' or 'obs-value'. The value type may be followed by ':ObjName' to refer "
-     "to a particular object defined in the datafile. Check out the documentation for more info.")
-    //    ("use-ref-state", bool_switch(& opt->use_ref_state)->default_value(opt->use_ref_state),
-    //     "If --value-type is 'fidelity', 'purif-dist' or 'tr-dist', then read the variable named 'rho_ref' "
-    //     "in the data file (--data-file-name) and calculate the histogram of fidelity or trace distance to "
-    //     "that state, instead of the MLE estimate (as by default).")
+     "to a particular object defined in the datafile. See below for more info.")
     ("value-hist", value<std::string>(&valhiststr),
-     "Do a histogram for different measured values (e.g. fidelity to MLE), format MIN:MAX/NPOINTS")
+     "Do a histogram of the figure of merit for different measured values. Format MIN:MAX/NUM_BINS")
     ("no-binning-analysis-error-bars", bool_switch(& no_binning_analysis_error_bars)
      ->default_value(no_binning_analysis_error_bars),
-     "Don't produce error bars from a binning analysis (cf. [Ambegaokar/Troyer AJP 2010, 0906.0943]) "
-     "for each histogram bin")
+     // REFERENCE [2]
+     "Don't produce error bars from a binning analysis [2] for each histogram bin")
     ("binning-analysis-num-levels", value<int>(& opt->binning_analysis_num_levels)
      ->default_value(opt->binning_analysis_num_levels),
-     "Number of levels of coarse-graining in the binning analysis. See --binning-analysis-error-bars. "
-     "Choose this number such that (n-run)/(2^(binning-num-levels)) is a sufficiently decent sample size "
-     "(say ~100).")
+     ("Number of levels of coarse-graining in the binning analysis. See --binning-analysis-error-bars. "
+      "Choose this number such that (n-run)/(2^(<binning-num-levels>)) is a sufficiently decent sample size "
+      "(say ~"+std::to_string(last_binning_level_warn_min_samples)+").").c_str())
     ("step-size", value<double>(& opt->step_size)->default_value(opt->step_size),
      "the step size for the region")
     ("n-sweep", value<unsigned int>(& opt->Nsweep)->default_value(opt->Nsweep),
@@ -302,6 +305,8 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
      "Same as --write-histogram=<config-file>, where <config-file> is the file name passed to "
      "the option --config. This option can only be used in conjunction with --config and may not "
      "be used with --write-histogram.")
+    ("version", "Print Tomographer/Tomorun version information")
+    ("help", "Print Help Message")
     ;
 
   // no positional options accepted
@@ -312,7 +317,109 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
     store(command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
 
     if (vm.count("help")) {
-      std::cout << desc;
+      std::cout
+	<< "\n"
+	"Tomographer/Tomorun " TOMOGRAPHER_VERSION "\n"
+	"(C) 2015 ETH Zurich\n"
+	"\n"
+	"A toolbox for error analysis in quantum tomography.\n"
+	"\n"
+	"Usage: tomorun --data-file-name=<data-file-name> [options]\n"
+	"       tomorun --config=<tomorun-config-file>\n"
+	"\n"
+//      |--------------------------------------------------------------------------------| 80 chars (col. 89)
+	"Produce a histogram of a figure of merit during a random walk in quantum state\n"
+	// REFERENCE [1]
+	"space according to the distribution \\mu_{B^n}(.) defined in Ref. [1].\n"
+	"\n"
+	"Input data is given as a MATLAB file (--data-file-name). See below for exact\n"
+	"format. Options may be specified in a separate file and referred to (option\n"
+	"--config).\n"
+	"\n"
+	<< desc	<<
+	"\n"
+	"DATA FILE CONTENTS:\n"
+	"The data file must contain the following MATLAB variables:\n"
+	"\n"
+	"    - dim\n"
+	"      An integer scalar: the dimension of the quantum system\n"
+	"\n"
+	"    - Emn\n"
+	"      A list of all the POVM effects. This is a complex matrix of shape\n"
+	"      (dim,dim,K) where dim is the dimension of the system and K the total\n"
+	"      number of POVM effects.\n"
+	"\n"
+	"    - Nm\n"
+	"      A list of (integer) frequencies. Nm(k) is the number of times the POVM\n"
+	"      effect Emn(:,:,k) was observed.\n"
+	"\n"
+	"    - rho_MLE\n"
+	"      (Required now, but in the future might not be required.) The maximum\n"
+	"      likelihood estimate corresponding to the given data. Used mostly as the\n"
+	"      default reference state if none other is specified for some figures of\n"
+	"      merit.\n"
+	"\n"
+	"    - <any other variable name>\n"
+	"      The MATLAB data file may contain further variables for use in some\n"
+	"      figures of merit. See below.\n"
+	"\n"
+	"Note: if the MatIO library was compiled without HDF5/MATLAB-7.3 file format\n"
+	"support, you must save your MATLAB data files in MATLAB v6 file format, e.g.:\n"
+	"\n"
+	"    (Matlab)>> save('datafile.mat', ..., '-v6')\n"
+	"\n"
+	"FIGURES OF MERIT:\n"
+	"The argument to the option --value-type should be specified as \"keyword\" or\n"
+	"\"keyword:RefObject\". <RefObject> should be the name of a MATLAB variable\n"
+	"present in the data file provided in --data-file-name. The possible keywords and\n"
+	"corresponding possible reference objects are:\n"
+	"\n"
+	"    - \"obs-value\": the expectation value of an observable. <RefObject> should\n"
+	"      be the name of a MATLAB variable present in the MATLAB data file. This\n"
+	"      object should be a complex dim x dim matrix which represents the\n"
+	"      observable in question. If no <RefObject> is specified, the variable named\n"
+	"      \"Observable\" is looked up in the data file.\n"
+	"\n"
+	"    - \"tr-dist\": the trace distance to a reference state. <RefObject> should\n"
+	"      be the name of a MATLAB variable present in the MATLAB data file. This\n"
+	"      object should be a complex dim x dim matrix, the density matrix of the\n"
+	"      reference state. If no <RefObject> is specified, then rho_MLE is used.\n"
+	"\n"
+	// REFERENCE [3]
+	"    - \"fidelity\": the (root) fidelity to a reference state [3]. <RefObject>\n"
+	"      should be the name of a MATLAB variable present in the MATLAB data file.\n"
+	"      This object should be a complex dim x dim matrix, the density matrix of\n"
+	"      the reference state. If no <RefObject> is specified, then rho_MLE is used.\n"
+	"\n"
+	// REFERENCE [4]
+	"    - \"purif-dist\": the purified distance to a reference state [4].\n"
+	"      <RefObject> should be the name of a MATLAB variable present in the MATLAB\n"
+	"      data file. This object should be a complex dim x dim matrix, the density\n"
+	"      matrix of the reference state. If no <RefObject> is specified, then\n"
+	"      rho_MLE is used.\n"
+	"\n"
+	"Note: For the (squared) fidelity to a pure state (usually preferred in\n"
+	"experimental papers), you should use \"obs-value\" with the observable being\n"
+	// REFERENCE [5]
+	"the density matrix of the reference state [5].\n"
+	"\n"
+	"REFERENCES:\n"
+	" [1] Christandl and Renner, Phys. Rev. Lett. 12:120403 (2012), arXiv:1108.5329\n"
+	" [2] Ambegaokar and Troyer, Am. J. Phys., 78(2):150 (2010), arXiv:0906.0943\n"
+	" [3] The root fidelity is defined as F(rho,sigma)=|| rho^{1/2} sigma^{1/2} ||_1,\n"
+	"     as in Nielsen and Chuang, \"Quantum Computation and Quantum Information\".\n"
+	" [4] The purified distance, also called \"infidelity\" in the literature, is\n"
+	"     defined as P(rho,sigma) = \\sqrt{1 - F^2(rho,sigma)}.\n"
+	" [5] Indeed, for pure rho_ref, F^2(rho,rho_ref) = tr(rho*rho_ref).\n"
+	"\n"
+	"Please report issues and bugs by following instructions at:\n"
+	"\n"
+	"    https://gitlab.phys.ethz.ch/pfaist/tomographer/\n"
+	"\n"
+	"Have a lot of fun!\n"
+	"\n"
+	;
+
       ::exit(1);
     }
 
@@ -418,12 +525,19 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
     opt->write_histogram = configdir + "/" + configbasename;
   }
 
+
+  // make sure we have a data file
+  if (!opt->data_file_name.size()) {
+    logger.error("parse_options", "No data file specified. Please specify a MATLAB file with --data-file-name.");
+    ::exit(3);
+  }
+
   // set up value histogram parameters
   if (valhiststr.size()) {
     double fmin, fmax;
     int nbins = 100;
     if (std::sscanf(valhiststr.c_str(), "%lf:%lf/%d", &fmin, &fmax, &nbins) < 2) {
-      throw bad_options("--value-hist expects an argument of format MIN:MAX[/NPOINTS]");
+      throw bad_options("--value-hist expects an argument of format MIN:MAX[/NUM_BINS]");
     }
 
     opt->val_min = fmin;
