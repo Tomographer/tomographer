@@ -5,7 +5,7 @@
  * inform the user and/or developer about what the program is doing. Objects who would
  * like to log messages take a template type parameter \a Logger, and an instance of such
  * a type usually provided to its constructor. The \a Logger type must be a subclass of
- * \ref Tomographer::LoggerBase.
+ * \ref Tomographer::Logger::LoggerBase.
  *
  * Log messages have different levels of importance, which are \ref
  * Tomographer::Logger::ERROR, \ref Tomographer::Logger::WARNING, \ref

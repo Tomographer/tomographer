@@ -68,7 +68,7 @@
 
 /** \page pageParamsX \a X parameterization
  *
- * See e.g. \ref Tomographer::Tools::param_herm_to_x()
+ * See e.g. \ref Tomographer::param_herm_to_x()
  *
  * \todo DOC............
  */

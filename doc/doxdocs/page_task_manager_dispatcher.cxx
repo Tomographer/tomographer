@@ -5,7 +5,7 @@
  * task, possibly reporting intermediate status, and collecting results in the end.
  *
  * Such interfaces are required, for example, to run parallel tasks with the OMP task
- * dispatcher, \ref Tomographer::MultiProc::OMPTaskDispatcher.
+ * dispatcher, \ref Tomographer::MultiProc::OMP::TaskDispatcher.
  *
  * In the future, I hope we can also write an MPI implementation using the same
  * interfaces. (Hopefully everything works fine if \a ResultType and \a ConstantDataType
@@ -60,10 +60,11 @@
  *
  * \par void run(const ConstantDataType * pcdata, LoggerType & logger, TaskManagerIface * tmgriface)
  *          Actually runs the task. It can log to the given \c logger (see \ref
- *          LoggerBase). Note that the \a logger need NOT be the logger that may have been
- *          specified, e.g., to the task dispatcher: it could be, for example, an internal
- *          thread-safe wrapper to your original logger. To be sure, you should make this
- *          a template method with parameters \a LoggerType and TaskManagerIface.
+ *          Tomographer::Logger::LoggerBase). Note that the \a logger need NOT be the
+ *          logger that may have been specified, e.g., to the task dispatcher: it could
+ *          be, for example, an internal thread-safe wrapper to your original logger. To
+ *          be sure, you should make this a template method with parameters \a LoggerType
+ *          and TaskManagerIface.
  *
  * \par
  *          The code in \c run() should poll <code>tmgriface->status_report_requested()</code>
@@ -100,7 +101,7 @@
  *         or the data was serialized and passed to the main process, etc.)
  *
  * \par
- *         in the OMP task dispatcher (\ref Tomographer::MultiProc::OMPTaskDispatcher),
+ *         in the OMP task dispatcher (\ref Tomographer::MultiProc::OMP::TaskDispatcher),
  *         this is called within a \c critical OMP section, so it may safely access and
  *         write shared data.
  *

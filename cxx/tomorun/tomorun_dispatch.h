@@ -340,7 +340,7 @@ inline void tomorun(const TomoProblem & tomodat, const ProgOptions * opt,
 
   OurResultsCollector results(logger);
 
-  auto tasks = Tomographer::MultiProc::makeOMPTaskDispatcher<OurMHRandomWalkTask>(
+  auto tasks = Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
       &taskcdat, // constant data
       &results, // results collector
       logger, // the main logger object

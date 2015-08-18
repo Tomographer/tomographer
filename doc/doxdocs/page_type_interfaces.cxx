@@ -243,7 +243,7 @@
  * function), and calculating the probability ratio for the jump.
  *
  * \a MHWalker types are used in particular by:
- *  - \refitem Tomographer::MHRandomWalk.
+ *   - \ref Tomographer::MHRandomWalk.
  *
  * A type implementing the \a MHWalker interface must provide the following types:
  *
@@ -321,7 +321,7 @@
  * move() function is called.
  *
  * \a RandomWalk types are used in particular by:
- *  - \refitem Tomographer::RandomWalkBase.
+ *   - \ref Tomographer::RandomWalkBase.
  *
  * The \a RandomWalk type should provide the following typedef member:
  *
@@ -412,8 +412,8 @@
  *
  * \par MHRWStatsCollectorType createStatsCollector() const
  *     Create an \a MHRWStatsCollector -type instance to use. This must be a type which
- *     compiles both with the \ref pageInstanceMHRWStatsCollectorType and the \ref
- *     pageInstanceResultable. It must have as its \a Result the type given as \a
+ *     compiles both with the \ref pageInterfaceMHRWStatsCollector and the \ref
+ *     pageInterfaceResultable. It must have as its \a Result the type given as \a
  *     MHRWStatsColelctorResultType.
  *
  * \par MHWalker createMHWalker(Rng & rng, LoggerType & logger) const
@@ -446,10 +446,10 @@
  *      The number of bins in this histogram.
  *
  * \par CountType count(std::size_t i) const
- *      Number of counts in the bin #i
+ *      Number of counts in the bin number i
  *
  * \par CountType errorbar(std::size_t i) const
  *      <em>(Only if <code>HasErrorBars = true</code>)</em> Error bar (standard deviation)
- *      associated to the bin #i.
+ *      associated to the bin number i.
  * 
  */

@@ -807,20 +807,37 @@ template<typename ValueCalculator_,
 	 >
 struct ValueHistogramWithBinningMHRWStatsCollectorParams
 {
+  /** \brief The type of the \ref pageInterfaceValueCalculator which calculates the value
+   * of which we're collecting a histogram. */
   typedef ValueCalculator_ ValueCalculator;
+  /** \brief Type used to count the number of hits in each bin. */
   typedef CountIntType_ CountIntType;
+  /** \brief Type used to store the averages of the histogram bins. */
   typedef CountRealAvgType_ CountRealAvgType;
+
+  //! Number of values we're tracking, i.e. the number of bins in the histogram [for now]
   static constexpr int NumTrackValues = NumTrackValues_;
+  //! The number of levels in the binning analysis. See \ref BinningAnalysis.
   static constexpr int NumLevels = NumLevels_;
+  //! NOT YET IMPLEMENTED. Whether to track only selected indices in the histogram [for now, all are tracked]
   static constexpr bool TrackSelectedIndices = TrackSelectedIndices_;
 
+  //! The type of a value calculated by the \ref pageInterfaceValueCalculator.
   typedef typename ValueCalculator::ValueType ValueType;
   
+  //! The relevant \ref BinningAnalysis parameters for us.
   typedef BinningAnalysisParams<ValueType,NumTrackValues,NumLevels,false/*StoreBinSums*/,CountIntType>
   BinningAnalysisParamsType;
 
+  /** \brief The Base Histogram Type.
+   *
+   * The type of the histogram which simply stores the bin counts.
+   */
   typedef UniformBinsHistogram<typename ValueCalculator::ValueType, CountIntType> BaseHistogramType;
-  typedef AveragedHistogram<BaseHistogramType, CountRealAvgType> HistogramType;
+  /** \brief The Final Histogram Type (with error bars).
+   *
+   */
+  typedef UniformBinsHistogramWithErrorBars<typename ValueCalculator::ValueType, CountRealAvgType> HistogramType;
   typedef typename HistogramType::Params HistogramParams;
 
   /** \brief Result type of the corresponding ValueHistogramWithBinningMHRWStatsCollector
@@ -894,10 +911,15 @@ template<typename Params,
 class ValueHistogramWithBinningMHRWStatsCollector
 {
 public:
+
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::ValueCalculator
   typedef typename Params::ValueCalculator ValueCalculator;
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::CountIntType
   typedef typename Params::CountIntType CountIntType;
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::CountRealAvgType
   typedef typename Params::CountRealAvgType CountRealAvgType;
   
+  /** \brief Somewhere where this object may log what it's doing. */
   typedef LoggerType_ LoggerType;
 
   typedef typename Params::BaseHistogramType BaseHistogramType;
@@ -971,7 +993,7 @@ public:
   */
 
 
-  //! Get the histogram data collected so far. See \ref HistogramType.
+  //! Get the histogram data collected so far. See \ref BaseHistogramType.
   inline const BaseHistogramType & histogram() const
   {
     return value_histogram.histogram();

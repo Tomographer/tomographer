@@ -1,5 +1,5 @@
 ================================================================================
-			    THE TOMOGRAPHER PROJECT
+                            THE TOMOGRAPHER PROJECT
 ================================================================================
 
 A toolbox for error analysis in quantum tomography.
@@ -17,7 +17,7 @@ This project comprises two parts:
 The `tomorun` executable produces a histogram of a figure of merit under the
 distribution relevant for constructing confidence regions using the method
 described in [Christandl & Renner, PRL (2012), arXiv:1108.5329]. The measurement
-data is specified with independent POVM outcomes.
+data are specified as independent POVM outcomes.
 
 The C++ framework is a set of abstract and generic classes which you can combine
 in your preferred way to implement this random walk for even more general
@@ -93,7 +93,15 @@ its help text:
 
     > tomorun --help
 
-It is often more convenient to make `tomorun` read its options from a
+Data is read from a file in MATLAB format (see option --data-file-name), and
+several options control which figure of merit to calculate as well as the
+parameters and behavior of the random walk.
+
+As `tomorun` is running, you may query on its progress by hitting CTRL-C
+(Linux/Mac OS X). If you want to interrupt `tomorun` and quit the current task,
+hit CTRL-C twice in short succession.
+
+Also, it is often more convenient to make `tomorun` read its options from a
 configuration file:
 
     > tomorun --config myconfigfile
@@ -130,7 +138,7 @@ An example config file would be:
     value-hist=0.9:1/50
 
 
-Api Documentation
+API Documentation
 -----------------
 
 You can build the API documentation using Doxygen >= 1.8

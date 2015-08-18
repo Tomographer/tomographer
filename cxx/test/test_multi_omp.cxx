@@ -107,7 +107,7 @@ BOOST_AUTO_TEST_SUITE(OMPThreadSanitizerLogger);
 BOOST_AUTO_TEST_CASE(relays_logs)
 {
   Tomographer::Logger::BufferLogger buflog(Tomographer::Logger::DEBUG);
-  Tomographer::MultiProc::OMPThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
+  Tomographer::MultiProc::OMP::ThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
   testtasklogger.longdebug("origin", "longdebug level");
   testtasklogger.debug("origin", "debug level");
   testtasklogger.info("origin", "info level");
@@ -127,9 +127,9 @@ BOOST_AUTO_TEST_CASE(fixes_level)
 {
   Tomographer::Logger::BufferLogger buflog(Tomographer::Logger::LONGDEBUG);
 
-  Tomographer::MultiProc::OMPThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
+  Tomographer::MultiProc::OMP::ThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
 
-  // this should NOT have any effect for testtasklogger, because OMPThreadSanitizerLogger
+  // this should NOT have any effect for testtasklogger, because OMP::ThreadSanitizerLogger
   // should fix the level at construction time for thread-safety/consistency reasons.
   buflog.setLevel(Tomographer::Logger::WARNING);
 
@@ -143,14 +143,14 @@ BOOST_AUTO_TEST_CASE(parallel)
   // 
   // Make sure that the output of the log is not mangled. We sort the lines because of
   // course the order is undefined, but each line should be intact (thanks to
-  // OMPThreadSanitizerLogger's wrapping into "#pragma omp critical" sections).
+  // OMP::ThreadSanitizerLogger's wrapping into "#pragma omp critical" sections).
   //
 
   Tomographer::Logger::BufferLogger buflog(Tomographer::Logger::LONGDEBUG);
   
 #pragma omp parallel shared(buflog)
   {
-    Tomographer::MultiProc::OMPThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
+    Tomographer::MultiProc::OMP::ThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
     testtasklogger.longdebug("main()", "test task logger from core #%06d of %06d",
 			     omp_get_thread_num(), omp_get_num_threads());
   }
@@ -253,7 +253,7 @@ BOOST_AUTO_TEST_CASE(dmmhrwtask)
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<MyCData, std::mt19937> OurMHRWTask;
 
-  MultiProc::makeOMPTaskDispatcher<OurMHRWTask>(
+  MultiProc::OMP::makeTaskDispatcher<OurMHRWTask>(
       &taskcdat, &results, logger, 64 /* num_runs */, 1 /* n_chunk */
       ).run();
 

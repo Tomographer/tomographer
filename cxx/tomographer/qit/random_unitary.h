@@ -15,6 +15,15 @@ namespace Tomographer
 {
 
 
+/** \brief Generate a Haar-distributed random unitary
+ *
+ * \param U reference to an Eigen type (already sized to a square matrix)
+ *
+ * \param rng a std::random random number generator (such as std::mt19937)
+ *
+ * \param logger a reference to a logger (\ref pageLoggers) where we can log what we're
+ *        doing.
+ */
 template<typename DerU, typename Rng, typename Log>
 inline void random_unitary(Eigen::MatrixBase<DerU> & U, Rng & rng, Log & logger)
 {
@@ -68,6 +77,7 @@ inline void random_unitary(Eigen::MatrixBase<DerU> & U, Rng & rng, Log & logger)
     });
 }
 
+//! Overload of random_unitary(U, rng, logger) which discards all logging messages.
 template<typename Der1, typename Rng>
 inline void random_unitary(Eigen::MatrixBase<Der1> & U, Rng & rng)
 {

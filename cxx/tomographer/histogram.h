@@ -191,7 +191,7 @@ struct UniformBinsHistogram
    * \param x is an Eigen Vector or 1-D Array from which to load the data. It must be
    *     dense, have one column and exactly \ref num_bins() rows.
    *
-   * \param off_chart if provided, then set the \ref off_chart count to this
+   * \param off_chart_ if provided, then set the \ref off_chart count to this
    *     number. Otherwise, reset the \ref off_chart counts to zero.
    */
   template<typename EigenType>
@@ -209,7 +209,7 @@ struct UniformBinsHistogram
    *     the histogram counts. It must be (dense) Eigen::ArrayBase-derived type,
    *     have one column and exactly \ref num_bins() rows.
    *
-   * \param off_chart if provided, add this amount to the \ref off_chart counts.
+   * \param off_chart_ if provided, add this amount to the \ref off_chart counts.
    */
   template<typename EigenType>
   inline void add(const Eigen::ArrayBase<EigenType> & x, CountType off_chart_ = 0)
@@ -332,7 +332,7 @@ struct UniformBinsHistogram
 
   //! Pretty-print the histogram and return it as a string with horizontal bars
   /**
-   * \param max_bar_width is the maximum width (in number of characters) a full bar should
+   * \param max_width is the maximum width (in number of characters) a full bar should
    * occupy.
    */
   inline std::string pretty_print(int max_width = 0) const

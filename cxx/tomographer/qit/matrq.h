@@ -32,6 +32,7 @@ namespace tomo_internal
            typename RealScalar_, typename IntFreqType_>
   struct matrq_traits<MatrQ<FixedDim_, FixedMaxParamList_, RealScalar_, IntFreqType_> >
   {
+    //! Compile-time fixed values
     enum {
       /** \internal
        * \brief A fixed dimension, or \ref Eigen::Dynamic */
@@ -69,14 +70,28 @@ namespace tomo_internal
 template<typename Derived>
 struct MatrQBase
 {
+  //! Values that are either fixed at compile-time, or set to \ref Eigen::Dynamic.
   enum {
+    //! The dimension of the quantum system, or \ref Eigen::Dynamic
     FixedDim = tomo_internal::matrq_traits<Derived>::FixedDim,
+    //! The square of the dimension of the quantum system, or \ref Eigen::Dynamic
     FixedDim2 = ((FixedDim!=Eigen::Dynamic) ? FixedDim*FixedDim : Eigen::Dynamic),
+    /** \brief The square of the dimension of the quantum system minus one, or \ref
+     *         Eigen::Dynamic
+     */
     FixedNdof = ((FixedDim2!=Eigen::Dynamic) ? FixedDim2-1 : Eigen::Dynamic),
+    /** \brief Maximum number of matrices in a list of \ref pageParamsX form, or \ref
+     *         Eigen::Dynamic
+     *
+     * This is typically used for the list of POVM effects.
+     */
     FixedMaxParamList = tomo_internal::matrq_traits<Derived>::FixedMaxParamList
   };
+  //! Real scalar type (usually \c double)
   typedef typename tomo_internal::matrq_traits<Derived>::RealScalar RealScalar;
+  //! Complex scalar type (usually \c std::complex<double>)
   typedef typename tomo_internal::matrq_traits<Derived>::ComplexScalar ComplexScalar;
+  //! Integer type, used to count measurement frequencies. (\c int is fine)
   typedef typename tomo_internal::matrq_traits<Derived>::IntFreqType IntFreqType;
 
   /** \brief Complex dim x dim Matrix */
@@ -121,8 +136,13 @@ struct MatrQBase
 template<typename Derived, bool has_fixed_dim>
 struct MatrQBaseDimStore : public MatrQBase<Derived>
 {
+  //! The dimension of the quantum system. See \ref MatrQBase<Derived>::FixedDim
   inline std::size_t dim() const { return MatrQBase<Derived>::FixedDim; }
+  //! The squared dimension of the quantum system. See \ref MatrQBase<Derived>::FixedDim2
   inline std::size_t dim2() const { return MatrQBase<Derived>::FixedDim2; }
+  /** \brief The squared dimension of the quantum system, minus one. See \ref
+   *         MatrQBase<Derived>::FixedNdof
+   */
   inline std::size_t ndof() const { return MatrQBase<Derived>::FixedNdof; }
 
   /** Constructor. If a fixed dimension is given (\c has_fixed_dim is \c true), then we
@@ -196,40 +216,69 @@ struct MatrQBaseDimStore : public MatrQBase<Derived>
   }
 };
 
-// specialization for dynamic sized types -- give good initializers
+/** \brief Specialization of \ref MatrQBaseDimStore<Derived,has_fixed_dim> for dynamic sized types
+ *
+ * Mostly, we need to give good initializers to Eigen initializers for our types.
+ */
 template<typename Derived>
 struct MatrQBaseDimStore<Derived, false> : public MatrQBase<Derived>
 {
 private:
+  //! Store the dimension of the system at run-time
   const std::size_t _dim;
 public:
 
+  //! The dimension of the quantum system. See \ref MatrQBase<Derived>::FixedDim
   inline std::size_t dim() const { return _dim; }
+  //! The squared dimension of the quantum system. See \ref MatrQBase<Derived>::FixedDim2
   inline std::size_t dim2() const { return _dim*_dim; }
+  /** \brief The squared dimension of the quantum system, minus one. See \ref
+   *         MatrQBase<Derived>::FixedNdof
+   */
   inline std::size_t ndof() const { return _dim*_dim - 1; }
 
+  /** \brief Constructor, initialized to the given dimension
+   *
+   * The dimension is fixed here and cannot be changed later.
+   */
   MatrQBaseDimStore(std::size_t dim_)
     : _dim(dim_)
   {
     eigen_assert(MatrQBase<Derived>::FixedDim == Eigen::Dynamic);
   }
 
+  /** \brief initializer for MatrixType. See \ref
+   *         MatrQBaseDimStore<Derived,has_fixed_dim>::initMatrixType()
+   */
   inline typename MatrQBase<Derived>::MatrixType::ConstantReturnType initMatrixType() const
   {
     return MatrQBase<Derived>::MatrixType::Zero(_dim, _dim);
   }
+  /** \brief initializer for VectorParamType. See \ref
+   *         MatrQBaseDimStore<Derived,has_fixed_dim>::initVectorParamType()
+   */
   inline typename MatrQBase<Derived>::VectorParamType::ConstantReturnType initVectorParamType() const
   {
     return MatrQBase<Derived>::VectorParamType::Zero(_dim*_dim);
   }
+  /** \brief initializer for VectorParamNdofType. See \ref
+   *         MatrQBaseDimStore<Derived,has_fixed_dim>::initVectorParamNdofType()
+   */
   inline typename MatrQBase<Derived>::VectorParamNdofType::ConstantReturnType initVectorParamNdofType() const
   {
     return MatrQBase<Derived>::VectorParamNdofType::Zero(_dim*_dim-1);
   }
-  inline typename MatrQBase<Derived>::VectorParamListType::ConstantReturnType initVectorParamListType(std::size_t len) const
+  /** \brief initializer for VectorParamListType. See \ref
+   *         MatrQBaseDimStore<Derived,has_fixed_dim>::initVectorParamListType()
+   */
+  inline typename MatrQBase<Derived>::VectorParamListType::ConstantReturnType
+  initVectorParamListType(std::size_t len) const
   {
     return MatrQBase<Derived>::VectorParamListType::Zero(len, _dim*_dim);
   }
+  /** \brief initializer for FreqListType. See \ref
+   *         MatrQBaseDimStore<Derived,has_fixed_dim>::initFreqListType()
+   */
   inline typename MatrQBase<Derived>::FreqListType::ConstantReturnType initFreqListType(std::size_t len) const
   {
     return MatrQBase<Derived>::FreqListType::Zero(len);

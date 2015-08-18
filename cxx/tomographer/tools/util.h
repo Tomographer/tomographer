@@ -129,32 +129,63 @@ template<typename T_, int Value>
 class static_or_dynamic
 {
 public:
+  //! Type of the value we are storing
   typedef T_ T;
+  //! The value, if stored at compile-time, or \ref Eigen::Dynamic.
   static constexpr T ValueAtCTime = Value;
 
+  //! Default Constructor. Only if the value is stored at compile-time.
   inline static_or_dynamic() { }
+  /** \brief Constructor with an explicit value.
+   *
+   * The value \a val must equal the compile-time fixed value, if any, or you'll get an
+   * assert failure.
+   */
   inline explicit static_or_dynamic(T val) {
     assert(val == ValueAtCTime);
     (void)val; // silence "unused parameter" warning
   }
 
+  /** \brief Get the value stored.
+   *
+   * The same syntax works both for dynamic and compile-time storage.
+   */
   inline T value() const { return ValueAtCTime; }
+
+  /** \brief Get the value stored.
+   *
+   * The same syntax works both for dynamic and compile-time storage.
+   */
   inline T operator()() const { return ValueAtCTime; }
 };
 
+/** \brief Template Specialization -- see \ref static_or_dynamic<T_,Value>
+ *
+ * Specialization for the case if the value is known only at runtime.
+ */
 template<typename T_>
 class static_or_dynamic<T_, Eigen::Dynamic>
 {
 public:
+  //! See \ref static_or_dynamic<T_,Value>::T
   typedef T_ T;
+  //! See \ref static_or_dynamic<T_,Value>::ValueAtCTime. This is now fixed to Eigen::Dynamic
   static constexpr T ValueAtCTime = Eigen::Dynamic;
   
+  //! No default constructor.
   static_or_dynamic() = delete;  // no default constructor.
+  /** \brief Constructor which initializes the value to \a val.
+   *
+   * The stored value may not be subsequently changed.
+   */
   inline explicit static_or_dynamic(T val) : _dyn_value(val) { }
 
+  //! See \ref static_or_dynamic<T_,Value>::value()
   inline T value() const { return _dyn_value; }
+  //! See \ref static_or_dynamic<T_,Value>::operator()()
   inline T operator()() const { return value(); }
 private:
+  //! The dynamically stored value
   const T _dyn_value;
 };
 
@@ -173,29 +204,48 @@ private:
 template<typename T_, bool enabled>
 struct store_if_enabled
 {
+  //! The type we're storing
   typedef T_ T;
+  //! Whether we're storing a value or not -- by default no
   static constexpr bool is_enabled = false;
 
+  //! Constructor
   template<typename... Args>
   explicit store_if_enabled(Args...) { }
 };
+/** \brief Specialization of \ref store_if_enabled<T_,enabled> for if we're storing a
+ *         value
+ *
+ */
 template<typename T_>
 struct store_if_enabled<T_, true>
 {
+  //! The type we're storing
   typedef T_ T;
+  //! Whether we're storing a value or not -- yes.
   static constexpr bool is_enabled = true;
 
+  //! This property keeps the value we're supposed to store.
   T value;
 
+  //! Constructor. Any arguments are passed to the value's constructor.
   template<typename... ArgTypes>
   explicit store_if_enabled(const ArgTypes& ...  args) : value(args...) { }
 };
 
+/** \brief C++ Stream operators for \ref store_if_enabled<T,enabled>
+ *
+ * Produces human-readable output.
+ */
 template<typename T>
 inline std::ostream & operator<<(std::ostream & str, store_if_enabled<T, false> /*val*/)
 {
   return str << "[-]";
 }
+/** \brief C++ Stream operators for \ref store_if_enabled<T,enabled>
+ *
+ * Produces human-readable output.
+ */
 template<typename T>
 inline std::ostream & operator<<(std::ostream & str, store_if_enabled<T, true> val)
 {

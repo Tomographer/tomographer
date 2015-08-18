@@ -113,7 +113,7 @@ namespace MHRWTasks
       CountIntType n_total_iters;
     };
     /** \brief Typedef for \ref StatusReport. This is needed by, e.g. \ref
-     *         MultiProc::OMPTaskDispatcher.
+     *         MultiProc::OMP::TaskDispatcher.
      */
     typedef StatusReport StatusReportType;
 

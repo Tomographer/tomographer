@@ -330,11 +330,14 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
 //      |--------------------------------------------------------------------------------| 80 chars (col. 89)
 	"Produce a histogram of a figure of merit during a random walk in quantum state\n"
 	// REFERENCE [1]
-	"space according to the distribution \\mu_{B^n}(.) defined in Ref. [1].\n"
+	"space according to the distribution \\mu_{B^n}(.) defined in Ref. [1]. Currently\n"
+	"only independent POVM effects are supported.\n"
 	"\n"
 	"Input data is given as a MATLAB file (--data-file-name). See below for exact\n"
 	"format. Options may be specified in a separate file and referred to (option\n"
 	"--config).\n"
+	"\n"
+	"Hit CTRL-C while `tomorun` is running to inquire about progress information.\n"
 	"\n"
 	<< desc	<<
 	"\n"

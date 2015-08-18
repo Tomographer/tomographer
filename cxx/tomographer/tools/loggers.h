@@ -945,15 +945,17 @@ LoggerBase<Derived>::log(int level, const char * origin, Fn f)
 
 
 
-//
-// Traits for FileLogger -- fprintf is actually thread-safe, that's good :)
-//
 class FileLogger;
+/** \brief Specialized Traits for \ref FileLogger -- see \ref LoggerTraits<LoggerType>
+ *
+ * fprintf is actually thread-safe, that's good :)
+ */
 template<>
 struct LoggerTraits<FileLogger> : public DefaultLoggerTraits
 {
+  //! Overridden values. see \ref DefaultLoggerTraits.
   enum {
-    IsThreadSafe = 1
+    IsThreadSafe = 1 //!< This logger is indeed thread-safe.
   };
 };
 
@@ -1023,16 +1025,18 @@ private:
 
 
 
-//
-// Traits for VacuumLogger -- is a NOOP thread-safe? yeah probably.
-//
 class VacuumLogger;
+/** \brief Specialied Traits for \ref VacuumLogger. See \ref LoggerTraits<BaseLogger>.
+ *
+ * We'll assume that doing nothing is actually thread safe.
+ */
 template<>
 struct LoggerTraits<VacuumLogger> : public DefaultLoggerTraits
 {
+  //! Overridden values. see \ref DefaultLoggerTraits.
   enum {
-    IsThreadSafe = 1,
-    StaticMinimumSeverityLevel = -1 // discard all messages
+    IsThreadSafe = 1, //!< Logger is thread-safe
+    StaticMinimumSeverityLevel = -1 //!< Logger discards all messages regardless of severity
   };
 };
 
@@ -1059,15 +1063,17 @@ static VacuumLogger vacuum_logger;
 
 
 
-//
-// Traits for BufferLogger -- not thread-safe
-//
 class BufferLogger;
+/** \brief Specialized Traits for BufferLogger -- see \ref LoggerTraits<LoggerType>
+ *
+ * BufferLogger is not thread-safe.
+ */
 template<>
 struct LoggerTraits<BufferLogger> : public DefaultLoggerTraits
 {
+  //! Overridden values. see \ref DefaultLoggerTraits.
   enum {
-    IsThreadSafe = 0
+    IsThreadSafe = 0 //!< Logger is not thread-safe
   };
 };
 
@@ -1124,24 +1130,23 @@ public:
 
 
 
-
-//
-// Traits for MinimumSeverityLogger<BaseLogger,Level>
-//
 template<typename, int> class MinimumSeverityLogger;
+/** \brief Specialized Traits for \ref MinimumSeverityLogger<BaseLogger,Level> -- see \ref
+ *         LoggerTraits<BaseLogger>
+ */
 template<typename BaseLogger, int Level>
 struct LoggerTraits<MinimumSeverityLogger<BaseLogger,Level> > : public LoggerTraits<BaseLogger>
 {
+  //! Overridden values. see \ref DefaultLoggerTraits.
   enum {
 
-    // discard all messages less important than the given level
+    //! Logger will discard all messages less important than the given level
     StaticMinimumSeverityLevel = Level,
 
-    // delegate calls for current level() to base logger
+    //! Logger will delegate calls for current level() to base logger
     HasOwnGetLevel = 1
 
     // Note: filter by origin flag is inherited from base logger.
-
   };
 };
 
@@ -1157,23 +1162,32 @@ struct LoggerTraits<MinimumSeverityLogger<BaseLogger,Level> > : public LoggerTra
 template<typename BaseLogger, int Level>
 class MinimumSeverityLogger : public LoggerBase<MinimumSeverityLogger<BaseLogger,Level> >
 {
+  //! Keep reference to the base logger, to which we relay calls
   BaseLogger & baselogger;
 public:
+  /** \brief Constructor from a base logger
+   *
+   * You must provide a reference to an instance of a logger, to which we will relay
+   * relevant calls.
+   */
   MinimumSeverityLogger(BaseLogger & baselogger_)
     : LoggerBase<MinimumSeverityLogger<BaseLogger,Level> >(), baselogger(baselogger_)
   {
   }
 
+  //! Emit a log by relaying to the base logger
   inline void emit_log(int level, const char * origin, const std::string& msg)
   {
     baselogger.emit_log(level, origin, msg);
   }
 
+  //! Get the base logger's set level.
   inline int level() const
   {
     return baselogger.level();
   }
 
+  //! If relevant for the base logger, filter the messages by origin from the base logger.
   template<bool dummy = true>
   inline std::enable_if<dummy && LoggerTraits<BaseLogger>::HasFilterByOrigin, bool>
   filter_by_origin(int level, const char * origin)
@@ -1184,10 +1198,15 @@ public:
 
 
 namespace tomo_internal {
-  
+
+/** \brief Determine length of overlap of two strings.
+ *
+ * Returns the largest integer \a k such that the substrings \c s[0:k] and \c pattern[0:k]
+ * are equal.
+ */
 inline int matched_length(const std::string & s, const std::string & pattern)
 {
-  int k = 0;
+  std::size_t k = 0;
   while (s[k] == pattern[k]) {
     ++k;
   }
@@ -1196,18 +1215,20 @@ inline int matched_length(const std::string & s, const std::string & pattern)
 
 } // namespace tomo_internal
 
-//
-// Specialization of LoggerTraits<LoggerType> for OriginFilteredLogger.
-//
 template<typename BaseLogger> class OriginFilteredLogger;
+/** \brief Specialized Logger Traits for \ref OriginFilteredLogger -- see \ref
+ *         LoggerTraits<LoggerType>.
+ */
 template<typename BaseLogger>
 struct LoggerTraits<OriginFilteredLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
 {
+  //! Overridden values. see \ref DefaultLoggerTraits.
   enum {
-    HasOwnGetLevel = 1, // delegates level() to base logger
-    HasFilterByOrigin = 1 // we have customized origin filtering
+    HasOwnGetLevel = 1, //!< This logger delegates level() to base logger
+    HasFilterByOrigin = 1 //!< We have customized origin filtering
   };
 };
+
 /** \brief A logger which filters entries according to where they originated from.
  *
  * This logger implementation logs messages at specific severity levels depending on the
@@ -1231,10 +1252,18 @@ struct LoggerTraits<OriginFilteredLogger<BaseLogger> > : public LoggerTraits<Bas
 template<typename BaseLogger>
 class OriginFilteredLogger : public Tomographer::Logger::LoggerBase<OriginFilteredLogger<BaseLogger> >
 {
+  //! Reference to the base logger
   BaseLogger & baselogger;
 
+  //! List of patterns set. See class documentation.
   std::map<std::string,int> levels_set;
 public:
+
+  /** \brief Constructor based on a base logger reference.
+   *
+   * Pass a reference to the base logger here. Calls to \ref emit_log(), etc., will be
+   * relayed to this base logger.
+   */
   OriginFilteredLogger(BaseLogger & baselogger_)
     : Tomographer::Logger::LoggerBase<OriginFilteredLogger<BaseLogger> >(),
       baselogger(baselogger_),
@@ -1255,6 +1284,7 @@ public:
   {
     levels_set[origin_pattern] = level;
   }
+
   /** \brief Remove a rule set by \ref setDomainLevel()
    *
    * \param s the origin pattern corresponding to the rule to erase. This must be a

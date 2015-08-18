@@ -12,10 +12,12 @@ namespace Tomographer {
 
 namespace MultiProc
 {
+namespace OMP
+{
 
   namespace tomo_internal {
 
-  /** \brief Internal. Helper for \ref OMPThreadSanitizerLogger
+  /** \brief Internal. Helper for \ref ThreadSanitizerLogger
    *
    * Emits the log to \c baselogger. This template is specialized for
    * <code>baseLoggerIsThreadSafe=true</code>, in which case the call to baselogger's
@@ -23,20 +25,20 @@ namespace MultiProc
    *
    * This helper is meant to be called as
    * \code
-   *      OMPThreadSanitizerLoggerHelper<BaseLogger, Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
+   *      ThreadSanitizerLoggerHelper<BaseLogger, Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
    *        ::emit_log(
    *            baselogger, level, origin, msg
    *          );
    * \endcode
    */
   template<typename BaseLogger, bool baseLoggerIsThreadSafe>
-  struct OMPThreadSanitizerLoggerHelper
+  struct ThreadSanitizerLoggerHelper
   {
     static inline void emit_log(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
     {
 #pragma omp critical
       {
-        //printf("OMPThreadSanitizerLoggerHelper::emit_log(%d, %s, %s) -- OMP CRITICAL\n", level, origin, msg.c_str());
+        //printf("ThreadSanitizerLoggerHelper::emit_log(%d, %s, %s) -- OMP CRITICAL\n", level, origin, msg.c_str());
         baselogger.emit_log(level, origin, msg);
       }
     }
@@ -45,7 +47,7 @@ namespace MultiProc
       bool ok = true;
 #pragma omp critical
       {
-        //printf("OMPThreadSanitizerLoggerHelper::filter_by_origin(%d, %s) -- OMP CRITICAL\n", level, origin);
+        //printf("ThreadSanitizerLoggerHelper::filter_by_origin(%d, %s) -- OMP CRITICAL\n", level, origin);
         ok = baselogger.filter_by_origin(level, origin);
       }
       return ok;
@@ -57,16 +59,16 @@ namespace MultiProc
   // section needed because the logger is already thread-safe.
   //
   template<typename BaseLogger>
-  struct OMPThreadSanitizerLoggerHelper<BaseLogger, true>
+  struct ThreadSanitizerLoggerHelper<BaseLogger, true>
   {
     static inline void emit_log(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
     {
-      //printf("OMPThreadSanitizerLoggerHelper::emit_log(%d, %s, %s) -- NORMAL\n", level, origin, msg.c_str());
+      //printf("ThreadSanitizerLoggerHelper::emit_log(%d, %s, %s) -- NORMAL\n", level, origin, msg.c_str());
       baselogger.emit_log(level, origin, msg);
     }
     static inline bool filter_by_origin(BaseLogger & baselogger, int level, const char * origin)
     {
-      //printf("OMPThreadSanitizerLoggerHelper::filter_by_origin(%d, %s) -- NORMAL\n", level, origin);
+      //printf("ThreadSanitizerLoggerHelper::filter_by_origin(%d, %s) -- NORMAL\n", level, origin);
       return baselogger.filter_by_origin(level, origin);
     }
   };
@@ -104,14 +106,14 @@ namespace MultiProc
    *     ... // parallel code
    *
    *     // it may not be safe to log to `logger`, because it might not be
-   *     // thread-safe. So create a OMPThreadSanitizerLogger to which we can
+   *     // thread-safe. So create a ThreadSanitizerLogger to which we can
    *     // safely log and pass to sub-routines that want a logger.
-   *     OMPThreadSanitizerLogger<SomeLogger> threadsafelogger(logger);
+   *     ThreadSanitizerLogger<SomeLogger> threadsafelogger(logger);
    *
    *     threadsafelogger.longdebug( ... ); // safe
    *
    *     // the logger may be passed to subtasks
-   *     FidelityHistogramStatsCollector<MatrQ, double, OMPThreadSanitizerLogger<SomeLogger> >
+   *     FidelityHistogramStatsCollector<MatrQ, double, ThreadSanitizerLogger<SomeLogger> >
    *       fidelityhistogramcollector(..., threadsafelogger);
    *
    *     ... // more parallel code
@@ -121,33 +123,33 @@ namespace MultiProc
    * 
    */
   template<typename BaseLogger>
-  class OMPThreadSanitizerLogger : public Logger::LoggerBase<OMPThreadSanitizerLogger<BaseLogger> >
+  class ThreadSanitizerLogger : public Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >
   {
     BaseLogger & _baselogger;
   public:
 
     template<typename... MoreArgs>
-    OMPThreadSanitizerLogger(BaseLogger & logger, MoreArgs...)
+    ThreadSanitizerLogger(BaseLogger & logger, MoreArgs...)
       // NOTE: pass the baselogger's level on here. The ThreadSanitizerLogger's level is
       // this one, and is fixed and cannot be changed while running.
-      : Logger::LoggerBase<OMPThreadSanitizerLogger<BaseLogger> >(logger.level()),
+      : Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >(logger.level()),
         _baselogger(logger)
     {
       // when you have to debug the log mechanism.... lol
-      //printf("OMPThreadSanitizerLogger(): object created\n");
-      //_baselogger.debug("OMPThreadSanitizerLogger()", "log from constructor.");
-      //emit_log(Logger::DEBUG, "OMPThreadSanitizerLogger!", "emit_log from constructor");
-      //LoggerBase<OMPThreadSanitizerLogger<BaseLogger> >::debug("OMPThreadSanitizerLogger", "debug from constructor");
+      //printf("ThreadSanitizerLogger(): object created\n");
+      //_baselogger.debug("ThreadSanitizerLogger()", "log from constructor.");
+      //emit_log(Logger::DEBUG, "ThreadSanitizerLogger!", "emit_log from constructor");
+      //LoggerBase<ThreadSanitizerLogger<BaseLogger> >::debug("ThreadSanitizerLogger", "debug from constructor");
     }
     
-    ~OMPThreadSanitizerLogger()
+    ~ThreadSanitizerLogger()
     {
     }
     
     inline void emit_log(int level, const char * origin, const std::string& msg)
     {
-      //printf("OMPThreadSanitizerLogger::emit_log(%d, %s, %s)\n", level, origin, msg.c_str());
-      tomo_internal::OMPThreadSanitizerLoggerHelper<BaseLogger,
+      //printf("ThreadSanitizerLogger::emit_log(%d, %s, %s)\n", level, origin, msg.c_str());
+      tomo_internal::ThreadSanitizerLoggerHelper<BaseLogger,
                                                     Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
         ::emit_log(
             _baselogger, level, origin, msg
@@ -158,7 +160,7 @@ namespace MultiProc
     inline typename std::enable_if<dummy && Logger::LoggerTraits<BaseLogger>::HasFilterByOrigin, bool>::type
       filter_by_origin(int level, const char * origin) const
     {
-      return tomo_internal::OMPThreadSanitizerLoggerHelper<BaseLogger,
+      return tomo_internal::ThreadSanitizerLoggerHelper<BaseLogger,
                                                            Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
         ::filter_by_origin(
             _baselogger, level, origin
@@ -166,14 +168,17 @@ namespace MultiProc
     }
   };
 
-}
+} // namespace OMP
+} // namespace MultiProc
 
 namespace Logger {
-  //
-  // logger traits for OMPThreadSanitizerLogger
-  //
+  /** \brief Specialized Traits for \ref MultiProc::OMP::ThreadSanitizerLogger<BaseLogger>
+   *         -- see \ref Logger::LoggerTraits<LoggerType>
+   *
+   * Logger traits for \ref MultiProc::OMP::ThreadSanitizerLogger.
+   */
   template<typename BaseLogger>
-  struct LoggerTraits<MultiProc::OMPThreadSanitizerLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
+  struct LoggerTraits<MultiProc::OMP::ThreadSanitizerLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
   {
     enum {
       // explicitly require our logger instance to store its level. The level cannot be
@@ -186,13 +191,14 @@ namespace Logger {
 
 
 namespace MultiProc {
+namespace OMP {
     
   /** \brief A complete status report of currently running threads.
    */
   template<typename TaskStatusReportType>
-  struct OMPFullStatusReport
+  struct FullStatusReport
   {
-    OMPFullStatusReport() : tasks_running(), tasks_reports() { }
+    FullStatusReport() : tasks_running(), tasks_reports() { }
 
     //! Number of completed tasks
     int num_completed;
@@ -251,10 +257,10 @@ namespace MultiProc {
    * <li> \a TaskLogger is the type of the logger which will be provided to tasks inside
    *      the parallel section. Such logger should ensure that the logging is
    *      thread-safe. By default \a TaskLogger is nothing else than an appropriate \ref
-   *      OMPThreadSanitizerLogger.
+   *      ThreadSanitizerLogger.
    *
    *      (Note that if the originally given \c logger is thread-safe (see
-   *      \ref LoggerTraits), then \ref OMPThreadSanitizerLogger directly relays calls
+   *      \ref LoggerTraits), then \ref ThreadSanitizerLogger directly relays calls
    *      without wrapping them into OMP critical sections.)
    *
    *      For each task, a new \a TaskLogger will be created. The constructor is expected
@@ -262,7 +268,7 @@ namespace MultiProc {
    *      \code
    *         TaskLogger(Logger & baselogger, const ConstantDataType * pcdata, CountIntType k)
    *      \endcode
-   *      where \a baselogger is the logger given to the \a OMPTaskDispatcher constructor,
+   *      where \a baselogger is the logger given to the \a TaskDispatcher constructor,
    *      \a pcdata is the constant shared data pointer also given to the constructor, and
    *      \a k is the task number (which may range from 0 to the total number of tasks -
    *      1). The task logger is NOT constructed in a thread-safe code region, so use \c
@@ -278,8 +284,8 @@ namespace MultiProc {
    */
   template<typename Task_, typename ConstantDataType_, typename ResultsCollector_,
            typename Logger_, typename CountIntType_ = int,
-           typename TaskLogger_ = OMPThreadSanitizerLogger<Logger_> >
-  class OMPTaskDispatcher
+           typename TaskLogger_ = ThreadSanitizerLogger<Logger_> >
+  class TaskDispatcher
   {
   public:
     typedef Task_ Task;
@@ -289,7 +295,7 @@ namespace MultiProc {
     typedef Logger_ Logger;
     typedef CountIntType_ CountIntType;
     typedef TaskLogger_ TaskLogger;
-    typedef OMPFullStatusReport<TaskStatusReportType> FullStatusReportType;
+    typedef FullStatusReport<TaskStatusReportType> FullStatusReportType;
 
     typedef std::function<void(const FullStatusReportType&)> FullStatusReportCallbackType;
 
@@ -321,7 +327,7 @@ namespace MultiProc {
       volatile std::sig_atomic_t status_report_counter;
       CountIntType status_report_numreportsrecieved;
 
-      OMPFullStatusReport<TaskStatusReportType> status_report_full;
+      FullStatusReport<TaskStatusReportType> status_report_full;
       FullStatusReportCallbackType status_report_user_fn;
 
       CountIntType num_total_runs;
@@ -350,7 +356,7 @@ namespace MultiProc {
       {
         if ((int)local_status_report_counter == (int)shared_data->status_report_counter) {
           // error: task submitted unsollicited report
-          logger->warning("OMPTaskDispatcher/taskmanageriface", "Task submitted unsollicited status report");
+          logger->warning("OMP TaskDispatcher/taskmanageriface", "Task submitted unsollicited status report");
           return;
         }
 
@@ -375,13 +381,13 @@ namespace MultiProc {
             //
             if (shared_data->status_report_underway) {
               // status report already underway!
-              logger->warning("OMPTaskDispatcher/taskmanageriface",
+              logger->warning("OMP TaskDispatcher/taskmanageriface",
                               "status report already underway!");
               ok = false;
             }
             if (!shared_data->status_report_user_fn) {
               // no user handler set
-              logger->warning("OMPTaskDispatcher/taskmanageriface",
+              logger->warning("OMP TaskDispatcher/taskmanageriface",
                               "no user status report handler set!"
                               " call set_status_report_handler() first.");
               ok = false;
@@ -394,7 +400,7 @@ namespace MultiProc {
               shared_data->status_report_initialized = true;
               
               // initialize status report object & overall data
-              shared_data->status_report_full = OMPFullStatusReport<TaskStatusReportType>();
+              shared_data->status_report_full = FullStatusReport<TaskStatusReportType>();
               shared_data->status_report_full.num_completed = shared_data->num_completed;
               shared_data->status_report_full.num_total_runs = shared_data->num_total_runs;
               shared_data->status_report_full.num_active_working_threads = shared_data->num_active_working_threads;
@@ -407,7 +413,7 @@ namespace MultiProc {
               shared_data->status_report_full.tasks_reports.clear();
               shared_data->status_report_full.tasks_running.resize(num_threads, false);
               shared_data->status_report_full.tasks_reports.resize(num_threads);
-              logger->debug("OMPTaskDispatcher/taskmanageriface", "vectors resized to %lu & %lu, resp.",
+              logger->debug("OMP TaskDispatcher/taskmanageriface", "vectors resized to %lu & %lu, resp.",
                            shared_data->status_report_full.tasks_running.size(),
                            shared_data->status_report_full.tasks_reports.size());
               shared_data->status_report_numreportsrecieved = 0;
@@ -422,7 +428,7 @@ namespace MultiProc {
             //
             // Report the data corresponding to this thread.
             //
-	    logger->debug("OMPTaskDispatcher/taskmanageriface", "threadnum=%ld, tasks_reports.size()=%ld",
+	    logger->debug("OMP TaskDispatcher/taskmanageriface", "threadnum=%ld, tasks_reports.size()=%ld",
 			  (long)threadnum, (long)shared_data->status_report_full.tasks_reports.size());
 
             assert(0 <= threadnum && (std::size_t)threadnum < shared_data->status_report_full.tasks_reports.size());
@@ -451,7 +457,7 @@ namespace MultiProc {
     thread_shared_data shared_data;
 
   public:
-    OMPTaskDispatcher(ConstantDataType * pcdata_, ResultsCollector * results_, Logger & logger_,
+    TaskDispatcher(ConstantDataType * pcdata_, ResultsCollector * results_, Logger & logger_,
                       CountIntType num_total_runs_, CountIntType n_chunk_)
       : shared_data(pcdata_, results_, logger_, num_total_runs_, n_chunk_)
     {
@@ -529,7 +535,7 @@ namespace MultiProc {
      * invoked.
      *
      * The callback, when invoked, will be called with a single parameter of type \ref
-     * OMPFullStatusReport<TaskStatusReportType>.
+     * FullStatusReport<TaskStatusReportType>.
      *
      * \par How Tasks should handle status reports.
      * Task's must regularly check whether a status report has been requested as they run. 
@@ -577,17 +583,18 @@ namespace MultiProc {
 
   template<typename Task_, typename ConstantDataType_, typename ResultsCollector_,
            typename Logger_, typename CountIntType_ = unsigned int>
-  OMPTaskDispatcher<Task_, ConstantDataType_, ResultsCollector_,
+  TaskDispatcher<Task_, ConstantDataType_, ResultsCollector_,
                     Logger_, CountIntType_>
-  makeOMPTaskDispatcher(ConstantDataType_ * pcdata_, ResultsCollector_ * results_, Logger_ & logger_,
+  makeTaskDispatcher(ConstantDataType_ * pcdata_, ResultsCollector_ * results_, Logger_ & logger_,
                         CountIntType_ num_total_runs_, CountIntType_ n_chunk_)
   {
-    return OMPTaskDispatcher<Task_, ConstantDataType_, ResultsCollector_,
+    return TaskDispatcher<Task_, ConstantDataType_, ResultsCollector_,
                              Logger_, CountIntType_>(
         pcdata_, results_, logger_, num_total_runs_, n_chunk_
         );
   }
-    
+
+} // namespace OMP
 } // namespace MultiProc
 
 } // namespace Tomographer

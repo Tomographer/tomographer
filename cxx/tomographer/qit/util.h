@@ -168,6 +168,7 @@ inline auto dense_random(Rng & rng, RndDist &rnddist, IndexTypes... sizes)
 
 
 namespace tomo_internal {
+  /** \internal */
   template<typename Scalar, typename IndexType>
   struct can_basis_vec_generator
   {
@@ -216,6 +217,10 @@ inline auto can_basis_vec(IndexType k, IndexType size)
       );
 }
 
+/** \brief Expression for the (k,j)-th canonical basis matrix of given dimension
+ *
+ * This is a matrix of zeros except for the entry (k,j) which is one.
+ */
 template<typename Der, typename IndexType>
 inline auto can_basis_vec(IndexType k, IndexType j, IndexType rows, IndexType cols)
   -> const Eigen::CwiseNullaryOp<
@@ -238,6 +243,7 @@ inline auto can_basis_vec(IndexType k, IndexType j, IndexType rows, IndexType co
 
 
 namespace tomo_internal {
+  /** \internal */
   template<typename Scalar>
   struct powers_of_two_generator
   {
@@ -318,7 +324,6 @@ inline auto powers_of_two(IndexTypes... sizes)
  * runtime argument (done as an \a eigen_assert() check, i.e. this is compiled out if \a
  * -DNDEBUG is used)
  */
-
 template<int RowFactorCTime, int ColFactorCTime, typename Derived,
 	 typename std::enable_if<(RowFactorCTime == Eigen::Dynamic || ColFactorCTime == Eigen::Dynamic),
 				 bool>::type dummy = true>
@@ -329,12 +334,13 @@ inline auto replicated(const Eigen::DenseBase<Derived> & x, int row_factor, int 
   eigen_assert(ColFactorCTime == Eigen::Dynamic || col_factor == ColFactorCTime);
   return x.replicate(row_factor, col_factor);
 }
-//
-// Implementation for fixed RowFactorCTime and ColFactorCTime.
-//
+/** \brief See \ref replicated<RowFactorCTime, ColFactorCTime, Derived, dummy>
+ *
+ * This is the implementation for fixed RowFactorCTime and ColFactorCTime.
+ */
 template<int RowFactorCTime, int ColFactorCTime, typename Derived,
 	 typename std::enable_if<(RowFactorCTime != Eigen::Dynamic && ColFactorCTime != Eigen::Dynamic),
-				 bool>::type dummy = true>
+				 bool>::type dummy2 = true>
 inline auto replicated(const Eigen::DenseBase<Derived> & x, int row_factor, int col_factor)
   -> const Eigen::Replicate<Derived, RowFactorCTime, ColFactorCTime>
 {
@@ -342,93 +348,6 @@ inline auto replicated(const Eigen::DenseBase<Derived> & x, int row_factor, int 
   eigen_assert(col_factor == ColFactorCTime); (void)col_factor; // "unused argument" warning
   return x.template replicate<RowFactorCTime, ColFactorCTime>();
 }
-
-
-/* second attempt, after I couldn't find the bug in the above..... not needed in the end.
-
-namespace tomo_internal {
-
-template<int RowFactorCTime, int ColFactorCTime, bool KnownAtCompileTime>
-struct replicator_helper {
-  template<typename Derived>
-  static inline auto impl(const Eigen::DenseBase<Derived> & x, int row_factor, int col_factor)
-    -> const typename Eigen::DenseBase<Derived>::ReplicateReturnType
-  {
-    eigen_assert(RowFactorCTime == Eigen::Dynamic || row_factor == RowFactorCTime);
-    eigen_assert(ColFactorCTime == Eigen::Dynamic || col_factor == ColFactorCTime);
-    return x.replicate(row_factor, col_factor);
-  }
-};
-
-template<int RowFactorCTime, int ColFactorCTime>
-struct replicator_helper<RowFactorCTime, ColFactorCTime, true> {
-  template<typename Derived>
-  static inline auto impl(const Eigen::DenseBase<Derived> & x, int row_factor, int col_factor)
-    -> const Eigen::Replicate<Derived, RowFactorCTime, ColFactorCTime>
-  {
-    eigen_assert(row_factor == RowFactorCTime); (void)row_factor; // "unused argument" warning
-    eigen_assert(col_factor == ColFactorCTime); (void)col_factor; // "unused argument" warning
-    return x.template replicate<RowFactorCTime, ColFactorCTime>();
-  }
-};
-
-} // tomo_internal
-
-
-template<int RowFactorCTime, int ColFactorCTime>
-struct replicator {
-  //
-  // fixed size version
-  //
-  template<typename Derived>
-  static inline auto replicate(const Eigen::DenseBase<Derived> & x, int row_factor, int col_factor)
-    -> const Eigen::Replicate<Derived, RowFactorCTime, ColFactorCTime>
-  {
-    return tomo_internal::replicator_helper<
-      RowFactorCTime,
-      ColFactorCTime,
-      true
-      >::impl(
-	  x, row_factor, col_factor
-	  );
-  }
-};
-
-template<int RowFactorCTime>
-struct replicator<RowFactorCTime, Eigen::Dynamic>
-{
-  template<typename Derived>
-  static inline auto replicate(const Eigen::DenseBase<Derived> & x, int row_factor, int col_factor)
-    -> const typename Eigen::DenseBase<Derived>::ReplicateReturnType
-  {
-    return tomo_internal::replicator_helper<
-      RowFactorCTime,
-      Eigen::Dynamic,
-      false
-      >::impl(
-	  x, row_factor, col_factor
-	  );
-  }
-};
-template<int ColFactorCTime>
-struct replicator<Eigen::Dynamic, ColFactorCTime>
-{
-  template<typename Derived>
-  static inline auto replicate(const Eigen::DenseBase<Derived> & x, int row_factor, int col_factor)
-    -> const typename Eigen::DenseBase<Derived>::ReplicateReturnType
-  {
-    return tomo_internal::replicator_helper<
-      Eigen::Dynamic,
-      ColFactorCTime,
-      false
-      >::impl(
-	  x, row_factor, col_factor
-	  );
-  }
-};
-*/
-
-
 
 
 } // namespace Tomographer
