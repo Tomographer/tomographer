@@ -862,7 +862,8 @@ EXCLUDE_PATTERNS       =
 # Note that the wildcards are matched against the file with absolute path, so to
 # exclude all test directories use the pattern */test/*
 
-EXCLUDE_SYMBOLS        = Tomographer::tomo_internal \
+EXCLUDE_SYMBOLS        = std \
+		         Tomographer::tomo_internal \
 		         Tomographer::Tools::tomo_internal \
 		         Tomographer::Logger::tomo_internal \
 		         Tomographer::MultiProc::tomo_internal \

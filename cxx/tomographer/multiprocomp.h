@@ -12,6 +12,7 @@ namespace Tomographer {
 
 namespace MultiProc
 {
+//! Definitions for multitasking using OpenMP multithreading.
 namespace OMP
 {
 

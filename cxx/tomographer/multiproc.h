@@ -13,7 +13,8 @@ namespace Tomographer {
  * This namespace encompasses classes and functions allowing to dispatch and process
  * several tasks simultaneously.
  *
- * Currently, only an OpenMP implementation is provided, see \ref OMPTaskDispatcher.
+ * Currently, only an OpenMP implementation is provided, see \ref MultiProc::OMP and \ref
+ * MultiProc::OMP::TaskDispatcher.
  */
 namespace MultiProc {
 

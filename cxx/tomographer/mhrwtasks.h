@@ -29,19 +29,26 @@ namespace MHRWTasks
    * provide some methods, e.g. to create the random walk and stats collectors. See \ref
    * pageInterfaceMHRandomWalkTaskCData.
    *
-   * Stores the tomography data, as well as parameters to the random walk and ranges for
-   * the fidelity histgram to take.
+   * Stores the parameters to the random walk.
    *
    */
   template<typename CountIntType_ = unsigned int, typename RealType_ = double>
   struct CDataBase
   {
+    /** \brief Constructor.
+     *
+     * Make sure to initialize \a base_seed to something quite random (e.g. current time
+     * in seconds) so that independent runs of your program won't produce the exact same
+     * results.
+     */
     CDataBase(int base_seed_ = 0)
       : base_seed(base_seed_)
     {
     }
 
+    //! Type used to count the number of iterations
     typedef CountIntType_ CountIntType;
+    //! Type used to specify the step size
     typedef RealType_ RealType;
 
     //! Parameter of the random walk -- number of iterations per sweep
@@ -53,14 +60,32 @@ namespace MHRWTasks
     //! Parameter of the random walk -- step size of the random walk
     RealType step_size;
 
-    //! A base random seed from which each run seed will be derived
+    /** \brief A base random seed from which each run seed will be derived
+     *
+     * For each new random walk, a new pseudorandom number generator instance is created
+     * with a new seed.
+     *
+     * In order to be able to reproduce results, the seeds are set deterministically from
+     * the \a base_seed, by using for the random seed of the k-th random walk:
+     * <code>seed[k] = base_seed + k</code>
+     *
+     * Thus, by setting the base_seed to a fixed value you can reproduce all the results
+     * of a run. However, in order for your program not to output exactly the same thing
+     * if it is run a second time, and to make sure the points are indeed random, you must
+     * randomize \a base_seed, e.g. using the current time.
+     */
     int base_seed;
   };
 
   /** \brief Random Walk task, collecting statistics
    *
-   * This class can be used with \ref MultiProc::OMPTaskDispatcher, for example.
+   * This class can be used with \ref MultiProc::OMP::TaskDispatcher, for example.
    *
+   * \tparam MHRandomWalkTaskCData must comply with the \ref
+   *         pageInterfaceMHRandomWalkTaskCData and inherit from \ref
+   *         CDataBase<CountIntType,RealType> with appropriate types as required.  The
+   *         parameters to the random walk, as well as types to use, stats collector
+   *         etc. are specified using this class.
    */
   template<typename MHRandomWalkTaskCData,
 	   typename Rng = std::mt19937>

@@ -330,67 +330,13 @@ struct UniformBinsHistogram
     return index;
   }
 
-  //! Pretty-print the histogram and return it as a string with horizontal bars
-  /**
-   * \param max_width is the maximum width (in number of characters) a full bar should
-   * occupy.
+  /** \brief Pretty-print the histogram and return it as a string with horizontal bars
+   *
+   * \param max_width is the maximum line width the display should fit in.
    */
   inline std::string pretty_print(int max_width = 0) const
   {
     return histogram_pretty_print(*this, max_width);
-    // eigen_assert(Tools::is_positive(params.num_bins));
-
-    // if (params.num_bins == 0) {
-    //   return std::string("<empty histogram: no bins>\n");
-    // }
-
-    // if (max_bar_width == 0) {
-    //   // decide of a maximum width to display
-    //   max_bar_width = 80; // default maximum width
-    //   // If the user provided a value for the terminal width, use it. Note that $COLUMNS is
-    //   // not in the environment usually, so you have to set it manually with e.g.
-    //   //    shell> export COLUMNS=$COLUMNS
-    //   const char * cols_s = std::getenv("COLUMNS");
-    //   if (cols_s != NULL) {
-    // 	max_bar_width = std::atoi(cols_s) - 20;
-    //   }
-    // }
-
-    // eigen_assert(bins.size() >= 0);
-    // std::size_t Ntot = (std::size_t)bins.size();
-    // double barscale = 1.0;
-    // if (bins.maxCoeff() > 0) {
-    //   // if all values are zero, the division later by barscale gives a division by zero
-    //   // and crashes stuff
-    //   barscale = (double)bins.maxCoeff() / max_bar_width; // full bar is 80 chars wide
-    // }
-    // std::stringstream s;
-    // for (std::size_t k = 0; k < Ntot; ++k) {
-    //   //assert(Tools::is_positive(bins(k))); // don't abort() because of this...
-    //   eigen_assert(Tools::is_positive(bins(k)));
-    //   s.width(6);
-    //   s << std::setprecision(4) << std::left << (params.min + k*(params.max-params.min)/Ntot);
-    //   s << " | ";
-    //   s.width(3);
-    //   s << std::setprecision(2) << std::right << bins(k) << " ";
-    //   s.width(0);
-    //   int strwid = (int)(bins(k)/barscale + 0.5);
-    //   if (strwid < 0) {
-    // 	strwid = 0;
-    //   } else if (strwid > max_bar_width) {
-    // 	strwid = max_bar_width;
-    //   }
-    //   s << std::string(strwid >= 0 ? strwid : 0, '*') << "\n";
-
-    //   //      s += Tools::fmts("%-6.4g | %3ld %s\n",
-    //   //		       (double)(params.min + k*(params.max-params.min)/Ntot),
-    //   //		       (long)bins(k), std::string((int)(bins(k)/barscale+0.5), '*').c_str());
-    // }
-    // if (off_chart > 0) {
-    //   //      s += Tools::fmts("   ... with another %lu points off chart.\n", (unsigned long)off_chart);
-    //   s << "   ... with another " << off_chart << " points off chart.\n";
-    // }
-    // return s.str();
   }
 
 };
@@ -405,12 +351,18 @@ struct UniformBinsHistogram
 template<typename Scalar_, typename CountType_ = double>
 struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, CountType_>
 {
+  //! The Scalar (X-axis) Type. See \ref UniformBinsHistogram<Scalar_,CountType_>::Scalar.
   typedef Scalar_ Scalar;
+  //! The Type used to keep track of counts. See \ref UniformBinsHistogram<Scalar_,CountType_>::CountType.
   typedef CountType_ CountType;
 
+  //! Shortcut for our base class type.
   typedef UniformBinsHistogram<Scalar_, CountType_> Base_;
+  /** \brief Shortcut for our base class' histogram parameters. See \ref
+   *         UniformBinsHistogram<Scalar_,CountType_>::Params. */
   typedef typename Base_::Params Params;
   
+  //! For the \ref pageInterfaceHistogram. This type of histogram does provide error bars
   static constexpr bool HasErrorBars = true;
 
   //! The error bars associated with each histogram bin
@@ -422,11 +374,21 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
   using Base_::off_chart;
 
 
+  /** \brief Constructor, with given histogram parameters.
+   *
+   * Constructs an empty histogram with the given parameters. All bin counts, off-chart
+   * counts and \ref delta error bars are initialized to zero.
+   */
   UniformBinsHistogramWithErrorBars(Params params = Params())
     : Base_(params), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero(params.num_bins))
   {
   }
 
+  /** \brief Constructor, with given histogram parameters.
+   *
+   * Constructs an empty histogram with the given parameters. All bin counts, off-chart
+   * counts and \ref delta error bars are initialized to zero.
+   */
   UniformBinsHistogramWithErrorBars(Scalar min, Scalar max, std::size_t num_bins)
     : Base_(min, max, num_bins), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero(num_bins))
   {
@@ -445,75 +407,25 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
     delta.setZero();
   }
   
-
+  /** \brief For the \ref pageInterfaceHistogram. Get error bar for bin number \a i.
+   *
+   * This simply returns <code>delta(i)</code>.
+   */
   inline CountType errorbar(std::size_t i) const
   {
     return delta(i);
   }
 
-
+  /** \brief Print the histogram in human readable form
+   *
+   * Returns a string which can be e.g. printed to the terminal, which produces a visual
+   * representation of the histogram.
+   *
+   * \param max_width the maximum line length the displayed histogram should fit in.
+   */
   std::string pretty_print(int max_width = 0) const
   {
     return histogram_pretty_print(*this, max_width);
-    // eigen_assert(Tools::is_positive(params.num_bins));
-
-    // if (max_bar_width == 0) {
-    //   // decide of a maximum width to display
-    //   max_bar_width = 70; // default maximum width
-    //   // If the user provided a value for the terminal width, use it. Note that $COLUMNS is
-    //   // not in the environment usually, so you have to set it manually with e.g.
-    //   //    shell> export COLUMNS=$COLUMNS
-    //   const char * cols_s = std::getenv("COLUMNS");
-    //   if (cols_s != NULL) {
-    // 	max_bar_width = std::atoi(cols_s) - 30;
-    //   }
-    // }
-
-    // eigen_assert(bins.size() >= 0);
-    // std::size_t Ntot = (std::size_t)bins.size();
-    // double barscale = 1.0;
-    // if (bins.maxCoeff() > 0) {
-    //   // if all values are zero, the division later by barscale gives a division by zero
-    //   // and a nan/inf mess
-    //   barscale = (double)bins.maxCoeff() / max_bar_width;
-    // }
-    // auto val_to_bar_len = [max_bar_width,barscale](double val) -> unsigned int {
-    //   if (val < 0) {
-    // 	val = 0;
-    //   }
-    //   int l = (int)(val/barscale+0.5);
-    //   if (l >= max_bar_width) {
-    // 	return max_bar_width-1;
-    //   }
-    //   return l;
-    // };
-    // auto fill_str_len = [val_to_bar_len](std::string & s, double valstart, double valend, char c, char cside) {
-    //   unsigned int vs = val_to_bar_len(valstart);
-    //   unsigned int ve = val_to_bar_len(valend);
-    //   eigen_assert(vs < s.size() && ve < s.size());
-    //   for (unsigned int j = vs+1; j < ve; ++j) {
-    // 	s[j] = c;
-    //   }
-    //   s[vs] = cside;
-    //   s[ve] = cside;
-    // };
-    
-    // std::string s;
-    // for (std::size_t k = 0; k < Ntot; ++k) {
-    //   eigen_assert(Tools::is_positive(bins(k)));
-    //   std::string sline(max_bar_width, ' ');
-    //   fill_str_len(sline, 0.0, bins(k) - delta(k), '*', '*');
-    //   fill_str_len(sline, bins(k) - delta(k), bins(k) + delta(k), '-', '|');
-    //   s += Tools::fmts("%-6.4g | %s    %5.1f +- %5.1f\n",
-    // 		       (double)(params.min + k*(params.max-params.min)/Ntot),
-    // 		       sline.c_str(),
-    // 		       (double)bins(k), (double)delta(k)
-    // 	  );
-    // }
-    // if (off_chart > 1e-6) {
-    //   s += Tools::fmts("   ... with another (average) %.4g points off chart.\n", (double)off_chart);
-    // }
-    // return s;
   }
   
 };
@@ -526,31 +438,74 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
 
 /** \brief Combines several histograms (with same parameters) into an averaged histogram
  *
+ * What this class does exactly is explained on the page \ref pageTheoryAveragedHistogram.
+ *
  * The \a HistogramType is expected to be a \ref pageInterfaceHistogram -compliant
  * type. It may, or may not, come with its own error bars. If this is the case, then the
  * error bars are properly combined.
  *
- * \note Check out the source how this works. First call the constructor, or reset(), then
- * call add_histogram() as much as you need, DON'T FORGET TO CALL finalize(), and then you
- * may read out meaningful results in bins, delta, off_chart and
- * num_histograms.
- *  
+ * You should add histograms to average with repeated calls to \ref add_histogram(). Then,
+ * you should call \ref finalize(). Then this object, which inherits \ref
+ * UniformBinsHistogramWithErrorBars, will be properly initialized with average counts and
+ * error bars.
+ *
+ * \warning All the histograms added with \ref add_histogram() MUST have the same params,
+ *          i.e. bin ranges and number of bins! The bin values are added up regardless of
+ *          any parameters, simply because the \ref pageInterfaceHistogram does not expose
+ *          any API for querying the params for a general histogram.
+ *
+ * This class itself complies with the \ref pageInterfaceHistogram.
+ *
+ * \warning Don't forget to call \ref finalize()! The bin counts \ref bins, off-chart
+ *          count \ref off_chart and error bars \ref delta have UNDEFINED VALUES before
+ *          calling \ref finalize().
+ *
+ *
+ * \tparam HistgoramType_ the type of the individual histograms that we are
+ *         averaging. This must comply with the \ref pageInterfaceHistogram
+ *
+ * \tparam RealAvgType the real scalar type used for averaging. You'll most likely want to
+ *         choose \c double here. This can be different from the underlying \ref
+ *         HistogramType's CountType, because that may be an integer type and not suitable
+ *         for holding an average.
  */
 template<typename HistogramType_, typename RealAvgType = double>
 struct AveragedHistogram
   : public UniformBinsHistogramWithErrorBars<typename HistogramType_::Scalar, RealAvgType>
 {
+  /** \brief Type of the individual histograms we are averaging.
+   *
+   * This is the argument given as template parameter, and is expected to compily with
+   * the \ref pageInterfaceHistogram.
+   */
   typedef HistogramType_ HistogramType;
+  //! Shortcut for our base class' type.
   typedef UniformBinsHistogramWithErrorBars<typename HistogramType_::Scalar, RealAvgType> Base_;
 
+  //! The histogram parameters' type. See \ref UniformBinsHistogramWithErrorBars::Params
   typedef typename Base_::Params Params;
+  //! The histogram's X-axis scalar type. See \ref UniformBinsHistogramWithErrorBars::Scalar
   typedef typename Base_::Scalar Scalar;
+  //! The histogram' count type. This is exactly the same as \a RealAvgType.
   typedef typename Base_::CountType CountType;
 
+  //! For the \ref pageInterfaceHistogram. This histogram type does provide error bars.
   static constexpr bool HasErrorBars = true;
 
+  /** \brief The number of histograms averaged.
+   *
+   * This member records how many histograms have been added using \ref add_histogram()
+   * since the object was created or was last \ref reset().
+   */
   int num_histograms;
 
+
+  /** \brief Constructs an AveragedHistogram with the given histogram parameters.
+   *
+   * The \a params are the histogram parameters (see \ref UniformBinsHistogram::Params) of
+   * the individual histograms which will be averaged. Note that all those histograms must
+   * have the same params.
+   */
   AveragedHistogram(const Params& params = Params())
     : Base_(params), num_histograms(0)
   {
@@ -672,7 +627,10 @@ struct histogram_pretty_print_label
     }
   }
 };
-// get labels left of histogram (UniformBinsHistogram)
+// get labels left of histogram (for the family of histograms with 'Params':
+// UniformBinsHistogram, UniformBinsHistogramWithErrorBars etc.)
+//
+// common code for several specializations of histogram_pretty_print_label
 template<typename HistogramType>
 inline void histogram_get_labels_for_hist_params(std::vector<std::string> & labels, const HistogramType& hist)
 {
@@ -689,6 +647,7 @@ inline void histogram_get_labels_for_hist_params(std::vector<std::string> & labe
     labels[k] = ss.str();
   }
 }
+// specialize histogram pretty-print labels using the code above
 template<typename Scalar_, typename CountType_>
 struct histogram_pretty_print_label<UniformBinsHistogram<Scalar_, CountType_> >
 {
@@ -698,6 +657,7 @@ struct histogram_pretty_print_label<UniformBinsHistogram<Scalar_, CountType_> >
     histogram_get_labels_for_hist_params<HistogramType>(labels, hist);
   }
 };
+// specialize histogram pretty-print labels using the code above
 template<typename Scalar_, typename CountType_>
 struct histogram_pretty_print_label<UniformBinsHistogramWithErrorBars<Scalar_, CountType_> >
 {
@@ -707,6 +667,7 @@ struct histogram_pretty_print_label<UniformBinsHistogramWithErrorBars<Scalar_, C
     histogram_get_labels_for_hist_params<HistogramType>(labels, hist);
   }
 };
+// specialize histogram pretty-print labels using the code above
 template<typename BaseHistogramType_, typename RealAvgType_>
 struct histogram_pretty_print_label<AveragedHistogram<BaseHistogramType_, RealAvgType_> >
 {
@@ -786,6 +747,10 @@ private:
   }
 };
 
+//! Internal Helper: format a pretty-print of a histogram.
+//
+// access this with public API using histogram_pretty_print().
+//
 template<typename HistogramType>
 struct histogram_pretty_printer
 {

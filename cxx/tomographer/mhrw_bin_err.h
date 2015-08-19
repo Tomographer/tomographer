@@ -34,6 +34,7 @@ struct helper_samples_size<NumLevels,true> {
 
 /** \brief Group template parameters for BinningAnalysis
  *
+ * \todo DOCUMENTATION......................................
  */
 template<typename ValueType_, int NumTrackValues_ = Eigen::Dynamic, int NumLevels_ = Eigen::Dynamic,
          bool StoreBinSums_ = true, typename CountIntType_ = int>
@@ -75,6 +76,9 @@ struct BinningAnalysisParams
  * \todo OPTIMIZE THE WAY WE STORE STUFF!!! TAKE MORE IDEAS FROM ALPS'
  * simplebinning.h. [Store sum of squares, not its mean, etc.] ********* Working on
  * this. Check that it's fine????
+ *
+ *
+ * \todo MORE DOCUMENTATION......................................
  */
 template<typename Params, typename LoggerType_>
 class BinningAnalysis
