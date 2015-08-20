@@ -559,6 +559,18 @@ BOOST_AUTO_TEST_SUITE_END();
 // -----------------------------------------------------------------------------
 
 
+// test new type of logger, fixed origin
+
+// template<typename BaseLoggerType_>
+// class OriginedLogger : public Tomographer::Logger::LoggerBase<LocalLogger>
+// {
+// public:
+//   OriginedLogger(const char * pretty_constructor_function)
+//     : _constr_name(extract_fn_name(pretty_constructor_function)) {
+//   }
+// };
+
+
 
 
 BOOST_AUTO_TEST_SUITE_END() // test_loggers_basic

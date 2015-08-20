@@ -527,6 +527,53 @@ public:
   inline ENABLE_IF_Fn_CALLABLE_OSTREAM
   log(int level, const char * origin, Fn f);
 
+
+
+  /** \brief emit a log message at the given log level.
+   *
+   * The log level is given statically. You shouldn't need to call this method directly,
+   * it's probably more readable to use \ref debug(), \ref warning(), etc.
+   *
+   * See \ref debug(const char *, const char *, ...) for information about the
+   * function arguments.
+   */
+  template<int Level>
+  PRINTF3_ARGS_SAFE
+  inline void log(const char * origin, const char * fmt, ...);
+  /** \brief emit a log message at the given log level.
+   *
+   * The log level is given statically. You shouldn't need to call this method directly,
+   * it's probably more readable to use \ref debug(), \ref warning(), etc.
+   *
+   * This function is a convenience method which accepts an argument list pointer instead
+   * of \c ... . The format string and argument list are expected to be the same as for
+   * \ref log(const char * origin, const char * fmt, ...) .
+   */
+  template<int Level>
+  inline void log(const char * origin, const char * fmt, va_list ap);
+  /** \brief emit a log message at the given log level.
+   *
+   * The log level is given statically. You shouldn't need to call this method directly,
+   * it's probably more readable to use \ref debug(), \ref warning(), etc.
+   *
+   * Otherwise, see \ref debug(const char*, const std::string&) for information about the
+   * function arguments.
+   */
+  template<int Level>
+  inline void log(const char * origin, const std::string & msg);
+  /** \brief emit a log message at the given log level.
+   *
+   * The log level is given statically. You shouldn't need to call this method directly,
+   * it's probably more readable to use \ref debug(), \ref warning(), etc.
+   *
+   * Otherwise, see \ref debug(const char *, Fn) for information about the function
+   * arguments.
+   */
+  template<int Level, typename Fn>
+  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
+  log(const char * origin, Fn f);
+
+
   /** \brief Check whether the logger is statically disabled for some levels
    *
    * \tparam Level the log level to test for.
@@ -807,14 +854,14 @@ inline void LoggerBase<Derived>::error(const char * origin, const char * fmt, ..
 {
   va_list ap;
   va_start(ap, fmt);
-  tomo_internal::LoggerBaseHelperStatic<Derived,ERROR>::test_and_call_emit_log(this, origin, fmt, ap);
+  derived()->template log<ERROR>(origin, fmt, ap);
   va_end(ap);
 }
 
 template<typename Derived>
 inline void LoggerBase<Derived>::error(const char * origin, const std::string & msg)
 {
-  tomo_internal::LoggerBaseHelperStatic<Derived,ERROR>::test_and_call_emit_log(this, origin, msg);
+  derived()->template log<ERROR>(origin, msg);
 }
 
 template<typename Derived>
@@ -822,7 +869,7 @@ template<typename Fn>
 inline ENABLE_IF_Fn_CALLABLE_OSTREAM
 LoggerBase<Derived>::error(const char * origin, Fn f)
 {
-  tomo_internal::LoggerBaseHelperStatic<Derived,ERROR>::test_and_call_emit_log(this, origin, f);
+  derived()->template log<ERROR>(origin, f);
 }
 
 
@@ -831,14 +878,14 @@ inline void LoggerBase<Derived>::warning(const char * origin, const char * fmt, 
 {
   va_list ap;
   va_start(ap, fmt);
-  tomo_internal::LoggerBaseHelperStatic<Derived,WARNING>::test_and_call_emit_log(this, origin, fmt, ap);
+  derived()->template log<WARNING>(origin, fmt, ap);
   va_end(ap);
 }
 
 template<typename Derived>
 inline void LoggerBase<Derived>::warning(const char * origin, const std::string & msg)
 {
-  tomo_internal::LoggerBaseHelperStatic<Derived,WARNING>::test_and_call_emit_log(this, origin, msg);
+  derived()->template log<WARNING>(origin, msg);
 }
 
 template<typename Derived>
@@ -846,7 +893,7 @@ template<typename Fn>
 inline ENABLE_IF_Fn_CALLABLE_OSTREAM
 LoggerBase<Derived>::warning(const char * origin, Fn f)
 {
-  tomo_internal::LoggerBaseHelperStatic<Derived,WARNING>::test_and_call_emit_log(this, origin, f);
+  derived()->template log<WARNING>(origin, f);
 }
 
 template<typename Derived>
@@ -854,14 +901,14 @@ inline void LoggerBase<Derived>::info(const char * origin, const char * fmt, ...
 {
   va_list ap;
   va_start(ap, fmt);
-  tomo_internal::LoggerBaseHelperStatic<Derived,INFO>::test_and_call_emit_log(this, origin, fmt, ap);
+  derived()->template log<INFO>(origin, fmt, ap);
   va_end(ap);
 }
 
 template<typename Derived>
 inline void LoggerBase<Derived>::info(const char * origin, const std::string & msg)
 {
-  tomo_internal::LoggerBaseHelperStatic<Derived,INFO>::test_and_call_emit_log(this, origin, msg);
+  derived()->template log<INFO>(origin, msg);
 }
 
 template<typename Derived>
@@ -869,7 +916,7 @@ template<typename Fn>
 inline ENABLE_IF_Fn_CALLABLE_OSTREAM
 LoggerBase<Derived>::info(const char * origin, Fn f)
 {
-  tomo_internal::LoggerBaseHelperStatic<Derived,INFO>::test_and_call_emit_log(this, origin, f);
+  derived()->template log<INFO>(origin, f);
 }
 
 template<typename Derived>
@@ -877,14 +924,14 @@ inline void LoggerBase<Derived>::debug(const char * origin, const char * fmt, ..
 {
   va_list ap;
   va_start(ap, fmt);
-  tomo_internal::LoggerBaseHelperStatic<Derived,DEBUG>::test_and_call_emit_log(this, origin, fmt, ap);
+  derived()->template log<DEBUG>(origin, fmt, ap);
   va_end(ap);
 }
 
 template<typename Derived>
 inline void LoggerBase<Derived>::debug(const char * origin, const std::string & msg)
 {
-  tomo_internal::LoggerBaseHelperStatic<Derived,DEBUG>::test_and_call_emit_log(this, origin, msg);
+  derived()->template log<DEBUG>(origin, msg);
 }
 
 template<typename Derived>
@@ -892,7 +939,7 @@ template<typename Fn>
 inline ENABLE_IF_Fn_CALLABLE_OSTREAM
 LoggerBase<Derived>::debug(const char * origin, Fn f)
 {
-  tomo_internal::LoggerBaseHelperStatic<Derived,DEBUG>::test_and_call_emit_log(this, origin, f);
+  derived()->template log<DEBUG>(origin, f);
 }
 
 template<typename Derived>
@@ -900,14 +947,14 @@ inline void LoggerBase<Derived>::longdebug(const char * origin, const char * fmt
 {
   va_list ap;
   va_start(ap, fmt);
-  tomo_internal::LoggerBaseHelperStatic<Derived,LONGDEBUG>::test_and_call_emit_log(this, origin, fmt, ap);
+  derived()->template log<LONGDEBUG>(origin, fmt, ap);
   va_end(ap);
 }
 
 template<typename Derived>
 inline void LoggerBase<Derived>::longdebug(const char * origin, const std::string & msg)
 {
-  tomo_internal::LoggerBaseHelperStatic<Derived,LONGDEBUG>::test_and_call_emit_log(this, origin, msg);
+  derived()->template log<LONGDEBUG>(origin, msg);
 }
 
 template<typename Derived>
@@ -915,7 +962,7 @@ template<typename Fn>
 inline ENABLE_IF_Fn_CALLABLE_OSTREAM
 LoggerBase<Derived>::longdebug(const char * origin, Fn f)
 {
-  tomo_internal::LoggerBaseHelperStatic<Derived,LONGDEBUG>::test_and_call_emit_log(this, origin, f);
+  derived()->template log<LONGDEBUG>(origin, f);
 }
 
 
@@ -940,6 +987,39 @@ inline ENABLE_IF_Fn_CALLABLE_OSTREAM
 LoggerBase<Derived>::log(int level, const char * origin, Fn f)
 {
   tomo_internal::LoggerBaseHelperDynamic<Derived>::test_and_call_emit_log(this, level, origin, f);
+}
+
+
+template<typename Derived>
+template<int Level>
+inline void LoggerBase<Derived>::log(const char * origin, const char * fmt, ...)
+{
+  va_list ap;
+  va_start(ap, fmt);
+  tomo_internal::LoggerBaseHelperStatic<Derived, Level>::test_and_call_emit_log(this, origin, fmt, ap);
+  va_end(ap);
+}
+
+template<typename Derived>
+template<int Level>
+inline void LoggerBase<Derived>::log(const char * origin, const char * fmt, va_list ap)
+{
+  tomo_internal::LoggerBaseHelperStatic<Derived, Level>::test_and_call_emit_log(this, origin, fmt, ap);
+}
+
+template<typename Derived>
+template<int Level>
+inline void LoggerBase<Derived>::log(const char * origin, const std::string & msg)
+{
+  tomo_internal::LoggerBaseHelperStatic<Derived, Level>::test_and_call_emit_log(this, origin, msg);
+}
+
+template<typename Derived>
+template<int Level, typename Fn>
+inline ENABLE_IF_Fn_CALLABLE_OSTREAM
+LoggerBase<Derived>::log(const char * origin, Fn f)
+{
+  tomo_internal::LoggerBaseHelperStatic<Derived, Level>::test_and_call_emit_log(this, origin, f);
 }
 
 

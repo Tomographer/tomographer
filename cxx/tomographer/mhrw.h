@@ -266,7 +266,7 @@ namespace tomo_internal {
  * pageInterfaceMHRWStatsCollector.
  *
  */
-template<typename Rng_, typename MHWalker_, typename MHRWStatsCollector_, typename Log_,
+template<typename Rng_, typename MHWalker_, typename MHRWStatsCollector_, typename LoggerType_,
          typename CountIntType_ = unsigned int>
 class MHRandomWalk
 {
@@ -278,7 +278,7 @@ public:
   //! The stats collector type (see \ref pageInterfaceMHRWStatsCollector)
   typedef MHRWStatsCollector_ MHRWStatsCollector;
   //! The logger type (see \ref pageLoggers)
-  typedef Log_ Log;
+  typedef LoggerType_ LoggerType;
   //! The type used for counting numbers of iterations (see, e.g. \ref n_sweep())
   typedef CountIntType_ CountIntType;
 
@@ -288,8 +288,13 @@ public:
   typedef typename MHWalker::RealScalar RealScalar;
 
   //! The type of the Metropolis-Hastings function value. (See class documentation)
+#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
   typedef typename tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,MHWalker::UseFnSyntaxType>::FnValueType
-          FnValueType;
+      FnValueType;
+#else
+  typedef _FnValueType FnValueType;
+#endif
+
   enum {
     //! How to calculate the Metropolis-Hastings jump probability ratio (see class documentation)
     UseFnSyntaxType = MHWalker::UseFnSyntaxType
@@ -304,7 +309,7 @@ private:
   Rng & _rng;
   MHWalker & _mhwalker;
   MHRWStatsCollector & _stats;
-  Log & _log;
+  LoggerType & _logger;
 
   //! Current point
   PointType curpt;
@@ -328,16 +333,16 @@ public:
   //! Simple constructor, initializes the given fields
   MHRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run, RealScalar step_size,
 	       MHWalker & mhwalker, MHRWStatsCollector & stats,
-               Rng & rng, Log & log_)
+               Rng & rng, LoggerType & logger_)
     : _n_sweep(n_sweep), _n_therm(n_therm), _n_run(n_run),
       _step_size(step_size),
       _rng(rng),
       _mhwalker(mhwalker),
       _stats(stats),
-      _log(log_),
+      _logger(logger_),
       curpt()
   {
-    _log.debug("MHRandomWalk", "constructor(). n_sweep=%lu, n_therm=%lu, n_run=%lu, step_size=%g",
+    _logger.debug("MHRandomWalk", "constructor(). n_sweep=%lu, n_therm=%lu, n_run=%lu, step_size=%g",
 	       (unsigned long)n_sweep, (unsigned long)n_therm, (unsigned long)n_run, (double)step_size);
   }
 
@@ -410,7 +415,7 @@ public:
   {
     curpt = pt;
     curptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, curpt);
-    _log.longdebug("MHRandomWalk",
+    _logger.longdebug("MHRandomWalk",
                    streamstr("set_curpt(): set internal state. Value = "<<curptval<<"; Point =\n"<<pt<<"\n"));
                    
   }
@@ -452,7 +457,7 @@ public:
 
     _stats.raw_move(k, is_thermalizing, is_live_iter, accept, a, newpt, newptval, curpt, curptval, *this);
 
-    _log.longdebug("MHRandomWalk",
+    _logger.longdebug("MHRandomWalk",
                    "%s%3lu: %s a=%-7.2g, newptval=%5.4g [llh=%.4g], curptval=%5.4g [llh=%.4g]   accept_ratio=%s",
                    (is_thermalizing?"T":"#"),
                    (unsigned long)k, accept?"AC":"RJ", (double)a, (double)newptval, -2.0*newptval,
@@ -669,7 +674,7 @@ public:
  *
  */
 template<typename ValueCalculator_,
-	 typename Log = Logger::VacuumLogger,
+	 typename LoggerType = Logger::VacuumLogger,
 	 typename HistogramType_ = UniformBinsHistogram<typename ValueCalculator_::ValueType>
 	 >
 class ValueHistogramMHRWStatsCollector
@@ -703,16 +708,16 @@ private:
    */
   ValueCalculator _vcalc;
 
-  Log & _log;
+  LoggerType & _logger;
 
 public:
   //! Simple constructor, initializes with the given values
   ValueHistogramMHRWStatsCollector(HistogramParams histogram_params,
 				   const ValueCalculator & vcalc,
-				   Log & logger)
+				   LoggerType & logger)
     : _histogram(histogram_params),
       _vcalc(vcalc),
-      _log(logger)
+      _logger(logger)
   {
   }
 
@@ -753,9 +758,9 @@ public:
   inline void done()
   {
     if (PrintHistogram) {
-      if (_log.enabled_for(Logger::LONGDEBUG)) {
-	// _log.longdebug("ValueHistogramMHRWStatsCollector", "done()");
-	_log.longdebug("ValueHistogramMHRWStatsCollector",
+      if (_logger.enabled_for(Logger::LONGDEBUG)) {
+	// _logger.longdebug("ValueHistogramMHRWStatsCollector", "done()");
+	_logger.longdebug("ValueHistogramMHRWStatsCollector",
 		       "Done walking & collecting stats. Here's the histogram:\n"
 		       + _histogram.pretty_print());
       }
@@ -768,7 +773,7 @@ public:
                 double /*a*/, const PointType & /*newpt*/, LLHValueType /*newptval*/,
                 const PointType & /*curpt*/, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
-    _log.longdebug("ValueHistogramMHRWStatsCollector", "raw_move(): k=%lu", (unsigned long)k);
+    _logger.longdebug("ValueHistogramMHRWStatsCollector", "raw_move(): k=%lu", (unsigned long)k);
   }
 
   //! Part of the \ref pageInterfaceMHRWStatsCollector. Records the sample in the histogram.
@@ -778,12 +783,12 @@ public:
   {
     ValueType val = _vcalc.getValue(curpt);
 
-    _log.longdebug("ValueHistogramMHRWStatsCollector", "in process_sample(): k=%lu, n=%lu, val=%.4g",
+    _logger.longdebug("ValueHistogramMHRWStatsCollector", "in process_sample(): k=%lu, n=%lu, val=%.4g",
                    (unsigned long)k, (unsigned long)n, val);
 
     return _histogram.record(val);
 
-    //_log.longdebug("ValueHistogramMHRWStatsCollector", "process_sample() finished");
+    //_logger.longdebug("ValueHistogramMHRWStatsCollector", "process_sample() finished");
   }
  
 
@@ -1203,12 +1208,12 @@ std::string histogram_short_bar_fmt(const HistogramType & histogram, const std::
  *
  */
 template<typename ValueCalculator_,
-	 typename Log_,
+	 typename LoggerType_,
 	 typename HistogramType_
 	 >
-struct MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator_, Log_, HistogramType_> >
+struct MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator_, LoggerType_, HistogramType_> >
 {
-  typedef ValueHistogramMHRWStatsCollector<ValueCalculator_, Log_, HistogramType_> MHRWStatsCollector;
+  typedef ValueHistogramMHRWStatsCollector<ValueCalculator_, LoggerType_, HistogramType_> MHRWStatsCollector;
   
   static constexpr bool CanProvideStatus = true;
 
