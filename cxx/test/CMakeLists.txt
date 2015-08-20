@@ -25,7 +25,7 @@ add_definitions(-DTOMOGRAPHER_TEST_PATTERNS_DIR="${TOMOGRAPHER_TEST_PATTERNS_DIR
 set(tests_SRCS
   # list of sources containing test cases:
   test_tomographer.cxx
-  testsphcoords.cxx
+  test_sphcoords.cxx
   test_misc.cxx
   test_loggers.cxx
   test_lib_basics.cxx
@@ -39,7 +39,9 @@ set(tests_SRCS
 
 
 # the test binary executable
-add_executable(test_tomographer ${tests_SRCS})
+add_executable(test_tomographer  EXCLUDE_FROM_ALL
+  ${tests_SRCS}
+  )
 
 # compile & link with OpenMP
 SetOpenMPTarget(test_tomographer)

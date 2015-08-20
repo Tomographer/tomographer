@@ -38,19 +38,16 @@ A recent C++ compiler is required as some C++11 features and elements of its
 standard library are used. Also, make sure it supports OpenMP or you won't
 benefit from parallelization.
 
-[Successful setup:
-    - g++ 4.6.3
-    - CMake 2.8.7
-    - Boost 1.48
-    - Eigen 3.2.1
-    - MatIO 1.5.2]
-
 Tested on Linux/Ubuntu and Mac OS X. Should theoretically (*big flashing red
 warning light*) also work on Windows.
 
 
 Download
 --------
+
+There are currently no binary releases available, you'll have to compile from
+source. Don't worry, that's not complicated. If you haven't already done so,
+install all the usual development tools (gcc/g++/make/etc.)
 
 There will soon be official source code releases (TODO!!). For now, you need
 `git` and you should clone the repository (FIXME!!). Note that for the build
@@ -61,14 +58,15 @@ appropriately.
 Installation
 ------------
 
-The installation process is done using CMake. (You'll need CMake >= 2.8.5.)
-Download an official release of Tomographer, unpack it, and enter the unpacked
-directory. Then, issue the commands:
+The configuration, compilation and installation process is done using
+CMake. (You'll need CMake >= 2.8.5.)  Download an official release of
+Tomographer, unpack it, and enter the unpacked directory. Then, issue the
+commands:
 
     tomographer-1.0> mkdir build
     tomographer-1.0> cd build
     tomographer-1.0/build> cmake .. <ADDITIONAL CMAKE OPTIONS HERE>
-    tomographer-1.0/build> make -j4
+    tomographer-1.0/build> make
     tomographer-1.0/build> make install/strip
 
 And you'll have the `tomorun` installed on your system. You can specify some
@@ -148,6 +146,31 @@ directory `doc/` and type:
     tomographer-1.0/doc/> doxygen Doxyfile
 
 This will create API documentation in both HTML and LaTeX format.
+
+
+Test Suite (for developers)
+---------------------------
+
+There is a test suite which checks that the tomographer C++ framework works
+correctly, and that no bugs or regressions are being introduced as the code is
+being changed and maintained.
+
+The test suite can be build by issuing the command
+
+    tomographer-1.0/build> make -j4
+
+(Replace `4` by the number of CPUs available on your system.)
+
+Run the test suite with the command
+
+    tomographer-1.0/build> ./cxx/test/test_tomographer
+
+As the test suite uses the [Boost Unit Test Framework][boost_test], this program
+accepts [a set of options][boost_test_options] to tune verbosity, which tests to
+run, etc.
+
+[boost_test]: http://www.boost.org/doc/libs/1_59_0/libs/test/doc/html/index.html
+[boost_test_options]: http://www.boost.org/doc/libs/1_59_0/libs/test/doc/html/boost_test/runtime_config/summary.html
 
 
 Authors, Copyright, License
