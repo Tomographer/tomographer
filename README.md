@@ -1,8 +1,8 @@
-================================================================================
+
                             THE TOMOGRAPHER PROJECT
 ================================================================================
 
-A toolbox for error analysis in quantum tomography.
+---A toolbox for error analysis in quantum tomography.
 
 
 Overview
@@ -10,14 +10,15 @@ Overview
 
 This project comprises two parts:
 
-     * The `tomorun` program -- you probably want this
+ * The `tomorun` program -- you probably want this
 
-     * The generic, C++ framework -- flexible, but you'll need to invest time.
+ * The generic, C++ framework -- flexible, but you'll need to invest time.
 
 The `tomorun` executable produces a histogram of a figure of merit under the
 distribution relevant for constructing confidence regions using the method
-described in [Christandl & Renner, PRL (2012), arXiv:1108.5329]. The measurement
-data are specified as independent POVM outcomes.
+described in [Christandl & Renner, PRL (2012),
+arXiv:1108.5329](http://arxiv.org/abs/1108.5329). The measurement data are
+specified as independent POVM outcomes.
 
 The C++ framework is a set of abstract and generic classes which you can combine
 in your preferred way to implement this random walk for even more general
@@ -28,11 +29,12 @@ Prerequisites
 -------------
 
 You'll need:
-    - a recent C++ compiler (g++ >= 4.6)
-    - CMake >= 2.8.5 http://www.cmake.org/
-    - Boost libraries, http://www.boost.org/
-    - Eigen3 library >= 3.2, http://eigen.tuxfamily.org/
-    - MatIO library, https://sourceforge.net/projects/matio/
+
+  - a recent C++ compiler (g++ >= 4.6)
+  - [CMake >= 2.8.5](http://www.cmake.org/)
+  - [Boost libraries](http://www.boost.org/)
+  - [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/)
+  - [MatIO library](https://sourceforge.net/projects/matio/)
 
 A recent C++ compiler is required as some C++11 features and elements of its
 standard library are used. Also, make sure it supports OpenMP or you won't
@@ -47,7 +49,7 @@ Download
 
 There are currently no binary releases available, you'll have to compile from
 source. Don't worry, that's not complicated. If you haven't already done so,
-install all the usual development tools (gcc/g++/make/etc.)
+install all the usual development tools (`gcc`/`g++`/`make`/etc.)
 
 There will soon be official source code releases (TODO!!). For now, you need
 `git` and you should clone the repository (FIXME!!). Note that for the build
@@ -139,13 +141,14 @@ An example config file would be:
 API Documentation
 -----------------
 
-You can build the API documentation using Doxygen >= 1.8
-(http://www.doxygen.org/). You'll also need `dot` (`graphviz`). Enter the
-directory `doc/` and type:
+You can build the API documentation using [Doxygen >= 1.8][doxygen]. You'll also need
+`dot` (`graphviz`). Enter the directory `doc/` and type:
 
     tomographer-1.0/doc/> doxygen Doxyfile
 
 This will create API documentation in both HTML and LaTeX format.
+
+[doxygen]: http://www.doxygen.org/
 
 
 Test Suite (for developers)
