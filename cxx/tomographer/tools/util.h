@@ -265,6 +265,23 @@ inline constexpr bool is_power_of_two(int N)
 }
 
 
+
+
+
+// -----------------------------------------------------------------------------
+
+#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
+#define TOMOGRAPHER_ENABLED_IF(...)					\
+  template<bool dummy_enabled_if = true,				\
+	   typename std::enable_if<dummy_enabled_if && (__VA_ARGS__), bool>::type \
+	                                                 dummy_enabled_if_2 = true>
+#define TOMOGRAPHER_ENABLED_IF_TMPL(...)				\
+  bool _dummyUIHFKDLNJD_enabled_if = true,				\
+  typename std::enable_if<_dummyUIHFKDLNJD_enabled_if && (__VA_ARGS__), bool>::type \
+                                                 _dummyUIHFKDLNJD_enabled_if_2 = true
+#endif
+
+
 } // namespace Tools
 } // namespace Tomographer
 
