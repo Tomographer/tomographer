@@ -2,6 +2,7 @@
 #include <iostream>
 #include <iomanip>
 #include <stdexcept>
+#include <tuple>
 
 // we want `eigen_assert()` to raise an `eigen_assert_exception` here
 #include <tomographer/tools/eigen_assert_exception.h>
@@ -17,6 +18,466 @@
 // tolerance, in *PERCENT*
 const double tol_percent = 1e-12;
 const double tol = tol_percent * 0.01;
+
+
+// ----------------------- NEW EXPERIMENT --------------------------
+
+
+// test new type of logger, fixed origin
+
+#define TOMO_FUNCTION __PRETTY_FUNCTION__
+
+#define TOMO_ORIGIN extractTomoOrigin(TOMO_FUNCTION)
+
+
+class conststr
+{
+public:
+  const char* _p;
+  std::size_t _sz;
+public:
+  template<std::size_t N>
+  constexpr conststr(const char(&a)[N]) : _p(a), _sz(N - 1) {}
+  constexpr conststr(const char *a, std::size_t n) : _p(a), _sz(n) {}
+ 
+  inline constexpr char operator[](std::size_t n) const
+  {
+    return n < _sz ? _p[n] : throw std::out_of_range("");
+  }
+  inline constexpr std::size_t size() const { return _sz; }
+
+  inline constexpr bool is_in_range(std::size_t n) const
+  {
+    return n < _sz ? true : false;
+  }
+  inline constexpr bool check_range(std::size_t n, bool answer = true) const
+  {
+    return is_in_range(n) ? answer : throw std::out_of_range("");
+  }
+
+  inline constexpr std::size_t clamp_to_range(const std::size_t pos)
+  {
+    return pos >= _sz ? _sz-1 : pos;
+  }
+
+  inline constexpr bool startswith(const conststr& s, std::size_t StartOffset = 0, std::size_t S_I = 0) const {
+    return ((S_I >= s.size())
+	    ? true
+	    : (StartOffset+S_I < size() && s[S_I] == operator[](StartOffset+S_I)
+	       ? startswith(s, StartOffset, S_I+1)
+	       : false)
+	);
+  }
+
+  inline constexpr bool operator==(const conststr& other) {
+    return startswith(other) && other.size() == size();
+  }
+
+
+  constexpr conststr substr(std::size_t pos, std::size_t count = std::string::npos) const {
+    return conststr(_p+pos, (pos > size() || count > size() || pos+count>size()) ? (size()-pos) : count);
+  }
+  constexpr conststr substr_e(std::size_t pos, std::size_t end = std::string::npos) const {
+    return conststr(_p+pos, (end>size()) ? (size()-pos) : end-pos);
+  }
+
+  constexpr std::size_t find(const conststr& s, std::size_t pos = 0,
+			     std::size_t not_found = std::string::npos) const
+  {
+    return (!is_in_range(pos)
+	    ? ( not_found )
+	    : ( startswith(s, pos)
+		? pos
+		: (pos <= size()-s.size()
+		   ? find(s, pos+1, not_found)
+		   : not_found) ));
+  }
+
+  inline constexpr std::size_t rfind(const conststr& s, std::size_t pos = std::string::npos,
+				     std::size_t not_found = std::string::npos) const
+  {
+    return ((s.size() > size())
+	    ? ( not_found )
+	    : ((pos > size()-s.size())
+	       ? rfind(s, size()-s.size(), not_found)
+	       : ( startswith(s, pos)
+		   ? pos
+		   : ((pos > s.size())
+		      ? rfind(s, pos-1, not_found)
+		      : not_found) )));
+  }
+
+  inline std::string to_string() const { return std::string(_p, _sz); }
+};
+
+
+// test conststr
+#define TOMO_STATIC_ASSERT_EXPR(...)				\
+  static_assert(__VA_ARGS__, #__VA_ARGS__)
+
+TOMO_STATIC_ASSERT_EXPR(conststr("abcdef") == conststr("abcdef"));
+TOMO_STATIC_ASSERT_EXPR(!(conststr("ksfldnfa") == conststr("abcdef")));
+TOMO_STATIC_ASSERT_EXPR(!(conststr("abcdef") == conststr("abcde")));
+TOMO_STATIC_ASSERT_EXPR(!(conststr("abcde") == conststr("abcdef")));
+TOMO_STATIC_ASSERT_EXPR(conststr("fdknslf")[0] == 'f');
+TOMO_STATIC_ASSERT_EXPR(conststr("fdknslf")[1] == 'd');
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789")[8] == '8');
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789")[9] == '9');
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").is_in_range(0u));
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").is_in_range(1u));
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").is_in_range(9u));
+TOMO_STATIC_ASSERT_EXPR(!conststr("0123456789").is_in_range(10u));
+TOMO_STATIC_ASSERT_EXPR(!conststr("0123456789").is_in_range(std::string::npos));
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").clamp_to_range(0) == 0);
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").clamp_to_range(1) == 1);
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").clamp_to_range(13) == 9);
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").startswith(conststr("01234")));
+TOMO_STATIC_ASSERT_EXPR(!conststr("0123456789").startswith(conststr("abcdef")));
+TOMO_STATIC_ASSERT_EXPR(!conststr("012").startswith(conststr("0123456789")));
+TOMO_STATIC_ASSERT_EXPR(conststr("xyz0123456789").startswith(conststr("01234"), 3));
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").startswith(conststr("9"),9));
+TOMO_STATIC_ASSERT_EXPR(conststr("xyz0123456789").startswith(conststr("X1234"), 3, 1));
+// substr(start, count) or substr_e(start, end)
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").substr(0,3) == conststr("012"));
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").substr(2,3) == conststr("234"));
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").substr_e(2,5) == conststr("234"));
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").substr(2) == conststr("23456789"));
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").substr(2, 8) == conststr("23456789"));
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").substr(2, 10) == conststr("23456789"));
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").substr(2, std::string::npos) == conststr("23456789"));
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").substr_e(2, 10) == conststr("23456789"));
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").substr_e(2, std::string::npos) == conststr("23456789"));
+// find(s,pos,not_found)
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").find("234") == 2);
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").find("ab") == std::string::npos);
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").find("ab",2,999u) == 999u);
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").find("0123xyz",0) == std::string::npos);
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").find("9",3) == 9);
+// rfind(s,pos,not_found)
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").rfind("9") == 9);
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").rfind("4") == 4);
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").rfind("4",4) == 4);
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").rfind("4",std::string::npos) == 4);
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").rfind("4",3) == std::string::npos);
+TOMO_STATIC_ASSERT_EXPR(conststr("0123456789").rfind("4",3,999u) == 999u);
+
+// BOOST_AUTO_TEST_CASE(test_conststr)
+// {
+//   conststr s = conststr("0123456789");
+//   BOOST_MESSAGE(std::to_string(conststr("0123456789").rfind(conststr("9"),10)));
+//   BOOST_MESSAGE(s._p + std::string(" len=") + std::to_string(s._sz));
+//   BOOST_MESSAGE(s.to_string());
+// }
+
+// -----------------------------------------------
+
+
+// logic taken from KLatexFormula/klftools: klfdefs.cpp / klfShortFuncSignature()
+struct extractFuncName_helper {
+  struct extracted {
+    const std::size_t decl_pos;
+    const conststr extr;
+    constexpr extracted(std::size_t dp, const conststr& s) : decl_pos(dp), extr(s) { }
+  };
+  static constexpr conststr alltofirstparen(const conststr& s)
+  {
+    return s.substr(0, s.find(conststr("("), 0, s.size()));
+  }
+  static constexpr std::size_t declpos_from_found_spc(std::size_t found_pos)
+  {
+    return found_pos == std::string::npos ? 0 : found_pos + 1;
+  }
+  static constexpr std::size_t pos_decl(const conststr& s)
+  {
+    return ((s.size() > 2)
+	    ? declpos_from_found_spc(s.rfind(conststr(" "), std::string::npos))
+	    : 0);
+  }
+  static constexpr extracted allfromfirstspace(const conststr& s)
+  {
+    return extracted(pos_decl(s),
+		     s.substr_e(pos_decl(s),
+				s.size()));
+  }
+  static constexpr extracted do_extract(const conststr& funcname)
+  {
+    return allfromfirstspace(alltofirstparen(funcname));
+  }
+  static constexpr conststr extract_choose(const extracted& do_extracted,
+					   const conststr& funcname)
+  {
+    return (do_extracted.extr.substr(0,8) == conststr("operator")
+	    ? funcname.substr(do_extracted.decl_pos)
+	    : do_extracted.extr);
+  }
+  static constexpr conststr extract(const conststr& funcname)
+  {
+    return extract_choose(do_extract(funcname), funcname);
+  }
+};
+constexpr inline conststr extractFuncName(const conststr & funcname)
+{
+  return extractFuncName_helper::extract(funcname);
+}
+
+
+TOMO_STATIC_ASSERT_EXPR(extractFuncName("void class::subclass::subclass(int)") == "class::subclass::subclass");
+TOMO_STATIC_ASSERT_EXPR(extractFuncName("conststr ns::subclass::method()") == "ns::subclass::method");
+TOMO_STATIC_ASSERT_EXPR(extractFuncName("int ns::subclass::method(const int&, void, conststr *)") == "ns::subclass::method");
+TOMO_STATIC_ASSERT_EXPR(extractFuncName("int ns::subclass::operator==(int)") == "ns::subclass::operator==");
+TOMO_STATIC_ASSERT_EXPR(extractFuncName("int operator==(const ns::subclass&, char)") == "operator==(const ns::subclass&, char)");
+
+// BOOST_AUTO_TEST_CASE(a)
+// {
+//   BOOST_MESSAGE( extractFuncName("int ns::subclass::operator==(char)")...........);
+// }
+
+
+
+struct OriginedFilterOriginSpec {
+  const conststr origin_prefix;
+  const conststr glue;
+
+  constexpr OriginedFilterOriginSpec(const conststr& s, const conststr& gl)
+    : origin_prefix(s), glue(gl) { }
+};
+
+struct extractTomoOrigin_helper {
+  static inline constexpr OriginedFilterOriginSpec step2(const conststr fn, std::size_t last_doublecolons,
+							 std::size_t after_prelast_doublecolons)
+  {
+    return ( fn.substr_e(after_prelast_doublecolons, last_doublecolons) == fn.substr(last_doublecolons+2)
+	     // fn is a constructor, so keep class name and use "::" as glue
+	     ? OriginedFilterOriginSpec(fn.substr(last_doublecolons+2), "::")
+	     // looks like a method name. Strip off the class name. Also use an internal
+	     // glue to indicate a logical level.
+	     : OriginedFilterOriginSpec(fn.substr(last_doublecolons+2), "/")
+	);
+  }
+  static inline constexpr std::size_t afterprelast_doublecolons(std::size_t prelast_doublecolons_found)
+  {
+    return (prelast_doublecolons_found == std::string::npos) ? 0 : prelast_doublecolons_found+2;
+  }
+  static inline constexpr OriginedFilterOriginSpec step1(const conststr fn, std::size_t last_doublecolons)
+  {
+    return last_doublecolons == std::string::npos || last_doublecolons == 0
+      ? OriginedFilterOriginSpec(fn, "/") // looks like simple function name with no parent scope
+      : step2(fn, last_doublecolons, afterprelast_doublecolons(fn.rfind("::", last_doublecolons-1)));
+  }
+
+  static inline constexpr OriginedFilterOriginSpec extract_from_func_name(const conststr fn)
+  {
+    return step1(fn, fn.rfind("::"));
+  }
+};  
+
+constexpr const OriginedFilterOriginSpec extractTomoOrigin(const conststr fn)
+{
+  return extractTomoOrigin_helper::extract_from_func_name(extractFuncName(fn));
+}
+
+/*
+constexpr OriginedFilterOriginSpec extractTomoOrigin(const char * funcname)
+{
+  std::string prefix = extractFuncName(origin_fn_name);
+  // determine if it is a constructor.
+  std::size_t last_doublecolons = prefix.rfind("::");
+  if (last_doublecolons == std::string::npos || last_doublecolons == 0) {
+    // looks like a simple function name with no parent scope.
+    return std::pair<std::string,std::string>(prefix, "/");
+  }
+
+  std::size_t afterprelast_doublecolons = prefix.rfind("::", last_doublecolons-1);
+  if (afterprelast_doublecolons == std::string::npos) {
+    afterprelast_doublecolons = 0;
+  } else {
+    afterprelast_doublecolons += 2; // point on the class name
+  }
+  if (prefix.substr(afterprelast_doublecolons, last_doublecolons - afterprelast_doublecolons)
+      == prefix.substr(last_doublecolons+2)) {
+    // prefix is a constructor, so keep class name and "::" glue.
+    return std::pair<std::string,std::string>(prefix.substr(0, last_doublecolons), "::");
+  }
+
+  // a function name. Strip off the class name if we're nested. Also use an internal
+  // glue to indicate a logical level.
+  std::string baseprefix =
+    tomo_internal::OriginedLoggerGetPrefix<BaseLoggerType>::prefix(_baselogger);
+  std::string newprefix =
+    prefix.substr(Tomographer::Logger::tomo_internal::matched_length(baseprefix, prefix));
+  if (newprefix.substr(0,2) == "::") {
+    newprefix = newprefix.substr(2);
+  }
+  return std::pair<std::string,std::string>(newprefix+"()", "/");
+}
+*/
+
+template<typename BaseLoggerType_>  class OriginedLogger;
+
+namespace Tomographer { namespace Logger {
+  // Traits for OriginedLogger
+  template<typename BaseLoggerType_>
+  struct LoggerTraits<OriginedLogger<BaseLoggerType_> > : LoggerTraits<BaseLoggerType_>
+  {
+    enum {
+      //! Logger will delegate calls for current level() to base logger
+      HasOwnGetLevel = 1
+    };
+  };
+} } // namespaces
+
+/*
+namespace tomo_internal {
+template<typename LoggerType>
+struct OriginedLoggerGetPrefix {
+  static inline std::string prefix(LoggerType & ) { return std::string(); }
+};
+template<typename BaseLoggerType>
+struct OriginedLoggerGetPrefix<OriginedLogger<BaseLoggerType> > {
+  typedef OriginedLogger<BaseLoggerType> LoggerType;
+  static inline std::string prefix(LoggerType & logger) {
+    return OriginedLoggerGetPrefix<BaseLoggerType>::prefix(logger.baselogger())
+      + logger.origin_prefix() + logger.glue();
+  }
+};
+} // namespace tomo_internal
+*/
+
+template<typename BaseLoggerType_>
+class OriginedLogger : public Tomographer::Logger::LoggerBase<OriginedLogger<BaseLoggerType_> >
+{
+public:
+  typedef BaseLoggerType_ BaseLoggerType;
+
+private:
+  typedef Tomographer::Logger::LoggerBase<OriginedLogger> Base_;
+
+  const std::string _origin_prefix;
+  const std::string _glue;
+
+  BaseLoggerType & _baselogger;
+
+public:
+  OriginedLogger(const std::string & origin_fn_name, BaseLoggerType & logger_)
+    : _origin_prefix(origin_fn_name), _glue("::"), _baselogger(logger_)
+  {
+  }
+  OriginedLogger(const std::string & origin_prefix, const std::string & glue, BaseLoggerType & logger_)
+    : _origin_prefix(origin_prefix), _glue(glue), _baselogger(logger_)
+  {
+  }
+  OriginedLogger(const OriginedFilterOriginSpec & spec, BaseLoggerType & logger_)
+    : _origin_prefix(spec.origin_prefix.to_string()), _glue(spec.glue.to_string()), _baselogger(logger_)
+  {
+  }
+
+  inline std::string origin_prefix() const { return _origin_prefix; }
+  inline std::string glue() const { return _glue; }
+
+  inline BaseLoggerType & baselogger() { return _baselogger; };
+
+  inline OriginedLogger<OriginedLogger<BaseLoggerType> > sublogger(const std::string & new_prefix)
+  {
+    return OriginedLogger<OriginedLogger<BaseLoggerType> >(new_prefix, *this);
+  }
+  inline OriginedLogger<OriginedLogger<BaseLoggerType> > sublogger(const std::string & new_prefix,
+								   const std::string & new_glue)
+  {
+    return OriginedLogger<OriginedLogger<BaseLoggerType> >(new_prefix, new_glue, *this);
+  }
+
+  template<typename... Args>
+  inline void longdebug(Args... a) { log<Tomographer::Logger::LONGDEBUG>(a...); }
+  template<typename... Args>
+  inline void debug(Args... a) { log<Tomographer::Logger::DEBUG>(a...); }
+  template<typename... Args>
+  inline void info(Args... a) { log<Tomographer::Logger::INFO>(a...); }
+  template<typename... Args>
+  inline void warning(Args... a) { log<Tomographer::Logger::WARNING>(a...); }
+  template<typename... Args>
+  inline void error(Args... a) { log<Tomographer::Logger::ERROR>(a...); }
+
+  template<int Level, typename... Args>
+  inline void log(Args... args)
+  {
+    Base_::template log<Level>("", args...);
+  }
+
+
+  // relay calls to base logger
+
+  inline std::string get_origin(const char * origin) const
+  {
+    return ( origin == NULL || origin[0] == 0
+	     ? _origin_prefix
+	     : _origin_prefix + _glue + origin );
+  }
+
+  //! Emit a log by relaying to the base logger
+  inline void emit_log(int level, const char * origin, const std::string& msg)
+  {
+    // this might also be called if we have a sublogger. In that case, if we have a
+    // sublogger, then use their prefix.
+    _baselogger.emit_log(level, get_origin(origin).c_str(), msg);
+  }
+
+  //! Get the base logger's set level.
+  inline int level() const
+  {
+    return _baselogger.level();
+  }
+
+  //! If relevant for the base logger, filter the messages by origin from the base logger.
+  TOMOGRAPHER_ENABLED_IF(Tomographer::Logger::LoggerTraits<BaseLoggerType>::HasFilterByOrigin)
+  inline bool filter_by_origin(int level, const char * origin)
+  {
+    return _baselogger.filter_by_origin(level, get_origin(origin).c_str());
+  }
+};
+
+
+class test_origin_logger
+{
+  OriginedLogger<Tomographer::Logger::BufferLogger> _logger;
+
+public:
+
+  test_origin_logger(Tomographer::Logger::BufferLogger & logger)
+    : _logger(TOMO_ORIGIN, logger)
+  {
+    _logger.longdebug("constructor!");
+    _logger.debug("constructor!");
+    _logger.info("constructor!");
+    _logger.warning("constructor!");
+    _logger.error("constructor!");
+  }
+
+  ~test_origin_logger()
+  {
+    _logger.debug("destructor.");
+    auto l = _logger.sublogger("[destructor]", "-");
+    l.info("destructor.");
+    auto l2 = l.sublogger("yo!");
+    l2.info("depth two!");
+  }
+
+  void some_method()
+  {
+    OriginedLogger<decltype(_logger)> logger(TOMO_ORIGIN, _logger);
+    
+    logger.debug("Hi there!");
+    for (int k = 0; k < 10; ++k) {
+      logger.longdebug("Number = %d", k);
+    }
+  }
+};
+
+
+
+
+
+
+
 
 
 // #############################################################################
@@ -559,18 +1020,22 @@ BOOST_AUTO_TEST_SUITE_END();
 // -----------------------------------------------------------------------------
 
 
-// test new type of logger, fixed origin
+BOOST_AUTO_TEST_CASE(origined_logger)
+{
+  Tomographer::Logger::BufferLogger b(Tomographer::Logger::LONGDEBUG);
 
-// template<typename BaseLoggerType_>
-// class OriginedLogger : public Tomographer::Logger::LoggerBase<LocalLogger>
-// {
-// public:
-//   OriginedLogger(const char * pretty_constructor_function)
-//     : _constr_name(extract_fn_name(pretty_constructor_function)) {
-//   }
-// };
-
+  {
+    test_origin_logger tst(b);
+    tst.some_method();
+  }
+  
+  BOOST_MESSAGE(b.get_contents());
+  // ............
+}
 
 
 
 BOOST_AUTO_TEST_SUITE_END() // test_loggers_basic
+
+
+

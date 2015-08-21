@@ -416,6 +416,7 @@ public:
    */
   PRINTF3_ARGS_SAFE
   inline void debug(const char * origin, const char * fmt, ...);
+
   /** \brief emit an debug message
    *
    * Call this method to report a debugging message with this logger. This will relay the
