@@ -30,6 +30,14 @@ const double tol = tol_percent * 0.01;
 #define TOMO_ORIGIN extractTomoOrigin(TOMO_FUNCTION)
 
 
+
+template<char... Chars>
+struct from_chars_helper
+{
+  char array[sizeof...(Chars)];
+  constexpr from_chars_helper() : array{Chars...} { }
+};
+
 class conststr
 {
 public:
@@ -39,6 +47,14 @@ public:
   template<std::size_t N>
   constexpr conststr(const char(&a)[N]) : _p(a), _sz(N - 1) {}
   constexpr conststr(const char *a, std::size_t n) : _p(a), _sz(n) {}
+
+private:
+public:
+  template<char... Chars>
+  static inline constexpr conststr from_chars()
+  {
+    return conststr(from_chars_helper<Chars...>().array, sizeof...(Chars));
+  }
  
   inline constexpr char operator[](std::size_t n) const
   {
@@ -60,6 +76,45 @@ public:
     return pos >= _sz ? _sz-1 : pos;
   }
 
+  /*
+  template<char... Chars>
+  inline constexpr auto append_array() -> std::array<char, sizeof...(Chars)+size()>
+  {
+    return to_array<0, Chars...>();
+  }
+
+  template<std::size_t N = 0, char... Chars>
+  inline constexpr auto to_array() -> std::array<char, sizeof...(Chars)+size()-N>
+  {
+    return (N < size()
+	    ? to_array<N + 1, Chars..., _p[N]>()
+	    : std::array<char, sizeof...(Chars)>{Chars...});
+  }
+  */
+
+  // returns the string composed of, in this order (for N<size()):
+  //   - the given Chars...
+  //   - the substring of *this [N,end]
+  //   - the string s
+  // if N>size() but N<size()+s.size(), then returns:
+  //   - the given Chars...
+  //   - the substring s[N-size(),end]
+  // if N>=size()+s.size(), returns the given Chars... as a conststr.
+  template<std::size_t N = 0, char... Chars>
+  inline constexpr conststr add_string(const conststr& s) const
+  {
+    return (N < size()
+	    ? add_string<N+1, Chars..., _p[N]>(s)
+	    : (N < size() + s.size()
+	       ? add_string<N+1, Chars..., s[N-size()]>(s)
+	       : from_chars<Chars...>()));
+  }
+
+  inline constexpr conststr operator+(const conststr & s) const
+  {
+    return add_string<0>(s);
+  }
+
   inline constexpr bool startswith(const conststr& s, std::size_t StartOffset = 0, std::size_t S_I = 0) const {
     return ((S_I >= s.size())
 	    ? true
@@ -73,16 +128,15 @@ public:
     return startswith(other) && other.size() == size();
   }
 
-
-  constexpr conststr substr(std::size_t pos, std::size_t count = std::string::npos) const {
+  inline constexpr conststr substr(std::size_t pos, std::size_t count = std::string::npos) const {
     return conststr(_p+pos, (pos > size() || count > size() || pos+count>size()) ? (size()-pos) : count);
   }
-  constexpr conststr substr_e(std::size_t pos, std::size_t end = std::string::npos) const {
+  inline constexpr conststr substr_e(std::size_t pos, std::size_t end = std::string::npos) const {
     return conststr(_p+pos, (end>size()) ? (size()-pos) : end-pos);
   }
 
-  constexpr std::size_t find(const conststr& s, std::size_t pos = 0,
-			     std::size_t not_found = std::string::npos) const
+  inline constexpr std::size_t find(const conststr& s, std::size_t pos = 0,
+				    std::size_t not_found = std::string::npos) const
   {
     return (!is_in_range(pos)
 	    ? ( not_found )
@@ -251,7 +305,7 @@ struct extractTomoOrigin_helper {
 	     ? OriginedFilterOriginSpec(fn.substr(last_doublecolons+2), "::")
 	     // looks like a method name. Strip off the class name. Also use an internal
 	     // glue to indicate a logical level.
-	     : OriginedFilterOriginSpec(fn.substr(last_doublecolons+2), "/")
+	     : OriginedFilterOriginSpec(fn.substr(last_doublecolons+2) + "()", "/")
 	);
   }
   static inline constexpr std::size_t afterprelast_doublecolons(std::size_t prelast_doublecolons_found)
