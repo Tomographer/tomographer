@@ -6,6 +6,9 @@
 
 #include <Eigen/Core> // Eigen::Dynamic
 
+#include <tomographer/tools/conststr.h>
+
+
 // -----------------------------------------------------------------------------
 // Define functions with printf-safe arguments, with compiler-generated warnings
 // -----------------------------------------------------------------------------
@@ -86,24 +89,6 @@ inline tomo_internal::FinalAction<F> finally(F f)
 }
 
 
-
-
-/** \brief Test whether the given value is positive or zero.
- *
- * This helper is useful to silence warnings in templates about `comparision of unsigned
- * >= 0 is always true'.
- */
-template<typename X>
-inline typename std::enable_if<std::is_unsigned<X>::value, bool>::type is_positive(const X /* val */)
-{
-  return true;
-}
-//! See \ref is_positive()
-template<typename X>
-inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type is_positive(const X val)
-{
-  return val >= 0;
-}
 
 
 
@@ -265,6 +250,87 @@ inline constexpr bool is_power_of_two(int N)
 }
 
 
+
+
+// -----------------------------------------------------------------------------
+
+
+
+/** \brief Expands to the current function name or signature
+ *
+ * For \ref Logger::LocalLogger, use \ref TOMO_ORIGIN.
+ */
+#define TOMO_FUNCTION __PRETTY_FUNCTION__
+
+
+
+namespace tomo_internal {
+// logic taken from KLatexFormula/klftools: klfdefs.cpp / klfShortFuncSignature()
+struct extractFuncName_helper {
+  struct extracted {
+    const std::size_t decl_pos;
+    const conststr extr;
+    constexpr extracted(std::size_t dp, const conststr& s) : decl_pos(dp), extr(s) { }
+  };
+  static constexpr conststr alltofirstparen(const conststr& s)
+  {
+    return s.substr(0, s.find(conststr("("), 0, s.size()));
+  }
+  static constexpr std::size_t declpos_from_found_spc(std::size_t found_pos)
+  {
+    return found_pos == std::string::npos ? 0 : found_pos + 1;
+  }
+  static constexpr std::size_t pos_decl(const conststr& s)
+  {
+    return ((s.size() > 2)
+	    ? declpos_from_found_spc(s.rfind(conststr(" "), std::string::npos))
+	    : 0);
+  }
+  static constexpr extracted allfromfirstspace(const conststr& s)
+  {
+    return extracted(pos_decl(s),
+		     s.substr_e(pos_decl(s),
+				s.size()));
+  }
+  static constexpr extracted do_extract(const conststr& funcname)
+  {
+    return allfromfirstspace(alltofirstparen(funcname));
+  }
+  static constexpr conststr extract_choose(const extracted& do_extracted,
+					   const conststr& funcname)
+  {
+    return (do_extracted.extr.substr(0,8) == conststr("operator")
+	    ? funcname.substr(do_extracted.decl_pos)
+	    : do_extracted.extr);
+  }
+  static constexpr conststr extract(const conststr& funcname)
+  {
+    return extract_choose(do_extract(funcname), funcname);
+  }
+}; // helper struct
+} // namespace tomo_internal
+
+
+/** \brief Extract the function name from its signature.
+ *
+ * The argument is parsed as a function signature, and the name of the function (including
+ * scope such as namespaces and classes) is returned.
+ */
+constexpr inline conststr extractFuncName(const conststr & funcname)
+{
+  return tomo_internal::extractFuncName_helper::extract(funcname);
+}
+
+
+
+
+/** \brief Tool for static assertions without message.
+ *
+ * Simply use as message to C++11's \a static_assert() a stringified version of the
+ * expression itself.
+ */
+#define TOMO_STATIC_ASSERT_EXPR(...)				\
+  static_assert(__VA_ARGS__, #__VA_ARGS__)
 
 
 

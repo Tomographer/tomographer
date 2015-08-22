@@ -14,6 +14,7 @@
 #include <map>
 
 #include <tomographer/tools/fmt.h>
+#include <tomographer/tools/conststr.h>
 
 #define ENABLE_IF_Fn_CALLABLE_OSTREAM                                      \
   typename std::enable_if<std::is_convertible<Fn,std::function<void(std::ostream&)> >::value, void>::type
@@ -1432,6 +1433,207 @@ public:
     return is_at_least_of_severity(level, loglevel);
   }
 
+};
+
+
+
+
+
+// --------------------------------------------------
+
+
+
+
+
+//! Tool to specify arguments to \ref LocalLogger
+struct LocalLoggerOriginSpec {
+  //! Origin prefix for the local logger
+  const Tools::conststr origin_prefix;
+  //! optionally some string to append to origin_prefix
+  const Tools::conststr origin_prefix_add;
+  //! the glue to use in the local logger
+  const Tools::conststr glue;
+
+  //! constructor. origin_prefix_add is left blank.
+  constexpr LocalLoggerOriginSpec(const Tools::conststr& s, const Tools::conststr& gl)
+    : origin_prefix(s), origin_prefix_add(""), glue(gl) { }
+  //! complete constructor.
+  constexpr LocalLoggerOriginSpec(const Tools::conststr& s, const Tools::conststr& s2, const Tools::conststr& gl)
+    : origin_prefix(s), origin_prefix_add(s2), glue(gl) { }
+};
+
+namespace tomo_internal {
+/** \internal */
+struct extractTomoOrigin_helper {
+  static inline constexpr LocalLoggerOriginSpec step2(const Tools::conststr fn, std::size_t last_doublecolons,
+							 std::size_t after_prelast_doublecolons)
+  {
+    return ( fn.substr_e(after_prelast_doublecolons, last_doublecolons) == fn.substr(last_doublecolons+2)
+	     // fn is a constructor, so keep class name and use "::" as glue
+	     ? LocalLoggerOriginSpec(fn.substr(last_doublecolons+2), "::")
+	     // looks like a method name. Strip off the class name. Also use an internal
+	     // glue to indicate a logical level.
+	     : LocalLoggerOriginSpec(fn.substr(last_doublecolons+2), "()", "/")
+	);
+  }
+  static inline constexpr std::size_t afterprelast_doublecolons(std::size_t prelast_doublecolons_found)
+  {
+    return (prelast_doublecolons_found == std::string::npos) ? 0 : prelast_doublecolons_found+2;
+  }
+  static inline constexpr LocalLoggerOriginSpec step1(const Tools::conststr fn, std::size_t last_doublecolons)
+  {
+    return last_doublecolons == std::string::npos || last_doublecolons == 0
+      ? LocalLoggerOriginSpec(fn, "/") // looks like simple function name with no parent scope
+      : step2(fn, last_doublecolons, afterprelast_doublecolons(fn.rfind("::", last_doublecolons-1)));
+  }
+
+  static inline constexpr LocalLoggerOriginSpec extract_from_func_name(const Tools::conststr fn)
+  {
+    return step1(fn, fn.rfind("::"));
+  }
+};
+
+/** \internal */
+constexpr const LocalLoggerOriginSpec extractTomoOrigin(const Tools::conststr fn)
+{
+  return extractTomoOrigin_helper::extract_from_func_name(Tomographer::Tools::extractFuncName(fn));
+}
+
+} // namespace tomo_internal
+
+
+/** \brief Use this as argument for \ref LocalLogger() 
+ */
+#define TOMO_ORIGIN Tomographer::Logger::tomo_internal::extractTomoOrigin(TOMO_FUNCTION)
+
+
+
+
+template<typename BaseLoggerType_>  class LocalLogger;
+
+//! Specialized Traits for \ref LocalLogger. See \ref LoggerTraits<BaseLoggerType_>
+template<typename BaseLoggerType_>
+struct LoggerTraits<LocalLogger<BaseLoggerType_> > : LoggerTraits<BaseLoggerType_>
+{
+  enum {
+    //! Logger will delegate calls for current level() to base logger
+    HasOwnGetLevel = 1
+  };
+};
+
+
+/** \brief Local Logger: avoid having to repeat origin at each emitted message
+ *
+ * This type of logger accepts origin information in its constructor. Then, you may call
+ * the \ref longdebug(), \ref debug(), \ref info(), \ref warning() and \ref error()
+ * methods without any \a origin information.
+ *
+ * This logger relays log messages to a base logger of type \a BaseLoggerType.
+ *
+ * You may also nest these loggers. See method \ref sublogger().
+ */
+template<typename BaseLoggerType_>
+class LocalLogger : public Tomographer::Logger::LoggerBase<LocalLogger<BaseLoggerType_> >
+{
+public:
+  typedef BaseLoggerType_ BaseLoggerType;
+
+private:
+  typedef Tomographer::Logger::LoggerBase<LocalLogger> Base_;
+
+  const std::string _origin_prefix;
+  const std::string _glue;
+
+  BaseLoggerType & _baselogger;
+
+public:
+  LocalLogger(const std::string & origin_fn_name, BaseLoggerType & logger_)
+    : _origin_prefix(origin_fn_name), _glue("::"), _baselogger(logger_)
+  {
+  }
+  LocalLogger(const std::string & origin_prefix, const std::string & glue, BaseLoggerType & logger_)
+    : _origin_prefix(origin_prefix), _glue(glue), _baselogger(logger_)
+  {
+  }
+  LocalLogger(const LocalLoggerOriginSpec & spec, BaseLoggerType & logger_)
+    : _origin_prefix(spec.origin_prefix.to_string()+spec.origin_prefix_add.to_string()),
+      _glue(spec.glue.to_string()), _baselogger(logger_)
+  {
+  }
+
+  inline std::string origin_prefix() const { return _origin_prefix; }
+  inline std::string glue() const { return _glue; }
+
+  inline BaseLoggerType & baselogger() { return _baselogger; };
+
+  inline LocalLogger<LocalLogger<BaseLoggerType> > sublogger(const std::string & new_prefix)
+  {
+    return LocalLogger<LocalLogger<BaseLoggerType> >(new_prefix, *this);
+  }
+  inline LocalLogger<LocalLogger<BaseLoggerType> > sublogger(const std::string & new_prefix,
+								   const std::string & new_glue)
+  {
+    return LocalLogger<LocalLogger<BaseLoggerType> >(new_prefix, new_glue, *this);
+  }
+
+  PRINTF2_ARGS_SAFE inline void longdebug(const char * fmt, ...)
+  { va_list ap; va_start(ap, fmt);  log<LONGDEBUG>(fmt, ap); va_end(ap); }
+  PRINTF2_ARGS_SAFE inline void debug(const char * fmt, ...)
+  { va_list ap; va_start(ap, fmt);  log<DEBUG>(fmt, ap); va_end(ap); }
+  PRINTF2_ARGS_SAFE inline void info(const char * fmt, ...)
+  { va_list ap; va_start(ap, fmt);  log<INFO>(fmt, ap); va_end(ap); }
+  PRINTF2_ARGS_SAFE inline void warning(const char * fmt, ...)
+  { va_list ap; va_start(ap, fmt);  log<WARNING>(fmt, ap); va_end(ap); }
+  PRINTF2_ARGS_SAFE inline void error(const char * fmt, ...)
+  { va_list ap; va_start(ap, fmt);  log<ERROR>(fmt, ap); va_end(ap); }
+
+  template<typename... Args>
+  inline void longdebug(Args... a) { log<Tomographer::Logger::LONGDEBUG>(a...); }
+  template<typename... Args>
+  inline void debug(Args... a) { log<Tomographer::Logger::DEBUG>(a...); }
+  template<typename... Args>
+  inline void info(Args... a) { log<Tomographer::Logger::INFO>(a...); }
+  template<typename... Args>
+  inline void warning(Args... a) { log<Tomographer::Logger::WARNING>(a...); }
+  template<typename... Args>
+  inline void error(Args... a) { log<Tomographer::Logger::ERROR>(a...); }
+
+  template<int Level, typename... Args>
+  inline void log(Args... args)
+  {
+    Base_::template log<Level>("", args...);
+  }
+
+
+  // relay calls to base logger
+
+  inline std::string get_origin(const char * origin) const
+  {
+    return ( origin == NULL || origin[0] == 0
+	     ? _origin_prefix
+	     : _origin_prefix + _glue + origin );
+  }
+
+  //! Emit a log by relaying to the base logger
+  inline void emit_log(int level, const char * origin, const std::string& msg)
+  {
+    // this might also be called if we have a sublogger. In that case, if we have a
+    // sublogger, then use their prefix.
+    _baselogger.emit_log(level, get_origin(origin).c_str(), msg);
+  }
+
+  //! Get the base logger's set level.
+  inline int level() const
+  {
+    return _baselogger.level();
+  }
+
+  //! If relevant for the base logger, filter the messages by origin from the base logger.
+  TOMOGRAPHER_ENABLED_IF(Tomographer::Logger::LoggerTraits<BaseLoggerType>::HasFilterByOrigin)
+  inline bool filter_by_origin(int level, const char * origin)
+  {
+    return _baselogger.filter_by_origin(level, get_origin(origin).c_str());
+  }
 };
 
 

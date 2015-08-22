@@ -9,7 +9,6 @@
 #include "test_tomographer.h"
 
 #include <tomographer/qit/util.h>
-#include <tomographer/tools/util.h>
 
 
 BOOST_AUTO_TEST_SUITE(test_misc)
