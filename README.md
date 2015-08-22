@@ -84,6 +84,10 @@ To specify paths to the Eigen3 and MatIO libraries, use the CMake switches:
 
 You may of course also alternatively use CMake's graphical interface, CMake-GUI.
 
+Note the compilation step (`make`) is quite computation-heavy because of the extensive
+C++11 template metaprogramming. It might take a minute or two to complete depending on
+your hardware.
+
 
 Running Tomorun
 ---------------

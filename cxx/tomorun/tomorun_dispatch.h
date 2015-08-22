@@ -82,10 +82,10 @@ struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculato
     
     Tomographer::AveragedHistogram<HistogramType, double> finalhistogram;
 
-    LoggerType & logger;
+    Tomographer::Logger::LocalLogger<LoggerType>  llogger;
     
     ResultsCollector(LoggerType & logger_)
-      : finalhistogram(HistogramParams()), logger(logger_)
+      : finalhistogram(HistogramParams()), llogger(TOMO_ORIGIN, logger_)
     {
     }
     
@@ -98,7 +98,7 @@ struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculato
     template<typename Cnt, typename CData>
     inline void collect_result(Cnt /*task_no*/, const HistogramType& taskresult, const CData *)
     {
-      logger.debug("TomorunCDataSimple::ResultsCollector::collect_result", [&](std::ostream & str) {
+      llogger.sublogger(TOMO_ORIGIN).debug([&](std::ostream & str) {
           str << "Got task result. Histogram is:\n" << taskresult.pretty_print();
         });
       finalhistogram.add_histogram(taskresult);
@@ -111,7 +111,8 @@ struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculato
 
     inline void write_histogram_file(const std::string & csvfname)
     {
-      logger.info("TomorunCDataSimple::ResultsCollector::write_histogram_file", "()");
+      auto l = llogger.sublogger(TOMO_ORIGIN);
+      l.info("()");
 
       std::ofstream outf;
       outf.open(csvfname);
@@ -122,9 +123,7 @@ struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculato
              << (double)finalhistogram.bins(kk) << "\t"
              << (double)finalhistogram.delta(kk) << "\n";
       }
-      logger.info("TomorunCDataSimple::ResultsCollector::write_histogram_file",
-                  "Wrote histogram to CSV file %s (Value/Counts/Error)", csvfname.c_str());
-
+      l.info("Wrote histogram to CSV file %s (Value/Counts/Error)", csvfname.c_str());
     }
   };
 };
@@ -193,10 +192,10 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
     //typedef typename MHRWStatsCollectorParams::BaseHistogramType SimpleHistogramType;
     Tomographer::AveragedHistogram<SimpleHistogramType, double> simplefinalhistogram;
 
-    LoggerType & logger;
+    Tomographer::Logger::LocalLogger<LoggerType>  llogger;
     
     ResultsCollector(LoggerType & logger_)
-      : finalhistogram(), simplefinalhistogram(), logger(logger_)
+      : finalhistogram(), simplefinalhistogram(), llogger(TOMO_ORIGIN, logger_)
     {
     }
     
@@ -210,7 +209,8 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
     template<typename Cnt, typename CData>
     inline void collect_result(Cnt /*task_no*/, const Result& taskresult, const CData *)
     {
-      logger.debug("TomorunCDataBinning::ResultsCollector::collect_result", [&](std::ostream & str) {
+      auto logger = llogger.sublogger(TOMO_ORIGIN);
+      logger.debug([&](std::ostream & str) {
           str << "(). Got task result. Histogram (w/ error bars from binning analysis):\n"
               << taskresult.hist.pretty_print();
         });
@@ -218,45 +218,43 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
 
       if ((taskresult.converged_status !=
            Eigen::ArrayXi::Constant(taskresult.hist.num_bins(), BinningAnalysisParamsType::CONVERGED)).any()) {
-        logger.warning(
-            "TomorunCDataBinning::ResultsCollector::collect_result",
-            [&,this](std::ostream & str) {
-              str << "Error bars have not converged! The error bars at different binning levels are:\n"
-                  << taskresult.error_levels << "\n"
-                  << "\t-> convergence analysis: \n";
-              for (std::size_t k = 0; k < taskresult.hist.num_bins(); ++k) {
-                str << "\t    val[" << std::setw(3) << k << "] = "
-                    << std::setw(12) << taskresult.hist.bins(k)
-                    << " +- " << std::setw(12) << taskresult.hist.delta(k);
-                if (taskresult.converged_status(k) == BinningAnalysisParamsType::CONVERGED) {
-                  str << "  [CONVERGED]";
-                } else if (taskresult.converged_status(k) == BinningAnalysisParamsType::NOT_CONVERGED) {
-                  str << "  [NOT CONVERGED]";
-                } else if (taskresult.converged_status(k) == BinningAnalysisParamsType::UNKNOWN_CONVERGENCE) {
-                  str << "  [UNKNOWN]";
-                } else {
-                  str << "  [UNKNOWN CONVERGENCE STATUS: " << taskresult.converged_status(k) << "]";
-                }
-                str << "\n";
+        logger.warning([&,this](std::ostream & str) {
+            str << "Error bars have not converged! The error bars at different binning levels are:\n"
+                << taskresult.error_levels << "\n"
+                << "\t-> convergence analysis: \n";
+            for (std::size_t k = 0; k < taskresult.hist.num_bins(); ++k) {
+              str << "\t    val[" << std::setw(3) << k << "] = "
+                  << std::setw(12) << taskresult.hist.bins(k)
+                  << " +- " << std::setw(12) << taskresult.hist.delta(k);
+              if (taskresult.converged_status(k) == BinningAnalysisParamsType::CONVERGED) {
+                str << "  [CONVERGED]";
+              } else if (taskresult.converged_status(k) == BinningAnalysisParamsType::NOT_CONVERGED) {
+                str << "  [NOT CONVERGED]";
+              } else if (taskresult.converged_status(k) == BinningAnalysisParamsType::UNKNOWN_CONVERGENCE) {
+                str << "  [UNKNOWN]";
+              } else {
+                str << "  [UNKNOWN CONVERGENCE STATUS: " << taskresult.converged_status(k) << "]";
               }
-            });
+              str << "\n";
+            }
+          });
       }
 
       // because taskresult is a histogram WITH error bars, add_histogram will do the
       // right thing and take them into account.
       finalhistogram.add_histogram(taskresult.hist);
 
-      logger.debug("TomorunCDataBinning::ResultsCollector::collect_result", "added first histogram.");
+      logger.debug("added first histogram.");
 
 
       // this one is declared for histograms WITHOUT error bars (SimpleHistogramType is a
       // UniformBinsHistogram), so it will just ignore the error bars
-      logger.debug("TomorunCDataBinning::ResultsCollector::collect_result", [&](std::ostream & str) {
+      logger.debug([&](std::ostream & str) {
 	  str << "Simple histogram is:\n";
 	  Tomographer::histogram_pretty_print<SimpleHistogramType>(str, taskresult.hist);
 	});
       simplefinalhistogram.add_histogram(taskresult.hist);
-      logger.debug("TomorunCDataBinning::ResultsCollector::collect_result", "done.");
+      logger.debug("done.");
     }
     template<typename Cnt, typename CData>
     inline void runs_finished(Cnt, const CData *)
@@ -267,7 +265,8 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
 
     inline void write_histogram_file(const std::string & csvfname)
     {
-      logger.info("TomorunCDataBinning::ResultsCollector::write_histogram_file", "()");
+      auto logger = llogger.sublogger(TOMO_ORIGIN);
+      logger.info("()");
       
       std::ofstream outf;
       outf.open(csvfname);
@@ -279,8 +278,7 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
              << (double)finalhistogram.delta(kk) << "\t"
              << (double)simplefinalhistogram.delta(kk) << "\n";
       }
-      logger.info("TomorunCDataBinning::ResultsCollector::write_histogram_file",
-                  "Wrote histogram to CSV file %s (Value/Counts/Error/SimpleError)", csvfname.c_str());
+      logger.info("Wrote histogram to CSV file %s (Value/Counts/Error/SimpleError)", csvfname.c_str());
     }
   };
 };
@@ -312,8 +310,9 @@ struct TomorunModeTypes<false, TomoProblem, ValueCalculator>
 template<bool BinningAnalysisErrorBars, typename TomoProblem,
          typename FnMakeValueCalculator, typename LoggerType>
 inline void tomorun(const TomoProblem & tomodat, const ProgOptions * opt,
-		    FnMakeValueCalculator makeValueCalculator, LoggerType & logger)
+		    FnMakeValueCalculator makeValueCalculator, LoggerType & baselogger)
 {
+  Tomographer::Logger::LocalLogger<LoggerType> logger(TOMO_ORIGIN, baselogger);
   //
   // create the OMP Task Manager and run.
   //
@@ -338,20 +337,20 @@ inline void tomorun(const TomoProblem & tomodat, const ProgOptions * opt,
   taskcdat.n_run = opt->Nrun;
   taskcdat.step_size = opt->step_size;
 
-  OurResultsCollector results(logger);
+  OurResultsCollector results(logger.baselogger());
 
   auto tasks = Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
       &taskcdat, // constant data
       &results, // results collector
-      logger, // the main logger object
+      logger.baselogger(), // the main logger object
       opt->Nrepeats, // num_runs
       opt->Nchunk // n_chunk
       );
 
   // set up signal handling
-  auto srep = Tomographer::Tools::makeSigHandlerTaskDispatcherStatusReporter(&tasks, logger);
+  auto srep = Tomographer::Tools::makeSigHandlerTaskDispatcherStatusReporter(&tasks, logger.baselogger());
   Tomographer::Tools::installSignalStatusReportHandler(SIGINT, &srep);
-  //  auto srep = makeSigHandlerStatusReporter(&tasks, logger);
+  //  auto srep = makeSigHandlerStatusReporter(&tasks, logger.baselogger());
   //  signal_handler = &srep;
   //  signal(SIGINT, sig_int_handler);
 
@@ -365,15 +364,14 @@ inline void tomorun(const TomoProblem & tomodat, const ProgOptions * opt,
 
   auto time_end = TimerClock::now();
 
-  logger.debug("tomorun()", "Random walks done.");
+  logger.debug("Random walks done.");
 
   // delta-time, in seconds and fraction of seconds
   std::string elapsed_s = Tomographer::Tools::fmt_duration(time_end - time_start);
 
-  logger.info(
-      "tomorun()", [&results](std::ostream & str) {
-        str << "FINAL HISTOGRAM\n" << results.finalhistogram.pretty_print() << "\n";
-      });
+  logger.info([&results](std::ostream & str) {
+      str << "FINAL HISTOGRAM\n" << results.finalhistogram.pretty_print() << "\n";
+    });
 
 
   // save the histogram to a CSV file if the user required it
@@ -381,10 +379,7 @@ inline void tomorun(const TomoProblem & tomodat, const ProgOptions * opt,
     results.write_histogram_file(opt->write_histogram+"-histogram.csv");
   }
 
-  logger.info("tomorun()",
-              "Computation time: %s\n\n",
-              elapsed_s.c_str());
-
+  logger.info("Computation time: %s\n\n", elapsed_s.c_str());
 }
 
 

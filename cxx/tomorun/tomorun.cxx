@@ -40,7 +40,7 @@
 #include "tomorun_dispatch.h"
 
 
-Tomographer::Logger::FileLogger logger(stdout, Tomographer::Logger::INFO, false);
+Tomographer::Logger::FileLogger rootlogger(stdout, Tomographer::Logger::INFO, false);
 
 
 // ------------------------------------------------------------------------------
@@ -50,24 +50,23 @@ int main(int argc, char **argv)
 {
   ProgOptions opt;
 
+  Tomographer::Logger::LocalLogger<decltype(rootlogger)> logger("main()", rootlogger);
+
   try {
-    parse_options(&opt, argc, argv, logger);
+    parse_options(&opt, argc, argv, logger.baselogger());
   } catch (const bad_options& e) {
     fprintf(stderr, "%s\n", e.what());
     return 127;
   }
 
   logger.info(
-      // origin
-      "main()",
-      // message
       "\n"
       "-------------------------------\n"
       "Welcome to tomorun.\n"
       "-------------------------------\n"
       );
 
-  display_parameters(&opt, logger);
+  display_parameters(&opt, logger.baselogger());
 
   //
   // Renice the program, if requested
@@ -79,19 +78,15 @@ int main(int argc, char **argv)
     int niceret = nice(opt.nice_level);
     if (niceret == -1 && errno != 0) {
       logger.warning(
-          "main()",
           "Failed to nice(%d) process: %s",
           opt.nice_level, strerror(errno)
           );
     } else {
-      logger.debug("main()", "nice()'ed our process to priority %d", niceret);
+      logger.debug("nice()'ed our process to priority %d", niceret);
     }
   }
 
   logger.debug(
-      // origin
-      "main()",
-      // message
       "SIMD instructions set in use by Eigen: %s",
       Eigen::SimdInstructionSetsInUse()
       );
@@ -109,12 +104,11 @@ int main(int argc, char **argv)
   // [note: std::ldexp(x,e) := x * 2^{e} ]
   //
   const unsigned long last_level_num_samples = std::ldexp((double)opt.Nrun, - opt.binning_analysis_num_levels);
-  logger.debug("tomorun_dispatch", "last_level_num_samples = %lu", last_level_num_samples);
+  logger.debug("last_level_num_samples = %lu", last_level_num_samples);
   //
   if ( opt.binning_analysis_error_bars &&
        ( last_level_num_samples < (unsigned long)last_binning_level_warn_min_samples ) ) {
     logger.warning(
-	"tomorun_dispatch",
 	"Few samples in the last binning level of binning analysis : "
 	"Nrun=%lu, # of levels=%lu --> %lu samples. [Recommended >= %lu]",
 	(unsigned long)opt.Nrun,
@@ -139,18 +133,18 @@ int main(int argc, char **argv)
     dim = Tomographer::MAT::value<int>(matf->var("dim"));
     n_povms = matf->var("Nm").numel();
   } catch (const std::exception& e) {
-    logger.error("main()", [&opt, &e](std::ostream & str){
+    logger.error([&opt, &e](std::ostream & str){
                    str << "Failed to read data from file "<< opt.data_file_name << "\n\t" << e.what() << "\n";
                  });
     ::exit(1);
   }
 
-  auto delete_matf = Tomographer::Tools::finally([matf] {
-      logger.debug("main()", "Freeing input file resource");
+  auto delete_matf = Tomographer::Tools::finally([matf,&logger] {
+      logger.debug("Freeing input file resource");
       delete matf;
     });
 
-  logger.debug("main()", "Data file opened, found dim = %u", dim);
+  logger.debug("Data file opened, found dim = %u", dim);
 
   //
   // ---------------------------------------------------------------------------
@@ -161,7 +155,7 @@ int main(int argc, char **argv)
   // Maybe use statically instantiated size for some predefined sizes.
 
   //  Logger::MinimumSeverityLogger<Logger::FileLogger, Logger::INFO> mlog(logger);
-  auto & mlog = logger;
+  auto & mlog = logger.baselogger();
 
   //  try {
   if (dim == 2 && n_povms <= 6) {

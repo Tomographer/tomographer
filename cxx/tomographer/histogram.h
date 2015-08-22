@@ -16,6 +16,7 @@
 #include <Eigen/Core>
 
 #include <tomographer/tools/fmt.h>
+#include <tomographer/qit/util.h>
 
 
 namespace Tomographer {

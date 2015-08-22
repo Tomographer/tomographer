@@ -150,6 +150,7 @@ struct ProgOptions
     Nchunk(1),
     NMeasAmplifyFactor(1.0),
     loglevel(Tomographer::Logger::INFO),
+    verbose_log_info(false), // display origins in log messages
     write_histogram("")
   {
   }
@@ -182,7 +183,8 @@ struct ProgOptions
 
   double NMeasAmplifyFactor;
 
-  int loglevel;
+  Tomographer::Logger::LogLevel loglevel;
+  bool verbose_log_info;
 
   std::string write_histogram;
 };
@@ -286,9 +288,13 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
      "Specify an integer factor by which to multiply number of measurements.")
     ("write-histogram", value<std::string>(& opt->write_histogram),
      "write the histogram to the given file in tabbed CSV values")
-    ("verbose", value<int>(& opt->loglevel)->default_value(opt->loglevel)->implicit_value(Tomographer::Logger::DEBUG),
+    ("verbose", value<Tomographer::Logger::LogLevel>(& opt->loglevel)->default_value(opt->loglevel)
+     ->implicit_value(Tomographer::Logger::DEBUG),
      "print iteration info. Not very readable unless n-repeats=1. You may also specify "
      "a specific verbosity level (integer); the higher the more verbose.")
+    ("verbose-log-info", bool_switch(& opt->verbose_log_info)->default_value(opt->verbose_log_info),
+     "[For Developers.] If specified, log messages are more verbose; they display e.g. at which point "
+     "in the code they were emitted.")
     ("nice", value<int>(& opt->nice_level)->default_value(opt->nice_level),
      "Renice the process to the given level to avoid slowing down the whole system. Set to zero "
      "to avoid renicing.")
@@ -515,6 +521,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
 
   // set up log level
   logger.setLevel(opt->loglevel);
+  logger.setDisplayOrigin(opt->verbose_log_info);
 
   // set up write histogram file name from config file name
   if (write_histogram_from_config_file_name) {

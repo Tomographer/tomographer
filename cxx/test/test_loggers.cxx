@@ -117,8 +117,6 @@ DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerOriginFilter, enum {
 // #############################################################################
 
 
-
-
 BOOST_AUTO_TEST_SUITE(test_loggers);
 
 
@@ -565,6 +563,8 @@ BOOST_AUTO_TEST_SUITE_END();
 // -----------------------------------------------------------------------------
 
 
+
+
 class test_origin_logger
 {
   Tomographer::Logger::LocalLogger<Tomographer::Logger::BufferLogger> _logger;
@@ -599,9 +599,17 @@ public:
       logger.longdebug("Number = %d", k);
     }
   }
+
+  template<int I = 1342, char c = 'Z', typename T = std::string>
+  void tmpl(const T & value = T("fdsk"))
+  {
+    auto l = _logger.sublogger(TOMO_ORIGIN);
+    l.info("info message. Value = %s", value.c_str());
+
+    auto l2 = l.sublogger("inner logger");
+    l2.debug("I = %d, c=%c", I, c);
+  }
 };
-
-
 
 
 BOOST_AUTO_TEST_CASE(local_logger)
@@ -611,15 +619,43 @@ BOOST_AUTO_TEST_CASE(local_logger)
   {
     test_origin_logger tst(b);
     tst.some_method();
+    tst.tmpl();
   }
   
-  BOOST_MESSAGE(b.get_contents());
+  BOOST_CHECK_EQUAL(b.get_contents(),
+                    "[test_origin_logger] constructor!\n"
+                    "[test_origin_logger] constructor!\n"
+                    "[test_origin_logger] constructor!\n"
+                    "[test_origin_logger] constructor!\n"
+                    "[test_origin_logger] constructor!\n"
+                    "[test_origin_logger::some_method()] Hi there!\n"
+                    "[test_origin_logger::some_method()] Number = 0\n"
+                    "[test_origin_logger::some_method()] Number = 1\n"
+                    "[test_origin_logger::some_method()] Number = 2\n"
+                    "[test_origin_logger::some_method()] Number = 3\n"
+                    "[test_origin_logger::some_method()] Number = 4\n"
+                    "[test_origin_logger::some_method()] Number = 5\n"
+                    "[test_origin_logger::some_method()] Number = 6\n"
+                    "[test_origin_logger::some_method()] Number = 7\n"
+                    "[test_origin_logger::some_method()] Number = 8\n"
+                    "[test_origin_logger::some_method()] Number = 9\n"
+                    "[test_origin_logger::tmpl()] info message. Value = fdsk\n"
+                    "[test_origin_logger::tmpl()/inner logger] I = 1342, c=Z\n"
+                    "[test_origin_logger] destructor.\n"
+                    "[test_origin_logger::[destructor]] destructor.\n"
+                    "[test_origin_logger::[destructor]-yo!] depth two!\n"
+      );
+
   // ............
 }
 
 
 
-BOOST_AUTO_TEST_SUITE_END() // test_loggers_basic
+
+
+// #############################################################################
+
+BOOST_AUTO_TEST_SUITE_END() // test_loggers
 
 
 

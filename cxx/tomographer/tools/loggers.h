@@ -13,6 +13,8 @@
 #include <type_traits> // std::enable_if
 #include <map>
 
+#include <boost/algorithm/string.hpp> // to_upper()
+
 #include <tomographer/tools/fmt.h>
 #include <tomographer/tools/conststr.h>
 
@@ -34,7 +36,8 @@ namespace Logger
  * Don't trust the numeric values here, they may change at any time. Just the order is
  * important.
  */
-enum {
+enum LogLevelCode
+{
   /** \brief Error logging level
    *
    * A log message with this level signifies that a critical error has occurred which
@@ -95,6 +98,101 @@ enum {
    */
   LOWEST_SEVERITY_LEVEL = 0x7fffffff
 };
+
+
+
+/** \brief Object which stores a log level and can initialize from a string.
+ *
+ * The only valid levels are LONGDEBUG, DEBUG, INFO, WARNING and ERROR. Any attempt to
+ * store any other integer value, or to assign any other string will result in an \ref
+ * std::invalid_argument exception.
+ *
+ * The acceptable strings are "LONGDEBUG", "DEBUG", "INFO", "WARNING" and "ERROR". They
+ * are parsed case-insensitive.
+ *
+ * This may be used as type for one of Boost's Programs Options type, for example.
+ *
+ * This class has also C++ i/ostream operators defined, which parse and write the level
+ * name as a \ref std::string.
+ */
+class LogLevel
+{
+  int _level;
+public:
+  //! Construct a level using an integer level code. See \ref LogLevelCode.
+  LogLevel(int level_ = INFO) { setlevel(level_); }
+  //! Construct a level using a string level name
+  LogLevel(const char * s) { setlevel(s); }
+  //! Construct a level using a string level name
+  LogLevel(const std::string& s) { setlevel(s); }
+
+  //! Get the stored level code. See \ref LogLevelCode.
+  inline int level() const { return _level; }
+
+  //! This class is implicitly convertible to an int
+  inline operator int() const { return _level; }
+
+  //! Get the stored level name.
+  inline std::string levelname() const
+  {
+    switch (_level) {
+    case LONGDEBUG: return std::string("LONGDEBUG");
+    case DEBUG:     return std::string("DEBUG");
+    case INFO:      return std::string("INFO");
+    case WARNING:   return std::string("WARNING");
+    case ERROR:     return std::string("ERROR");
+    default: return std::string("<INVALID LEVEL>");
+    };
+  }
+
+  //! Set the level to the given level code. See class doc and \ref LogLevelCode.
+  inline void setlevel(int level)
+  {
+    if (level != LONGDEBUG &&
+        level != DEBUG &&
+        level != INFO &&
+        level != WARNING &&
+        level != ERROR) {
+      throw std::invalid_argument("Invalid level code: "+std::to_string(level));
+    }
+    _level = level;
+  }
+
+  //! Set the level to the given level name. See class doc. 
+  inline void setlevel(std::string s)
+  {
+    boost::to_upper(s);
+    if (s == "LONGDEBUG") {
+      _level = LONGDEBUG;
+    } else if (s == "DEBUG") {
+      _level = DEBUG;
+    } else if (s == "INFO") {
+      _level = INFO;
+    } else if (s == "WARNING") {
+      _level = WARNING;
+    } else if (s == "ERROR") {
+      _level = ERROR;
+    } else {
+      throw std::invalid_argument("Invalid log level: '"+s+"'");
+    }
+  }
+};
+
+//! C++ input stream operator for \ref LogLevel
+std::istream & operator>>(std::istream & str, LogLevel &l)
+{
+  std::string s;
+  str >> s;
+  l.setlevel(s);
+  return str;
+}
+//! C++ output stream operator for \ref LogLevel
+std::ostream & operator<<(std::ostream & str, const LogLevel &l)
+{
+  return str << l.levelname();
+}
+
+
 
 /** \brief Helper to compare severity levels.
  *
@@ -1075,6 +1173,14 @@ public:
     setLogLevel(level);
   }
 
+  /**
+   * \warning This method is not thread-safe!
+   */
+  inline void setDisplayOrigin(bool display_origin_)
+  {
+    display_origin = display_origin_;
+  }
+
   inline void emit_log(int level, const char * origin, const std::string & msg)
   {
     static const std::string level_prefixes[] = {
@@ -1574,6 +1680,10 @@ public:
 								   const std::string & new_glue)
   {
     return LocalLogger<LocalLogger<BaseLoggerType> >(new_prefix, new_glue, *this);
+  }
+  inline LocalLogger<LocalLogger<BaseLoggerType> > sublogger(const LocalLoggerOriginSpec & spec)
+  {
+    return LocalLogger<LocalLogger<BaseLoggerType> >(spec, *this);
   }
 
   PRINTF2_ARGS_SAFE inline void longdebug(const char * fmt, ...)
