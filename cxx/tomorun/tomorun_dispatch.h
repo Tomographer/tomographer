@@ -85,7 +85,7 @@ struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculato
     Tomographer::Logger::LocalLogger<LoggerType>  llogger;
     
     ResultsCollector(LoggerType & logger_)
-      : finalhistogram(HistogramParams()), llogger(TOMO_ORIGIN, logger_)
+      : finalhistogram(HistogramParams()), llogger("TomorunCDataSimple::ResultsCollector", logger_)
     {
     }
     
@@ -195,7 +195,7 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
     Tomographer::Logger::LocalLogger<LoggerType>  llogger;
     
     ResultsCollector(LoggerType & logger_)
-      : finalhistogram(), simplefinalhistogram(), llogger(TOMO_ORIGIN, logger_)
+      : finalhistogram(), simplefinalhistogram(), llogger("TomorunCDataBinning::ResultsCollector", logger_)
     {
     }
     

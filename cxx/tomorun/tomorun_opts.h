@@ -235,10 +235,12 @@ public:
 
 
 template<typename LoggerType>
-void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger)
+void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselogger)
 {
   // read the options
   using namespace boost::program_options;
+
+  Tomographer::Logger::LocalLogger<LoggerType> logger("parse_options()", baselogger);
 
   std::string flogname;
   bool flogname_from_config_file_name = false;
@@ -442,7 +444,10 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
     if (vm.count("config")) {
       // load the file, and include options from that file
       configfname = vm["config"].as<std::string>();
-      logger.info("parse_options()", "Loading options from file %s\n", configfname.c_str());
+      // avoid log messages at this point before having parsed --verbose. We'll issue this
+      // message later.
+      //logger.info("Loading options from file %s\n", configfname.c_str());
+
       // this will not overwrite options already given on the command line
       store(parse_config_file<char>(configfname.c_str(), desc), vm);
 
@@ -464,10 +469,6 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
       if (configdir != ".") {
 	throw bad_options(streamstr("Config file must reside in current working directory: " << configfname));
       }
-
-      // debug
-      //logger.debug("parse_options()", [=](std::ostream& s) { s << "configdir=" << configdir; });
-      //logger.debug("parse_options()", [=](std::ostream& s) { s << "configbasename=" << configbasename; });
     }
 
     notify(vm);
@@ -477,10 +478,12 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
     throw bad_options(streamstr("Error parsing program options: " << e.what()));
   }
 
-  // set up the "false-type" boolean switches
-  opt->binning_analysis_error_bars = ! no_binning_analysis_error_bars;
+  // First thing: set up logging, so that we can issue log messages.
+  // --------------------
 
-  // set up logging.
+  // set up level and verbosity
+  baselogger.setLevel(opt->loglevel);
+  baselogger.setDisplayOrigin(opt->verbose_log_info);
   // maybe set up log file name from config file name
   if (flogname_from_config_file_name) {
     if (!configfname.size()) {
@@ -499,7 +502,6 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
     if (opt->flog == NULL) {
       throw bad_options(streamstr("Can't open file "<<flogname<<" for logging: " << strerror(errno)));
     }
-    logger.info("parse_options()", "Output is now being redirected to %s.", flogname.c_str());
 
     // write out header
     char curdtstr[128];
@@ -516,12 +518,24 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
         curdtstr
         );
 
-    logger.setFp(opt->flog);
+    baselogger.setFp(opt->flog);
+    logger.info("Output is now being redirected to %s.", flogname.c_str());
   }
 
-  // set up log level
-  logger.setLevel(opt->loglevel);
-  logger.setDisplayOrigin(opt->verbose_log_info);
+  // issue any delayed log messages
+  // --------------------
+
+  if (configfname.size()) {
+    logger.debug("Options were loaded from file %s\n", configfname.c_str());
+  }
+
+  // Further Settings
+  // --------------------
+
+  // set up the "false-type" boolean switche(s)
+
+  opt->binning_analysis_error_bars = ! no_binning_analysis_error_bars;
+
 
   // set up write histogram file name from config file name
   if (write_histogram_from_config_file_name) {
@@ -538,7 +552,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
 
   // make sure we have a data file
   if (!opt->data_file_name.size()) {
-    logger.error("parse_options", "No data file specified. Please specify a MATLAB file with --data-file-name.");
+    logger.error("No data file specified. Please specify a MATLAB file with --data-file-name.");
     ::exit(3);
   }
 
@@ -553,6 +567,8 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & logger
     opt->val_min = fmin;
     opt->val_max = fmax;
     opt->val_nbins = nbins;
+    logger.debug("Histogram parameters parsed: min=%g, max=%g, num_bins=%d",
+		 (double)opt->val_min, (double)opt->val_max, (int)opt->val_nbins);
   }
 }
 

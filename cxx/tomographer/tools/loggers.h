@@ -179,7 +179,7 @@ public:
 };
 
 //! C++ input stream operator for \ref LogLevel
-std::istream & operator>>(std::istream & str, LogLevel &l)
+inline std::istream & operator>>(std::istream & str, LogLevel &l)
 {
   std::string s;
   str >> s;
@@ -187,7 +187,7 @@ std::istream & operator>>(std::istream & str, LogLevel &l)
   return str;
 }
 //! C++ output stream operator for \ref LogLevel
-std::ostream & operator<<(std::ostream & str, const LogLevel &l)
+inline std::ostream & operator<<(std::ostream & str, const LogLevel &l)
 {
   return str << l.levelname();
 }
@@ -1589,7 +1589,7 @@ struct extractTomoOrigin_helper {
   static inline constexpr LocalLoggerOriginSpec step1(const Tools::conststr fn, std::size_t last_doublecolons)
   {
     return last_doublecolons == std::string::npos || last_doublecolons == 0
-      ? LocalLoggerOriginSpec(fn, "/") // looks like simple function name with no parent scope
+      ? LocalLoggerOriginSpec(fn, "()", "/") // looks like simple function name with no parent scope
       : step2(fn, last_doublecolons, afterprelast_doublecolons(fn.rfind("::", last_doublecolons-1)));
   }
 
