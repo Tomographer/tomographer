@@ -164,7 +164,7 @@ being changed and maintained.
 
 The test suite can be build by issuing the command
 
-    tomographer-1.0/build> make -j4
+    tomographer-1.0/build> make -j4 test_tomographer
 
 (Replace `4` by the number of CPUs available on your system.)
 
