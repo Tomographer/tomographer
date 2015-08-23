@@ -1,8 +1,8 @@
-#ifndef _MATIOPP_H
-#define _MATIOPP_H
 
-#include <inttypes.h>
+#ifndef _TOMOGRAPHER_TOOLS_EZMATIO_H
+#define _TOMOGRAPHER_TOOLS_EZMATIO_H
 
+#include <cstdint>
 #include <cerrno>
 
 #include <complex>
@@ -12,19 +12,23 @@
 #include <iostream>
 
 extern "C" {
-#include <matio.h>
+#  include <matio.h>
 }
+
+#include <Eigen/Core>
 
 #include <tomographer/tools/fmt.h>
 
 
 namespace Tomographer
 {
+// namespace doc in doc/doxdocs/namespaces.cxx
 namespace MAT
 {
 
 //! Base Exception class for errors within our MAT routines
-class Exception : public std::exception {
+class Exception : public std::exception
+{
   std::string p_heading;
   std::string p_msg;
 public:
@@ -38,11 +42,14 @@ public:
   }
 };
 
+//! Exception relating to a MATLAB variable in the data file
 class VarError : public Exception {
 public:
   VarError(const std::string& msg) : Exception("Variable error", msg) { }
   virtual ~VarError() throw() { }
 };
+
+//! Error while reading a variable from the MATLAB data file
 class VarReadError : public VarError {
 public:
   VarReadError(const std::string& varname)
@@ -51,15 +58,19 @@ public:
   }
   virtual ~VarReadError() throw() { }
 };
+
+//! Type mismatch (wrong type requested) in a variable read from the MATLAB data file
 class VarTypeError : public VarError {
 public:
   VarTypeError(const std::string& varname, const std::string& expected)
     : VarError(streamstr("Expected "<<expected<<" for variable `"<<varname<<"`"))
   {
-    fprintf(stderr, "varname=%s\n", varname.c_str());
+    //fprintf(stderr, "varname=%s\n", varname.c_str());
   }
   virtual ~VarTypeError() throw() { }
 };
+
+//! Unknown type of a variable present in the data file
 class VarMatTypeError : public VarError {
 public:
   VarMatTypeError(const std::string& msg)
@@ -69,6 +80,7 @@ public:
   virtual ~VarMatTypeError() throw() { }
 };
 
+//! Error while opening a MATLAB file
 class FileOpenError : public Exception {
 public:
   FileOpenError(const std::string& fname, const std::string& errmsg = "")
@@ -78,7 +90,7 @@ public:
   virtual ~FileOpenError() throw() { }
 };
 
-
+/*
 class InvalidOperationError : public Exception {
 public:
   InvalidOperationError(const std::string& msg)
@@ -86,18 +98,24 @@ public:
   {
   }
   virtual ~InvalidOperationError() throw() { }
-};
+  };
+*/
 
-class BadIndexError : public Exception {
+//! Invalid index or index list provided to a routine
+class InvalidIndexError : public Exception {
 public:
-  BadIndexError(const std::string& msg) : Exception("Bad index", msg) { }
-  virtual ~BadIndexError() throw() { }
+  InvalidIndexError(const std::string& msg) : Exception("Bad index", msg) { }
+  virtual ~InvalidIndexError() throw() { }
 };
 
 
 class Var;
 
 
+/** \brief A MATLAB file open for reading data.
+ *
+ * Access variables with \ref var()
+ */
 class File
 {
 public:
@@ -109,13 +127,22 @@ public:
       throw FileOpenError(fname, strerror(errno));
     }
   }
+  File(const File& other) = delete;
+  File(File&& other) { // move constructor.
+    p_matfp = other.p_matfp;
+    other.p_matfp = NULL;
+  }
 
   ~File()
   {
-    Mat_Close(p_matfp);
+    if ( p_matfp != NULL ) {
+      Mat_Close(p_matfp);
+    }
   }
 
   inline Var var(const std::string& varname, bool load_data = true);
+
+  inline std::vector<Var> get_var_info_list();
 
   mat_t * get_mat_ptr()
   {
@@ -126,19 +153,24 @@ private:
 };
 
 
-
-template<class It>
-int get_numel(It b, It e)
+/** \brief Calculate the product of all dimensions
+ *
+ * Given two C++/STL-type iterators \a begin and \a end, calculate the product of the
+ * sequence of elements. For an empty sequence (<em>begin==end</em>), the result is \c 1.
+ */
+template<typename It, typename ValueType = typename std::iterator_traits<It>::value_type>
+ValueType get_numel(It begin, It end)
 {
-  int n = 1;
-  for (It it = b; it != e; ++it) {
+  ValueType n = 1;
+  for (It it = begin; it != end; ++it) {
     n *= (*it);
   }
   return n;
 }
 
 
-class DimList : public std::vector<int> {
+class DimList : public std::vector<int>
+{
 public:
   DimList(const std::vector<int>& dims = std::vector<int>())
     : std::vector<int>(dims)
@@ -189,7 +221,7 @@ public:
     : std::vector<int>(dims.size()), p_dims(dims)
   {
     if (get_numel(dims.begin(), dims.end()) <= 0) {
-      throw BadIndexError("Invalid indexing of zero-sized array given by dimension list");
+      throw InvalidIndexError("Invalid indexing of zero-sized array given by dimension list");
     }
     if (linearindex >= 0) {
       setLinearIndex(linearindex, firstmajor);
@@ -273,12 +305,17 @@ private:
 
 
 
-
+//! Abstract class to access data via a linear index
 template<class OutType>
 class VarDataAccessor {
 public:
+  VarDataAccessor() { }
   virtual ~VarDataAccessor() { }
+
+  //! Subclasses must reimplement this to actually access some data.
   virtual OutType operator()(int linindex) const = 0;
+
+  //! Alias for operator().
   inline OutType value(int linindex) const { return this->operator()(linindex); }
 };
 
@@ -323,7 +360,17 @@ public:
   }
 };
 
-
+/** \brief Map matio's constants to C/C++ types
+ *
+ * The constants \a MAT_T_DOUBLE, \a MAT_T_SINGLE, etc. describing MATLAB's types are
+ * mapped to C/C++ types via this template. You can get the C/C++ type by using the
+ * constant as template parameter, e.g.:
+ * \code
+ *   typedef MatType<MAT_T_DOUBLE>::Type double_type; // double
+ *   typedef MatType<MAT_T_SINGLE>::Type single_type; // float
+ *   typedef MatType<MAT_T_UINT32>::Type uint32_type; // uint32_t
+ * \endcode
+ */
 template<int MatTType = -1>  struct MatType { };
 template<>  struct MatType<MAT_T_DOUBLE> { typedef double Type; };
 template<>  struct MatType<MAT_T_SINGLE> { typedef float Type; };
@@ -338,7 +385,7 @@ template<>  struct MatType<MAT_T_UINT8> { typedef uint8_t Type; };
   
 
 #define MAT_SWITCH_TYPE(typ, ...)                                       \
-  { switch (typ) {                                                      \
+  do { switch (typ) {                                                      \
     case MAT_T_DOUBLE: { typedef typename MatType<MAT_T_DOUBLE>::Type Type; { __VA_ARGS__; } break; } \
     case MAT_T_SINGLE: { typedef typename MatType<MAT_T_SINGLE>::Type Type; { __VA_ARGS__; } break; } \
     case MAT_T_INT64: { typedef typename MatType<MAT_T_INT64>::Type Type; { __VA_ARGS__; } break; } \
@@ -353,16 +400,17 @@ template<>  struct MatType<MAT_T_UINT8> { typedef uint8_t Type; };
       throw VarMatTypeError( streamstr("Uknown/unsupported encoded type from matio: " \
 				       <<(typ)) );			\
     }                                                                   \
-  }
+  } while (false)
+
 #define MAT_SWITCH_COMPLEXABLE_TYPE(typ, ...)                           \
-  { switch (typ) {                                                      \
+  do { switch (typ) {                                                      \
     case MAT_T_DOUBLE: { typedef typename MatType<MAT_T_DOUBLE>::Type Type; { __VA_ARGS__; } break; } \
     case MAT_T_SINGLE: { typedef typename MatType<MAT_T_SINGLE>::Type Type; { __VA_ARGS__; } break; } \
     default:                                                            \
       throw VarMatTypeError( streamstr("Uknown/unsupported encoded type from matio: " \
 				       <<(typ)) );			\
     }                                                                   \
-  }
+  } while (false)
       
 
 template<class OutT>
@@ -413,6 +461,17 @@ private:
   };
   VarData *p_vardata;
 
+  Var(matvar_t * varinfo) // take over the struct ownership
+  {
+    if (varinfo == NULL) {
+      throw VarReadError("<unknown>");
+    }
+    p_vardata = new VarData;
+    p_vardata->refcount++;
+    p_vardata->p_matvar = varinfo;
+    p_vardata->p_varname = std::string(varinfo->name);
+  }
+
 public:
   Var(File *matf, const std::string& varname, bool load_data = true)
   {
@@ -424,6 +483,8 @@ public:
       p_vardata->p_matvar = Mat_VarReadInfo(matf->get_mat_ptr(), varname.c_str());
     }
     if (p_vardata->p_matvar == NULL) {
+      delete p_vardata;
+      p_vardata = NULL;
       throw VarReadError(varname);
     }
     p_vardata->p_varname = varname;
@@ -433,45 +494,91 @@ public:
     p_vardata = copy.p_vardata;
     p_vardata->refcount++;
   }
+  Var(Var&& other)
+  {
+    // steal the data
+    p_vardata = other.p_vardata;
+    other.p_vardata = NULL;
+  }
   virtual ~Var() {
-    p_vardata->refcount--;
-    if (!p_vardata->refcount) {
-      Mat_VarFree(p_vardata->p_matvar);
-      delete p_vardata;
+    if (p_vardata != NULL) {
+      p_vardata->refcount--;
+      if (!p_vardata->refcount) {
+        Mat_VarFree(p_vardata->p_matvar);
+        delete p_vardata;
+      }
     }
   }
 
-  inline std::string varname() const {
-    return std::string(p_vardata->p_varname);
+  static Var takeOver(matvar_t * varinfo)
+  {
+    return Var(varinfo);
   }
 
-  inline int ndims() const {
+
+  inline std::string varname() const
+  {
+    assert(p_vardata != NULL);
+    return p_vardata->p_varname;
+  }
+
+  inline int ndims() const
+  {
+    assert(p_vardata != NULL);
     return p_vardata->p_matvar->rank;
   }
-  inline DimList dims() const {
+  inline DimList dims() const
+  {
+    assert(p_vardata != NULL);
     return DimList(&p_vardata->p_matvar->dims[0],
 		   &p_vardata->p_matvar->dims[p_vardata->p_matvar->rank]);
   }
-  inline int numel() const {
+  inline int numel() const
+  {
+    assert(p_vardata != NULL);
     return dims().numel();
   }
-  inline bool isComplex() const {
+  inline bool isComplex() const
+  {
+    assert(p_vardata != NULL);
     return p_vardata->p_matvar->isComplex;
   }
 
+  inline bool has_data() const
+  {
+    assert(p_vardata != NULL);
+    return (p_vardata->p_matvar->data != NULL);
+  }
+
+  template<typename T, typename RetType = typename VarValueRetTypeTraits<T>::type>
+  inline RetType value() const;
+
   const matvar_t * get_matvar_ptr() const
   {
+    assert(p_vardata != NULL);
     return p_vardata->p_matvar;
   }
 
 };
 
 
-inline
-Var File::var(const std::string& varname, bool load_data)
+inline Var File::var(const std::string& varname, bool load_data)
 {
   return Var(this, varname, load_data);
 }
+
+inline std::vector<Var> File::get_var_info_list()
+{
+  std::vector<Var> varlist;
+
+  Mat_Rewind(p_matfp);
+  matvar_t * p = NULL;
+  while ( (p = Mat_ReadNextVarInfo(p_matfp)) != NULL ) {
+    varlist.append(Var::takeOver(p));
+  }
+  return varlist;
+}
+
 
 /* get value types */
 
@@ -507,11 +614,30 @@ template<class cT>
 struct _mat_helper_get_value<std::complex<cT> >
   : public _mat_helper_get_value_base<std::complex<cT>,true> { };
 
-template<class T>
-inline T value(const Var& var)
+
+/** \brief the return value of \ref value(), if a type T is requested.
+ *
+ * By default, this is the same type \a T. However, for example for Eigen types, we might
+ * prefer to return a generator expression or a mapped type.
+ */
+template<typename T>
+struct VarValueRetTypeTraits {
+  typedef T type;
+};
+
+
+template<typename T, typename RetType = typename VarValueRetTypeTraits<T>::type>
+inline RetType value(const Var& var)
 {
   return _mat_helper_get_value<T>::get_value(var);
 }
+
+template<typename T, typename RetType = typename VarValueRetTypeTraits<T>::type>
+inline RetType Var::value() const;
+{
+  return value<T,RetType>(*this);
+}
+
 
   
 /* get vector/matrix types */

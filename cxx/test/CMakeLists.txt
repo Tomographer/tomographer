@@ -20,6 +20,10 @@ add_definitions(-DBOOST_TEST_DYN_LINK)
 set(TOMOGRAPHER_TEST_PATTERNS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patterns/"
   CACHE STRING "path to the expected test results patterns")
 add_definitions(-DTOMOGRAPHER_TEST_PATTERNS_DIR="${TOMOGRAPHER_TEST_PATTERNS_DIR}")
+# we need to access some data. Trailing slash needed.
+set(TOMOGRAPHER_TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/data/"
+  CACHE STRING "path to data files required by some tests")
+add_definitions(-DTOMOGRAPHER_TEST_DATA_DIR="${TOMOGRAPHER_TEST_DATA_DIR}")
 
 # test suite
 set(tests_SRCS
@@ -28,6 +32,7 @@ set(tests_SRCS
   test_sphcoords.cxx
   test_tools_util.cxx
   test_tools_conststr.cxx
+  test_tools_ezmatio.cxx
   test_qit_util.cxx
   test_loggers.cxx
   test_lib_basics.cxx

@@ -26,6 +26,7 @@
 
 /** \namespace Tomographer::MAT
  *
- * \brief Utilities to read MATLAB \c *.mat files.
+ * \brief Utilities and helpers for reading MATLAB \c .mat files
  *
+ * 
  */
