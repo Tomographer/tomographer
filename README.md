@@ -2,7 +2,7 @@
 THE TOMOGRAPHER PROJECT
 =======================
 
----A toolbox for error analysis in quantum tomography.
+— A toolbox for error analysis in quantum tomography.
 
 
 Overview
@@ -10,9 +10,9 @@ Overview
 
 This project comprises two parts:
 
- * The `tomorun` program -- you probably want this
+ * The `tomorun` program — you probably want this
 
- * The generic, `Tomographer` C++ framework -- flexible, but you'll need to
+ * The generic, `Tomographer` C++ framework — flexible, but you'll need to
    invest more time.
 
 The `tomorun` executable produces a histogram of a figure of merit under the
