@@ -224,10 +224,11 @@ BOOST_AUTO_TEST_CASE(binning_analysis)
       );
   output_error_bars
     << "--------------------------------------------------------------------------------\n";
-  dump_histogram_test(output_error_bars, result.hist);
+  dump_histogram_test(output_error_bars, result.hist, 2);
   output_error_bars
     << "--------------------------------------------------------------------------------\n"
     << "ERROR BARS @ BINNING LEVELS = \n"
+    << std::setprecision(2) << std::scientific << std::left << std::setfill('0')
     << result.error_levels
     << "\n";
   BOOST_CHECK(output_error_bars.match_pattern());

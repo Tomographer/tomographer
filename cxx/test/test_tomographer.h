@@ -148,6 +148,8 @@ static const float tol_f = tol_percent_f * 0.01f;
 
 
 
+static constexpr int DumpHistogramTest_DefaultPrecision = 3;
+
 // utility to check histograms.
 //
 // This dumps the histogram data (with or without error bars depending on the histogram
@@ -157,7 +159,8 @@ static const float tol_f = tol_percent_f * 0.01f;
 template<typename HistogramType>
 struct DumpHistogramTest
 {
-  static inline void dump(std::ostream & str, const HistogramType & histogram)
+  static inline void dump(std::ostream & str, const HistogramType & histogram,
+			  const int precision = DumpHistogramTest_DefaultPrecision)
   {
     str << "HISTOGRAM";
     if (HistogramType::HasErrorBars) {
@@ -165,8 +168,9 @@ struct DumpHistogramTest
     } else {
       str << "\n";
     }
+    str << std::setprecision(precision) << std::scientific << std::right << std::setfill('0');
     str << "\n";
-    str << "PARAMS = [" << std::setprecision(3) << histogram.params.min << ", " << histogram.params.max
+    str << "PARAMS = ["	<< histogram.params.min << ", " << histogram.params.max
 	<< "] (" << histogram.num_bins() << " bins)\n"
 	<< "\n";
     for (std::size_t k = 0; k < (std::size_t)histogram.num_bins(); ++k) {
@@ -191,9 +195,10 @@ private:
 
 // helper function for automatic template type deduction
 template<typename HistogramType>
-void dump_histogram_test(std::ostream & str, const HistogramType & histogram)
+void dump_histogram_test(std::ostream & str, const HistogramType & histogram,
+			 const int precision = DumpHistogramTest_DefaultPrecision)
 {
-  DumpHistogramTest<HistogramType>::dump(str, histogram);
+  DumpHistogramTest<HistogramType>::dump(str, histogram, precision);
 }
 
 

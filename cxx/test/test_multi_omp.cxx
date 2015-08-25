@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_CASE(dmmhrwtask)
       TOMOGRAPHER_TEST_PATTERNS_DIR "test_multi_omp/hist_dmmhrwtask.txt",
       true // true = match mode, false = write mode
       );
-  dump_histogram_test(output, results.finalhistogram);
+  dump_histogram_test(output, results.finalhistogram, 2);
   // output
   //   << "BINS = \n"
   //   << std::setprecision(3)
