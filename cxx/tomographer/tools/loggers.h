@@ -1628,15 +1628,50 @@ struct LoggerTraits<LocalLogger<BaseLoggerType_> > : LoggerTraits<BaseLoggerType
 };
 
 
-/** \brief Local Logger: avoid having to repeat origin at each emitted message
+/** \brief Local logger: avoid having to repeat origin at each emitted message
  *
  * This type of logger accepts origin information in its constructor. Then, you may call
  * the \ref longdebug(), \ref debug(), \ref info(), \ref warning() and \ref error()
- * methods without any \a origin information.
+ * methods without any \a origin information.  You may also nest these loggers. See method
+ * \ref sublogger(const std::string&).
  *
  * This logger relays log messages to a base logger of type \a BaseLoggerType.
  *
- * You may also nest these loggers. See method \ref sublogger().
+ * Example usage:
+ * \code
+ *   template<typename BaseLoggerType>
+ *   class XYZ
+ *   {
+ *     LocalLogger<BaseLoggerType> _logger;
+ *   public:
+ *     XYZ(BaseLoggerType & baselogger)
+ *       : _logger(TOMO_ORIGIN, baselogger)
+ *     {
+ *       // this message's origin will be "XYZ"
+ *       _logger.debug("constructor was called.");
+ *     }
+ *
+ *     void method(int k)
+ *     {
+ *       // this message's origin will be "XYZ"
+ *       _logger.debug("method() was called. k=%d", k);
+ *
+ *       // if you need to pass a logger to any external procedure, pass on the
+ *       // baselogger() as the other routine expects to be able to specify its
+ *       // own origin string:
+ *       some_external_routine(k, .., _logger.baselogger());
+ *     }
+ *
+ *     void longmethod(int N)
+ *     {
+ *       auto logger = _logger.sublogger(TOMO_ORIGIN);
+ *       for (int k = 0; k < N; ++k) {
+ *         // this message's origin will be "XYZ::longmethod()"
+ *         logger.debug("inner loop: k=%d out of %d", k, N);
+ *       }
+ *     }
+ *   };
+ * \endcode
  */
 template<typename BaseLoggerType_>
 class LocalLogger : public Tomographer::Logger::LoggerBase<LocalLogger<BaseLoggerType_> >

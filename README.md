@@ -12,7 +12,8 @@ This project comprises two parts:
 
  * The `tomorun` program -- you probably want this
 
- * The generic, C++ framework -- flexible, but you'll need to invest time.
+ * The generic, `Tomographer` C++ framework -- flexible, but you'll need to
+   invest more time.
 
 The `tomorun` executable produces a histogram of a figure of merit under the
 distribution relevant for constructing confidence regions using the method
@@ -30,7 +31,7 @@ Prerequisites
 
 You'll need:
 
-  - a recent C++ compiler (g++ >= 4.6)
+  - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, clang++?)
   - [CMake >= 2.8.5](http://www.cmake.org/)
   - [Boost libraries](http://www.boost.org/)
   - [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/)
@@ -184,6 +185,6 @@ Authors, Copyright, License
 ---------------------------
 
 Philippe Faist
-(C) 2015 ETH Zurich
+(C) 2015 ETH Zurich    ??????
 
-Released under the terms of the ??????? License (TODO!!/FIXME!!)
+Released under the terms of the ??????? License (TODO!!)

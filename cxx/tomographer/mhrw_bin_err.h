@@ -506,7 +506,7 @@ public:
    *
    */
   TOMOGRAPHER_ENABLED_IF(StoreBinSums)
-  inline const auto get_bin_means() const
+  inline auto get_bin_means() const
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
     -> decltype(BinSumArray() / ValueType(n_samples))
 #endif
@@ -520,7 +520,7 @@ public:
    * raw values observed, <em>bin_sqmeans.col(1)</em> the raw average of the squares of
    * the values averaged 2 by 2 (i.e. at the first binning level), and so on.
    */
-  inline const auto get_bin_sqmeans() const
+  inline auto get_bin_sqmeans() const
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
     -> decltype(
 	bin_sumsq.cwiseQuotient(n_flushes * replicated<NumTrackValuesCTime,1>(

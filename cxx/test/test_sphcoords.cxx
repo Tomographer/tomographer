@@ -101,7 +101,7 @@ struct TestSphJacFixture
     const int ds = SPH_DIM;
     const double pi = boost::math::constants::pi<double>();
 
-    Eigen::VectorXd theta(ds);
+    Eigen::VectorXd theta((Eigen::VectorXd::Index)ds);
     double surf = 0;
 
     for (std::size_t k = 0; k < npoints; ++k) {

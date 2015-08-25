@@ -248,7 +248,7 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
 
 
       // this one is declared for histograms WITHOUT error bars (SimpleHistogramType is a
-      // UniformBinsHistogram), so it will just ignore the error bars
+      // UniformBinsHistogram), so it will just ignore the error bars.
       logger.debug([&](std::ostream & str) {
 	  str << "Simple histogram is:\n";
 	  Tomographer::histogram_pretty_print<SimpleHistogramType>(str, taskresult.hist);

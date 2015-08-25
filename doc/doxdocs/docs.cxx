@@ -29,3 +29,10 @@
  * \brief Utilities to read MATLAB \c *.mat files.
  *
  */
+
+
+/** \namespace Tomographer::SphCoords
+ *
+ * Utilities for hyperspherical coordinates. See also the corresponding theory page \ref
+ * pageParamsSphericalCoords.
+ */

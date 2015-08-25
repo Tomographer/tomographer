@@ -1,11 +1,11 @@
 
 /** \page pageLoggers Logging and Loggers
  *
- * Tomographer provides a lightweight framework for logging, i.e. producing messages which
- * inform the user and/or developer about what the program is doing. Objects who would
- * like to log messages take a template type parameter \a Logger, and an instance of such
- * a type usually provided to its constructor. The \a Logger type must be a subclass of
- * \ref Tomographer::Logger::LoggerBase.
+ * %Tomographer provides a lightweight framework for logging, i.e. producing messages
+ * which inform the user and/or developer about what the program is doing. Objects who
+ * would like to log messages take a template type parameter \a Logger, and an instance of
+ * such a type usually provided to its constructor. The \a Logger type must be a subclass
+ * of \ref Tomographer::Logger::LoggerBase.
  *
  * Log messages have different levels of importance, which are \ref
  * Tomographer::Logger::ERROR, \ref Tomographer::Logger::WARNING, \ref
@@ -57,6 +57,11 @@
  * \endcode
  * The call to the lambda, and thus to <code>histogram.pretty_print()</code>, will only be
  * performed if the logger will indeed eventually print the message.
+ *
+ * To avoid specifying the \a origin parameter for repeated calls within the same class or
+ * function, you may use a Tomographer::Logger::LocalLogger, where you set the origin once
+ * in the constructor and don't specify it later on. Also, you may use it recursively. See
+ * its class documentation.
  *
  * A logger may be also directly queried whether a message at a given log level will be
  * emitted or discarded:

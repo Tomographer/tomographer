@@ -935,8 +935,8 @@ public:
   typedef typename Params::BinningAnalysisParamsType BinningAnalysisParamsType;
   typedef BinningAnalysis<BinningAnalysisParamsType, LoggerType> BinningAnalysisType;
     
-  static constexpr int NumTrackValuesCTime = Params::NumTrackValuesCTime;
-  static constexpr int NumLevelsCTime = Params::NumLevelsCTime;
+  static constexpr int NumTrackValuesCTime = Params::NumTrackValues;
+  static constexpr int NumLevelsCTime = Params::NumLevels;
   static constexpr bool TrackSelectedIndices = Params::TrackSelectedIndices;
 
   typedef typename Params::Result Result;

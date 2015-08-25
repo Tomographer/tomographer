@@ -109,7 +109,7 @@
  * error. If not, there are not enough samples and the error bar hasn't converged.
  *
  * Make sure that at the last binning level you still have enough samples to get a
- * reliable estimate of the \f$ \Delta^{(n)} \f$ from those samples.
+ * reliable estimate of \f$ \Delta^{(n)} \f$ from those samples.
  *
  * This analysis is done using the class \ref Tomographer::BinningAnalysis.
  */
