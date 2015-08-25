@@ -825,6 +825,9 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
   //! The number of levels in the binning analysis. See \ref BinningAnalysis.
   static constexpr int NumLevels = NumLevels_;
   //! NOT YET IMPLEMENTED. Whether to track only selected indices in the histogram [for now, all are tracked]
+  /**
+   * \todo why would one want to track selected indices? remove this completely.
+   */
   static constexpr bool TrackSelectedIndices = TrackSelectedIndices_;
 
   //! The type of a value calculated by the \ref pageInterfaceValueCalculator.
