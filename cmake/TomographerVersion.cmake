@@ -56,7 +56,7 @@ else(EXISTS "${TomographerVersionFile}")
     
   else(_git_all_ok)
 
-    message(WARNING, "Can't determine Tomographer GIT version. Looks like you didn't clone the GIT repo and didn't download an official release.")
+    message(WARNING, "Can't determine Tomographer GIT version. Looks like you didn't clone the GIT repo and didn't download an official release; or CMake couldn't find the `git' executable.")
     
     set(TOMOGRAPHER_VERSION "<unknown>")
     # don't try to update, won't find git repo
