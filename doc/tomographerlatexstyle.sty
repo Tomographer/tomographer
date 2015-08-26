@@ -1,0 +1,29 @@
+%
+% Author: Philippe Faist (2015)
+%
+\NeedsTeXFormat{LaTeX2e}
+\ProvidesPackage{tomographerlatexstyle}[2015/08/26 Tomographer Doxygen Documentation Style]
+
+\RequirePackage{amsmath}
+\RequirePackage{amsfonts}
+\RequirePackage{amssymb}
+
+%\RequirePackage{mathptmx}
+%\renewcommand{\familydefault}{\rmdefault}
+%\allsectionsfont{%
+%  \fontseries{\sfdefault}\selectfont%\fontseries{bc}\selectfont%
+%  \color{darkgray}%
+%}
+
+
+% hack to avoid TT links in documenation (doxygen inserts \tt, we can't do anything about
+% that, as in "See
+% \href{http://eigen.tuxfamily.org/dox/group__TopicStlContainers.html}{\tt this discussion
+% in Eigen\textquotesingle{}s documentation} about using Eigen with C++ S\+T\+L
+% containers."
+%\newcommand\tomographer@href[2]{\bgroup\let\tt\relax\tomographer@old@href{#1}{#2}\egroup}%
+%\AtBeginDocument{%
+%  \let\tomographer@old@href\href%
+%  \let\href\tomographer@href%
+%}
+\let\tt\relax
