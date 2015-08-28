@@ -197,17 +197,18 @@
  *     real samples, use \c process_sample() instead.
  *
  * \par
- *     \c k is the iteration number, \c is_thermalizing is \c true during the first part
- *     of the random walk during the thermalizing runs, \c is_live_iter is set to \c true
- *     only if a sample is taken at this point, i.e. if not thermalizing and after a full
- *     sweep. \c accepted indicates whether this Metropolis-Hastings move was accepted or
- *     not and \c a gives the ratio of the function which was tested for the move. (Note
- *     that \c a might not be calculated and left to 1 if known to be greater than 1.) \c
- *     newpt and \c newptval are the new proposal jump point and the function value at
- *     that new point. The function value is either the actual value of the function, or
- *     its logarithm, or a dummy value, depending on \c MHWalker::UseFnSyntaxType. 
- *     Similarly \c curpt and \c curptval are the current point and function value. The
- *     object \c rw is a reference to the random walk object instance.
+ *     \c k is the iteration number (which is reset to zero after the thermalizing
+ *     sweeps), \c is_thermalizing is \c true during the first part of the random walk
+ *     during the thermalizing runs, \c is_live_iter is set to \c true only if a sample is
+ *     taken at this point, i.e. if not thermalizing and after a full sweep. \c accepted
+ *     indicates whether this Metropolis-Hastings move was accepted or not and \c a gives
+ *     the ratio of the function which was tested for the move. (Note that \c a might not
+ *     be calculated and left to 1 if known to be greater than 1.) \c newpt and \c
+ *     newptval are the new proposal jump point and the function value at that new
+ *     point. The function value is either the actual value of the function, or its
+ *     logarithm, or a dummy value, depending on \c MHWalker::UseFnSyntaxType.  Similarly
+ *     \c curpt and \c curptval are the current point and function value. The object \c rw
+ *     is a reference to the random walk object instance.
  * 
  *
  */

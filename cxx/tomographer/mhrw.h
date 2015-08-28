@@ -20,6 +20,12 @@
 #include <tomographer/mhrw_bin_err.h>
 
 
+/** \file mhrw.h
+ * \brief Routines for performing a Metropolis-Hastings random walk.
+ *
+ */
+
+
 namespace Tomographer {
 
 
@@ -340,7 +346,10 @@ public:
       _mhwalker(mhwalker),
       _stats(stats),
       _logger(logger_),
-      curpt()
+      curpt(),
+      curptval(),
+      num_accepted(0),
+      num_live_points(0)
   {
     _logger.debug("MHRandomWalk", "constructor(). n_sweep=%lu, n_therm=%lu, n_run=%lu, step_size=%g",
 	       (unsigned long)n_sweep, (unsigned long)n_therm, (unsigned long)n_run, (double)step_size);
@@ -487,7 +496,8 @@ public:
   }
 
   /** \brief Required for \ref pageInterfaceRandomWalk. Process a new live sample in the
-   * random walk. Relays the call to the \a MHRWStatsCollector.
+   * random walk. Relays the call to the \a MHRWStatsCollector (see \ref
+   * pageInterfaceMHRWStatsCollector).
    */
   inline void process_sample(CountIntType k, CountIntType n)
   {
@@ -513,9 +523,10 @@ public:
 
 /** \brief A simple MHRWStatsCollector interface which combines several stats collectors
  *
- * A \ref MHRandomWalk object expects one instance of a \c MHRWStatsCollector; in case you
- * wish to provide several stats collectors, you should use a MultipleMHRWStatsCollectors
- * instance which combines all your preferred stats collectors.
+ * A \ref MHRandomWalk object expects one instance of a \a MHRWStatsCollector (see \ref
+ * pageInterfaceMHRWStatsCollector); in case you wish to provide several stats collectors,
+ * you should use a MultipleMHRWStatsCollectors instance which combines all your preferred
+ * stats collectors.
  *
  * The obscure variadic templating of this class should not scare you&mdash;it's
  * relatively straightforward to use:

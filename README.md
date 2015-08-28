@@ -183,6 +183,18 @@ run, etc.
 [boost_test_options]: http://www.boost.org/doc/libs/1_59_0/libs/test/doc/html/boost_test/runtime_config/summary.html
 
 
+How to Cite
+-----------
+
+If you use this software in your research, please add the following citations:
+
+1. Philippe Faist and Renato Renner. Practical, Reliable Error Bars in Quantum Tomography. arXiv:XXXX.XXXXX
+
+2. Philippe Faist. Tomographer C++ Framework. Available at [URL].
+
+(TODO/FIXME:: update references!)
+
+
 Authors, Copyright, License
 ---------------------------
 

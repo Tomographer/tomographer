@@ -13,11 +13,8 @@
 #include <tomographer/mhrwtasks.h>
 #include <tomographer/dmmhrw.h>
 
-#include <boost/test/unit_test.hpp>
-#include <boost/test/floating_point_comparison.hpp>
-#include <boost/test/output_test_stream.hpp>
 
-//#include <boost/algorithm/string.hpp>
+#include "test_mh_random_walk.h" // our test-case random walk
 
 
 
