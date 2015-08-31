@@ -2,7 +2,7 @@
 THE TOMOGRAPHER PROJECT
 =======================
 
-— A toolbox for error analysis in quantum tomography.
+A toolbox for error analysis in quantum tomography.
 
 
 Overview
@@ -57,6 +57,10 @@ There will  soon be official  source code releases  (TODO!!). For now,  you need
 `git` and  you should clone  the repository (FIXME!!).  Note that for  the build
 system, `git` must be  in your PATH, or you should set  the CMake variable "GIT"
 appropriately.
+
+Download from:
+
+    https://github.com/Tomographer/tomographer/
 
 
 Installation
