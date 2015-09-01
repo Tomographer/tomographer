@@ -292,8 +292,9 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
      "write the histogram to the given file in tabbed CSV values")
     ("verbose", value<Tomographer::Logger::LogLevel>(& opt->loglevel)->default_value(opt->loglevel)
      ->implicit_value(Tomographer::Logger::DEBUG),
-     "print iteration info. Not very readable unless n-repeats=1. You may also specify "
-     "a specific verbosity level (integer); the higher the more verbose.")
+     "print verbose information. Not very readable unless n-repeats=1. You may also specify "
+     "as argument 'longdebug', 'debug', 'info', 'warning' or 'error', or a numerical verbosity "
+     "level 0-4.")
     ("verbose-log-info", bool_switch(& opt->verbose_log_info)->default_value(opt->verbose_log_info),
      "[For Developers.] If specified, log messages are more verbose; they display e.g. at which point "
      "in the code they were emitted.")
@@ -324,11 +325,15 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     variables_map vm;
     store(command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
 
+    const char * prog_version_info =
+      "Tomographer/Tomorun " TOMOGRAPHER_VERSION "\n"
+      "by Philippe Faist, Institute for Theoretical Physics, ETH Zurich\n"
+      "(C) 2015 ETH Zurich\n";
+
+    
     if (vm.count("help")) {
       std::cout
-	<< "\n"
-	"Tomographer/Tomorun " TOMOGRAPHER_VERSION "\n"
-	"(C) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist\n"
+	<< "\n" << prog_version_info <<
 	"\n"
 	"A toolbox for error analysis in quantum tomography.\n"
 	"\n"
@@ -467,9 +472,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     }
 
     if (vm.count("version")) {
-      std::cout << "Tomographer/Tomorun " << TOMOGRAPHER_VERSION << "\n"
-		<< "by Philippe Faist, Institute for Theoretical Physics, ETH Zurich\n"
-		<< "(C) 2015 ETH Zurich\n\n";
+      std::cout << prog_version_info << "\n";
       ::exit(2);
     }
 
