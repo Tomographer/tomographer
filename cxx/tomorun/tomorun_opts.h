@@ -457,7 +457,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"FEEDBACK:\n"
 	"Please report issues, wishlists and bugs by following instructions at:\n"
 	"\n"
-	"    https://gitlab.phys.ethz.ch/pfaist/tomographer/\n"
+	"    https://github.com/Tomographer/tomographer/\n"
 	"\n"
 	"Have a lot of fun!\n"
 	"\n"
