@@ -1,7 +1,17 @@
 
-
 #ifndef SIMPLE_FIND_ZERO_H
 #define SIMPLE_FIND_ZERO_H
+
+/** \file simple_find_zero.h
+ *
+ * \brief A very simplistic tool for finding a relatively straightforward zero with few
+ *        iterations.
+ *
+ * For better, interval bracketing algorithms, see <a
+ * href="http://www.boost.org/doc/libs/1_59_0/libs/math/doc/html/math_toolkit/internals1/roots2.html"
+ * target="_blank">Boost's alternatives</a>.
+ *
+ */
 
 #include <cmath>
 #include <cstdio>

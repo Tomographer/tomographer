@@ -2,6 +2,13 @@
 #ifndef RANDOM_UNITARY_H
 #define RANDOM_UNITARY_H
 
+/** \file random_unitary.h
+ *
+ * \brief Produce a random unitary according to the Haar measure.
+ *
+ */
+
+
 #include <iostream>
 #include <random>
 

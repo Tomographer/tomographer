@@ -2,6 +2,15 @@
 #ifndef TOMOGRAPHER_CONSTSTR_H
 #define TOMOGRAPHER_CONSTSTR_H
 
+#include <string>
+
+
+/** \file conststr.h
+ *
+ * \brief A constexpr string type, suitable for basic compile-time string processing.
+ *
+ * See \ref Tomographer::Tools::conststr.
+ */
 
 
 namespace Tomographer {

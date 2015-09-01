@@ -2,6 +2,12 @@
 #ifndef QIT_DIST_H
 #define QIT_DIST_H
 
+/** \file dist.h
+ *
+ * \brief Distance measures in Quantum Information Theory -- e.g. fidelity
+ *
+ */
+
 
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>

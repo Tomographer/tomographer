@@ -1,6 +1,12 @@
 #ifndef TOMOGRAPHER_TOOLS_FMT_H
 #define TOMOGRAPHER_TOOLS_FMT_H
 
+/** \file fmt.h
+ *
+ * \brief Utilities for formatting strings.
+ *
+ */
+
 #include <cstdio>
 #include <cstdarg>
 

@@ -2,6 +2,12 @@
 #ifndef HERM_PARAM_X_H
 #define HERM_PARAM_X_H
 
+/** \file param_herm_x.h
+ *
+ * \brief Tools for parameterizing hermitian matrices with the \ref pageParamsX.
+ *
+ */
+
 #include <cmath>
 #include <complex>
 

@@ -7,6 +7,13 @@
 
 #include <Eigen/Core>
 
+/** \file check_derivatives.h
+ *
+ * \brief Tools to check numerical derivatives.
+ *
+ * See \ref Tomographer::Tools::check_derivatives().
+ *
+ */
 
 namespace Tomographer
 {

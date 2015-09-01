@@ -18,6 +18,15 @@
 #include <tomographer/tools/fmt.h>
 #include <tomographer/tools/conststr.h>
 
+
+/** \file loggers.h
+ *
+ * \brief Utilities for logging messages.
+ *
+ */
+
+
+
 #define ENABLE_IF_Fn_CALLABLE_OSTREAM                                      \
   typename std::enable_if<std::is_convertible<Fn,std::function<void(std::ostream&)> >::value, void>::type
 

@@ -3,6 +3,12 @@
 #ifndef POS_SEMIDEF_UTIL
 #define POS_SEMIDEF_UTIL
 
+/** \file pos_semidef_util.h
+ *
+ * \brief Tools for dealing with positive semidefinite matrices.
+ *
+ */
+
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 

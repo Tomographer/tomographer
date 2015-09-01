@@ -6,6 +6,15 @@
 #include <omp.h>
 
 
+/** \file multiprocomp.h
+ *
+ * \brief Multiprocessing with OpenMP parallel multithreading.
+ *
+ * See \ref Tomographer::MultiProc::OMP.
+ *
+ */
+
+
 namespace Tomographer {
 
 

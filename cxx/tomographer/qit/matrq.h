@@ -1,10 +1,18 @@
-#ifndef QUTIL_H
-#define QUTIL_H
+#ifndef _MATRQ_H
+#define _MATRQ_H
 
 #include <cstddef> // std::size_t
 #include <complex>
 
 #include <Eigen/Core>
+
+
+/** \file matrq.h
+ *
+ * \brief Define types for quantum objects. See \ref Tomographer::MatrQ.
+ *
+ */
+
 
 
 namespace Tomographer {

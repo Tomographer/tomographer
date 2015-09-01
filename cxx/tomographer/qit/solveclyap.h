@@ -2,6 +2,13 @@
 #ifndef SOLVECLYAP_H
 #define SOLVECLYAP_H
 
+/** \file solveclyap.h
+ *
+ * \brief Routine for solving a complex Lyapunov equation. See \ref
+ *        Tomographer::SolveCLyap::solve().
+ *
+ */
+
 #include <string>
 
 #include <Eigen/Core>

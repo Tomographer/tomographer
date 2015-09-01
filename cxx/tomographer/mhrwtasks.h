@@ -2,6 +2,13 @@
 #ifndef TOMOGRAPHER_MHWALKER_TASKS_H
 #define TOMOGRAPHER_MHWALKER_TASKS_H
 
+/** \file mhrwtasks.h
+ *
+ * \brief Multiprocessing tasks interface (see \ref pageTaskManagerDispatch) for
+ *        parallel Metropolis-Hastings random walks.
+ *
+ */
+
 #include <string>
 #include <limits>
 #include <random>

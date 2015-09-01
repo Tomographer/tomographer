@@ -2,6 +2,13 @@
 #ifndef QIT_UTIL_H
 #define QIT_UTIL_H
 
+/** \file tomographer/qit/util.h
+ *
+ * \brief Basic utilities for dealing with Eigen matrices and other types.
+ *
+ */
+
+
 #include <complex>
 #include <vector>
 

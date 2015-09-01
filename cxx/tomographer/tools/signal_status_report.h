@@ -3,6 +3,15 @@
 #ifndef SIGNAL_STATUS_REPORT
 #define SIGNAL_STATUS_REPORT
 
+/** \file signal_status_report.h
+ *
+ * \brief Basic common code for intercepting a signal to print status information of a
+ *        task manager.
+ *
+ */
+
+
+
 #include <signal.h>
 
 #include <cstdio>

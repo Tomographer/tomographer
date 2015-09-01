@@ -10,6 +10,15 @@
 #include <boost/math/constants/constants.hpp>
 
 
+/** \file mhrw_bin_err.h
+ *
+ * \brief Binning Analysis in a Metropolis-Hastings random walk.
+ *
+ * See \ref Tomographer::BinningAnalysis and its parameters template class, \ref
+ * Tomographer::BinningAnalysisParams.
+ */
+
+
 namespace Tomographer {
 
 namespace tomo_internal {

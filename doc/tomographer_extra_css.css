@@ -1,0 +1,23 @@
+
+body, table, div, p, dl {
+   /*font-family: "DejaVu Sans", sans-serif;*/
+}
+
+#titlearea {
+   background-color: #531c00; /*#802b00;*/ /*rgb(255, 152, 101);*/
+   text-shadow: 2px 2px 4px #c48d71;
+}
+
+#titlearea #projectname {
+   color: #ffe8dc;
+   display: inline-block;
+   margin-right: 1em;
+}
+#titlearea #projectnumber {
+   color: #ffad84; /*#ff8b52;*/
+}
+#titlearea #projectbrief {
+   color: #ffad84; /*ff8b52;*/
+   font-style: italic;
+   display: inline-block;
+}

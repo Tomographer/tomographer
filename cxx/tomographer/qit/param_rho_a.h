@@ -1,8 +1,12 @@
 
-
 #ifndef QIT_PARAM_RHO_A_H
 #define QIT_PARAM_RHO_A_H
 
+/** \file param_rho_a.h
+ *
+ * \brief Tools for parameterizing density matrices with the \ref pageParamsA.
+ *
+ */
 
 
 #include <Eigen/Core>

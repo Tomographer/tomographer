@@ -2,6 +2,12 @@
 #ifndef TOMOPROBLEM_H
 #define TOMOPROBLEM_H
 
+/** \file tomoproblem.h
+ *
+ * \brief Data corresponding to a quantum tomography setting.
+ *
+ * See \ref pageInterfaceTomoProblem and \ref Tomographer::IndepMeasTomoProblem.
+ */
 
 namespace Tomographer {
 

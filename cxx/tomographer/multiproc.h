@@ -5,6 +5,14 @@
 #include <string>
 
 
+/** \file multiproc.h
+ *
+ * \brief Some common definitions for multiprocessing interfaces.
+ *
+ * See also \ref pageTaskManagerDispatcher as well as \ref Tomographer::MultiProc::OMP.
+ */
+
+
 namespace Tomographer {
 
 

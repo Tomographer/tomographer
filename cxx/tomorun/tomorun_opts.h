@@ -328,7 +328,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
       std::cout
 	<< "\n"
 	"Tomographer/Tomorun " TOMOGRAPHER_VERSION "\n"
-	"(C) 2015 ETH Zurich\n"
+	"(C) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist\n"
 	"\n"
 	"A toolbox for error analysis in quantum tomography.\n"
 	"\n"
@@ -449,7 +449,13 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"     defined as P(rho,sigma) = \\sqrt{1 - F^2(rho,sigma)}.\n"
 	" [5] Indeed, for pure rho_ref, F^2(rho,rho_ref) = tr(rho*rho_ref).\n"
 	"\n"
-	"Please report issues and bugs by following instructions at:\n"
+	"CITATION:\n"
+	"If you use this program in your research, we strongly encourage you to cite it\n"
+	"accordingly. Please see the instructions provded in the README file accompanying\n"
+	"the source code.\n"
+	"\n"
+	"FEEDBACK:\n"
+	"Please report issues, wishlists and bugs by following instructions at:\n"
 	"\n"
 	"    https://gitlab.phys.ethz.ch/pfaist/tomographer/\n"
 	"\n"
@@ -462,7 +468,8 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 
     if (vm.count("version")) {
       std::cout << "Tomographer/Tomorun " << TOMOGRAPHER_VERSION << "\n"
-		<< "by Philippe Faist, (C) 2015 ETH Zurich\n";
+		<< "by Philippe Faist, Institute for Theoretical Physics, ETH Zurich\n"
+		<< "(C) 2015 ETH Zurich\n\n";
       ::exit(2);
     }
 
@@ -493,7 +500,8 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
        * behavior risks. Same thing for log file and histogram write file.
        */
       if (configdir != ".") {
-	throw bad_options(streamstr("Config file must reside in current working directory: " << configfname));
+	throw bad_options(streamstr("Sorry, config file must reside in current working directory: "
+				    << configfname));
       }
     }
 

@@ -2,6 +2,12 @@
 #ifndef TOMOGRAPHER_TOOLS_UTILS_H
 #define TOMOGRAPHER_TOOLS_UTILS_H
 
+/** \file tomographer/tools/util.h
+ *
+ * \brief Some C++ utilities, with a tad of C++11 tricks.
+ *
+ */
+
 #include <type_traits>
 
 #include <Eigen/Core> // Eigen::Dynamic

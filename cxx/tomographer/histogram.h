@@ -19,6 +19,13 @@
 #include <tomographer/qit/util.h>
 
 
+/** \file histogram.h
+ *
+ * \brief Definitions for Histogram Types.
+ *
+ * See also the \ref pageInterfaceHistogram.
+ */
+
 namespace Tomographer {
 
 

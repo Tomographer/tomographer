@@ -15,6 +15,14 @@
 
 #include <boost/math/constants/constants.hpp>
 
+/** \file dmmhrw.h
+ *
+ * \brief Definitions for a Metropolis-Hastings random walk on a quantum state space with
+ *        dense matrix type
+ *
+ * See mainly \ref Tomographer::DMStateSpaceLLHMHWalker.
+ */
+
 namespace Tomographer {
 
 
