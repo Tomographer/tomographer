@@ -1,23 +1,419 @@
 
-body, table, div, p, dl {
-   /*font-family: "DejaVu Sans", sans-serif;*/
+/* ------------------------------ FONTS ------------------------------ */
+
+/* DejaVu Sans */
+@font-face {
+   font-family: myDejaVuSans;
+   font-weight: normal;
+   font-style: normal;
+   src: url(DejaVuSans.ttf);
+}
+@font-face {
+   font-family: myDejaVuSans;
+   font-weight: bold;
+   font-style: normal;
+   src: url(DejaVuSans-Bold.ttf);
+}
+@font-face {
+   font-family: myDejaVuSans;
+   font-weight: normal;
+   font-style: italic;
+   src: url(DejaVuSans-Oblique.ttf);
+}
+@font-face {
+   font-family: myDejaVuSans;
+   font-weight: bold;
+   font-style: italic;
+   src: url(DejaVuSans-BoldOblique.ttf);
+}
+@font-face {
+   font-family: myDejaVuSans;
+   font-weight: 100;
+   font-style: normal;
+   src: url(DejaVuSans-ExtraLight.ttf);
+}
+/* DejaVu Sans Mono */
+@font-face {
+   font-family: myDejaVuSansMono;
+   src: url(DejaVuSansMono.ttf);
+}
+@font-face {
+   font-family: myDejaVuSansMono;
+   font-weight: bold;
+   src: url(DejaVuSansMono-Bold.ttf);
+}
+@font-face {
+   font-family: myDejaVuSansMono;
+   font-style: italic;
+   src: url(DejaVuSansMono-Oblique.ttf);
+}
+@font-face {
+   font-family: myDejaVuSansMono;
+   font-weight: bold;
+   font-style: italic;
+   src: url(DejaVuSansMono-BoldOblique.ttf);
 }
 
+
+body, html {
+   font-size: 100.01%;
+}
+
+body, table, div, p, dl,
+   .tabs, .tabs2, .tabs3,
+   .title,
+   table.directory,
+   .navpath li.navelem a,
+    #projectname, #projectbrief, #projectnumber,
+    div.toc li,
+    div.toc h3,
+    #powerTip div,
+    #nav-tree .label
+{
+   font-family: myDejaVuSans, /* "DejaVu Sans", */ sans-serif;
+   font-weight: normal;
+}
+
+.tabs, .tabs2, .tabs3 {
+   /*letter-spacing: -.05ex;*/
+}
+
+#doc-content table, #doc-content div, #doc-content p, #doc-content dl {
+   font-size: inherit;
+   /*line-height: inherit;*/
+}
+#doc-content {
+   font-size: 0.95em;
+   /*line-height: 1.3em;*/
+   /*font-weight: 100;*/
+   font-style: normal;
+}
+
+#doc-content div.title {
+   font-size: 2em;
+   line-height: 1.3em;
+   font-weight: 100;
+   margin: 0.6em 0px 0.6em;
+}
+
+h1 {
+   font-size: 2em;
+   line-height: 1.3em;
+   font-weight: 100;
+}
+h2, h2.groupheader {
+   font-size: 1.8em;
+   line-height: 1.3em;
+   font-weight: 100;
+}
+h3 {
+   font-size: 1.4em;
+   line-height: 1.2em;
+   font-weight: 100;
+}
+
+/* specific font settings */
+
+a.el {
+   font-weight: bold;
+}
+code a.el, pre a.el, div.line a.el {
+   font-weight: normal;
+}
+.memname {
+   font-weight: normal;
+}
+
+table.fieldtable th {
+   font-weight: 100;
+   font-size: 0.9em;
+}
+
+dl dt {
+   font-weight: 100;
+   font-size: 1.2em;
+   line-height: 1.5em;
+}
+
+dl.section.user dt {
+   font-weight: bold;
+   font-size: 1em;
+   line-height: 1.5em;
+}
+dl.section.user dd {
+   margin-left: 40px;
+}
+
+
+
+dl.note, dl.warning, dl.attention, dl.todo, dl.bug
+/*, dl.pre, dl.post, dl.invariant, dl.deprecated, dl.todo, dl.test, dl.bug */
+{
+   margin-left: 0px;
+   border-left: none 0px;
+   padding: 5px 50px;
+   border-radius: 4px 4px 4px 4px;
+}
+dl.section dt
+{
+   font-weight: 100;
+   font-size: 1.2em;
+   line-height: 1.5em;
+}
+dl.section dd
+{
+   margin-left: 0px;
+}
+/* note */
+dl.note {
+   background-color: #e0e0ff;
+}
+dl.note dt {
+   color: #000050;
+}
+/* warning, attention */
+dl.warning, dl.attention {
+   background-color: #ffbcaf;
+}
+dl.warning dt, dl.attention dt {
+   color: #500000;
+}
+/* todo, bug */
+dl.todo, dl.bug {
+   background-color: #ffdc9f;
+}
+dl.todo a.el, dl.bug a.el {
+   font-weight: 100;
+   font-size: 1.2em;
+   line-height: 1.5em;
+}
+dl.todo dd, dl.bug dd {
+   margin-left: 0px;
+}
+
+
+/* fixed width fonts */
+
+div.line,
+   code,
+   pre
+{
+   font-family: myDejaVuSansMono, /* "DejaVu Sans Mono", */ monospace, fixed;
+}
+
+div.line {
+   font-size: 1em;
+   line-height: 1.5em;
+}
+span.lineno {
+   display: inline-block;
+}
+div.line {
+   text-indent: 0px;
+   padding-left: 0px;
+}
+
+
+#powerTip,
+#powerTip div
+{
+   font-size: 0.9em;
+   line-height: 1.3em;
+}
+
+/* ------------------------------ TITLE ------------------------------ */
+
 #titlearea {
-   background-color: #531c00; /*#802b00;*/ /*rgb(255, 152, 101);*/
-   text-shadow: 2px 2px 4px #c48d71;
+   color: white;
+   background-color: #0d4e4e;
+   text-shadow: 2px 2px 4px white;
 }
 
 #titlearea #projectname {
-   color: #ffe8dc;
    display: inline-block;
    margin-right: 1em;
+   font-size: 3em;
+   font-weight: 100;
+   font-variant: small-caps;
+   letter-spacing: 5px;
 }
 #titlearea #projectnumber {
-   color: #ffad84; /*#ff8b52;*/
+   font-size: 0.5em;
+   font-weight: 100;
+   letter-spacing: 2px;
 }
 #titlearea #projectbrief {
-   color: #ffad84; /*ff8b52;*/
-   font-style: italic;
+   font-weight: 100;
+   font-size: 1.4em;
+   letter-spacing: 0px;
+   /*font-style: italic;*/
    display: inline-block;
+}
+
+/* ------------------------------ TABS, TABLES, FIELDS etc. ------------------------------ */
+
+.tabs {
+   font-size: 1.2em;
+}
+.tabs2 {
+   font-size: 1em;
+}
+.tablist a {
+   font-weight: normal;
+}
+
+.tabs3 {
+   height: 30px;
+}
+.tabs3 .tablist li {
+   line-height: 26px;
+   height: 30px;
+}
+
+.tabs, .tabs2, .tabs3,
+      .tablist a,
+      .tablist li,
+      .navpath ul,
+      .ui-resizable-e
+{
+   background-image: none;
+   background-color: #8ad4d4; /*#5ec8c8;*/
+}
+.tablist li {
+   border-right: dotted 1px #254f4f;
+}
+.tablist a:hover {
+   background-image: none;
+   background-color: #0c8383;
+}
+
+div.header {
+   border-bottom: 1px solid #8ad4d4;
+}
+
+.paramname {
+   color: #98611b;
+}
+h2.groupheader {
+   color: #98611b;
+   border-bottom: 1px solid #e3c093; /*e3b172;*/
+}
+
+
+dl.reflist a.el {
+   font-weight: normal;
+}
+.memproto, dl.reflist dt,
+      .fieldtable th
+{
+   background-image: none;
+   background-color: #d5eeee;
+   font-weight: 100;
+   font-size: 0.95em;
+   line-height: 1.2em;
+}
+
+table.fieldtable,
+   table.fieldtable th
+{
+   border: 1px solid #d5eeee;
+}
+.fieldtable td.fieldtype,
+      .fieldtable td.fieldname
+{
+   border-right: 1px solid #d5eeee;
+   border-bottom: 1px solid #d5eeee;
+}
+.fieldtable td.fielddoc {
+   border-bottom: 1px solid #d5eeee;
+}
+
+.memproto, dl.reflist dt
+{
+   border-top: 1px solid #d5eeee;
+   border-left: 1px solid #d5eeee;
+   border-right: 1px solid #d5eeee;
+}
+.memdoc, dl.reflist dd
+{
+   border-left: 1px solid #d5eeee;
+   border-right: 1px solid #d5eeee;
+   border-bottom: 1px solid #d5eeee;
+}
+
+div.directory {
+   border-top: 1px solid #d5eeee;
+   border-bottom: 1px solid #d5eeee;
+   padding: 10px 0px;
+}
+
+/* ------------------------------ GLOW ------------------------------ */
+
+h1.glow, h2.glow, h3.glow, h4.glow, h5.glow, h6.glow {
+   text-shadow: 0 0 15px #ff8237;
+}
+div.line.glow {
+   background-color: #ff8237;
+   box-shadow: 0 0 10px #ff8237;
+}
+.memberdecls td.glow, .fieldtable tr.glow {
+   background-color: #ff8237;
+   box-shadow: 0 0 15px #ff8237;
+}
+.memitem.glow {
+   box-shadow: 0 0 15px #ff8237;
+}
+
+
+
+/* ------------------------------ LAYOUT ISSUES ------------------------------ */
+
+.directory td.entry {
+   white-space: normal;
+   width: 30%;
+   line-height: 1.6em;
+}
+.icon {
+   line-height: initial;
+}
+
+.mdescLeft, .memItemLeft, .memTemplItemLeft
+{
+   white-space: normal;
+   max-width: 40%;
+}
+
+table.memberdecls {
+   width: 100%;
+}
+
+a.el {
+}
+
+
+/* ------------------------------ CODE SYNTAX HIGHLIGHT ------------------------------ */
+
+span.keyword {
+   color: #008080;
+}
+span.keywordflow {
+   color: #008080;
+}
+span.keywordtype {
+   color: #40c0c0;
+}
+span.comment {
+   color: #a00000;
+}
+span.preprocessor {
+   color: #4040d0;
+}
+span.stringliteral {
+   color: #00a000;
+}
+div.line a.code {
+   color: #000090;
+}
+div.line a.codeRef {
+   color: #000050;
 }
