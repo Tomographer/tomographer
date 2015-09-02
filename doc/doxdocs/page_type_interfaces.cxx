@@ -5,8 +5,17 @@
 
 /** \page pageTypeInterfaces Type Interfaces
  *
- * These pages document <em>type interfaces</em>: i.e. types which may appear as template
- * parameters, and which must conform to some standard in order to complete their tasks.
+ * These pages document <em>type interfaces</em>. These specify signatures and members
+ * which a type must provide in order to fulfil a particular task. This is what the C++
+ * standard calls &lsquo;concepts.&rsquo; Typically, classes might expect their template
+ * parameters to conform to a particular type interface.
+ *
+ * For example, the class \ref Tomographer::ValueHistogramMHRWStatsCollector calculates
+ * the value of a function specified by a template parameter. In order to use it, it must
+ * be made clear which methods the class is allowed to call on this template
+ * parameter. This specification corresponds to a <em>type interface</em>; in this case
+ * the class expects as template parameter any type which complies with the \ref
+ * pageInterfaceValueCalculator.
  *
  * Documented Type Interfaces in the %Tomographer framwork are:
  *
@@ -29,6 +38,9 @@
 // =============================================================================
 
 /** \page pageInterfaceMatrQ MatrQ Interface
+ *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
  *
  * Declares types for dealing with quantum states and POVMs of a fixed dimension which
  * we'll call here \a dim. See also \ref Tomographer::MatrQ.
@@ -93,6 +105,9 @@
 // =============================================================================
 
 /** \page pageInterfaceTomoProblem TomoProblem Interface
+ *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
  *
  * Stores the data relevant for a tomography problem. Includes:
  *
@@ -165,6 +180,9 @@
 
 /** \page pageInterfaceMHRWStatsCollector MHRWStatsCollector Interface
  *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
+ *
  * A type implementing a \a MHRWStatsCollector interface is responsible for collecting
  * statistics from samples during a Metropolis-Hastings random walk (see \ref
  * Tomographer::MHRandomWalk).
@@ -220,6 +238,9 @@
 
 /** \page pageInterfaceResultable Resultable Interface
  *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
+ *
  * This abstract type interface describes a type which results in some output. This might
  * be for example some forms of \ref pageInterfaceMHRWStatsCollector 's such as \ref
  * Tomographer::ValueHistogramMHRWStatsCollector which results in a histogram.
@@ -238,6 +259,9 @@
 // =============================================================================
 
 /** \page pageInterfaceMHWalker MHWalker Interface
+ *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
  *
  * A \a MHWalker compliant type describes a particular Metropolis-Hastings walk on some
  * state space. It takes care for example of providing candidate new points (jump
@@ -317,6 +341,9 @@
 
 /** \page pageInterfaceRandomWalk RandomWalk Interface
  *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
+ *
  * The \a RandomWalk type is responsible for actually implementing the random walk. It
  * should keep the current state of the random walk in memory and update it when the \c
  * move() function is called.
@@ -374,6 +401,9 @@
 
 /** \page pageInterfaceValueCalculator ValueCalculator Interface
  *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
+ *
  * A \a ValueCalculator is responsible for calculating a particular value at a particular
  * point. This might be, for example, calculating the value of a figure of merit at
  * various point samples during a Metropolis-Hastings random walk.
@@ -396,6 +426,9 @@
 
 
 /** \page pageInterfaceMHRandomWalkTaskCData MHRandomWalkTaskCData Interface
+ *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
  *
  * A \a MHRandomWalkTaskCData is an object which provides data about how to conduct a
  * repetition of random walks, while collecting statistics. It may store constant global
@@ -427,6 +460,9 @@
 
 
 /** \page pageInterfaceHistogram Histogram Interface
+ *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
  *
  * \par typedef .. Scalar
  *      Type used to quantify the quantity which is binned into separate bins

@@ -282,6 +282,9 @@ div.line {
 .tablist li {
    border-right: dotted 1px #254f4f;
 }
+.tabs, .tabs2, .tabs3 {
+   border-bottom: solid 1px #6dbbbb;
+}
 .tablist a:hover {
    background-image: none;
    background-color: #0c8383;
@@ -293,6 +296,9 @@ div.header {
 
 .paramname {
    color: #98611b;
+}
+h2 {
+   border-bottom: 1px solid #d5eeee;
 }
 h2.groupheader {
    color: #98611b;
@@ -368,6 +374,9 @@ div.line.glow {
 
 /* ------------------------------ LAYOUT ISSUES ------------------------------ */
 
+table.directory {
+   width: 100%;
+}
 .directory td.entry {
    white-space: normal;
    width: 30%;
@@ -385,9 +394,6 @@ div.line.glow {
 
 table.memberdecls {
    width: 100%;
-}
-
-a.el {
 }
 
 
