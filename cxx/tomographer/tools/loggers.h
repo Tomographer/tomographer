@@ -170,6 +170,7 @@ public:
   //! Set the level to the given level name. See class doc. 
   inline void setlevel(std::string s)
   {
+    // NOT const string `s`! we need our copy for to_upper():
     boost::to_upper(s);
     if (s == "LONGDEBUG") {
       _level = LONGDEBUG;
