@@ -32,6 +32,31 @@
    font-style: normal;
    src: url(DejaVuSans-ExtraLight.ttf);
 }
+/* DejaVu Sans Condensed */
+@font-face {
+   font-family: myDejaVuSansCondensed;
+   font-weight: normal;
+   font-style: normal;
+   src: url(DejaVuSansCondensed.ttf);
+}
+@font-face {
+   font-family: myDejaVuSansCondensed;
+   font-weight: bold;
+   font-style: normal;
+   src: url(DejaVuSansCondensed-Bold.ttf);
+}
+@font-face {
+   font-family: myDejaVuSansCondensed;
+   font-weight: normal;
+   font-style: italic;
+   src: url(DejaVuSansCondensed-Oblique.ttf);
+}
+@font-face {
+   font-family: myDejaVuSansCondensed;
+   font-weight: bold;
+   font-style: italic;
+   src: url(DejaVuSansCondensed-BoldOblique.ttf);
+}
 /* DejaVu Sans Mono */
 @font-face {
    font-family: myDejaVuSansMono;
@@ -70,7 +95,7 @@ body, table, div, p, dl,
     #powerTip div,
     #nav-tree .label
 {
-   font-family: myDejaVuSans, /* "DejaVu Sans", */ sans-serif;
+   font-family: myDejaVuSans, "DejaVu Sans", sans-serif;
    font-weight: normal;
 }
 
@@ -198,7 +223,7 @@ div.line,
    code,
    pre
 {
-   font-family: myDejaVuSansMono, /* "DejaVu Sans Mono", */ monospace, fixed;
+   font-family: myDejaVuSansMono, "DejaVu Sans Mono", monospace, fixed;
 }
 
 div.line {
@@ -382,9 +407,15 @@ table.directory {
    width: 100%;
 }
 .directory td.entry {
-   white-space: normal;
-   width: 30%;
+   white-space: nowrap;/*normal;*/
+   text-overflow: ellipsis;
+   overflow: hidden;
+   width: 24em;
+   min-width: 16em;
+   max-width: 24em;
    line-height: 1.6em;
+   font-family: myDejaVuSansCondensed;
+   /*letter-spacing: -1px;*/
 }
 .icon {
    line-height: initial;
@@ -426,4 +457,13 @@ div.line a.code {
 }
 div.line a.codeRef {
    color: #000050;
+}
+
+/* ------------------------------ FOOTER FIX ------------------------------ */
+
+li.footer a img.footer {
+   display: none;
+}
+li.footer a:before {
+   content: "Doxygen";
 }

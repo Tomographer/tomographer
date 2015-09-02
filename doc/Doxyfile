@@ -1108,7 +1108,7 @@ HTML_HEADER            =
 # that doxygen normally uses.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_FOOTER            = 
+HTML_FOOTER            = doxy_footer.html
 
 # The HTML_STYLESHEET tag can be used to specify a user-defined cascading style
 # sheet that is used by each HTML page. It can be used to fine-tune the look of
@@ -1163,7 +1163,8 @@ HTML_EXTRA_FILES       = dejavu-fonts-ttf-2.35/ttf/DejaVuSans-Bold.ttf \
                          dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed-Bold.ttf \
                          dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed-BoldItalic.ttf \
                          dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed-Italic.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed.ttf
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed.ttf \
+			 tomographer_script_setup.js
 
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the style sheet and background images according to

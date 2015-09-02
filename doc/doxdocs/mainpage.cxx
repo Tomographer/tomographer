@@ -37,7 +37,7 @@
  *   and is responsible for calculating the loglikelihood function. For the moment, you
  *   should use \ref Tomographer::IndepMeasTomoProblem.
  *
- * \note These types interfaces might change in the future.
+ * \note These type interfaces above might change in the future.
  * 
  * <h3>Running the Metropolis-Hastings Random Walk</h3>
  *
