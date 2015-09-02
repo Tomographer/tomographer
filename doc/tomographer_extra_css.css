@@ -293,6 +293,10 @@ div.line {
 div.header {
    border-bottom: 1px solid #8ad4d4;
 }
+div.summary {
+   display: none;
+   width: 80%;
+}
 
 .paramname {
    color: #98611b;
