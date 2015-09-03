@@ -58,12 +58,32 @@ function fixNavTreeArrows(tag) {
      })($("div#nav-tree", tag)[0]);
 };
 
+function mystrtrim(str) {
+    var rx_trim = /^[\n\s\uFEFF\xA0]+|[\n\s\uFEFF\xA0]+$/g;
+    return str.replace(rx_trim, '');
+}
+
+function setupHomeLink(doc) {
+    var projectname = $("#projectname", doc);
+    $('<span id="innerprojectname"></span>').prependTo(projectname);
+    projectname.contents().each(function(){
+				    if (this.nodeType == 3) {
+					// text node
+					$(this).appendTo($("#innerprojectname", projectname));
+				    }
+				});
+    var inner = $("#innerprojectname", projectname);
+    inner.text(mystrtrim(inner.text()));
+    inner.click(function(){location.href="index.html";});
+};
+
 
 $(document).ready(function() {
 		      setupExternalLinks($(document));
 		      setupAllDirectoryLinks($(document));
 		      setupSpanArrows($(document));
 		      fixNavTreeArrows($(document));
+		      setupHomeLink($(document));
 		 });
 
 

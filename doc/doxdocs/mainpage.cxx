@@ -19,7 +19,7 @@
  * - \ref Tomographer::MAT povides a set of routines to read data from MATLAB files;
  *
  * - %Tomographer provides a lightweight mechanism for logging messages. See \ref
- *   pageLogging;
+ *   pageLoggers;
  *
  * - Some more utilities are provided in \ref Tomographer::SolveCLyap and \ref
  *   Tomographer::SphCoords.

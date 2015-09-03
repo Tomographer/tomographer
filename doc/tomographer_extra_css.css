@@ -108,14 +108,14 @@ body, table, div, p, dl,
    /*line-height: inherit;*/
 }
 #doc-content {
-   font-size: 0.95em;
+   font-size: 0.9em;
    /*line-height: 1.3em;*/
    /*font-weight: 100;*/
    font-style: normal;
 }
 
 #doc-content div.title {
-   font-size: 2em;
+   font-size: 2.2em;
    line-height: 1.3em;
    font-weight: 100;
    margin: 0.6em 0px 0.6em;
@@ -176,7 +176,7 @@ dl.note, dl.warning, dl.attention, dl.todo, dl.bug
 {
    margin-left: 0px;
    border-left: none 0px;
-   padding: 5px 50px;
+   padding: 5px 50px 5px;
    border-radius: 4px 4px 4px 4px;
 }
 dl.section dt
@@ -188,6 +188,7 @@ dl.section dt
 dl.section dd
 {
    margin-left: 0px;
+   margin-bottom: 0px;
 }
 /* note */
 dl.note {
@@ -254,7 +255,7 @@ div.line {
    text-shadow: 2px 2px 4px white;
 }
 
-#titlearea #projectname {
+#projectname {
    display: inline-block;
    margin-right: 1em;
    font-size: 3em;
@@ -262,12 +263,12 @@ div.line {
    font-variant: small-caps;
    letter-spacing: 5px;
 }
-#titlearea #projectnumber {
+#projectnumber {
    font-size: 0.5em;
    font-weight: 100;
    letter-spacing: 2px;
 }
-#titlearea #projectbrief {
+#projectbrief {
    font-weight: 100;
    font-size: 1.4em;
    letter-spacing: 0px;
@@ -275,13 +276,19 @@ div.line {
    display: inline-block;
 }
 
+#innerprojectname {
+   display: inline-block;
+   margin-right: .3em;
+   cursor: pointer;
+}
+
 /* ------------------------------ TABS & APPEARANCE-RELATED ------------------------------ */
 
 .tabs {
-   font-size: 1.2em;
+   font-size: 1em;
 }
 .tabs2 {
-   font-size: 1em;
+   font-size: 0.95em;
 }
 .tablist a {
    font-weight: normal;
@@ -291,7 +298,10 @@ div.line {
    height: 30px;
 }
 .tabs3 .tablist li {
-   line-height: 26px;
+   line-height: 30px;
+   height: 30px;
+}
+.tabs3 .tablist li a {
    height: 30px;
 }
 
@@ -437,7 +447,8 @@ table.directory {
 .mdescLeft, .memItemLeft, .memTemplItemLeft
 {
    white-space: normal;
-   max-width: 40%;
+   min-width: 6em;
+   max-width: 24em;
 }
 
 table.memberdecls {
