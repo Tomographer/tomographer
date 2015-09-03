@@ -1164,7 +1164,9 @@ HTML_EXTRA_FILES       = dejavu-fonts-ttf-2.35/ttf/DejaVuSans-Bold.ttf \
                          dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed-BoldItalic.ttf \
                          dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed-Italic.ttf \
                          dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed.ttf \
-			 tomographer_script_setup.js
+			 tomographer_script_setup.js \
+			 myarrowdown.png \
+			 myarrowright.png
 
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the style sheet and background images according to

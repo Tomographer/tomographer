@@ -275,7 +275,7 @@ div.line {
    display: inline-block;
 }
 
-/* ------------------------------ TABS, TABLES, FIELDS etc. ------------------------------ */
+/* ------------------------------ TABS & APPEARANCE-RELATED ------------------------------ */
 
 .tabs {
    font-size: 1.2em;
@@ -314,6 +314,16 @@ div.line {
    background-image: none;
    background-color: #0c8383;
 }
+
+span.arrow.arrowdown {
+   background-image: url(myarrowdown.png);
+   color: rgba(0, 80, 80, 0);
+}
+span.arrow.arrowright {
+   background-image: url(myarrowright.png);
+   color: rgba(0, 80, 80, 0);
+}
+
 
 div.header {
    border-bottom: 1px solid #8ad4d4;
@@ -417,6 +427,9 @@ table.directory {
    font-family: myDejaVuSansCondensed;
    /*letter-spacing: -1px;*/
 }
+.directory td.entry a.el {
+   font-weight: normal;
+}
 .icon {
    line-height: initial;
 }
@@ -459,11 +472,3 @@ div.line a.codeRef {
    color: #000050;
 }
 
-/* ------------------------------ FOOTER FIX ------------------------------ */
-
-li.footer a img.footer {
-   display: none;
-}
-li.footer a:before {
-   content: "Doxygen";
-}
