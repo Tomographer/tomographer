@@ -35,6 +35,7 @@
 #include <vector>
 #include <algorithm>
 #include <iostream>
+#include <stdexcept>
 
 extern "C" {
 #  include <matio.h>
@@ -605,10 +606,98 @@ inline std::vector<Var> File::get_var_info_list()
 }
 
 
+
+
+/** \brief the return value of \ref value(), if a type T is requested.
+ *
+ * By default, this is the same type \a T. However, for example for Eigen types, we might
+ * prefer to return a generator expression or a mapped type.
+ *
+ * Specialize this template class to implement.................
+ */
+template<typename T>
+struct VarValueRetTypeTraits
+{
+  typedef T type;
+};
+
+
+template<typename T>
+struct VarValueDecoder
+{
+  static constexpr bool has_decode_ptr = false;
+  inline void decode_value(Var & /*var*/, T * /*target*/)
+  {
+    throw std::runtime_error("Not Implemented: Tomographer::MAT::VarValueDecoder<..>::decode_value(Var&, T *)");
+  }
+
+  static constexpr bool has_decode_retval = false;
+  inline VarValueRetTypeTraits<T>::type decode_value(Var & /*var*/)
+  {
+    throw std::runtime_error("Not Implemented: Tomographer::MAT::VarValueDecoder<..>::decode_value(Var &)");
+  }
+};
+
+
+template<typename T, typename RetType = typename VarValueRetTypeTraits<T>::type>
+inline RetType value(const Var& var)
+{
+  return _mat_helper_get_value<T>::get_value(var);
+}
+
+template<typename T, typename RetType = typename VarValueRetTypeTraits<T>::type>
+inline RetType Var::value() const;
+{
+  return value<T,RetType>(*this);
+}
+
+
+
+struct 
+
+
+
+namespace tomo_internal {
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+}
+
+
+
+
+
+
+
+
+// -----------------------------------------------------------------------------
+
+
+
+
+
+
+
+
 /* get value types */
 
-template<class T, bool want_complex>
-struct _mat_helper_get_value_base {
+template<class T>
+struct helper_get_value
+{
+  static constexpr bool want_complex = Tools::is_complex<T>::value;
+
   static inline T get_value(const Var& var)
   {
     const matvar_t * mvar = var.get_matvar_ptr();
@@ -630,39 +719,6 @@ struct _mat_helper_get_value_base {
     return ValueDecoder<T>(mvar, mvar->data).accessor()->value(0);
   }
 };
-
-template<class T>
-struct _mat_helper_get_value
-  : public _mat_helper_get_value_base<T,false> { };
-
-template<class cT>
-struct _mat_helper_get_value<std::complex<cT> >
-  : public _mat_helper_get_value_base<std::complex<cT>,true> { };
-
-
-/** \brief the return value of \ref value(), if a type T is requested.
- *
- * By default, this is the same type \a T. However, for example for Eigen types, we might
- * prefer to return a generator expression or a mapped type.
- */
-template<typename T>
-struct VarValueRetTypeTraits {
-  typedef T type;
-};
-
-
-template<typename T, typename RetType = typename VarValueRetTypeTraits<T>::type>
-inline RetType value(const Var& var)
-{
-  return _mat_helper_get_value<T>::get_value(var);
-}
-
-template<typename T, typename RetType = typename VarValueRetTypeTraits<T>::type>
-inline RetType Var::value() const;
-{
-  return value<T,RetType>(*this);
-}
-
 
   
 /* get vector/matrix types */
