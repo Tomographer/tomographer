@@ -1,4 +1,31 @@
 # Doxyfile 1.8.9.1
+#
+# This file is part of the Tomographer project, which is distributed under the
+# terms of the MIT license.
+# 
+# The MIT License (MIT)
+# 
+# Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe
+# Faist
+# 
+# Permission is hereby granted, free of charge, to any person obtaining a copy
+# of this software and associated documentation files (the "Software"), to deal
+# in the Software without restriction, including without limitation the rights
+# to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+# copies of the Software, and to permit persons to whom the Software is
+# furnished to do so, subject to the following conditions:
+# 
+# The above copyright notice and this permission notice shall be included in all
+# copies or substantial portions of the Software.
+# 
+# THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+# IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+# FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+# AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+# LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+# OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+# SOFTWARE.
+
 
 # This file describes the settings to be used by the documentation system
 # doxygen (www.doxygen.org) for a project.
@@ -171,14 +198,14 @@ STRIP_FROM_PATH        = ../cxx
 # specify the list of include paths that are normally passed to the compiler
 # using the -I flag.
 
-STRIP_FROM_INC_PATH    = 
+STRIP_FROM_INC_PATH    = ../cxx
 
 # If the SHORT_NAMES tag is set to YES, doxygen will generate much shorter (but
 # less readable) file names. This can be useful is your file systems doesn't
 # support long names like on DOS, Mac, or CD-ROM.
 # The default value is: NO.
 
-SHORT_NAMES            = YES
+SHORT_NAMES            = NO
 
 # If the JAVADOC_AUTOBRIEF tag is set to YES then doxygen will interpret the
 # first line (until the first dot) of a Javadoc-style comment as the brief
@@ -1108,7 +1135,7 @@ HTML_HEADER            =
 # that doxygen normally uses.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_FOOTER            = 
+HTML_FOOTER            = doxy_footer.html
 
 # The HTML_STYLESHEET tag can be used to specify a user-defined cascading style
 # sheet that is used by each HTML page. It can be used to fine-tune the look of
@@ -1133,7 +1160,7 @@ HTML_STYLESHEET        =
 # list). For an example see the documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_STYLESHEET  = 
+HTML_EXTRA_STYLESHEET  = tomographer_extra_css.css
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note
@@ -1143,7 +1170,30 @@ HTML_EXTRA_STYLESHEET  =
 # files will be copied as-is; there are no commands or markers available.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_FILES       = 
+HTML_EXTRA_FILES       = dejavu-fonts-ttf-2.35/ttf/DejaVuSans-Bold.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSans-BoldOblique.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSans-ExtraLight.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSans-Oblique.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSans.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansCondensed-Bold.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansCondensed-BoldOblique.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansCondensed-Oblique.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansCondensed.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono-Bold.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono-BoldOblique.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono-Oblique.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerif-Bold.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerif-BoldItalic.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerif-Italic.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerif.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed-Bold.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed-BoldItalic.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed-Italic.ttf \
+                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed.ttf \
+			 tomographer_script_setup.js \
+			 myarrowdown.png \
+			 myarrowright.png
 
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the style sheet and background images according to
@@ -1154,7 +1204,7 @@ HTML_EXTRA_FILES       =
 # Minimum value: 0, maximum value: 359, default value: 220.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_COLORSTYLE_HUE    = 200
+HTML_COLORSTYLE_HUE    = 180
 
 # The HTML_COLORSTYLE_SAT tag controls the purity (or saturation) of the colors
 # in the HTML output. For a value of 0 the output will use grayscales only. A
@@ -1162,7 +1212,7 @@ HTML_COLORSTYLE_HUE    = 200
 # Minimum value: 0, maximum value: 255, default value: 100.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_COLORSTYLE_SAT    = 100
+HTML_COLORSTYLE_SAT    = 180
 
 # The HTML_COLORSTYLE_GAMMA tag controls the gamma correction applied to the
 # luminance component of the colors in the HTML output. Values below 100
@@ -1173,7 +1223,7 @@ HTML_COLORSTYLE_SAT    = 100
 # Minimum value: 40, maximum value: 240, default value: 80.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_COLORSTYLE_GAMMA  = 100
+HTML_COLORSTYLE_GAMMA  = 140
 
 # If the HTML_TIMESTAMP tag is set to YES then the footer of each generated HTML
 # page will contain the date and time when the page was generated. Setting this
@@ -1658,7 +1708,7 @@ PAPER_TYPE             = a4
 # If left blank no extra packages will be included.
 # This tag requires that the tag GENERATE_LATEX is set to YES.
 
-EXTRA_PACKAGES         = 
+EXTRA_PACKAGES         = tomographerlatexstyle
 
 # The LATEX_HEADER tag can be used to specify a personal LaTeX header for the
 # generated LaTeX document. The header should contain everything until the first
@@ -1704,7 +1754,7 @@ LATEX_EXTRA_STYLESHEET =
 # markers available.
 # This tag requires that the tag GENERATE_LATEX is set to YES.
 
-LATEX_EXTRA_FILES      = 
+LATEX_EXTRA_FILES      = tomographerlatexstyle.sty
 
 # If the PDF_HYPERLINKS tag is set to YES, the LaTeX that is generated is
 # prepared for conversion to PDF (using ps2pdf or pdflatex). The PDF file will

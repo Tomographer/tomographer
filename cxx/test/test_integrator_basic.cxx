@@ -1,3 +1,28 @@
+/* This file is part of the Tomographer project, which is distributed under the
+ * terms of the MIT license.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 #include <cstdio>
 #include <random>
@@ -13,11 +38,8 @@
 #include <tomographer/mhrwtasks.h>
 #include <tomographer/dmmhrw.h>
 
-#include <boost/test/unit_test.hpp>
-#include <boost/test/floating_point_comparison.hpp>
-#include <boost/test/output_test_stream.hpp>
 
-//#include <boost/algorithm/string.hpp>
+#include "test_mh_random_walk.h" // our test-case random walk
 
 
 
@@ -224,10 +246,11 @@ BOOST_AUTO_TEST_CASE(binning_analysis)
       );
   output_error_bars
     << "--------------------------------------------------------------------------------\n";
-  dump_histogram_test(output_error_bars, result.hist);
+  dump_histogram_test(output_error_bars, result.hist, 2);
   output_error_bars
     << "--------------------------------------------------------------------------------\n"
     << "ERROR BARS @ BINNING LEVELS = \n"
+    << std::setprecision(2) << std::scientific << std::left << std::setfill('0')
     << result.error_levels
     << "\n";
   BOOST_CHECK(output_error_bars.match_pattern());

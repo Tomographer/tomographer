@@ -1,3 +1,28 @@
+/* This file is part of the Tomographer project, which is distributed under the
+ * terms of the MIT license.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 #ifndef TOMOGRAPHER_MHRW_BIN_ERR_H
 #define TOMOGRAPHER_MHRW_BIN_ERR_H
@@ -8,6 +33,15 @@
 #include <tomographer/tools/loggers.h>
 
 #include <boost/math/constants/constants.hpp>
+
+
+/** \file mhrw_bin_err.h
+ *
+ * \brief Binning Analysis in a Metropolis-Hastings random walk.
+ *
+ * See \ref Tomographer::BinningAnalysis and its parameters template class, \ref
+ * Tomographer::BinningAnalysisParams.
+ */
 
 
 namespace Tomographer {
@@ -506,7 +540,7 @@ public:
    *
    */
   TOMOGRAPHER_ENABLED_IF(StoreBinSums)
-  inline const auto get_bin_means() const
+  inline auto get_bin_means() const
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
     -> decltype(BinSumArray() / ValueType(n_samples))
 #endif
@@ -520,7 +554,7 @@ public:
    * raw values observed, <em>bin_sqmeans.col(1)</em> the raw average of the squares of
    * the values averaged 2 by 2 (i.e. at the first binning level), and so on.
    */
-  inline const auto get_bin_sqmeans() const
+  inline auto get_bin_sqmeans() const
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
     -> decltype(
 	bin_sumsq.cwiseQuotient(n_flushes * replicated<NumTrackValuesCTime,1>(

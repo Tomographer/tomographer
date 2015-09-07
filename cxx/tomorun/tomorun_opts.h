@@ -1,3 +1,30 @@
+/* This file is part of the Tomographer project, which is distributed under the
+ * terms of the MIT license.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+
 #ifndef TOMORUN_OPTS
 #define TOMORUN_OPTS
 
@@ -292,8 +319,9 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
      "write the histogram to the given file in tabbed CSV values")
     ("verbose", value<Tomographer::Logger::LogLevel>(& opt->loglevel)->default_value(opt->loglevel)
      ->implicit_value(Tomographer::Logger::DEBUG),
-     "print iteration info. Not very readable unless n-repeats=1. You may also specify "
-     "a specific verbosity level (integer); the higher the more verbose.")
+     "print verbose information. Not very readable unless n-repeats=1. You may also specify "
+     "as argument 'longdebug', 'debug', 'info', 'warning' or 'error', or a numerical verbosity "
+     "level 0-4.")
     ("verbose-log-info", bool_switch(& opt->verbose_log_info)->default_value(opt->verbose_log_info),
      "[For Developers.] If specified, log messages are more verbose; they display e.g. at which point "
      "in the code they were emitted.")
@@ -324,11 +352,15 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     variables_map vm;
     store(command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
 
+    const char * prog_version_info =
+      "Tomographer/Tomorun " TOMOGRAPHER_VERSION "\n"
+      "by Philippe Faist, Institute for Theoretical Physics, ETH Zurich\n"
+      "(C) 2015 ETH Zurich\n";
+
+    
     if (vm.count("help")) {
       std::cout
-	<< "\n"
-	"Tomographer/Tomorun " TOMOGRAPHER_VERSION "\n"
-	"(C) 2015 ETH Zurich\n"
+	<< "\n" << prog_version_info <<
 	"\n"
 	"A toolbox for error analysis in quantum tomography.\n"
 	"\n"
@@ -338,8 +370,8 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 //      |--------------------------------------------------------------------------------| 80 chars (col. 89)
 	"Produce a histogram of a figure of merit during a random walk in quantum state\n"
 	// REFERENCE [1]
-	"space according to the distribution \\mu_{B^n}(.) defined in Ref. [1]. Currently\n"
-	"only independent POVM effects are supported.\n"
+	"space according to the distribution \\mu_{B^n}(.) defined in Ref. [1]. The\n"
+	"likelihood function is specified with independent POVM effects (see below).\n"
 	"\n"
 	"Input data is given as a MATLAB file (--data-file-name). See below for exact\n"
 	"format. Options may be specified in a separate file and referred to (option\n"
@@ -378,6 +410,32 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"support, you must save your MATLAB data files in MATLAB v6 file format, e.g.:\n"
 	"\n"
 	"    (Matlab)>> save('datafile.mat', ..., '-v6')\n"
+	"\n"
+	"OUTPUT HISTOGRAM:\n"
+	"The histogram data is output to a text file in tab-separated values format with\n"
+	"a single-line header. There are three or four columns, depending on whether a\n"
+	"binning analysis is performed. Each row corresponds to a histogram bin. The\n"
+	"columns are:\n"
+	"\n"
+	"    - The first column is the X-axis value, given as the *left edge* of the bin\n"
+	"      (for example, if the bin range is [0.1, 0.2[, then the value listed in the\n"
+	"      first column is 0.1).\n"
+	"\n"
+	"    - The second column gives the average counts in the histogram bin. The value\n"
+	"      here is the average of the characteristic function \"is the point in this\n"
+	"      bin\" over the samples of the random walk.\n"
+	"\n"
+	"    - The third column gives an error bar on the figure in the second column. If\n"
+	"      binning analysis is enabled, then the third column is the corresponding\n"
+	"      error bar obtained by combining error bars from the binning analyses of\n"
+	"      each random walk. If binning analysis is disabled, this column is the\n"
+	"      statistical standard deviation of the results of the different random\n"
+	"      walks.\n"
+	"\n"
+	"    - If binning analysis is enabled, then the fourth column is the statistical\n"
+	"      standard deviation of the results of the different random walks,\n"
+	"      regardless of error bars from the binning analysis. There is no fourth\n"
+	"      column if binning analysis is disabled.\n"
 	"\n"
 	"FIGURES OF MERIT:\n"
 	"The argument to the option --value-type should be specified as \"keyword\" or\n"
@@ -423,9 +481,15 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"     defined as P(rho,sigma) = \\sqrt{1 - F^2(rho,sigma)}.\n"
 	" [5] Indeed, for pure rho_ref, F^2(rho,rho_ref) = tr(rho*rho_ref).\n"
 	"\n"
-	"Please report issues and bugs by following instructions at:\n"
+	"CITATION:\n"
+	"If you use this program in your research, we strongly encourage you to cite it\n"
+	"accordingly. Please see the instructions provded in the README file accompanying\n"
+	"the source code.\n"
 	"\n"
-	"    https://gitlab.phys.ethz.ch/pfaist/tomographer/\n"
+	"FEEDBACK:\n"
+	"Please report issues, wishlists and bugs by following instructions at:\n"
+	"\n"
+	"    https://github.com/Tomographer/tomographer/\n"
 	"\n"
 	"Have a lot of fun!\n"
 	"\n"
@@ -435,8 +499,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     }
 
     if (vm.count("version")) {
-      std::cout << "Tomographer/Tomorun " << TOMOGRAPHER_VERSION << "\n"
-		<< "by Philippe Faist, (C) 2015 ETH Zurich\n";
+      std::cout << prog_version_info << "\n";
       ::exit(2);
     }
 
@@ -467,7 +530,8 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
        * behavior risks. Same thing for log file and histogram write file.
        */
       if (configdir != ".") {
-	throw bad_options(streamstr("Config file must reside in current working directory: " << configfname));
+	throw bad_options(streamstr("Sorry, config file must reside in current working directory: "
+				    << configfname));
       }
     }
 
@@ -612,7 +676,9 @@ void display_parameters(ProgOptions * opt, LoggerType & logger)
       (unsigned long)opt->Nrun,
       (unsigned long)opt->Nrepeats,
       (unsigned long)opt->Nchunk,
-      (opt->write_histogram.size()?opt->write_histogram:std::string("<don't write histogram>")).c_str(),
+      (opt->write_histogram.size()
+       ? opt->write_histogram + std::string("-histogram.csv")
+       : std::string("<don't write histogram>")).c_str(),
       (unsigned long)(opt->Nrun*opt->Nrepeats),
       (double)(opt->Nrun*opt->Nrepeats)
       );

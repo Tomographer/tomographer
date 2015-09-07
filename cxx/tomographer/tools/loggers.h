@@ -1,3 +1,28 @@
+/* This file is part of the Tomographer project, which is distributed under the
+ * terms of the MIT license.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 #ifndef LOGGERS_H
 #define LOGGERS_H
@@ -17,6 +42,15 @@
 
 #include <tomographer/tools/fmt.h>
 #include <tomographer/tools/conststr.h>
+
+
+/** \file loggers.h
+ *
+ * \brief Utilities for logging messages.
+ *
+ */
+
+
 
 #define ENABLE_IF_Fn_CALLABLE_OSTREAM                                      \
   typename std::enable_if<std::is_convertible<Fn,std::function<void(std::ostream&)> >::value, void>::type
@@ -161,6 +195,7 @@ public:
   //! Set the level to the given level name. See class doc. 
   inline void setlevel(std::string s)
   {
+    // NOT const string `s`! we need our copy for to_upper():
     boost::to_upper(s);
     if (s == "LONGDEBUG") {
       _level = LONGDEBUG;
@@ -1628,15 +1663,50 @@ struct LoggerTraits<LocalLogger<BaseLoggerType_> > : LoggerTraits<BaseLoggerType
 };
 
 
-/** \brief Local Logger: avoid having to repeat origin at each emitted message
+/** \brief Local logger: avoid having to repeat origin at each emitted message
  *
  * This type of logger accepts origin information in its constructor. Then, you may call
  * the \ref longdebug(), \ref debug(), \ref info(), \ref warning() and \ref error()
- * methods without any \a origin information.
+ * methods without any \a origin information.  You may also nest these loggers. See method
+ * \ref sublogger(const std::string&).
  *
  * This logger relays log messages to a base logger of type \a BaseLoggerType.
  *
- * You may also nest these loggers. See method \ref sublogger().
+ * Example usage:
+ * \code
+ *   template<typename BaseLoggerType>
+ *   class XYZ
+ *   {
+ *     LocalLogger<BaseLoggerType> _logger;
+ *   public:
+ *     XYZ(BaseLoggerType & baselogger)
+ *       : _logger(TOMO_ORIGIN, baselogger)
+ *     {
+ *       // this message's origin will be "XYZ"
+ *       _logger.debug("constructor was called.");
+ *     }
+ *
+ *     void method(int k)
+ *     {
+ *       // this message's origin will be "XYZ"
+ *       _logger.debug("method() was called. k=%d", k);
+ *
+ *       // if you need to pass a logger to any external procedure, pass on the
+ *       // baselogger() as the other routine expects to be able to specify its
+ *       // own origin string:
+ *       some_external_routine(k, .., _logger.baselogger());
+ *     }
+ *
+ *     void longmethod(int N)
+ *     {
+ *       auto logger = _logger.sublogger(TOMO_ORIGIN);
+ *       for (int k = 0; k < N; ++k) {
+ *         // this message's origin will be "XYZ::longmethod()"
+ *         logger.debug("inner loop: k=%d out of %d", k, N);
+ *       }
+ *     }
+ *   };
+ * \endcode
  */
 template<typename BaseLoggerType_>
 class LocalLogger : public Tomographer::Logger::LoggerBase<LocalLogger<BaseLoggerType_> >

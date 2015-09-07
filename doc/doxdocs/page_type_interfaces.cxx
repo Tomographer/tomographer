@@ -1,3 +1,29 @@
+/* This file is part of the Tomographer project, which is distributed under the
+ * terms of the MIT license.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 
 // =============================================================================
 // Type Interfaces -- Title Page
@@ -5,8 +31,17 @@
 
 /** \page pageTypeInterfaces Type Interfaces
  *
- * These pages document <em>type interfaces</em>: i.e. types which may appear as template
- * parameters, and which must conform to some standard in order to complete their tasks.
+ * These pages document <em>type interfaces</em>. These specify signatures and members
+ * which a type must provide in order to fulfil a particular task. This is what the C++
+ * standard calls &lsquo;concepts.&rsquo; Typically, classes might expect their template
+ * parameters to conform to a particular type interface.
+ *
+ * For example, the class \ref Tomographer::ValueHistogramMHRWStatsCollector calculates
+ * the value of a function specified by a template parameter. In order to use it, it must
+ * be made clear which methods the class is allowed to call on this template
+ * parameter. This specification corresponds to a <em>type interface</em>; in this case
+ * the class expects as template parameter any type which complies with the \ref
+ * pageInterfaceValueCalculator.
  *
  * Documented Type Interfaces in the %Tomographer framwork are:
  *
@@ -29,6 +64,9 @@
 // =============================================================================
 
 /** \page pageInterfaceMatrQ MatrQ Interface
+ *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
  *
  * Declares types for dealing with quantum states and POVMs of a fixed dimension which
  * we'll call here \a dim. See also \ref Tomographer::MatrQ.
@@ -93,6 +131,9 @@
 // =============================================================================
 
 /** \page pageInterfaceTomoProblem TomoProblem Interface
+ *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
  *
  * Stores the data relevant for a tomography problem. Includes:
  *
@@ -165,6 +206,9 @@
 
 /** \page pageInterfaceMHRWStatsCollector MHRWStatsCollector Interface
  *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
+ *
  * A type implementing a \a MHRWStatsCollector interface is responsible for collecting
  * statistics from samples during a Metropolis-Hastings random walk (see \ref
  * Tomographer::MHRandomWalk).
@@ -197,17 +241,18 @@
  *     real samples, use \c process_sample() instead.
  *
  * \par
- *     \c k is the iteration number, \c is_thermalizing is \c true during the first part
- *     of the random walk during the thermalizing runs, \c is_live_iter is set to \c true
- *     only if a sample is taken at this point, i.e. if not thermalizing and after a full
- *     sweep. \c accepted indicates whether this Metropolis-Hastings move was accepted or
- *     not and \c a gives the ratio of the function which was tested for the move. (Note
- *     that \c a might not be calculated and left to 1 if known to be greater than 1.) \c
- *     newpt and \c newptval are the new proposal jump point and the function value at
- *     that new point. The function value is either the actual value of the function, or
- *     its logarithm, or a dummy value, depending on \c MHWalker::UseFnSyntaxType. 
- *     Similarly \c curpt and \c curptval are the current point and function value. The
- *     object \c rw is a reference to the random walk object instance.
+ *     \c k is the iteration number (which is reset to zero after the thermalizing
+ *     sweeps), \c is_thermalizing is \c true during the first part of the random walk
+ *     during the thermalizing runs, \c is_live_iter is set to \c true only if a sample is
+ *     taken at this point, i.e. if not thermalizing and after a full sweep. \c accepted
+ *     indicates whether this Metropolis-Hastings move was accepted or not and \c a gives
+ *     the ratio of the function which was tested for the move. (Note that \c a might not
+ *     be calculated and left to 1 if known to be greater than 1.) \c newpt and \c
+ *     newptval are the new proposal jump point and the function value at that new
+ *     point. The function value is either the actual value of the function, or its
+ *     logarithm, or a dummy value, depending on \c MHWalker::UseFnSyntaxType.  Similarly
+ *     \c curpt and \c curptval are the current point and function value. The object \c rw
+ *     is a reference to the random walk object instance.
  * 
  *
  */
@@ -218,6 +263,9 @@
 // =============================================================================
 
 /** \page pageInterfaceResultable Resultable Interface
+ *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
  *
  * This abstract type interface describes a type which results in some output. This might
  * be for example some forms of \ref pageInterfaceMHRWStatsCollector 's such as \ref
@@ -237,6 +285,9 @@
 // =============================================================================
 
 /** \page pageInterfaceMHWalker MHWalker Interface
+ *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
  *
  * A \a MHWalker compliant type describes a particular Metropolis-Hastings walk on some
  * state space. It takes care for example of providing candidate new points (jump
@@ -316,6 +367,9 @@
 
 /** \page pageInterfaceRandomWalk RandomWalk Interface
  *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
+ *
  * The \a RandomWalk type is responsible for actually implementing the random walk. It
  * should keep the current state of the random walk in memory and update it when the \c
  * move() function is called.
@@ -373,6 +427,9 @@
 
 /** \page pageInterfaceValueCalculator ValueCalculator Interface
  *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
+ *
  * A \a ValueCalculator is responsible for calculating a particular value at a particular
  * point. This might be, for example, calculating the value of a figure of merit at
  * various point samples during a Metropolis-Hastings random walk.
@@ -395,6 +452,9 @@
 
 
 /** \page pageInterfaceMHRandomWalkTaskCData MHRandomWalkTaskCData Interface
+ *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
  *
  * A \a MHRandomWalkTaskCData is an object which provides data about how to conduct a
  * repetition of random walks, while collecting statistics. It may store constant global
@@ -426,6 +486,9 @@
 
 
 /** \page pageInterfaceHistogram Histogram Interface
+ *
+ * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
  *
  * \par typedef .. Scalar
  *      Type used to quantify the quantity which is binned into separate bins

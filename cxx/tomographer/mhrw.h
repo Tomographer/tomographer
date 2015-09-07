@@ -1,3 +1,28 @@
+/* This file is part of the Tomographer project, which is distributed under the
+ * terms of the MIT license.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 #ifndef INTEGRATOR_H
 #define INTEGRATOR_H
@@ -18,6 +43,12 @@
 #include <tomographer/histogram.h>
 #include <tomographer/tools/loggers.h>
 #include <tomographer/mhrw_bin_err.h>
+
+
+/** \file mhrw.h
+ * \brief Routines for performing a Metropolis-Hastings random walk.
+ *
+ */
 
 
 namespace Tomographer {
@@ -340,7 +371,10 @@ public:
       _mhwalker(mhwalker),
       _stats(stats),
       _logger(logger_),
-      curpt()
+      curpt(),
+      curptval(),
+      num_accepted(0),
+      num_live_points(0)
   {
     _logger.debug("MHRandomWalk", "constructor(). n_sweep=%lu, n_therm=%lu, n_run=%lu, step_size=%g",
 	       (unsigned long)n_sweep, (unsigned long)n_therm, (unsigned long)n_run, (double)step_size);
@@ -487,7 +521,8 @@ public:
   }
 
   /** \brief Required for \ref pageInterfaceRandomWalk. Process a new live sample in the
-   * random walk. Relays the call to the \a MHRWStatsCollector.
+   * random walk. Relays the call to the \a MHRWStatsCollector (see \ref
+   * pageInterfaceMHRWStatsCollector).
    */
   inline void process_sample(CountIntType k, CountIntType n)
   {
@@ -513,9 +548,10 @@ public:
 
 /** \brief A simple MHRWStatsCollector interface which combines several stats collectors
  *
- * A \ref MHRandomWalk object expects one instance of a \c MHRWStatsCollector; in case you
- * wish to provide several stats collectors, you should use a MultipleMHRWStatsCollectors
- * instance which combines all your preferred stats collectors.
+ * A \ref MHRandomWalk object expects one instance of a \a MHRWStatsCollector (see \ref
+ * pageInterfaceMHRWStatsCollector); in case you wish to provide several stats collectors,
+ * you should use a MultipleMHRWStatsCollectors instance which combines all your preferred
+ * stats collectors.
  *
  * The obscure variadic templating of this class should not scare you&mdash;it's
  * relatively straightforward to use:
@@ -825,6 +861,9 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
   //! The number of levels in the binning analysis. See \ref BinningAnalysis.
   static constexpr int NumLevels = NumLevels_;
   //! NOT YET IMPLEMENTED. Whether to track only selected indices in the histogram [for now, all are tracked]
+  /**
+   * \todo why would one want to track selected indices? remove this completely.
+   */
   static constexpr bool TrackSelectedIndices = TrackSelectedIndices_;
 
   //! The type of a value calculated by the \ref pageInterfaceValueCalculator.
@@ -935,8 +974,8 @@ public:
   typedef typename Params::BinningAnalysisParamsType BinningAnalysisParamsType;
   typedef BinningAnalysis<BinningAnalysisParamsType, LoggerType> BinningAnalysisType;
     
-  static constexpr int NumTrackValuesCTime = Params::NumTrackValuesCTime;
-  static constexpr int NumLevelsCTime = Params::NumLevelsCTime;
+  static constexpr int NumTrackValuesCTime = Params::NumTrackValues;
+  static constexpr int NumLevelsCTime = Params::NumLevels;
   static constexpr bool TrackSelectedIndices = Params::TrackSelectedIndices;
 
   typedef typename Params::Result Result;

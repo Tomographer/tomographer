@@ -1,3 +1,29 @@
+/* This file is part of the Tomographer project, which is distributed under the
+ * terms of the MIT license.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 
 // this file should be included in tests before other Eigen or tomographer headers. It
 // also automatically includes all the needed boost test framework tools.
@@ -148,6 +174,8 @@ static const float tol_f = tol_percent_f * 0.01f;
 
 
 
+static constexpr int DumpHistogramTest_DefaultPrecision = 3;
+
 // utility to check histograms.
 //
 // This dumps the histogram data (with or without error bars depending on the histogram
@@ -157,7 +185,8 @@ static const float tol_f = tol_percent_f * 0.01f;
 template<typename HistogramType>
 struct DumpHistogramTest
 {
-  static inline void dump(std::ostream & str, const HistogramType & histogram)
+  static inline void dump(std::ostream & str, const HistogramType & histogram,
+			  const int precision = DumpHistogramTest_DefaultPrecision)
   {
     str << "HISTOGRAM";
     if (HistogramType::HasErrorBars) {
@@ -165,8 +194,9 @@ struct DumpHistogramTest
     } else {
       str << "\n";
     }
+    str << std::setprecision(precision) << std::scientific << std::right << std::setfill('0');
     str << "\n";
-    str << "PARAMS = [" << std::setprecision(3) << histogram.params.min << ", " << histogram.params.max
+    str << "PARAMS = ["	<< histogram.params.min << ", " << histogram.params.max
 	<< "] (" << histogram.num_bins() << " bins)\n"
 	<< "\n";
     for (std::size_t k = 0; k < (std::size_t)histogram.num_bins(); ++k) {
@@ -191,9 +221,10 @@ private:
 
 // helper function for automatic template type deduction
 template<typename HistogramType>
-void dump_histogram_test(std::ostream & str, const HistogramType & histogram)
+void dump_histogram_test(std::ostream & str, const HistogramType & histogram,
+			 const int precision = DumpHistogramTest_DefaultPrecision)
 {
-  DumpHistogramTest<HistogramType>::dump(str, histogram);
+  DumpHistogramTest<HistogramType>::dump(str, histogram, precision);
 }
 
 

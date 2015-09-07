@@ -1,6 +1,6 @@
 HISTOGRAM
 
-PARAMS = [0.96, 0.98] (10 bins)
+PARAMS = [9.600e-01, 9.800e-01] (10 bins)
 
 0
 0
