@@ -53,14 +53,12 @@ There are  currently no binary releases  available, you'll have  to compile from
 source. Don't  worry, that's  not complicated. If  you haven't already  done so,
 install all the usual development tools (`gcc`/`g++`/`make`/etc.)
 
-There will  soon be official  source code releases  (TODO!!). For now,  you need
-`git` and  you should clone  the repository (FIXME!!).  Note that for  the build
-system, `git` must be  in your PATH, or you should set  the CMake variable "GIT"
-appropriately.
+The source can be downloaded from our github page:
 
-Download from:
+    https://github.com/Tomographer/tomographer/releases
 
-    https://github.com/Tomographer/tomographer/
+If you  wish to contribute  to development, don't hesitate  to fork the  repo on
+github and send me pull requests.
 
 
 Installation
@@ -194,15 +192,13 @@ If you use this software in your research, please add the following citations:
 
 1. Philippe Faist and Renato Renner. Practical, Reliable Error Bars in Quantum Tomography. arXiv:XXXX.XXXXX
 
-2. Philippe Faist. Tomographer C++ Framework. Available at [URL].
-
-(TODO/FIXME:: update references!)
+2. Philippe Faist. Tomographer C++ Framework. Available at https://github.com/Tomographer/tomographer/.
 
 
 Authors, Copyright, License
 ---------------------------
 
 Philippe Faist
-(C) 2015 ETH Zurich    ??????
+Copyright (C) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
 
-Released under the terms of the ??????? License (TODO!!)
+Released under the terms of the MIT License (see file LICENSE.txt)
