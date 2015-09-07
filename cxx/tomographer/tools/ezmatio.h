@@ -24,9 +24,6 @@
  * SOFTWARE.
  */
 
-#ifndef _MATIOPP_H
-#define _MATIOPP_H
-
 #ifndef _TOMOGRAPHER_TOOLS_EZMATIO_H
 #define _TOMOGRAPHER_TOOLS_EZMATIO_H
 
