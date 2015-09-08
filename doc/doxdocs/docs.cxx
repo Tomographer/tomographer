@@ -26,8 +26,10 @@
 
 /** \namespace Tomographer::MAT
  *
- * \brief Utilities to read MATLAB \c *.mat files.
+ * \brief Utilities to read MATLAB \c *.mat files. NOTE: THIS API WILL CHANGE IN THE NEAR FUTURE.
  *
+ * \note This API is not well-structured and I plan to change it in the near future. Not
+ *       much should change, though, hopefully just how to get the values from variables.
  */
 
 

@@ -447,7 +447,7 @@ table.directory {
 .mdescLeft, .memItemLeft, .memTemplItemLeft
 {
    white-space: normal;
-   min-width: 6em;
+   min-width: 16em;
    max-width: 24em;
 }
 

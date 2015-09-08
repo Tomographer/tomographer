@@ -330,7 +330,6 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
       "by Philippe Faist, Institute for Theoretical Physics, ETH Zurich\n"
       "(C) 2015 ETH Zurich\n";
 
-    
     if (vm.count("help")) {
       std::cout
 	<< "\n" << prog_version_info <<
@@ -390,9 +389,11 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"binning analysis is performed. Each row corresponds to a histogram bin. The\n"
 	"columns are:\n"
 	"\n"
-	"    - The first column is the X-axis value, given as the *left edge* of the bin\n"
-	"      (for example, if the bin range is [0.1, 0.2[, then the value listed in the\n"
-	"      first column is 0.1).\n"
+	"    - The first column is the X-axis value, given as the *left edge* of the bin.\n"
+	"      For example, if the range [0, 1[ is divided into 10 bins, then the first\n"
+	"      column will display the values 0.0, 0.1, 0.2, ..., 0.9; the first bin\n"
+	"      covers samples in the range [0.0, 0.1[, the second collects samples in the\n"
+	"      range [0.1, 0.2[, and so on.\n"
 	"\n"
 	"    - The second column gives the average counts in the histogram bin. The value\n"
 	"      here is the average of the characteristic function \"is the point in this\n"
@@ -403,18 +404,20 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"      error bar obtained by combining error bars from the binning analyses of\n"
 	"      each random walk. If binning analysis is disabled, this column is the\n"
 	"      statistical standard deviation of the results of the different random\n"
-	"      walks.\n"
+	"      walks (make sure to have enough independent runs for this figure to make\n"
+	"      sense in this case).\n"
 	"\n"
 	"    - If binning analysis is enabled, then the fourth column is the statistical\n"
 	"      standard deviation of the results of the different random walks,\n"
-	"      regardless of error bars from the binning analysis. There is no fourth\n"
-	"      column if binning analysis is disabled.\n"
+	"      regardless of error bars from the binning analysis (this figure might be\n"
+	"      irrelevant or misleading if too few independent random walks are\n"
+	"      instanciated). There is no fourth column if binning analysis is disabled.\n"
 	"\n"
 	"FIGURES OF MERIT:\n"
 	"The argument to the option --value-type should be specified as \"keyword\" or\n"
-	"\"keyword:RefObject\". <RefObject> should be the name of a MATLAB variable\n"
-	"present in the data file provided in --data-file-name. The possible keywords and\n"
-	"corresponding possible reference objects are:\n"
+	"\"keyword:<RefObject>\". <RefObject> should be the name of a MATLAB variable\n"
+	"present in the data file provided to --data-file-name. The possible keywords and\n"
+	"corresponding possible reference variables are:\n"
 	"\n"
 	"    - \"obs-value\": the expectation value of an observable. <RefObject> should\n"
 	"      be the name of a MATLAB variable present in the MATLAB data file. This\n"
@@ -472,7 +475,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     }
 
     if (vm.count("version")) {
-      std::cout << prog_version_info << "\n";
+      std::cout << prog_version_info;
       ::exit(2);
     }
 

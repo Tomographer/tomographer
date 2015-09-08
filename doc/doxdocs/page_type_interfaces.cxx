@@ -39,7 +39,7 @@
 
 /** \page pageInterfaceMatrQ MatrQ Interface
  *
- * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
  *
  * Declares types for dealing with quantum states and POVMs of a fixed dimension which
@@ -58,6 +58,19 @@
  * \par typedef ... MatrixType
  * The type needed to represent a density matrix. This is usually expected to be a Eigen
  * type.
+ *
+ * \par int dim() const
+ * The dimension of the quantum system. Return any integer type, usually
+ * std::size_t. Inline of course is better.
+ *
+ * \par int dim2() const
+ * The squared dimension of the quantum system. Return any integer type, usually
+ * std::size_t. Inline of course is better.
+ *
+ * \par int ndof() const
+ * The squared dimension of the quantum system, minus one. This is the number of degrees
+ * of freedom of the density matrix. Return any integer type, usually std::size_t. Inline
+ * of course is better.
  *
  * \par MatrixType initMatrixType() const
  * Returns an expression which can be assigned to a \a MatrixType such that the matrix is
@@ -106,7 +119,7 @@
 
 /** \page pageInterfaceTomoProblem TomoProblem Interface
  *
- * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
  *
  * Stores the data relevant for a tomography problem. Includes:
@@ -180,7 +193,7 @@
 
 /** \page pageInterfaceMHRWStatsCollector MHRWStatsCollector Interface
  *
- * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
  *
  * A type implementing a \a MHRWStatsCollector interface is responsible for collecting
@@ -238,7 +251,7 @@
 
 /** \page pageInterfaceResultable Resultable Interface
  *
- * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
  *
  * This abstract type interface describes a type which results in some output. This might
@@ -260,7 +273,7 @@
 
 /** \page pageInterfaceMHWalker MHWalker Interface
  *
- * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
  *
  * A \a MHWalker compliant type describes a particular Metropolis-Hastings walk on some
@@ -341,7 +354,7 @@
 
 /** \page pageInterfaceRandomWalk RandomWalk Interface
  *
- * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
  *
  * The \a RandomWalk type is responsible for actually implementing the random walk. It
@@ -401,7 +414,7 @@
 
 /** \page pageInterfaceValueCalculator ValueCalculator Interface
  *
- * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
  *
  * A \a ValueCalculator is responsible for calculating a particular value at a particular
@@ -427,7 +440,7 @@
 
 /** \page pageInterfaceMHRandomWalkTaskCData MHRandomWalkTaskCData Interface
  *
- * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
  *
  * A \a MHRandomWalkTaskCData is an object which provides data about how to conduct a
@@ -461,7 +474,7 @@
 
 /** \page pageInterfaceHistogram Histogram Interface
  *
- * <em>This is a &lsquo;type interface.&#rsquo; See \ref pageTypeInterfaces
+ * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
  *
  * \par typedef .. Scalar
