@@ -34,6 +34,19 @@
 #include "test_tomographer.h"
 
 #include <tomographer/qit/util.h>
+#include <tomographer/tools/util.h>
+
+struct ABC { int a; };
+
+
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_complex<int>::value);
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_complex<double>::value);
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_complex<float>::value);
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_complex<std::string>::value);
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_complex<ABC>::value);
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_complex<std::complex<int> >::value);
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_complex<std::complex<float> >::value);
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_complex<std::complex<double> >::value);
 
 
 BOOST_AUTO_TEST_SUITE(test_misc)

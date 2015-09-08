@@ -80,5 +80,10 @@ add_executable(test_tomographer  EXCLUDE_FROM_ALL
 # compile & link with OpenMP
 SetOpenMPTarget(test_tomographer)
 
+AppendTargetProperty(test_tomographer
+  COMPILE_FLAGS  "-I${MATIO_INCLUDE_DIR} -I${Boost_INCLUDE_DIR} -I${ZLIB_INCLUDE_DIRS}")
+
 # link with Boost.Test framework
 target_link_libraries(test_tomographer ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+target_link_libraries(test_tomographer ${MATIO_LIBRARIES})
+target_link_libraries(test_tomographer ${ZLIB_LIBRARIES})

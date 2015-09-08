@@ -64,6 +64,25 @@ struct is_complex {
 };
 
 
+/** \brief The Real scalar type corresponding to a std::complex type
+ *
+ * This struct has no members by default. If the type \a Scalar is of the form \a
+ * std::complex<T>, then this struct has a single member \a type which is an alias of \a
+ * T.
+ */
+template<typename Scalar>
+struct complex_real_scalar {
+  // no member by default
+};
+
+//! Implementation of \ref complex_real_scalar for complex types.
+template<typename RealScalar>
+struct complex_real_scalar<std::complex<RealScalar> >
+{
+  typedef RealScalar type;
+};
+
+
 
 
 /** \brief Test whether the given value is positive or zero.

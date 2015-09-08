@@ -23,17 +23,24 @@ d.u32 = int32(2147483647);
 d.u64 = int64(9223372036854775807);
 
 % double, 4x3 matrix
-d.md_4x3 = double([1.0, 2.0, 3.0; 1.5, 3, 4.5; 100.0, 200.0, 300.0]);
+d.md_4x3 = double([1.0, 2.0, 3.0; 1.5, 3, 4.5; 100.0, 200.0, 300.0; 0.0 0.0 1.0]);
 % double row vector
 d.rvd_5 = double([1.0, 2.0, -3.0, 4.0, -193.223]);
 % double column vector
 d.vd_5 = double([1.0; 2.0; -3.0; 4.0; -193.223]);
 
-% signle, 4x3 matrix
+% double, 4x3 matrix
+d.mcd_4x3 = [1 0 0; 0 1 0; 0 0 1; 0 0 0] + 1i*double([1.0, 2.0, 3.0; 1.5, 3, 4.5; 100.0, 200.0, 300.0; 0.0 0.0 1.0]);
+% double row vector
+d.rvcd_5 = double([1.0+1i, 2.0+2.5i, -3.0, 4.0, -193.223]);
+% double column vector
+d.vcd_5 = double([1.0+1i; 2.0; -3.0; 4.0; -193.223]);
+
+% single, 4x3 matrix
 d.mf_4x3 = single([1.0, 2.0, 3.0; 1.5, 3, 4.5; 100.0, 200.0, 300.0]);
-% signle row vector
+% single row vector
 d.rvf_5 = single([1.0, 2.0, -3.0, 4.0, -193.223]);
-% signle column vector
+% single column vector
 d.vf_5 = single([1.0; 2.0; -3.0; 4.0; -193.223]);
 
 % int8, 3x3 matrix
