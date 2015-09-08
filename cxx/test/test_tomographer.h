@@ -161,6 +161,48 @@ check_eigen_dense_equal(const Eigen::DenseBase<Derived1> & a, const Eigen::Dense
 
 
 
+
+
+template<typename T1, typename A1, typename T2, typename A2, typename ToleranceType = double>
+boost::test_tools::predicate_result
+check_std_vector_equal(const std::vector<T1, A1> & a, const std::vector<T2, A2> & b,
+                       const ToleranceType tol = 1e-8) // tol is absolute tolerance
+{
+  BOOST_MESSAGE("Comparing two std::vector<T>'s");
+
+  if (a.size() != b.size()) {
+    boost::test_tools::predicate_result res(false);
+    res.message() << "a.size() [="<<a.size()<<"]  !=  b.size() [="<<b.size()<<"]";
+    return res;
+  }
+
+  for (std::size_t j = 0; j < a.size(); ++j) {
+    if (std::abs(a[j] - b[j]) > tol) {
+      boost::test_tools::predicate_result res(false);
+      res.message() << "vectors are different: a["<<j<<"]=" << a[j] << "  !=  b["<<j<<"]=" << b[j] << "\n"
+                    << "\t[diff = " << std::abs(a[j]-b[j]) << "]\n";
+      return res;
+    }
+  }
+  return true;
+}
+template<typename T1, typename A1, std::size_t N2, typename T2, typename ToleranceType = double>
+boost::test_tools::predicate_result
+check_std_vector_equal(const std::vector<T1, A1> & a, const T2 (&b)[N2],
+                       const ToleranceType tol = 1e-8) // tol is absolute tolerance
+{
+  return check_std_vector_equal(a, std::vector<T2>(b, b+N2), tol);
+}
+
+
+#define MY_BOOST_CHECK_STD_VECTOR_EQUAL(a, b, tol)       \
+  BOOST_CHECK( check_std_vector_equal((a), (b), (tol)) )
+
+
+
+
+
+
 // tolerance, in *PERCENT*
 static const double tol_percent = 1e-12;
 static const double tol = tol_percent * 0.01;

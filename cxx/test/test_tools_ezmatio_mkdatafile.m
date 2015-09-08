@@ -14,13 +14,13 @@ d.i32 = int32(2147483647);
 % int64, simple value
 d.i64 = int64(-9223372036854775808);
 % uint8, simple value
-d.u8 = int8(42);
+d.u8 = uint8(42);
 % uint16, simple value
-d.u16 = int16(65536);
+d.u16 = uint16(65535);
 % uint32, simple value
-d.u32 = int32(2147483647);
+d.u32 = uint32(4294967295);
 % uint64, simple value
-d.u64 = int64(9223372036854775807);
+d.u64 = uint64(18446744073709551615);
 
 % double, 4x3 matrix
 d.md_4x3 = double([1.0, 2.0, 3.0; 1.5, 3, 4.5; 100.0, 200.0, 300.0; 0.0 0.0 1.0]);
