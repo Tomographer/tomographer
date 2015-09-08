@@ -6,6 +6,10 @@ function dat = analyze_tomorun_histogram(varargin)
 %
 % Run analyze_tomorun_histogram('Help') for more information.
 %
+%
+% This file is part of the Tomographer project, which is distributed under the
+% terms of the MIT license. (see LICENSE.txt)
+
 
   optdefs = struct;
   optdefs.opt_allow_args = true;
@@ -256,6 +260,7 @@ function dat = analyze_tomorun_histogram(varargin)
     dat.evalfitlogp = evalfitlogp; % always log(P)
     dat.evalfitp = evalfitp; % always P
     dat.thefit = thefit;
+    dat.gof = gof;
     dat.FigHandleP = opts.FigHandleP;
     dat.FigHandleLogP = opts.FigHandleLogP;
   end
