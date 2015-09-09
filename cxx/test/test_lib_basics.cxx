@@ -28,6 +28,7 @@
 #include <iomanip>
 #include <stdexcept>
 
+// include before <Eigen/*> !
 #include "test_tomographer.h"
 
 #include <tomographer/qit/matrq.h>
@@ -48,17 +49,22 @@ BOOST_AUTO_TEST_SUITE(test_eigen_assert_dyn);
 // test the eigen_assert dynamic functionality
 BOOST_AUTO_TEST_CASE(setting)
 {
-  assert(EigenAssertTest::setting_scope_ptr == NULL);
+  BOOST_CHECK(EigenAssertTest::setting_scope_ptr == NULL);
   {
     //    fprintf(stderr, "entering block...\n");
     EigenAssertTest::setting_scope mysettingvar(true); // eigen_assert() should throw an exception.
     //    fprintf(stderr, "instanciated mysettingvar\n");
-    assert(EigenAssertTest::setting_scope_ptr != NULL);
-    assert(EigenAssertTest::setting_scope_ptr->throws_exception);
-    eigen_assert(true);
+    BOOST_CHECK(EigenAssertTest::setting_scope_ptr != NULL);
+    BOOST_CHECK(EigenAssertTest::setting_scope_ptr->throws_exception);
+    bool has_not_tested = true;
+    BOOST_CHECK_THROW(
+        eigen_assert( (has_not_tested = false) ),
+        Tomographer::Tools::eigen_assert_exception
+        );
+    BOOST_CHECK(!has_not_tested);
     //    fprintf(stderr, "leaving block.\n");
   }
-  assert(EigenAssertTest::setting_scope_ptr == NULL);
+  BOOST_CHECK(EigenAssertTest::setting_scope_ptr == NULL);
 }
 
 
@@ -89,6 +95,8 @@ struct test_matrq_fixture {
 
     // has dim() property
     BOOST_CHECK_EQUAL(matq.dim(), dim);
+
+    BOOST_CHECKPOINT("About to test that a wrong fixed dimension will throw");
 
     // if has fixed dim, make sure that if we attempt to construct a bad dimension,
     // something explodes

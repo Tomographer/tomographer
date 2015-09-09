@@ -36,11 +36,29 @@ d.rvcd_5 = double([1.0+1i, 2.0+2.5i, -3.0, 4.0, -193.223]);
 % double column vector
 d.vcd_5 = double([1.0+1i; 2.0-2.5i; -3.0; 4.0; -193.223]);
 
-% double, 3x Pauli matrices
+% cplx double, 3x Pauli matrices
 d.mcd_2x2x3 = zeros(2,2,3);
 d.mcd_2x2x3(:,:,1) = [0 1; 1 0];
 d.mcd_2x2x3(:,:,2) = [0 -1i; 1i 0];
 d.mcd_2x2x3(:,:,3) = [1 0; 0 -1];
+
+% cplx single, 3x Pauli matrices
+d.mcf_2x2x3 = single(zeros(2,2,3));
+d.mcf_2x2x3(:,:,1) = single([0 1; 1 0]);
+d.mcf_2x2x3(:,:,2) = single([0 -1i; 1i 0]);
+d.mcf_2x2x3(:,:,3) = single([1 0; 0 -1]);
+
+% single, two 2x3 matrices
+d.mf_2x3x2 = single(zeros(2,3,2));
+d.mf_2x3x2(:,:,1) = single([ 1 4 -2.5; 1.0 1.5 -1e4 ]);
+d.mf_2x3x2(:,:,2) = single([ 0 0 0; 1 -2 -3 ]);
+
+% cplx double, four (2x2) 2x3 matrices
+d.mcd_2x3x2x2 = (zeros(2,3,2,2));
+d.mcd_2x3x2x2(:,:,1,1) = ([ 1 1i -1i; 1.0 1.5i -1e4+1e3i ]);
+d.mcd_2x3x2x2(:,:,2,1) = ([ 0 0 0; 1i -2i -3i ]);
+d.mcd_2x3x2x2(:,:,1,2) = ([ 1 0 0; 0 1 0 ]);
+d.mcd_2x3x2x2(:,:,2,2) = ([ 0 0 0; 1i -2i -3i ]);
 
 % single, 4x3 matrix
 d.mf_4x3 = single([1.0, 2.0, 3.0; 1.5, 3, 4.5; 100.0, 200.0, 300.0; 0.0 0.0 1.0]);

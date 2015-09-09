@@ -190,7 +190,10 @@ struct MatrQBaseDimStore : public MatrQBase<Derived>
   MatrQBaseDimStore(std::size_t dim_)
   {
     (void)dim_; // don't warn of unused variable if eigen_assert() gets optimized out
-    eigen_assert(MatrQBase<Derived>::FixedDim != Eigen::Dynamic && dim_ == dim());
+
+    // use eigen_assert() here for our test suite to check this without abort()ing.
+    eigen_assert(MatrQBase<Derived>::FixedDim != Eigen::Dynamic);
+    eigen_assert(dim_ == MatrQBase<Derived>::FixedDim);
   }
 
   /** \brief Zero initializer for a MatrixType

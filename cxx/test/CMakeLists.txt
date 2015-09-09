@@ -58,7 +58,9 @@ set(tests_SRCS
   test_sphcoords.cxx
   test_tools_util.cxx
   test_tools_conststr.cxx
-  test_tools_ezmatio.cxx
+  test_tools_ezmatio_1.cxx
+  test_tools_ezmatio_2.cxx
+  test_tools_ezmatio_3.cxx
   test_qit_util.cxx
   test_loggers.cxx
   test_lib_basics.cxx

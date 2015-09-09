@@ -102,7 +102,7 @@ private:
         throw (::Tomographer::Tools::eigen_assert_exception(#x, __FILE__, __LINE__)); \
       }                                                                 \
     } else {                                                            \
-      assert((x) && "eigen_assert() failure");                          \
+      assert((x) && "eigen_assert(" #x ") failure");                    \
     }                                                                   \
   } while (false)
 

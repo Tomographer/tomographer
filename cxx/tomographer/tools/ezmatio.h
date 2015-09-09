@@ -59,64 +59,96 @@ namespace MAT
 class Exception : public std::exception
 {
   std::string p_heading;
-  std::string p_msg;
+  std::string p_message;
+  std::string p_final;
 public:
-  Exception(const std::string& heading, const std::string& msg)
-    : p_heading(heading), p_msg(msg)
-  {
+  Exception(std::string msg) : p_message(msg) { update_final(); }
+  Exception(std::string heading, std::string msg) : p_heading(heading), p_message(msg) { update_final(); }
+  virtual ~Exception() noexcept { }
+  
+  virtual const char * what() const noexcept { return p_final.c_str(); }
+
+protected:
+  inline void setHeading(const std::string heading) {
+    p_heading = heading;
+    update_final();
   }
-  virtual ~Exception() throw() { }
-  virtual const char * what() const throw() {
-    return (p_heading + ": " + p_msg).c_str();
+  inline void setMessage(const std::string message) {
+    p_message = message;
+    update_final();
+  }
+private:
+  inline void update_final() {
+    p_final = p_heading + p_message;
   }
 };
 
 //! Exception relating to a MATLAB variable in the data file
-class VarError : public Exception {
+class VarError : public Exception
+{
 public:
-  VarError(const std::string& msg) : Exception("Variable error", msg) { }
-  virtual ~VarError() throw() { }
+  VarError(std::string msg) : Exception("", msg) { }
+  VarError(std::string varname, std::string msg) : Exception(heading(varname), msg) { }
+  virtual ~VarError() noexcept { }
+  
+  void setVarName(std::string varname) { setHeading(heading(varname)); }
+
+private:
+  static std::string heading(std::string varname) { return "Variable " + varname + ": "; }
 };
 
 //! Error while reading a variable from the MATLAB data file
-class VarReadError : public VarError {
+class VarReadError : public VarError
+{
 public:
-  VarReadError(const std::string& varname)
-    : VarError(streamstr("Can't read variable `"<<varname<<"`"))
+  VarReadError(const std::string varname)
+    : VarError(varname, "Can't read variable")
   {
   }
-  virtual ~VarReadError() throw() { }
+  virtual ~VarReadError() noexcept { }
 };
 
 //! Type mismatch (wrong type requested) in a variable read from the MATLAB data file
-class VarTypeError : public VarError {
+class VarTypeError : public VarError
+{
 public:
-  VarTypeError(const std::string& varname, const std::string& expected)
-    : VarError(streamstr("Expected "<<expected<<" for variable `"<<varname<<"`"))
+  VarTypeError(const std::string varname, const std::string msg)
+    : VarError(varname, msg)
   {
-    //fprintf(stderr, "varname=%s\n", varname.c_str());
   }
-  virtual ~VarTypeError() throw() { }
+  virtual ~VarTypeError() noexcept { }
 };
 
 //! Unknown type of a variable present in the data file
 class VarMatTypeError : public VarError {
 public:
-  VarMatTypeError(const std::string& msg)
+  VarMatTypeError(const std::string msg)
     : VarError(msg)
   {
   }
-  virtual ~VarMatTypeError() throw() { }
+  VarMatTypeError(const std::string varname, const std::string msg)
+    : VarError(varname, msg)
+  {
+  }
+  virtual ~VarMatTypeError() noexcept { }
 };
 
 //! Error while opening a MATLAB file
-class FileOpenError : public Exception {
+class FileOpenError : public Exception
+{
 public:
-  FileOpenError(const std::string& fname, const std::string& errmsg = "")
-    : Exception("File Error", "Error opening file `" + fname + (errmsg.size() ? "': "+errmsg : ""))
-    {
-    }
-  virtual ~FileOpenError() throw() { }
+  FileOpenError(const std::string fname, const std::string errmsg = std::string())
+    : Exception(heading(fname), "Error opening file" + (errmsg.size() ? "': "+errmsg : ""))
+  {
+  }
+  virtual ~FileOpenError() noexcept { }
+
+  void setFileName(const std::string fname) {
+    setHeading(heading(fname));
+  }
+
+private:
+  static std::string heading(std::string fname) { return "File `"+fname+"`: "; }
 };
 
 /*
@@ -126,15 +158,15 @@ public:
     : Exception("Invalid operation", msg)
   {
   }
-  virtual ~InvalidOperationError() throw() { }
+  virtual ~InvalidOperationError() noexcept { }
   };
 */
 
 //! Invalid index or index list provided to a routine
 class InvalidIndexError : public Exception {
 public:
-  InvalidIndexError(const std::string& msg) : Exception("Bad index", msg) { }
-  virtual ~InvalidIndexError() throw() { }
+  InvalidIndexError(const std::string msg) : Exception("Invalid index", msg) { }
+  virtual ~InvalidIndexError() noexcept { }
 };
 
 
@@ -148,7 +180,7 @@ class Var;
 class File
 {
 public:
-  File(const std::string& fname)
+  File(const std::string fname)
   {
     errno = 0;
     p_matfp = Mat_Open(fname.c_str(), MAT_ACC_RDONLY);
@@ -171,7 +203,7 @@ public:
     }
   }
 
-  inline Var var(const std::string& varname, bool load_data = true);
+  inline Var var(const std::string varname, bool load_data = true);
 
   inline std::vector<Var> getVarInfoList();
 
@@ -252,7 +284,7 @@ public:
 };
 
 //! C++ output stream operators for a \ref DimList
-std::ostream& operator<<(std::ostream& out, const DimList& dlist)
+inline std::ostream& operator<<(std::ostream& out, const DimList& dlist)
 {
   out << "[";
   for (DimList::const_iterator it = dlist.begin(); it != dlist.end(); ++it) {
@@ -380,7 +412,7 @@ private:
 
 
 template<bool IsRowMajor>
-std::ostream& operator<<(std::ostream& str, const IndexList<IsRowMajor> & indexlist)
+inline std::ostream& operator<<(std::ostream& str, const IndexList<IsRowMajor> & indexlist)
 {
   str << "[";
   for (std::size_t j = 0; j < indexlist.size(); ++j) {
@@ -492,7 +524,7 @@ public:
 
 
 template<bool IsRowMajor, typename IntType>
-std::ostream& operator<<(std::ostream& str, const IndexListIterator<IsRowMajor, IntType> & indexlistit)
+inline std::ostream& operator<<(std::ostream& str, const IndexListIterator<IsRowMajor, IntType> & indexlistit)
 {
   std::vector<int> indexlist{indexlistit.index()};
 
@@ -707,7 +739,7 @@ public:
 // ---------------
 
 
-inline Var File::var(const std::string& varname, bool load_data)
+inline Var File::var(const std::string varname, bool load_data)
 {
   return Var(*this, varname, load_data);
 }
@@ -1073,7 +1105,17 @@ public:
    * If the MATLAB variable \a var does not have the shape described by this VarShape
    * object, or if the variable is complex and \a T is not, then throw a VarTypeError.
    */
-  inline void checkShape(const Var& var);
+  inline void checkShape(const VarShape & other);
+
+  inline void checkShape(const Var & var)
+  {
+    try {
+      checkShape(VarShape(var));
+    } catch (VarTypeError & err) {
+      err.setVarName(var.varName());
+      throw;
+    }
+  }
 };
 
 inline std::ostream& operator<<(std::ostream& str, const VarShape & varshape)
@@ -1097,24 +1139,24 @@ inline std::ostream& operator<<(std::ostream& str, const VarShape & varshape)
   return str;
 }
 
-inline void VarShape::checkShape(const Var& var)
+inline void VarShape::checkShape(const VarShape& other)
 {
-  const matvar_t * mvar = var.getMatvarPtr();
-  const DimList mvardims = var.dims();
+  const DimList mvardims = other.dims;
   
-  if ((mvar->isComplex && !is_complex) ||
-      ((std::size_t)mvar->rank != dims.size() && dims.size() > 0) ||
-      (is_square && (mvar->rank != 2 || mvar->dims[0] != mvar->dims[1])) ||
+  if ((other.is_complex && !is_complex) ||
+      (mvardims.size() != dims.size() && dims.size() > 0) ||
+      (is_square && (mvardims.size() != 2 || mvardims[0] != mvardims[1])) ||
       (dims.size() > 0 && !mvardims.matchesWanted(dims)))  {
     
     std::stringstream errstr;
 
-    errstr << *this;
-    errstr << ", got ";
-    errstr << VarShape(var);
+    errstr << "Expected "
+           << *this
+           << ", got "
+           << other;
 
     //fprintf(stderr, "Bad var type for variable %s\n", var.varName().c_str());
-    throw VarTypeError(var.varName(), errstr.str());
+    throw VarTypeError(std::string(), errstr.str());
 
   }
 }
@@ -1183,6 +1225,22 @@ struct VarValueDecoder<GetStdVector<T, IsRowMajor> >
 namespace tomo_internal {
 
 
+inline DimList dims_stackedcols(DimList vdims)
+{
+  assert(vdims.size() >= 1);
+  DimList vdimsreshaped;
+  if (vdims.size() == 1) {
+    vdimsreshaped = vdims;
+    vdimsreshaped << 1;
+  } else if (vdims.size() == 2) {
+    vdimsreshaped = vdims;
+  } else if (vdims.size() > 2) {
+    vdimsreshaped << get_numel(vdims.data(), vdims.data()+vdims.size()-1) << vdims[vdims.size()-1];
+  }
+  assert(vdimsreshaped[0] != -1 && vdimsreshaped[1] != -1);
+  return vdimsreshaped;
+}
+
 template<typename MatrixType, typename MatType,
          TOMOGRAPHER_ENABLED_IF_TMPL(Eigen::NumTraits<typename MatrixType::Scalar>::IsComplex &&
                                      Eigen::NumTraits<MatType>::IsComplex)>
@@ -1198,16 +1256,15 @@ void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
   
   const mat_complex_split_t * cdata = (mat_complex_split_t*) matvar_ptr->data;
   
-  assert(vdims.size() == 2);
-  assert(vdims[0] != -1 && vdims[1] != -1);
+  DimList vdimsreshaped = dims_stackedcols(vdims);
   
   matrix = (
       Eigen::Map<const Eigen::Matrix<MatRealType,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor> >(
-          (const MatRealType *) cdata->Re + data_offset, vdims[0], vdims[1]
+          (const MatRealType *) cdata->Re + data_offset, vdimsreshaped[0], vdimsreshaped[1]
           ).template cast<std::complex<RealScalar> >()
       + std::complex<RealScalar>(0,1) *
       Eigen::Map<const Eigen::Matrix<MatRealType,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor> >(
-          (const MatRealType *) cdata->Im + data_offset, vdims[0], vdims[1]
+          (const MatRealType *) cdata->Im + data_offset, vdimsreshaped[0], vdimsreshaped[1]
           ).template cast<std::complex<RealScalar> >()
       );
 }
@@ -1230,12 +1287,11 @@ void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
 
   const matvar_t * matvar_ptr = var.getMatvarPtr();
   
-  assert(vdims.size() == 2);
-  assert(vdims[0] != -1 && vdims[1] != -1);
+  DimList vdimsreshaped = dims_stackedcols(vdims);
   
   matrix = (
       Eigen::Map<const Eigen::Matrix<MatRealType,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor> >(
-          (const MatRealType *) matvar_ptr->data + data_offset, vdims[0], vdims[1]
+          (const MatRealType *) matvar_ptr->data + data_offset, vdimsreshaped[0], vdimsreshaped[1]
           )
       ).template cast<Scalar>();
 }
@@ -1285,9 +1341,18 @@ struct VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
 
     VarShape shape(Eigen::NumTraits<Scalar>::IsComplex,
                    matdims,
-                   matdims.size() == 2 && matdims[0] != -1 && matdims[0] == matdims[1]);
+                   matdims[0] != -1 && matdims[0] == matdims[1]);
 
-    shape.checkShape(var);
+    DimList vdims = var.dims();
+    if (vdims.size() > 2) {
+      vdims = (DimList() << get_numel(vdims.data(), vdims.data()+vdims.size()-1) << vdims[vdims.size()-1]);
+    }
+    try {
+      shape.checkShape(VarShape(var.isComplex(), vdims, (vdims[0] != -1 && vdims[0] == vdims[1])));
+    } catch (VarTypeError & err) {
+      err.setVarName(var.varName());
+      throw; // re-throw
+    }
   }
                              
   static inline RetType decodeValue(const Var & var) //, const Params & p = Params())
@@ -1295,11 +1360,20 @@ struct VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
     const matvar_t * matvar_ptr = var.getMatvarPtr();
     DimList vdims{var.dims()};
 
-    assert(vdims.size() >= 2);
+    if (vdims.size() < 2) {
+      throw VarTypeError(var.varName(), streamstr("Expected matrix, but variable shape is " << vdims));
+    }
+    // if we are stacking several dimensions in the column, force column-major ordering.
+    if (vdims.size() > 2 &&
+        ((MatrixType::Options & Eigen::RowMajorBit) == Eigen::RowMajor)) {
+      throw VarTypeError(var.varName(),
+                         "When collapsing several dimensions into Eigen columns, you must use "
+                         "column-major ordering (sorry).");
+    }
 
-    const int rows = vdims[0];
+    const int cols = vdims[vdims.size()-1];
     // rest of dimensions.
-    const int cols = get_numel(vdims.data()+1, vdims.data()+vdims.size());
+    const int rows = get_numel(vdims.data(), vdims.data()+vdims.size()-1);
 
     MatrixType matrix(rows, cols);
 
@@ -1338,7 +1412,27 @@ struct VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRow
                    matdims,
                    false);
 
-    shape.checkShape(var);
+    DimList vdims = var.dims();
+    if (vdims.size() < 1) {
+      throw VarTypeError(var.varName(), "Invalid (empty) variable dimensions");
+    }
+    if (vdims.size() == 1) {
+      vdims << 1 << 1;
+    } else if (vdims.size() == 2) {
+      vdims << 1;
+    } else { //if (vdims.size() > 2) {
+      vdims = (DimList() << vdims[0] << vdims[1] << get_numel(vdims.data()+2, vdims.data()+vdims.size()));
+    }
+
+    // check shape now:
+    try {
+      shape.checkShape(VarShape(var.isComplex(), vdims, false));
+    } catch (VarTypeError & err) {
+
+      err.setVarName(var.varName());
+      throw; // re-throw
+    }
+
   }
                              
   static inline RetType decodeValue(const Var & var)
@@ -1347,36 +1441,34 @@ struct VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRow
 
     assert(vardims.size() >= 1);
 
-    constexpr int numinnerdims = int(Rows != 1) + int(Cols != 1);
-
     DimList innerdims;
-    int k;
-    for (k = 0; k < vardims.size(); ++k) {
-      if (vardims[k] != 1) {
-        innerdims << vardims[k];
-      }
-      if (innerdims.size() == numinnerdims) {
-        break;
-      }
+    std::size_t outerdim = 1;
+    if (vardims.size() == 1) {
+      innerdims << vardims[0] << 1;
+    } else if (vardims.size() == 2) {
+      innerdims = vardims;
+    } else {
+      // more dimensions
+      innerdims << vardims[0] << vardims[1];
+      outerdim = get_numel(vardims.data()+2, vardims.data()+vardims.size());
     }
-    DimList inner_rowcols;
-    inner_rowcols << (Rows == 1  ? 1 : innerdims[0]);
-    inner_rowcols << (Cols == 1
-                      ? 1 : (Rows == 1
-                             ? innerdims[0]
-                             : innerdims[1]));
-
-    std::size_t outerdim = get_numel(vardims.data() + k, vardims.data() + vardims.size());
 
     RetType value(outerdim);
-    std::size_t j;
 
-    matvar_t * matvar_ptr = var.getMatvarPtr();
+    std::ptrdiff_t innernumel = innerdims[0]*innerdims[1];
+
+    std::size_t j;
+    const matvar_t * matvar_ptr = var.getMatvarPtr();
 
     MAT_SWITCH_TYPE(
         matvar_ptr,
         for (j = 0; j < outerdim; ++j) {
-          tomo_internal::init_eigen_matrix<MatrixType,Type>(value[j], inner_rowcols, var);
+          tomo_internal::init_eigen_matrix<MatrixType,Type>(
+              value[j], // matrix reference
+              innerdims, // dimensions of matrix reference
+              var, // data
+              j*innernumel // offset
+              );
         }
         );
 
