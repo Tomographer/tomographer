@@ -105,6 +105,7 @@ BOOST_AUTO_TEST_CASE(rvalref_index)
 {
   Tomographer::MAT::DimList dims{3, 4, 5};
   const std::vector<int> ok{1, 0, 3};
+  /* had to remove rvalue-ref qualified methods for g++ 4.6 ... :(
   {
     Tomographer::MAT::IndexList<true> il{dims, 23};
     Tomographer::MAT::IndexList<true> && ilref = std::move(il).index(); // && rvalue-ref
@@ -114,6 +115,12 @@ BOOST_AUTO_TEST_CASE(rvalref_index)
     Tomographer::MAT::IndexList<true> il{dims, 23};
     const Tomographer::MAT::IndexList<true> & ilref = il.index(); // const&
     BOOST_CHECK(std::vector<int>(ilref) == ok);
+  }
+  */
+  {
+    Tomographer::MAT::IndexList<true> il{dims, 23};
+    std::vector<int> index{std::move(il.index())};
+    BOOST_CHECK(index == ok);
   }
 }
 

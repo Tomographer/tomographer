@@ -38,6 +38,7 @@
 #include <stdexcept>
 #include <sstream>
 #include <initializer_list>
+#include <utility>
 
 extern "C" {
 #  include <matio.h>
@@ -165,7 +166,7 @@ public:
 //! Invalid index or index list provided to a routine
 class InvalidIndexError : public Exception {
 public:
-  InvalidIndexError(const std::string msg) : Exception("Invalid index", msg) { }
+  InvalidIndexError(const std::string msg) : Exception("Invalid index: ", msg) { }
   virtual ~InvalidIndexError() noexcept { }
 };
 
@@ -315,12 +316,13 @@ class IndexList : public std::vector<int>
 {
 public:
   static constexpr bool IsRowMajor = IsRowMajor_;
+  typedef std::vector<int> VectorType;
   
   IndexList(const std::vector<int>& dims = std::vector<int>(), int linearindex = -1)
     : std::vector<int>(dims.size()), p_dims(dims)
   {
     if (get_numel(dims.begin(), dims.end()) <= 0) {
-      throw InvalidIndexError("Invalid indexing of zero-sized array given by dimension list");
+      throw InvalidIndexError("zero-sized array given by dimension list");
     }
     if (linearindex >= 0) {
       setLinearIndex(linearindex);
@@ -331,7 +333,7 @@ public:
     : std::vector<int>(std::forward<VectorIntInitializer>(index)), p_dims(dims)
   {
     if (get_numel(dims.begin(), dims.end()) <= 0) {
-      throw InvalidIndexError("Invalid indexing of zero-sized array given by dimension list");
+      throw InvalidIndexError("zero-sized array given by dimension list");
     }
   }
 
@@ -377,18 +379,9 @@ public:
     return linindex;
   }
 
-  inline const IndexList & index() const&
+  inline const std::vector<int> & index() const
   {
     return *this;
-  }
-
-  /**
-   * \warning This function <em>std::move</em>s \c *this, so you shouldn't use the object
-   * after calling this method any more.
-   */
-  inline IndexList && index() &&
-  {
-    return std::move(*this);
   }
 
   inline const std::vector<int> & dims() const
@@ -404,6 +397,21 @@ public:
   IndexList& operator<<(const std::vector<int>& moredims) {
     insert(end(), moredims.begin(), moredims.end());
     return *this;
+  }
+
+
+
+  // for internal use:
+
+  template<bool IsRowMajor2 = false>
+  static const std::vector<int> &  forward_index(const IndexList<IsRowMajor2> & index)
+  {
+    return index.p_index;
+  }
+  template<bool IsRowMajor2 = false>
+  static std::vector<int> &&  forward_index(IndexList<IsRowMajor2> && index)
+  {
+    return std::move(index);
   }
 
 private:
@@ -436,6 +444,7 @@ class IndexListIterator
 public:
   static constexpr bool IsRowMajor = IsRowMajor_;
   typedef IntType_ IntType;
+  typedef std::vector<IntType> VectorType;
 
 private:
   const std::vector<IntType> p_dims;
@@ -458,13 +467,9 @@ public:
     }
   }
 
-  inline const std::vector<IntType> & index() const&
+  inline const std::vector<IntType>& index() const
   {
     return p_index;
-  }
-  inline std::vector<IntType> && index() &&
-  {
-    return std::move(p_index);
   }
 
   inline IntType linearIndex() const
@@ -520,6 +525,23 @@ public:
   {
     return Tools::is_positive<IntType>(p_linearIndex) && p_linearIndex < p_numel;
   }
+
+
+  // for internal use:
+
+  template<bool IsRowMajor2 = false, typename IntType2 = int>
+  static const std::vector<IntType2> &
+  forward_index(const IndexListIterator<IsRowMajor2,IntType2> & index)
+  {
+    return index.p_index;
+  }
+  template<bool IsRowMajor2 = false, typename IntType2 = int>
+  static std::vector<IntType2> &&
+  forward_index(IndexListIterator<IsRowMajor2,IntType2> && index)
+  {
+    return std::move(index.p_index);
+  }
+
 };
 
 
@@ -1049,7 +1071,10 @@ private:
   template<typename IndexListType>
   std::size_t linear_index(IndexListType && index) const
   {
-    IndexList<false> ind_cmaj{p_var.dims(), index.index()};
+    IndexList<false> ind_cmaj{
+        p_var.dims(),
+	std::remove_reference<IndexListType>::type::forward_index(index)
+	};
     // std::cout << "linear_index: ind_cmaj=" << ind_cmaj << ", -> linear index = " << ind_cmaj.linearIndex() << "\n";
     return ind_cmaj.linearIndex();
   }
@@ -1300,6 +1325,14 @@ void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
 
 
 
+/** \brief Decoder for Eigen::Matrix types.
+ *
+ * \note This decoder is capable of decoding multidimensional tensors also with number of
+ *       dimensions >2. In that case, the last dimension is the column index, and the
+ *       first dimensions up to the before-to-last-one are collapsed in column-major
+ *       ordering into the row index of the Eigen type.
+ *
+ */
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
 struct VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
 {
@@ -1393,6 +1426,17 @@ struct VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
 
 
 
+/** \brief Decoder for a std::vector of elements of type Eigen::Matrix.
+ *
+ * This decoder decodes multidimensional tensors with number of dimensions == 3 as
+ * follows: the first two indices indicate the inner matrix dimensions, and the last index
+ * indicates the position in the \a std::vector.
+ *
+ * \note This decoder is capable of decoding multidimensional tensors also with number of
+ *       dimensions >3. In that case, all further dimensions are collapsed with the 3rd
+ *       dimension in column-major ordering, as the \a std::vector index.
+ *
+ */
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols, typename Alloc>
 struct VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols>, Alloc> >
 {
