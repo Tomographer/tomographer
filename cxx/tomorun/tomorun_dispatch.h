@@ -444,9 +444,9 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   OurTomoProblem tomodat(matq);
 
   typename Tomographer::Tools::eigen_std_vector<typename OurMatrQ::MatrixType>::type Emn;
-  Tomographer::MAT::getListOfEigenMatrices(matf->var("Emn"), & Emn, true);
+  Emn = Tomographer::MAT::value<decltype(Emn)>(matf->var("Emn"));
   Eigen::VectorXi Nm;
-  Tomographer::MAT::getEigenMatrix(matf->var("Nm"), & Nm);
+  Nm = Tomographer::MAT::value<Eigen::VectorXi>(matf->var("Nm"));
   ensure_valid_input((int)Emn.size() == Nm.size(),
 		     "number of POVM effects in `Emn' doesn't match length of `Nm'");
   if (Emn.size() > 0) {
@@ -501,7 +501,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
                     << tomodat.Nx << "\n";
                });
 
-  Tomographer::MAT::getEigenMatrix(matf->var("rho_MLE"), &tomodat.rho_MLE);
+  tomodat.rho_MLE = Tomographer::MAT::value<typename OurMatrQ::MatrixType>(matf->var("rho_MLE"));
 
   ensure_valid_input(tomodat.rho_MLE.cols() == dim && tomodat.rho_MLE.rows() == dim,
 		     Tomographer::Tools::fmts("rho_MLE is expected to be a square matrix %d x %d", dim, dim));
@@ -545,7 +545,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
       refname = opt->valtype.ref_obj_name;
     }
 
-    Tomographer::MAT::getEigenMatrix(matf->var(refname), &rho_ref);
+    rho_ref = Tomographer::MAT::value<MatrixType>(matf->var(refname));
 
     typedef typename Eigen::SelfAdjointEigenSolver<MatrixType>::RealVectorType RealVectorType;
 
@@ -600,7 +600,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
       obsname = opt->valtype.ref_obj_name;
     }
 
-    Tomographer::MAT::getEigenMatrix(matf->var(obsname), &A);
+    A = Tomographer::MAT::value<MatrixType>(matf->var(obsname));
     
     ensure_valid_input(A.cols() == dim && A.rows() == dim,
 		       Tomographer::Tools::fmts("Observable (%s) is expected to be a square matrix %d x %d",
