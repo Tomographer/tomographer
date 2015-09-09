@@ -140,7 +140,8 @@ check_eigen_dense_equal(const Eigen::DenseBase<Derived1> & a, const Eigen::Dense
 
   typedef decltype(typename Derived1::Scalar(0) + typename Derived2::Scalar(0))  PromotedScalar;
 
-  Eigen::Array<PromotedScalar, Eigen::Dynamic, Eigen::Dynamic> diff  =  a_eval - b_eval;
+  Eigen::Array<PromotedScalar, Eigen::Dynamic, Eigen::Dynamic> diff
+    =  a_eval.template cast<PromotedScalar>() - b_eval.template cast<PromotedScalar>();
 
   if (diff.isMuchSmallerThan(1.0f, tol)) {
     return true;

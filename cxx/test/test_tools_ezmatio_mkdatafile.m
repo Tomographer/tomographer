@@ -34,10 +34,16 @@ d.mcd_4x3 = [1 0 0; 0 1 0; 0 0 1; 0 0 0] + 1i*double([1.0, 2.0, 3.0; 1.5, 3, 4.5
 % double row vector
 d.rvcd_5 = double([1.0+1i, 2.0+2.5i, -3.0, 4.0, -193.223]);
 % double column vector
-d.vcd_5 = double([1.0+1i; 2.0; -3.0; 4.0; -193.223]);
+d.vcd_5 = double([1.0+1i; 2.0-2.5i; -3.0; 4.0; -193.223]);
+
+% double, 3x Pauli matrices
+d.mcd_2x2x3 = zeros(2,2,3);
+d.mcd_2x2x3(:,:,1) = [0 1; 1 0];
+d.mcd_2x2x3(:,:,2) = [0 -1i; 1i 0];
+d.mcd_2x2x3(:,:,3) = [1 0; 0 -1];
 
 % single, 4x3 matrix
-d.mf_4x3 = single([1.0, 2.0, 3.0; 1.5, 3, 4.5; 100.0, 200.0, 300.0]);
+d.mf_4x3 = single([1.0, 2.0, 3.0; 1.5, 3, 4.5; 100.0, 200.0, 300.0; 0.0 0.0 1.0]);
 % single row vector
 d.rvf_5 = single([1.0, 2.0, -3.0, 4.0, -193.223]);
 % single column vector

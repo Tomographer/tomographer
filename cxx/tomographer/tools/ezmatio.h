@@ -37,6 +37,7 @@
 #include <iostream>
 #include <stdexcept>
 #include <sstream>
+#include <initializer_list>
 
 extern "C" {
 #  include <matio.h>
@@ -213,6 +214,11 @@ public:
     : std::vector<int>(std::forward<VectorType>(dims))
   {
   }
+  template<typename T, TOMOGRAPHER_ENABLED_IF_TMPL(std::is_convertible<T,int>::value)>
+  DimList(std::initializer_list<T> init)
+    : std::vector<int>(init)
+  {
+  }
   template<class It>
   DimList(It b, It e) : std::vector<int>(b, e)
   {
@@ -272,10 +278,12 @@ std::ostream& operator<<(std::ostream& out, const DimList& dlist)
  * \todo DOC.......... in particular what \a RowMajor does......
  *
  */
-template<bool RowMajor = false>
+template<bool IsRowMajor_ = false>
 class IndexList : public std::vector<int>
 {
 public:
+  static constexpr bool IsRowMajor = IsRowMajor_;
+  
   IndexList(const std::vector<int>& dims = std::vector<int>(), int linearindex = -1)
     : std::vector<int>(dims.size()), p_dims(dims)
   {
@@ -294,48 +302,67 @@ public:
       throw InvalidIndexError("Invalid indexing of zero-sized array given by dimension list");
     }
   }
+
+  TOMOGRAPHER_ENABLED_IF(IsRowMajor)
   void setLinearIndex(int linearindex)
   {
     const int ndims = (int)p_dims.size();
-    if ( RowMajor ) {
-      for (int k = ndims-1; k >= 0; --k) {
-	this->at(k) = linearindex % p_dims[k];
-	linearindex /= p_dims[k]; // integer division
-      }
-    } else {
-      for (int k = 0; k < ndims; ++k) {
-	this->at(k) = linearindex % p_dims[k];
-	linearindex /= p_dims[k]; // integer division
-      }
+    for (int k = ndims-1; k >= 0; --k) {
+      this->at(k) = linearindex % p_dims[k];
+      linearindex /= p_dims[k]; // integer division
     }
   }
+  TOMOGRAPHER_ENABLED_IF(!IsRowMajor)
+  void setLinearIndex(int linearindex)
+  {
+    const int ndims = (int)p_dims.size();
+    for (int k = 0; k < ndims; ++k) {
+      this->at(k) = linearindex % p_dims[k];
+      linearindex /= p_dims[k]; // integer division
+      // std::cout << "k = " << k << "; p_dims = " << p_dims << "; at(k) = " << this->at(k)
+      //           << "; linearindex=" << linearindex << "\n";
+    }
+  }
+
+  TOMOGRAPHER_ENABLED_IF(IsRowMajor)
   int linearIndex() const
   {
     int linindex = 0;
-    if ( RowMajor ) {
-      for (int k = (int)p_dims.size()-1; k >= 0; --k) {
-	linindex *= p_dims[k];
-	linindex += this->at(k);
-      }
-    } else {
-      for (int k = 0; k < (int)p_dims.size(); ++k) {
-	linindex *= p_dims[k];
-	linindex += this->at(k);
-      }
+    for (int k = 0; k < (int)p_dims.size(); ++k) {
+      linindex *= p_dims[k];
+      linindex += this->at(k);
+    }
+    return linindex;
+  }
+  TOMOGRAPHER_ENABLED_IF(!IsRowMajor)
+  int linearIndex() const
+  {
+    int linindex = 0;
+    for (int k = (int)p_dims.size()-1; k >= 0; --k) {
+      linindex *= p_dims[k];
+      linindex += this->at(k);
     }
     return linindex;
   }
 
-  inline const IndexList & index() const
+  inline const IndexList & index() const&
   {
     return *this;
   }
 
+  /**
+   * \warning This function <em>std::move</em>s \c *this, so you shouldn't use the object
+   * after calling this method any more.
+   */
   inline IndexList && index() &&
   {
     return std::move(*this);
   }
 
+  inline const std::vector<int> & dims() const
+  {
+    return p_dims;
+  }
 
   
   IndexList& operator<<(int dim) {
@@ -352,8 +379,8 @@ private:
 };
 
 
-template<bool RowMajor>
-std::ostream& operator<<(std::ostream& str, const IndexList<RowMajor> & indexlist)
+template<bool IsRowMajor>
+std::ostream& operator<<(std::ostream& str, const IndexList<IsRowMajor> & indexlist)
 {
   str << "[";
   for (std::size_t j = 0; j < indexlist.size(); ++j) {
@@ -371,9 +398,14 @@ std::ostream& operator<<(std::ostream& str, const IndexList<RowMajor> & indexlis
 /** \brief Utility to iterate over a multidim array by increasing linear index
  *
  */
-template<bool RowMajor = false, typename IntType = int>
+template<bool IsRowMajor_ = false, typename IntType_ = int>
 class IndexListIterator
 {
+public:
+  static constexpr bool IsRowMajor = IsRowMajor_;
+  typedef IntType_ IntType;
+
+private:
   const std::vector<IntType> p_dims;
   const IntType p_numel;
 
@@ -394,7 +426,7 @@ public:
     }
   }
 
-  inline const std::vector<IntType> & index() const
+  inline const std::vector<IntType> & index() const&
   {
     return p_index;
   }
@@ -414,7 +446,7 @@ public:
   }
 
 
-  TOMOGRAPHER_ENABLED_IF(RowMajor)
+  TOMOGRAPHER_ENABLED_IF(IsRowMajor)
   IntType increment()
   {
     for (int k = p_dims.size() - 1; k >= 0; --k) {
@@ -431,7 +463,7 @@ public:
     return ++p_linearIndex;
   }
 
-  TOMOGRAPHER_ENABLED_IF(!RowMajor)
+  TOMOGRAPHER_ENABLED_IF(!IsRowMajor)
   IntType increment()
   {
     for (int k = 0; k < (int)p_dims.size(); ++k) {
@@ -459,8 +491,8 @@ public:
 };
 
 
-template<bool RowMajor, typename IntType>
-std::ostream& operator<<(std::ostream& str, const IndexListIterator<RowMajor, IntType> & indexlistit)
+template<bool IsRowMajor, typename IntType>
+std::ostream& operator<<(std::ostream& str, const IndexListIterator<IsRowMajor, IntType> & indexlistit)
 {
   std::vector<int> indexlist{indexlistit.index()};
 
@@ -504,6 +536,39 @@ struct VarValueDecoder
 
 
 
+
+
+namespace tomo_internal {
+  template<typename T, typename Enabled = void>
+  struct has_params_member {
+    enum { value = 0 };
+  };
+  // if T has no Params member, following will fail by SFINAE
+  template<typename T>
+  struct has_params_member<T, typename T::Params>
+  {
+    enum { value = 1 };
+  };
+}; // namespace tomo_internal
+
+
+
+class Var;
+
+template<typename T>
+inline typename VarValueDecoder<T>::RetType value(const Var& var)
+{
+  VarValueDecoder<T>::checkShape(var);
+  return VarValueDecoder<T>::decodeValue(var);
+}
+
+template<typename T, TOMOGRAPHER_ENABLED_IF_TMPL( tomo_internal::has_params_member<VarValueDecoder<T> >::value )>
+inline typename VarValueDecoder<T>::RetType value(const Var& var,
+                                                  const typename VarValueDecoder<T>::Params & params)
+{
+  VarValueDecoder<T>::checkShape(var, params);
+  return VarValueDecoder<T>::decodeValue(var, params);
+}
 
 
 
@@ -619,7 +684,16 @@ public:
   }
 
   template<typename T>
-  inline typename VarValueDecoder<T>::RetType value() const;
+  inline typename VarValueDecoder<T>::RetType value() const
+  {
+    return Tomographer::MAT::value<T>(*this);
+  }
+  template<typename T, TOMOGRAPHER_ENABLED_IF_TMPL( tomo_internal::has_params_member<VarValueDecoder<T> >::value )>
+  inline typename VarValueDecoder<T>::RetType value(const Var& var,
+                                                    const typename VarValueDecoder<T>::Params & params)
+  {
+    return Tomographer::MAT::value<T>(*this, params);
+  }
 
   const matvar_t * getMatvarPtr() const
   {
@@ -628,20 +702,6 @@ public:
   }
 
 };
-
-
-template<typename T>
-inline typename VarValueDecoder<T>::RetType value(const Var& var)
-{
-  VarValueDecoder<T>::checkShape(var);
-  return VarValueDecoder<T>::decodeValue(var);
-}
-
-template<typename T>
-inline typename VarValueDecoder<T>::RetType Var::value() const
-{
-  return Tomographer::MAT::value<T>(*this);
-}
 
 
 // ---------------
@@ -957,7 +1017,8 @@ private:
   template<typename IndexListType>
   std::size_t linear_index(IndexListType && index) const
   {
-    IndexList<false> ind_cmaj{p_var.dims(), std::forward<IndexListType>(index.index())};
+    IndexList<false> ind_cmaj{p_var.dims(), index.index()};
+    // std::cout << "linear_index: ind_cmaj=" << ind_cmaj << ", -> linear index = " << ind_cmaj.linearIndex() << "\n";
     return ind_cmaj.linearIndex();
   }
 };
@@ -980,7 +1041,7 @@ struct VarShape
 
   template<typename DimListType>
   VarShape(bool is_complex_, DimListType&& dims_, bool is_square_)
-    : is_complex(is_complex_), dims(std::forward(dims_)), is_square(is_square_)
+    : is_complex(is_complex_), dims(std::forward<DimListType>(dims_)), is_square(is_square_)
   {
     _check_consistency();
   }
@@ -1067,14 +1128,14 @@ inline void VarShape::checkShape(const Var& var)
 /** \brief Ask for this type in \ref Var::value() to get an std::vector<T>
  *
  */
-template<typename T_, bool RowMajor_ = false>
+template<typename T_, bool IsRowMajor_ = false>
 struct GetStdVector {
   typedef T_ type;
-  static constexpr bool RowMajor = RowMajor_;
+  static constexpr bool IsRowMajor = IsRowMajor_;
 };
 
-template<typename T, bool RowMajor>
-struct VarValueDecoder<GetStdVector<T, RowMajor> >
+template<typename T, bool IsRowMajor>
+struct VarValueDecoder<GetStdVector<T, IsRowMajor> >
 {
   typedef std::vector<T> RetType;
 
@@ -1096,7 +1157,8 @@ struct VarValueDecoder<GetStdVector<T, RowMajor> >
     MAT_SWITCH_TYPE(matvar_ptr,
                     tomo_internal::VarMatDataAccessor<T, Type> acc(var);
                     
-                    for(IndexListIterator<RowMajor> il(var.dims()); il.valid(); ++il) {
+                    for(IndexListIterator<IsRowMajor> il(var.dims()); il.valid(); ++il) {
+                      // std::cout << "index: " << il << "\n";
                       val[il.linearIndex()] = acc.value(il);
                     }
                     
@@ -1121,13 +1183,18 @@ struct VarValueDecoder<GetStdVector<T, RowMajor> >
 namespace tomo_internal {
 
 
-template<typename MatrixType, typename MatRealType,
-         TOMOGRAPHER_ENABLED_IF_TMPL(Eigen::NumTraits<typename MatrixType::Scalar>::IsComplex)>
+template<typename MatrixType, typename MatType,
+         TOMOGRAPHER_ENABLED_IF_TMPL(Eigen::NumTraits<typename MatrixType::Scalar>::IsComplex &&
+                                     Eigen::NumTraits<MatType>::IsComplex)>
 void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
-                       const matvar_t * matvar_ptr, const std::ptrdiff_t data_offset = 0)
+                       const Var & var, const std::ptrdiff_t data_offset = 0)
 {
   typedef typename MatrixType::Scalar Scalar;
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
+
+  typedef typename Eigen::NumTraits<MatType>::Real MatRealType;
+
+  const matvar_t * matvar_ptr = var.getMatvarPtr();
   
   const mat_complex_split_t * cdata = (mat_complex_split_t*) matvar_ptr->data;
   
@@ -1135,28 +1202,39 @@ void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
   assert(vdims[0] != -1 && vdims[1] != -1);
   
   matrix = (
-      Eigen::Map<Eigen::Matrix<MatRealType,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor> >(
+      Eigen::Map<const Eigen::Matrix<MatRealType,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor> >(
           (const MatRealType *) cdata->Re + data_offset, vdims[0], vdims[1]
           ).template cast<std::complex<RealScalar> >()
       + std::complex<RealScalar>(0,1) *
-      Eigen::Map<Eigen::Matrix<MatRealType,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor> >(
+      Eigen::Map<const Eigen::Matrix<MatRealType,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor> >(
           (const MatRealType *) cdata->Im + data_offset, vdims[0], vdims[1]
           ).template cast<std::complex<RealScalar> >()
       );
 }
 
 template<typename MatrixType, typename MatRealType,
-         TOMOGRAPHER_ENABLED_IF_TMPL(!Eigen::NumTraits<typename MatrixType::Scalar>::IsComplex)>
+         TOMOGRAPHER_ENABLED_IF_TMPL(!Eigen::NumTraits<typename MatrixType::Scalar>::IsComplex &&
+                                     Eigen::NumTraits<MatRealType>::IsComplex)>
+void init_eigen_matrix(MatrixType & /*matrix*/, const DimList & /*vdims*/,
+                       const Var & var, const std::ptrdiff_t /*data_offset*/ = 0)
+{
+  throw VarTypeError(var.varName(), "Expected real type, but got complex.");
+}
+
+template<typename MatrixType, typename MatRealType,
+         TOMOGRAPHER_ENABLED_IF_TMPL(!Eigen::NumTraits<MatRealType>::IsComplex)>
 void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
-                       const matvar_t * matvar_ptr, const std::ptrdiff_t data_offset = 0)
+                       const Var & var, const std::ptrdiff_t data_offset = 0)
 {
   typedef typename MatrixType::Scalar Scalar;
+
+  const matvar_t * matvar_ptr = var.getMatvarPtr();
   
   assert(vdims.size() == 2);
   assert(vdims[0] != -1 && vdims[1] != -1);
   
   matrix = (
-      Eigen::Map<Eigen::Matrix<MatRealType,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor> >(
+      Eigen::Map<const Eigen::Matrix<MatRealType,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor> >(
           (const MatRealType *) matvar_ptr->data + data_offset, vdims[0], vdims[1]
           )
       ).template cast<Scalar>();
@@ -1173,7 +1251,33 @@ struct VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
   typedef MatrixType RetType;
 
-  static inline void checkShape(const Var & var)
+  /* not needed in fact.
+  struct Params {
+    Params() : dims{Rows, Cols}
+    {
+    } 
+    Params(int rows) : dims{rows, 1}
+    {
+      assert(Cols == 1);
+      assert(Rows == Eigen::Dynamic || Rows == rows);
+    }
+    Params(int rows, int cols) : dims{rows, cols}
+    {
+      assert(Rows == Eigen::Dynamic || Rows == rows);
+      assert(Cols == Eigen::Dynamic || Cols == cols);
+    }
+    Params(const DimList& dims_) : dims{dims_}
+    {
+      assert(dims.size() == 2);
+      assert(Rows == Eigen::Dynamic || Rows == dims[0]);
+      assert(Cols == Eigen::Dynamic || Cols == dims[1]);
+    }
+
+    const DimList dims;
+  };
+  */
+
+  static inline void checkShape(const Var & var) //, const Params & p = Params())
   {
     DimList matdims;
     matdims << (Rows!=Eigen::Dynamic ? Rows : -1)
@@ -1181,43 +1285,30 @@ struct VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
 
     VarShape shape(Eigen::NumTraits<Scalar>::IsComplex,
                    matdims,
-                   matdims.size() == 2 && matdims[0] == matdims[1]);
+                   matdims.size() == 2 && matdims[0] != -1 && matdims[0] == matdims[1]);
 
     shape.checkShape(var);
   }
                              
-  static inline RetType decodeValue(const Var & var)
+  static inline RetType decodeValue(const Var & var) //, const Params & p = Params())
   {
-    matvar_t * matvar_ptr = var.getMatvarPtr();
+    const matvar_t * matvar_ptr = var.getMatvarPtr();
     DimList vdims{var.dims()};
 
     assert(vdims.size() >= 2);
+
     const int rows = vdims[0];
     // rest of dimensions.
-    int cols = get_numel(vdims.data()+1, vdims.data()+vdims.size());
+    const int cols = get_numel(vdims.data()+1, vdims.data()+vdims.size());
 
-    constexpr int RowMajorOrColMajor = ( ((Options & Eigen::RowMajorBit) == Eigen::RowMajor)
-                                         ? Eigen::RowMajor
-                                         : Eigen::ColMajor );
-    
     MatrixType matrix(rows, cols);
 
-    if (var.isComplex()) {
-      const mat_complex_split_t * cdata = (mat_complex_split_t*) matvar_ptr->data;
-      MAT_SWITCH_COMPLEX_TYPE(
-          matvar_ptr->data_type,
-          tomo_internal::init_eigen_matrix<MatrixType, std::complex<Type> >(
-              *matrix, vdims, matvar_ptr
-              );
-          );
-    } else {
-      MAT_SWITCH_REAL_TYPE(
-          matvar_ptr->data_type,
-          tomo_internal::init_eigen_matrix<MatrixType,Type>(
-              *matrix, vdims, matvar_ptr
-              );
-          );
-    }
+    MAT_SWITCH_TYPE(
+        matvar_ptr,
+        tomo_internal::init_eigen_matrix<MatrixType, Type>(
+            matrix, vdims, var
+            );
+        );
      
     return matrix;
   }
@@ -1282,24 +1373,12 @@ struct VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRow
 
     matvar_t * matvar_ptr = var.getMatvarPtr();
 
-    if (var.isComplex()) {
-      const mat_complex_split_t * cdata = (mat_complex_split_t*) matvar_ptr->data;
-      MAT_SWITCH_COMPLEX_TYPE(
-          matvar_ptr->data_type,
-          typedef Type MATType;
-          for (j = 0; j < outerdim; ++j) {
-            tomo_internal::init_eigen_matrix<MatrixType,MATType>(value[j], inner_rowcols, matvar_ptr);
-          }
-          );
-    } else {
-      MAT_SWITCH_REAL_TYPE(
-          matvar_ptr->data_type,
-          typedef Type MatType;
-          for (j = 0; j < outerdim; ++j) {
-            tomo_internal::init_eigen_matrix<MatrixType,MatType>(value[j], inner_rowcols, matvar_ptr);
-          }
-          );
-    }
+    MAT_SWITCH_TYPE(
+        matvar_ptr,
+        for (j = 0; j < outerdim; ++j) {
+          tomo_internal::init_eigen_matrix<MatrixType,Type>(value[j], inner_rowcols, var);
+        }
+        );
 
     return value;
   }

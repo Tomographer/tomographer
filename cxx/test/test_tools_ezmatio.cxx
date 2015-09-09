@@ -37,8 +37,88 @@
 BOOST_AUTO_TEST_SUITE(test_tools_ezmatio);
 // =============================================================================
 
-BOOST_AUTO_TEST_SUITE(utils);
+BOOST_AUTO_TEST_SUITE(DimList);
+BOOST_AUTO_TEST_CASE(basic)
+{
+  typedef Tomographer::MAT::DimList DimList;
+  DimList dims{3, 4, 5};
+  const std::vector<int> ok{3, 4, 5};
+  BOOST_CHECK_EQUAL(dims.size(), 3);
+  BOOST_CHECK_EQUAL(dims.ndims(), 3);
+  BOOST_CHECK_EQUAL(dims.numel(), 3*4*5);
+  BOOST_CHECK(dims == ok);
+  BOOST_CHECK(dims.matchesWanted(DimList{3, 4, 5}));
+  BOOST_CHECK(!dims.matchesWanted(DimList{2, 4, 5}));
+  BOOST_CHECK(!dims.matchesWanted(DimList{3, 4}));
+  BOOST_CHECK(dims.matchesWanted(DimList{-1, -1, -1}));
+  BOOST_CHECK(dims.matchesWanted(DimList{-1, 4, -1}));
+  BOOST_CHECK(dims.matchesWanted(DimList{3, 4, -1}));
+  BOOST_CHECK(!dims.matchesWanted(DimList{3, -1, 3}));
+}
+BOOST_AUTO_TEST_SUITE_END();
 
+BOOST_AUTO_TEST_SUITE(IndexList)
+
+// IndexList<> defaults to column-major
+TOMO_STATIC_ASSERT_EXPR(Tomographer::MAT::IndexList<>::IsRowMajor == false);
+
+BOOST_AUTO_TEST_CASE(constr1)
+{
+  Tomographer::MAT::DimList dims{3, 4, 5};
+  BOOST_MESSAGE("dims = " << dims) ;
+  Tomographer::MAT::IndexList<false> il{dims};
+  BOOST_CHECK(il.dims() == dims);
+
+  il.setLinearIndex(23);
+  BOOST_MESSAGE("il == " << il) ;
+  const std::vector<int> ok{2, 3, 1};
+  BOOST_CHECK(il.index() == ok);
+
+  BOOST_CHECK_EQUAL(il.linearIndex(), 23);
+
+  // can use as std::vector<int> (base class):
+  BOOST_CHECK((const std::vector<int>&)(il) == ok);
+}
+BOOST_AUTO_TEST_CASE(constr2)
+{
+  Tomographer::MAT::DimList dims{3, 4, 5};
+  Tomographer::MAT::IndexList<> il{dims, 23};
+  BOOST_CHECK(il.dims() == dims);
+  BOOST_CHECK_EQUAL(il.linearIndex(), 23);
+  const std::vector<int> ok{2, 3, 1};
+  BOOST_CHECK(il.index() == ok);
+}
+BOOST_AUTO_TEST_CASE(constr1_rowmaj)
+{
+  Tomographer::MAT::DimList dims{3, 4, 5};
+  Tomographer::MAT::IndexList<true> il{dims};
+  BOOST_CHECK(il.dims() == dims);
+  il.setLinearIndex(23);
+  const std::vector<int> ok{1, 0, 3};
+  BOOST_CHECK(il.index() == ok);
+  // can use as std::vector<int>:
+  BOOST_CHECK((const std::vector<int>&)(il) == ok);
+}
+BOOST_AUTO_TEST_CASE(rvalref_index)
+{
+  Tomographer::MAT::DimList dims{3, 4, 5};
+  const std::vector<int> ok{1, 0, 3};
+  {
+    Tomographer::MAT::IndexList<true> il{dims, 23};
+    Tomographer::MAT::IndexList<true> && ilref = std::move(il).index(); // && rvalue-ref
+    BOOST_CHECK(std::vector<int>(ilref) == ok);
+  }
+  {
+    Tomographer::MAT::IndexList<true> il{dims, 23};
+    const Tomographer::MAT::IndexList<true> & ilref = il.index(); // const&
+    BOOST_CHECK(std::vector<int>(ilref) == ok);
+  }
+}
+
+BOOST_AUTO_TEST_SUITE_END();
+
+
+BOOST_AUTO_TEST_SUITE(IndexListIterator);
 
 BOOST_AUTO_TEST_CASE(IndexListIterator1)
 {
@@ -98,10 +178,9 @@ BOOST_AUTO_TEST_CASE(IndexListIterator2)
   }
 }
 
-
-
-
 BOOST_AUTO_TEST_SUITE_END();
+
+
 
 // -----------------------------------------------------------------------------
 
@@ -361,37 +440,307 @@ BOOST_AUTO_TEST_CASE(getstdvector)
     };
     MY_BOOST_CHECK_STD_VECTOR_EQUAL(v, ok, tol);
   }
+  {
+    Tomographer::MAT::Var var = f.var("mcd_4x3");
+    typedef std::complex<double> Cd;
+    std::vector<Cd> v = var.value<Tomographer::MAT::GetStdVector<Cd, true> >();
+    const std::vector<Cd> ok{ // row major
+      Cd(1,1),
+      Cd(0,2),
+      Cd(0,3),
+      Cd(0,1.5),
+      Cd(1,3),
+      Cd(0,4.5),
+      Cd(0,100),
+      Cd(0,200),
+      Cd(1,300),
+      Cd(0,0),
+      Cd(0,0),
+      Cd(0,1)
+    };
+    MY_BOOST_CHECK_STD_VECTOR_EQUAL(v, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("rvcd_5");
+    typedef std::complex<double> Cd;
+    std::vector<Cd> v = var.value<Tomographer::MAT::GetStdVector<Cd> >();
+    const std::vector<Cd> ok{ // row major
+      Cd(1,1),
+      Cd(2,2.5),
+      Cd(-3,0),
+      Cd(4,0),
+      Cd(-193.223,0),
+    };
+    MY_BOOST_CHECK_STD_VECTOR_EQUAL(v, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("vcd_5");
+    typedef std::complex<double> Cd;
+    std::vector<Cd> v = var.value<Tomographer::MAT::GetStdVector<Cd> >();
+    const std::vector<Cd> ok{ // row major
+      Cd(1,1),
+      Cd(2,-2.5),
+      Cd(-3,0),
+      Cd(4,0),
+      Cd(-193.223,0),
+    };
+    MY_BOOST_CHECK_STD_VECTOR_EQUAL(v, ok, tol);
+  }
+
+  {
+    Tomographer::MAT::Var var = f.var("mf_4x3");
+    std::vector<float> v = var.value<Tomographer::MAT::GetStdVector<float, true> >();
+    const float ok[] = {
+      1.0f, 2.0f, 3.0f,
+      1.5f, 3.f, 4.5f,
+      100.0f, 200.0f, 300.0f,
+      0.0f, 0.0f, 1.0f
+    };
+    MY_BOOST_CHECK_STD_VECTOR_EQUAL(v, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("rvf_5");
+    std::vector<float> v = var.value<Tomographer::MAT::GetStdVector<float, true> >();
+    const float ok[] = {
+      1.0f, 2.0f, -3.0f, 4.0f, -193.223f
+    };
+    MY_BOOST_CHECK_STD_VECTOR_EQUAL(v, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("vf_5");
+    std::vector<float> v = var.value<Tomographer::MAT::GetStdVector<float, true> >();
+    const float ok[] = {
+      1.0f, 2.0f, -3.0f, 4.0f, -193.223f
+    };
+    MY_BOOST_CHECK_STD_VECTOR_EQUAL(v, ok, tol);
+  }
+
+  {
+    Tomographer::MAT::Var var = f.var("mi8_3x3");
+    std::vector<int8_t> v = var.value<Tomographer::MAT::GetStdVector<int8_t, true> >();
+    const std::vector<int8_t> ok{
+      1, 1, 1, 2, 2, 2, 127, 0, -128
+    };
+    MY_BOOST_CHECK_STD_VECTOR_EQUAL(v, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("mi32_3x3");
+    std::vector<int32_t> v = var.value<Tomographer::MAT::GetStdVector<int32_t, true> >();
+    const std::vector<int32_t> ok{
+      1, 1, 1, 2, 2, 2, 2147483647l, 0, -2147483648l
+    };
+    MY_BOOST_CHECK_STD_VECTOR_EQUAL(v, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("mu32_3x3");
+    std::vector<uint32_t> v = var.value<Tomographer::MAT::GetStdVector<uint32_t, true> >();
+    const std::vector<uint32_t> ok{
+      1, 1, 1, 2, 2, 2, 4294967295lu, 0, 0
+    };
+    MY_BOOST_CHECK_STD_VECTOR_EQUAL(v, ok, tol);
+  }
 }
-/*
-% double, 4x3 matrix
-d.md_4x3 = double([1.0, 2.0, 3.0; 1.5, 3, 4.5; 100.0, 200.0, 300.0; 0.0 0.0 1.0]);
-% double row vector
-d.rvd_5 = double([1.0, 2.0, -3.0, 4.0, -193.223]);
-% double column vector
-d.vd_5 = double([1.0; 2.0; -3.0; 4.0; -193.223]);
 
-% double, 4x3 matrix
-d.mcd_4x3 = [1 0 0; 0 1 0; 0 0 1; 0 0 0] + 1i*double([1.0, 2.0, 3.0; 1.5, 3, 4.5; 100.0, 200.0, 300.0; 0.0 0.0 1.0]);
-% double row vector
-d.rvcd_5 = double([1.0+1i, 2.0+2.5i, -3.0, 4.0, -193.223]);
-% double column vector
-d.vcd_5 = double([1.0+1i; 2.0; -3.0; 4.0; -193.223]);
 
-% single, 4x3 matrix
-d.mf_4x3 = single([1.0, 2.0, 3.0; 1.5, 3, 4.5; 100.0, 200.0, 300.0]);
-% single row vector
-d.rvf_5 = single([1.0, 2.0, -3.0, 4.0, -193.223]);
-% single column vector
-d.vf_5 = single([1.0; 2.0; -3.0; 4.0; -193.223]);
 
-% int8, 3x3 matrix
-d.mi8_3x3 = int8([1 1 1; 2 2 2; 127 0 -128]);
-% int32, 3x3 matrix
-d.mi32_3x3 = int32([1 1 1; 2 2 2; 2147483647 0 -2147483648]);
-% uint32, 3x3 matrix
-d.mu32_3x3 = uint32([1 1 1; 2 2 2; 4294967295 0 0]);
-*/
+BOOST_AUTO_TEST_CASE(eigen_conv)
+{
+  {
+    Tomographer::MAT::Var var = f.var("md_4x3");
+    Eigen::MatrixXd m = var.value<Eigen::MatrixXd>();
+    BOOST_CHECK_EQUAL(m.rows(), 4);
+    BOOST_CHECK_EQUAL(m.cols(), 3);
+    Eigen::Matrix<double,4,3> ok;
+    ok <<  1.0, 2.0, 3.0, 1.5, 3, 4.5, 100.0, 200.0, 300.0, 0.0, 0.0, 1.0 ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("md_4x3");
+    typedef Eigen::Matrix<double,4,Eigen::Dynamic,Eigen::RowMajor> MatrixType;
+    MatrixType m = var.value<MatrixType>();
+    BOOST_CHECK_EQUAL(m.rows(), 4);
+    BOOST_CHECK_EQUAL(m.cols(), 3);
+    Eigen::Matrix<double,4,3> ok;
+    // still same matrix, even if m is stored in row-major format.
+    ok <<  1.0, 2.0, 3.0, 1.5, 3, 4.5, 100.0, 200.0, 300.0, 0.0, 0.0, 1.0 ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("md_4x3");
+    typedef Eigen::Matrix<float,Eigen::Dynamic,3,Eigen::RowMajor> MatrixType;
+    MatrixType m = var.value<MatrixType>();
+    BOOST_CHECK_EQUAL(m.rows(), 4);
+    BOOST_CHECK_EQUAL(m.cols(), 3);
+    Eigen::Matrix<float,4,3> ok;
+    ok <<  1.0f, 2.0f, 3.0f, 1.5f, 3.f, 4.5f, 100.0f, 200.0f, 300.0f, 0.0f, 0.0f, 1.0f ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("md_4x3");
+    typedef Eigen::Matrix<float,4,3> MatrixType;
+    MatrixType m = var.value<MatrixType>();
+    BOOST_CHECK_EQUAL(m.rows(), 4);
+    BOOST_CHECK_EQUAL(m.cols(), 3);
+    Eigen::Matrix<float,4,3> ok;
+    ok <<  1.0f, 2.0f, 3.0f, 1.5f, 3.f, 4.5f, 100.0f, 200.0f, 300.0f, 0.0f, 0.0f, 1.0f ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("md_4x3");
+    typedef Eigen::Matrix<int,Eigen::Dynamic,Eigen::Dynamic> MatrixType;
+    MatrixType m = var.value<MatrixType>();
+    BOOST_CHECK_EQUAL(m.rows(), 4);
+    BOOST_CHECK_EQUAL(m.cols(), 3);
+    Eigen::Matrix<int,4,3> ok;
+    ok <<  1, 2, 3, 1, 3, 4, 100, 200, 300, 0, 0, 1 ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("rvd_5");
+    Eigen::MatrixXd m = var.value<Eigen::MatrixXd>();
+    Eigen::RowVectorXd ok(5);
+    ok <<  1.0, 2.0, -3.0, 4.0, -193.223 ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+}
 
+BOOST_AUTO_TEST_CASE(eigen)
+{
+  {
+    Tomographer::MAT::Var var = f.var("md_4x3");
+    Eigen::MatrixXd m = var.value<Eigen::MatrixXd>();
+    Eigen::Matrix<double,4,3> ok;
+    ok <<  1.0, 2.0, 3.0, 1.5, 3.0, 4.5, 100.0, 200.0, 300.0, 0.0, 0.0, 1.0 ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("rvd_5");
+    Eigen::RowVectorXd m = var.value<Eigen::RowVectorXd>();
+    Eigen::RowVectorXd ok(5);
+    ok <<  1.0, 2.0, -3.0, 4.0, -193.223 ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("vd_5");
+    Eigen::VectorXd m = var.value<Eigen::VectorXd>();
+    Eigen::VectorXd ok(5);
+    ok <<  1.0, 2.0, -3.0, 4.0, -193.223 ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("mcd_4x3");
+    Eigen::MatrixXcd m = var.value<Eigen::MatrixXcd>();
+    Eigen::MatrixXcd ok(4,3);
+    typedef std::complex<double> Cd;
+    ok <<
+      Cd(1,1),
+      Cd(0,2),
+      Cd(0,3),
+      Cd(0,1.5),
+      Cd(1,3),
+      Cd(0,4.5),
+      Cd(0,100),
+      Cd(0,200),
+      Cd(1,300),
+      Cd(0,0),
+      Cd(0,0),
+      Cd(0,1) ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("rvcd_5");
+    Eigen::MatrixXcd m = var.value<Eigen::MatrixXcd>();
+    Eigen::MatrixXcd ok(1,5);
+    typedef std::complex<double> Cd;
+    ok <<
+      Cd(1,1),
+      Cd(2,2.5),
+      Cd(-3,0),
+      Cd(4,0),
+      Cd(-193.223,0) ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("vcd_5");
+    Eigen::VectorXcd m = var.value<Eigen::VectorXcd>();
+    Eigen::VectorXcd ok(5);
+    typedef std::complex<double> Cd;
+    ok <<
+      Cd(1,1),
+      Cd(2,-2.5),
+      Cd(-3,0),
+      Cd(4,0),
+      Cd(-193.223,0) ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("mf_4x3");
+    Eigen::MatrixXf m = var.value<Eigen::MatrixXf>();
+    Eigen::Matrix<float,4,3> ok;
+    ok <<
+      1.0f, 2.0f, 3.0f,
+      1.5f, 3.f, 4.5f,
+      100.0f, 200.0f, 300.0f,
+      0.0f, 0.0f, 1.0f
+      ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("rvf_5");
+    Eigen::Matrix<float,1,5> m = var.value<Eigen::Matrix<float,1,5> >();
+    Eigen::Matrix<float,1,5> ok;
+    ok <<
+      1.0f, 2.0f, -3.0f, 4.0f, -193.223f
+      ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("vf_5");
+    Eigen::Matrix<float,5,1> m = var.value<Eigen::Matrix<float,5,1> >();
+    Eigen::Matrix<float,5,1> ok;
+    ok <<
+      1.0f, 2.0f, -3.0f, 4.0f, -193.223f
+      ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+
+  {
+    Tomographer::MAT::Var var = f.var("mi8_3x3");
+    Eigen::Matrix<int8_t,Eigen::Dynamic,3> m = var.value<Eigen::Matrix<int8_t,Eigen::Dynamic,3> >();
+    Eigen::Matrix<int8_t,3,3> ok;
+    ok <<
+      1, 1, 1, 2, 2, 2, 127, 0, -128
+      ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("mi32_3x3");
+    Eigen::Matrix<int32_t,Eigen::Dynamic,Eigen::Dynamic> m
+      = var.value<Eigen::Matrix<int32_t,Eigen::Dynamic,Eigen::Dynamic> >();
+    Eigen::Matrix<int32_t,3,3> ok;
+    ok <<
+      1, 1, 1, 2, 2, 2, 2147483647l, 0, -2147483648l
+      ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+  {
+    Tomographer::MAT::Var var = f.var("mu32_3x3");
+    Eigen::Matrix<uint32_t,3,3> m = var.value<Eigen::Matrix<uint32_t,3,3> >();
+    Eigen::Matrix<uint32_t,3,3> ok;
+    ok <<
+      1, 1, 1, 2, 2, 2, 4294967295lu, 0, 0
+      ;
+    MY_BOOST_CHECK_EIGEN_EQUAL(m, ok, tol);
+  }
+}
+
+
+
+
+BOOST_AUTO_TEST_CASE(stdvec_of_eigen)
+{
+  
+}
 
 BOOST_AUTO_TEST_SUITE_END();
 
