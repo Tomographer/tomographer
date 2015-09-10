@@ -50,13 +50,22 @@ extern "C" {
 #include <tomographer/tools/fmt.h>
 
 
+/** \file tomographer/tools/ezmatio.h
+ *
+ * \brief Utilities for reading MATLAB \c "*.mat" data files. See \ref Tomographer::MAT.
+ */
+
+
+
 namespace Tomographer
 {
 // namespace doc in doc/doxdocs/namespaces.cxx
 namespace MAT
 {
 
-//! Base Exception class for errors within our MAT routines
+
+/** \brief Base Exception class for errors within our MAT routines
+ */
 class Exception : public std::exception
 {
   std::string p_heading;
@@ -84,7 +93,8 @@ private:
   }
 };
 
-//! Exception relating to a MATLAB variable in the data file
+/** \brief Exception relating to a MATLAB variable in the data file 
+ */
 class VarError : public Exception
 {
 public:
@@ -169,6 +179,9 @@ public:
   InvalidIndexError(const std::string msg) : Exception("Invalid index: ", msg) { }
   virtual ~InvalidIndexError() noexcept { }
 };
+
+
+
 
 
 class Var;
@@ -306,18 +319,37 @@ inline std::ostream& operator<<(std::ostream& out, const DimList& dlist)
 
 /** \brief A list of indices with an API for linear or subindices access.
  *
- * Stores also the dimensions. (.....................)
+ * This subclass of \ref std::vector<int> stores indices into a multi-dimensional array,
+ * and adds utilities to access the data with a linear index (i.e. linear memory access
+ * model) in either column-major or row-major format.
  *
- * \todo DOC.......... in particular what \a RowMajor does......
+ * If \a RowMajor is \c true, then the linear indices in this class are given and
+ * calculated in row-major format; if \c false, in column-major format. See <a
+ * href="http://eigen.tuxfamily.org/dox/group__TopicStorageOrders.html">Eigen's page on
+ * storage orders</a>.
  *
+ * \note that this class also stores the underlying dimensions of the tensor, which are
+ *       needed to calculate the linear indices. Also, note that the multidimensional
+ *       index list is stored, not the linear index. So repeated calls to \ref
+ *       setLinearIndex() and \ref linearIndex() will do redundant calculations.
+ *
+ * \note Use \ref IndexListIterator if you want to iterate linearly through memory layout
+ *       with both linear and indices-based access.
  */
 template<bool IsRowMajor_ = false>
 class IndexList : public std::vector<int>
 {
 public:
+  //! Is this class calculating and expecting row-major (\c true) or column-major (\c false) format 
   static constexpr bool IsRowMajor = IsRowMajor_;
+  //! Base vector type (superclass)
   typedef std::vector<int> VectorType;
   
+  /** \brief Constructor with linear index
+   *
+   * \note if no linear index is specified (or a negative value is given), then the vector
+   * is uninitialized.
+   */
   IndexList(const std::vector<int>& dims = std::vector<int>(), int linearindex = -1)
     : std::vector<int>(dims.size()), p_dims(dims)
   {
@@ -328,6 +360,15 @@ public:
       setLinearIndex(linearindex);
     }
   }
+  /** \brief Constructor with multidimensional index specification
+   *
+   * The second argument is any (single-argument) initializer which can be used as
+   * constructor in a \ref std::vector<int>.
+   *
+   */
+  // the reason we dont have template<typename... VectorArgs> for std::vector<>
+  // constructor is that g++ 4.6 if I remember correctly can't unpack arguments into a
+  // fixed number of arguments (TODO: CHECK THIS!)
   template<typename VectorIntInitializer>
   IndexList(const std::vector<int>& dims, VectorIntInitializer&& index)
     : std::vector<int>(std::forward<VectorIntInitializer>(index)), p_dims(dims)
@@ -337,6 +378,13 @@ public:
     }
   }
 
+  /** \brief Set the linear index.
+   *
+   * This will set the underlying index list to the multi-dimensional index corresponding
+   * to this linear index.
+   *
+   * (This is the row-major implementation)
+   */
   TOMOGRAPHER_ENABLED_IF(IsRowMajor)
   void setLinearIndex(int linearindex)
   {
@@ -346,6 +394,13 @@ public:
       linearindex /= p_dims[k]; // integer division
     }
   }
+  /** \brief Set the linear index.
+   *
+   * This will set the underlying index list to the multi-dimensional index corresponding
+   * to this linear index.
+   *
+   * (This is the column-major implementation)
+   */
   TOMOGRAPHER_ENABLED_IF(!IsRowMajor)
   void setLinearIndex(int linearindex)
   {
@@ -358,6 +413,10 @@ public:
     }
   }
 
+  /** \brief Linear index corresponding to the stored multidimensional indices.
+   *
+   * (This is the row-major implementation.)
+   */
   TOMOGRAPHER_ENABLED_IF(IsRowMajor)
   int linearIndex() const
   {
@@ -368,6 +427,10 @@ public:
     }
     return linindex;
   }
+  /** \brief Linear index corresponding to the stored multidimensional indices.
+   *
+   * (This is the column-major implementation.)
+   */
   TOMOGRAPHER_ENABLED_IF(!IsRowMajor)
   int linearIndex() const
   {
@@ -379,21 +442,42 @@ public:
     return linindex;
   }
 
+  /** \brief Return a reference to \c *this.
+   */
   inline const std::vector<int> & index() const
   {
     return *this;
   }
 
+  /** \brief Get the underlying dimensions given to the constructor.
+   *
+   * There is no way to change the underlying dims.
+   */
   inline const std::vector<int> & dims() const
   {
     return p_dims;
   }
 
-  
-  IndexList& operator<<(int dim) {
-    push_back(dim);
+  /** \brief Append index to list.
+   *
+   * Utility to construct an index list as
+   * \code
+   *   IndexList il; il << 1 << 2 << 5;
+   * \endcode
+   */
+  IndexList& operator<<(int ind) {
+    push_back(ind);
     return *this;
   }
+
+  /** \brief Append a list of indices to list.
+   *
+   * Utility to construct an index list as
+   * \code
+   *   IndexList more = ...; // or std::vector<int> more = ...
+   *   IndexList il; il << 1 << 2 << more;
+   * \endcode
+   */
   IndexList& operator<<(const std::vector<int>& moredims) {
     insert(end(), moredims.begin(), moredims.end());
     return *this;
@@ -406,7 +490,7 @@ public:
   template<bool IsRowMajor2 = false>
   static const std::vector<int> &  forward_index(const IndexList<IsRowMajor2> & index)
   {
-    return index.p_index;
+    return index;
   }
   template<bool IsRowMajor2 = false>
   static std::vector<int> &&  forward_index(IndexList<IsRowMajor2> && index)
@@ -415,10 +499,11 @@ public:
   }
 
 private:
-  std::vector<int> p_dims;
+  const std::vector<int> p_dims;
 };
 
 
+//! C++ output stream operator for \ref IndexList<bool IsRowMajor> .
 template<bool IsRowMajor>
 inline std::ostream& operator<<(std::ostream& str, const IndexList<IsRowMajor> & indexlist)
 {
@@ -545,6 +630,7 @@ public:
 };
 
 
+//! C++ output stream operator for \ref IndexListIterator<bool IsRowMajor, typename IntType> .
 template<bool IsRowMajor, typename IntType>
 inline std::ostream& operator<<(std::ostream& str, const IndexListIterator<IsRowMajor, IntType> & indexlistit)
 {
@@ -800,25 +886,25 @@ inline std::vector<Var> File::getVarInfoList()
  * \endcode
  */
 template<int MatTypeId = -1>  struct MatType { };
-//! Specialization of \ref MatType<int MatTypeId> for MAT_T_DOUBLE
+//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_DOUBLE
 template<>  struct MatType<MAT_T_DOUBLE> { typedef double Type; };
-//! Specialization of \ref MatType<int MatTypeId> for MAT_T_DOUBLE
+//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_DOUBLE
 template<>  struct MatType<MAT_T_SINGLE> { typedef float Type; };
-//! Specialization of \ref MatType<int MatTypeId> for MAT_T_INT64
+//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_INT64
 template<>  struct MatType<MAT_T_INT64> { typedef int64_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for MAT_T_INT32
+//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_INT32
 template<>  struct MatType<MAT_T_INT32> { typedef int32_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for MAT_T_INT16
+//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_INT16
 template<>  struct MatType<MAT_T_INT16> { typedef int16_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for MAT_T_INT8
+//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_INT8
 template<>  struct MatType<MAT_T_INT8> { typedef int8_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for MAT_T_UINT64
+//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_UINT64
 template<>  struct MatType<MAT_T_UINT64> { typedef uint64_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for MAT_T_UINT32
+//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_UINT32
 template<>  struct MatType<MAT_T_UINT32> { typedef uint32_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for MAT_T_UINT16
+//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_UINT16
 template<>  struct MatType<MAT_T_UINT16> { typedef uint16_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for MAT_T_UINT8
+//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_UINT8
 template<>  struct MatType<MAT_T_UINT8> { typedef uint8_t Type; };
 
 
@@ -1143,6 +1229,7 @@ public:
   }
 };
 
+//! C++ output stream operator for \ref VarShape .
 inline std::ostream& operator<<(std::ostream& str, const VarShape & varshape)
 {
   str << ((varshape.is_complex) ? std::string("complex ") : std::string("real "));
@@ -1192,8 +1279,14 @@ inline void VarShape::checkShape(const VarShape& other)
 
 // get an std::vector<T> for a variable.
 
-/** \brief Ask for this type in \ref Var::value() to get an std::vector<T>
+/** \brief Ask for this type in \ref Var::value<typename T>() to get an \ref std::vector
+ *         of the data
  *
+ * \tparam T_ is the type stored in the std::vector.
+ *
+ * \tparam IsRowMajor_ should be \c true if the elements of the matrix should be stored in
+ * the vector in row-major ordering or \c false if they should be stored in column-major
+ * ordering (the default, also Eigen's default)
  */
 template<typename T_, bool IsRowMajor_ = false>
 struct GetStdVector {
@@ -1201,6 +1294,7 @@ struct GetStdVector {
   static constexpr bool IsRowMajor = IsRowMajor_;
 };
 
+//! Specialization of \ref VarValueDecoder<T> to obtain an std::vector<> with the matrix data.
 template<typename T, bool IsRowMajor>
 struct VarValueDecoder<GetStdVector<T, IsRowMajor> >
 {

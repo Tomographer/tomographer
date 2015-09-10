@@ -33,6 +33,12 @@
  * assert'ing.
  *
  * \note This header must be included BEFORE any Eigen header!
+ *
+ * \note If you define the preprocessor symbol \c TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION
+ * before including this file, then the macro \c eigen_assert() is defined such that it
+ * throws an exception upon failure. (In this case, \c eigen_assert() is defined to call
+ * \ref eigen_assert_throw_exception().)
+ *
  */
 
 #include <string>
@@ -63,6 +69,12 @@ public:
 
 
 
+/** \brief Macro like \a eigen_assert(), but which throws an exception.
+ *
+ * You can use this macro in a definition of \c "eigen_assert()". If the assertion
+ * condition fails, then an exception of type \ref
+ * Tomographer::Tools::eigen_assert_exception is thrown.
+ */
 #define eigen_assert_throw_exception(x)         \
   if (!(x)) { throw (::Tomographer::Tools::eigen_assert_exception(#x, __FILE__, __LINE__)); }
   

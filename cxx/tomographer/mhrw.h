@@ -843,8 +843,7 @@ template<typename ValueCalculator_,
          typename CountIntType_ = int,
          typename CountRealAvgType_ = double,
          int NumTrackValues_ = Eigen::Dynamic,
-         int NumLevels_ = Eigen::Dynamic,
-         bool TrackSelectedIndices_ = false
+         int NumLevels_ = Eigen::Dynamic
 	 >
 struct ValueHistogramWithBinningMHRWStatsCollectorParams
 {
@@ -860,11 +859,6 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
   static constexpr int NumTrackValues = NumTrackValues_;
   //! The number of levels in the binning analysis. See \ref BinningAnalysis.
   static constexpr int NumLevels = NumLevels_;
-  //! NOT YET IMPLEMENTED. Whether to track only selected indices in the histogram [for now, all are tracked]
-  /**
-   * \todo why would one want to track selected indices? remove this completely.
-   */
-  static constexpr bool TrackSelectedIndices = TrackSelectedIndices_;
 
   //! The type of a value calculated by the \ref pageInterfaceValueCalculator.
   typedef typename ValueCalculator::ValueType ValueType;
@@ -947,7 +941,6 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
  * ValueHistogramWithBinningMHRWStatsCollectorParams with the relevant template
  * parameters.
  *
- * \bug \a TrackSelectedindices does not work yet.
  */
 template<typename Params,
 	 typename LoggerType_ = Logger::VacuumLogger
@@ -956,30 +949,40 @@ class ValueHistogramWithBinningMHRWStatsCollector
 {
 public:
 
-  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::ValueCalculator
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::ValueCalculator .
   typedef typename Params::ValueCalculator ValueCalculator;
-  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::CountIntType
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::CountIntType .
   typedef typename Params::CountIntType CountIntType;
-  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::CountRealAvgType
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::CountRealAvgType .
   typedef typename Params::CountRealAvgType CountRealAvgType;
   
   /** \brief Somewhere where this object may log what it's doing. */
   typedef LoggerType_ LoggerType;
 
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::BaseHistogramType .
   typedef typename Params::BaseHistogramType BaseHistogramType;
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::HistogramParams .
   typedef typename Params::HistogramParams HistogramParams;
     
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::ValueType .
   typedef typename Params::ValueType ValueType;
   
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::BinningAnalysisParamsType .
   typedef typename Params::BinningAnalysisParamsType BinningAnalysisParamsType;
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::BinningAnalysisType .
   typedef BinningAnalysis<BinningAnalysisParamsType, LoggerType> BinningAnalysisType;
     
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::NumTrackValues .
   static constexpr int NumTrackValuesCTime = Params::NumTrackValues;
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::NumLevels .
   static constexpr int NumLevelsCTime = Params::NumLevels;
-  static constexpr bool TrackSelectedIndices = Params::TrackSelectedIndices;
 
+  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::Result .
   typedef typename Params::Result Result;
 
+  /** \brief This is the natural ValueHistogramMHRWStatsCollector type on which we're
+   *         adding error bars.
+   */
   typedef ValueHistogramMHRWStatsCollector<
     ValueCalculator,
     LoggerType,
@@ -992,52 +995,25 @@ private:
 
   BinningAnalysisType binning_analysis;
 
-  //  Tools::store_if_enabled<Eigen::Array<CountIntType, Eigen::Dynamic, 1>, TrackSelectedIndices>
-  //  selected_indices;
-
   LoggerType & logger;
 
   Result result;
 
 public:
     
-  template<bool dummy = true,
-           typename std::enable_if<(dummy && !TrackSelectedIndices), bool>::type dummy2 = true
-           >
   ValueHistogramWithBinningMHRWStatsCollector(HistogramParams histogram_params,
                                               const ValueCalculator & vcalc,
                                               int num_levels,
                                               LoggerType & logger_)
     : value_histogram(histogram_params, vcalc, logger_),
       binning_analysis(histogram_params.num_bins, num_levels, logger_),
-      //      selected_indices(),
       logger(logger_),
       result(histogram_params, binning_analysis)
   {
     logger.longdebug("ValueHistogramWithBinningMHRWStatsCollector", "constructor()");
   }
   
-  /*
-  template<typename Derived, bool dummy = true,
-           typename std::enable_if<(dummy && TrackSelectedIndices), bool>::type dummy2 = true
-           >
-  ValueHistogramWithBinningMHRWStatsCollector(HistogramParams histogram_params,
-                                              const ValueCalculator & vcalc,
-                                              const Eigen::ArrayBase<Derived> & which_indices,
-                                              int num_levels,
-                                              LoggerType & logger_)
-    : value_histogram(histogram_params, vcalc, logger_),
-      binning_analysis(histogram_params.num_bins, num_levels, logger_),
-      //      selected_indices(which_indices),
-      logger(logger_),
-      result(histogram_params, binning_analysis)
-  {
-    assert(false && "TrackSelectedIndices : NOT YET IMPLEMENTED");
-  }
-  */
-
-
-  //! Get the histogram data collected so far. See \ref BaseHistogramType.
+  //! Get the histogram data collected so far. See \ref BaseHistogramType .
   inline const BaseHistogramType & histogram() const
   {
     return value_histogram.histogram();

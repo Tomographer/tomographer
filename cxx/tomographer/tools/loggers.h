@@ -52,8 +52,12 @@
 
 
 
+#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
+
 #define ENABLE_IF_Fn_CALLABLE_OSTREAM                                      \
   typename std::enable_if<std::is_convertible<Fn,std::function<void(std::ostream&)> >::value, void>::type
+
+#endif
 
 
 namespace Tomographer
@@ -1643,7 +1647,7 @@ constexpr const LocalLoggerOriginSpec extractTomoOrigin(const Tools::conststr fn
 } // namespace tomo_internal
 
 
-/** \brief Use this as argument for \ref LocalLogger() 
+/** \brief Use this as argument for a \ref Tomographer::Logger::LocalLogger constructor . 
  */
 #define TOMO_ORIGIN Tomographer::Logger::tomo_internal::extractTomoOrigin(TOMO_FUNCTION)
 

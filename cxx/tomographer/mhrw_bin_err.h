@@ -254,15 +254,15 @@ public:
   //! Type used to count the number of samples. See \ref BinningAnalysisParams::CountIntType.
   typedef typename Params::CountIntType CountIntType;
 
-  /** \copybrief BinningAnalysisParams::NumTrackValuesCTime.
+  /** \copybrief BinningAnalysisParams::NumTrackValuesCTime
    * See \ref BinningAnalysisParams::NumTrackValuesCTime. 
    */
   static constexpr int NumTrackValuesCTime = Params::NumTrackValuesCTime;
-  /** \copybrief BinningAnalysisParams::NumLevelsCTime.
+  /** \copybrief BinningAnalysisParams::NumLevelsCTime
    * See \ref BinningAnalysisParams::NumLevelsCTime.
    */
   static constexpr int NumLevelsCTime = Params::NumLevelsCTime;
-  /** \copybrief BinningAnalysisParams::NumLevelsPlusOneCTime.
+  /** \copybrief BinningAnalysisParams::NumLevelsPlusOneCTime
    * See \ref BinningAnalysisParams::NumLevelsPlusOneCTime.
    */
   static constexpr int NumLevelsPlusOneCTime = Params::NumLevelsPlusOneCTime;

@@ -81,6 +81,14 @@ BOOST_AUTO_TEST_CASE(constr1)
   // can use as std::vector<int> (base class):
   BOOST_CHECK((const std::vector<int>&)(il) == ok);
 }
+BOOST_AUTO_TEST_CASE(constr1b)
+{
+  Tomographer::MAT::DimList dims{3, 4, 5};
+  // constructor with indices
+  Tomographer::MAT::IndexList<false> il{dims, std::vector<int>{0, 2, 4}};
+  const std::vector<int> ok{0, 2, 4};
+  BOOST_CHECK(il.index() == ok);
+}
 BOOST_AUTO_TEST_CASE(constr2)
 {
   Tomographer::MAT::DimList dims{3, 4, 5};

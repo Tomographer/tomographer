@@ -207,8 +207,9 @@ namespace OMP
 } // namespace MultiProc
 
 namespace Logger {
-  /** \brief Specialized Traits for \ref MultiProc::OMP::ThreadSanitizerLogger<BaseLogger>
-   *         -- see \ref Logger::LoggerTraits<LoggerType>
+  /** \brief Specialized Traits for \ref
+   *         Tomographer::MultiProc::OMP::ThreadSanitizerLogger<typename BaseLogger> --
+   *         see \ref Tomographer::Logger::LoggerTraits<typename LoggerType>
    *
    * Logger traits for \ref MultiProc::OMP::ThreadSanitizerLogger.
    */
@@ -616,13 +617,18 @@ namespace OMP {
 
   };
 
+  /** \brief Create an OMP task dispatcher. Useful if you want C++'s template parameter
+   *         deduction mechanism.
+   *
+   */
   template<typename Task_, typename ConstantDataType_, typename ResultsCollector_,
            typename Logger_, typename CountIntType_ = unsigned int>
-  TaskDispatcher<Task_, ConstantDataType_, ResultsCollector_,
-                    Logger_, CountIntType_>
+  inline TaskDispatcher<Task_, ConstantDataType_, ResultsCollector_,
+                        Logger_, CountIntType_>
   makeTaskDispatcher(ConstantDataType_ * pcdata_, ResultsCollector_ * results_, Logger_ & logger_,
                         CountIntType_ num_total_runs_, CountIntType_ n_chunk_)
   {
+    // RVO should be rather obvious to the compiler
     return TaskDispatcher<Task_, ConstantDataType_, ResultsCollector_,
                              Logger_, CountIntType_>(
         pcdata_, results_, logger_, num_total_runs_, n_chunk_

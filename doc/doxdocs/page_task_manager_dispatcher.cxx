@@ -28,7 +28,7 @@
 
 /** \page pageTaskManagerDispatcher Task Manager/Dispatcher Interfaces
  *
- * <em>The following describes &lsquo;type interfaces.&#rsquo; See \ref pageTypeInterfaces
+ * <em>The following describes &lsquo;type interfaces.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
  *
  * The following are type interfaces that allow the creation of several instances of a

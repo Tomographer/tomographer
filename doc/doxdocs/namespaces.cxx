@@ -54,7 +54,30 @@
  *
  * \brief Utilities and helpers for reading MATLAB \c .mat files
  *
- * 
+ * The class \ref File represents an open MATLAB file from which you can extract
+ * data. Variables inside the file are represented with \ref Var objects.
+ *
+ * The actual data can be extracted to some native C++ representation using \ref
+ * Var::value<T>() for some selected C++ types. Example:
+ *
+ * \code
+ *   Tomographer::MAT::File matfile("myfile.mat");
+ *
+ *   // find the variable in file named `x'
+ *   Tomographer::MAT::Var var_x = matfile.var("x");
+ *
+ *   // get `x' as C++ double. If `x' in the file is not convertible to double, or if
+ *   // it is not a scalar, then a VarTypeError is thrown.
+ *   double var_x_value = var.value<double>();
+ *
+ *   // find variable `m' and get it as an Eigen::MatrixXd. Again, if the type is
+ *   // incompatible a VarTypeError is thrown.
+ *   Tomographer::MAT::Var var = matfile.var("m");
+ *   Eigen::MatrixXd matrix = var.value<Eigen::MatrixXd>();
+ * \endcode
+ *
+ * You can extend this mechanism easily to essentially any C++ type. Just specialize the
+ * \ref VarValueDecoder<T> template for your C++ type.
  */
 
 

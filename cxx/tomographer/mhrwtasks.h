@@ -29,7 +29,7 @@
 
 /** \file mhrwtasks.h
  *
- * \brief Multiprocessing tasks interface (see \ref pageTaskManagerDispatch) for
+ * \brief Multiprocessing tasks interface (see \ref pageTaskManagerDispatcher) for
  *        parallel Metropolis-Hastings random walks.
  *
  */
