@@ -43,19 +43,19 @@ BOOST_AUTO_TEST_SUITE(DimList);
 BOOST_AUTO_TEST_CASE(basic)
 {
   typedef Tomographer::MAT::DimList DimList;
-  DimList dims{3, 4, 5};
-  const std::vector<int> ok{3, 4, 5};
+  DimList dims{{3, 4, 5}};
+  const std::vector<int> ok{{3, 4, 5}};
   BOOST_CHECK_EQUAL(dims.size(), 3);
   BOOST_CHECK_EQUAL(dims.ndims(), 3);
   BOOST_CHECK_EQUAL(dims.numel(), 3*4*5);
   BOOST_CHECK(dims == ok);
-  BOOST_CHECK(dims.matchesWanted(DimList{3, 4, 5}));
-  BOOST_CHECK(!dims.matchesWanted(DimList{2, 4, 5}));
-  BOOST_CHECK(!dims.matchesWanted(DimList{3, 4}));
-  BOOST_CHECK(dims.matchesWanted(DimList{-1, -1, -1}));
-  BOOST_CHECK(dims.matchesWanted(DimList{-1, 4, -1}));
-  BOOST_CHECK(dims.matchesWanted(DimList{3, 4, -1}));
-  BOOST_CHECK(!dims.matchesWanted(DimList{3, -1, 3}));
+  BOOST_CHECK(dims.matchesWanted(DimList{{3, 4, 5}}));
+  BOOST_CHECK(!dims.matchesWanted(DimList{{2, 4, 5}}));
+  BOOST_CHECK(!dims.matchesWanted(DimList{{3, 4}}));
+  BOOST_CHECK(dims.matchesWanted(DimList{{-1, -1, -1}}));
+  BOOST_CHECK(dims.matchesWanted(DimList{{-1, 4, -1}}));
+  BOOST_CHECK(dims.matchesWanted(DimList{{3, 4, -1}}));
+  BOOST_CHECK(!dims.matchesWanted(DimList{{3, -1, 3}}));
 }
 BOOST_AUTO_TEST_SUITE_END(); // DimList
 
@@ -66,14 +66,14 @@ TOMO_STATIC_ASSERT_EXPR(Tomographer::MAT::IndexList<>::IsRowMajor == false);
 
 BOOST_AUTO_TEST_CASE(constr1)
 {
-  Tomographer::MAT::DimList dims{3, 4, 5};
+  Tomographer::MAT::DimList dims{{3, 4, 5}};
   BOOST_MESSAGE("dims = " << dims) ;
   Tomographer::MAT::IndexList<false> il{dims};
   BOOST_CHECK(il.dims() == dims);
 
   il.setLinearIndex(23);
   BOOST_MESSAGE("il == " << il) ;
-  const std::vector<int> ok{2, 3, 1};
+  const std::vector<int> ok{{2, 3, 1}};
   BOOST_CHECK(il.index() == ok);
 
   BOOST_CHECK_EQUAL(il.linearIndex(), 23);
@@ -83,36 +83,36 @@ BOOST_AUTO_TEST_CASE(constr1)
 }
 BOOST_AUTO_TEST_CASE(constr1b)
 {
-  Tomographer::MAT::DimList dims{3, 4, 5};
+  Tomographer::MAT::DimList dims{{3, 4, 5}};
   // constructor with indices
-  Tomographer::MAT::IndexList<false> il{dims, std::vector<int>{0, 2, 4}};
-  const std::vector<int> ok{0, 2, 4};
+  Tomographer::MAT::IndexList<false> il{dims, std::vector<int>{{0, 2, 4}}};
+  const std::vector<int> ok{{0, 2, 4}};
   BOOST_CHECK(il.index() == ok);
 }
 BOOST_AUTO_TEST_CASE(constr2)
 {
-  Tomographer::MAT::DimList dims{3, 4, 5};
+  Tomographer::MAT::DimList dims{{3, 4, 5}};
   Tomographer::MAT::IndexList<> il{dims, 23};
   BOOST_CHECK(il.dims() == dims);
   BOOST_CHECK_EQUAL(il.linearIndex(), 23);
-  const std::vector<int> ok{2, 3, 1};
+  const std::vector<int> ok{{2, 3, 1}};
   BOOST_CHECK(il.index() == ok);
 }
 BOOST_AUTO_TEST_CASE(constr1_rowmaj)
 {
-  Tomographer::MAT::DimList dims{3, 4, 5};
+  Tomographer::MAT::DimList dims{{3, 4, 5}};
   Tomographer::MAT::IndexList<true> il{dims};
   BOOST_CHECK(il.dims() == dims);
   il.setLinearIndex(23);
-  const std::vector<int> ok{1, 0, 3};
+  const std::vector<int> ok{{1, 0, 3}};
   BOOST_CHECK(il.index() == ok);
   // can use as std::vector<int>:
   BOOST_CHECK((const std::vector<int>&)(il) == ok);
 }
 BOOST_AUTO_TEST_CASE(rvalref_index)
 {
-  Tomographer::MAT::DimList dims{3, 4, 5};
-  const std::vector<int> ok{1, 0, 3};
+  Tomographer::MAT::DimList dims{{3, 4, 5}};
+  const std::vector<int> ok{{1, 0, 3}};
   /* had to remove rvalue-ref qualified methods for g++ 4.6 ... :(
   {
     Tomographer::MAT::IndexList<true> il{dims, 23};

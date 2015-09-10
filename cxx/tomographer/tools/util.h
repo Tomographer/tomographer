@@ -368,14 +368,16 @@ constexpr inline conststr extractFuncName(const conststr & funcname)
 // -----------------------------------------------------------------------------
 
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
+// WARNING!!! CHECK OUT  http://stackoverflow.com/q/29363532/1694896
+// FOR VERY SUBTLE BUGS....... :( :(   -- TEST WITH INTEL ICC!!
 #define TOMOGRAPHER_ENABLED_IF(...)					\
-  template<bool dummy_enabled_if = true,				\
-	   typename std::enable_if<dummy_enabled_if && (__VA_ARGS__), bool>::type \
-	                                                 dummy_enabled_if_2 = true>
+  template<bool _dummy__enabledif = false,				\
+	   typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
+                                                        _dummy__enabledif2 = false>
 #define TOMOGRAPHER_ENABLED_IF_TMPL(...)				\
-  bool _dummyUIHFKDLNJD_enabled_if = true,				\
-  typename std::enable_if<_dummyUIHFKDLNJD_enabled_if && (__VA_ARGS__), bool>::type \
-                                                 _dummyUIHFKDLNJD_enabled_if_2 = true
+  bool _dummy__enabledif = false,				\
+  typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
+                                                 _dummy__enabledif2 = true
 #endif
 
 

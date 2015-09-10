@@ -225,6 +225,15 @@ public:
   {
     return p_matfp;
   }
+
+  File& operator=(File&& other)
+  {
+    // move assignment operator. Steal the other object's MAT file handle
+    p_matfp = other.p_matfp;
+    other.p_matfp = NULL;
+    return *this;
+  }
+  File& operator=(const File& other) = delete;
   
 private:
   mat_t *p_matfp;
@@ -841,6 +850,14 @@ public:
     return p_vardata->p_matvar;
   }
 
+  Var& operator=(Var&& other)
+  {
+    // steal the data
+    p_vardata = other.p_vardata;
+    other.p_vardata = NULL;
+    return *this;
+  }
+  Var& operator=(const Var& other) = delete;
 };
 
 
@@ -1109,8 +1126,9 @@ public:
   virtual ~VarMatDataAccessor() { }
 
   template<typename IndexListType,
-           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::is_complex<OutType>::value &&
-                                       !Tools::is_complex<MatInnerT>::value)>
+	   typename OutType__ = OutType, typename MatInnerT__ = MatInnerT,
+           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::is_complex<OutType__>::value &&
+                                       !Tools::is_complex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& index) const
   {
     assert(p_r_ptr != NULL);
@@ -1121,16 +1139,18 @@ public:
   }
   
   template<typename IndexListType,
-           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::is_complex<OutType>::value &&
-                                       Tools::is_complex<MatInnerT>::value)>
+	   typename OutType__ = OutType, typename MatInnerT__ = MatInnerT,
+           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::is_complex<OutType__>::value &&
+                                       Tools::is_complex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& ) const
   {
     throw VarTypeError(p_var.varName(), "Expected real type, got complex");
   }
 
   template<typename IndexListType,
-           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::is_complex<OutType>::value &&
-                                       !Tools::is_complex<MatInnerT>::value)>
+	   typename OutType__ = OutType, typename MatInnerT__ = MatInnerT,
+           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::is_complex<OutType__>::value &&
+                                       !Tools::is_complex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& index) const
   {
     assert(p_r_ptr != NULL);
@@ -1141,8 +1161,9 @@ public:
   }
 
   template<typename IndexListType,
-           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::is_complex<OutType>::value &&
-                                       Tools::is_complex<MatInnerT>::value)>
+	   typename OutType__ = OutType, typename MatInnerT__ = MatInnerT,
+           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::is_complex<OutType__>::value &&
+                                       Tools::is_complex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& index) const
   {
     assert(p_cre_ptr != NULL);
@@ -1189,13 +1210,15 @@ struct VarShape
     _check_consistency();
   }
 
+  /* ICC doesn't like this, and we don't seem to need it either
   template<class T, typename DimListType>
   VarShape(DimListType&& dims_, bool is_square_)
     : is_complex(Tools::is_complex<T>::value), dims(std::forward(dims_)), is_square(is_square_)
   {
     _check_consistency();
   }
-  
+  */  
+
   VarShape(const Var & var)
     : is_complex(var.isComplex()), dims(var.dims()), is_square(var.isSquareMatrix())
   {
