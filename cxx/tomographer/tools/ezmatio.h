@@ -203,6 +203,8 @@ class File
 public:
   /** \brief Open a data file for reading.
    *
+   * The file will be immediately open for reading. You may directly call the \ref var(),
+   * \ref getVarInfoList() etc. methods after constructing a File object.
    */
   File(const std::string fname)
   {
@@ -262,6 +264,11 @@ public:
     return p_matfp;
   }
 
+  /** \brief Move assignment operator.
+   *
+   * This object has C++11 move semantics, meaning that you can pass it around by
+   * value. Read more on C++11 move semantics for more information.
+   */
   File& operator=(File&& other)
   {
     // move assignment operator. Steal the other object's MAT file handle
@@ -380,6 +387,9 @@ inline std::ostream& operator<<(std::ostream& out, const DimList& dlist)
  *
  * \note Use \ref IndexListIterator if you want to iterate linearly through memory layout
  *       with both linear and indices-based access.
+ *
+ * \note There is no way to change the underlying dimensions once the object is
+ *       constructed.
  */
 template<bool IsRowMajor_ = false>
 class IndexList : public std::vector<int>
@@ -584,7 +594,7 @@ private:
   IntType p_linearIndex;
 
 public:
-  IndexListIterator(const std::vector<IntType>& dims = std::vector<IntType>())
+  IndexListIterator(const std::vector<IntType>& dims)
     : p_dims(dims),
       p_numel(get_numel(dims.begin(), dims.end())),
       p_index(dims.size(), 0),
@@ -702,20 +712,64 @@ inline std::ostream& operator<<(std::ostream& str, const IndexListIterator<IsRow
  * Specialize this template to your favorite return type to define a decoder for that
  * type.
  *
+ * This class does two things:
+ *
+ * - it ensures that the variable in the data file has a type and shape which is
+ *   compatible with the C++ data type requested (\a T)
+ *
+ * - it decodes the MAT data via the C MatIO interface (see the \a matvar_t structure) to
+ *   transform it into the requested native C++ object
+ *
+ * It may be that the decoding routine might not want to have directly \a T as a return
+ * type, but rather return a type which is convertible to \a T or which can be used as an
+ * initializer for a \a T. (Think, for example, an Eigen generator type.)
+ *
+ * This default class template does nothing. Specialize it for your C++ type or use one of
+ * the available specializations.
+ *
+ * The \a Enabled template parameter is provided for convenience, if you wish to employ
+ * SFINAE to conditionally enable specializations. See the VarValueDecoder<T> for simple
+ * numeric values for an example.
  */
 template<typename T, typename Enabled = void>
 struct VarValueDecoder
 {
+  /** \brief Type returned by \ref decodeValue()
+   *
+   * The specialization of VarValueDecoder<T> should explicitly specify which type is
+   * returned by the main decoding routine (see class doc).
+   */
   typedef T RetType;
 
-  static inline void checkShape(const Var &)
+  /** \brief Check that the type and shape of the \a var are compatible with \a T
+   *
+   * Specializations of VarValueDecoder<T> should implement this function and check
+   * whether the given variable can be decoded into the requested C++ type \a T. If there
+   * is any error, throw a \ref VarTypeError exception.
+   */
+  static inline void checkShape(const Var & var)
   {
+    (void)var; // silence "unused parameter" warnings
   }
 
-  static inline RetType decodeValue(const Var &  /* var */)
+  /** \brief Decode the variable \a var into the C++ type \a T
+   *
+   * Specializations of VarValueDecoder<T> should implement this function to read data in
+   * the MATLAB variable \a var and return an instance of the requested C++ type \a T.
+   *
+   * Note the return type of this function need not be \a T itself, but any type you like,
+   * presumably one that is convertible to \a T, assignable to \a T, or which can be used
+   * as initializer for \a T. You may find this useful if you want to return an
+   * initializer type such as, e.g., an \a Eigen generator expression.
+   *
+   * Do note, though, that with modern compilers performing return value optimization
+   * (RVO), in most cases there shouldn't be any real overhead in returning a \a T
+   * directly.
+   */
+  static inline RetType decodeValue(const Var & var)
   {
     throw std::runtime_error(std::string("Not Implemented: Please specialize MAT::VarValueDecoder<> for ")
-                             + typeid(T).name());
+                             + typeid(T).name() + " to decode variable " + var.varName());
   }
 };
 
@@ -724,6 +778,8 @@ struct VarValueDecoder
 
 
 namespace tomo_internal {
+  // has_params_member<T>::value is true if T has a type member named Params,
+  // i.e. typename T::Params, else it is false.
   template<typename T, typename Enabled = void>
   struct has_params_member {
     enum { value = 0 };
@@ -759,6 +815,20 @@ inline typename VarValueDecoder<T>::RetType value(const Var& var,
 
 /** \brief A MATLAB variable in the MAT file.
  *
+ * This object is a wrapper around MatIO's API for reading data of a variable in the data
+ * file.
+ *
+ * This object can be moved around using C++11 move semantics. Also, this object is
+ * copyable. (But don't modify the object, as the data is shared.)
+ *
+ * Var objects may, or may not, have the actual data loaded (\ref hasData()). If no data
+ * is loaded, information about the variable (type, shape, etc.) may be accessed. There is
+ * currently no way to load the data subsequently for the same Var object, just
+ * re-construct a new Var object.
+ *
+ * To read the data, you should use the template method \ref value<T>(). The type you can
+ * request is any type for which a corresponding \ref VarValueDecoder<T> has been defined.
+ *
  */
 class Var
 {
@@ -783,6 +853,16 @@ private:
   }
 
 public:
+  /** \brief Read variable from MATLAB data file.
+   *
+   * This constructor initializes this variable from the given open MATLAB data file \a
+   * matf by looking up the variable named \a varname.
+   *
+   * If \a load_data is \c true, then the data is also loaded. Otherwise, only the type
+   * and shape information is loaded. See \ref hasData().
+   *
+   * Calling this constructor directly is the same as calling \ref File::var().
+   */
   Var(File & matf, const std::string& varname, bool load_data = true)
   {
     p_vardata = new VarData;
@@ -800,12 +880,14 @@ public:
     p_vardata->p_varname = varname;
   }
 
+  //! Var objects are copyable. Beware though that the data is shared.
   Var(const Var& copy)
   {
     p_vardata = copy.p_vardata;
     p_vardata->refcount++;
   }
 
+  //! Var implements C++11 move semantics.
   Var(Var&& other)
   {
     // steal the data
@@ -813,7 +895,7 @@ public:
     other.p_vardata = NULL;
   }
 
-  virtual ~Var() {
+  ~Var() {
     if (p_vardata != NULL) {
       p_vardata->refcount--;
       if (!p_vardata->refcount) {
@@ -823,56 +905,142 @@ public:
     }
   }
 
+  /** \brief Take in charge the given C \c matvar_t pointer.
+   *
+   * This static method yields an instance of \a Var directly initialized with the given
+   * variable pointer. The object takes ownership of the pointer, and will call \a
+   * Mat_VarFree when the last Var copy sharing this data will be destructed.
+   */
   static Var takeOver(matvar_t * varinfo)
   {
     return Var(varinfo);
   }
 
-
+  /** \brief The variable name.
+   *
+   * Returns the name of the MATLAB variable this object is referring to.
+   */
   inline const std::string & varName() const
   {
     assert(p_vardata != NULL);
     return p_vardata->p_varname;
   }
 
+  /** \brief Number of dimensions of this object.
+   *
+   * This is called the &lsquo;rank&rsquo; of the tensor in MatIO terminology.
+   */
   inline int ndims() const
   {
     assert(p_vardata != NULL);
     return p_vardata->p_matvar->rank;
   }
+  /** \brief Specific dimensions of this numeric array or tensor.
+   *
+   * This returns a DimList, which is essentially a \ref std::vector<int>.
+   */
   inline DimList dims() const
   {
     assert(p_vardata != NULL);
     return DimList(&p_vardata->p_matvar->dims[0],
 		   &p_vardata->p_matvar->dims[p_vardata->p_matvar->rank]);
   }
+  /** \brief The total number of elements in this array or tensor.
+   *
+   * Returns the product of all the dimensions of this array or tensor.
+   */
   inline int numel() const
   {
     assert(p_vardata != NULL);
     return dims().numel();
   }
+  /** \brief Whether this variable is complex or real.
+   *
+   * Returns \c true if the data stored by this variable is complex.
+   *
+   * If the data is complex, then the variable pointer's data is in fact a pointer to a \c
+   * mat_complex_split_t which stores the real and imaginary parts of the array
+   * separately. See MatIO's documentation for more info.
+   */
   inline bool isComplex() const
   {
     assert(p_vardata != NULL);
     return p_vardata->p_matvar->isComplex;
   }
+  /** \brief Whether this is a square matrix.
+   *
+   * Return \c true if this variable has 2 dimensions which are equal, or \c false otherwise.
+   */
   inline bool isSquareMatrix() const
   {
     assert(p_vardata != NULL);
     return p_vardata->p_matvar->rank == 2 && p_vardata->p_matvar->dims[0] == p_vardata->p_matvar->dims[1];
   }
 
+  /** \brief Whether data for this Var object has been loaded.
+   *
+   * If not, then to access data (e.g. \ref value<T>()), then you need to re-obtain a
+   * fresh Var object with data loaded.
+   */
   inline bool hasData() const
   {
     assert(p_vardata != NULL);
     return (p_vardata->p_matvar->data != NULL);
   }
 
+  /** \brief Read this variable data as native C++ object.
+   *
+   * This function returns the data stored by the variable in a C++ object of type \a T.
+   *
+   * The type \a T may be any type for which a specialization of \ref VarValueDecoder<T>
+   * has been defined.
+   *
+   * Examples:
+   * \code
+   *   // Read a variable in the file named 'my_scalar_variable'
+   *   Var scalar_var = matfile.var("my_scalar_variable");
+   *   // get the scalar variable as a float. This will raise an exception if
+   *   // 'my_scalar_variable' is an array with several elements.
+   *   float scalar_f = scalar_var.value<float>();
+   *   // same: get the scalar variable as a double.
+   *   double scalar_f = scalar_var.value<double>();
+   *
+   *   // Read a variable in the file named 'my_matrix_variable'
+   *   Var matrix_var = matfile.var("my_matrix_variable");
+   *   // get the data as an Eigen::MatrixXd
+   *   Eigen::MatrixXd matrix = matrix_var.value<Eigen::MatrixXd>();
+   *   // get the data in an std::vector<double>, stored with row-major ordering
+   *   std::vector<double> vecdata = matrix_var.value<GetStdVector<double,true> >();
+   *
+   *   // read complex variables using std::complex<floating-point-type> :
+   *   Var cmatrix_var = matfile.var("my_complex_matrix_variable");
+   *   Eigen::MatrixXcd cmatrix = cmatrix_var.value<Eigen::MatrixXcd>();
+   *   std::vector<std::complex<double> > cvecdata
+   *       = cmatrix_var.value<GetStdVector<std::complex<double>,true> >();
+   * \endcode
+   *
+   * You may also equivalently call \ref Tomographer::MAT::value<T>:
+   * \code
+   *   Eigen::MatrixXd matrix = var.value<Eigen::MatrixXd>();
+   *   // is equivalent to:
+   *   Eigen::MatrixXd matrix = Tomographer::MAT::value<Eigen::MatrixXd>(var);
+   * \endcode
+   */
   template<typename T>
   inline typename VarValueDecoder<T>::RetType value() const
   {
     return Tomographer::MAT::value<T>(*this);
   }
+  /** \brief Read this variable data as native C++ object.
+   *
+   * See \ref value<T>().
+   *
+   * This overload accepts an additional \a params parameter, but only if the
+   * corresponding VarValueDecoder<T> accepts it. This is in case the behavior of the
+   * decoding should depend on additional parameters given at runtime. Currently, no
+   * built-in VarValueDecoder<T> specializations use this.
+   *
+   */
   template<typename T, TOMOGRAPHER_ENABLED_IF_TMPL( tomo_internal::has_params_member<VarValueDecoder<T> >::value )>
   inline typename VarValueDecoder<T>::RetType value(const Var& var,
                                                     const typename VarValueDecoder<T>::Params & params)
@@ -880,12 +1048,20 @@ public:
     return Tomographer::MAT::value<T>(*this, params);
   }
 
+  /** \brief Access the underlying C pointer to the MatIO structure. Use with care.
+   *
+   * Please be careful as the data is shared between different copies of Var objects.
+   *
+   */
   const matvar_t * getMatvarPtr() const
   {
     assert(p_vardata != NULL);
     return p_vardata->p_matvar;
   }
 
+  /** \brief Move assignment operator as this object implements C++11 move semantics.
+   *
+   */  
   Var& operator=(Var&& other)
   {
     // steal the data
@@ -893,7 +1069,13 @@ public:
     other.p_vardata = NULL;
     return *this;
   }
-  Var& operator=(const Var& other) = delete;
+  //! Var objects are copyable. Beware though that the data is shared.
+  Var& operator=(const Var& other)
+  {
+    p_vardata = copy.p_vardata;
+    p_vardata->refcount++;
+    return *this;
+  }
 };
 
 
