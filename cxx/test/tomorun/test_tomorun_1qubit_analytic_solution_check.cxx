@@ -26,6 +26,7 @@
 
 #include <cmath>
 
+#include <limits>
 #include <vector>
 #include <string>
 #include <iostream>
@@ -54,11 +55,11 @@ struct AnalyticalSolutionFn
 };
 
 struct DataPoint {
-  const double fval;
-  const double val;
-  const double err;
-  const double valln;
-  const double errln;
+  double fval;
+  double val;
+  double err;
+  double valln;
+  double errln;
 
   DataPoint(double fval_, double val_, double err_)
     : fval(fval_), val(val_), err(err_),
@@ -111,8 +112,8 @@ int main(int argc, char **argv)
   pts.reserve(200);
   // collect all data points
   int count_lines = 0;
-  double first_fval;
-  double bin_delta;
+  double first_fval = std::numeric_limits<double>::quiet_NaN();
+  double bin_delta = std::numeric_limits<double>::quiet_NaN();
   while (true) {
     std::getline(fnstr, line);
     if (fnstr.eof()) {
