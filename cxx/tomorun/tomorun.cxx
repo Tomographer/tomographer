@@ -202,4 +202,6 @@ int main(int argc, char **argv)
   //    logger.error("main()", "Caught exception: %s", e.what());
   //    return 2;
   //  }
+
+  return 0;
 }
