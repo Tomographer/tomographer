@@ -766,15 +766,8 @@ struct VarValueDecoder
    * (RVO), in most cases there shouldn't be any real overhead in returning a \a T
    * directly.
    */
-  static inline RetType decodeValue(const Var & var)
-  {
-    throw std::runtime_error(std::string("Not Implemented: Please specialize MAT::VarValueDecoder<> for ")
-                             + typeid(T).name() + " to decode variable " + var.varName());
-  }
+  static inline RetType decodeValue(const Var & var);
 };
-
-
-
 
 
 namespace tomo_internal {
@@ -1070,7 +1063,7 @@ public:
     return *this;
   }
   //! Var objects are copyable. Beware though that the data is shared.
-  Var& operator=(const Var& other)
+  Var& operator=(const Var& copy)
   {
     p_vardata = copy.p_vardata;
     p_vardata->refcount++;
@@ -1099,6 +1092,16 @@ inline std::vector<Var> File::getVarInfoList()
   
   return varlist;
 }
+
+
+template<typename T, typename Enabled>
+// static
+inline typename VarValueDecoder<T,Enabled>::RetType VarValueDecoder<T,Enabled>::decodeValue(const Var & var)
+{
+  throw std::runtime_error(std::string("Not Implemented: Please specialize MAT::VarValueDecoder<> for ")
+			   + typeid(T).name() + " to decode variable " + var.varName());
+}
+
 
 
 

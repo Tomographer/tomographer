@@ -56,12 +56,16 @@ BOOST_AUTO_TEST_CASE(setting)
     //    fprintf(stderr, "instanciated mysettingvar\n");
     BOOST_CHECK(EigenAssertTest::setting_scope_ptr != NULL);
     BOOST_CHECK(EigenAssertTest::setting_scope_ptr->throws_exception);
-    bool has_not_tested = true;
+    bool pt1 = false;
+    bool pt2 = false;
     BOOST_CHECK_THROW(
-        eigen_assert( (has_not_tested = false) ),
+	pt1 = true;
+        eigen_assert( false );
+	pt2 = true;
+	,
         Tomographer::Tools::eigen_assert_exception
         );
-    BOOST_CHECK(!has_not_tested);
+    BOOST_CHECK(pt1 && !pt2);
     //    fprintf(stderr, "leaving block.\n");
   }
   BOOST_CHECK(EigenAssertTest::setting_scope_ptr == NULL);
