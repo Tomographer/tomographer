@@ -24,8 +24,8 @@
  * SOFTWARE.
  */
 
-#ifndef INTEGRATOR_H
-#define INTEGRATOR_H
+#ifndef _TOMOGRAPHER_MHRW_H
+#define _TOMOGRAPHER_MHRW_H
 
 #include <cstddef>
 #include <cassert>

@@ -94,6 +94,17 @@ add_custom_target(uninstall
     )
 
 
+# ==============================================================================
+# Tests?
+# ==============================================================================
+
+option(TOMOGRAPHER_ENABLE_TESTS "Build Tomographer/Tomorun tests" off)
+if(TOMOGRAPHER_ENABLE_TESTS)
+  message(STATUS "Will build tomographer tests")
+  enable_testing()
+else(TOMOGRAPHER_ENABLE_TESTS)
+  message(STATUS "Will not build tests. Set TOMOGRAPHER_ENABLE_TESTS=on for that.")
+endif(TOMOGRAPHER_ENABLE_TESTS)
 
 # ==============================================================================
 # Include our subdirectories

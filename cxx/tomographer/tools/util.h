@@ -107,7 +107,7 @@ namespace tomo_internal {
  * Example Usage:
  * \code
  *   SomeResource * ptr = new SomeResource(..)
- *   auto delete_ptr = finally([ptr] { delete ptr; });
+ *   auto delete_ptr = finally([ptr]() { delete ptr; });
  *   // Now, the pointer ptr will be 'delete'd at end of the current block.
  *   ...
  *

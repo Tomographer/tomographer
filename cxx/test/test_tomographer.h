@@ -271,6 +271,4 @@ void dump_histogram_test(std::ostream & str, const HistogramType & histogram,
 }
 
 
-
-
 #endif

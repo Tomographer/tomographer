@@ -77,3 +77,12 @@ TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::conststr("0123456789").rfind("4",4) 
 TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::conststr("0123456789").rfind("4",std::string::npos) == 4);
 TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::conststr("0123456789").rfind("4",3) == std::string::npos);
 TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::conststr("0123456789").rfind("4",3,999u) == 999u);
+
+
+
+// we need to add at least one boost test, otherwise the executable reports failure
+// because it has no tests.
+BOOST_AUTO_TEST_CASE(a)
+{
+  BOOST_CHECK(true);
+}
