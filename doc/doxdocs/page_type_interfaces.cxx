@@ -85,6 +85,19 @@
  * The type needed to represent a density matrix. This is usually expected to be a Eigen
  * type.
  *
+ * \par int dim() const
+ * The dimension of the quantum system. Return any integer type, usually
+ * std::size_t. Inline of course is better.
+ *
+ * \par int dim2() const
+ * The squared dimension of the quantum system. Return any integer type, usually
+ * std::size_t. Inline of course is better.
+ *
+ * \par int ndof() const
+ * The squared dimension of the quantum system, minus one. This is the number of degrees
+ * of freedom of the density matrix. Return any integer type, usually std::size_t. Inline
+ * of course is better.
+ *
  * \par MatrixType initMatrixType() const
  * Returns an expression which can be assigned to a \a MatrixType such that the matrix is
  * initialized to a square \a dim x \a dim zero matrix.

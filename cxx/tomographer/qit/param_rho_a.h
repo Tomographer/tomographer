@@ -258,7 +258,7 @@ public:
     rho = trace * MatrixType::Identity(rho.rows(), rho.cols()) / matq.dim();
     for (std::size_t n = 0; n < lambda.size(); ++n) {
       rho += a(n) * lambda[n].template selfadjointView<Eigen::Lower>()
-	* boost::math::constants::half_root_two<RealScalar>();;
+	* boost::math::constants::half_root_two<RealScalar>();
     }
   }
 
