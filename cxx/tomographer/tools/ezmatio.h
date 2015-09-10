@@ -189,11 +189,21 @@ class Var;
 
 /** \brief A MATLAB file open for reading data.
  *
- * Access variables with \ref var()
+ * Access variables with \ref var(), and get a list of variables with \ref
+ * getVarInfoList().
+ *
+ * This class is in fact a wrapper for MatIO C function calls. This class owns a \a mat_t
+ * pointer to an open file, which is open in the constructor and closed in the destructor.
+ *
+ * \note This C++ class is not copyable. You may pass it by value everywhere though as if
+ *       it were copyable, because of C++11 move semantics.
  */
 class File
 {
 public:
+  /** \brief Open a data file for reading.
+   *
+   */
   File(const std::string fname)
   {
     errno = 0;
@@ -203,6 +213,12 @@ public:
     }
   }
   File(const File& other) = delete;
+
+  /** \brief Move constructor.
+   *
+   * This object has C++11 move semantics, meaning that you can pass it around by
+   * value. Read more on C++11 move semantics for more information.
+   */
   File(File&& other)
   {
     // move constructor. Steal the other object's MAT file handle
@@ -217,10 +233,30 @@ public:
     }
   }
 
+  /** \brief Find a variable by name.
+   *
+   * This returns a \ref Var object with the information corresponding to the given
+   * variable.
+   *
+   * If \a load_data is \c true (the default), then the returned Var object also contains
+   * the variable data. Otherwise, it just contains the information about the type,
+   * dimensions, etc.
+   */
   inline Var var(const std::string varname, bool load_data = true);
 
+
+  /** \brief Get a list of all variables in this data file.
+   *
+   * The returned Var objects don't have data loaded. You must re-open them with \ref
+   * var() to get the data.
+   */
   inline std::vector<Var> getVarInfoList();
 
+  /** \brief Direct access to the underlying C pointer used for the MatIO library.
+   *
+   * Please be careful with this. The pointer is owned by this object, and will be free'd
+   * at the end of this object's lifetime.
+   */
   mat_t * getMatPtr()
   {
     return p_matfp;
