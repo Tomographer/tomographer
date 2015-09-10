@@ -15,13 +15,13 @@ This project comprises two parts:
  * The generic, `Tomographer` C++ framework — flexible, but you'll need to
    invest more time.
 
-The `tomorun`  executable produces a  histogram of a  figure of merit  under the
-distribution  relevant  for constructing  confidence  regions  using the  method
+The `tomorun` executable produces a histogram of a figure of merit under the
+distribution relevant for constructing confidence regions using the method
 described in [Christandl & Renner, PRL (2012), arXiv:1108.5329][Christandl2012].
 The measurement data are specified as independent POVM outcomes.
 
 The C++ framework is a set of abstract and generic classes which you can combine
-in  your preferred  way to  implement  this random  walk for  even more  general
+in your preferred way to implement this random walk for even more general
 settings.
 
 [Christandl2012]: http://arxiv.org/abs/1108.5329
@@ -38,8 +38,8 @@ You'll need:
   - [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/)
   - [MatIO library](https://sourceforge.net/projects/matio/)
 
-A recent  C++ compiler is  required as some  C++11 features and elements  of its
-standard  library are  used. Also,  make sure  it supports  OpenMP or  you won't
+A recent C++ compiler is required as some C++11 features and elements of its
+standard library are used. Also, make sure it supports OpenMP or you won't
 benefit from parallelization.
 
 Tested on Linux/Ubuntu and Mac OS X. Should theoretically (*big flashing red
@@ -49,25 +49,24 @@ warning light*) also work on Windows.
 Download
 --------
 
-There are  currently no binary releases  available, you'll have  to compile from
-source. Don't  worry, that's  not complicated. If  you haven't already  done so,
+There are currently no binary releases available, you'll have to compile from
+source. Don't worry, that's not complicated. If you haven't already done so,
 install all the usual development tools (`gcc`/`g++`/`make`/etc.)
 
 The source can be downloaded from our github page:
 
     https://github.com/Tomographer/tomographer/releases
 
-If you  wish to contribute  to development, don't hesitate  to fork the  repo on
+If you wish to contribute to development, don't hesitate to fork the repo on
 github and send me pull requests.
 
 
 Installation
 ------------
 
-The  configuration,   compilation  and   installation  process  is   done  using
-CMake.  (You'll  need  CMake  >=   2.8.5.)   Download  an  official  release  of
-Tomographer,  unpack it,  and  enter  the unpacked  directory.  Then, issue  the
-commands:
+The configuration, compilation and installation process is done using CMake.
+(You'll need CMake >= 2.8.5.)  Download an official release of Tomographer,
+unpack it, and enter the unpacked directory.  Then, issue the commands:
 
     tomographer-1.0> mkdir build
     tomographer-1.0> cd build
@@ -75,8 +74,8 @@ commands:
     tomographer-1.0/build> make
     tomographer-1.0/build> make install/strip
 
-And you'll  have the `tomorun`  installed on your  system. You can  specify some
-standard  CMake variables,  such  as CMAKE_INSTALL_PREFIX.  If  you installed  a
+And you'll have the `tomorun` installed on your system. You can specify some
+standard CMake variables, such as CMAKE_INSTALL_PREFIX.  If you installed a
 recent compiler manually, you'll need to point CMake to that compiler, e.g. with
 
     > cmake .. -DCMAKE_C_COMPILER=/path/to/gcc -DCMAKE_CXX_COMPILER=/path/to/g++ 
@@ -89,28 +88,28 @@ To specify paths to the Eigen3 and MatIO libraries, use the CMake switches:
 You may of course also alternatively use CMake's graphical interface, CMake-GUI.
 You may also run CMake multiple times to adjust all the relevant options.
 
-Note the  compilation step  (`make`) is quite  computation-heavy because  of the
-extensive  C++11 template  metaprogramming. It  might take  a minute  or  two to
+Note the compilation step (`make`) is quite computation-heavy because of the
+extensive C++11 template metaprogramming. It might take a minute or two to
 complete depending on your hardware, and might be greedy on RAM.
 
 
 Running Tomorun
 ---------------
 
-Detailed information  about how to use  & run `tomorun` is  obtained by querying
+Detailed information about how to use & run `tomorun` is obtained by querying
 its help text:
 
     > tomorun --help
 
-Data is read  from a file in MATLAB format  (see option `--data-file-name`), and
-several  options control  which figure  of  merit to  calculate as  well as  the
+Data is read from a file in MATLAB format (see option `--data-file-name`), and
+several options control which figure of merit to calculate as well as the
 parameters and behavior of the random walk.
 
 As `tomorun` is running, you may query its progress by hitting CTRL-C (Linux/Mac
-OS X). If you want to interrupt  `tomorun` and quit the current task, hit CTRL-C
+OS X). If you want to interrupt `tomorun` and quit the current task, hit CTRL-C
 twice in short succession.
 
-Also, it  is often  more convenient to  make `tomorun`  read its options  from a
+Also, it is often more convenient to make `tomorun` read its options from a
 configuration file:
 
     > tomorun --config myconfigfile
@@ -163,24 +162,30 @@ This will create API documentation in both HTML and LaTeX format.
 Test Suite (for developers)
 ---------------------------
 
-There is  a test  suite which  checks that the  tomographer C++  framework works
-correctly, and that  no bugs or regressions are being introduced  as the code is
+There is a test suite which checks that the tomographer C++ framework works
+correctly, and that no bugs or regressions are being introduced as the code is
 being changed and maintained.
 
-The test suite can be build by issuing the command
+To compile and run the test suite, you need to specify to cmake that you want to
+build it:
 
-    tomographer-1.0/build> make -j4 test_tomographer
+    tomographer-1.0/build> cmake .. -DTOMOGRAPHER_ENABLE_TESTS=on
 
-(Replace `4` by the number of CPUs available on your system.)
+The test suite will then be compiled normally when you run `make`. Use the `-j`
+option with the number of CPU cores on your system to speed up the compilation:
+
+    tomographer-1.0/build> make -j4
 
 Run the test suite with the command
 
-    tomographer-1.0/build> ./cxx/test/test_tomographer
+    tomographer-1.0/build> make test
 
-As the test suite uses the [Boost Unit Test Framework][boost_test], this program
-accepts [a set of options][boost_test_options] to tune verbosity, which tests to
-run, etc.
+The test suite uses [CTest][ctest].  You can also run the test programs
+individually.  Most test executables use the [Boost Unit Test
+Framework][boost_test] and as such accept [various options][boost_test_options]
+to tune verbosity, which tests to run, etc.
 
+[ctest]: http://www.cmake.org/Wiki/CMake/Testing_With_CTest
 [boost_test]: http://www.boost.org/doc/libs/1_59_0/libs/test/doc/html/index.html
 [boost_test_options]: http://www.boost.org/doc/libs/1_59_0/libs/test/doc/html/boost_test/runtime_config/summary.html
 
@@ -198,7 +203,8 @@ If you use this software in your research, please add the following citations:
 Authors, Copyright, License
 ---------------------------
 
-Philippe Faist
-Copyright (C) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+Author: Philippe Faist
+
+Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
 
 Released under the terms of the MIT License (see file LICENSE.txt)
