@@ -193,7 +193,8 @@ to tune verbosity, which tests to run, etc.
 How to Cite
 -----------
 
-If you use this software in your research, please add the following citations:
+If you use this software in your research, please consider citing the following
+works:
 
 1. Philippe Faist and Renato Renner. Practical, Reliable Error Bars in Quantum Tomography. arXiv:XXXX.XXXXX
 
