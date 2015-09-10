@@ -38,7 +38,7 @@ Cdata.Emn(:,:,1) = [0.5, -0.5i; 0.5i, 0.5]; % +1 eigenspace of sigma_Y
 Cdata.Emn(:,:,2) = [0.5, 0.5i; -0.5i, 0.5]; % -1 eigenspace of sigma_Y
 
 % tomography data: 500x counts +1, 0x counts -1; when measuring sigma_Y 500 times in total
-Cdata.Nm = [ 500, 0 ];
+Cdata.Nm = [ 500; 0 ];
 
 Cdata.rho_MLE = [0.5, -0.5i; 0.5i, 0.5];
 Cdata.rho_ref = [0.5, -0.5i; 0.5i, 0.5];
