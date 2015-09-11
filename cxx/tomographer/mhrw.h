@@ -1163,62 +1163,6 @@ struct MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >
 
 
 
-namespace tomo_internal {
-template<typename HistogramType>
-std::string histogram_short_bar_fmt(const HistogramType & histogram, const std::string heading,
-				    const int maxbarwidth)
-{
-  std::string s = heading;
-
-  const int numdiv = (int)(std::ceil((float)histogram.num_bins() / maxbarwidth) + 0.5f);
-  const int barwidth = (int)(std::ceil((float)histogram.num_bins() / numdiv) + 0.5f);
-
-  Eigen::ArrayXi vec(barwidth);
-  Eigen::ArrayXf veclog(barwidth);
-
-  int k;
-  float minlogval = 0;
-  float maxlogval = 0;
-  for (k = 0; k < barwidth; ++k) {
-    vec(k) = histogram.bins.segment(numdiv*k, std::min((std::size_t)numdiv,
-						       (std::size_t)(histogram.bins.size()-numdiv*k))).sum();
-    if (vec(k) > 0) {
-      veclog(k) = std::log((float)vec(k));
-      if (k == 0 || minlogval > veclog(k)) {
-	minlogval = veclog(k);
-      }
-      if (k == 0 || maxlogval < veclog(k)) {
-	maxlogval = veclog(k) + 1e-6f;
-      }
-    } else {
-      veclog(k) = 0.f;
-    }
-  }
-
-  // now, prepare string
-  s += Tools::fmts("%.2g|", (double)histogram.bin_lower_value(0));
-  const std::string chars = ".-+ox%#";
-  for (k = 0; k < barwidth; ++k) {
-    if (vec(k) <= 0) {
-      s += ' ';
-    } else {
-      int i = (int)(chars.size() * (veclog(k) - minlogval) / (maxlogval - minlogval));
-      if (i < 0) { i = 0; }
-      if (i >= (int)chars.size()) { i = chars.size()-1; }
-      s += chars[i];
-    }
-  }
-  s += Tools::fmts("|%.2g", (double)histogram.bin_upper_value(histogram.num_bins()-1));
-  if (histogram.off_chart > 0) {
-    s += Tools::fmts(" [+%.1g off]", (double)histogram.off_chart);
-  }
-
-  return s;  
-}
-
-} // namespace tomo_internal
-
-
 /** \brief Provide status reporting for a ValueHistogramMHRWStatsCollector
  *
  */
@@ -1238,8 +1182,7 @@ struct MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator
 
     typedef typename MHRWStatsCollector::HistogramType HistogramType;
 
-    return tomo_internal::histogram_short_bar_fmt<HistogramType>(stats->histogram(), "Histogram: ",
-								 maxbarwidth);
+    return "Histogram: " + histogram_short_bar<HistogramType>(stats->histogram(), true, maxbarwidth);
   }
 };
 

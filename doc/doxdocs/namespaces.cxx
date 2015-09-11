@@ -82,7 +82,7 @@
  * \note Currently, only numeric types are supported. Neither structures nor cell arrays
  *       nor function handles can be read.
  *
- * \note Currently, you can't write anything.
+ * \note Also, currently, you can't write data files, you can only read them.
  */
 
 

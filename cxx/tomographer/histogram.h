@@ -927,12 +927,100 @@ private:
   }
 };
 
+template<typename HistogramType>
+inline std::string histogram_short_bar_fmt(const HistogramType & histogram, const bool log_scale,
+                                           const int max_width)
+{
+  std::string s = Tools::fmts("%.2g|", (double)histogram.bin_lower_value(0));
+  std::string send = Tools::fmts("|%.2g", (double)histogram.bin_upper_value(histogram.num_bins()-1));
+  if (histogram.off_chart > 0) {
+    send += Tools::fmts(" [+%.1g off]", (double)histogram.off_chart);
+  }
+  
+  const int maxbarwidth = max_width - s.size() - send.size();
+  const int numdiv = (int)(std::ceil((float)histogram.num_bins() / maxbarwidth) + 0.5f);
+  const int barwidth = (int)(std::ceil((float)histogram.num_bins() / numdiv) + 0.5f);
+
+  Eigen::ArrayXi vec(barwidth);
+  Eigen::ArrayXf veclog(barwidth);
+
+  int k;
+  float minlogval = 0;
+  float maxlogval = 0;
+  for (k = 0; k < barwidth; ++k) {
+    vec(k) = histogram.bins.segment(numdiv*k, std::min((std::size_t)numdiv,
+						       (std::size_t)(histogram.bins.size()-numdiv*k))).sum();
+    if (vec(k) > 0) {
+      if (log_scale) {
+        veclog(k) = std::log((float)vec(k));
+      } else {
+        veclog(k) = (float)vec(k);
+      }
+      if (k == 0 || minlogval > veclog(k)) {
+	minlogval = veclog(k);
+      }
+      if (k == 0 || maxlogval < veclog(k)) {
+	maxlogval = veclog(k) + 1e-6f;
+      }
+    } else {
+      veclog(k) = 0.f;
+    }
+  }
+
+  // now, prepare string
+  const std::string chars = ".-+ox%#";
+  for (k = 0; k < barwidth; ++k) {
+    if (vec(k) <= 0) {
+      s += ' ';
+    } else {
+      int i = (int)(chars.size() * (veclog(k) - minlogval) / (maxlogval - minlogval));
+      if (i < 0) { i = 0; }
+      if (i >= (int)chars.size()) { i = chars.size()-1; }
+      s += chars[i];
+    }
+  }
+
+  s += send;
+  
+  return s;
+}
+
+/** \internal
+ *
+ * If maxwidth > 0, return as is.
+ *
+ * If maxwidth <= 0, return the width of the screen (or default width), minus the absolute
+ * value of the given number. [E.g. if the screen width is 100, then if maxwidth=-4, then
+ * return 96.]
+ */
+int maybe_default_col_width(int maxwidth = 0)
+{
+  if (max_width <= 0) {
+    const int offset = max_width;
+    // decide of a maximum width to display
+    max_width = 100; // default maximum width
+    // If the user provided a value for the terminal width, use it. Note that $COLUMNS is
+    // not in the environment usually, so you have to set it manually with e.g.
+    //    shell> export COLUMNS=$COLUMNS
+    const char * cols_s = std::getenv("COLUMNS");
+    if (cols_s != NULL) {
+      max_width = std::atoi(cols_s);
+    }
+    max_width += offset; // if we had given, e.g. maxwidth=-4
+  }
+  return max_width;
+}
+
 } // namespace tomo_internal
 
 
 /** \brief pretty-print the given histogram.
  *
  * This overload dumps the pretty print into the ostream \a str.
+ *
+ * If max_width <= 0, then the screen width (or default width) minus the given amount in
+ * absolute value is used. The negative amount is useful if your line is already occupied
+ * by some content.
  */
 template<typename HistogramType>
 inline void histogram_pretty_print(std::ostream & str, const HistogramType & histogram, int max_width = 0)
@@ -944,24 +1032,17 @@ inline void histogram_pretty_print(std::ostream & str, const HistogramType & his
     return;
   }
 
-  if (max_width == 0) {
-    // decide of a maximum width to display
-    max_width = 100; // default maximum width
-    // If the user provided a value for the terminal width, use it. Note that $COLUMNS is
-    // not in the environment usually, so you have to set it manually with e.g.
-    //    shell> export COLUMNS=$COLUMNS
-    const char * cols_s = std::getenv("COLUMNS");
-    if (cols_s != NULL) {
-      max_width = std::atoi(cols_s);
-    }
-  }
-
+  max_width = tomo_internal::maybe_default_col_width(max_width);
   tomo_internal::histogram_pretty_printer<HistogramType>(histogram, max_width).pretty_print(str);
 }
 
 /** \brief Utility to display histograms for humans.
  *
  * This version of the function returns a formatted std::string.
+ *
+ * If max_width <= 0, then the screen width (or default width) minus the given amount in
+ * absolute value is used. The negative amount is useful if your line is already occupied
+ * by some content.
  */
 template<typename HistogramType>
 inline std::string histogram_pretty_print(const HistogramType & histogram, int max_width = 0)
@@ -971,7 +1052,54 @@ inline std::string histogram_pretty_print(const HistogramType & histogram, int m
   return ss.str();
 }
 
+/** \brief Format the histogram as a one-line bar.
+ *
+ * Produces a one-line visual representation of the histogram. The histogram is printed in
+ * the given std::ostream.
+ *
+ * There's no final newline.
+ *
+ * If max_width <= 0, then the screen width (or default width) minus the given amount in
+ * absolute value is used. The negative amount is useful if your line is already occupied
+ * by some content.
+ */
+template<typename HistogramType>
+inline void histogram_short_bar(std::ostream & str, const HistogramType & histogram,
+                                bool log_scale = true, int max_width = 0)
+{
+  eigen_assert(Tools::is_positive(histogram.params.num_bins));
 
+  if (histogram.params.num_bins == 0) {
+    str << "<empty histogram: no bins>";
+    return;
+  }
+
+  max_width = tomo_internal::maybe_default_col_width(max_width);
+  str << tomo_internal::histogram_short_bar_fmt<HistogramType>(histogram, log_scale, max_width);
+}
+/** \brief Format the histogram as a one-line bar.
+ *
+ * Produces a one-line visual representation of the histogram. Returns a \ref std::string.
+ *
+ * There's no final newline.
+ *
+ * If max_width <= 0, then the screen width (or default width) minus the given amount in
+ * absolute value is used. The negative amount is useful if your line is already occupied
+ * by some content.
+ */
+template<typename HistogramType>
+inline std::string histogram_short_bar(const HistogramType & histogram, bool log_scale = true, int max_width = 0)
+{
+  eigen_assert(Tools::is_positive(histogram.params.num_bins));
+
+  if (histogram.params.num_bins == 0) {
+    str << "<empty histogram: no bins>";
+    return;
+  }
+
+  max_width = tomo_internal::maybe_default_col_width(max_width);
+  return tomo_internal::histogram_short_bar_fmt<HistogramType>(histogram, log_scale, max_width);
+}
 
 
 
