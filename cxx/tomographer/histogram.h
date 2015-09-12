@@ -941,7 +941,7 @@ inline std::string histogram_short_bar_fmt(const HistogramType & histogram, cons
   const int numdiv = (int)(std::ceil((float)histogram.num_bins() / maxbarwidth) + 0.5f);
   const int barwidth = (int)(std::ceil((float)histogram.num_bins() / numdiv) + 0.5f);
 
-  Eigen::ArrayXi vec(barwidth);
+  Eigen::Array<typename HistogramType::CountType,Eigen::Dynamic,1> vec(barwidth);
   Eigen::ArrayXf veclog(barwidth);
 
   int k;

@@ -330,21 +330,20 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
       auto logger = llogger.sublogger(TOMO_ORIGIN);
       logger.info([&](std::ostream & str) {
           str << "\n"
-              << "               Final Report of Runs               \n"
-              << "--------------------------------------------------\n";
+              << "                              Final Report of Runs                              \n"
+              << "--------------------------------------------------------------------------------\n";
           std::size_t j;
           int w = (int)std::ceil(std::log10(collected_histograms.size()));
           for (j = 0; j < collected_histograms.size(); ++j) {
             str << "#" << std::setw(w) << j << ": "
-	      // BUG HERE!! why doesn't display anything??? ..............
-	      ................
                 << histogram_short_bar(collected_histograms[j].hist, false, -3-w)
                 << "\n";
             const int nbins = collected_histograms[j].converged_status.size();
             const int n_conv = collected_histograms[j].converged_status
               .cwiseEqual(BinningAnalysisParamsType::CONVERGED).count();
             Eigen::ArrayXi unkn_arr = (collected_histograms[j].converged_status
-				       .cwiseEqual(BinningAnalysisParamsType::UNKNOWN_CONVERGENCE)).template cast<int>();
+				       .cwiseEqual(BinningAnalysisParamsType::UNKNOWN_CONVERGENCE))
+              .template cast<int>();
             const int n_unknown = unkn_arr.count();
             const int n_unknown_followingotherunknown
               = unkn_arr.segment(0,nbins-1).cwiseProduct(unkn_arr.segment(1,nbins-1)).count();
@@ -352,16 +351,16 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
             const int n_notconv = collected_histograms[j].converged_status
               .cwiseEqual(BinningAnalysisParamsType::NOT_CONVERGED).count();
             str << "    error bars: " << n_conv << " converged / "
-                << n_unknown << " unknown (" << n_unknown_isolated << " isolated) / "
+                << n_unknown << " maybe (" << n_unknown_isolated << " isolated) / "
                 << n_notconv << " not converged\n";
           }
-          str << "--------------------------------------------------\n"
+          str << "--------------------------------------------------------------------------------\n"
               << "\n\n";
           // and the final histogram
-          str << "                  Final Histogram                 \n"
-              << "--------------------------------------------------\n";
+          str << "                                 Final Histogram                                \n"
+              << "--------------------------------------------------------------------------------\n";
           histogram_pretty_print(str, finalhistogram);
-          str << "--------------------------------------------------\n\n";
+          str << "--------------------------------------------------------------------------------\n\n";
         });
     }
 
