@@ -41,6 +41,18 @@
 
 
 
+
+
+template<typename T>
+inline Eigen::Matrix<T,4,1> inline_vector_4(T a1, T a2, T a3, T a4)
+{
+  Eigen::Matrix<T,4,1> v;
+  (v << a1, a2, a3, a4).finished();
+  return v;
+}
+
+
+
 BOOST_AUTO_TEST_SUITE(test_histogram);
 // =============================================================================
 
@@ -205,7 +217,7 @@ BOOST_AUTO_TEST_CASE(floatcounttype)
 }
 
 
-BOOST_AUTO_TEST_SUITE_END();
+BOOST_AUTO_TEST_SUITE_END(); // uniform_bins_histogram
 
 // -----------------------------------------------------------------------------
 
@@ -241,20 +253,12 @@ BOOST_AUTO_TEST_CASE(basic)
   BOOST_CHECK( MyHistType::HasErrorBars );
 }
 
-BOOST_AUTO_TEST_SUITE_END();
+BOOST_AUTO_TEST_SUITE_END(); // uniform_bins_histogram_with_error_bars
 
 
 // -----------------------------------------------------------------------------
 
 BOOST_AUTO_TEST_SUITE(averaged_histogram);
-
-template<typename T>
-inline Eigen::Matrix<T,4,1> inline_vector_4(T a1, T a2, T a3, T a4)
-{
-  Eigen::Matrix<T,4,1> v;
-  (v << a1, a2, a3, a4).finished();
-  return v;
-}
 
 BOOST_AUTO_TEST_CASE(no_underlying_error_bars)
 {
@@ -353,7 +357,18 @@ BOOST_AUTO_TEST_CASE(with_underlying_error_bars)
 }
 
 
-BOOST_AUTO_TEST_SUITE_END();
+BOOST_AUTO_TEST_SUITE_END(); // averaged_histogram
+
+// -----------------------------------------------------------------------------
+
+BOOST_AUTO_TEST_SUITE(formatting);
+
+BOOST_AUTO_TEST_CASE(histogram_pretty_print)
+{
+
+}
+
+BOOST_AUTO_TEST_SUITE_END(); // formatting
 
 // =============================================================================
 BOOST_AUTO_TEST_SUITE_END();

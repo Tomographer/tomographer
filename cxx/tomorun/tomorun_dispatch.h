@@ -157,7 +157,7 @@ struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculato
           // and the final histogram
           str << "                  Final Histogram                 \n"
               << "--------------------------------------------------\n";
-          finalhistogram.pretty_print(str);
+          histogram_pretty_print(str, finalhistogram);
           str << "--------------------------------------------------\n\n";
         });
     }
@@ -249,6 +249,8 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
 
     Tomographer::Logger::LocalLogger<LoggerType>  llogger;
     
+    typedef typename MHRWStatsCollectorParams::BinningAnalysisParamsType BinningAnalysisParamsType;
+
     ResultsCollector(LoggerType & logger_)
       : finalhistogram(), simplefinalhistogram(), llogger("TomorunCDataBinning::ResultsCollector", logger_)
     {
@@ -274,8 +276,6 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
               << taskresult.hist.pretty_print();
         });
       
-      typedef typename MHRWStatsCollectorParams::BinningAnalysisParamsType BinningAnalysisParamsType;
-
       if ((taskresult.converged_status !=
            Eigen::ArrayXi::Constant(taskresult.hist.num_bins(), BinningAnalysisParamsType::CONVERGED)).any()) {
         logger.debug([&,this](std::ostream & str) {
@@ -336,21 +336,23 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
           int w = (int)std::ceil(std::log10(collected_histograms.size()));
           for (j = 0; j < collected_histograms.size(); ++j) {
             str << "#" << std::setw(w) << j << ": "
-                << histogram_short_bar(collected_histograms[j], false, -3-w)
+	      // BUG HERE!! why doesn't display anything??? ..............
+	      ................
+                << histogram_short_bar(collected_histograms[j].hist, false, -3-w)
                 << "\n";
-            const int nbins = collected_histograms[j].size();
+            const int nbins = collected_histograms[j].converged_status.size();
             const int n_conv = collected_histograms[j].converged_status
               .cwiseEqual(BinningAnalysisParamsType::CONVERGED).count();
-            const Eigen::ArrayXi unkn_arr = collected_histograms[j].converged_status
-              .cwiseEqual(BinningAnalysisParamsType::UNKNOWN_CONVERGENCE);
+            Eigen::ArrayXi unkn_arr = (collected_histograms[j].converged_status
+				       .cwiseEqual(BinningAnalysisParamsType::UNKNOWN_CONVERGENCE)).template cast<int>();
             const int n_unknown = unkn_arr.count();
             const int n_unknown_followingotherunknown
-              = unkn_arr.segment(0,nbins-1).cwiseProduct(unkn_arr.segment(1,nbins)).count();
+              = unkn_arr.segment(0,nbins-1).cwiseProduct(unkn_arr.segment(1,nbins-1)).count();
             const int n_unknown_isolated = n_unknown - n_unknown_followingotherunknown;
             const int n_notconv = collected_histograms[j].converged_status
               .cwiseEqual(BinningAnalysisParamsType::NOT_CONVERGED).count();
-            str << "    error bars: " << n_conv << " converged, "
-                << n_unknown << " unknown (" << n_unknown_isolated << " isolated), "
+            str << "    error bars: " << n_conv << " converged / "
+                << n_unknown << " unknown (" << n_unknown_isolated << " isolated) / "
                 << n_notconv << " not converged\n";
           }
           str << "--------------------------------------------------\n"
@@ -358,7 +360,7 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
           // and the final histogram
           str << "                  Final Histogram                 \n"
               << "--------------------------------------------------\n";
-          finalhistogram.pretty_print(str);
+          histogram_pretty_print(str, finalhistogram);
           str << "--------------------------------------------------\n\n";
         });
     }
@@ -469,7 +471,7 @@ inline void tomorun(const TomoProblem & tomodat, const ProgOptions * opt,
   // delta-time, in seconds and fraction of seconds
   std::string elapsed_s = Tomographer::Tools::fmt_duration(time_end - time_start);
 
-  results.print_final_report();
+  results.produce_final_report();
 
   // save the histogram to a CSV file if the user required it
   if (opt->write_histogram.size()) {

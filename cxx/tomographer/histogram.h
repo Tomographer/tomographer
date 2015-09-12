@@ -987,13 +987,13 @@ inline std::string histogram_short_bar_fmt(const HistogramType & histogram, cons
 
 /** \internal
  *
- * If maxwidth > 0, return as is.
+ * If max_width > 0, return as is.
  *
- * If maxwidth <= 0, return the width of the screen (or default width), minus the absolute
+ * If max_width <= 0, return the width of the screen (or default width), minus the absolute
  * value of the given number. [E.g. if the screen width is 100, then if maxwidth=-4, then
  * return 96.]
  */
-int maybe_default_col_width(int maxwidth = 0)
+int maybe_default_col_width(int max_width = 0)
 {
   if (max_width <= 0) {
     const int offset = max_width;
@@ -1093,8 +1093,7 @@ inline std::string histogram_short_bar(const HistogramType & histogram, bool log
   eigen_assert(Tools::is_positive(histogram.params.num_bins));
 
   if (histogram.params.num_bins == 0) {
-    str << "<empty histogram: no bins>";
-    return;
+    return "<empty histogram: no bins>";
   }
 
   max_width = tomo_internal::maybe_default_col_width(max_width);

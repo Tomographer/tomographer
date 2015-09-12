@@ -885,6 +885,13 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
    */
   struct Result
   {
+    //! Simple default constructor (e.g. to use as std::vector<Result>).
+    explicit Result()
+      : hist(), error_levels(), converged_status()
+    {
+    }
+
+    //! Constructor which initializes the fields from the histogram and binning analysis type.
     template<typename BinningAnalysisType>
     Result(HistogramParams p, const BinningAnalysisType & b)
       : hist(p),
