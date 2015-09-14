@@ -1176,22 +1176,9 @@ HTML_EXTRA_FILES       = dejavu-fonts-ttf-2.35/ttf/DejaVuSans-Bold.ttf \
                          dejavu-fonts-ttf-2.35/ttf/DejaVuSans-ExtraLight.ttf \
                          dejavu-fonts-ttf-2.35/ttf/DejaVuSans-Oblique.ttf \
                          dejavu-fonts-ttf-2.35/ttf/DejaVuSans.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansCondensed-Bold.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansCondensed-BoldOblique.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansCondensed-Oblique.ttf \
                          dejavu-fonts-ttf-2.35/ttf/DejaVuSansCondensed.ttf \
                          dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono-Bold.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono-BoldOblique.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono-Oblique.ttf \
                          dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerif-Bold.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerif-BoldItalic.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerif-Italic.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerif.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed-Bold.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed-BoldItalic.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed-Italic.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSerifCondensed.ttf \
 			 tomographer_script_setup.js \
 			 myarrowdown.png \
 			 myarrowright.png
