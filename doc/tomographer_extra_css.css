@@ -64,7 +64,7 @@
    font-style: normal;
    src: url(DejaVuSansCondensed.ttf);
 }
-@font-face {
+/*@font-face {
    font-family: myDejaVuSansCondensed;
    font-weight: bold;
    font-style: normal;
@@ -81,7 +81,7 @@
    font-weight: bold;
    font-style: italic;
    src: url(DejaVuSansCondensed-BoldOblique.ttf);
-}
+}*/
 /* DejaVu Sans Mono */
 @font-face {
    font-family: myDejaVuSansMono;
@@ -92,7 +92,7 @@
    font-weight: bold;
    src: url(DejaVuSansMono-Bold.ttf);
 }
-@font-face {
+/*@font-face {
    font-family: myDejaVuSansMono;
    font-style: italic;
    src: url(DejaVuSansMono-Oblique.ttf);
@@ -102,7 +102,7 @@
    font-weight: bold;
    font-style: italic;
    src: url(DejaVuSansMono-BoldOblique.ttf);
-}
+}*/
 
 
 body, html {
