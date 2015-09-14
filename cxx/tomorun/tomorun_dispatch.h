@@ -104,9 +104,13 @@ struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculato
     typedef ValueCalculator_ ValueCalculator;
     typedef typename Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator>::Result HistogramType;
     typedef typename HistogramType::Params HistogramParams;
+    typedef Tomographer::UniformBinsHistogram<typename HistogramType::Scalar, double>
+	NormalizedHistogramType;
+    typedef Tomographer::AveragedHistogram<NormalizedHistogramType, typename NormalizedHistogramType::CountType>
+        FinalHistogramType;
 
-    std::vector<HistogramType> collected_histograms;
-    Tomographer::AveragedHistogram<HistogramType, double> finalhistogram;
+    std::vector<NormalizedHistogramType> collected_histograms;
+    FinalHistogramType finalhistogram;
 
     Tomographer::Logger::LocalLogger<LoggerType>  llogger;
     
@@ -123,13 +127,18 @@ struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculato
       finalhistogram.reset(pcdata->histogram_params);
     }
     template<typename Cnt, typename CData>
-    inline void collect_result(Cnt task_no, const HistogramType& taskresult, const CData *)
+    inline void collect_result(Cnt task_no, const HistogramType& taskresult, const CData * /*pcdata*/)
     {
       llogger.sublogger(TOMO_ORIGIN).debug([&](std::ostream & str) {
           str << "Got task result. Histogram is:\n" << taskresult.pretty_print();
         });
-      collected_histograms[task_no] = taskresult;
-      finalhistogram.add_histogram(taskresult);
+      NormalizedHistogramType thishistogram = taskresult;
+      typename NormalizedHistogramType::CountType normalization =
+	thishistogram.bins.sum() + thishistogram.off_chart;
+      thishistogram.bins /= normalization;
+      thishistogram.off_chart /= normalization;
+      collected_histograms[task_no] = thishistogram;
+      finalhistogram.add_histogram(thishistogram);
     }
     template<typename Cnt, typename CData>
     inline void runs_finished(Cnt, const CData *)
