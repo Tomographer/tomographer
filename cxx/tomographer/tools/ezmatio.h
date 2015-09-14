@@ -717,12 +717,16 @@ inline std::ostream& operator<<(std::ostream& str, const IndexListIterator<IsRow
  * - it ensures that the variable in the data file has a type and shape which is
  *   compatible with the C++ data type requested (\a T)
  *
- * - it decodes the MAT data via the C MatIO interface (see the \a matvar_t structure) to
- *   transform it into the requested native C++ object
+ * - it decodes the %MAT Matlab data via the C MatIO interface (see the \a matvar_t
+ *   structure) to transform it into the requested native C++ object
  *
  * It may be that the decoding routine might not want to have directly \a T as a return
  * type, but rather return a type which is convertible to \a T or which can be used as an
- * initializer for a \a T. (Think, for example, an Eigen generator type.)
+ * initializer for a \a T. (Think, for example, an Eigen mapped type.)
+ *
+ * Another reason for not returning \a T directly is if \a T is a proxy type which
+ * describes which type is requested along with some parameters (e.g. storage order). See
+ * for example \ref GetStdVector.
  *
  * This default class template does nothing. Specialize it for your C++ type or use one of
  * the available specializations.
@@ -1538,7 +1542,7 @@ struct GetStdVector {
   static constexpr bool IsRowMajor = IsRowMajor_;
 };
 
-//! Specialization of \ref VarValueDecoder<T> to obtain an std::vector<> with the matrix data.
+//! Specialization of \ref VarValueDecoder<T> to obtain an std::vector<> with the matrix data. See \ref GetStdVector.
 template<typename T, bool IsRowMajor>
 struct VarValueDecoder<GetStdVector<T, IsRowMajor> >
 {
@@ -1766,14 +1770,12 @@ struct VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
 
 /** \brief Decoder for a std::vector of elements of type Eigen::Matrix.
  *
- * This decoder decodes multidimensional tensors with number of dimensions == 3 as
- * follows: the first two indices indicate the inner matrix dimensions, and the last index
- * indicates the position in the \a std::vector.
- *
- * \note This decoder is capable of decoding multidimensional tensors also with number of
- *       dimensions >3. In that case, all further dimensions are collapsed with the 3rd
- *       dimension in column-major ordering, as the \a std::vector index.
- *
+ * This decoder decodes multidimensional tensors with number of dimensions >= 3. For
+ * multidimensional tensors with number of dimensions == 3, the first two indices indicate
+ * the inner matrix dimensions, and the last index indicates the position in the \a
+ * std::vector. For multidimensional tensors also with number of dimensions >3, all
+ * further dimensions are collapsed with the 3rd dimension in column-major ordering, as
+ * the \a std::vector index.
  */
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols, typename Alloc>
 struct VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols>, Alloc> >
