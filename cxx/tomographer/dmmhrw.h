@@ -290,7 +290,7 @@ public:
   inline ValueType getValue(const MatrixType & T) const
   {
     auto F = fidelity_T<ValueType>(T, _ref_T);
-    return std::sqrt(1.0 - F*F);
+    return std::sqrt(ValueType(1) - F*F);
   }
 };
 

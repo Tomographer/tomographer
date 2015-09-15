@@ -41,8 +41,8 @@
  * - most tools, e.g. C++ language utilities and matrix utilities, are located in the
  *   namespace \ref Tomographer::Tools;
  *
- * - \ref Tomographer::MAT povides a set of routines to read data from MATLAB files (based
- *   on the <a href="http://matio.sourceforge.net/">MatIO</a> library);
+ * - \ref Tomographer::MAT provides a set of routines to read data from MATLAB files
+ *   (based on the <a href="http://matio.sourceforge.net/">MatIO</a> library);
  *
  * - %Tomographer provides a lightweight mechanism for logging messages. See \ref
  *   pageLoggers;
@@ -100,6 +100,12 @@
  *
  *
  * <h2>Documentation Pages</h2>
+ *
+ * <h3>Important Namespaces</h3>
+ *
+ *   - \ref Tomographer — base %Tomographer namespace
+ *   - \ref Tomographer::Tools — namespace for various tools
+ *   - Additional tools are available in selected namespaces. See the \htmlonly <a href="namespaces.html">List of Namespaces</a>.\endhtmlonly \latexonly List of Namespaces.\endlatexonly
  *
  * <h3>Specific Topics</h3>
  *
