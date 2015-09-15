@@ -111,11 +111,17 @@ inline void print_short_bar_and_accept_ratio(std::ostream & str, int j, HistType
 			      -3 - dig_width - accept_ratio_appendstr.size());
   str << std::setw(w + accept_ratio_appendstr.size()) << std::right << accept_ratio_appendstr << "\n";
   if (inf.acceptance_ratio > 0.35 || inf.acceptance_ratio < 0.2) {
-    str << "\n    *** Accept ratio out of recommended bounds [0.20, 0.35] ! Adapt step size ***\n";
+    str << "    *** Accept ratio out of recommended bounds [0.20, 0.35] ! Adapt step size ***\n";
   }
 }
 
 
+static const std::string report_hline =
+  "----------------------------------------------------------------------------------------------------\n";
+static const std::string report_final_header =
+  "                                        Final Report of Runs                                        \n";
+static const std::string report_final_histogram =
+  "                                          Final Histogram                                           \n";
 
 
 // -----------------------------------------------------------------------------
@@ -214,21 +220,23 @@ struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculato
       auto logger = llogger.sublogger(TOMO_ORIGIN);
       logger.info([&](std::ostream & str) {
           str << "\n"
-              << "                              Final Report of Runs                              \n"
-              << "--------------------------------------------------------------------------------\n";
+              << report_final_header
+              << report_hline
+            ;
 	  cdata.print_basic_cdata_mhrw_info(str);
           std::size_t j;
           int w = (int)std::ceil(std::log10(collected_histograms.size()));
           for (j = 0; j < collected_histograms.size(); ++j) {
 	    print_short_bar_and_accept_ratio(str, j, collected_histograms[j], collected_runtaskinfos[j], w);
           }
-          str << "--------------------------------------------------------------------------------\n"
-              << "\n\n";
+          str << report_hline
+              << "\n";
           // and the final histogram
-          str << "                                 Final Histogram                                \n"
-              << "--------------------------------------------------------------------------------\n";
+          str << report_final_histogram
+              << report_hline;
           histogram_pretty_print(str, finalhistogram);
-          str << "--------------------------------------------------------------------------------\n\n";
+          str << report_hline
+              << "\n";
         });
     }
 
@@ -404,8 +412,9 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
       auto logger = llogger.sublogger(TOMO_ORIGIN);
       logger.info([&](std::ostream & str) {
           str << "\n"
-              << "                              Final Report of Runs                              \n"
-              << "--------------------------------------------------------------------------------\n";
+              << report_final_header
+              << report_hline
+            ;
 	  cdata.print_basic_cdata_mhrw_info(str);
           std::size_t j;
           int w = (int)std::ceil(std::log10(collected_histograms.size()));
@@ -428,13 +437,14 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
                 << n_unknown << " maybe (" << n_unknown_isolated << " isolated) / "
                 << n_notconv << " not converged\n";
           }
-          str << "--------------------------------------------------------------------------------\n"
-              << "\n\n";
+          str << report_hline
+              << "\n";
           // and the final histogram
-          str << "                                 Final Histogram                                \n"
-              << "--------------------------------------------------------------------------------\n";
+          str << report_final_histogram
+              << report_hline;
           histogram_pretty_print(str, finalhistogram);
-          str << "--------------------------------------------------------------------------------\n\n";
+          str << report_hline
+              << "\n";
         });
     }
 
