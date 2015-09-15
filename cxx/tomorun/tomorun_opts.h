@@ -33,6 +33,18 @@
 #include <tomographer/tomographer_version.h>
 
 
+static const std::string prog_version_info_1 =
+  "Tomographer/Tomorun " TOMOGRAPHER_VERSION "\n"
+  ;
+
+static const std::string prog_version_info_2 =
+  "by Philippe Faist, Institute for Theoretical Physics, ETH Zurich\n"
+  "(C) 2015 ETH Zurich\n"
+  "Released under the terms of the MIT License (see LICENSE.txt)\n"
+  ;
+
+static const std::string prog_version_info = prog_version_info_1 + prog_version_info_2;
+
 
 
 static const int last_binning_level_warn_min_samples = 128;
@@ -352,11 +364,6 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     variables_map vm;
     store(command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
 
-    const char * prog_version_info =
-      "Tomographer/Tomorun " TOMOGRAPHER_VERSION "\n"
-      "by Philippe Faist, Institute for Theoretical Physics, ETH Zurich\n"
-      "(C) 2015 ETH Zurich\n";
-
     if (vm.count("help")) {
       std::cout
 	<< "\n" << prog_version_info <<
@@ -653,7 +660,6 @@ void display_parameters(ProgOptions * opt, LoggerType & logger)
       // origin
       "display_parameters()",
       // message
-      "\n"
       "Using  data from file :     %s  (measurements x%.3g)\n"
       "       value type :         %s\n"
       "       val. histogram :     [%.2g, %.2g] (%lu bins)\n"

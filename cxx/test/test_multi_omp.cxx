@@ -112,9 +112,14 @@ struct MyResultsCollector {
   {
     finalhistogram.reset(pcdata->histogram_params);
   }
-  inline void collect_result(unsigned int /*task_no*/, const OurHistogramType& taskresult, const MyCData *)
+  template<typename MyStatsCollectorResultType, typename IntType>
+  inline void collect_result(unsigned int /*task_no*/,
+			     const Tomographer::MHRWTasks::MHRandomWalkTaskResult<MyStatsCollectorResultType,
+										  IntType> &
+			     taskresult,
+			     const MyCData *)
   {
-    finalhistogram.add_histogram(taskresult);
+    finalhistogram.add_histogram(taskresult.stats_collector_result);
   }
   inline void runs_finished(unsigned int, const MyCData *)
   {

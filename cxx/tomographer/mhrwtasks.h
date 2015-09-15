@@ -109,6 +109,43 @@ namespace MHRWTasks
     int base_seed;
   };
 
+  /** \brief Result of a task run.
+   *
+   * This is the stats collector's result, as well as information about the random walk
+   * (e.g. acceptance ratio).
+   *
+   * \tparam MHRWStatsCollectorResultType_ the result type of the MHRWStatsCollector which
+   *         the task will be running.
+   * \tparam CountIntType the integer type used for counting in the MHRW task.
+   *
+   * \note This type is not default-constructible.
+   */
+  template<typename MHRWStatsCollectorResultType_, typename CountIntType>
+  struct MHRandomWalkTaskResult
+  {
+    typedef MHRWStatsCollectorResultType_ MHRWStatsCollectorResultType;
+    
+    template<typename MHRWStatsCollectorResultTypeInit, typename MHRandomWalkType>
+    MHRandomWalkTaskResult(MHRWStatsCollectorResultTypeInit && stats_collector_result_,
+			   const MHRandomWalkType & mhrandomwalk)
+      : stats_collector_result(std::forward<MHRWStatsCollectorResultTypeInit>(stats_collector_result_)),
+	n_sweep(mhrandomwalk.n_sweep()),
+	n_therm(mhrandomwalk.n_therm()),
+	n_run(mhrandomwalk.n_run()),
+	step_size(mhrandomwalk.step_size()),
+	acceptance_ratio(mhrandomwalk.acceptance_ratio())
+    {
+    }
+    
+    const MHRWStatsCollectorResultType stats_collector_result;
+    
+    const CountIntType n_sweep;
+    const CountIntType n_therm;
+    const CountIntType n_run;
+    const double step_size;
+    const double acceptance_ratio;
+  };
+
   /** \brief Random Walk task, collecting statistics
    *
    * This class can be used with \ref MultiProc::OMP::TaskDispatcher, for example.
@@ -124,7 +161,13 @@ namespace MHRWTasks
   struct MHRandomWalkTask
   {
     typedef typename MHRandomWalkTaskCData::CountIntType CountIntType;
-    typedef typename MHRandomWalkTaskCData::MHRWStatsCollectorResultType Result;
+
+    /** \brief Result type of a single task run.
+     *
+     * See \ref MHRandomWalkTaskResult.
+     */    
+    typedef MHRandomWalkTaskResult<typename MHRandomWalkTaskCData::MHRWStatsCollectorResultType,
+				   CountIntType> Result;
 
     /** \brief Status Report for a \ref MHRandomWalkTask
      *
@@ -270,7 +313,7 @@ namespace MHRWTasks
       
       rwalk.run();
 
-      result = new Result(stats.getResult());
+      result = new Result(stats.getResult(), rwalk);
     }
 
     inline const Result & getResult() const

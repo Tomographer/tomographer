@@ -387,6 +387,9 @@ public:
   //! Required for \ref pageInterfaceRandomWalk. Number of live run sweeps.
   inline CountIntType n_run() const { return _n_run; }
 
+  //! Get the step size of the random walk.
+  inline RealScalar step_size() const { return _step_size; }
+
   /** \brief Required for \ref pageInterfaceRandomWalk. Resets counts and relays to the
    * MHWalker and the MHRWStatsCollector.
    */

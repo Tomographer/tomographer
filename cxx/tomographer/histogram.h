@@ -1062,20 +1062,30 @@ inline std::string histogram_pretty_print(const HistogramType & histogram, int m
  * If max_width <= 0, then the screen width (or default width) minus the given amount in
  * absolute value is used. The negative amount is useful if your line is already occupied
  * by some content.
+ *
+ * \returns The number of characters which are still left to fill a line with maximal
+ *          width. More precisely, the maximum width is first determined from \a max_width
+ *          and/or from the \c COLUMNS environment variable. Then histogram is formatted
+ *          into a bar which fits in this width. The difference between the maximum width
+ *          and the histogram length is returned.
  */
 template<typename HistogramType>
-inline void histogram_short_bar(std::ostream & str, const HistogramType & histogram,
-                                bool log_scale = true, int max_width = 0)
+inline int histogram_short_bar(std::ostream & str, const HistogramType & histogram,
+			       bool log_scale = true, int max_width = 0)
 {
   eigen_assert(Tools::is_positive(histogram.params.num_bins));
 
+  max_width = tomo_internal::maybe_default_col_width(max_width);
+
+  std::string s;
   if (histogram.params.num_bins == 0) {
-    str << "<empty histogram: no bins>";
-    return;
+    s = "<empty histogram: no bins>";
+  } else {
+    s = tomo_internal::histogram_short_bar_fmt<HistogramType>(histogram, log_scale, max_width);
   }
 
-  max_width = tomo_internal::maybe_default_col_width(max_width);
-  str << tomo_internal::histogram_short_bar_fmt<HistogramType>(histogram, log_scale, max_width);
+  str << s;
+  return max_width - s.size();
 }
 /** \brief Format the histogram as a one-line bar.
  *

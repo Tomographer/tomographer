@@ -35,9 +35,11 @@
 template<typename TomoProblem_, typename ValueCalculator_>
 struct TomorunCDataBase : public Tomographer::MHRWTasks::CDataBase<>
 {
+  typedef Tomographer::MHRWTasks::CDataBase<> Base; // base class
+
   typedef TomoProblem_ TomoProblem;
   typedef ValueCalculator_ ValueCalculator;
-
+ 
   TomorunCDataBase(const TomoProblem & tomo_, const ValueCalculator & vcalc_)
     : tomo(tomo_), vcalc(vcalc_)
   {
@@ -58,7 +60,62 @@ struct TomorunCDataBase : public Tomographer::MHRWTasks::CDataBase<>
 	);
   }
 
+  inline void print_basic_cdata_mhrw_info(std::ostream & str)
+  {
+    str << "\t# iter. / sweep = " << Base::n_sweep << "\n"
+	<< "\t# therm. sweeps = " << Base::n_therm << "\n"
+	<< "\t# run sweeps    = " << Base::n_run << "\n"
+	<< "\tstep size       = " << std::setprecision(4) << Base::step_size << "\n";
+  }
 };
+
+
+struct RunTaskInfo
+{
+  RunTaskInfo()
+    : n_run(0), n_therm(0), n_sweep(0),
+      step_size(std::numeric_limits<double>::quiet_NaN()),
+      acceptance_ratio(std::numeric_limits<double>::quiet_NaN())
+  {
+  }
+
+  template<typename TaskResultType>
+  RunTaskInfo(TaskResultType && t)
+    : n_run(t.n_run),
+      n_therm(t.n_therm),
+      n_sweep(t.n_sweep),
+      step_size(t.step_size),
+      acceptance_ratio(t.acceptance_ratio)
+  {
+  }
+
+  std::size_t n_run;
+  std::size_t n_therm;
+  std::size_t n_sweep;
+  double step_size;
+  double acceptance_ratio;
+};
+
+
+
+template<typename HistType>
+inline void print_short_bar_and_accept_ratio(std::ostream & str, int j, HistType && hist,
+					     const RunTaskInfo & inf,
+					     int dig_width)
+{
+  std::string accept_ratio_appendstr =
+    " [accept ratio = " + Tomographer::Tools::fmts("%.2f", inf.acceptance_ratio) + "]";
+
+  str << "#" << std::setw(dig_width) << j << ": ";
+  int w = histogram_short_bar(str, std::forward<HistType>(hist), false,
+			      -3 - dig_width - accept_ratio_appendstr.size());
+  str << std::setw(w + accept_ratio_appendstr.size()) << std::right << accept_ratio_appendstr << "\n";
+  if (inf.acceptance_ratio > 0.35 || inf.acceptance_ratio < 0.2) {
+    str << "\n    *** Accept ratio out of recommended bounds [0.20, 0.35] ! Adapt step size ***\n";
+  }
+}
+
+
 
 
 // -----------------------------------------------------------------------------
@@ -109,6 +166,7 @@ struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculato
     typedef Tomographer::AveragedHistogram<NormalizedHistogramType, typename NormalizedHistogramType::CountType>
         FinalHistogramType;
 
+    std::vector<RunTaskInfo> collected_runtaskinfos;
     std::vector<NormalizedHistogramType> collected_histograms;
     FinalHistogramType finalhistogram;
 
@@ -124,20 +182,23 @@ struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculato
                      const CData * pcdata)
     {
       collected_histograms.resize(num_total_runs);
+      collected_runtaskinfos.reserve(num_total_runs);
       finalhistogram.reset(pcdata->histogram_params);
     }
-    template<typename Cnt, typename CData>
-    inline void collect_result(Cnt task_no, const HistogramType& taskresult, const CData * /*pcdata*/)
+    template<typename Cnt, typename TaskResultType, typename CData>
+    inline void collect_result(Cnt task_no, const TaskResultType& taskresult, const CData * /*pcdata*/)
     {
       llogger.sublogger(TOMO_ORIGIN).debug([&](std::ostream & str) {
-          str << "Got task result. Histogram is:\n" << taskresult.pretty_print();
+          str << "Got task result. Histogram is:\n" << taskresult.stats_collector_result.pretty_print();
         });
-      NormalizedHistogramType thishistogram = taskresult;
+      NormalizedHistogramType thishistogram = taskresult.stats_collector_result;
       typename NormalizedHistogramType::CountType normalization =
 	thishistogram.bins.sum() + thishistogram.off_chart;
       thishistogram.bins /= normalization;
       thishistogram.off_chart /= normalization;
+
       collected_histograms[task_no] = thishistogram;
+      collected_runtaskinfos[task_no] = RunTaskInfo(taskresult);
       finalhistogram.add_histogram(thishistogram);
     }
     template<typename Cnt, typename CData>
@@ -146,35 +207,35 @@ struct TomorunCDataSimple : public TomorunCDataBase<TomoProblem_, ValueCalculato
       finalhistogram.finalize();
     }
 
-    inline void produce_final_report()
+    template<typename CDataType>
+    inline void produce_final_report(CDataType && cdata)
     {
       // produce report on runs
       auto logger = llogger.sublogger(TOMO_ORIGIN);
       logger.info([&](std::ostream & str) {
           str << "\n"
-              << "               Final Report of Runs               \n"
-              << "--------------------------------------------------\n";
+              << "                              Final Report of Runs                              \n"
+              << "--------------------------------------------------------------------------------\n";
+	  cdata.print_basic_cdata_mhrw_info(str);
           std::size_t j;
           int w = (int)std::ceil(std::log10(collected_histograms.size()));
           for (j = 0; j < collected_histograms.size(); ++j) {
-            str << "#" << std::setw(w) << j << ": "
-                << histogram_short_bar(collected_histograms[j], false, -3-w)
-                << "\n";
+	    print_short_bar_and_accept_ratio(str, j, collected_histograms[j], collected_runtaskinfos[j], w);
           }
-          str << "--------------------------------------------------\n"
+          str << "--------------------------------------------------------------------------------\n"
               << "\n\n";
           // and the final histogram
-          str << "                  Final Histogram                 \n"
-              << "--------------------------------------------------\n";
+          str << "                                 Final Histogram                                \n"
+              << "--------------------------------------------------------------------------------\n";
           histogram_pretty_print(str, finalhistogram);
-          str << "--------------------------------------------------\n\n";
+          str << "--------------------------------------------------------------------------------\n\n";
         });
     }
 
     inline void write_histogram_file(const std::string & csvfname)
     {
       auto l = llogger.sublogger(TOMO_ORIGIN);
-      l.info("()");
+      //l.info("()");
 
       std::ofstream outf;
       outf.open(csvfname);
@@ -242,6 +303,7 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
     typedef typename MHRWStatsCollectorParams::HistogramType HistogramType;
     typedef typename HistogramType::Params HistogramParams;
     
+    std::vector<RunTaskInfo> collected_runtaskinfos;
     //! All collected histograms for each run
     std::vector<Result> collected_histograms;
     //! The final histogram, properly averaged
@@ -270,48 +332,51 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
                      const CData * pcdata)
     {
       collected_histograms.resize(num_total_runs);
+      collected_runtaskinfos.resize(num_total_runs);
       finalhistogram.reset(pcdata->histogram_params);
       simplefinalhistogram.reset(pcdata->histogram_params);
     }
-    template<typename Cnt, typename CData>
-    inline void collect_result(Cnt task_no, const Result& taskresult, const CData *)
+    template<typename Cnt, typename TaskResultType, typename CData>
+    inline void collect_result(Cnt task_no, TaskResultType && taskresult, const CData *)
     {
       auto logger = llogger.sublogger(TOMO_ORIGIN);
 
-      collected_histograms[task_no] = taskresult;
+      collected_runtaskinfos[task_no] = RunTaskInfo(taskresult);
+      auto stats_coll_result = taskresult.stats_collector_result;
+      collected_histograms[task_no] = stats_coll_result;
 
       logger.debug([&](std::ostream & str) {
           str << "(). Got task result. Histogram (w/ error bars from binning analysis):\n"
-              << taskresult.hist.pretty_print();
+              << stats_coll_result.hist.pretty_print();
         });
       
-      if ((taskresult.converged_status !=
-           Eigen::ArrayXi::Constant(taskresult.hist.num_bins(), BinningAnalysisParamsType::CONVERGED)).any()) {
+      if ((stats_coll_result.converged_status !=
+           Eigen::ArrayXi::Constant(stats_coll_result.hist.num_bins(), BinningAnalysisParamsType::CONVERGED)).any()) {
         logger.debug([&,this](std::ostream & str) {
             str << "Error bars have not converged! The error bars at different binning levels are:\n"
-                << taskresult.error_levels << "\n"
+                << stats_coll_result.error_levels << "\n"
                 << "\t-> convergence analysis: \n";
-            for (std::size_t k = 0; k < taskresult.hist.num_bins(); ++k) {
+            for (std::size_t k = 0; k < stats_coll_result.hist.num_bins(); ++k) {
               str << "\t    val[" << std::setw(3) << k << "] = "
-                  << std::setw(12) << taskresult.hist.bins(k)
-                  << " +- " << std::setw(12) << taskresult.hist.delta(k);
-              if (taskresult.converged_status(k) == BinningAnalysisParamsType::CONVERGED) {
+                  << std::setw(12) << stats_coll_result.hist.bins(k)
+                  << " +- " << std::setw(12) << stats_coll_result.hist.delta(k);
+              if (stats_coll_result.converged_status(k) == BinningAnalysisParamsType::CONVERGED) {
                 str << "  [CONVERGED]";
-              } else if (taskresult.converged_status(k) == BinningAnalysisParamsType::NOT_CONVERGED) {
+              } else if (stats_coll_result.converged_status(k) == BinningAnalysisParamsType::NOT_CONVERGED) {
                 str << "  [NOT CONVERGED]";
-              } else if (taskresult.converged_status(k) == BinningAnalysisParamsType::UNKNOWN_CONVERGENCE) {
+              } else if (stats_coll_result.converged_status(k) == BinningAnalysisParamsType::UNKNOWN_CONVERGENCE) {
                 str << "  [UNKNOWN]";
               } else {
-                str << "  [UNKNOWN CONVERGENCE STATUS: " << taskresult.converged_status(k) << "]";
+                str << "  [UNKNOWN CONVERGENCE STATUS: " << stats_coll_result.converged_status(k) << "]";
               }
               str << "\n";
             }
           });
       }
 
-      // because taskresult is a histogram WITH error bars, add_histogram will do the
+      // because stats_coll_result is a histogram WITH error bars, add_histogram will do the
       // right thing and take them into account.
-      finalhistogram.add_histogram(taskresult.hist);
+      finalhistogram.add_histogram(stats_coll_result.hist);
 
       logger.debug("added first histogram.");
 
@@ -320,9 +385,9 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
       // UniformBinsHistogram), so it will just ignore the error bars.
       logger.debug([&](std::ostream & str) {
 	  str << "Simple histogram is:\n";
-	  Tomographer::histogram_pretty_print<SimpleHistogramType>(str, taskresult.hist);
+	  Tomographer::histogram_pretty_print<SimpleHistogramType>(str, stats_coll_result.hist);
 	});
-      simplefinalhistogram.add_histogram(taskresult.hist);
+      simplefinalhistogram.add_histogram(stats_coll_result.hist);
       logger.debug("done.");
     }
     template<typename Cnt, typename CData>
@@ -332,8 +397,8 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
       simplefinalhistogram.finalize();
     }
 
-
-    inline void produce_final_report()
+    template<typename CDataType>
+    inline void produce_final_report(CDataType && cdata)
     {
       // produce report on runs
       auto logger = llogger.sublogger(TOMO_ORIGIN);
@@ -341,12 +406,12 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
           str << "\n"
               << "                              Final Report of Runs                              \n"
               << "--------------------------------------------------------------------------------\n";
+	  cdata.print_basic_cdata_mhrw_info(str);
           std::size_t j;
           int w = (int)std::ceil(std::log10(collected_histograms.size()));
           for (j = 0; j < collected_histograms.size(); ++j) {
-            str << "#" << std::setw(w) << j << ": "
-                << histogram_short_bar(collected_histograms[j].hist, false, -3-w)
-                << "\n";
+	    print_short_bar_and_accept_ratio(str, j, collected_histograms[j].hist, collected_runtaskinfos[j], w);
+	    // error bars stats:
             const int nbins = collected_histograms[j].converged_status.size();
             const int n_conv = collected_histograms[j].converged_status
               .cwiseEqual(BinningAnalysisParamsType::CONVERGED).count();
@@ -376,7 +441,7 @@ struct TomorunCDataBinning : public TomorunCDataBase<TomoProblem_, ValueCalculat
     inline void write_histogram_file(const std::string & csvfname)
     {
       auto logger = llogger.sublogger(TOMO_ORIGIN);
-      logger.info("()");
+      //logger.info("()");
       
       std::ofstream outf;
       outf.open(csvfname);
@@ -479,7 +544,7 @@ inline void tomorun(const TomoProblem & tomodat, const ProgOptions * opt,
   // delta-time, in seconds and fraction of seconds
   std::string elapsed_s = Tomographer::Tools::fmt_duration(time_end - time_start);
 
-  results.produce_final_report();
+  results.produce_final_report(taskcdat);
 
   // save the histogram to a CSV file if the user required it
   if (opt->write_histogram.size()) {

@@ -60,6 +60,7 @@
 #include <tomographer/mhrwtasks.h>
 #include <tomographer/dmmhrw.h>
 #include <tomographer/multiprocomp.h>
+#include <tomographer/tomographer_version.h>
 
 #include "tomorun_config.h"
 #include "tomorun_opts.h"
@@ -85,12 +86,15 @@ int main(int argc, char **argv)
     return 127;
   }
 
-  logger.info(
-      "\n"
-      "-------------------------------\n"
-      "Welcome to tomorun.\n"
-      "-------------------------------\n"
-      );
+  logger.info([&](std::ostream & str) {
+      str << "\n"
+	  << "-----------------------------------------------------------------\n"
+	  << "Welcome to " << prog_version_info_1
+	  << "-----------------------------------------------------------------\n"
+	  << prog_version_info_2
+	  << "-----------------------------------------------------------------\n"
+	;
+    });
 
   display_parameters(&opt, logger.baselogger());
 
