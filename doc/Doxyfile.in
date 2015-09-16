@@ -65,7 +65,7 @@ PROJECT_NAME           = Tomographer
 # could be handy for archiving the generated documentation or if some version
 # control system is used.
 
-PROJECT_NUMBER         = 0.1
+PROJECT_NUMBER         = @TOMOGRAPHER_VERSION@
 
 # Using the PROJECT_BRIEF tag one can provide an optional one line description
 # for a project that appears at the top of each page and should give viewer a
@@ -189,7 +189,7 @@ FULL_PATH_NAMES        = YES
 # will be relative from the directory where doxygen is started.
 # This tag requires that the tag FULL_PATH_NAMES is set to YES.
 
-STRIP_FROM_PATH        = ../cxx
+STRIP_FROM_PATH        = @RELPATH_SRCROOT@/cxx
 
 # The STRIP_FROM_INC_PATH tag can be used to strip a user-defined part of the
 # path mentioned in the documentation of a class, which tells the reader which
@@ -198,7 +198,7 @@ STRIP_FROM_PATH        = ../cxx
 # specify the list of include paths that are normally passed to the compiler
 # using the -I flag.
 
-STRIP_FROM_INC_PATH    = ../cxx
+STRIP_FROM_INC_PATH    = @RELPATH_SRCROOT@/cxx
 
 # If the SHORT_NAMES tag is set to YES, doxygen will generate much shorter (but
 # less readable) file names. This can be useful is your file systems doesn't
@@ -751,7 +751,7 @@ WARNINGS               = YES
 # will automatically be disabled.
 # The default value is: YES.
 
-WARN_IF_UNDOCUMENTED   = YES
+WARN_IF_UNDOCUMENTED   = NO
 
 # If the WARN_IF_DOC_ERROR tag is set to YES, doxygen will generate warnings for
 # potential errors in the documentation, such as not documenting some parameters
@@ -795,8 +795,8 @@ WARN_LOGFILE           =
 # spaces.
 # Note: If this tag is empty the current directory is searched.
 
-INPUT                  = ../cxx/tomographer \
-                         doxdocs
+INPUT                  = @RELPATH_SRCROOT@/cxx/tomographer \
+                         @DOCROOT@/doxdocs
 
 # This tag can be used to specify the character encoding of the source files
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding. Doxygen uses
@@ -1136,7 +1136,7 @@ HTML_HEADER            =
 # that doxygen normally uses.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_FOOTER            = doxy_footer.html
+HTML_FOOTER            = @DOCROOT@/doxy_footer.html
 
 # The HTML_STYLESHEET tag can be used to specify a user-defined cascading style
 # sheet that is used by each HTML page. It can be used to fine-tune the look of
@@ -1161,7 +1161,7 @@ HTML_STYLESHEET        =
 # list). For an example see the documentation.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_STYLESHEET  = tomographer_extra_css.css
+HTML_EXTRA_STYLESHEET  = @DOCROOT@/tomographer_extra_css.css
 
 # The HTML_EXTRA_FILES tag can be used to specify one or more extra images or
 # other source files which should be copied to the HTML output directory. Note
@@ -1171,17 +1171,17 @@ HTML_EXTRA_STYLESHEET  = tomographer_extra_css.css
 # files will be copied as-is; there are no commands or markers available.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_FILES       = dejavu-fonts-ttf-2.35/ttf/DejaVuSans-Bold.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSans-BoldOblique.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSans-ExtraLight.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSans-Oblique.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSans.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansCondensed.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono-Bold.ttf \
-                         dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono.ttf \
-			 tomographer_script_setup.js \
-			 myarrowdown.png \
-			 myarrowright.png
+HTML_EXTRA_FILES       = @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSans-Bold.ttf \
+                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSans-BoldOblique.ttf \
+                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSans-ExtraLight.ttf \
+                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSans-Oblique.ttf \
+                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSans.ttf \
+                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSansCondensed.ttf \
+                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono-Bold.ttf \
+                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono.ttf \
+			 @DOCROOT@/tomographer_script_setup.js \
+			 @DOCROOT@/myarrowdown.png \
+			 @DOCROOT@/myarrowright.png
 
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the style sheet and background images according to
@@ -1466,7 +1466,7 @@ GENERATE_TREEVIEW      = YES
 # Minimum value: 0, maximum value: 20, default value: 4.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-ENUM_VALUES_PER_LINE   = 4
+ENUM_VALUES_PER_LINE   = 0
 
 # If the treeview is enabled (see GENERATE_TREEVIEW) then this tag can be used
 # to set the initial width (in pixels) of the frame in which the tree is shown.
@@ -1742,7 +1742,7 @@ LATEX_EXTRA_STYLESHEET =
 # markers available.
 # This tag requires that the tag GENERATE_LATEX is set to YES.
 
-LATEX_EXTRA_FILES      = tomographerlatexstyle.sty
+LATEX_EXTRA_FILES      = @DOCROOT@/tomographerlatexstyle.sty
 
 # If the PDF_HYPERLINKS tag is set to YES, the LaTeX that is generated is
 # prepared for conversion to PDF (using ps2pdf or pdflatex). The PDF file will
@@ -2112,8 +2112,8 @@ SKIP_FUNCTION_MACROS   = YES
 # the path). If a tag file is not located in the directory in which doxygen is
 # run, you must also specify the path to the tagfile here.
 
-TAGFILES               = Eigen.doxytags=http://eigen.tuxfamily.org/dox/  \
-		         "cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/"
+TAGFILES               = @DOCROOT@/Eigen.doxytags=http://eigen.tuxfamily.org/dox/  \
+		         "@DOCROOT@/cppreference-doxygen-web.tag.xml=http://en.cppreference.com/w/"
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create a
 # tag file that is based on the input files it reads. See section "Linking to

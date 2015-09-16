@@ -26,38 +26,33 @@
 
 
 # 
-# Configure the tomographer_version.h.in file.
+# Set up the Doxygen configuration file with correct TOMOGRAPHER Version.
 # 
 # Also create a corresponding tomographer_VERSION file which contains the raw
-# version. This is useful e.g. for the doxygen documentation.
+# version. This is useful, e.g. for the doxygen documentation.
 # 
 # Required variables:
-#     - VersionFile  OR  TOMOGRAPHER_VERSION
-#     - TomographerBinaryDir
-#     - TomographerSourceDir
+#  - VersionFile
+#  - RootSourceDir
+#  - TargetDoxyfileDir
 # 
-# those last directories must point to the 'cxx/tomographer/' directories in the binary
-# and source tree, respectively.
 
 
-#message(STATUS "VersionFile=${VersionFile}")
+file(READ "${VersionFile}" _tomover)
+string(STRIP "${_tomover}" TOMOGRAPHER_VERSION)
 
-if(VersionFile)
-  file(READ "${VersionFile}" _tomover)
-  string(STRIP "${_tomover}" TOMOGRAPHER_VERSION)
-endif(VersionFile)
+file(RELATIVE_PATH RELPATH_SRCROOT "${TargetDoxyfileDir}" "${RootSourceDir}")
+file(RELATIVE_PATH DOCROOT "${TargetDoxyfileDir}" "${RootSourceDir}/doc")
 
-#message(STATUS "Tomographer Version is ${TOMOGRAPHER_VERSION}")
+message(STATUS "Tomographer Version is ${TOMOGRAPHER_VERSION}")
+message(STATUS "    RELPATH_SRCROOT=${RELPATH_SRCROOT}")
+message(STATUS "    DOCROOT=${DOCROOT}")
 
 #
 # TOMOGRAPHER_VERSION is set.
 #
 CONFIGURE_FILE(
-  "${TomographerSourceDir}/tomographer_version.h.in"
-  "${TomographerBinaryDir}/tomographer_version.h"
+  "${RootSourceDir}/doc/Doxyfile.in"
+  "${TargetDoxyfileDir}/Doxyfile"
   @ONLY
-  )
-
-file(WRITE "${TomographerBinaryDir}/tomographer_VERSION"
-  "${TOMOGRAPHER_VERSION}"
   )
