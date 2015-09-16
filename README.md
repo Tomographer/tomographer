@@ -146,6 +146,17 @@ An example config file would be:
     value-hist=0.9:1/50
 
 
+MATLAB Tools
+------------
+
+Some tools are provided for fitting the resulting histogram to our theoretical
+model. These are MATLAB scripts located in the `tools` subdirectory.
+
+For more information on how to run the histogram analyzer/fitter, run:
+
+    >> analyze_tomorun_histogram('Help')
+
+
 API Documentation
 -----------------
 

@@ -46,7 +46,7 @@ namespace Tomographer {
  *
  * Calculates \f$ F(\rho,\sigma) = \left\Vert\sigma^{1/2}\rho^{1/2}\right\Vert_1 \f$.
  *
- * \note This is the Nielsen & Chuang fidelity, also called "root fidelity."
+ * \note This is the Nielsen & Chuang fidelity, sometimes also called "root fidelity."
  */
 template<typename ValueType, typename Derived, typename Derived2>
 inline ValueType fidelity(const Eigen::MatrixBase<Derived>& rho, const Eigen::MatrixBase<Derived2>& sigma)
@@ -57,15 +57,15 @@ inline ValueType fidelity(const Eigen::MatrixBase<Derived>& rho, const Eigen::Ma
   return ValueType( (rho_eig.operatorSqrt()*sigma_eig.operatorSqrt()).jacobiSvd().singularValues().sum() );
 }
 
-/** \brief Fidelity between two \c T-parameterizations of quantum states
+/** \brief Fidelity between two quantum states given by their \ref pageParamsT.
  *
  * The \f$ T \f$ -parameterization of \f$ \rho \f$ is a matrix \f$ T \f$ which satisfies
  * \f[
  *     \rho = T T^\dagger .
  * \f]
  *
- * This function calculates the same fidelity function as \ref fidelity(), but accepts
- * T-parameterizations of the quantum states instead. The formula used by this function
+ * This function calculates the same fidelity function as \ref fidelity(), but accepts the
+ * \ref pageParamsT of the quantum states instead. The formula used by this function
  * acts directly on the \f$ T \f$ 's:
  * \f[
  *    F(T_1 T_1^\dagger, T_2 T_2^\dagger)
@@ -73,7 +73,7 @@ inline ValueType fidelity(const Eigen::MatrixBase<Derived>& rho, const Eigen::Ma
  *        = \left\Vert T_1^\dagger T_2\right\Vert_1 .
  * \f]
  *
- * \note This is the Nielsen & Chuang fidelity, also called "root fidelity."
+ * \note This is the Nielsen & Chuang fidelity, sometimes also called "root fidelity."
  */
 template<typename ValueType, typename Der1, typename Der2>
 inline ValueType fidelity_T(const Eigen::MatrixBase<Der1>& T1, const Eigen::MatrixBase<Der2>& T2)

@@ -91,25 +91,89 @@
 
 
 
-/** \page pageParamsX \a X parameterization
+/** \page pageParamsX \a X Parameterization
  *
- * See e.g. \ref Tomographer::param_herm_to_x()
+ * Parameterization of a \f$ d\times d\f$ (complex) hermitian matrix \f$ A \f$ into a real
+ * vector \f$ (x_i)\f$ of \f$ d^2 \f$ elements. The parameterization is linear, and
+ * preserves inner products: \f$ \mathrm{tr}(A\,A') = \sum_i x_i x_i' \f$.
  *
- * \todo DOC............
+ * The parameterization is defined as follows: the first \f$ d\f$ entries of \f$ (x_i)\f$
+ * are the diagonal entries of \f$ A\f$. The following \f$ d(d-1)/2\f$ entries are the
+ * real parts of the off-diagonal entries, and the yet followoing \f$ d(d-1)/2\f$ entries
+ * are the imaginary parts of the off-diagonal entries. All off-diagonal entries are
+ * normalized by a factor \f$1/\sqrt{2}\f$ to preserve inner products. The off-diagonals
+ * are listed in the lower triangular part and row-wise. More precisely, we have (define
+ * as shorthand \f$ d'= d(d-1)/2\f$):
+ *
+ * \f{align*}{
+ * A = \begin{pmatrix}
+ *    x_{1}  &   \ast   &   \ast      &  \ldots   &  \ast \\
+ *    (x_{d+1} + i x_{d+d'+1})/\sqrt2  &
+ *             x_{2}    &   \ast      &  \ldots    &  \ast \\
+ *    (x_{d+2} + i x_{d+d'+2})/\sqrt2  &  (x_{d+3} + i x_{d+d'+3})/\sqrt2 &
+ *                          x_{3}     &            &  \ast \\
+ *    \vdots &          &             &  \ddots    &  \ast \\
+ *    (x_{d'} + i x_{2d'})/\sqrt2 &  \ldots    &             &
+ *    (x_{d+d'} + i x_{2d'+d})/\sqrt2   &   x_{d}
+ * \end{pmatrix}.
+ * \f}
+ * The upper triangular off-diagonals are set of course such that \f$ A\f$ is hermitian.
+ *
+ * See \ref Tomographer::param_herm_to_x() and \ref Tomographer::param_x_to_herm().
+ *
+ * \note The API for those functions might change and be replaced by a class \a
+ * ParamHermX, just like \ref Tomographer::ParamRhoA.
  */
 
-/** \page pageParamsT \a T parameterization
+/** \page pageParamsT \a T Parameterization
  *
- * Parameterization such that \f$ \rho = T T^\dagger \f$.
+ * Parameterization of a density operator \f$ \rho\f$ by a complex matrix \f$ T\f$ such
+ * that \f$ \rho = T T^\dagger \f$ and with \f$ T\f$ satisfying \f$
+ * \mathrm{tr}(TT^\dagger)=1 \f$.
  *
- * Often, \a T is chosen to be positive semidefinite. But this is not always the case, and
- * you should double-check.
- * 
- * \todo DOC.............................
+ * The matrix \f$ T\f$ is obviously not unique but has a
+ * unitary freedom: \f$ T' = TU\f$ is also possible parameterization for any unitary \f$
+ * U\f$. You can choose a gauge to fix this unitary freedom. Two are common:
+ *
+ * - Force \f$ T\f$ to be positive semidefinite. Then \f$ T = \rho^{1/2} \f$.
+ *
+ * - Force \f$ T\f$ to be a lower triangular matrix. You can obtain \f$ T\f$ by
+ *   performing a Cholesky (or LLT or LDLT) decomposition.
+ *
+ * Throughout the project, if we refer to a &lsquo;\a T parameterization,&rsquo; we do not
+ * imply any particular gauge.  In our %Tomographer project, we usually use the positive
+ * semidefinite gauge in practice. But you should double-check before blindly assuming
+ * this!
+ *
+ * See, for example, \ref Tomographer::fidelity_T().
  */
 
 
-/** \page pageParamsA \a A parameterization
+/** \page pageParamsA \a A Parameterization
  *
- * \todo DOC...............................
+ * Parameterize a traceless hermitian matrix \f$ A\f$ in an orthonormal basis of \f$
+ * su(d)\f$.  The (complex) traceless hermitian matrix \f$ A\f$ is written as
+ * \f[
+ *   A = \sum_{j=1}^{d^2-1} a_j A_j\ ,
+ * \f]
+ * where the \f$ A_j\f$ are the normalized version of the generalized Gell-Mann matrices,
+ * i.e. \f$ A_j = \lambda_j/\sqrt2\f$ where \f$\lambda_j\f$ are defined as in Refs. [1-3].
+ *
+ * Whenever we talk about the \a A parameterization of a matrix which is not traceless, we
+ * imply the \a A parameterization of its traceless part, i.e. \f$ A -
+ * \mathrm{tr}(A)\mathbb{I}/d\f$.
+ *
+ * 1. <a href="http://mathworld.wolfram.com/GeneralizedGell-MannMatrix.html">Wolfram
+ *       MathWorld: Generalized Gell-Mann Matrix</a>;
+ *
+ * 2. Br&uuml;ning et al., &ldquo;Parametrizations of density matrices,&rdquo; Journal of
+ *    Modern Optics 59:1 1 (2012), <a
+ *    href="http://dx.doi.org/10.1080/09500340.2011.632097">doi:10.1080/09500340.2011.632097</a>,
+ *    <a href="http://arxiv.org/abs/1103.4542">arXiv:1103.4542</a>;
+ *
+ * 3. Bertlmann &amp; Krammer, &ldquo;Bloch vectors for qudits,&rdquo; Journal of Physics
+ *    A 41:23 235303 (2008) <a
+ *    href="http://dx.doi.org/10.1088/1751-8113/41/23/235303">doi:10.1088/1751-8113/41/23/235303</a>,
+ *    <a href="http://arxiv.org/abs/0806.1174">arXiv:0806.1174</a>.
+ *
  */

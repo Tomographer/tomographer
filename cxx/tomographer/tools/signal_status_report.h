@@ -170,7 +170,8 @@ namespace tomo_internal {
  * \warning This will replace any previous signal handlers set, including for other
  * signals!
  *
- * \bug Don't replace the signal handlers for other signals...
+ * \todo Don't replace the signal handlers for other signals. (Well ok, we only catch
+ *       SIGINT anyway so this isn't a problem now.)
  *
  */
 template<typename SigHandler>

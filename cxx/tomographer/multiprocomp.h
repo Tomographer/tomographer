@@ -121,8 +121,8 @@ namespace OMP
    *       \ref LoggerTraits::IsThreadSafe), then the call to emit the log is not wrapped
    *       in a critical section, but directly called.
    *
-   * \bug WE SHOULD BUFFER LOG ENTRIES, and emit them only every N seconds. Currently we
-   *      emit the logs as they come.
+   * \todo Buffer log entries here to optimize performance and to limit the number of
+   *       <code>#pragma omp critical</code> blocks.
    *
    * \warning The runtime level of this logger is fixed to the level of the base logger at
    * the moment of instanciation. Any changes to the level of the base logger afterwards

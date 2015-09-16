@@ -174,23 +174,38 @@ namespace Tomographer
 
 /** \brief Parameterization of density matrices in su(N) generators
  *
- * \todo DOC...................
+ * This class implements the parameterization descirbed on the page \ref pageParamsA.
+ *
+ * Additionally, this class gives access to the constructed generalized Gell-Mann matrices
+ * (see \ref pageParamsA), see \ref getLambda().
  */
 template<typename MatrQ_>
 class ParamRhoA
 {
 public:
+  //! The C++ types for quantum objects and parameterizations
   typedef MatrQ_ MatrQ;
+  //! The Matrix type to use to describe hermitian matrices.
   typedef typename MatrQ::MatrixType MatrixType;
+  //! The Matrix type to use to describe the \ref pageParamsA of a hermitian matrix.
   typedef typename MatrQ::VectorParamNdofType VectorParamNdofType;
+  //! The real scalar type. Usually this is \c double.
   typedef typename MatrQ::RealScalar RealScalar;
 
 private:
   MatrQ matq;
 
+  //! Cached generators of \f$ su(d)\f$.
   typename Tools::eigen_std_vector<MatrixType>::type lambda;
 
 public:
+  /** \brief Construct an object which can perform A parameterization transformations.
+   *
+   * Specify the runtime \a MatrQ object to use (see \ref pageInterfaceMatrQ).
+   *
+   * Once constructed, this object has precalculated and cached the generalized Gell-Mann
+   * matrices (see \ref pageParamsA), and these can be obtained with \ref getLambda().
+   */
   ParamRhoA(MatrQ matq_)
     : matq(matq_)
   {
@@ -233,11 +248,36 @@ public:
     eigen_assert(count == (std::size_t)matq.ndof());
   }
 
-  inline const MatrixType & getLambda(std::size_t genindex) const
+  /** \brief Generalized Gell-Mann matrices.
+   *
+   * Returns the \a j-th generalized Gell-Mann matrix, as described in \ref
+   * pageParamsA. The matrices returned here are NOT normalized with the factor \f$
+   * \sqrt2\f$, rather, they are directly the ones constructed in the references cited
+   * \ref pageParamsA "here".
+   *
+   * \param j which matrix to return. There are in total \f$ d^2-1\f$ matrices. \a j must
+   *        be in range or else prepare for an assert hara-kiri.
+   *
+   * This function executes quickly as it does not need to compute the matrices. All the
+   * generalized Gell-Mann matrices for this dimension are precomputed in the constructor.
+   *
+   * The returned reference points directly to the internal cached version of the matrix,
+   * so copy it somewhere else if you wish to change it.
+   */
+  inline const MatrixType & getLambda(std::size_t j) const
   {
-    return lambda[genindex];
+    eigen_assert(j < matq.ndof());
+    return lambda[j];
   }
 
+  /** \brief Compute the \ref pageParamsA of a hermitian matrix.
+   *
+   * This method computes the \ref pageParamsA of the traceless part of the matrix \a rho.
+   *
+   * \note The matrix \a rho need not be traceless, though the parameterization in \a a
+   *       will only reflect its traceless part, i.e. \f$ \texttt{rho} -
+   *       \mathrm{tr}(\texttt{rho})\mathbb{I}/d \f$.
+   */
   inline void rhoToA(Eigen::Ref<VectorParamNdofType> a, const Eigen::Ref<const MatrixType> & rho) const
   {
     eigen_assert((std::size_t)a.size() == matq.ndof());
@@ -249,6 +289,11 @@ public:
     }
   }
 
+  /** \brief Reconstruct a hermitian traceless matrix from its \ref pageParamsA.
+   *
+   * This method computes the hermitian matrix given by its corresponding \ref
+   * pageParamsA. The matrix is shifted by the identity so that it has trace \a trace.
+   */
   inline void aToRho(Eigen::Ref<MatrixType> rho, const Eigen::Ref<const VectorParamNdofType> & a,
 		     RealScalar trace = 1.0) const
   {

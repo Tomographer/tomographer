@@ -34,6 +34,16 @@
 #include <fstream>
 #include <iomanip>
 
+/* This program checks that the numerical histogram obtained for a 1-qubit system with all
+ * measurement outcomes in one direction corresponds to the known analytical solution.
+ *
+ * If a qubit is measured in a single basis, and all outcomes are in the same direction,
+ * then the fidelity to the state in the measured direction is known analytically.
+ *
+ * This program takes as argument the CSV output of `tomorun`, and checks that it
+ * corresponds to the known analytical solution.
+ */
+
 
 struct AnalyticalSolutionFn
 {
@@ -172,7 +182,7 @@ int main(int argc, char **argv)
             << "chi2_red = " << chi2_red << "\n\n";
 
   if (chi2_red > 1.5) {
-    std::cout << "!!! Fit doesn't seem good...\n";
+    std::cerr << "Error: !!! Fit doesn't seem good... !!!\n";
     return 1;
   }
 
