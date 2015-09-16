@@ -26,6 +26,8 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import print_function
+
 
 import os
 import os.path
@@ -34,7 +36,7 @@ import subprocess
 import shutil
 
 if (len(sys.argv) != 2):
-    print "Usage: %s <version>\n(where <version> is a git version tag)\n"%(sys.argv[0])
+    print("Usage: %s <version>\n(where <version> is a git version tag)\n"%(sys.argv[0]))
     sys.exit(1)
 
 gitversion = sys.argv[1]
@@ -46,15 +48,15 @@ tomo_name_w_ver_a = {
     }
 
 if os.path.exists(tomo_name_w_ver) or any((os.path.exists(n) for n in tomo_name_w_ver_a.values())):
-    print "Error: some files with conflicting names exist, aborting.\n"
-    print "Please remove the following files if you wish to proceed:\n"
-    print "\t"+tomo_name_w_ver
+    print("Error: some files with conflicting names exist, aborting.\n" +
+          "Please remove the following files if you wish to proceed:\n" +
+          "\t"+tomo_name_w_ver)
     for fn in tomo_name_w_ver_a.values():
-        print "\t"+fn
-    print "\n"
+        print("\t"+fn)
+    print("")
     sys.exit(2)
 
-print "Packaging Tomographer version", gitversion, "as", tomo_name_w_ver
+print("Packaging Tomographer version", gitversion, "as", tomo_name_w_ver)
 
 tomographer_url = "git@gitlab.phys.ethz.ch:pfaist/tomographer.git"
 
@@ -64,20 +66,29 @@ e.git = os.environ.get('GIT', "git")
 e.tar = os.environ.get('TAR', "tar")
 e.zip = os.environ.get('ZIP', "zip")
 
+def do_run(cmdargv, **opts):
+    print("Running %r ..."%(cmdargv))
+    subprocess.check_call(cmdargv, **opts)
+    print("")
+
+def do_rmtree(path):
+    print("Removing %s ..."%(path))
+    shutil.rmtree(path)
+
 # git clone
-subprocess.check_call([e.git, "clone", tomographer_url, tomo_name_w_ver])
+do_run([e.git, "clone", tomographer_url, tomo_name_w_ver])
 # git checkout <CORRECT-VERSION>
-subprocess.check_call([e.git, "checkout", gitversion], cwd=tomo_name_w_ver)
+do_run([e.git, "checkout", gitversion], cwd=tomo_name_w_ver)
 # create VERSION file with version number
 with open(os.path.join(tomo_name_w_ver, 'VERSION'), 'w') as f:
-    subprocess.check_call([e.git, "describe", "--tags"], stdout=f, cwd=tomo_name_w_ver)
+    do_run([e.git, "describe", "--tags"], stdout=f, cwd=tomo_name_w_ver)
 # remove .git files etc.
-shutil.rmtree(os.path.join(tomo_name_w_ver, '.git'))
+do_rmtree(os.path.join(tomo_name_w_ver, '.git'))
 
-subprocess.check_call([e.tar, "cvfz", tomo_name_w_ver_a['tar.gz'], tomo_name_w_ver])
-subprocess.check_call([e.tar, "cvfj", tomo_name_w_ver_a['tar.bz2'], tomo_name_w_ver])
-subprocess.check_call([e.zip, "-r", tomo_name_w_ver_a['zip'], tomo_name_w_ver])
+do_run([e.tar, "cvfz", tomo_name_w_ver_a['tar.gz'], tomo_name_w_ver])
+do_run([e.tar, "cvfj", tomo_name_w_ver_a['tar.bz2'], tomo_name_w_ver])
+do_run([e.zip, "-r", tomo_name_w_ver_a['zip'], tomo_name_w_ver])
 
-shutil.rmtree(tomo_name_w_ver)
+do_rmtree(tomo_name_w_ver)
 
-print "Done."
+print("Done.")
