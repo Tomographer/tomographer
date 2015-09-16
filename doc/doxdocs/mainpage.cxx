@@ -28,7 +28,8 @@
  *
  * The <a href="https://github.com/Tomographer/tomographer" target="_blank">%Tomographer
  * C++ Framework</a> groups a set of classes and functions which allow to reliably analyze
- * data from quantum experiments.
+ * data from quantum experiments. These serve in particular as components for the tomorun
+ * executable program.
  *
  * <h2>%Tomographer's Components</h2>
  *
