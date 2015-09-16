@@ -76,6 +76,24 @@ include(OptimizeForArchitecture)
 OptimizeForArchitecture()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Vc_ARCHITECTURE_FLAGS}")
 
+# ==============================================================================
+# Documentation Target
+# ==============================================================================
+
+find_package(Doxygen)
+if(DOXYGEN_FOUND)
+  add_custom_target(doc
+    COMMAND "${CMAKE_COMMAND}" "-DVersionFile=${CMAKE_BINARY_DIR}/cxx/tomographer/tomographer_VERSION" "-DRootSourceDir=${CMAKE_SOURCE_DIR}" "-DTargetDoxyfileDir=${CMAKE_BINARY_DIR}" -P "${CMAKE_SOURCE_DIR}/cmake/CreateDoxyfile.cmake"
+    COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_BINARY_DIR}/Doxyfile"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+    COMMENT "Generating API documentation with Doxygen" VERBATIM
+    )
+  # to make sure the version file is set up properly
+  add_dependencies(doc tomographer)
+  message(STATUS "You can build the API documentation by running `make doc`.")
+else(DOXYGEN_FOUND)
+  message(STATUS "Doxygen not found. Don't worry, you'd only need this if you wanted to generate API documentation.")
+endif(DOXYGEN_FOUND)
 
 # ==============================================================================
 # Set up Install Targets

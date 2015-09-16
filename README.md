@@ -150,11 +150,18 @@ API Documentation
 -----------------
 
 You can build the API documentation using [Doxygen >= 1.8][doxygen]. You'll also
-need `dot` (`graphviz`). Enter the directory `doc/` and type:
+need `dot` (from the `graphviz` suite). To build the documentation, simply run
 
-    tomographer-1.0/doc> doxygen Doxyfile
+    tomographer-1.0/build> make doc
 
-This will create API documentation in both HTML and LaTeX format.
+This will create API documentation in both HTML and LaTeX format. The HTML
+output is located in `build/html` and the latex files are in `build/latex`.
+
+If `doxygen` was not found by CMake, then re-run `cmake` specifying the location
+of Doxygen using the `-DDOXYGEN_EXECUTABLE=/location/of/doxygen` switch.
+
+To build the latex documentation, enter the `latex` directory and run `make`.
+The output file is called `refman.pdf`.
 
 [doxygen]: http://www.doxygen.org/
 
