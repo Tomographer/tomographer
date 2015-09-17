@@ -32,7 +32,10 @@
 #include <algorithm>
 #include <string>
 
-#include <omp.h>
+// This is included anyway in multiprocomp.h
+//#ifdef TOMOGRAPHER_HAVE_OMP
+//#include <omp.h>
+//#endif // TOMOGRAPHER_HAVE_OMP
 
 #include "test_tomographer.h"
 

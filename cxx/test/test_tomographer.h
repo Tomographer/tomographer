@@ -33,13 +33,45 @@
 
 #define EIGEN_INITIALIZE_MATRICES_BY_NAN
 
+#include <cmath>
 #include <cstdlib>
+#include <complex>
+#include <type_traits>
 
 #include <iostream>
 #include <iomanip>
 
 // define the exception class, but don't override eigen's eigen_assert() macro itself
 #include <tomographer/tools/eigen_assert_exception.h>
+
+
+
+// It seems that Clang++ does not provide std::abs(std::complex<..> z). (???) So we'll
+// need to implement it ourselves.
+template<typename T, typename Enable = void>
+struct MyAbs {
+  static inline T calcAbs(T val) {
+    using namespace std;
+    return abs(val);
+  };
+};
+template<typename RealType>
+struct MyAbs<std::complex<RealType> > {
+  typedef std::complex<RealType> T;
+  static inline RealType calcAbs(T z) {
+    using namespace std;
+    return hypot(std::real(z), std::imag(z));
+  };
+};
+// abs() for unsigned types. no-op by definition as unsigned types are always positive.
+template<typename T>
+struct MyAbs<T, typename std::enable_if<std::is_unsigned<T>::value >::type> {
+  static inline T calcAbs(T val) {
+    return val;
+  };
+};
+
+
 
 
 /** 
@@ -177,11 +209,14 @@ check_std_vector_equal(const std::vector<T1, A1> & a, const std::vector<T2, A2> 
     return res;
   }
 
+  typedef decltype(T1(1) + T2(1))  PromotedScalar;
+
   for (std::size_t j = 0; j < a.size(); ++j) {
-    if (std::abs(a[j] - b[j]) > tol) {
+    auto thedelta = MyAbs<PromotedScalar>::calcAbs(a[j] - b[j]);
+    if (thedelta > tol) {
       boost::test_tools::predicate_result res(false);
       res.message() << "vectors are different: a["<<j<<"]=" << a[j] << "  !=  b["<<j<<"]=" << b[j] << "\n"
-                    << "\t[diff = " << std::abs(a[j]-b[j]) << "]\n";
+                    << "\t[diff = " << thedelta << "]\n";
       return res;
     }
   }
