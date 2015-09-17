@@ -39,16 +39,16 @@ def fix_exe_object_lib_refs(exename):
             continue
         libname = m.group('libname')
         if any([libname.startswith(x) for x in system_paths]):
-            print "%s is in a system path, skipping...\n"%(libname)
+            print "%s is in a system path, skipping..."%(libname)
             continue
 
         if libname.startswith('@'):
-            print "%s is already a local reference, skipping...\n"%(libname)
+            print "%s is already a local reference, skipping..."%(libname)
             continue
 
         # copy the library next to the executable and rename link
         if (not os.path.exists(libname)):
-            print "Warning: Can't find library %s, skipping...\n"%(libname)
+            print "Warning: Can't find library %s, skipping..."%(libname)
             continue
         
         baselibname = os.path.basename(libname)
