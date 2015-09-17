@@ -29,7 +29,10 @@ settings.
 Prerequisites
 -------------
 
-You'll need:
+If you're lucky and there's a binary release for your system, you won't need
+anything else.
+
+To compile from source, you'll need:
 
   - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, clang++ >= 3.6 (3.3 w/o
     OpenMP))
