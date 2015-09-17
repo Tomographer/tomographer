@@ -42,9 +42,9 @@ static const std::string prog_version_info_2 =
   "(C) 2015 ETH Zurich\n"
   "Released under the terms of the MIT License (see LICENSE.txt)\n"
 #ifdef TOMOGRAPHER_HAVE_OMP
-  "[Tomorun was compiled with OpenMP support.]"
+  "[Tomorun was compiled with OpenMP support.]\n"
 #else
-  "[Tomorun was compiled without OpenMP support.]"
+  "[Tomorun was compiled without OpenMP support.]\n"
 #endif
   ;
 
