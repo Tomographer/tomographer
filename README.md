@@ -73,6 +73,11 @@ github and send me pull requests. Contact me if you have questions.
 Installation
 ------------
 
+If you found a binary release for your system, simply unpack it. It is then
+ready for use.
+
+The rest of this section concerns compiling Tomographer/Tomorun from source.
+
 The configuration, compilation and installation process is done using CMake.
 (You'll need CMake >= 2.8.5.)  Download an official release of Tomographer,
 unpack it, and enter the unpacked directory.  Then, issue the commands:
@@ -83,23 +88,31 @@ unpack it, and enter the unpacked directory.  Then, issue the commands:
     tomographer-1.0/build> make
     tomographer-1.0/build> make install/strip
 
-And you'll have the `tomorun` installed on your system. You can specify some
-standard CMake variables, such as CMAKE_INSTALL_PREFIX.  If you installed a
-recent compiler manually, you'll need to point CMake to that compiler, e.g. with
+And you'll have the `tomorun` installed on your system.
+
+You may also run CMake multiple times to adjust all the relevant options.  You
+can specify some standard CMake variables, such as CMAKE_INSTALL_PREFIX.  If you
+installed a recent compiler manually, you'll need to point CMake to that
+compiler, e.g. with
 
     > cmake .. -DCMAKE_C_COMPILER=/path/to/gcc -DCMAKE_CXX_COMPILER=/path/to/g++ 
 
-To specify paths to the Eigen3 and MatIO libraries, use the CMake switches:
+To specify paths to the Boost, Eigen3 and MatIO libraries, use the CMake
+switches:
 
     -DEIGEN3_INCLUDE_DIR=/path/to/include/eigen3
+    -DMATIO_LIBRARY=/path/to/libmatio.a
     -DMATIO_INCLUDE_DIR=/path/to/include
 
+(See [here][cmake_findboost] for switches relating to Boost libraries.)
+
+[cmake_findboost]: http://www.cmake.org/cmake/help/v3.0/module/FindBoost.html
+
 You may of course also alternatively use CMake's graphical interface, CMake-GUI.
-You may also run CMake multiple times to adjust all the relevant options.
 
 Note the compilation step (`make`) is quite computation-heavy because of the
 extensive C++11 template metaprogramming. It might take a minute or two to
-complete depending on your hardware, and might be greedy on RAM.
+complete depending on your hardware, and might be pretty greedy on RAM.
 
 
 Running Tomorun
