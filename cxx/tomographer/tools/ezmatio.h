@@ -301,6 +301,15 @@ ValueType get_numel(It begin, It end)
 
 /** \brief An array of ints which specifies a list of dimensions.
  *
+ * This utility may be used to specify a list of dimensions for a N-D array.  It
+ * is a subclass of \ref std::vector<int>, and implements some additional
+ * functions such as \ref numel(), \ref matchesWanted() and \ref
+ * operator<<(std::ostream&,const DimList&) "operator<<".
+ *
+ * You may also use \ref operator<<(int) and \ref operator<<(const DimList&) to
+ * append dimensions to the list.
+ *
+ *
  */
 class DimList : public std::vector<int>
 {
@@ -322,10 +331,22 @@ public:
   {
   }
 
+  /** \brief Get the total number of elements in an array of these dimensions
+   *
+   * This is simply the product of all elements in the array. See \ref get_numel().
+   */
   inline int numel() const { return get_numel(begin(), end()); }
 
+  /** \brief Get the number of dimensions in this array.
+   *
+   * This is simply an alias for \ref std::vector<int>::size()
+   *
+   */
   inline int ndims() const { return (int)size(); }
 
+  /** \brief Test whether our dimensions match the given required list of dimensions
+   *
+   */
   inline bool matchesWanted(const DimList& wanted) const
   {
     if (size() != wanted.size()) {
@@ -1416,17 +1437,93 @@ private:
 
 // -----------------------------------------------
 
-/** \brief Describe shape and type of variable
+/** \brief Describe shape of variable and whether it is complex
  *
  * Allows to check a matlab variable for correct shape, for example.
  *
+ * This struct stores attributes of a variable, or attributes which one would require a
+ * variable to have. You can create a VarShape which represents an actual MATLAB variable,
+ * or you can also create a VarShape describing the characteristics which you'd want a
+ * loaded MATLAB variable to have, and then test that shape agains the actual variable.
+ *
+ * This simple struct stores:
+ *  - whether the variable is complex or not (\ref is_complex);
+ *  - the dimensions of the variable, i.e. a list of integers (\ref dims);
+ *  - whether the variable is or should be square, i.e. whether the two first dimensions
+ *    are or have to be equal (\ref is_square).
+ *
+ * The dimensions \a dims may contain \a -1 entries, which indicate that the particular
+ * dimension is not fixed (i.e. doesn't have a particular requirement).
+ *
+ * You may check whether a particular requirement given as a VarShape matches the actual
+ * shape of a variable using \ref checkShape(const Var & var), or more generally whether
+ * it matches another VarShape using \ref checkShape(const VarShape& varshape).
+ *
+ * Example:
+ * \code
+ *   VarShape shape(true, DimList() << 4 << 4, false);
+ *   Var v = matfile.var("my_variable");
+ *   try {
+ *     std::cout << "Decoding '" << v.varName() << "' into a " << shape << "\n";
+ *     shape.checkShape(v);
+ *     // The variable 'my_variable' in the data file is indeed a 4x4 square
+ *     // real or complex matrix.
+ *     std::cout << "OK\n";
+ *   } catch (const VarTypeError & err) {
+ *     std::cout << "Error: " << err.what() << "\n";
+ *   }
+ * \endcode
+ *
+ * You may also stream a VarShape into an \ref std::ostream for formatting, as in the
+ * example.
  */
 struct VarShape
 {
+  /** \brief Whether the variable is or should be complex
+   *
+   * When describing a requirement, it is OK if the requirement is to be complex
+   * but the variable is real, and the shapes will be reported to match. (This
+   * is natural as a real MATLAB variable is easily decoded into a complex C++
+   * object.)
+   */
   const bool is_complex;
+
+  /** \brief The dimensions of the variable, or requested dimensions
+   *
+   * If you are describing the requested dimensions of a variable, you can set some
+   * dimensions to \a -1 to signify that they can assume any value. For example, if you
+   * want a matrix with three rows but any number of columns, you may set
+   * \code
+   *   dims = DimList() << 3 << -1;
+   * \endcode
+   *
+   * This property can be left empty to signify that there should be no constraint on the
+   * dimensions of the MATLAB variable.
+   *
+   * See also \ref DimList::matchesWanted()
+   */
   const DimList dims;
+
+  /** \brief Whether the variable's two first dimensions are (or should be) the same
+   *
+   * This flag encodes a requirement that the two first dimensions of a matrix must be
+   * equal. For example, to ensure that an input variable is a list of three square
+   * matrices (of any but same size) encoded as <code>Mat(:,:,i)</code>, then you may set
+   * \code
+   *    dims = DimList() << -1 << -1 << 3;
+   *    is_square = true;
+   * \endcode
+   *
+   * If \a is_square is \a false, this does not indicate that the variable is requested to
+   * have a non-square shape. If \a is_square is \a false, the variable may have any
+   * shape.
+   */
   const bool is_square;
 
+  /** \brief Construct a VarShape object from given characteristics
+   *
+   * This simply initializes the fields and checks consistency of the given fields.
+   */
   template<typename DimListType>
   VarShape(bool is_complex_, DimListType&& dims_, bool is_square_)
     : is_complex(is_complex_), dims(std::forward<DimListType>(dims_)), is_square(is_square_)
@@ -1434,15 +1531,11 @@ struct VarShape
     _check_consistency();
   }
 
-  /* ICC doesn't like this, and we don't seem to need it either
-  template<class T, typename DimListType>
-  VarShape(DimListType&& dims_, bool is_square_)
-    : is_complex(Tools::is_complex<T>::value), dims(std::forward(dims_)), is_square(is_square_)
-  {
-    _check_consistency();
-  }
-  */  
-
+  /** \brief Construct a VarShape object reflecting the actual shape of a variable in the
+   *         data file.
+   *
+   * The fields are initialized from the values of the actual variable.
+   */
   VarShape(const Var & var)
     : is_complex(var.isComplex()), dims(var.dims()), is_square(var.isSquareMatrix())
   {
@@ -1450,7 +1543,8 @@ struct VarShape
 
 
 private:
-  void _check_consistency() {
+  void _check_consistency()
+  {
     if (is_square) {
       assert(dims.size() == 0 || (dims.size() == 2 && (dims[0] == -1 || dims[1] == -1 || dims[0] == dims[1])));
     }
@@ -1458,13 +1552,22 @@ private:
   
 public:
   
-  /** \brief Verify the shape of the MATLAB variable.
+  /** \brief Verify that our requirements match the given other \a shape
    *
-   * If the MATLAB variable \a var does not have the shape described by this VarShape
-   * object, or if the variable is complex and \a T is not, then throw a VarTypeError.
+   * If the \a shape does not satisfy the requirements of this VarShape object,
+   * then throw a VarTypeError. The requirements are described in the class
+   * documentation and in the individual member documentations for \ref
+   * is_complex, \ref dims and \ref is_square.
    */
-  inline void checkShape(const VarShape & other);
+  inline void checkShape(const VarShape & shape);
 
+  /** \brief Shorthand for \ref checkShape(const VarShape& other) for a shape given by a
+   *         variable.
+   *
+   * \note If you have a variable to check against, it is advantageous to use this method
+   *       instead of \ref checkShape(const VarShape& shape) as any thrown exception will
+   *       also contain the name of the variable and thus be more informative.
+   */
   inline void checkShape(const Var & var)
   {
     try {
@@ -1489,7 +1592,11 @@ inline std::ostream& operator<<(std::ostream& str, const VarShape & varshape)
     str << "matrix";
   } else if (varshape.dims.size() > 0) {
     str << varshape.dims.size() << "-D array";
+    if (varshape.is_square) {
+      str << " with first two dimensions square";
+    }
   } else {
+    // empty dims means no requirement
     str << "array";
   }
   if (varshape.dims.size()) {
