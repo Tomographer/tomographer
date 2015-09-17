@@ -32,7 +32,8 @@ Prerequisites
 
 You'll need:
 
-  - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, clang++?)
+  - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, clang++ >= 3.6 (3.3 w/o
+    OpenMP))
   - [CMake >= 2.8.5](http://www.cmake.org/)
   - [Boost libraries](http://www.boost.org/)
   - [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/)
