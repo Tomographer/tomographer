@@ -50,16 +50,22 @@ warning light*) also work on Windows.
 Download
 --------
 
-There are currently no binary releases available, you'll have to compile from
-source. Don't worry, that's not complicated. If you haven't already done so,
-install all the usual development tools (`gcc`/`g++`/`make`/etc.)
-
-The source can be downloaded from our github page:
+Tomographer can be downloaded from our github releases page:
 
     https://github.com/Tomographer/tomographer/releases
 
+There is currently only a binary release for Mac OS X available.  For other
+platforms, you'll have to compile from source.  Don't worry, that's not
+complicated. If you haven't already done so, install all the usual development
+tools (`gcc`/`g++`/`make`/etc.) and follow the *Installation* instructions
+below.
+
+If you compile from source, make sure you download the offical source package
+from our releases page. If you use github's automatic `Download TAR.GZ or ZIP'
+links from the source code, you might end up with missing files.
+
 If you wish to contribute to development, don't hesitate to fork the repo on
-github and send me pull requests.
+github and send me pull requests. Contact me if you have questions.
 
 
 Installation
