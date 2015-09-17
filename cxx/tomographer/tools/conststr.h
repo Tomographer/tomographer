@@ -75,7 +75,7 @@ public:
     return is_in_range(n) ? answer : throw std::out_of_range("");
   }
 
-  inline constexpr std::size_t clamp_to_range(const std::size_t pos)
+  inline constexpr std::size_t clamp_to_range(const std::size_t pos) const
   {
     return pos >= _sz ? _sz-1 : pos;
   }
@@ -89,7 +89,7 @@ public:
 	);
   }
 
-  inline constexpr bool operator==(const conststr& other) {
+  inline constexpr bool operator==(const conststr& other) const {
     return startswith(other) && other.size() == size();
   }
 

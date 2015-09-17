@@ -28,7 +28,13 @@
 #define MULTIPROCOMP_H
 
 #include <csignal>
+
+#ifdef TOMOGRAPHER_HAVE_OMP
 #include <omp.h>
+#else
+inline constexpr int omp_get_thread_num() { return 0; }
+inline constexpr int omp_get_num_threads() { return 1; }
+#endif
 
 
 /** \file multiprocomp.h
@@ -509,6 +515,7 @@ namespace OMP {
       // "`n_chunk' is predetermined `shared' for `shared'"
       CountIntType num_total_runs = shared_data.num_total_runs;
       CountIntType n_chunk = shared_data.n_chunk;
+      (void)n_chunk; // silence "unused variable" warning when compiling without OMP support
 
       CountIntType k = 0;
 

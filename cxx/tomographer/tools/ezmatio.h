@@ -1039,8 +1039,7 @@ public:
    *
    */
   template<typename T, TOMOGRAPHER_ENABLED_IF_TMPL( tomo_internal::has_params_member<VarValueDecoder<T> >::value )>
-  inline typename VarValueDecoder<T>::RetType value(const Var& var,
-                                                    const typename VarValueDecoder<T>::Params & params)
+  inline typename VarValueDecoder<T>::RetType value(const typename VarValueDecoder<T>::Params & params)
   {
     return Tomographer::MAT::value<T>(*this, params);
   }

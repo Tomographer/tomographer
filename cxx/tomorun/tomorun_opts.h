@@ -41,6 +41,9 @@ static const std::string prog_version_info_2 =
   "by Philippe Faist, Institute for Theoretical Physics, ETH Zurich\n"
   "(C) 2015 ETH Zurich\n"
   "Released under the terms of the MIT License (see LICENSE.txt)\n"
+#ifdef TOMOGRAPHER_HAVE_OMP
+  "[Tomorun was compiled with OpenMP support.]"
+#endif
   ;
 
 static const std::string prog_version_info = prog_version_info_1 + prog_version_info_2;

@@ -196,6 +196,7 @@ namespace tomo_internal {
      */
     static inline FnValueType get_ptval(MHWalker & mhwalker, const PointType & curpt)
     {
+      (void)mhwalker; (void)curpt;
       assert(0 && "UNKNOWN UseFnSyntaxType: Not implemented");
     }
     /** \internal
@@ -1166,6 +1167,7 @@ struct MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >
   template<int I = 0, typename std::enable_if<(I == NumStatColl), bool>::type dummy = true>
   static inline std::string getStatus(const MHRWStatsCollector * stats)
   {
+    (void)stats;
     return std::string();
   }
 
