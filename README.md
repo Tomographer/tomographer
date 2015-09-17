@@ -16,15 +16,14 @@ This project comprises two parts:
    invest more time.
 
 The `tomorun` executable produces a histogram of a figure of merit under the
-distribution relevant for constructing confidence regions using the method
-described in [Christandl & Renner, PRL (2012), arXiv:1108.5329][Christandl2012].
-The measurement data are specified as independent POVM outcomes.
+distribution relevant for a reliable error analysis as described in [Faist &
+Renner, Practical Reliable Error Bars in Quantum Tomography, arXiv:XXXX.XXXXX
+(September 2015)].  The measurement data are specified as independent POVM
+outcomes.
 
 The C++ framework is a set of abstract and generic classes which you can combine
 in your preferred way to implement this random walk for even more general
 settings.
-
-[Christandl2012]: http://arxiv.org/abs/1108.5329
 
 
 Prerequisites
