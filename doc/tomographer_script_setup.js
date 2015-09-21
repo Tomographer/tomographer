@@ -100,7 +100,7 @@ function setupHomeLink(doc) {
 				});
     var inner = $("#innerprojectname", projectname);
     inner.text(mystrtrim(inner.text()));
-    inner.click(function(){location.href="http://tomographer.github.io/tomographer/";});
+    inner.click(function(){location.href="index.html";});
 };
 
 
