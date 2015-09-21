@@ -110,69 +110,15 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 
-
-// we should integrate directly the SASS bootstrap, not monkey-patch like hell....  :(
-// ===================================================================================
-
-// Large screen / wide desktop
-$screen-sm:                  768px !default;
-$screen-sm-min:              $screen-sm !default;
-
-$screen-md:                  992px !default;
-$screen-md-min:              $screen-md !default;
-
-//== Deprecated `$screen-lg` as of v3.0.1
-$screen-lg:                  1200px !default;
-$screen-lg-min:              $screen-lg !default;
-//== Deprecated `$screen-lg-desktop` as of v3.0.1
-$screen-lg-desktop:          $screen-lg-min !default;
-
-// So media queries don't overlap when required, provide a maximum'
-$screen-xs-max:              ($screen-sm-min - 1) !default;
-$screen-sm-max:              ($screen-md-min - 1) !default;
-$screen-md-max:              ($screen-lg-min - 1) !default;
-
-
-//== Grid system
-//
-//## Define your custom responsive grid.
-
-//== Number of columns in the grid.
-$grid-columns:              12 !default;
-//== Padding between columns. Gets divided in half for the left and right.
-$grid-gutter-width:         30px !default;
-// Navbar collapse
-//== Point at which the navbar becomes uncollapsed.
-$grid-float-breakpoint:     $screen-sm-min !default;
-//== Point at which the navbar begins collapsing.
-$grid-float-breakpoint-max: ($grid-float-breakpoint - 1) !default;
-
-
-// --------------------------------
-
-$my-navbar-color:             rgb(255,255,255);
-$my-navbar-bg:                rgba(255,255,255,0.3);
-$my-navbar-border:            darken($my-navbar-bg, 6.5%);
-
-// Navbar links
-$my-navbar-link-color:                #fbe5ff;
-$my-navbar-link-hover-color:          $default-a-hover-color;/*#474048;*/
-$my-navbar-link-hover-bg:             transparent;/*$default-a-hover-color;*/
-$my-navbar-link-active-color:         #474048;
-$my-navbar-link-active-bg:            darken($my-navbar-bg, 6.5%) !default;
-$my-navbar-link-disabled-color:       #ccc !default;
-$my-navbar-link-disabled-bg:          transparent;
-
-// Navbar brand label
-$my-navbar-brand-color:               white;
-$my-navbar-brand-bg:                  transparent;/*#504049;*/
-$my-navbar-brand-hover-color:         $my-navbar-link-hover-color;
-$my-navbar-brand-hover-bg:            $my-navbar-link-hover-bg;/*#504049;*/
-
-// Navbar toggle
-$my-navbar-toggle-hover-bg:           #ddd !default;
-$my-navbar-toggle-icon-bar-bg:        #888 !default;
-$my-navbar-toggle-border-color:       #ddd !default;
+.site-wrapper-content {
+    h1, h2 {
+        border-bottom: solid 1px $default-text-color;
+    }
+    h1 {
+        font-size: 2em;
+        margin-bottom: 0.5em;
+    }
+}
 
 
 
@@ -181,7 +127,7 @@ $my-navbar-toggle-border-color:       #ddd !default;
 .my-navbar {
   background-color: $my-navbar-bg;
   border-color: $my-navbar-border;
-  text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+  text-shadow: $my-navbar-text-shadow;
 
   .navbar-brand {
     color: $my-navbar-brand-color;
@@ -194,7 +140,7 @@ $my-navbar-toggle-border-color:       #ddd !default;
   }
 
   .navbar-text {
-    color: $my-navbar-color;
+    color: $my-navbar-text-color;
   }
 
   .navbar-nav {

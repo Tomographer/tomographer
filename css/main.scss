@@ -1,17 +1,63 @@
 ---
 # Only the main Sass file needs front matter (the dashes are enough)
 ---
-@charset "utf-8";
 
+@charset "utf-8";
 
 $baseurl: '{{ site.baseurl }}';
 
+
+// ===============================================
+
+// -----------------------------------------------
+// Base Variables - import from Bootstrap
+// -----------------------------------------------
+
+@import "bootstrap-sass/variables.scss";
+
+// -----------------------------------------------
+// General variables for our site
+// -----------------------------------------------
 
 $default-text-color: #eaddea;
 $highlight-text-color: white;
 
 $default-a-color: #4690da;
 $default-a-hover-color: #86b0da;
+
+
+// -----------------------------------------------
+// My Navbar Style
+// -----------------------------------------------
+
+$my-navbar-text-color:             red;//rgb(255,255,255);
+$my-navbar-bg:                rgba(255,255,128,0.3);
+$my-navbar-border:            $my-navbar-bg;//darken($my-navbar-bg, 6.5%);
+$my-navbar-text-shadow:       2px 2px 4px rgba(0,0,0,0.3);
+
+// Navbar links
+$my-navbar-link-color:                #fbe5ff;
+$my-navbar-link-hover-color:          #efefa0;/*$default-a-hover-color;*//*#474048;*/
+$my-navbar-link-hover-bg:             transparent;/*$default-a-hover-color;*/
+$my-navbar-link-active-color:         #474048;
+$my-navbar-link-active-bg:            darken($my-navbar-bg, 6.5%) !default;
+$my-navbar-link-disabled-color:       #ccc !default;
+$my-navbar-link-disabled-bg:          transparent;
+
+// Navbar brand label
+$my-navbar-brand-color:               $my-navbar-link-color; /*white*/
+$my-navbar-brand-bg:                  transparent;/*#504049;*/
+$my-navbar-brand-hover-color:         $my-navbar-link-hover-color;
+$my-navbar-brand-hover-bg:            $my-navbar-link-hover-bg;/*#504049;*/
+
+// Navbar toggle
+$my-navbar-toggle-hover-bg:           $my-navbar-link-active-bg;
+$my-navbar-toggle-icon-bar-bg:        $my-navbar-link-color;
+$my-navbar-toggle-border-color:       $my-navbar-link-color;
+
+
+// ===============================================
+
 
 
 
