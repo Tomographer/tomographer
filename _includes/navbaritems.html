@@ -1,0 +1,8 @@
+{% assign pagelist = site.pages | sort:"name" %}
+{% for p in pagelist %}
+  {% if p.title %}
+    <li {% if p.url == page.url %}class="active"{% endif %}><a href="{{ p.url | prepend: site.baseurl }}">{{ navbar_item_prepend }}{{ p.title }}{% if p.url == page.url %} <span class="sr-only">(current)</span>{% endif %}</a></li>
+  {% endif %}
+{% endfor %}
+<li><a href="https://github.com/Tomographer/tomographer/" target="_blank">{{ navbar_item_prepend }}on github.com</a></li>
+<li><a href="https://arxiv.org/abs/XXXX.XXXXX" target="_blank">{{ navbar_item_prepend }}arXiv:XXXX.XXXXX</a></li>

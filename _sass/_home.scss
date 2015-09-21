@@ -1,0 +1,77 @@
+
+
+
+.home-site-wrapper {
+
+
+    display: table;
+    
+    width: 100%;
+    height: 100%;
+    margin: 0px;
+
+    color: $default-text-color;
+    background-image: url(#{$baseurl}/boom.jpg) /*url(gold.jpg)*/;
+    background-repeat: no-repeat;
+    background-position: 25% 0%;
+    background-color: black;
+
+    .home-site-wrapper-top {
+        display: table-row;
+    }
+
+    .home-site-wrapper-inner {
+        display: table-cell;
+        vertical-align: middle;
+        padding: 0px;
+    
+        text-align: center;
+    }
+    
+    .jumbotron {
+        background-color: transparent;
+    }
+    
+    .home-top-jumbotron {
+        margin-top: 0px;
+        padding-top: 0px;
+    }
+    
+    h1 {
+        color: $highlight-text-color;
+        font-weight: 600;
+        text-shadow: 3px 3px 5px rgba(0,0,0,.5);
+    }
+    
+    h1 small {
+        font-style: italic;
+        color: #c2b7c2;
+        font-size: 0.5em;
+    }
+    
+    h2 {
+        text-shadow: 2px 2px 4px rgba(0,0,0,.3);
+    }
+   
+
+    .home-main-ul {
+        width: 60%;
+        margin-left: 20%;
+
+        li {
+            list-style-type: none;
+            font-size: 1.5em;
+            margin-bottom: 0.5em;
+            text-align: left;
+
+            a {
+                color: $default-a-hover-color;
+                text-shadow: 2px 2px 4px rgba(0,0,0,.4);
+
+                &:hover {
+                    color: white;
+                }
+            }
+        }
+    }
+}
