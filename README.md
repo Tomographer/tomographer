@@ -239,7 +239,7 @@ works:
 1. Philippe Faist and Renato Renner. Practical, Reliable Error Bars in Quantum
    Tomography. arXiv:XXXX.XXXXX (2015)
 
-2. Philippe Faist. Tomographer C++ Framework. Available at
+2. Philippe Faist. The Tomographer Project. Available at
    https://github.com/Tomographer/tomographer/.
 
 
