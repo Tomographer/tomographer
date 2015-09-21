@@ -1,0 +1,9 @@
+<map id="Tomographer::UniformBinsHistogram&lt; Scalar_, CountType_ &gt;" name="Tomographer::UniformBinsHistogram&lt; Scalar_, CountType_ &gt;">
+<area shape="rect" id="node3" href="$struct_tomographer_1_1_uniform_bins_histogram_1_1_params.html" title="The parameters of a UniformBinsHistogram. " alt="" coords="1141,55,1352,107"/>
+<area shape="rect" id="node4" href="/Users/philippe/temp/tomographer/tomographer-build-docs/doc/cppreference-doxygen-web.tag.xml$cpp/types/size_t.html" title="std::size_t" alt="" coords="846,68,927,93"/>
+<area shape="rect" id="node5" href="/Users/philippe/temp/tomographer/tomographer-build-docs/doc/Eigen.doxytags$classEigen_1_1Array.html" title="Eigen::Array\&lt; CountType,\l Eigen::Dynamic, 1 \&gt;" alt="" coords="1160,131,1334,169"/>
+<area shape="rect" id="node6" href="/Users/philippe/temp/tomographer/tomographer-build-docs/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Array\&lt; CountType, Eigen\l::Dynamic, 1, _Options, \l_MaxRows, _MaxCols \&gt; \&gt;" alt="" coords="595,107,776,172"/>
+<area shape="rect" id="node7" href="/Users/philippe/temp/tomographer/tomographer-build-docs/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Derived \&gt;" alt="" coords="5,155,167,193"/>
+<area shape="rect" id="node9" href="/Users/philippe/temp/tomographer/tomographer-build-docs/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Array\&lt; _Scalar, _Rows,\l _Cols, _Options, _MaxRows,\l _MaxCols \&gt; \&gt;" alt="" coords="374,176,571,241"/>
+<area shape="rect" id="node8" href="/Users/philippe/temp/tomographer/tomographer-build-docs/doc/Eigen.doxytags$classEigen_1_1Array.html" title="Eigen::Array\&lt; _Scalar,\l _Rows, _Cols, _Options,\l _MaxRows, _MaxCols \&gt;" alt="" coords="800,181,972,233"/>
+</map>

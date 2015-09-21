@@ -1,0 +1,7 @@
+<map id="Tomographer::MAT::VarError" name="Tomographer::MAT::VarError">
+<area shape="rect" id="node4" href="$class_tomographer_1_1_m_a_t_1_1_var_mat_type_error.html" title="Unknown type of a variable present in the data file. " alt="" coords="647,5,829,44"/>
+<area shape="rect" id="node5" href="$class_tomographer_1_1_m_a_t_1_1_var_read_error.html" title="Error while reading a variable from the MATLAB data file. " alt="" coords="642,68,834,107"/>
+<area shape="rect" id="node6" href="$class_tomographer_1_1_m_a_t_1_1_var_type_error.html" title="Type mismatch (wrong type requested) in a variable read from the MATLAB data file. " alt="" coords="643,131,832,169"/>
+<area shape="rect" id="node2" href="$class_tomographer_1_1_m_a_t_1_1_exception.html" title="Base Exception class for errors within our MAT routines. " alt="" coords="157,75,356,100"/>
+<area shape="rect" id="node3" href="/Users/philippe/temp/tomographer/tomographer-build-docs/doc/cppreference-doxygen-web.tag.xml$cpp/error/exception.html" title="STL class. " alt="" coords="5,75,109,100"/>
+</map>

@@ -100,7 +100,7 @@ h1, h2, h3, h4, h5, h6 {
 
 @media screen and (min-height: 480px) {
 .site-wrapper-content {
-    margin-top: 2.5em;
+    margin-top: 2em;
 }
 }
 @media screen and (max-height: 480px) {
@@ -109,14 +109,56 @@ h1, h2, h3, h4, h5, h6 {
 }
 }
 
-
 .site-wrapper-content {
-    h1, h2 {
+    padding-bottom: 2em;
+}
+
+
+//
+// Default style of content items.
+// 
+.site-wrapper-content {
+    h1 {
         border-bottom: solid 1px $default-text-color;
     }
     h1 {
         font-size: 2em;
         margin-bottom: 0.5em;
+    }
+    h2 {
+        font-size: 1.6em;
+    }
+    h3 {
+        font-size: 1em;
+        font-weight: bold;
+        margin-top: 1em;
+        margin-bottom: 0.8em;
+    }
+
+    p, ul, pre {
+        margin-bottom: 1em;
+    }
+
+    code {
+        padding: 2px 4px;
+        font-size: 0.85em;
+        border-radius: 3px;
+        color: $pre-text-color;
+        background-color: $pre-bg-color;
+    }
+
+    pre {
+        border-radius: 3px;
+        color: $pre-text-color;
+        background-color: $pre-bg-color;
+        border: $pre-border;
+        font-size: inherit;
+        
+        > code {
+            padding: 0px;
+            background-color: transparent;
+            color: inherit;
+        }
     }
 }
 
@@ -128,6 +170,10 @@ h1, h2, h3, h4, h5, h6 {
   background-color: $my-navbar-bg;
   border-color: $my-navbar-border;
   text-shadow: $my-navbar-text-shadow;
+
+  &.navbar {
+      margin-bottom: 0px;
+  }
 
   .navbar-brand {
     color: $my-navbar-brand-color;

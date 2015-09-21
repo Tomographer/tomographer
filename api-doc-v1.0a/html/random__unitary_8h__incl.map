@@ -1,0 +1,7 @@
+<map id="tomographer/qit/random_unitary.h" name="tomographer/qit/random_unitary.h">
+<area shape="rect" id="node5" href="$qit_2util_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="1326,92,1472,117"/>
+<area shape="rect" id="node10" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="553,92,741,117"/>
+<area shape="rect" id="node20" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="338,165,500,191"/>
+<area shape="rect" id="node23" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="484,312,674,337"/>
+<area shape="rect" id="node22" href="$tools_2util_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="339,239,499,264"/>
+</map>

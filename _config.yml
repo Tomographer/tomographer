@@ -10,3 +10,19 @@ github_username:  Tomographer
 
 # Build settings
 markdown: kramdown
+
+
+# Tomographer available downloads & versions
+tomographer_latest_version: v1.0a
+tomographer_apidoc_version: v1.0a
+tomographer_binaries:
+  - version: 'v1.0'
+    system: 'macosx'
+    ext: '.tar.gz'
+    title: 'Mac OS X Binaries (TAR.GZ archive), OS X >= 10.6'
+  - version: 'v1.0'
+    system: 'win32'
+    ext: '.zip'
+    title: "Windows Binaries (dummy, this doesn't actually exist)"
+
+github_blob_baseurl: 'https://github.com/Tomographer/tomographer/blob/'

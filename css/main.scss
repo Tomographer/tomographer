@@ -25,6 +25,9 @@ $highlight-text-color: white;
 $default-a-color: #4690da;
 $default-a-hover-color: #86b0da;
 
+$pre-text-color: inherit;
+$pre-bg-color: rgba(darken(desaturate($default-text-color, 30%),70%), 0.6); //rgba(0,0,0,0.3);
+$pre-border: solid 1px rgba(desaturate($default-text-color, 40%), 0.2);
 
 // -----------------------------------------------
 // My Navbar Style

@@ -1,0 +1,6 @@
+<map id="tomographer/histogram.h" name="tomographer/histogram.h">
+<area shape="rect" id="node11" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="408,85,570,111"/>
+<area shape="rect" id="node18" href="$qit_2util_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="952,85,1098,111"/>
+<area shape="rect" id="node16" href="$tools_2util_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="716,165,877,191"/>
+<area shape="rect" id="node17" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="634,239,824,264"/>
+</map>

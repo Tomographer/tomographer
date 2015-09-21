@@ -1,0 +1,7 @@
+<map id="Tomographer::MatrQBase&lt; Derived &gt;" name="Tomographer::MatrQBase&lt; Derived &gt;">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_matr_q_base_dim_store.html" title="Helper intermediate class for MatrQ. " alt="" coords="453,21,651,59"/>
+<area shape="rect" id="node5" href="$struct_tomographer_1_1_matr_q_base_dim_store_3_01_derived_00_01false_01_4.html" title="Specialization of MatrQBaseDimStore&lt;Derived,has_fixed_dim&gt; for dynamic sized types. " alt="" coords="453,83,651,122"/>
+<area shape="rect" id="node6" href="$struct_tomographer_1_1_matr_q_base.html" title="Tomographer::MatrQBase\l\&lt; MatrQ\&lt; FixedDim_, FixedMax\lParamList_, RealScalar_, IntFreqType_ \&gt; \&gt;" alt="" coords="413,146,691,198"/>
+<area shape="rect" id="node3" href="$struct_tomographer_1_1_matr_q_base_dim_store.html" title="Tomographer::MatrQBaseDim\lStore\&lt; MatrQ\&lt; FixedDim\l_, FixedMaxParamList_, RealScalar\l_, IntFreqType_ \&gt;, FixedDim_!\l=Eigen::Dynamic \&gt;" alt="" coords="946,57,1180,135"/>
+<area shape="rect" id="node4" href="$struct_tomographer_1_1_matr_q.html" title="Defines the data types for a particular problem setting. " alt="" coords="1229,70,1456,122"/>
+</map>
