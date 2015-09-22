@@ -26,3 +26,5 @@ tomographer_binaries:
     title: "Windows Binaries (dummy, this doesn't actually exist)"
 
 github_blob_baseurl: 'https://github.com/Tomographer/tomographer/blob/'
+paper_url: 'http://arxiv.org/abs/XXXX.XXXXX'
+paper_ref: 'arxiv:XXXX.XXXXX'

@@ -74,7 +74,7 @@ You may download the source in either of two ways:
 
 - [Clone the git repository.](https://github.com/Tomographer/tomographer) Do this if you
   know a bit of GIT, if you wish to keep up-to-date with future updates, or if you wish to
-  develop Tomographer itself.
+  contribute to the development of Tomographer itself.
 
   If you plan to contribute and are willing to send changes back (yes please!), go ahead
   and fork the repo in github, and send me pull requests.  Don't hesitate to contact me

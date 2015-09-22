@@ -139,6 +139,17 @@ h1, h2, h3, h4, h5, h6 {
         margin-bottom: 1em;
     }
 
+    blockquote {
+        font-size: inherit;
+        padding: 0px 1em;
+        margin: 0px 0px 1em 0px;
+        color: $dim-text-color;
+        border-left: 3px solid $dim-text-color;
+        border-top: 0px none;
+        border-right: 0px none;
+        border-bottom: 0px none;
+    }
+
     code {
         padding: 2px 4px;
         font-size: 0.85em;
@@ -165,10 +176,14 @@ h1, h2, h3, h4, h5, h6 {
 
 
 
-// Default navbar
+// My Navbar
 .my-navbar {
   background-color: $my-navbar-bg;
-  border-color: $my-navbar-border;
+  border-top: $my-navbar-border;
+  border-bottom: $my-navbar-border;
+  border-left: none 0px;
+  border-right: none 0px;
+  border-radius: 0px;
   text-shadow: $my-navbar-text-shadow;
 
   &.navbar {
@@ -176,6 +191,7 @@ h1, h2, h3, h4, h5, h6 {
   }
 
   .navbar-brand {
+    font-size: inherit;
     color: $my-navbar-brand-color;
     background-color: $my-navbar-brand-bg;
     &:hover,
