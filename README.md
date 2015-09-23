@@ -154,13 +154,16 @@ An example config file would be:
     # Number of random walk instances. Tip: Use all your CPU's.
     n-repeats = 12
 
-    # Step size of the random walk.
+    # Step size of the random walk. Adjust so that the acceptance ratio is
+    # around 0.25-0.4.
     step-size = 0.01
 
     # Sweep size. Keep only one in so many samples, to decorrelate them.
     # Choose of the order of 1/<step-size>
     n-sweep = 100
-    # Run until we have recorded this number of samples.
+
+    # Run until we have recorded this number of samples. Power of two
+    # recommended for binning analysis (the default)
     n-run = 32768
 
     # Choice of figure of merit. Here for example, tr(rho*rho_ref). If rho_ref
