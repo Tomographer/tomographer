@@ -116,10 +116,10 @@ int main(int argc, char **argv)
     }
   }
 
-  logger.debug(
-      "SIMD instructions set in use by Eigen: %s",
-      Eigen::SimdInstructionSetsInUse()
-      );
+  logger.debug([](std::ostream & str) {
+      str << "Features activated:\n"
+	  << prog_version_info_features();
+    });
 
 
   //

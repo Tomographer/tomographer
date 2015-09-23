@@ -1772,15 +1772,15 @@ public:
   { va_list ap; va_start(ap, fmt);  log<ERROR>(fmt, ap); va_end(ap); }
 
   template<typename... Args>
-  inline void longdebug(Args... a) { log<Tomographer::Logger::LONGDEBUG>(a...); }
+  inline void longdebug(Args &&... a) { log<Tomographer::Logger::LONGDEBUG>(std::forward<Args>(a)...); }
   template<typename... Args>
-  inline void debug(Args... a) { log<Tomographer::Logger::DEBUG>(a...); }
+  inline void debug(Args &&... a) { log<Tomographer::Logger::DEBUG>(std::forward<Args>(a)...); }
   template<typename... Args>
-  inline void info(Args... a) { log<Tomographer::Logger::INFO>(a...); }
+  inline void info(Args &&... a) { log<Tomographer::Logger::INFO>(std::forward<Args>(a)...); }
   template<typename... Args>
-  inline void warning(Args... a) { log<Tomographer::Logger::WARNING>(a...); }
+  inline void warning(Args &&... a) { log<Tomographer::Logger::WARNING>(std::forward<Args>(a)...); }
   template<typename... Args>
-  inline void error(Args... a) { log<Tomographer::Logger::ERROR>(a...); }
+  inline void error(Args &&... a) { log<Tomographer::Logger::ERROR>(std::forward<Args>(a)...); }
 
   template<int Level, typename... Args>
   inline void log(Args... args)
