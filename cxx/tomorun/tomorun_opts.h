@@ -31,6 +31,7 @@
 #include <stdexcept>
 
 #include <tomographer/tomographer_version.h>
+#include <tomographer/tools/ezmatio.h>
 
 
 static const std::string prog_version_info_1 =
@@ -39,16 +40,42 @@ static const std::string prog_version_info_1 =
 
 static const std::string prog_version_info_2 =
   "by Philippe Faist, Institute for Theoretical Physics, ETH Zurich\n"
-  "(C) 2015 ETH Zurich\n"
-  "Released under the terms of the MIT License (see LICENSE.txt)\n"
-#ifdef TOMOGRAPHER_HAVE_OMP
-  "[Tomorun was compiled with OpenMP support.]\n"
-#else
-  "[Tomorun was compiled without OpenMP support.]\n"
-#endif
-  ;
+  "Copyright (c) 2015 ETH Zurich\n"
+  "Released under the terms of the MIT License (see LICENSE.txt)\n";
 
 static const std::string prog_version_info = prog_version_info_1 + prog_version_info_2;
+
+
+static std::string prog_version_info_features()
+{
+  static std::string features_str = std::string();
+
+  if (features_str.size() == 0) {
+    // detect the program features. 
+
+    // MatIO
+    int major, minor, release;
+    Mat_GetLibraryVersion(&major,&minor,&release);
+    features_str += Tomographer::Tools::fmts("MatIO %d.%d.%d\n", major, minor, release);
+
+    // OpenMP
+    features_str +=
+#ifdef TOMOGRAPHER_HAVE_OMP
+      "+OpenMP [Tomorun was compiled with OpenMP support.]\n"
+#else
+      "-OpenMP [Tomorun was compiled without OpenMP support.]\n"
+#endif
+      ;
+
+    // Eigen
+    features_str += Tomographer::Tools::fmts("Eigen %d.%d.%d (SIMD: %s)\n", EIGEN_WORLD_VERSION,
+					     EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
+					     Eigen::SimdInstructionSetsInUse());
+  }
+
+  return features_str;
+}
+
 
 
 
@@ -358,7 +385,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
      "Same as --write-histogram=<config-file>, where <config-file> is the file name passed to "
      "the option --config. This option can only be used in conjunction with --config and may not "
      "be used with --write-histogram.")
-    ("version", "Print Tomographer/Tomorun version information")
+    ("version", "Print Tomographer/Tomorun version information as well as information about enabled features.")
     ("help", "Print Help Message")
     ;
 
@@ -497,10 +524,14 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	" [5] Indeed, for pure rho_ref, F^2(rho,rho_ref) = tr(rho*rho_ref).\n"
 	"\n"
 	"CITATION:\n"
-	"If you use this program in your research, we strongly encourage you to cite it\n"
-	"accordingly. Please see the instructions provided at:\n"
+	"If you use this program in your research, we strongly encourage you to cite the\n"
+	"following works:\n"
 	"\n"
-	"    https://github.com/Tomographer/tomographer/blob/master/README.md\n"
+	"  1. Philippe Faist and Renato Renner. Practical, Reliable Error Bars in Quantum\n"
+	"     Tomography (2015). arXiv:XXXX.XXXXX\n"
+	"\n"
+	"  2. Philippe Faist. The Tomographer Project. Available at\n"
+	"     https://github.com/Tomographer/tomographer/.\n"
 	"\n"
 	"FEEDBACK:\n"
 	"Please report issues, wishlists and bugs by following instructions at:\n"
@@ -515,7 +546,9 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     }
 
     if (vm.count("version")) {
-      std::cout << prog_version_info;
+      std::cout << prog_version_info
+		<< "----\n"
+		<< prog_version_info_features();
       ::exit(2);
     }
 

@@ -71,6 +71,7 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wall -Wex
 
 
 # optimization flags for computer architecture.
+# -> set TARGET_ARCHITECTURE=none to not pass "-m..." options to compiler at all
 # -> set TARGET_ARCHITECTURE=generic to disable optimizations
 include(OptimizeForArchitecture)
 OptimizeForArchitecture()
