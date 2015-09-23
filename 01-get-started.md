@@ -37,10 +37,9 @@ started:
    [MatIO](http://matio.sourceforge.net/){:target="_blank"} library `tomorun` was compiled
    with.)
 
-4. Create a configuration file for tomorun for your experiment. See the
-   [`README`]({{site.github_blob_baseurl}}{{site.tomographer_latest_version}}/README.md){:target="_blank"}
-   the tomographer sources for an example. (This is simply a list of `tomorun` options
-   with corresponding values, and optional comments.)
+4. Create a configuration file for tomorun for your experiment (or edit [this example
+   configuration]({{site.baseurl}}/tomorun-config-sample){:target="_blank"}). This is
+   simply a list of `tomorun` options with corresponding values, and optional comments.
 
    Use the `--data-file-name` option to specify the name of the file where you saved your
    data (step above). To keep things simple, put the configuration file and data file in
@@ -55,8 +54,9 @@ started:
    because that's better (it's on by default).
 
    The output is controlled by the options `--write-histogram` and
-   `--write-histogram-from-config-file-name`. This will produce a tab-separated table of
-   values as documented in `tomorun --help`.
+   `--write-histogram-from-config-file-name`. When using the option
+   `--write-histogram=<filename>`, then the file written will be
+   `<filename>-histogram.csv`, and will be overwritten if it already exists.
 
 5. Run `tomorun`.
 
@@ -64,10 +64,14 @@ started:
 
    This will run the Metropolis-Hastings random walk according to the given settings.
 
-   Hit `Ctrl-C` to get an intermediate progress report, and to get updates on if the
-   parameters of the random walk are appropriate (you should have an acceptance ratio
-   roughly in between 0.25 and 0.4). Hit `Ctrl-C` twice in short succession to abort, for
-   instance if you want to change the parameters of the random walk and start again.
+   Hit `Ctrl-C` to get an intermediate progress report, and to see if the parameters of
+   the random walk are appropriate. You should have an acceptance ratio roughly in between
+   0.25 and 0.4. Hit `Ctrl-C` twice in short succession to abort, for instance if you want
+   to change the parameters of the random walk and start again.
+
+   The output consists in a tab-separated table of values as documented in `tomorun
+   --help`. The output file is specified with the options `--write-histogram` and
+   `--write-histogram-from-config-file-name`.
 
 6. Analyse the output.  (Read [{{site.paper_ref}}]({{site.paper_url}}){:target="_blank"}
    to understand the theory behind this method.)

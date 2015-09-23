@@ -12,18 +12,21 @@ github_username:  Tomographer
 markdown: kramdown
 
 
+# ------------------------------------------
 # Tomographer available downloads & versions
+# ------------------------------------------
+
 tomographer_latest_version: v1.0a
 tomographer_apidoc_version: v1.0a
 tomographer_binaries:
   - version: 'v1.0'
     system: 'macosx'
     ext: '.tar.gz'
-    title: 'Mac OS X Binaries (TAR.GZ archive), OS X >= 10.6'
+    title: 'Mac OS X Binaries (64-bit, TAR.GZ archive), OS X >= 10.6'
   - version: 'v1.0'
-    system: 'win32'
-    ext: '.zip'
-    title: "Windows Binaries (dummy, this doesn't actually exist)"
+    system: 'linux'
+    ext: '.tar.gz'
+    title: "Linux Binaries (64-bit, TAR.GZ archive), wherever they're compatible"
 
 github_blob_baseurl: 'https://github.com/Tomographer/tomographer/blob/'
 paper_url: 'http://arxiv.org/abs/XXXX.XXXXX'

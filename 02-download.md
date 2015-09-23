@@ -18,23 +18,33 @@ If there's a binary distribution for your system, that's your best option.
 - [{{ b.title }}](https://github.com/Tomographer/tomographer/releases/download/{{ b.version }}/tomographer-{{ b.version }}-{{ b.system }}{{ b.ext }})
 {% endfor %}
 
-If you couldn't find a binary for your system, then you'll have to compile Tomographer
-from sources (next section).
+If you couldn't find a binary for your system, or if the binary is incompatible or doesn't
+work, then you'll have to compile Tomographer from sources (next section).
 
 Install
 -------
 
 The installation of the binary is normally straightforward.
 
-### Mac OS X:
-Unpack the archive anywhere on your system. You may then run the `tomorun`
-executable in the Terminal by executing directly the binary inside the archive, inside the
-`bin/` subdirectory:
+### Linux and Mac OS X:
+Unpack the archive anywhere on your system (say, somewhere in your home directory, or
+system-wide like in `/opt/tomographer/`). You may then run the `tomorun` executable in the
+Terminal by executing directly the binary inside the archive, inside the `bin/`
+subdirectory:
 
-    > /path/to/extracted/tomographer-{{ site.tomographer_latest_version }}-macosx/bin/tomorun
+    > /path/to/extracted/tomographer-{{ site.tomographer_latest_version }}-linux/bin/tomorun
 
 The archive also contains the header files necessary if you want to develop projects using
 the Tomographer C++ Framework.
+
+It is not recommended to extract the archive in a system-standard location such as `/usr`
+or `/usr/local`, because we ship alternative versions of system libraries. These could
+interfere with your system if they are placed in `/usr/local/lib` or some other standard
+location. For a system-wide install, simply symlink the `tomorun` executable to, e.g.,
+`/usr/local/bin/`:
+
+    > cd /usr/local/bin
+    > sudo ln -s /path/to/extracted/tomographer-{{ site.tomographer_latest_version }}-linux/bin/tomorun .
 
 
 Downloading & Installing From Source
@@ -66,7 +76,7 @@ Download
 
 You may download the source in either of two ways:
 
-- [Obtain the source distribution (TAR.GZ archive).](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.tar.gz)
+- [Obtain a stable source distribution (TAR.GZ archive).](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.tar.gz)
   (alternative formats: [ZIP](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.zip), [TAR.BZ2](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.tar.bz2))
 
   If you don't plan to modify Tomographer itself, this is what you should download. Unpack
@@ -80,8 +90,8 @@ You may download the source in either of two ways:
   and fork the repo in github, and send me pull requests.  Don't hesitate to contact me
   for questions and for mid-term or longer-term plans, especially for the APIs.
 
-Note: do NOT use github's automatic "download archive" feature, as you'll either miss out
-on GIT meta-information, or on auto-generated files in the source distributions.
+Note: do NOT use github's automatic "download ZIP" feature, as you'll either miss out on
+GIT meta-information, or on auto-generated files in the source distributions.
 
 Installation from Source
 ------------------------
@@ -111,4 +121,4 @@ file. The main steps are:
     tomographer-{{ site.tomographer_latest_version }}/build> make install/strip
 
 You'll then have the `tomorun` executable, as well as the headers library, installed at a
-system location.
+system location or wherever you specified to `cmake`.
