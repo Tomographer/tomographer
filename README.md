@@ -60,15 +60,15 @@ Tomographer can be downloaded from our github releases page:
 
   https://github.com/Tomographer/tomographer/releases
 
-There is currently only a binary release for Mac OS X available.  For other
+There are precompiled binary releases for Mac OS X and Linux.  For other
 platforms, you'll have to compile from source.  Don't worry, that's not
-complicated. If you haven't already done so, install all the usual development
+complicated.  If you haven't already done so, install all the usual development
 tools (`gcc`/`g++`/`make`/etc.) and follow the *Installation* instructions
 below.
 
 If you compile from source, make sure you download the offical source package
-from our releases page. If you use github's automatic `Download TAR.GZ or ZIP'
-links from the source code, you might end up with missing files.
+from our releases page. If you use github's automatic `Download ZIP' links from
+the source code, you might end up with missing files.
 
 If you wish to contribute to development, don't hesitate to fork the repo on
 github and send me pull requests. Contact me if you have questions.
