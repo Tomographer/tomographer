@@ -237,6 +237,17 @@ to tune verbosity, which tests to run, etc.
 [boost_test_options]: http://www.boost.org/doc/libs/1_59_0/libs/test/doc/html/boost_test/runtime_config/summary.html
 
 
+Feedback
+--------
+
+Please report bugs, issues and wishes at:
+
+  https://github.com/Tomographer/tomographer/issues
+
+If you wish to contribute, fork the repo and send me a pull request. Don't
+hesitate to contact me for questions.
+
+
 How to Cite
 -----------
 
