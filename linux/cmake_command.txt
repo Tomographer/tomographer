@@ -1,0 +1,4 @@
+
+This is the CMake command I'm using to compile the linux binary:
+
+cmake .. -DCMAKE_C_COMPILER=/home/pfaist/bin/gcc -DCMAKE_CXX_COMPILER=/home/pfaist/bin/g++ -DEIGEN3_INCLUDE_DIR=/scratch/pfaist/soft/local/include/eigen3 -DMATIO_INCLUDE_DIR=/home/pfaist/.local/include -DMATIO_LIBRARY=/home/pfaist/.local/lib/libmatio.a -DBoost_PROGRAM_OPTIONS_LIBRARY=/usr/lib/libboost_program_options.a -DTARGET_ARCHITECTURE=none -DCMAKE_CXX_FLAGS="-mtune=generic" -DCMAKE_SKIP_BUILD_RPATH=true -DCMAKE_BUILD_WITH_INSTALL_RPATH=false -DCMAKE_INSTALL_RPATH="\$ORIGIN/../lib"  -DCMAKE_INSTALL_PREFIX="`pwd`/tomographer-VERSION-linux"
