@@ -325,13 +325,15 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     ("n-therm", value<unsigned int>(& opt->Ntherm)->default_value(opt->Ntherm),
      "number of thermalizing sweeps")
     ("n-run", value<unsigned int>(& opt->Nrun)->default_value(opt->Nrun),
-     "number of running sweeps after thermalizing")
+     "number of running sweeps after thermalizing. If you're doing a binning analysis "
+     "(see --no-binning-analysis-error-bars), use a power of two here.")
     ("n-repeats", value<unsigned int>(& opt->Nrepeats)->default_value(opt->Nrepeats),
      "number of times to repeat the metropolis procedure")
     ("n-chunk", value<unsigned int>(& opt->Nchunk)->default_value(opt->Nchunk),
      "chunk the number of repeats by this number per OMP thread")
     ("n-meas-amplify-factor", value<double>(& opt->NMeasAmplifyFactor)->default_value(opt->NMeasAmplifyFactor),
-     "Specify an integer factor by which to multiply number of measurements.")
+     "Specify an integer factor by which to multiply number of measurements. "
+     "Don't use this. It's unphysical, and meant just for debugging Tomographer itself.")
     ("write-histogram", value<std::string>(& opt->write_histogram),
      "write the histogram to the given file in tabbed CSV values")
     ("verbose", value<Tomographer::Logger::LogLevel>(& opt->loglevel)->default_value(opt->loglevel)
