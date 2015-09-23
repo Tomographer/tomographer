@@ -15,7 +15,7 @@ Download
 If there's a binary distribution for your system, that's your best option.
 
 {% for b in site.tomographer_binaries %}
-- [{{ b.title }}](https://github.com/Tomographer/tomographer/releases/download/{{ b.version }}/tomographer-{{ b.version }}-{{ b.system }}{{ b.ext }})
+- [{{ b.title }}](https://github.com/Tomographer/tomographer/releases/download/{{ b.version }}/tomographer-{{ b.version }}-{{ b.system }}{{ b.ext }}){:target="_blank"}
 {% endfor %}
 
 If you couldn't find a binary for your system, or if the binary is incompatible or doesn't
@@ -57,10 +57,10 @@ You'll need:
 
 - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, clang++ >= 3.6 (>= 3.3 w/o
   OpenMP))
-- [CMake >= 2.8.5](http://www.cmake.org/)
-- [Boost libraries](http://www.boost.org/)
-- [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/)
-- [MatIO library](https://sourceforge.net/projects/matio/)
+- [CMake >= 2.8.5](http://www.cmake.org/){:target="_blank"}
+- [Boost libraries](http://www.boost.org/){:target="_blank"}
+- [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/){:target="_blank"}
+- [MatIO library](https://sourceforge.net/projects/matio/){:target="_blank"}
 
 A recent C++ compiler is required as some C++11 features and elements of its
 standard library are used. Also, make sure it supports OpenMP or you won't
@@ -76,13 +76,13 @@ Download
 
 You may download the source in either of two ways:
 
-- [Obtain a stable source distribution (TAR.GZ archive).](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.tar.gz)
-  (alternative formats: [ZIP](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.zip), [TAR.BZ2](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.tar.bz2))
+- [Obtain a stable source distribution (TAR.GZ archive).](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.tar.gz){:target="_blank"}
+  (alternative formats: [ZIP](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.zip){:target="_blank"}, [TAR.BZ2](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.tar.bz2)){:target="_blank"}
 
   If you don't plan to modify Tomographer itself, this is what you should download. Unpack
   the archive anywhere you want and continue with the installation instructions below.
 
-- [Clone the git repository.](https://github.com/Tomographer/tomographer) Do this if you
+- [Clone the git repository.](https://github.com/Tomographer/tomographer){:target="_blank"} Do this if you
   know a bit of GIT, if you wish to keep up-to-date with future updates, or if you wish to
   contribute to the development of Tomographer itself.
 
@@ -98,7 +98,7 @@ Installation from Source
 
 In either case, you'll now have unpacked the sources at some location. You may now follow
 the instructions detailed in the
-[`README`]({{site.github_blob_baseurl}}{{site.tomographer_latest_version}}/README.md)
+[`README`]({{site.github_blob_baseurl}}{{site.tomographer_latest_version}}/README.md){:target="_blank"}
 file. The main steps are:
 
 ### Set up a `build` directory and run `cmake`:
@@ -109,7 +109,7 @@ file. The main steps are:
 
   You may re-run `cmake` multiple times in order to find all libraries correctly. Use the
   appropriate switches (see the
-  [`README`]({{site.github_blob_baseurl}}{{site.tomographer_latest_version}}/README.md)
+  [`README`]({{site.github_blob_baseurl}}{{site.tomographer_latest_version}}/README.md){:target="_blank"}
   file in the tomographer sources)
 
 ### Compile the project:
