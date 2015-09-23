@@ -1,0 +1,31 @@
+# Configuration file for an execution of `tomorun`.  Lines starting with '#'
+# are comments and are ignored.
+
+# The data file which contains the POVM effects and frequencies etc.
+data-file-name=the_data.mat
+
+# Write the histogram to the file named "<myconfigfile>-histogram.csv"
+write-histogram-from-config-file-name = 1
+
+# Number of random walk instances. Tip: Use all your CPU's.
+n-repeats = 12
+
+# Step size of the random walk. Adjust so that the acceptance ratio is
+# around 0.25-0.4.
+step-size = 0.01
+
+# Sweep size. Keep only one in so many samples, to decorrelate them.
+# Choose of the order of 1/<step-size>
+n-sweep = 100
+
+# Run until we have recorded this number of samples. Power of two
+# recommended for binning analysis (the default)
+n-run = 32768
+
+# Choice of figure of merit. Here for example, tr(rho*rho_ref). If rho_ref
+# is pure, this is exactly the (squared) fidelity to rho_ref. "rho_ref" is
+# the name of a variable defined in 'the_data.mat'
+value-type=obs-value:rho_ref
+
+# The parameters of the histogram. MIN:MAX/NUM_BINS
+value-hist=0.9:1/50
