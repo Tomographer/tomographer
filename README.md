@@ -52,9 +52,13 @@ warning light*) also work on Windows.
 Download
 --------
 
+Follow the instructions on:
+
+  http://tomographer.github.io/tomographer/download
+
 Tomographer can be downloaded from our github releases page:
 
-https://github.com/Tomographer/tomographer/releases
+  https://github.com/Tomographer/tomographer/releases
 
 There is currently only a binary release for Mac OS X available.  For other
 platforms, you'll have to compile from source.  Don't worry, that's not
