@@ -1,0 +1,11 @@
+<map id="tomographer/tools/fmt.h" name="tomographer/tools/fmt.h">
+<area shape="rect" id="node2" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="44,79,214,104"/>
+<area shape="rect" id="node5" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Task Manager/Dispatcher Interfaces) for parallel Metropolis&#45;Hast..." alt="" coords="5,312,181,337"/>
+<area shape="rect" id="node6" href="$ezmatio_8h.html" title="Utilities for reading MATLAB &quot;*.mat&quot; data files. See Tomographer::MAT. " alt="" coords="238,79,428,104"/>
+<area shape="rect" id="node7" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="453,79,640,104"/>
+<area shape="rect" id="node3" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="108,239,252,264"/>
+<area shape="rect" id="node4" href="$dmmhrw_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="452,312,614,337"/>
+<area shape="rect" id="node8" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="585,152,743,191"/>
+<area shape="rect" id="node9" href="$random__unitary_8h.html" title="Produce a random unitary according to the Haar measure. " alt="" coords="217,152,380,191"/>
+<area shape="rect" id="node10" href="$simple__find__zero_8h.html" title="A very simplistic tool for finding a relatively straightforward zero with few iterations. " alt="" coords="404,152,561,191"/>
+</map>

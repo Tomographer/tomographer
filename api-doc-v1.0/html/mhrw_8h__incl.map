@@ -1,0 +1,12 @@
+<map id="tomographer/mhrw.h" name="tomographer/mhrw.h">
+<area shape="rect" id="node9" href="$matrq_8h.html" title="Define types for quantum objects. See Tomographer::MatrQ. " alt="" coords="256,85,420,111"/>
+<area shape="rect" id="node12" href="$qit_2util_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="958,259,1105,284"/>
+<area shape="rect" id="node16" href="$param__herm__x_8h.html" title="Tools for parameterizing hermitian matrices with the X Parameterization. " alt="" coords="5,165,162,204"/>
+<area shape="rect" id="node19" href="$tomoproblem_8h.html" title="Data corresponding to a quantum tomography setting. " alt="" coords="2262,85,2452,111"/>
+<area shape="rect" id="node20" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="878,172,1049,197"/>
+<area shape="rect" id="node33" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="1635,172,1822,197"/>
+<area shape="rect" id="node37" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1503,79,1661,117"/>
+<area shape="rect" id="node26" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="1382,259,1545,284"/>
+<area shape="rect" id="node31" href="$tools_2util_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="1512,339,1673,364"/>
+<area shape="rect" id="node32" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="1899,412,2089,437"/>
+</map>

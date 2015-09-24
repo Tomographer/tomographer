@@ -1,0 +1,5 @@
+var struct_tomographer_1_1_logger_1_1_logger_traits_3_01_origin_filtered_logger_3_01_base_logger_01_4_01_4 =
+[
+    [ "HasOwnGetLevel", "struct_tomographer_1_1_logger_1_1_logger_traits_3_01_origin_filtered_logger_3_01_base_logger_01_4_01_4.html#ac5b995e9160db298311ad868b0ae616cae10f3ada888ceb46ccabf9c0c4f6f0cf", null ],
+    [ "HasFilterByOrigin", "struct_tomographer_1_1_logger_1_1_logger_traits_3_01_origin_filtered_logger_3_01_base_logger_01_4_01_4.html#ac5b995e9160db298311ad868b0ae616ca5a05b529ecaabab29ef45652369653bb", null ]
+];

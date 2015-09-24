@@ -1,0 +1,6 @@
+var struct_tomographer_1_1_m_a_t_1_1_var_value_decoder_3_01std_1_1vector_3_01_eigen_1_1_matrix_3_01_ef693ddb0893d8b556aaba7238c62a3f =
+[
+    [ "MatrixType", "struct_tomographer_1_1_m_a_t_1_1_var_value_decoder_3_01std_1_1vector_3_01_eigen_1_1_matrix_3_01_ef693ddb0893d8b556aaba7238c62a3f.html#a2031c76dcc4bc6925cad20f3be3cfb1a", null ],
+    [ "RealScalar", "struct_tomographer_1_1_m_a_t_1_1_var_value_decoder_3_01std_1_1vector_3_01_eigen_1_1_matrix_3_01_ef693ddb0893d8b556aaba7238c62a3f.html#ab4ef5ca20816b7dfee3e77e24ecba4ec", null ],
+    [ "RetType", "struct_tomographer_1_1_m_a_t_1_1_var_value_decoder_3_01std_1_1vector_3_01_eigen_1_1_matrix_3_01_ef693ddb0893d8b556aaba7238c62a3f.html#a4e4351484a046a9283cb0f81a4c508e6", null ]
+];

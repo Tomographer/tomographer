@@ -1,0 +1,8 @@
+<map id="Tomographer::UniformBinsHistogram&lt; Scalar_, CountType_ &gt;" name="Tomographer::UniformBinsHistogram&lt; Scalar_, CountType_ &gt;">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Stores a histogram along with error bars. " alt="" coords="520,81,700,133"/>
+<area shape="rect" id="node6" href="$struct_tomographer_1_1_uniform_bins_histogram.html" title="Tomographer::UniformBins\lHistogram\&lt; HistogramType\l_::Scalar, RealAvgType \&gt;" alt="" coords="519,5,702,57"/>
+<area shape="rect" id="node7" href="$struct_tomographer_1_1_uniform_bins_histogram.html" title="Tomographer::UniformBins\lHistogram\&lt; typename ValueCalculator\l::ValueType, CountRealAvgType \&gt;" alt="" coords="486,157,735,209"/>
+<area shape="rect" id="node3" href="$struct_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; HistogramType_::Scalar,\l RealAvgType \&gt;" alt="" coords="1008,28,1188,93"/>
+<area shape="rect" id="node5" href="$struct_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; typename ValueCalculator\l::ValueType, CountRealAvgType \&gt;" alt="" coords="986,124,1210,189"/>
+<area shape="rect" id="node4" href="$struct_tomographer_1_1_averaged_histogram.html" title="Combines several histograms (with same parameters) into an averaged histogram. " alt="" coords="1260,41,1487,80"/>
+</map>

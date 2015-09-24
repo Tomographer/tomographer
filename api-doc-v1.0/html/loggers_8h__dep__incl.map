@@ -1,0 +1,8 @@
+<map id="tomographer/tools/loggers.h" name="tomographer/tools/loggers.h">
+<area shape="rect" id="node2" href="$dmmhrw_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="5,239,167,264"/>
+<area shape="rect" id="node3" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="152,165,296,191"/>
+<area shape="rect" id="node5" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="174,79,332,117"/>
+<area shape="rect" id="node6" href="$random__unitary_8h.html" title="Produce a random unitary according to the Haar measure. " alt="" coords="357,79,520,117"/>
+<area shape="rect" id="node7" href="$simple__find__zero_8h.html" title="A very simplistic tool for finding a relatively straightforward zero with few iterations. " alt="" coords="544,79,701,117"/>
+<area shape="rect" id="node4" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Task Manager/Dispatcher Interfaces) for parallel Metropolis&#45;Hast..." alt="" coords="192,239,367,264"/>
+</map>
