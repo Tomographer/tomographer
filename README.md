@@ -255,7 +255,7 @@ If you use this software in your research, please consider citing the following
 works:
 
 1. Philippe Faist and Renato Renner. Practical, Reliable Error Bars in Quantum
-   Tomography (2015). arXiv:XXXX.XXXXX
+   Tomography (2015). arXiv:1509.06763
 
 2. Philippe Faist. The Tomographer Project. Available at
    https://github.com/Tomographer/tomographer/.

@@ -530,7 +530,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"following works:\n"
 	"\n"
 	"  1. Philippe Faist and Renato Renner. Practical, Reliable Error Bars in Quantum\n"
-	"     Tomography (2015). arXiv:XXXX.XXXXX\n"
+	"     Tomography (2015). arXiv:1509.06763\n"
 	"\n"
 	"  2. Philippe Faist. The Tomographer Project. Available at\n"
 	"     https://github.com/Tomographer/tomographer/.\n"
