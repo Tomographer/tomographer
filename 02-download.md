@@ -38,7 +38,7 @@ The archive also contains the header files necessary if you want to develop proj
 the Tomographer C++ Framework.
 
 It is not recommended to extract the archive in a system-standard location such as `/usr`
-or `/usr/local`, because we ship alternative versions of system libraries. These could
+or `/usr/local`, because we may ship alternative versions of system libraries. These could
 interfere with your system if they are placed in `/usr/local/lib` or some other standard
 location. For a system-wide install, simply symlink the `tomorun` executable to, e.g.,
 `/usr/local/bin/`:

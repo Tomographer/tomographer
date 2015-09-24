@@ -16,8 +16,8 @@ markdown: kramdown
 # Tomographer available downloads & versions
 # ------------------------------------------
 
-tomographer_latest_version: v1.0a
-tomographer_apidoc_version: v1.0a
+tomographer_latest_version: v1.0
+tomographer_apidoc_version: v1.0
 tomographer_binaries:
   - version: 'v1.0'
     system: 'macosx'
