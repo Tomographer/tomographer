@@ -86,7 +86,7 @@ started:
 7. Publish paper. Please don't forget to cite us :)
 
    > 1. Philippe Faist and Renato Renner. Practical, Reliable Error Bars in Quantum
-   >    Tomography. arXiv:XXXX.XXXXX
+   >    Tomography. arXiv:1509.06763
    > 
    > 2. Philippe Faist. The Tomographer Project. Available at:
    >    https://github.com/Tomographer/tomographer/
