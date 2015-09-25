@@ -60,7 +60,7 @@ static std::string prog_version_info_features()
 
     // OpenMP
     features_str +=
-#ifdef TOMOGRAPHER_HAVE_OMP
+#ifdef _OPENMP
       "+OpenMP [Tomorun was compiled with OpenMP support.]\n"
 #else
       "-OpenMP [Tomorun was compiled without OpenMP support.]\n"

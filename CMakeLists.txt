@@ -49,20 +49,36 @@ include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 
+#
+# Using "if(NOT mypackage_FOUND)" for the find_package() directives below allows the user
+# to specify custom values to configurations (such as explicitly turning off OpenMP) and
+# not being interefered with by a call to find_package().
+#
+
 # Find Eigen3 package
-find_package(Eigen3 REQUIRED)
+if(NOT EIGEN3_FOUND)
+  find_package(Eigen3 REQUIRED)
+endif(NOT EIGEN3_FOUND)
 
 # Find OpenMP
-find_package(OpenMP)
+if(NOT OPENMP_FOUND)
+  find_package(OpenMP)
+endif(NOT OPENMP_FOUND)
 
 # Find MatIO library (https://sourceforge.net/projects/matio/)
+if(NOT MATIO_FOUND)
 find_package(MatIO REQUIRED)
+endif(NOT MATIO_FOUND)
 
 # ... which requires the libz library
-find_package(ZLIB REQUIRED)
+if(NOT ZLIB_FOUND)
+  find_package(ZLIB REQUIRED)
+endif(NOT ZLIB_FOUND)
 
 # Find boost::program_options and boost::math
-find_package(Boost 1.40 COMPONENTS program_options unit_test_framework REQUIRED)
+if(NOT BOOST_FOUND)
+  find_package(Boost 1.40 COMPONENTS program_options unit_test_framework REQUIRED)
+endif(NOT BOOST_FOUND)
 
 
 # activate warning flags on debug builds

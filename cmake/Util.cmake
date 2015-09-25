@@ -53,7 +53,7 @@ macro(SetOpenMPTarget target)
   if(OPENMP_FOUND)
     #OpenMP_C_FLAGS   - flags to add to the C compiler for OpenMP support
     #OpenMP_CXX_FLAGS - flags to add to the CXX compiler for OpenMP support
-    AppendTargetProperty(${target} COMPILE_FLAGS "${OpenMP_CXX_FLAGS} -DTOMOGRAPHER_HAVE_OMP")
+    AppendTargetProperty(${target} COMPILE_FLAGS "${OpenMP_CXX_FLAGS}")
     AppendTargetProperty(${target} LINK_FLAGS "${OpenMP_CXX_FLAGS}")
   else()
     message(WARNING "OpenMP not found. `${target}' will run serially with no parallelization.")
