@@ -26,6 +26,9 @@ $dim-text-color: darken(desaturate($default-text-color, 5%), 20%);
 $default-a-color: #4690da;
 $default-a-hover-color: #86b0da;
 
+$home-a-color: $default-a-hover-color;
+$home-a-hover-color: #ffffff;
+
 $pre-text-color: inherit;
 $pre-bg-color: rgba(darken(desaturate($default-text-color, 15%),70%), 0.6); //rgba(0,0,0,0.3);
 $pre-border: solid 1px rgba(desaturate($default-text-color, 15%), 0.2);

@@ -65,11 +65,11 @@
             text-align: left;
 
             a {
-                color: $default-a-hover-color;
+                color: $home-a-color;
                 text-shadow: 2px 2px 4px rgba(0,0,0,.4);
 
                 &:hover {
-                    color: white;
+                    color: $home-a-hover-color;
                 }
             }
         }

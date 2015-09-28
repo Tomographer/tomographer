@@ -5,6 +5,8 @@ permalink: /download/
 layout: default
 ---
 
+<div class="auto-toc auto-toc-h2"></div>
+
 
 Downloading & Installing Binary
 ===============================
@@ -26,7 +28,7 @@ Install
 
 The installation of the binary is normally straightforward.
 
-### Linux and Mac OS X:
+### Linux and Mac OS X
 Unpack the archive anywhere on your system (say, somewhere in your home directory, or
 system-wide like in `/opt/tomographer/`). You may then run the `tomorun` executable in the
 Terminal by executing directly the binary inside the archive, inside the `bin/`
@@ -101,7 +103,7 @@ the instructions detailed in the
 [`README`]({{site.github_blob_baseurl}}{{site.tomographer_latest_version}}/README.md){:target="_blank"}
 file. The main steps are:
 
-### Set up a `build` directory and run `cmake`:
+### Set up a `build` directory and run `cmake`
 
     tomographer-{{ site.tomographer_latest_version }}> mkdir build
     tomographer-{{ site.tomographer_latest_version }}> cd build
@@ -112,11 +114,11 @@ file. The main steps are:
   [`README`]({{site.github_blob_baseurl}}{{site.tomographer_latest_version}}/README.md){:target="_blank"}
   file in the tomographer sources)
 
-### Compile the project:
+### Compile the project
 
     tomographer-{{ site.tomographer_latest_version }}/build> make
 
-### (Optional) install the project to a system location:
+### (Optional) install the project to a system location
 
     tomographer-{{ site.tomographer_latest_version }}/build> make install/strip
 

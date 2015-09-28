@@ -134,9 +134,33 @@ h1, h2, h3, h4, h5, h6 {
         margin-top: 1em;
         margin-bottom: 0.8em;
     }
+    h3::after {
+        content: ':';
+    }
 
     p, ul, pre {
         margin-bottom: 1em;
+    }
+
+    .auto-toc {
+        margin-bottom: 1.5em;
+
+        a {
+            color: $home-a-color;
+            &:hover {
+                color: $home-a-hover-color;
+            }
+        }
+        
+        ul, p {
+            margin-bottom: 0em;
+        }
+        li {
+            font-size: 0.95em;
+        }
+    }
+    @media (max-height: 480px) {
+        .auto-toc { display: none; }
     }
 
     blockquote {
