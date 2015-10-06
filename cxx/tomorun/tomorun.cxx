@@ -187,25 +187,23 @@ int main(int argc, char **argv)
   //  Logger::MinimumSeverityLogger<Logger::FileLogger, Logger::INFO> mlog(logger);
   auto & mlog = logger.baselogger();
 
-  //  try {
-  if (dim == 2 && n_povms <= 6) {
-    tomorun_dispatch_eb<2, 6>(dim, &opt, matf, mlog);
-/* speed up a bit compilation times by removing some cases here */
-/*} else if (dim == 2 && n_povms <= 64) {
-    tomorun_dispatch<2, 64>(dim, &opt, matf, mlog); */
-  } else if (dim == 2) {
-    tomorun_dispatch_eb<2, Eigen::Dynamic>(dim, &opt, matf, mlog);
-/*} else if (dim == 4 && n_povms <= 64) {
-    tomorun_dispatch<4, 64>(dim, &opt, matf, mlog); */
-  } else if (dim == 4) {
-    tomorun_dispatch_eb<4, Eigen::Dynamic>(dim, &opt, matf, mlog);
-  } else {
-    tomorun_dispatch_eb<Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
+  try {
+    // some special cases where we can avoid dynamic memory allocation for Eigen matrices
+    // by using compile-time sizes
+    
+    if (dim == 2 && n_povms <= 6) {
+      tomorun_dispatch_eb<2, 6>(dim, &opt, matf, mlog);
+    } else if (dim == 2) {
+      tomorun_dispatch_eb<2, Eigen::Dynamic>(dim, &opt, matf, mlog);
+    } else if (dim == 4) {
+      tomorun_dispatch_eb<4, Eigen::Dynamic>(dim, &opt, matf, mlog);
+    } else {
+      tomorun_dispatch_eb<Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
+    }
+  } catch (const std::exception& e) {
+    logger.error("Exception: %s", e.what());
+    throw;
   }
-  //  } catch (const std::exception& e) {
-  //    logger.error("main()", "Caught exception: %s", e.what());
-  //    return 2;
-  //  }
 
   return 0;
 }

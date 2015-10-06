@@ -209,7 +209,7 @@ struct ProgOptions
     step_size(0.01),
     Nsweep(std::max(10, int(1/step_size))),
     Ntherm(500),
-    Nrun(5000),
+    Nrun(32768),
     valtype("fidelity"),
     val_min(0.97),
     val_max(1.0),
@@ -217,7 +217,7 @@ struct ProgOptions
     binning_analysis_error_bars(true), // error bars from binning analysis
     binning_analysis_num_levels(8),
     start_seed(std::chrono::system_clock::now().time_since_epoch().count()),
-    Nrepeats(256),
+    Nrepeats(12),
     Nchunk(1),
     NMeasAmplifyFactor(1.0),
     loglevel(Tomographer::Logger::INFO),

@@ -1237,9 +1237,13 @@ public:
     // display the log message
     std::fprintf(fp, "%s\n", finalmsg.c_str());
 
-    // force output also on stderr for warnings and errors if we are being redirected to a file
-    if (fp != stdout && fp != stderr && level <= WARNING) {
-      std::fprintf(stderr, "%s\n", finalmsg.c_str());
+    if (is_at_least_of_severity(level, WARNING)) {
+      // force output also on stderr for warnings and errors if we are being redirected to a
+      // file, or at least flush the buffer.
+      std::fflush(fp);
+      if (fp != stdout && fp != stderr) {
+        std::fprintf(stderr, "%s\n", finalmsg.c_str());
+      }
     }
   }
 
