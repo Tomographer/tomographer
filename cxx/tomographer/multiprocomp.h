@@ -29,7 +29,7 @@
 
 #include <csignal>
 
-#ifdef TOMOGRAPHER_HAVE_OMP
+#ifdef _OPENMP
 #include <omp.h>
 #else
 inline constexpr int omp_get_thread_num() { return 0; }
