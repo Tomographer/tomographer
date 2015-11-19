@@ -244,8 +244,12 @@ Please report bugs, issues and wishes at:
 
   https://github.com/Tomographer/tomographer/issues
 
-If you wish to contribute, fork the repo and send me a pull request. Don't
-hesitate to contact me for questions.
+
+Contributing
+------------
+
+Contributions are welcome.  The preferred way to submit enhancements is to fork the
+repo and send me a pull request. Also, don't hesitate to contact me for questions.
 
 
 How to Cite
