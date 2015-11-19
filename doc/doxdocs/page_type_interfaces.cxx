@@ -46,7 +46,7 @@
  * Documented Type Interfaces in the %Tomographer framwork are:
  *
  *  - \subpage pageInterfaceMatrQ
- *  - \subpage pageInterfaceTomoProblem
+ *  - \subpage pageInterfaceTomoSetting
  *  - \subpage pageInterfaceRandomWalk
  *  - \subpage pageInterfaceMHWalker
  *  - \subpage pageInterfaceMHRWStatsCollector
@@ -140,38 +140,26 @@
 
 
 // =============================================================================
-// TomoProblem
+// TomoSetting
 // =============================================================================
 
-/** \page pageInterfaceTomoProblem TomoProblem Interface
+/** \page pageInterfaceTomoSetting TomoSetting Interface
  *
  * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
  *
- * Stores the data relevant for a tomography problem. Includes:
+ * Stores the data relevant for a quantum tomography setting. Includes:
  *
- * - a \ref pageInterfaceMatrQ object, which stores the dimension and is able to construct
- *   requested types;
- *
- * - cached values of \a dim, <em>dim2=dim*dim</em>, and <em>Ndof=dim*dim-1</em>
- *
- * - a factor by which to artificially amplify/reduce the number of frequency counts
- *
- * - the list of POVM effects and their frequency counts (measurement data)
- *
- * - the maximum likelihood estimate, along with cached values of various of its
- *   parameterizations
- *
- * - a method which can calculate the loglikelihood function.
+ *   - ........
  *
  * See also: \ref Tomographer::IndepMeasTomoProblem<MatrQ_,LLHValueType_,UseCLoopInstead>
  *
  *
- * \par const MatrQ matrq;
- * A \ref pageInterfaceMatrQ object which we may use to create matrices etc.
+ * \par typedef ... QuStateReprType;
+ * The type used to represent (store) a quantum state.
  *
  * \par const IntegralType dim;
- * Cached dimension.
+ * Dimension of the quantum system.
  *
  * \par const IntegralType dim2;
  * Cached value of <em>dim*dim</em>
@@ -183,32 +171,13 @@
  * The type to use to store the value of the loglikelihood function calculated by \a
  * calc_llh().
  *
- * \par LLHValueType NMeasAmplifyFactor;
- * Factor by which to multiply all measurement frequencies when calculating the
- * loglikelihood function
- * 
- * \par typename MatrQ::VectorParamListType Exn;
- * The POVM Entries, parameterized with \ref pageParamsX
- *
- * \par typename MatrQ::FreqListType Nx;
- * The frequency list, i.e. number of times each POVM effect was observed
- *
- * \par typename MatrQ::MatrixType rho_MLE;
- * Maximum likelihood estimate as density matrix
- *
- * \par typename MatrQ::MatrixType T_MLE;
- * Maximum likelihood estimate as \ref pageParamsT of the density matrix
- *
- * \par typename MatrQ::VectorParamType x_MLE;
- * Maximum likelihood estimate as \ref pageParamsX
- *
- * \par LLHValueType calc_llh(const typename MatrQ::VectorParamType & x) const;
+ * \par LLHValueType calc_llh(const QuStateReprType & rho) const;
  * Calculate the loglikelihood function, defined as
  * \f[
  *   \lambda\left(\rho\right) = -2\,\ln\,\mathrm{tr}\left[B^n\,\rho^{\otimes n}\right]\ .
  * \f]
- * The argument \a x is the \ref pageParamsX of the density matrix at which the
- * loglikelihood function should be evaluated.
+ * The argument \a rho is the quantum state at which the loglikelihood function is to be
+ * evaluated.
  *
  */
 
