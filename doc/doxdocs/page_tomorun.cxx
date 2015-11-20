@@ -161,10 +161,11 @@
  *   if (valtype_str == "HS-dist") {
  *     valtype = HS_DIST;
  *     ref_obj_name = ref_obj_name_str; // the reference state
+ *     return;
  *   }
  * \endcode
- * and similarly, we'd update the function \a operator<<(std::ostream & str, const
- * val_type_spec & val) to include a case for our figure of merit:
+ * and similarly, we'd update the function <tt>operator<<(std::ostream & str, const
+ * val_type_spec & val)</tt> to include a case for our figure of merit:
  * \code
  *   case val_type_spec::HS_DIST:
  *     str << "HS-dist";

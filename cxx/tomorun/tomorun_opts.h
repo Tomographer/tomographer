@@ -155,6 +155,7 @@ struct val_type_spec
     // if (valtype_str == "<my-figure-of-merit-code-in-config-file>") {
     //   valtype = <MY_CUSTOM_FIGURE_OF_MERIT_INTERNAL_CODE>;
     //   ref_obj_name = ref_obj_name_str; // in case there's a reference object name (eg. reference state)
+    //   return;
     // }
     //
     
