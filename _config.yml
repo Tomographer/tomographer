@@ -1,4 +1,7 @@
+
+#
 # Site settings
+#
 title: Tomographer Project
 email: pfaist@phys.ethz.ch
 description: > # this means to ignore newlines until "baseurl:"
@@ -8,8 +11,11 @@ url: "http://tomographer.github.io/" # the base hostname & protocol for your sit
 twitter_username: fkdfnlkdasfldnsajf
 github_username:  Tomographer
 
+#
 # Build settings
+#
 markdown: kramdown
+
 
 
 # ------------------------------------------
