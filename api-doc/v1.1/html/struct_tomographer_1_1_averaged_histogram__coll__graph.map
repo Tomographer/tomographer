@@ -1,0 +1,13 @@
+<map id="Tomographer::AveragedHistogram&lt; HistogramType_, RealAvgType &gt;" name="Tomographer::AveragedHistogram&lt; HistogramType_, RealAvgType &gt;">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; HistogramType_::Scalar,\l RealAvgType \&gt;" alt="" coords="2285,180,2465,245"/>
+<area shape="rect" id="node3" href="$struct_tomographer_1_1_uniform_bins_histogram.html" title="Tomographer::UniformBins\lHistogram\&lt; HistogramType\l_::Scalar, RealAvgType \&gt;" alt="" coords="1894,96,2077,148"/>
+<area shape="rect" id="node4" href="$struct_tomographer_1_1_uniform_bins_histogram_1_1_params.html" title="The parameters of a UniformBinsHistogram. " alt="" coords="1141,5,1352,57"/>
+<area shape="rect" id="node11" href="$struct_tomographer_1_1_uniform_bins_histogram.html" title="Stores a histogram. " alt="" coords="1455,87,1685,125"/>
+<area shape="rect" id="node5" href="/Users/philippe/Documents/ETH/PhD/projects/qtomo/tomographer/doc/cppreference-doxygen-web.tag.xml$cpp/types/size_t.html" title="std::size_t" alt="" coords="846,19,927,44"/>
+<area shape="rect" id="node6" href="/Users/philippe/Documents/ETH/PhD/projects/qtomo/tomographer/doc/Eigen.doxytags$classEigen_1_1Array.html" title="Eigen::Array\&lt; CountType,\l Eigen::Dynamic, 1 \&gt;" alt="" coords="1160,197,1334,236"/>
+<area shape="rect" id="node13" href="$struct_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Stores a histogram along with error bars. " alt="" coords="1895,187,2075,239"/>
+<area shape="rect" id="node7" href="/Users/philippe/Documents/ETH/PhD/projects/qtomo/tomographer/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Array\&lt; CountType, Eigen\l::Dynamic, 1, _Options, \l_MaxRows, _MaxCols \&gt; \&gt;" alt="" coords="595,212,776,277"/>
+<area shape="rect" id="node8" href="/Users/philippe/Documents/ETH/PhD/projects/qtomo/tomographer/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Derived \&gt;" alt="" coords="5,184,167,223"/>
+<area shape="rect" id="node10" href="/Users/philippe/Documents/ETH/PhD/projects/qtomo/tomographer/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Array\&lt; _Scalar, _Rows,\l _Cols, _Options, _MaxRows,\l _MaxCols \&gt; \&gt;" alt="" coords="374,135,571,200"/>
+<area shape="rect" id="node9" href="/Users/philippe/Documents/ETH/PhD/projects/qtomo/tomographer/doc/Eigen.doxytags$classEigen_1_1Array.html" title="Eigen::Array\&lt; _Scalar,\l _Rows, _Cols, _Options,\l _MaxRows, _MaxCols \&gt;" alt="" coords="800,151,972,203"/>
+</map>

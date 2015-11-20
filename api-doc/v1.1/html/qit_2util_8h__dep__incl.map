@@ -1,0 +1,10 @@
+<map id="tomographer/qit/util.h" name="tomographer/qit/util.h">
+<area shape="rect" id="node2" href="$dmmhrw_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="5,239,167,264"/>
+<area shape="rect" id="node3" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="99,85,269,111"/>
+<area shape="rect" id="node4" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="221,165,365,191"/>
+<area shape="rect" id="node6" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="343,79,502,117"/>
+<area shape="rect" id="node7" href="$param__rho__a_8h.html" title="Tools for parameterizing density matrices with the A Parameterization. " alt="" coords="526,79,682,117"/>
+<area shape="rect" id="node8" href="$random__unitary_8h.html" title="Produce a random unitary according to the Haar measure. " alt="" coords="706,79,870,117"/>
+<area shape="rect" id="node9" href="$ezmatio_8h.html" title="Utilities for reading MATLAB &quot;*.mat&quot; data files. See Tomographer::MAT. " alt="" coords="894,85,1084,111"/>
+<area shape="rect" id="node5" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Task Manager/Dispatcher Interfaces) for parallel Metropolis&#45;Hast..." alt="" coords="205,239,381,264"/>
+</map>

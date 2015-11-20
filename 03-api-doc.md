@@ -11,6 +11,8 @@ layout: default
 
 **All Versions**
 
+  - [Version v1.1]({{ site.baseurl }}/api-doc/v1.1/html/){:target="_blank"}
+
   - [Version v1.0]({{ site.baseurl }}/api-doc/v1.0/html/){:target="_blank"}
 
   - [Version v1.0a]({{ site.baseurl }}/api-doc/v1.0a/html/){:target="_blank"}

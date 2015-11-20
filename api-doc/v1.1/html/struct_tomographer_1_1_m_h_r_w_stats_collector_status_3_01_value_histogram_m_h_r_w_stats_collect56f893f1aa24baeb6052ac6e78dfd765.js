@@ -1,0 +1,4 @@
+var struct_tomographer_1_1_m_h_r_w_stats_collector_status_3_01_value_histogram_m_h_r_w_stats_collect56f893f1aa24baeb6052ac6e78dfd765 =
+[
+    [ "MHRWStatsCollector", "struct_tomographer_1_1_m_h_r_w_stats_collector_status_3_01_value_histogram_m_h_r_w_stats_collect56f893f1aa24baeb6052ac6e78dfd765.html#a624cdc0b5e44be43998c890eef2a6fe7", null ]
+];

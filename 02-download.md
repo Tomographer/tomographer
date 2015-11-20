@@ -81,8 +81,9 @@ You may download the source in either of two ways:
 - [Obtain a stable source distribution (TAR.GZ archive).](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.tar.gz){:target="_blank"}
   (alternative formats: [ZIP](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.zip){:target="_blank"}, [TAR.BZ2](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.tar.bz2){:target="_blank"})
 
-  If you don't plan to modify Tomographer itself, this is what you should download. Unpack
-  the archive anywhere you want and continue with the installation instructions below.
+  If you're not too familiar with GIT and don't plan to modify Tomographer itself, this is
+  what you should download. Unpack the archive anywhere you want and continue with the
+  installation instructions below.
 
 - [Clone the git repository.](https://github.com/Tomographer/tomographer){:target="_blank"} Do this if you
   know a bit of GIT, if you wish to keep up-to-date with future updates, or if you wish to

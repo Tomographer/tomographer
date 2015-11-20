@@ -1,0 +1,8 @@
+var searchData=
+[
+  ['qsort',['qsort',['http://en.cppreference.com/w/cpp/algorithm/qsort.html',1,'std']]],
+  ['quaternion',['Quaternion',['http://eigen.tuxfamily.org/dox/classEigen_1_1Quaternion.html#a65ed15cc19af958b5933b5c522f10e66',1,'Eigen::Quaternion::Quaternion()'],['http://eigen.tuxfamily.org/dox/classEigen_1_1Quaternion.html#a91b6ea2cac13ab2d33b6e74818ee1490',1,'Eigen::Quaternion::Quaternion(const Scalar &amp;w, const Scalar &amp;x, const Scalar &amp;y, const Scalar &amp;z)'],['http://eigen.tuxfamily.org/dox/classEigen_1_1Quaternion.html#afb78170e1d8b745832839d4585becf85',1,'Eigen::Quaternion::Quaternion(const Scalar *data)'],['http://eigen.tuxfamily.org/dox/classEigen_1_1Quaternion.html#a5f7c4a058b9ca7bf6fb5d40c7c047a4a',1,'Eigen::Quaternion::Quaternion(const QuaternionBase&lt; Derived &gt; &amp;other)'],['http://eigen.tuxfamily.org/dox/classEigen_1_1Quaternion.html#a344a7c038d0b89e798baf2baa3b4a592',1,'Eigen::Quaternion::Quaternion(const AngleAxisType &amp;aa)'],['http://eigen.tuxfamily.org/dox/classEigen_1_1Quaternion.html#ad90ae48f7378bb94dfbc6436e3a66aa2',1,'Eigen::Quaternion::Quaternion(const MatrixBase&lt; Derived &gt; &amp;other)'],['http://eigen.tuxfamily.org/dox/classEigen_1_1Quaternion.html#a801ef1cd3194d3f9e3067c35d883ba4b',1,'Eigen::Quaternion::Quaternion(const Quaternion&lt; OtherScalar, OtherOptions &gt; &amp;other)']]],
+  ['queue',['queue',['http://en.cppreference.com/w/cpp/container/queue/queue.html',1,'std::queue']]],
+  ['quick_5fexit',['quick_exit',['http://en.cppreference.com/w/cpp/utility/program/quick_exit.html',1,'std']]],
+  ['quiet_5fnan',['quiet_NaN',['http://en.cppreference.com/w/cpp/types/numeric_limits/quiet_NaN.html',1,'std::numeric_limits']]]
+];
