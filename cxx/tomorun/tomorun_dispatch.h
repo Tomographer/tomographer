@@ -688,7 +688,12 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   //
 
   //
-  // One of the distance measures. There might be a reference state.
+  // Instantiate The Correct Figure Of Merit Calculator
+  //
+
+  //
+  // Figure of merit is one of the built-in distance measures. There might be a reference
+  // state.
   //
   if (opt->valtype.valtype == val_type_spec::FIDELITY ||
       opt->valtype.valtype == val_type_spec::TR_DIST ||
@@ -732,7 +737,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
           tomodat,
           opt,
           [&T_ref](const OurTomoProblem & tomo) {
-            return Tomographer::PurifDistToRefCalculator<OurTomoProblem, double>(tomo);
+            return Tomographer::PurifDistToRefCalculator<OurTomoProblem, double>(tomo, T_ref);
           },
           logger);
     } else if (opt->valtype.valtype == val_type_spec::TR_DIST) {
@@ -747,7 +752,12 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
       throw std::logic_error("WTF?? You shouldn't be here!");
     }
 
-  } else if (opt->valtype.valtype == val_type_spec::OBS_VALUE) {
+    return;
+  }
+  //
+  // Figure of merit: observable value
+  //
+  if (opt->valtype.valtype == val_type_spec::OBS_VALUE) {
     
     // load the observable
     MatrixType A = tomodat.matq.initMatrixType();
@@ -772,11 +782,16 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
         },
         logger);
 
-  } else {
-
-    throw std::logic_error(std::string("Unknown value type: ")+streamstr(opt->valtype));
-
+    return;
   }
+  // --------------------------------------------------
+  //
+  // INSERT CUSTOM FIGURE OF MERIT HERE:
+  // See instructions in API documentation, page 'Adding a new figure of merit to the tomorun program'
+  //
+  // --------------------------------------------------
+
+  throw std::logic_error(std::string("Unknown value type: ")+streamstr(opt->valtype));
 }
 
 

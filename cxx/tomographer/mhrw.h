@@ -710,7 +710,9 @@ public:
  * This stats collector is suitable for tracking statistics during a \ref MHRandomWalk.
  *
  * The ValueCalculator is a type expected to implement the \ref
- * pageInterfaceValueCalculator.
+ * pageInterfaceValueCalculator.  The argument of the \a getValue() method should be the
+ * same type as the point type of the random walk; the current point of the random walk is
+ * passed on as is.
  *
  */
 template<typename ValueCalculator_,

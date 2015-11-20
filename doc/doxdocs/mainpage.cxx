@@ -29,7 +29,7 @@
  * The <a href="https://github.com/Tomographer/tomographer" target="_blank">%Tomographer
  * C++ Framework</a> groups a set of classes and functions which allow to reliably analyze
  * data from quantum experiments. These serve in particular as components for the tomorun
- * executable program.
+ * executable program, which is not part of this Tomographer API documentation.
  *
  * <h2>%Tomographer's Components</h2>
  *
@@ -118,4 +118,12 @@
  * <h3>Other Specific Resources</h3>
  *
  *   - \subpage pageDebugging
+ *
+ * <h3>Tomorun-Executable Related Topics</h3>
+ *
+ * The \c tomorun program code is not part of the %Tomographer API strictly speaking.
+ * Here are just some specific information pages which may be useful.
+ *
+ *   - \subpage pageTomorunNewFigureOfMerit
+ *
  */
