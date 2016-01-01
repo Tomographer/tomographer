@@ -102,6 +102,11 @@ struct val_type_spec
     TR_DIST,
     FIDELITY,
     PURIF_DIST
+    //
+    // INSERT CUSTOM FIGURE OF MERIT HERE:
+    // See instructions in API documentation, page 'Adding a new figure of merit to the tomorun program'
+    //
+    // <MY_CUSTOM_FIGURE_OF_MERIT_INTERNAL_CODE>
   };
 
 
@@ -127,21 +132,34 @@ struct val_type_spec
       valtype = OBS_VALUE;
       ref_obj_name = ref_obj_name_str;
       return;
-    } else if (valtype_str == "tr-dist") {
+    }
+    if (valtype_str == "tr-dist") {
       valtype = TR_DIST;
       ref_obj_name = ref_obj_name_str;
       return;
-    } else if (valtype_str == "fidelity") {
+    }
+    if (valtype_str == "fidelity") {
       valtype = FIDELITY;
       ref_obj_name = ref_obj_name_str;
       return;
-    } else if (valtype_str == "purif-dist") {
+    }
+    if (valtype_str == "purif-dist") {
       valtype = PURIF_DIST;
       ref_obj_name = ref_obj_name_str;
       return;
-    } else {
-      throw std::invalid_argument(std::string("Invalid argument to val_type_spec: '") + str + std::string("'"));
     }
+    //
+    // INSERT CUSTOM FIGURE OF MERIT HERE:
+    // See instructions in API documentation, page 'Adding a new figure of merit to the tomorun program'
+    //
+    // if (valtype_str == "<my-figure-of-merit-code-in-config-file>") {
+    //   valtype = <MY_CUSTOM_FIGURE_OF_MERIT_INTERNAL_CODE>;
+    //   ref_obj_name = ref_obj_name_str; // in case there's a reference object name (eg. reference state)
+    //   return;
+    // }
+    //
+    
+    throw std::invalid_argument(std::string("Invalid argument to val_type_spec: '") + str + std::string("'"));
   }
 };
 
@@ -160,6 +178,15 @@ inline std::ostream & operator<<(std::ostream & str, const val_type_spec & val)
   case val_type_spec::PURIF_DIST:
     str << "purif-dist";
     break;
+
+  //
+  // INSERT CUSTOM FIGURE OF MERIT HERE:
+  // See instructions in API documentation, page 'Adding a new figure of merit to the tomorun program'
+  //
+  // case val_type_spec::<MY_CUSTOM_FIGURE_OF_MERIT_INTERNAL_CODE>:
+  //   str << "<my-figure-of-merit-code-in-config-file>";
+  //   break;
+
   case val_type_spec::INVALID:
     str << "<invalid>";
     break;
@@ -510,6 +537,12 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"      data file. This object should be a complex dim x dim matrix, the density\n"
 	"      matrix of the reference state. If no <RefObject> is specified, then\n"
 	"      rho_MLE is used.\n"
+        //
+        // INSERT CUSTOM FIGURE OF MERIT HERE:
+        // Please don't forget to document the option value corresponding to your figure
+        // of merit. Document also any possible string that is understood after the colon
+        // in the option value.
+        //
 	"\n"
 	"Note: For the (squared) fidelity to a pure state (usually preferred in\n"
 	"experimental papers), you should use \"obs-value\" with the observable being\n"

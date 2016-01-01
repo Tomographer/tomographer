@@ -129,7 +129,7 @@ add_custom_target(uninstall
     )
 
 # Install README into documentation directory
-install(FILES README.md README.txt
+install(FILES README.md README.txt LICENSE.txt
   DESTINATION "${CMAKE_INSTALL_DOCDIR}"
   )
 
