@@ -102,8 +102,9 @@ function dat = analyze_tomorun_histogram(varargin)
   end
 
   % Normalize to probability density
-  P = AvgCounts/trapz(flipsign*OneMinusFidelity,AvgCounts);
-  ErrorP = Error/trapz(flipsign*OneMinusFidelity,AvgCounts);
+  histnorm = trapz(flipsign*OneMinusFidelity,AvgCounts);
+  P = AvgCounts/histnorm;
+  ErrorP = Error/histnorm;
   
   % get the "support" of P -- where P != 0
   P_IndNonZero = find(P>0);
@@ -165,10 +166,14 @@ function dat = analyze_tomorun_histogram(varargin)
   FitDataX = OneMinusFidelity(FitDataIdx);
   if (fitlogp)
     FitDataY = LogP(FitDataIdx);
-    FitDataWeights = 1 ./ ErrorLogP(FitDataIdx);
+    %
+    % see the Curve Fitting Toolbox manual (e.g. PDF): weight_i = 1/(sigma_i)^2
+    % Here, our errors are standard deviations = sigma's
+    %
+    FitDataWeights = 1 ./ (ErrorLogP(FitDataIdx).^2);
   else
     FitDataY = P(FitDataIdx);
-    FitDataWeights = 1 ./ ErrorP(FitDataIdx);
+    FitDataWeights = 1 ./ (ErrorP(FitDataIdx).^2);
   end
   % --- now, do the fit ---
   [thefit, gof] = fit(FitDataX, FitDataY, thefitfunc, ...
@@ -246,6 +251,7 @@ function dat = analyze_tomorun_histogram(varargin)
     dat.OneMinusFidelity = OneMinusFidelity;
     dat.AvgCounts = AvgCounts;
     dat.ErrorAvgCounts = Error;
+    dat.HistogramNormalization = histnorm;
     dat.P = P;
     dat.LogP = LogP;
     dat.ErrorP = ErrorP;
@@ -263,6 +269,13 @@ function dat = analyze_tomorun_histogram(varargin)
     dat.gof = gof;
     dat.FigHandleP = opts.FigHandleP;
     dat.FigHandleLogP = opts.FigHandleLogP;
+    
+    %
+    % Also calculate chi-squared of the fit.
+    %
+    % Note the \sum_i (data_i - theoretical_i) / error2_i  ==  dat.gof.sse .
+    %
+    dat.gofchi2red = dat.gof.sse / (numel(dat.FitDataIdx) - numargs(fittype(thefit)) - 1);
   end
 
 end
