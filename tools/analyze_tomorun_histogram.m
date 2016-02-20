@@ -166,15 +166,17 @@ function dat = analyze_tomorun_histogram(varargin)
   FitDataX = OneMinusFidelity(FitDataIdx);
   if (fitlogp)
     FitDataY = LogP(FitDataIdx);
-    %
-    % see the Curve Fitting Toolbox manual (e.g. PDF): weight_i = 1/(sigma_i)^2
-    % Here, our errors are standard deviations = sigma's
-    %
-    FitDataWeights = 1 ./ (ErrorLogP(FitDataIdx).^2);
+    FitDataErrors = ErrorLogP(FitDataIdx);
   else
     FitDataY = P(FitDataIdx);
-    FitDataWeights = 1 ./ (ErrorP(FitDataIdx).^2);
+    FitDataErrors = ErrorP(FitDataIdx);
   end
+  %
+  % see the Curve Fitting Toolbox manual (e.g. PDF): weight_i = 1/(sigma_i)^2
+  % Here, our errors are standard deviations = sigma's
+  %
+  FitDataWeights = 1 ./ (FitDataErrors.^2);
+
   % --- now, do the fit ---
   [thefit, gof] = fit(FitDataX, FitDataY, thefitfunc, ...
                       'Weights', FitDataWeights, ...
@@ -261,6 +263,7 @@ function dat = analyze_tomorun_histogram(varargin)
     dat.FitDataIdx = FitDataIdx;
     dat.FitDataX = FitDataX;
     dat.FitDataY = FitDataY;
+    dat.FitDataErrors = FitDataErrors;
     dat.FitDataWeights = FitDataWeights;
     dat.thefitfunc = thefitfunc; % in whatever fit space
     dat.evalfitlogp = evalfitlogp; % always log(P)
