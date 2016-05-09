@@ -291,7 +291,7 @@ function [ opts args ] = parse_opts(optdefs, argin)
 %
 %     optdefs.DoDrawPlots = struct('mode', 'WhatToDo');
 %     optdefs.DoSmokeACigar = struct('mode', 'WhatToDo');
-%     optdefs.DoPlayViolin = struct('switch', 'WhatToDo');
+%     optdefs.DoPlayViolin = struct('mode', 'WhatToDo');
 %     optdefs.PlotsHaveNames = struct('switch', true);
 %     optdefs.PlotName = struct('arg', 's', ...
 %                               'imply', {{'DoDrawPlots', ...
@@ -300,6 +300,23 @@ function [ opts args ] = parse_opts(optdefs, argin)
 % [Beware MATLAB's catch: if you give a cell array in the struct() funtion,
 % you'll get unexpected results because struct() will construct a cell array of
 % structures! Use double-braces for correct results.]
+%
+% You may also specify an 'imply_if' field. This causes the implications to be
+% parsed only if the argument to the option satisfies a condition. The value to
+% 'imply_if' should be a function handle taking as argument the value of the
+% option. For example, for a bool switch:
+%
+%     optdefs.InitializeDebugLog = struct('mode', 1);
+%     optdefs.ProduceDebugMessages = struct('switch', false, ...
+%                            'imply', {{'InitializeDebugLog'}},
+%                            'imply_if', @(v) v);
+%
+% By default, 'imply_if' is an empty array `[]', meaning that the
+% implications are always parsed whenever this option is seen.
+%
+% WARNING: implications are only taken into account if the option is seen in the
+% input. In particular, implications don't kick in for a default option value!
+%
 %
 %
 % Shortcut Options
@@ -779,6 +796,9 @@ function optdefs = parse_opt_defs(o)
       if (~iscell(optdefs.(on).imply))
         optdefs.(on).imply = { optdefs.(on).imply };
       end
+      if (~isfield(optdefs.(on), 'imply_if'))
+        optdefs.(on).imply_if = [];
+      end
     end
     
     % is shortcut?
@@ -987,7 +1007,8 @@ function [ seenopts args exception ] = parse_seen_options(optdefs, argin)
       
       argin = [ argin(1:(i-1)) shortcut argin((i+1):end) ];
       
-      [seenopts args exception] = parse_implications(optdefs, mode_optname, seenopts, args);
+      [seenopts args exception] = parse_implications(optdefs, mode_optname, seenopts, ...
+                                                     args, []);
       
       % IMMEDIATLY process the shortcut on the next loop.
       continue;
@@ -1043,7 +1064,8 @@ function [ seenopts args exception ] = parse_seen_options(optdefs, argin)
       
       seenopts.(mode_key) = mode_kval;
       
-      [seenopts args exception] = parse_implications(optdefs, mode_optname, seenopts, args);
+      [seenopts args exception] = parse_implications(optdefs, mode_optname, seenopts, ...
+                                                     args, mode_kval);
       
     elseif (bool_tf)
       % this is a boolean option.
@@ -1067,7 +1089,8 @@ function [ seenopts args exception ] = parse_seen_options(optdefs, argin)
       
       seenopts.(bool_optname) = bool_val;
       
-      [seenopts args exception] = parse_implications(optdefs, bool_optname, seenopts, args);
+      [seenopts args exception] = parse_implications(optdefs, bool_optname, seenopts, ...
+                                                     args, bool_val);
       
     elseif (recopt_tf)
       % this is a recognized option, parse it
@@ -1093,7 +1116,8 @@ function [ seenopts args exception ] = parse_seen_options(optdefs, argin)
       
       seenopts.(recopt_optname) = optarg;
       
-      [seenopts args exception] = parse_implications(optdefs, mode_optname, seenopts, args);
+      [seenopts args exception] = parse_implications(optdefs, mode_optname, seenopts, ...
+                                                     args, optarg);
       
     else
       
@@ -1115,7 +1139,8 @@ function [ seenopts args exception ] = parse_seen_options(optdefs, argin)
 end
 
 
-function [seenopts args exception] = parse_implications(optdefs, optname, seenopts, args)
+function [seenopts args exception] = parse_implications(optdefs, optname, seenopts, args, ...
+                                                    imploptval)
   
   exception = {};
   opt = optdefs.(optname);
@@ -1123,6 +1148,13 @@ function [seenopts args exception] = parse_implications(optdefs, optname, seenop
   if (~opt.has_imply)
     % don't even care about implications
     return;
+  end
+  
+  if (~isempty(opt.imply_if))
+    if (~opt.imply_if(imploptval))
+      % if 'imply_if' fails, don't imply.
+      return;
+    end
   end
   
   [imply_seenopts imply_args exception] = parse_seen_options(optdefs, optdefs.(optname).imply);

@@ -24,14 +24,24 @@ function dat = analyze_tomorun_histogram(varargin)
   optdefs.IgnoreEndPoints.help = ['A number of points which should be ignored, starting ' ...
                       'from the f=max side.'];
   optdefs.CenterBins = struct('switch', true);
-  optdefs.CenterBins.help = ['tomorun produces Fidelity values which correspond to lower ' ...
+  optdefs.CenterBins.help = ['tomorun produces figure of merit values which correspond to lower ' ...
                       'bin values. Use this option to center the bins, i.e. move the x ' ...
                       'axis so that the x label corresponds to the center of a bin, and ' ...
                       'not the lower limit.'];
-  optdefs.XIsOneMinus = struct('switch', false);
-  optdefs.XIsOneMinus.help = ['If you set this option to true, then the X data is ' ...
-                      'calculated as 1 - (x-value). This makes sense for example for the ' ...
-                      'fidelity, which lies close to 1.'];
+  %  optdefs.XIsOneMinus = struct('switch', false);
+  %  optdefs.XIsOneMinus.help = ['If you set this option to true, then the X data is ' ...
+  %                      'calculated as 1 - (x-value). This makes sense for example for the ' ...
+  %                      'fidelity, which lies close to 1.'];
+  optdefs.XIsOneMinus = struct('switch', false, 'imply', {{ 'FToX', [1, -1] }}, ...
+                               'imply_if', @(tf) tf);
+  optdefs.FToX = struct('arg', 'n', 'default', []);
+  optdefs.FToX.help = ['Specify how to transform the figure of merit value f into the x ' ...
+                      'coordinate for fit. Specify the transformation as a pair of ' ...
+                      'values [h, s] where h can be any constant, and where s must be ' ...
+                      'plus or minus one. By default, or if you specify an empty array' ...
+                      'here, there is no transformation, x=f. For the fidelity, you ' ...
+                      'should use x=1-f ("[1,-1]") or the "XIsOneMinus" option. For an ' ...
+                      'entanglement witness, you might use x=2-f ("[2,-1]") for example.'];
   optdefs.FigHandleP = struct(...
       'arg', 'any', 'default', [] ...
       );
@@ -54,7 +64,19 @@ function dat = analyze_tomorun_histogram(varargin)
   optdefs.PlotFitPoints = struct('switch', true);
   optdefs.PlotFitPoints.help = ['Display with red crosses which points where used for ' ...
                       'the fit, in the log(p) plot'];
-  optdefs.CustomFit = struct('switch', false);
+  optdefs.PlotXNotF = struct('switch', false);
+  optdefs.PlotXNotF.help = ['Plot against the x value (=h-s*f), not against f. See option ' ...
+                      '"FToX".'];
+  optdefs.QuErrorBars = struct('switch', true, 'imply', {{'PlotDeskewedGaussian', false}}, ...
+                             'imply_if', @(v) ~v);
+  optdefs.QuErrorBars.help = ['Calculate the quantum error bars corresponding to the fit ' ...
+                      'parameters. Not supported if you provide your custom fit ' ...
+                      'model.'];
+  optdefs.PlotDeskewedGaussian = struct('switch', true);
+  optdefs.PlotDeskewedGaussian.help = ['Plot also the de-skewed Gaussian corresponding ' ...
+                      'to the quantum error bars without the m parameter.'];
+  optdefs.CustomFit = struct('switch', false, 'imply', {{'QuErrorBars', false}}, ...
+                             'imply_if', @(v) v);
   optdefs.CustomFit.help = ['Set to true if you have a custom model to fit. (This is ' ...
                       'implied by ''FitModel'', ''FitWhich'' or ''FitOptions''.)'];
   optdefs.FitModel = struct('arg', 'fh*', 'default', [], ...
@@ -80,43 +102,60 @@ function dat = analyze_tomorun_histogram(varargin)
   
   data = importdata(histfname);
   
-  Fidelity = data.data(:,1);
+  F = data.data(:,1);
   AvgCounts = data.data(:,2);
   Error = data.data(:,3);
   
   if (opts.CenterBins)
-    Fidelity = Fidelity + (Fidelity(2)-Fidelity(1)) ./ 2.0;
+    F = F + (F(2)-F(1)) ./ 2.0;
   end
 
-  if (opts.XIsOneMinus)
-    OneMinusFidelity = 1 - Fidelity;
-    flipsign = -1;
+  if (opts.FToX)
+    h = opts.FToX(1);
+    s = opts.FToX(2);
+    assert(abs(s) == 1, 'The s constant in "FToX" must be plus or minus one!');
+    XX = h + s*F;
   else
-    OneMinusFidelity = Fidelity;
-    flipsign = 1;
+    h = 0;
+    s = 1;
+    XX = F;
   end
 
-  if (any(OneMinusFidelity==0))
+  if (any(XX==0))
     warning('analyze_tomorun_histogram:zeroInOneMinusFidelity', ['Found a zero value in ' ...
-                        'OneMinusFidelity. fit might complain about model computing Inf.']);
+                        'X (transformed figure of merit). fit might complain about model computing Inf.']);
   end
 
   % Normalize to probability density
-  histnorm = trapz(flipsign*OneMinusFidelity,AvgCounts);
+  histnorm = trapz(s*XX,AvgCounts);
   P = AvgCounts/histnorm;
   ErrorP = Error/histnorm;
   
   % get the "support" of P -- where P != 0
   P_IndNonZero = find(P>0);
-  % and the width of one bin (NOTE: ASSSUMPTION THAT BINS EQUALLY SPACED)
-  %bin_width = abs(Fidelity(2)-Fidelity(1))
+  
+  if (~isequal(opts.FigHandleLogP, -1) || ~isequal(opts.FigHandleP, -1))
+    % for plots: some common defs (range of x's, and function to transform x back to f)
+    xxmin = min(XX(P_IndNonZero));
+    xxmax = max(XX(P_IndNonZero));
+    xxpts = linspace(xxmin, xxmax, opts.PlotFitFnRes);
+    plotx_trans = @(x) s*(x-h);
+    if (opts.PlotXNotF)
+      plotx_trans = @(x) x;
+    end
+  end
   
   if (~isequal(opts.FigHandleP, -1))
     figure(opts.FigHandleP);
     if (opts.ClearFigures)
       clf;
     end
-    errorbar(OneMinusFidelity, P, ErrorP, ...
+    if (opts.PlotXNotF)
+      myplot_x = XX;
+    else
+      myplot_x = F;
+    end
+    errorbar(myplot_x, P, ErrorP, ...
              'Marker', '.', 'LineStyle', 'none');
     set(gca, 'YScale', 'linear')
   end
@@ -139,7 +178,7 @@ function dat = analyze_tomorun_histogram(varargin)
     fitoptions = opts.FitOptions;
   else
     fitlogp = true;
-    thefitfunc = @(a1, a2, m, c, x) -a2*x^2 - a1*x + m*log(x) + c;
+    thefitfunc = @(a2, a1, m, c, x) -a2*x.^2 - a1*x + m*log(x) + c;
     fitoptions = {'StartPoint', [1, 0, 1, 100]};
     %thefitfunc = @(a, c, x) -a*x + log(x) + c;
     %fitoptions = {'StartPoint', [1, 100]};
@@ -163,7 +202,7 @@ function dat = analyze_tomorun_histogram(varargin)
     FitDataIdx(end-(ignore_end_points):end) = logical(0);
   end
   % --- prepare fit data x, y and weights ---
-  FitDataX = OneMinusFidelity(FitDataIdx);
+  FitDataX = XX(FitDataIdx);
   if (fitlogp)
     FitDataY = LogP(FitDataIdx);
     FitDataErrors = ErrorLogP(FitDataIdx);
@@ -191,31 +230,27 @@ function dat = analyze_tomorun_histogram(varargin)
     evalfitp = @(x) thefit(x);
   end
 
-  % ---
-  %thefitfunc = @(a, b, m, c, x) -a*x -b*x.^2 + m*log(x) + c
-  %evalfitlogp = @(p, x) thefitfunc(p.a, p.b, p.m, p.c, x);
-  %[thefit, gof] = fit(FitDataX, FitDataY, thefitfunc, ...
-  %                    'Weights', FitDataWeights, ...
-  %                    'StartPoint', [1, 0, 1, 100] ...
-  %                    );
-  % ---
-  %thefitfunc = @(a, c, x) -a*x + log(x) + c
-  %evalfitlogp = @(p, x) thefitfunc(p.a, p.c, x);
-  %[thefit, gof] = fit(FitDataX, FitDataY, thefitfunc, ...
-  %                    'Weights', FitDataWeights, ...
-  %                    'StartPoint', [1, 100] ...
-  %                    );
-  % ---
-  %thefitfunc = @(a, c, x) c*x.*exp(-a*x)
-  %evalfitlogp = @(p, x) log(thefitfunc(p.a, p.c, x));
-  %[thefit, gof] = fit(FitDataX, P(FitDataIdx), thefitfunc, ...
-  %                    'Weights', 1 ./ ErrorP(FitDataIdx), ...
-  %                    'StartPoint', [1, 100] ...
-  %                    );
-  % ---
-  
   display(thefit);
-
+  
+  
+  %
+  % "deskew" the fit to get the quantum error bars.
+  %
+  QuErrorBars = struct;
+  if (opts.QuErrorBars)
+    % we know there is no custom fit.
+    [a x0 y0] = deskew_logmu_curve(thefit.a2, thefit.a1, thefit.m, thefit.c);
+    % intermediary values
+    QuErrorBars.a = a;
+    QuErrorBars.m = thefit.m;
+    % the "quantum error bars" per se:
+    QuErrorBars.Delta = 1/sqrt(a);
+    QuErrorBars.x0 = x0;
+    QuErrorBars.y0 = y0;
+    QuErrorBars.gamma = thefit.m / (2 * a.^2 * x0.^3);
+    display(QuErrorBars);
+  end
+  
   if (~isequal(opts.FigHandleLogP, -1))
     figure(opts.FigHandleLogP);
     if (opts.ClearFigures)
@@ -223,16 +258,19 @@ function dat = analyze_tomorun_histogram(varargin)
     end
     hold on;
     set(gca, 'YScale', 'linear'); % seems to be needed to get stuff right if NoClearFigures?
-    %plot(thefit, OneMinusFidelity, log(P));
-    errorbar(OneMinusFidelity(P_IndNonZero), P(P_IndNonZero), ErrorP(P_IndNonZero), ...
+    errorbar(plotx_trans(XX(P_IndNonZero)), P(P_IndNonZero), ErrorP(P_IndNonZero), ...
              'Marker', '.', 'LineStyle', 'none', 'Color', [0.6, 0.6, 1.0]);
     if (opts.PlotFitPoints)
-      plot(FitDataX, P(FitDataIdx), 'rx');
+      plot(plotx_trans(FitDataX), P(FitDataIdx), 'rx');
     end
-    xxmin = min(OneMinusFidelity(P_IndNonZero));
-    xxmax = max(OneMinusFidelity(P_IndNonZero));
-    xx = linspace(xxmin, xxmax, opts.PlotFitFnRes);
-    plot(xx, evalfitp(xx), 'r-');
+
+    plot(plotx_trans(xxpts), evalfitp(xxpts), 'r-');
+    
+    if (opts.PlotDeskewedGaussian)
+      plot(plotx_trans(xxpts), exp(-QuErrorBars.a.*(xxpts-QuErrorBars.x0).^2 + ...
+                                   QuErrorBars.y0), 'g-');
+    end
+    
     set(gca, 'YScale', 'log');
   end
   
@@ -241,7 +279,11 @@ function dat = analyze_tomorun_histogram(varargin)
   if (~isequal(opts.FigHandleP, -1))
     figure(opts.FigHandleP);
     hold on;
-    plot(xx, evalfitp(xx), 'r-');
+    plot(plotx_trans(xxpts), evalfitp(xxpts), 'r-');
+    if (opts.PlotDeskewedGaussian)
+      plot(plotx_trans(xxpts), exp(-QuErrorBars.a.*(xxpts-QuErrorBars.x0).^2 + ...
+                                   QuErrorBars.y0), 'g-');
+    end
   end
   
   % ---
@@ -249,8 +291,10 @@ function dat = analyze_tomorun_histogram(varargin)
   % ---
   if (nargout > 0)
     dat = struct;
-    dat.Fidelity = Fidelity;
-    dat.OneMinusFidelity = OneMinusFidelity;
+    %    dat.Fidelity = Fidelity;% obsolete name
+    %    dat.OneMinusFidelity = OneMinusFidelity;% obsolete name
+    dat.F = F;
+    dat.X = XX;
     dat.AvgCounts = AvgCounts;
     dat.ErrorAvgCounts = Error;
     dat.HistogramNormalization = histnorm;
@@ -272,6 +316,7 @@ function dat = analyze_tomorun_histogram(varargin)
     dat.gof = gof;
     dat.FigHandleP = opts.FigHandleP;
     dat.FigHandleLogP = opts.FigHandleLogP;
+    dat.QuErrorBars = QuErrorBars;
     
     %
     % Also calculate chi-squared of the fit.
