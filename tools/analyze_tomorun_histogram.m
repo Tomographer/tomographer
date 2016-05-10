@@ -258,18 +258,19 @@ function dat = analyze_tomorun_histogram(varargin)
     end
     hold on;
     set(gca, 'YScale', 'linear'); % seems to be needed to get stuff right if NoClearFigures?
+    
     errorbar(plotx_trans(XX(P_IndNonZero)), P(P_IndNonZero), ErrorP(P_IndNonZero), ...
              'Marker', '.', 'LineStyle', 'none', 'Color', [0.6, 0.6, 1.0]);
     if (opts.PlotFitPoints)
       plot(plotx_trans(FitDataX), P(FitDataIdx), 'rx');
     end
 
-    plot(plotx_trans(xxpts), evalfitp(xxpts), 'r-');
-    
     if (opts.PlotDeskewedGaussian)
       plot(plotx_trans(xxpts), exp(-QuErrorBars.a.*(xxpts-QuErrorBars.x0).^2 + ...
                                    QuErrorBars.y0), 'g-');
     end
+
+    plot(plotx_trans(xxpts), evalfitp(xxpts), 'r-');
     
     set(gca, 'YScale', 'log');
   end
@@ -279,11 +280,13 @@ function dat = analyze_tomorun_histogram(varargin)
   if (~isequal(opts.FigHandleP, -1))
     figure(opts.FigHandleP);
     hold on;
-    plot(plotx_trans(xxpts), evalfitp(xxpts), 'r-');
+
     if (opts.PlotDeskewedGaussian)
       plot(plotx_trans(xxpts), exp(-QuErrorBars.a.*(xxpts-QuErrorBars.x0).^2 + ...
                                    QuErrorBars.y0), 'g-');
     end
+
+    plot(plotx_trans(xxpts), evalfitp(xxpts), 'r-');
   end
   
   % ---
