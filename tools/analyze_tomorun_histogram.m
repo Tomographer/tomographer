@@ -246,7 +246,7 @@ function dat = analyze_tomorun_histogram(varargin)
     % the "quantum error bars" per se:
     QuErrorBars.Delta = 1/sqrt(a);
     QuErrorBars.f0 = xtof(x0);
-    QuErrorBars.gamma = thefit.m / (2 * a.^2 * x0.^3);
+    QuErrorBars.gamma = thefit.m / (6 * a.^2 * x0.^3);
     % the normalization constant:
     QuErrorBars.y0 = y0;
     % and the intermediary values:
