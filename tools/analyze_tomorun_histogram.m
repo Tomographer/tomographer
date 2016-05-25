@@ -37,7 +37,8 @@ function dat = analyze_tomorun_histogram(varargin)
   optdefs.FToX = struct('arg', 'n', 'default', []);
   optdefs.FToX.help = ['Specify how to transform the figure of merit value f into the x ' ...
                       'coordinate for fit. Specify the transformation as a pair of ' ...
-                      'values [h, s] where h can be any constant, and where s must be ' ...
+                      'values [h, s] in the relation x=s(f-h) or f=sx+h, where h can ' ...
+                      'be any constant, and where s must be ' ...
                       'plus or minus one. By default, or if you specify an empty array' ...
                       'here, there is no transformation, x=f. For the fidelity, you ' ...
                       'should use x=1-f ("[1,-1]") or the "XIsOneMinus" option. For an ' ...
@@ -114,12 +115,14 @@ function dat = analyze_tomorun_histogram(varargin)
     h = opts.FToX(1);
     s = opts.FToX(2);
     assert(abs(s) == 1, 'The s constant in "FToX" must be plus or minus one!');
-    XX = h + s*F;
+    XX = s*(F-h);
   else
     h = 0;
     s = 1;
     XX = F;
   end
+  ftox = @(f) s*(f-h);
+  xtof = @(x) s*x + h;
 
   if (any(XX==0))
     warning('analyze_tomorun_histogram:zeroInOneMinusFidelity', ['Found a zero value in ' ...
@@ -139,7 +142,7 @@ function dat = analyze_tomorun_histogram(varargin)
     xxmin = min(XX(P_IndNonZero));
     xxmax = max(XX(P_IndNonZero));
     xxpts = linspace(xxmin, xxmax, opts.PlotFitFnRes);
-    plotx_trans = @(x) s*(x-h);
+    plotx_trans = xtof;
     if (opts.PlotXNotF)
       plotx_trans = @(x) x;
     end
@@ -240,14 +243,16 @@ function dat = analyze_tomorun_histogram(varargin)
   if (opts.QuErrorBars)
     % we know there is no custom fit.
     [a x0 y0] = deskew_logmu_curve(thefit.a2, thefit.a1, thefit.m, thefit.c);
-    % intermediary values
-    QuErrorBars.a = a;
-    QuErrorBars.m = thefit.m;
     % the "quantum error bars" per se:
     QuErrorBars.Delta = 1/sqrt(a);
-    QuErrorBars.x0 = x0;
-    QuErrorBars.y0 = y0;
+    QuErrorBars.f0 = xtof(x0);
     QuErrorBars.gamma = thefit.m / (2 * a.^2 * x0.^3);
+    % the normalization constant:
+    QuErrorBars.y0 = y0;
+    % and the intermediary values:
+    QuErrorBars.a = a;
+    QuErrorBars.m = thefit.m;
+    QuErrorBars.x0 = x0;
     display(QuErrorBars);
   end
   
