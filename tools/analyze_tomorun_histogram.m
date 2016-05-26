@@ -244,8 +244,8 @@ function dat = analyze_tomorun_histogram(varargin)
     % we know there is no custom fit.
     [a x0 y0] = deskew_logmu_curve(thefit.a2, thefit.a1, thefit.m, thefit.c);
     % the "quantum error bars" per se:
-    QuErrorBars.Delta = 1/sqrt(a);
     QuErrorBars.f0 = xtof(x0);
+    QuErrorBars.Delta = 1/sqrt(a);
     QuErrorBars.gamma = thefit.m / (2 * a.^2 * x0.^3);
     % the normalization constant:
     QuErrorBars.y0 = y0;
