@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,7 +24,6 @@
  * SOFTWARE.
  */
 
-//#include <iostream>
 #include <cmath>
 
 #include <string>
@@ -38,40 +37,25 @@
 
 #include <Eigen/Eigen>
 
-#include <tomographer/qit/util.h>
-#include <tomographer/tools/check_derivatives.h>
-#include <tomographer/tools/sphcoords.h>
+#include <tomographer/densedm/densedmtypes.h>
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
 
 
-
 // --------------------------------------------------------------------------------
 
-// for checking debug results
-// see http://en.wikipedia.org/wiki/N-sphere
 
-inline double known_vol_sph(int);
+....................
 
-inline double known_surf_sph(int sphdim)
-{
-  if (sphdim == 0) {
-    return 2;
-  }
-  return 2 * M_PI * known_vol_sph(sphdim - 1);
-}
-inline double known_vol_sph(int cartdim)
-{
-  if (cartdim == 0) {
-    return 1;
-  }
-  return known_surf_sph(cartdim - 1) / cartdim;
-}
+WRITE TESTS .....................
 
-// ------------------------------------------------------
 
-static const double pi = boost::math::constants::pi<double>();
+.......................
+
+
+................
+
 
 // utility to check for cart_to_sph_jacobian
 template<int CART_DIM = 3, int SPH_DIM = CART_DIM - 1>

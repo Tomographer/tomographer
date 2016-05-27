@@ -108,7 +108,7 @@ endmacro(addTomographerTest)
 
 # add tests for tomographer library.
 
-addTomographerTest(test_sphcoords.cxx  "")
+addTomographerTest(test_mathtools_sphcoords.cxx  "")
 addTomographerTest(test_tools_util.cxx  "")
 addTomographerTest(test_tools_conststr.cxx  "")
 addTomographerTest(test_tools_ezmatio_1.cxx  "matio")

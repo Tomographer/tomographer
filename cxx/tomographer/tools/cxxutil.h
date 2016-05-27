@@ -136,19 +136,27 @@ inline tomo_internal::FinalAction<F> finally(F f)
  * constructor, except if a value was already given as template parameter in which case we
  * take for granted that this value will always be the one we want at runtime.
  *
- * \tparam T the type of the value to store.
- * \tparam Value the (integer) value to store at compile-time. If this value is \a
- *         Eigen::Dynamic, then the value will be stored at runtime.
+ * \tparam T_ the type of the value to store.
+ * \tparam IsDynamic_ whether to store a dynamical value, or to store the static, fixed
+ *         compile-time value.
+ * \tparam StaticValue_ to store at compile-time.  This value will be ignored if
+ *         \c IsDynamic is \c false. 
  *
  */
-template<typename T_, int Value>
+template<typename T_, bool IsDynamic_, T_ StaticValue_>
 class static_or_dynamic
 {
+
 public:
+  // definitions here are for the static case, the dynamic case will be specialized below.
+  TOMO_STATIC_ASSERT_EXPR(IsDynamic_ == false)
+
   //! Type of the value we are storing
   typedef T_ T;
+  //! Whether this value is flexible at run-time (dynamic), or fixed at compile-time (static)
+  static constexpr bool IsDynamic = IsDynamic_;
   //! The value, if stored at compile-time, or \ref Eigen::Dynamic.
-  static constexpr T ValueAtCTime = Value;
+  static constexpr T StaticValue = StaticValue_;
 
   //! Default Constructor. Only if the value is stored at compile-time.
   inline static_or_dynamic() { }
@@ -158,49 +166,55 @@ public:
    * assert failure.
    */
   inline explicit static_or_dynamic(T val) {
-    assert(val == ValueAtCTime);
-    (void)val; // silence "unused parameter" warning
+    eigen_assert(val == StaticValue);
+    (void)val; // silence "unused parameter" warning if eigen_assert() gets optimized out
   }
 
   /** \brief Get the value stored.
    *
-   * The same syntax works both for dynamic and compile-time storage.
+   * The same call syntax works both for dynamic and compile-time storage.
    */
-  inline T value() const { return ValueAtCTime; }
+  inline T value() const { return StaticValue; }
 
   /** \brief Get the value stored.
    *
-   * The same syntax works both for dynamic and compile-time storage.
+   * The same call syntax works both for dynamic and compile-time storage.
    */
-  inline T operator()() const { return ValueAtCTime; }
+  inline T operator()() const { return StaticValue; }
 };
 
-/** \brief Template Specialization -- see \ref static_or_dynamic<T_,Value>
+/** \brief Template Specialization -- see \ref static_or_dynamic<T_,IsDynamic_,StaticValue_>
  *
  * Specialization for the case if the value is known only at runtime.
  */
-template<typename T_>
-class static_or_dynamic<T_, Eigen::Dynamic>
+template<typename T_, T_ StaticValue_>
+class static_or_dynamic<T_, true, StaticValue_>
 {
 public:
-  //! See \ref static_or_dynamic<T_,Value>::T
+
+  //! Type of the value we are storing. See \ref static_or_dynamic<T_,IsDynamic_,StaticValue_>::T
   typedef T_ T;
-  //! See \ref static_or_dynamic<T_,Value>::ValueAtCTime. This is now fixed to Eigen::Dynamic
-  static constexpr T ValueAtCTime = Eigen::Dynamic;
+  //! Whether this value is flexible at run-time (dynamic), or fixed at compile-time (static).
+  static constexpr bool IsDynamic = true;
+
   
   //! No default constructor.
-  static_or_dynamic() = delete;  // no default constructor.
+  static_or_dynamic() = delete;
   /** \brief Constructor which initializes the value to \a val.
    *
    * The stored value may not be subsequently changed.
    */
   inline explicit static_or_dynamic(T val) : _dyn_value(val) { }
 
+
   //! See \ref static_or_dynamic<typename T_, int Value>::value()
   inline T value() const { return _dyn_value; }
+
   //! See \ref static_or_dynamic<typename T_, int Value>::operator()()
   inline T operator()() const { return value(); }
+
 private:
+
   //! The dynamically stored value
   const T _dyn_value;
 };

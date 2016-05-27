@@ -29,7 +29,7 @@
 
 
 #include <tomographer/qit/util.h>
-#include <tomographer/tools/util.h>
+#include <tomographer/tools/cxxutil.h>
 #include <tomographer/tools/loggers.h>
 
 #include <boost/math/constants/constants.hpp>
