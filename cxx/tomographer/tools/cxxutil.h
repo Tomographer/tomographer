@@ -86,6 +86,18 @@
 // Some C++ helpers
 // -----------------------------------------------------------------------------
 
+
+
+/** \brief Tool for static assertions without message.
+ *
+ * Simply use as message to C++11's \a static_assert() a stringified version of the
+ * expression itself.
+ */
+#define TOMO_STATIC_ASSERT_EXPR(...)				\
+  static_assert(__VA_ARGS__, #__VA_ARGS__)
+
+
+
 namespace Tomographer
 {
 namespace Tools
@@ -149,7 +161,7 @@ class static_or_dynamic
 
 public:
   // definitions here are for the static case, the dynamic case will be specialized below.
-  TOMO_STATIC_ASSERT_EXPR(IsDynamic_ == false)
+  TOMO_STATIC_ASSERT_EXPR(IsDynamic_ == false) ;
 
   //! Type of the value we are storing
   typedef T_ T;
@@ -367,15 +379,6 @@ constexpr inline conststr extractFuncName(const conststr & funcname)
 }
 
 
-
-
-/** \brief Tool for static assertions without message.
- *
- * Simply use as message to C++11's \a static_assert() a stringified version of the
- * expression itself.
- */
-#define TOMO_STATIC_ASSERT_EXPR(...)				\
-  static_assert(__VA_ARGS__, #__VA_ARGS__)
 
 
 

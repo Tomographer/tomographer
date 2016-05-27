@@ -142,7 +142,6 @@ struct GenGellMannFunctor3
 };
 
 } // namespace tomo_internal
-
 } // namespace Tomographer
 
 namespace Eigen { namespace internal {
@@ -168,8 +167,7 @@ struct functor_has_linear_access<Tomographer::tomo_internal::GenGellMannFunctor3
 // ---
 } } // namespace Eigen::internal, Eigen
 
-namespace Tomographer
-{
+namespace Tomographer {
 
 
 /** \brief Parameterization of density matrices in su(N) generators

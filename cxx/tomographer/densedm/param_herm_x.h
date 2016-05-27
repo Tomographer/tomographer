@@ -40,82 +40,208 @@
 
 #include <Eigen/Core>
 
+#include <tomographer/tools/cxxutil.h> // static_or_dynamic
+
+
+// // heavily inspired by Eigen::Replicate [Eigen/src/Core/Replicate.h]
+// namespace Eigen {
+// namespace internal {
+// template<typename MatrixType,int RowFactor,int ColFactor>
+// struct traits<Tomographer::DenseDM::internal::ParamHermToX<MatrixType,RowFactor,ColFactor> >
+//   : traits<MatrixType>
+// {
+//   typedef Eigen::NumTraits<typename MatrixType::Scalar>::Real Scalar;
+//   typedef typename traits<MatrixType>::StorageKind StorageKind;
+//   typedef typename traits<MatrixType>::XprKind XprKind;
+//   enum {
+//     Factor = (RowFactor==Dynamic || ColFactor==Dynamic) ? Dynamic : RowFactor*ColFactor
+//   };
+//   typedef typename nested<MatrixType,1>::type MatrixTypeNested;
+//   typedef typename remove_reference<MatrixTypeNested>::type _MatrixTypeNested;
+//   enum {
+//     RowsAtCompileTime = (int(MatrixType::RowsAtCompileTime)==Eigen::Dynamic
+//                          ? Eigen::Dynamic
+//                          : MatrixType::RowsAtCompileTime*MatrixType::RowsAtCompileTime ),
+//     ColsAtCompileTime = 1,
+//     MaxRowsAtCompileTime = RowsAtCompileTime,
+//     MaxColsAtCompileTime = 1,
+//     IsRowMajor = MaxRowsAtCompileTime==1 && MaxColsAtCompileTime!=1 ? 1
+//                : MaxColsAtCompileTime==1 && MaxRowsAtCompileTime!=1 ? 0
+//                : (MatrixType::Flags & RowMajorBit) ? 1 : 0,
+//     Flags = (_MatrixTypeNested::Flags & HereditaryBits & ~RowMajorBit) | (IsRowMajor ? RowMajorBit : 0),
+//     CoeffReadCost = _MatrixTypeNested::CoeffReadCost * Eigen::NumTraits<typename MatrixType::Scalar>::MulCost
+//   };
+// };
+// } // namespace internal
+// } // namespace Eigen
+
+
+// namespace Tomographer {
+// namespace DenseDM {
+// namespace internal {
+
+// template<typename MatrixType>
+// class ParamHermToX : public Eigen::MatrixBase<ParamHermToX<MatrixType> >
+// {
+//   typedef typename internal::traits<ParamHermToX>::Scalar RealScalar;
+//   typedef typename internal::traits<ParamHermToX>::MatrixTypeNested MatrixTypeNested;
+//   typedef typename internal::traits<ParamHermToX>::_MatrixTypeNested _MatrixTypeNested;
+// public:
+
+//   typedef typename MatrixBase<ParamHermToX> Base;
+//   EIGEN_DENSE_PUBLIC_INTERFACE(ParamHermToX)
+  
+//   template<typename OriginalMatrixType>
+//   inline explicit ParamHermToX(const OriginalMatrixType& H)
+//     : _H(H), _dimtri(H.rows()*(H.rows()-1)/2)
+//   {
+//     EIGEN_STATIC_ASSERT((internal::is_same<typename internal::remove_const<MatrixType>::type,OriginalMatrixType>::value),
+//                         THE_MATRIX_OR_EXPRESSION_THAT_YOU_PASSED_DOES_NOT_HAVE_THE_EXPECTED_TYPE) ;
+//     eigen_assert(H.rows() == H.cols())
+//   }
+  
+//   inline Index rows() const { return _H.rows()*_H.rows(); }
+//   inline Index cols() const { return 1; }
+
+//   inline RealScalar coeff(Index rowId, Index colId) const
+//   {
+//     eigen_assert(colId == 0);
+
+//     if (rowId < _H.rows()) {
+//       return _H.coeff(rowId, rowId).real();
+//     }
+//     rowId -= _H.rows();
+//     if (rowId < _dimtri.value()) {
+//       return _H.coeff(......????)
+//     }
+//
+//     ............ MAYBE NOT THE WAY TO GO .............
+
+//     // try to avoid using modulo; this is a pure optimization strategy
+//     const Index actual_row  = internal::traits<MatrixType>::RowsAtCompileTime==1 ? 0
+//       : RowFactor==1 ? rowId
+//       : rowId%m_matrix.rows();
+//     const Index actual_col  = internal::traits<MatrixType>::ColsAtCompileTime==1 ? 0
+//       : ColFactor==1 ? colId
+//       : colId%m_matrix.cols();
+    
+//     return m_matrix.coeff(actual_row, actual_col);
+//   }
+
+//   const _MatrixTypeNested& nestedExpression() const
+//   { 
+//     return m_matrix;
+//   }
+
+// protected:
+//   MatrixTypeNested _H;
+//   const static_or_dynamic<Index,(MatrixType::RowsAtCompileTime==Eigen::Dynamic),
+//                           Index(MatrixType::RowsAtCompileTime*(MatrixType::RowsAtCompileTime-1)/2> _dimtri;
+// };
+
+// } // namespace internal 
+// } // namespace DenseDM
+// } // namespace Tomographer
+
+
+// ================================================================================
+
 
 namespace Tomographer {
+namespace DenseDM {
 
-
-/** \brief Get the Hermitian matrix parameterized by the "X-parameter" vector \c x
+/** \brief Convert hermitian matrices to vectors via their \ref pageParamX
  *
- * This calculates the hermitian matrix which is parameterized by \c x.
- * See \ref pageParamsX.
  */
-template<bool OnlyLowerTri=false, typename Derived1=Eigen::MatrixXd, typename Derived2=Eigen::MatrixXd>
-inline void param_x_to_herm(Eigen::MatrixBase<Derived1>& Herm, const Eigen::DenseBase<Derived2>& x)
-{
-  { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(Derived1); }
+template<typename DenseDMTypes_>
+class ParamX {
+public:
+  typename DenseDMTypes_ DenseDMTypes;
+  typename DenseDMTypes::MatrixType MatrixType;
+  typename DenseDMTypes::MatrixTypeConstRef MatrixTypeConstRef;
+  typename DenseDMTypes::VectorParamType VectorParamType;
+  typename DenseDMTypes::VectorParamTypeConstRef VectorParamTypeConstRef;
+  typename DenseDMTypes::RealScalar RealScalar;
+  typename DenseDMTypes::ComplexScalar ComplexScalar;
+  typename typename MatrixType::Index IndexType;
 
-  const int dim = Herm.rows();
-  const int dimtri = dim*(dim-1)/2;
-  eigen_assert(dim == Herm.cols()); // assert Herm is (dim x dim)
-  eigen_assert(x.rows() == dim*dim && x.cols() == 1); // assert x is (dim*dim x 1)
+  /** \brief Constructor.  Just give it the DenseDMTypes instance.
+   *
+   */
+  ParamX(DenseDMTypes dmt) : _dmt(dmt) { }
 
-  typedef typename Derived1::Scalar Scalar;
-  typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
-  
-  Herm.diagonal().real() = x.block(0,0,dim,1);
-  Herm.diagonal().imag().setZero();
-  
-  int n, m;
-  for (n = 1; n < dim; ++n) {
-    for (m = 0; m < n; ++m) {
-      const int k = dim + n*(n-1)/2 + m;
-      const int l = dimtri + k;
-      Herm(n,m) = boost::math::constants::half_root_two<RealScalar>() * Scalar(x(k), x(l));
-      if (!OnlyLowerTri) {
-        // complex conj. on opposite triangular part
-        Herm(m,n) = boost::math::constants::half_root_two<RealScalar>() * Scalar(x(k), -x(l));
+  /** \brief Get the X-parameterization corresponding to a given hermitian matrix
+   *
+   * See also \ref pageParamsX and \ref param_x_to_herm().
+   * 
+   * \note This function only accesses lower triangular part of \c Herm.
+   *
+   * \todo Currently, we can't pass an expression as second parameter here. So use \ref
+   *       Eigen::Ref instead to allow for that, too...
+   */
+  inline VectorParamType HermToX(MatrixTypeConstRef Herm)
+  {
+    // hope RVO kicks in
+    VectorParamType x(_dmt.initVectorParamType());
+    const IndexType dimtri = (_dmt.dim2 - _dmt.dim())/2;
+
+    eigen_assert(_dmt.dim() == Herm.cols()); // assert Herm is (dim x dim)
+    
+    x.block(0,0,_dmt.dim(),1) = Herm.real().diagonal();
+
+    IndexType k = _dmt.dim();
+    IndexType n, m;
+    for (n = 1; n < _dmt.dim(); ++n) {
+      for (m = 0; m < n; ++m) {
+        x(k)          = Herm(n,m).real() * boost::math::constants::root_two<RealScalar>();
+        x(dimtri + k) = Herm(n,m).imag() * boost::math::constants::root_two<RealScalar>();
+        ++k;
       }
     }
+
+    return x;
   }
+  
+  /** \brief Get the Hermitian matrix parameterized by the "X-parameter" vector \c x
+   *
+   * This calculates the hermitian matrix which is parameterized by \c x.
+   * See \ref pageParamsX.
+   */
+  template<bool OnlyLowerTri = false>
+  inline MatrixType XToHerm(VectorParamTypeConstRef x)
+  {
+    // should be optimized by compiler via RVO
+    MatrixType Herm(_dmt.initMatrixType());
+    
+    const IndexType dimtri = (_dmt.dim2()-_dmt.dim())/2;
+    eigen_assert(x.rows() == _dmt.dim2() && x.cols() == 1); // assert x is (dim*dim x 1)
+
+    Herm.diagonal().real() = x.block(0,0,_dmt.dim(),1);
+    Herm.diagonal().imag().setZero();
+  
+    IndexType k = _dmt.dim();
+    IndexType n, m;
+    for (n = 1; n < dim; ++n) {
+      for (m = 0; m < n; ++m) {
+        Herm(n,m) = boost::math::constants::half_root_two<RealScalar>() * Scalar(x(k), x(dimtri + k));
+        if (!OnlyLowerTri) {
+          // complex conj. on opposite triangular part
+          Herm(m,n) = boost::math::constants::half_root_two<RealScalar>() * Scalar(x(k), -x(dimtri + k));
+        }
+        ++k;
+      }
+    }
+    return Herm;
+  }
+  
+protected:
+  DenseDMTypes _dmt;
 };
 
 
-/** \brief Get the X-parameterization corresponding to a given hermitian matrix
- *
- * See also \ref pageParamsX and \ref param_x_to_herm().
- * 
- * \note This function only accesses lower triangular part of \c Herm.
- *
- * \todo Currently, we can't pass an expression as second parameter here. So use \ref
- *       Eigen::Ref instead to allow for that, too...
- */
-template<typename Derived1, typename Derived2>
-inline void param_herm_to_x(Eigen::DenseBase<Derived1>& x, const Eigen::MatrixBase<Derived2>& Herm)
-{
-  { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(Derived1); }
-
-  const int dim = Herm.rows();
-  const int dimtri = dim*(dim-1)/2;
-  eigen_assert(dim == Herm.cols()); // assert Herm is (dim x dim)
-  eigen_assert(x.rows() == dim*dim && x.cols() == 1); // assert x is (dim*dim x 1)
-
-  typedef typename Derived1::Scalar Scalar;
-  typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
-  
-  x.block(0,0,dim,1) = Herm.real().diagonal();
-
-  int n, m;
-  for (n = 1; n < dim; ++n) {
-    for (m = 0; m < n; ++m) {
-      const int k = dim + n*(n-1)/2 + m;
-      const int l = dimtri + k;
-      x(k) = Herm(n,m).real() * boost::math::constants::root_two<RealScalar>();
-      x(l) = Herm(n,m).imag() * boost::math::constants::root_two<RealScalar>();
-    }
-  }
-}
 
 
+} // namespace DenseDM
 } // namespace Tomographer
 
 

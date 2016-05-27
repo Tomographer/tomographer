@@ -30,7 +30,7 @@
 #include <cstddef>
 #include <cassert>
 
-#include <Eigen/Matrix>
+#include <Eigen/Eigen>
 #include <tomographer/tools/cxxutil.h> // static_or_dynamic, TOMOGRAPHER_ENABLED_IF
 
 /** \file densedmtypes.h
@@ -79,13 +79,18 @@ struct DMTypes {
 
   //! Matrix type, to store the density operator as a dense matrix
   typedef Eigen::Matrix<ComplexScalar, FixedDim, FixedDim>  MatrixType;
+  //! Shorthand for a const reference to a MatrixType-like Eigen object
+  typedef const Eigen::Ref<const MatrixType> &  MatrixTypeConstRef;
 
-
-  /** \brief Real dim*dim Vector */
+  //! Real dim*dim Vector
   typedef Eigen::Matrix<RealScalar, FixedDim2, 1> VectorParamType;
+  //! Shorthand for a const reference to a VectorParamType-like Eigen object
+  typedef const Eigen::Ref<const VectorParamType> &  VectorParamTypeConstRef;
 
   /** \brief Real dim*dim-1 Vector */
   typedef Eigen::Matrix<RealScalar, FixedNdof, 1> VectorParamNdofType;
+  //! Shorthand for a const reference to a VectorParamNdofType-like Eigen object
+  typedef const Eigen::Ref<const VectorParamNdofType> &  VectorParamNdofTypeConstRef;
   
 
 
@@ -183,19 +188,6 @@ struct DMTypes {
 private:
   const Tools::static_or_dynamic<std::size_t, IsDynamicDim, (std::size_t)FixedDim> _dim;
 };
-
-
-// /** \brief Default generic C++ types for density matrix objects
-//  *
-//  * The dimension is dynamically allocated, and the matrices / vectors in parameterizations
-//  * are store as dense objects with \c double precision.
-//  *
-//  * Because the dimension is dynamic, there might be a slight performance loss compared to
-//  * if the dimension is fixed at compile-time.
-//  */
-// typedef DMTypes<Eigen::Dynamic, double>  DefaultDMTypes;
-
-
 
 
 

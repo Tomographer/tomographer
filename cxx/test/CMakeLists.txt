@@ -109,6 +109,8 @@ endmacro(addTomographerTest)
 # add tests for tomographer library.
 
 addTomographerTest(test_mathtools_sphcoords.cxx  "")
+addTomographerTest(test_densedm_dmtypes.cxx "")
+addTomographerTest(test_densedm_distmeasures.cxx "")
 addTomographerTest(test_tools_util.cxx  "")
 addTomographerTest(test_tools_conststr.cxx  "")
 addTomographerTest(test_tools_ezmatio_1.cxx  "matio")
@@ -123,7 +125,6 @@ addTomographerTest(test_simple_find_zero.cxx  "")
 addTomographerTest(test_mhrw_bin_err.cxx  "")
 addTomographerTest(test_multi_omp.cxx  "openmp")
 addTomographerTest(test_histogram.cxx  "")
-
 
 
 add_executable(test_tomorun_1qubit_analytic_solution_check

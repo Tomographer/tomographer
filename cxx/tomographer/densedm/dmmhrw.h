@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,16 +24,14 @@
  * SOFTWARE.
  */
 
-#ifndef DMLLHINTEGRATOR_H
-#define DMLLHINTEGRATOR_H
+#ifndef TOMOGRAPHER_DENSEDM_DMMHRW_H
+#define TOMOGRAPHER_DENSEDM_DMMHRW_H
 
 #include <cstddef>
 #include <cmath>
 
 #include <random>
 
-#include <tomographer/qit/util.h>
-#include <tomographer/qit/dist.h>
 #include <tomographer/tomoproblem.h>
 #include <tomographer/tools/loggers.h>
 #include <tomographer/mhrw.h>
@@ -49,7 +47,7 @@
  */
 
 namespace Tomographer {
-
+namespace DenseDM {
 
 /** \brief A random walk in the density matrix space of a Hilbert state space of a quantum
  * system
@@ -67,7 +65,7 @@ namespace Tomographer {
  *      pageInterfaceMHRWStatsCollector)
  */
 template<typename TomoProblem, typename Rng, typename Log>
-class DMStateSpaceLLHMHWalker
+class StateSpaceLLHMHWalker
 {
 public:
   //! The data types of our problem
@@ -211,177 +209,6 @@ public:
 
 };
 
-
-
-
-
-/** \brief Calculate the fidelity to a reference state for each sample
- *
- */
-template<typename TomoProblem_, typename FidValueType_ = double>
-class FidelityToRefCalculator
-{
-public:
-  typedef TomoProblem_ TomoProblem;
-  typedef typename TomoProblem::MatrQ MatrQ;
-  typedef typename MatrQ::MatrixType MatrixType;
-
-  //! For ValueCalculator interface : value type
-  typedef FidValueType_ ValueType;
-
-private:
-  MatrixType _ref_T;
-
-public:
-  //! Constructor, take the reference state to be the MLE
-  FidelityToRefCalculator(const TomoProblem & tomo)
-    : _ref_T(tomo.matq.initMatrixType())
-  {
-    _ref_T = tomo.T_MLE;
-  }
-  //! Constructor, the reference state is T_ref (in \ref pageParamsT)
-  FidelityToRefCalculator(const TomoProblem & tomo, const MatrixType & T_ref)
-    : _ref_T(tomo.matq.initMatrixType())
-  {
-    _ref_T = T_ref;
-  }
-
-  inline ValueType getValue(const MatrixType & T) const
-  {
-    return fidelity_T<ValueType>(T, _ref_T);
-  }
-};
-
-/** \brief Calculate the "purified distance" to a reference state for each sample
- *
- * The purified distance \f$ P(\rho,\sigma) \f$ for two normalized states is defined as
- * \f[
- *   P\left(\rho,\sigma\right) = \sqrt{1 - F^2\left(\rho,\sigma\right)}\ .
- * \f]
- */
-template<typename TomoProblem_, typename ValueType_ = double>
-class PurifDistToRefCalculator
-{
-public:
-  typedef TomoProblem_ TomoProblem;
-  typedef typename TomoProblem::MatrQ MatrQ;
-  typedef typename MatrQ::MatrixType MatrixType;
-
-  //! For ValueCalculator interface : value type
-  typedef ValueType_ ValueType;
-
-private:
-  MatrixType _ref_T;
-
-public:
-  //! Constructor, take the reference state to be the MLE
-  PurifDistToRefCalculator(const TomoProblem & tomo)
-    : _ref_T(tomo.matq.initMatrixType())
-  {
-    _ref_T = tomo.T_MLE;
-  }
-  //! Constructor, the reference state is T_ref (in \ref pageParamsT)
-  PurifDistToRefCalculator(const TomoProblem & tomo, const MatrixType & T_ref)
-    : _ref_T(tomo.matq.initMatrixType())
-  {
-    _ref_T = T_ref;
-  }
-
-  inline ValueType getValue(const MatrixType & T) const
-  {
-    auto F = fidelity_T<ValueType>(T, _ref_T);
-    return std::sqrt(ValueType(1) - F*F);
-  }
-};
-
-/** \brief Calculate the trace distance to a reference state for each sample
- *
- */
-template<typename TomoProblem_, typename TrDistValueType_ = double>
-class TrDistToRefCalculator
-{
-public:
-  typedef TomoProblem_ TomoProblem;
-  typedef typename TomoProblem::MatrQ MatrQ;
-  typedef typename MatrQ::MatrixType MatrixType;
-
-  //! For ValueCalculator interface : value type
-  typedef TrDistValueType_ ValueType;
-
-private:
-  MatrixType _ref_rho;
-
-public:
-  //! Constructor, take the reference state to be the MLE
-  TrDistToRefCalculator(const TomoProblem & tomo)
-    : _ref_rho(tomo.matq.initMatrixType())
-  {
-    _ref_rho = tomo.rho_MLE;
-  }
-  //! Constructor, the reference state is \a rho_ref
-  TrDistToRefCalculator(const TomoProblem & tomo, const MatrixType& rho_ref)
-    : _ref_rho(tomo.matq.initMatrixType())
-  {
-    _ref_rho = rho_ref;
-  }
-
-  inline ValueType getValue(const MatrixType & T) const
-  {
-    return boost::math::constants::half<ValueType>() *
-      (T*T.adjoint() - _ref_rho).template selfadjointView<Eigen::Lower>()
-      .eigenvalues().cwiseAbs().sum();
-  }
-};
-
-/** \brief Calculate expectation value of an observable for each sample
- *
- */
-template<typename TomoProblem_>
-class ObservableValueCalculator
-{
-public:
-  typedef TomoProblem_ TomoProblem;
-  typedef typename TomoProblem::MatrQ MatrQ;
-  typedef typename MatrQ::MatrixType MatrixType;
-  typedef typename MatrQ::VectorParamType VectorParamType;
-
-  //! For ValueCalculator interface : value type
-  typedef typename MatrQ::RealScalar ValueType;
-
-private:
-  const TomoProblem & _tomo;
-
-  //! The observable we wish to watch the exp value with (in \ref pageParamsX)
-  VectorParamType _A_x;
-
-  //  MatrixType _A; // not needed
-
-public:
-  //! Constructor directly accepting \a A as a hermitian matrix
-  ObservableValueCalculator(const TomoProblem & tomo, const MatrixType & A)
-    : _tomo(tomo),
-      _A_x(tomo.matq.initVectorParamType())
-  {
-    param_herm_to_x(_A_x, A);
-  }
-
-  //! Constructor directly accepting the X parameterization of \a A
-  ObservableValueCalculator(const TomoProblem & tomo, const VectorParamType & A_x)
-    : _tomo(tomo),
-      _A_x(tomo.matq.initVectorParamType())
-  {
-    _A_x = A_x;
-  }
-
-  inline ValueType getValue(const MatrixType & T) const
-  {
-    MatrixType rho = _tomo.matq.initMatrixType();
-    rho = T*T.adjoint();
-    VectorParamType x = _tomo.matq.initVectorParamType();
-    param_herm_to_x(x, rho);
-    return _A_x.transpose() * x;
-  }
-};
 
 
 

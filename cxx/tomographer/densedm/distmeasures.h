@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,22 +24,40 @@
  * SOFTWARE.
  */
 
-#ifndef QIT_DIST_H
-#define QIT_DIST_H
+#ifndef TOMOGRAPHER_DENSEDM_DISTMEASURES_H
+#define TOMOGRAPHER_DENSEDM_DISTMEASURES_H
 
-/** \file dist.h
+
+/** \file distmeasures.h
  *
- * \brief Distance measures in Quantum Information Theory -- e.g. fidelity
+ * \brief Distance measures in quantum information for states represented as dense matrices
  *
  */
-
 
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 #include <Eigen/SVD>
 #include <unsupported/Eigen/MatrixFunctions>
 
+
 namespace Tomographer {
+namespace DenseDM {
+
+/** \brief Calculate the trace distance between two density matrices
+ *
+ * The trace distance between \f$ \rho \f$ and \f$ \sigma \f$ is defined as
+ * \f[
+ *   \delta(\rho,\sigma) = \frac{1}{2} \left\Vert \rho - \sigma \right\Vert_1 \ .
+ * \f]
+ *
+ */
+template<typename ValueType, typename Derived1, typename Derived2>
+inline ValueType trace_dist(const Eigen::MatrixBase<Derived1> & rho1, const Eigen::MatrixBase<Derived2> & rho2)
+{
+  return boost::math::constants::half<ValueType>() *
+    (rho1 - rho2).template selfadjointView<Eigen::Lower>()
+    .eigenvalues().cwiseAbs().sum();
+}
 
 
 /** \brief Fidelity between two density matrices
@@ -88,7 +106,7 @@ inline ValueType fidelity_T(const Eigen::MatrixBase<Der1>& T1, const Eigen::Matr
 
 
 
-
+} // namespace DenseDM
 } // namespace Tomographer
 
 
