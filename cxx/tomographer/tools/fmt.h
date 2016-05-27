@@ -41,7 +41,7 @@
 #include <sstream> // stringstream
 #include <iostream>
 
-#include <tomographer/tools/util.h> // PRINTFN_ARGS_SAFE
+#include <tomographer/tools/cxxutil.h> // PRINTFN_ARGS_SAFE
 
 
 namespace Tomographer

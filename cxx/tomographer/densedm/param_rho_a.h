@@ -24,8 +24,8 @@
  * SOFTWARE.
  */
 
-#ifndef QIT_PARAM_RHO_A_H
-#define QIT_PARAM_RHO_A_H
+#ifndef TOMOGRAPHER_DENSEDM_PARAM_RHO_A_H
+#define TOMOGRAPHER_DENSEDM_PARAM_RHO_A_H
 
 /** \file param_rho_a.h
  *
@@ -37,8 +37,8 @@
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 
-#include <tomographer/qit/matrq.h>
-#include <tomographer/qit/util.h>
+#include <tomographer/densedm/dmtypes.h>
+#include <tomographer/tools/eigenutil.h>
 
 #include <boost/math/constants/constants.hpp>
 
@@ -51,12 +51,12 @@ namespace Tomographer
 namespace tomo_internal
 {
 
-template<typename MatrQ_, typename Coeffs>
+template<typename DMTypes_, typename Coeffs>
 struct GenGellMannFunctor12
 {
-  typedef MatrQ_ MatrQ;
-  typedef typename MatrQ::MatrixType::Index MatIndex;
-  GenGellMannFunctor12(MatrQ matq_, MatIndex j_, MatIndex k_)
+  typedef DMTypes_ DMTypes;
+  typedef typename DMTypes::MatrixType::Index MatIndex;
+  GenGellMannFunctor12(DMTypes matq_, MatIndex j_, MatIndex k_)
     : matq(matq_),
       j(j_),
       k(k_)
@@ -64,12 +64,12 @@ struct GenGellMannFunctor12
     eigen_assert(j < k);
     eigen_assert(k <= (MatIndex)matq.dim());
   }
-  MatrQ matq;
+  DMTypes matq;
   MatIndex j;
   MatIndex k;
 
   template<typename Index>
-  inline const typename MatrQ::ComplexScalar operator() (Index row, Index col) const
+  inline const typename DMTypes::ComplexScalar operator() (Index row, Index col) const
   {
     if (row == j && col == k) {
       return Coeffs::CoeffJK();
@@ -81,39 +81,39 @@ struct GenGellMannFunctor12
   }
 };
 
-template<typename MatrQ>
+template<typename DMTypes>
 struct coeffs1 {
-  static inline typename MatrQ::ComplexScalar CoeffJK() { return typename MatrQ::ComplexScalar(1, 0); }
-  static inline typename MatrQ::ComplexScalar CoeffKJ() { return typename MatrQ::ComplexScalar(1, 0); }
+  static inline typename DMTypes::ComplexScalar CoeffJK() { return typename DMTypes::ComplexScalar(1, 0); }
+  static inline typename DMTypes::ComplexScalar CoeffKJ() { return typename DMTypes::ComplexScalar(1, 0); }
 };
-template<typename MatrQ>
+template<typename DMTypes>
 struct coeffs2 {
-  static inline typename MatrQ::ComplexScalar CoeffJK() { return typename MatrQ::ComplexScalar(0, -1); }
-  static inline typename MatrQ::ComplexScalar CoeffKJ() { return typename MatrQ::ComplexScalar(0, +1); }
+  static inline typename DMTypes::ComplexScalar CoeffJK() { return typename DMTypes::ComplexScalar(0, -1); }
+  static inline typename DMTypes::ComplexScalar CoeffKJ() { return typename DMTypes::ComplexScalar(0, +1); }
 };
 
-template<typename MatrQ>
+template<typename DMTypes>
 struct GenGellMannFunctor1
 {
-  typedef GenGellMannFunctor12<MatrQ, coeffs1<MatrQ> > type;
+  typedef GenGellMannFunctor12<DMTypes, coeffs1<DMTypes> > type;
 };
-template<typename MatrQ>
+template<typename DMTypes>
 struct GenGellMannFunctor2
 {
-  typedef GenGellMannFunctor12<MatrQ, coeffs2<MatrQ> > type;
+  typedef GenGellMannFunctor12<DMTypes, coeffs2<DMTypes> > type;
 };
 
 
-template<typename MatrQ_>
+template<typename DMTypes_>
 struct GenGellMannFunctor3
 {
-  typedef GenGellMannFunctor3<MatrQ_> type;
+  typedef GenGellMannFunctor3<DMTypes_> type;
 
-  typedef MatrQ_ MatrQ;
-  typedef typename MatrQ::RealScalar RealScalar;
-  typedef typename MatrQ::MatrixType::Index MatIndex;
+  typedef DMTypes_ DMTypes;
+  typedef typename DMTypes::RealScalar RealScalar;
+  typedef typename DMTypes::MatrixType::Index MatIndex;
 
-  GenGellMannFunctor3(MatrQ matq_, MatIndex l_)
+  GenGellMannFunctor3(DMTypes matq_, MatIndex l_)
     : matq(matq_),
       l(l_)
   {
@@ -121,12 +121,12 @@ struct GenGellMannFunctor3
     normalization = std::sqrt( RealScalar(2) / ((l+1)*(l+2)) );
     eigen_assert(l < (MatIndex)matq.dim()-1);
   }
-  MatrQ matq;
+  DMTypes matq;
   MatIndex l;
   RealScalar normalization;
 
   template<typename Index>
-  inline const typename MatrQ::ComplexScalar operator() (Index row, Index col) const
+  inline const typename DMTypes::ComplexScalar operator() (Index row, Index col) const
   {
     if (row != col) {
       return 0;
@@ -147,28 +147,28 @@ struct GenGellMannFunctor3
 namespace Eigen { namespace internal {
 // ---
 // functor_traits for GenGellMannFunctor12
-template<typename MatrQ, typename coeffs>
-struct functor_traits<Tomographer::tomo_internal::GenGellMannFunctor12<MatrQ, coeffs> >
+template<typename DMTypes, typename coeffs>
+struct functor_traits<Tomographer::tomo_internal::GenGellMannFunctor12<DMTypes, coeffs> >
 {
-  enum { Cost = 4*NumTraits<typename MatrQ::ComplexScalar>::AddCost, PacketAccess = false, IsRepeatable = true };
+  enum { Cost = 4*NumTraits<typename DMTypes::ComplexScalar>::AddCost, PacketAccess = false, IsRepeatable = true };
 };
 // functor_has_linear_access for GenGellMannFunctor12
-template<typename MatrQ, typename coeffs>
-struct functor_has_linear_access<Tomographer::tomo_internal::GenGellMannFunctor12<MatrQ, coeffs> >
+template<typename DMTypes, typename coeffs>
+struct functor_has_linear_access<Tomographer::tomo_internal::GenGellMannFunctor12<DMTypes, coeffs> >
 { enum { ret = 0 }; };
 // functor_traits for GenGellMannFunctor3
-template<typename MatrQ>
-struct functor_traits<Tomographer::tomo_internal::GenGellMannFunctor3<MatrQ> >
-{ enum { Cost = 4*NumTraits<typename MatrQ::ComplexScalar>::AddCost, PacketAccess = false, IsRepeatable = true }; };
+template<typename DMTypes>
+struct functor_traits<Tomographer::tomo_internal::GenGellMannFunctor3<DMTypes> >
+{ enum { Cost = 4*NumTraits<typename DMTypes::ComplexScalar>::AddCost, PacketAccess = false, IsRepeatable = true }; };
 // functor_has_linear_access for GenGellMannFunctor3
-template<typename MatrQ>
-struct functor_has_linear_access<Tomographer::tomo_internal::GenGellMannFunctor3<MatrQ> >
+template<typename DMTypes>
+struct functor_has_linear_access<Tomographer::tomo_internal::GenGellMannFunctor3<DMTypes> >
 { enum { ret = 0 }; };
 // ---
 } } // namespace Eigen::internal, Eigen
 
 namespace Tomographer {
-
+namespace DenseDM {
 
 /** \brief Parameterization of density matrices in su(N) generators
  *
@@ -176,22 +176,25 @@ namespace Tomographer {
  *
  * Additionally, this class gives access to the constructed generalized Gell-Mann matrices
  * (see \ref pageParamsA), see \ref getLambda().
+ *
+ * \todo This class can probably be better optimized, as currently the inner products are
+ *       calculated by Hilbert-Schmidt matrix multiplication ...
  */
-template<typename MatrQ_>
-class ParamRhoA
+template<typename DMTypes_>
+class ParamA
 {
 public:
   //! The C++ types for quantum objects and parameterizations
-  typedef MatrQ_ MatrQ;
+  typedef DMTypes_ DMTypes;
   //! The Matrix type to use to describe hermitian matrices.
-  typedef typename MatrQ::MatrixType MatrixType;
+  typedef typename DMTypes::MatrixType MatrixType;
   //! The Matrix type to use to describe the \ref pageParamsA of a hermitian matrix.
-  typedef typename MatrQ::VectorParamNdofType VectorParamNdofType;
+  typedef typename DMTypes::VectorParamNdofType VectorParamNdofType;
   //! The real scalar type. Usually this is \c double.
-  typedef typename MatrQ::RealScalar RealScalar;
+  typedef typename DMTypes::RealScalar RealScalar;
 
 private:
-  MatrQ matq;
+  const DMTypes _dmt;
 
   //! Cached generators of \f$ su(d)\f$.
   typename Tools::eigen_std_vector<MatrixType>::type lambda;
@@ -199,51 +202,51 @@ private:
 public:
   /** \brief Construct an object which can perform A parameterization transformations.
    *
-   * Specify the runtime \a MatrQ object to use (see \ref pageInterfaceMatrQ).
+   * Specify the runtime \a DMTypes object to use (see \ref pageInterfaceDMTypes).
    *
    * Once constructed, this object has precalculated and cached the generalized Gell-Mann
    * matrices (see \ref pageParamsA), and these can be obtained with \ref getLambda().
    */
-  ParamRhoA(MatrQ matq_)
-    : matq(matq_)
+  ParamA(DMTypes dmt_)
+    : _dmt(dmt_)
   {
     // calculate and cache the generalized Gell-Mann matrices
-    lambda.resize(matq.ndof());
+    lambda.resize(_dmt.ndof());
     std::size_t count = 0;
     // first kind
-    for (std::size_t j = 0; j < matq.dim(); ++j) {
-      for (std::size_t k = j+1; k < matq.dim(); ++k) {
+    for (std::size_t j = 0; j < _dmt.dim(); ++j) {
+      for (std::size_t k = j+1; k < _dmt.dim(); ++k) {
 	lambda[count] = MatrixType::NullaryExpr(
-	    matq.dim(),
-	    matq.dim(),
-	    typename tomo_internal::GenGellMannFunctor1<MatrQ>::type(matq, j, k)
+	    _dmt.dim(),
+	    _dmt.dim(),
+	    typename tomo_internal::GenGellMannFunctor1<DMTypes>::type(_dmt, j, k)
 	    );
 	++count;
       }
     }
     // second kind
-    for (std::size_t j = 0; j < matq.dim(); ++j) {
-      for (std::size_t k = j+1; k < matq.dim(); ++k) {
+    for (std::size_t j = 0; j < _dmt.dim(); ++j) {
+      for (std::size_t k = j+1; k < _dmt.dim(); ++k) {
 	lambda[count] = MatrixType::NullaryExpr(
-	    matq.dim(),
-	    matq.dim(),
-	    typename tomo_internal::GenGellMannFunctor2<MatrQ>::type(matq, j, k)
+	    _dmt.dim(),
+	    _dmt.dim(),
+	    typename tomo_internal::GenGellMannFunctor2<DMTypes>::type(_dmt, j, k)
 	    );
 	++count;
       }
     }
     // third kind
-    for (std::size_t l = 0; l < matq.dim()-1; ++l) {
+    for (std::size_t l = 0; l < _dmt.dim()-1; ++l) {
       lambda[count] = MatrixType::NullaryExpr(
-	  matq.dim(),
-	  matq.dim(),
-	  typename tomo_internal::GenGellMannFunctor3<MatrQ>::type(matq, l)
+	  _dmt.dim(),
+	  _dmt.dim(),
+	  typename tomo_internal::GenGellMannFunctor3<DMTypes>::type(_dmt, l)
 	  );
       ++count;
     }
     // got them all?
     eigen_assert(count == lambda.size());
-    eigen_assert(count == (std::size_t)matq.ndof());
+    eigen_assert(count == (std::size_t)_dmt.ndof());
   }
 
   /** \brief Generalized Gell-Mann matrices.
@@ -264,7 +267,7 @@ public:
    */
   inline const MatrixType & getLambda(std::size_t j) const
   {
-    eigen_assert(j < matq.ndof());
+    eigen_assert(j < _dmt.ndof());
     return lambda[j];
   }
 
@@ -276,15 +279,18 @@ public:
    *       will only reflect its traceless part, i.e. \f$ \texttt{rho} -
    *       \mathrm{tr}(\texttt{rho})\mathbb{I}/d \f$.
    */
-  inline void rhoToA(Eigen::Ref<VectorParamNdofType> a, const Eigen::Ref<const MatrixType> & rho) const
+  inline VectorParamNdofType
+  rhoToA(const Eigen::Ref<const MatrixType> & rho) const
   {
-    eigen_assert((std::size_t)a.size() == matq.ndof());
-    eigen_assert((std::size_t)rho.rows() == matq.dim());
-    eigen_assert((std::size_t)rho.cols() == matq.dim());
+    VectorParamNdofType a(_dmt.initVectorParamNdofType());
+    eigen_assert((std::size_t)a.size() == _dmt.ndof());
+    eigen_assert((std::size_t)rho.rows() == _dmt.dim());
+    eigen_assert((std::size_t)rho.cols() == _dmt.dim());
     for (std::size_t n = 0; n < lambda.size(); ++n) {
       a(n) = (rho * lambda[n].template selfadjointView<Eigen::Lower>())
 	.real().trace() * boost::math::constants::half_root_two<RealScalar>();
     }
+    return a;
   }
 
   /** \brief Reconstruct a hermitian traceless matrix from its \ref pageParamsA.
@@ -292,22 +298,25 @@ public:
    * This method computes the hermitian matrix given by its corresponding \ref
    * pageParamsA. The matrix is shifted by the identity so that it has trace \a trace.
    */
-  inline void aToRho(Eigen::Ref<MatrixType> rho, const Eigen::Ref<const VectorParamNdofType> & a,
-		     RealScalar trace = 1.0) const
+  inline MatrixType
+  aToRho(const Eigen::Ref<const VectorParamNdofType> & a, RealScalar trace = 1.0) const
   {
-    eigen_assert((std::size_t)a.size() == matq.ndof());
-    eigen_assert((std::size_t)rho.rows() == matq.dim());
-    eigen_assert((std::size_t)rho.cols() == matq.dim());
-    rho = trace * MatrixType::Identity(rho.rows(), rho.cols()) / matq.dim();
+    MatrixType rho(_dmt.initMatrixType());
+    eigen_assert((std::size_t)a.size() == _dmt.ndof());
+    eigen_assert((std::size_t)rho.rows() == _dmt.dim());
+    eigen_assert((std::size_t)rho.cols() == _dmt.dim());
+    rho = trace * MatrixType::Identity(rho.rows(), rho.cols()) / _dmt.dim();
     for (std::size_t n = 0; n < lambda.size(); ++n) {
       rho += a(n) * lambda[n].template selfadjointView<Eigen::Lower>()
 	* boost::math::constants::half_root_two<RealScalar>();
     }
+    return rho;
   }
 
-}; // class ParamRhoA
+}; // class ParamA
 
 
+} // namespace DenseDM
 } // namespace Tomographer
 
 #endif

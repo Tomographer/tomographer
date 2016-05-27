@@ -39,7 +39,7 @@
 
 #include <Eigen/Core>
 
-#include <tomographer/qit/util.h>
+#include <tomographer/tools/eigenutil.h>
 #include <tomographer/tools/loggers.h>
 
 

@@ -24,8 +24,10 @@
  * SOFTWARE.
  */
 
-#ifndef HERM_PARAM_X_H
-#define HERM_PARAM_X_H
+#ifndef TOMOGRAPHER_DENSEDM_PARAM_HERM_X_H
+#define TOMOGRAPHER_DENSEDM_PARAM_HERM_X_H
+
+
 
 /** \file param_herm_x.h
  *
@@ -153,22 +155,22 @@ namespace DenseDM {
 /** \brief Convert hermitian matrices to vectors via their \ref pageParamX
  *
  */
-template<typename DenseDMTypes_>
+template<typename DMTypes_>
 class ParamX {
 public:
-  typename DenseDMTypes_ DenseDMTypes;
-  typename DenseDMTypes::MatrixType MatrixType;
-  typename DenseDMTypes::MatrixTypeConstRef MatrixTypeConstRef;
-  typename DenseDMTypes::VectorParamType VectorParamType;
-  typename DenseDMTypes::VectorParamTypeConstRef VectorParamTypeConstRef;
-  typename DenseDMTypes::RealScalar RealScalar;
-  typename DenseDMTypes::ComplexScalar ComplexScalar;
-  typename typename MatrixType::Index IndexType;
+  typedef DMTypes_ DMTypes;
+  typedef typename DMTypes::MatrixType MatrixType;
+  typedef typename DMTypes::MatrixTypeConstRef MatrixTypeConstRef;
+  typedef typename DMTypes::VectorParamType VectorParamType;
+  typedef typename DMTypes::VectorParamTypeConstRef VectorParamTypeConstRef;
+  typedef typename DMTypes::RealScalar RealScalar;
+  typedef typename DMTypes::ComplexScalar ComplexScalar;
+  typedef typename MatrixType::Index IndexType;
 
-  /** \brief Constructor.  Just give it the DenseDMTypes instance.
+  /** \brief Constructor.  Just give it the DMTypes instance.
    *
    */
-  ParamX(DenseDMTypes dmt) : _dmt(dmt) { }
+  ParamX(DMTypes dmt) : _dmt(dmt) { }
 
   /** \brief Get the X-parameterization corresponding to a given hermitian matrix
    *
@@ -183,15 +185,15 @@ public:
   {
     // hope RVO kicks in
     VectorParamType x(_dmt.initVectorParamType());
-    const IndexType dimtri = (_dmt.dim2 - _dmt.dim())/2;
+    const IndexType dimtri = (_dmt.dim2() - _dmt.dim())/2;
 
-    eigen_assert(_dmt.dim() == Herm.cols()); // assert Herm is (dim x dim)
+    eigen_assert((IndexType)_dmt.dim() == Herm.cols()); // assert Herm is (dim x dim)
     
     x.block(0,0,_dmt.dim(),1) = Herm.real().diagonal();
 
     IndexType k = _dmt.dim();
     IndexType n, m;
-    for (n = 1; n < _dmt.dim(); ++n) {
+    for (n = 1; n < (IndexType)_dmt.dim(); ++n) {
       for (m = 0; m < n; ++m) {
         x(k)          = Herm(n,m).real() * boost::math::constants::root_two<RealScalar>();
         x(dimtri + k) = Herm(n,m).imag() * boost::math::constants::root_two<RealScalar>();
@@ -214,19 +216,19 @@ public:
     MatrixType Herm(_dmt.initMatrixType());
     
     const IndexType dimtri = (_dmt.dim2()-_dmt.dim())/2;
-    eigen_assert(x.rows() == _dmt.dim2() && x.cols() == 1); // assert x is (dim*dim x 1)
+    eigen_assert(x.rows() == (IndexType)_dmt.dim2() && x.cols() == 1); // assert x is (dim*dim x 1)
 
     Herm.diagonal().real() = x.block(0,0,_dmt.dim(),1);
     Herm.diagonal().imag().setZero();
   
     IndexType k = _dmt.dim();
     IndexType n, m;
-    for (n = 1; n < dim; ++n) {
+    for (n = 1; n < (IndexType)_dmt.dim(); ++n) {
       for (m = 0; m < n; ++m) {
-        Herm(n,m) = boost::math::constants::half_root_two<RealScalar>() * Scalar(x(k), x(dimtri + k));
+        Herm(n,m) = boost::math::constants::half_root_two<RealScalar>() * ComplexScalar(x(k), x(dimtri + k));
         if (!OnlyLowerTri) {
           // complex conj. on opposite triangular part
-          Herm(m,n) = boost::math::constants::half_root_two<RealScalar>() * Scalar(x(k), -x(dimtri + k));
+          Herm(m,n) = boost::math::constants::half_root_two<RealScalar>() * ComplexScalar(x(k), -x(dimtri + k));
         }
         ++k;
       }
@@ -235,7 +237,7 @@ public:
   }
   
 protected:
-  DenseDMTypes _dmt;
+  const DMTypes _dmt;
 };
 
 
