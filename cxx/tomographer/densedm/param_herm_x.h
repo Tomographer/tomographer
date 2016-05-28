@@ -181,7 +181,7 @@ public:
    * \todo Currently, we can't pass an expression as second parameter here. So use \ref
    *       Eigen::Ref instead to allow for that, too...
    */
-  inline VectorParamType HermToX(MatrixTypeConstRef Herm)
+  inline VectorParamType HermToX(MatrixTypeConstRef Herm) const
   {
     // hope RVO kicks in
     VectorParamType x(_dmt.initVectorParamType());
@@ -210,7 +210,7 @@ public:
    * See \ref pageParamsX.
    */
   template<bool OnlyLowerTri = false>
-  inline MatrixType XToHerm(VectorParamTypeConstRef x)
+  inline MatrixType XToHerm(VectorParamTypeConstRef x) const
   {
     // should be optimized by compiler via RVO
     MatrixType Herm(_dmt.initMatrixType());

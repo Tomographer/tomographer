@@ -43,7 +43,7 @@
  * \brief Definitions for a Metropolis-Hastings random walk on a quantum state space with
  *        dense matrix type
  *
- * See mainly \ref Tomographer::DMStateSpaceLLHMHWalker.
+ * See mainly \ref Tomographer::StateSpaceLLHMHWalker.
  */
 
 namespace Tomographer {
@@ -56,30 +56,31 @@ namespace DenseDM {
  * according to the distribution given by the likelihood function on the Hilbert-schmidt
  * uniform prior.
  *
- * \tparam TomoProblem the tomography data, expected to be a priori a \ref
- *      IndepMeasTomoProblem
+ * \tparam DenseLLH a type satisfying the LLH type interface (\ref pageInterfaceLLH)
+ *
+ * \todo DOCUMENT DenseLLH TYPE INTERFACE
  *
  * \tparam Rng a \c std::random random number \a generator (such as \ref std::mt19937)
  *
  * \tparam MHRWStatsCollector a type implementing a StatsCollector interface (\ref
  *      pageInterfaceMHRWStatsCollector)
  */
-template<typename TomoProblem, typename Rng, typename Log>
+template<typename DenseLLH, typename Rng, typename Log>
 class StateSpaceLLHMHWalker
 {
 public:
   //! The data types of our problem
-  typedef typename TomoProblem::MatrQ MatrQ;
-  //! The loglikelihood function value type (see \ref IndepMeasTomoProblem)
-  typedef typename TomoProblem::LLHValueType LLHValueType;
+  typedef typename Dense::DMTypes DMTypes;
+  //! The loglikelihood function value type (see \ref pageInterfaceLLH e.g. \ref IndepMeasLLH)
+  typedef typename DenseLLH::LLHValueType LLHValueType;
   //! The matrix type for a density operator on our quantum system
-  typedef typename MatrQ::MatrixType MatrixType;
-  //! Type of an X-parameterization of a density operator (see \ref param_x_to_herm())
-  typedef typename MatrQ::VectorParamType VectorParamType;
+  typedef typename DMTypes::MatrixType MatrixType;
+  //! Type of an X-parameterization of a density operator (see \ref pageParamsX)
+  typedef typename DMTypes::VectorParamType VectorParamType;
   //! The real scalar corresponding to our data types. Usually a \c double.
-  typedef typename MatrQ::RealScalar RealScalar;
+  typedef typename DMTypes::RealScalar RealScalar;
   //! The complex real scalar corresponding to our data types. Usually a \c std::complex<double>.
-  typedef typename MatrQ::ComplexScalar ComplexScalar;
+  typedef typename DMTypes::ComplexScalar ComplexScalar;
 
   //! Provided for MHRandomWalk. A point in our random walk = a density matrix
   typedef MatrixType PointType;
@@ -94,9 +95,10 @@ public:
 
 private:
 
-  const TomoProblem & _tomo;
+  const DenseLLH & _llh;
   Rng & _rng;
   std::normal_distribution<RealScalar> _normal_distr_rnd;
+  const ParamX _px;
 
   Log & _log;
   
@@ -109,11 +111,12 @@ public:
    * If you provide a zero \a startpt here, then a random starting point will be chosen
    * using the \a rng random number generator to generate a random point on the sphere.
    */
-  DMStateSpaceLLHMHWalker(const MatrixType & startpt, const TomoProblem & tomo, Rng & rng,
-			  Log & log_)
-    : _tomo(tomo),
+  StateSpaceLLHMHWalker(const MatrixType & startpt, const DenseLLH & llh, Rng & rng,
+                        Log & log_)
+    : _llh(llh),
       _rng(rng),
       _normal_distr_rnd(0.0, 1.0),
+      _px(llh.dmt),
       _log(log_),
       _startpt(startpt)
   {
@@ -130,7 +133,7 @@ public:
    */
   inline void init()
   {
-    _log.debug("DMStateSpaceLLHMHWalker", "Starting random walk");
+    _log.debug("StateSpaceLLHMHWalker", "Starting random walk");
   }
 
   //! Return the starting point given in the constructor, or a random start point
@@ -142,13 +145,13 @@ public:
     }
 
     // zero matrix given: means to choose random starting point
-    MatrixType T = _tomo.matq.initMatrixType();
+    MatrixType T(_llh.dmt.initMatrixType());
     T = dense_random<MatrixType>(
-	_rng, _normal_distr_rnd, _tomo.matq.dim(), _tomo.matq.dim()
+	_rng, _normal_distr_rnd, _llh.dmt.dim(), _llh.dmt.dim()
 	);
     _startpt = T/T.norm(); // normalize to be on surface of the sphere
 
-    _log.debug("DMStateSpaceLLHMHWalker", [&T](std::ostream & str) {
+    _log.debug("StateSpaceLLHMHWalker", [&T](std::ostream & str) {
 	str << "Chosen random start point T = \n" << T;
       });
 
@@ -172,29 +175,27 @@ public:
    * <code>-2-log-likelihood</code> is computed using \ref
    * IndepMeasTomoProblem::calc_llh()
    */
-  inline LLHValueType fnlogval(const MatrixType & T)
+  inline LLHValueType fnlogval(const MatrixType & T) const
   {
-    MatrixType rho = _tomo.matq.initMatrixType();
-    rho.noalias() = T*T.adjoint();
+    MatrixType rho(T*T.adjoint());
 
-    VectorParamType x = _tomo.matq.initVectorParamType();
-    param_herm_to_x(x, rho);
+    VectorParamType x = _px.HermToX(rho);
 
-    LLHValueType llhval = -boost::math::constants::half<RealScalar>() * _tomo.calc_llh(x);
+    LLHValueType llhval = -boost::math::constants::half<RealScalar>() * _llh.calc_llh(x);
+
     // _log.longdebug("fnlogval(%s) = %g\n", streamcstr(x.transpose()), llhval);
+
     return llhval;
   }
 
   //! Decides of a new point to jump to for the random walk
-  inline MatrixType jump_fn(const MatrixType& cur_T, RealScalar step_size)
+  inline MatrixType jump_fn(const MatrixType& cur_T, RealScalar step_size) const
   {
-    MatrixType DeltaT = dense_random<MatrixType>(
-        _rng, _normal_distr_rnd, _tomo.matq.dim(), _tomo.matq.dim()
-        );
+    MatrixType DeltaT(dense_random<MatrixType>(
+                          _rng, _normal_distr_rnd, _llh.dmt.dim(), _llh.dmt.dim()
+                          ));
 
-    MatrixType new_T = _tomo.matq.initMatrixType();
-
-    new_T.noalias() = cur_T + step_size * DeltaT;
+    MatrixType new_T(cur_T + step_size * DeltaT);
 
     // renormalize to "project" onto the large T-space sphere
     new_T /= new_T.norm(); //Matrix<>.norm() is Frobenius norm.
