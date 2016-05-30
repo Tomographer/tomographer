@@ -35,6 +35,8 @@
 // include before <Eigen/*> !
 #include "test_tomographer.h"
 
+#include <tomographer/densedm/dmmhrw.h>
+
 #include <tomographer/densedm/indepmeasllh.h>
 
 
@@ -46,17 +48,18 @@
 // test suites
 
 
-BOOST_AUTO_TEST_SUITE(test_densedm_indeapmeasllh)
+BOOST_AUTO_TEST_SUITE(test_densedm_dmmhrw)
 
 BOOST_AUTO_TEST_CASE(basic)
 {
   typedef Tomographer::DenseDM::DMTypes<2> DMTypes;
   DMTypes dmt;
   
-  Tomographer::DenseDM::IndepMeasLLH<DMTypes> dat(dmt);
+  typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> DenseLLH;
+  DenseLLH llh(dmt);
 
-  dat.initMeasVector(6);
-  dat.Exn <<
+  llh.initMeasVector(6);
+  llh.Exn <<
     0.5, 0.5,  0.707107,  0,
     0.5, 0.5, -0.707107,  0,
     0.5, 0.5,  0,         0.707107,
@@ -64,43 +67,34 @@ BOOST_AUTO_TEST_CASE(basic)
     1,   0,    0,         0,
     0,   1,    0,         0
     ;
-  dat.Nx << 1500, 800, 300, 300, 10, 30;
+  llh.Nx << 1500, 800, 300, 300, 10, 30;
 
-  DMTypes::VectorParamType x(dmt.initVectorParamType());
-  x << 0.5, 0.5, 0, 0; // maximally mixed state
+  typedef Tomographer::Logger::BufferLogger LoggerType;
+  LoggerType buflog(Tomographer::Logger::DEBUG);
+
+  std::mt19937 rng(0); // seeded rng, deterministic results
   
-  DMTypes::RealScalar value = dat.calc_llh(x);
+  Tomographer::DenseDM::StateSpaceLLHMHWalker<DenseLLH, std::mt19937, LoggerType>
+    dmmhrw(DMTypes::MatrixType::Zero(), llh, rng, buflog);
+
+  DMTypes::VectorParamType x;
+  x << 0.5, 0.5, 0, 0; // maximally mixed state.
+  DMTypes::MatrixType T;
+  T << boost::math::constants::half_root_two<double>(), 0.5, 0, 0; // maximally mixed state.
+
+  BOOST_CHECK_CLOSE(
   
+  
+  DMTypes::RealScalar value = llh.calc_llh(x);
+  
+  BOOST_MESSAGE(buflog.get_contents());
+
   BOOST_CHECK_CLOSE(value, 4075.70542169248, 1e-4);
+
   //std::cout << "llh @ mixed state = " << std::setprecision(15) << value << "\n";
+
 }
 
-BOOST_AUTO_TEST_CASE(basic_dyn)
-{
-  typedef Tomographer::DenseDM::DMTypes<Eigen::Dynamic> DMTypes;
-  DMTypes dmt(2);
-  
-  Tomographer::DenseDM::IndepMeasLLH<DMTypes> dat(dmt);
-
-  dat.initMeasVector(6);
-  dat.Exn <<
-    0.5, 0.5,  0.707107,  0,
-    0.5, 0.5, -0.707107,  0,
-    0.5, 0.5,  0,         0.707107,
-    0.5, 0.5,  0,        -0.707107,
-    1,   0,    0,         0,
-    0,   1,    0,         0
-    ;
-  dat.Nx << 1500, 800, 300, 300, 10, 30;
-
-  DMTypes::VectorParamType x(dmt.initVectorParamType());
-  x << 0.5, 0.5, 0, 0; // maximally mixed state
-  
-  DMTypes::RealScalar value = dat.calc_llh(x);
-  
-  BOOST_CHECK_CLOSE(value, 4075.70542169248, 1e-4);
-  //std::cout << "llh @ mixed state = " << std::setprecision(15) << value << "\n";
-}
 
 BOOST_AUTO_TEST_SUITE_END()
 

@@ -108,8 +108,10 @@ public:
 
   /** \brief Constructor which just initializes the given fields
    *
-   * If you provide a zero \a startpt here, then a random starting point will be chosen
-   * using the \a rng random number generator to generate a random point on the sphere.
+   * \param startpt A starting point for the random walk (matrix in \ref pageParamT).  If
+   *     you provide a zero \a startpt here, then a random starting point will be chosen
+   *     using the \a rng random number generator to generate a random point on the
+   *     sphere.
    */
   StateSpaceLLHMHWalker(const MatrixType & startpt, const DenseLLH & llh, Rng & rng,
                         Log & log_)
