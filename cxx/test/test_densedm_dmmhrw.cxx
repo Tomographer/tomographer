@@ -50,7 +50,7 @@
 
 BOOST_AUTO_TEST_SUITE(test_densedm_dmmhrw)
 
-BOOST_AUTO_TEST_CASE(basic)
+BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
 {
   typedef Tomographer::DenseDM::DMTypes<2> DMTypes;
   DMTypes dmt;
@@ -74,25 +74,29 @@ BOOST_AUTO_TEST_CASE(basic)
 
   std::mt19937 rng(0); // seeded rng, deterministic results
   
-  Tomographer::DenseDM::StateSpaceLLHMHWalker<DenseLLH, std::mt19937, LoggerType>
+  Tomographer::DenseDM::TSpaceLLHMHWalker<DenseLLH, std::mt19937, LoggerType>
     dmmhrw(DMTypes::MatrixType::Zero(), llh, rng, buflog);
 
-  DMTypes::VectorParamType x;
+  DMTypes::VectorParamType x(dmt.initVectorParamType());
   x << 0.5, 0.5, 0, 0; // maximally mixed state.
-  DMTypes::MatrixType T;
-  T << boost::math::constants::half_root_two<double>(), 0.5, 0, 0; // maximally mixed state.
+  DMTypes::MatrixType T(dmt.initMatrixType());
+  T << boost::math::constants::half_root_two<double>(), 0,
+       0, boost::math::constants::half_root_two<double>() ; // maximally mixed state.
 
-  BOOST_CHECK_CLOSE(
-  
-  
-  DMTypes::RealScalar value = llh.calc_llh(x);
-  
+  dmmhrw.init();
+  dmmhrw.thermalizing_done();
+
+  const DMTypes::MatrixType Tconst(T); // make sure that fnlogval() accepts const argument
+  BOOST_CHECK_CLOSE(dmmhrw.fnlogval(Tconst), -0.5*llh.calc_llh(x), tol_percent);
+
+  DMTypes::MatrixType newT = dmmhrw.jump_fn(T, 0.2);
+  BOOST_CHECK_CLOSE(newT.norm(), 1.0, tol_percent);
+
+  // not sure how to check that the jump distribution is symmetric ???
+  // ..........
+
+  dmmhrw.done();
   BOOST_MESSAGE(buflog.get_contents());
-
-  BOOST_CHECK_CLOSE(value, 4075.70542169248, 1e-4);
-
-  //std::cout << "llh @ mixed state = " << std::setprecision(15) << value << "\n";
-
 }
 
 

@@ -96,7 +96,8 @@ BOOST_AUTO_TEST_CASE(basic_dyn)
   DMTypes::VectorParamType x(dmt.initVectorParamType());
   x << 0.5, 0.5, 0, 0; // maximally mixed state
   
-  DMTypes::RealScalar value = dat.calc_llh(x);
+  const DMTypes::VectorParamType xconst(x); // make sure calc_llh() accepts const argument
+  DMTypes::RealScalar value = dat.calc_llh(xconst);
   
   BOOST_CHECK_CLOSE(value, 4075.70542169248, 1e-4);
   //std::cout << "llh @ mixed state = " << std::setprecision(15) << value << "\n";

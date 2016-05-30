@@ -28,7 +28,7 @@
 #define TOMOGRAPHER_MHRW_BIN_ERR_H
 
 
-#include <tomographer/qit/util.h>
+//#include <tomographer/qit/util.h>
 #include <tomographer/tools/cxxutil.h>
 #include <tomographer/tools/loggers.h>
 
@@ -297,7 +297,7 @@ public:
    *
    * \ref Eigen::Dynamic is never returned. See \ref Tools::static_or_dynamic.
    */
-  const Tools::static_or_dynamic<int, NumTrackValuesCTime> num_track_values;
+  const Tools::static_or_dynamic<int, (NumTrackValuesCTime==Eigen::Dynamic), NumTrackValuesCTime> num_track_values;
   /** \brief The number of levels in the binning analysis.
    *
    * The number may be obtained by calling
@@ -307,13 +307,13 @@ public:
    *
    * \ref Eigen::Dynamic is never returned. See \ref Tools::static_or_dynamic.
    */
-  const Tools::static_or_dynamic<int, NumLevelsCTime> num_levels;
+  const Tools::static_or_dynamic<int, (NumLevelsCTime==Eigen::Dynamic), NumLevelsCTime> num_levels;
   /** \brief The size of our samples buffer. (avoid using, might change in the future) 
    *
    * See \ref BinningAnalysisParams::SamplesSizeCTime. Avoid using this, this might change
    * in the future.
    */
-  const Tools::static_or_dynamic<CountIntType, SamplesSizeCTime> samples_size;
+  const Tools::static_or_dynamic<CountIntType, (SamplesSizeCTime==Eigen::Dynamic), SamplesSizeCTime> samples_size;
 
   //! Constants for error bar convergence analysis.  
   enum {

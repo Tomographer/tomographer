@@ -32,18 +32,19 @@
 
 #include <random>
 
+#include <boost/math/constants/constants.hpp>
+
 #include <tomographer/tomoproblem.h>
 #include <tomographer/tools/loggers.h>
 #include <tomographer/mhrw.h>
-
-#include <boost/math/constants/constants.hpp>
+#include <tomographer/densedm/param_herm_x.h>
 
 /** \file dmmhrw.h
  *
  * \brief Definitions for a Metropolis-Hastings random walk on a quantum state space with
  *        dense matrix type
  *
- * See mainly \ref Tomographer::StateSpaceLLHMHWalker.
+ * See mainly \ref Tomographer::TSpaceLLHMHWalker.
  */
 
 namespace Tomographer {
@@ -65,12 +66,12 @@ namespace DenseDM {
  * \tparam MHRWStatsCollector a type implementing a StatsCollector interface (\ref
  *      pageInterfaceMHRWStatsCollector)
  */
-template<typename DenseLLH, typename Rng, typename Log>
-class StateSpaceLLHMHWalker
+template<typename DenseLLH, typename Rng, typename LoggerType>
+class TSpaceLLHMHWalker
 {
 public:
   //! The data types of our problem
-  typedef typename Dense::DMTypes DMTypes;
+  typedef typename DenseLLH::DMTypes DMTypes;
   //! The loglikelihood function value type (see \ref pageInterfaceLLH e.g. \ref IndepMeasLLH)
   typedef typename DenseLLH::LLHValueType LLHValueType;
   //! The matrix type for a density operator on our quantum system
@@ -98,9 +99,9 @@ private:
   const DenseLLH & _llh;
   Rng & _rng;
   std::normal_distribution<RealScalar> _normal_distr_rnd;
-  const ParamX _px;
+  const ParamX<DMTypes> _px;
 
-  Log & _log;
+  LoggerType & _log;
   
   MatrixType _startpt;
 
@@ -113,8 +114,8 @@ public:
    *     using the \a rng random number generator to generate a random point on the
    *     sphere.
    */
-  StateSpaceLLHMHWalker(const MatrixType & startpt, const DenseLLH & llh, Rng & rng,
-                        Log & log_)
+  TSpaceLLHMHWalker(const MatrixType & startpt, const DenseLLH & llh, Rng & rng,
+                        LoggerType & log_)
     : _llh(llh),
       _rng(rng),
       _normal_distr_rnd(0.0, 1.0),
@@ -135,7 +136,7 @@ public:
    */
   inline void init()
   {
-    _log.debug("StateSpaceLLHMHWalker", "Starting random walk");
+    _log.debug("TSpaceLLHMHWalker", "Starting random walk");
   }
 
   //! Return the starting point given in the constructor, or a random start point
@@ -153,7 +154,7 @@ public:
 	);
     _startpt = T/T.norm(); // normalize to be on surface of the sphere
 
-    _log.debug("StateSpaceLLHMHWalker", [&T](std::ostream & str) {
+    _log.debug("TSpaceLLHMHWalker", [&T](std::ostream & str) {
 	str << "Chosen random start point T = \n" << T;
       });
 
@@ -191,7 +192,7 @@ public:
   }
 
   //! Decides of a new point to jump to for the random walk
-  inline MatrixType jump_fn(const MatrixType& cur_T, RealScalar step_size) const
+  inline MatrixType jump_fn(const MatrixType& cur_T, RealScalar step_size)
   {
     MatrixType DeltaT(dense_random<MatrixType>(
                           _rng, _normal_distr_rnd, _llh.dmt.dim(), _llh.dmt.dim()
@@ -214,7 +215,7 @@ public:
 
 
 
-
+} // namespace DenseDM
 } // namespace Tomographer
 
 
