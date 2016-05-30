@@ -162,35 +162,59 @@ BOOST_FIXTURE_TEST_CASE(TrDistToRefCalculator_4_f, distmeasures_qudit4_fixture<f
 
 BOOST_FIXTURE_TEST_CASE(ObservableValueCalculator_2_d, distmeasures_qubit_fixture<double>)
 {
-  Tomographer::DenseDM::ObservableValueCalculator<DMTypes> f(dmt, rho1);
+  typedef DMTypes::ComplexScalar Cplx;
+  MatrixType A;
+  A <<
+    Cplx( 6.528329762670850e-01, + 0.000000000000000e+00),    Cplx(-2.828700628152467e-02, - 4.752282889738084e-01),
+    Cplx(-2.828700628152467e-02, + 4.752282889738084e-01),    Cplx( 3.471670237329149e-01, + 0.000000000000000e+00) ;
+  Tomographer::DenseDM::ObservableValueCalculator<DMTypes> f(dmt, A);
 
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), (std::pow(fid_with_1<double>(1),2)), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), (std::pow(fid_with_1<double>(2),2)), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2b), (std::pow(fid_with_1<double>(2),2)), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T3), (std::pow(fid_with_1<double>(3),2)), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T4), (std::pow(fid_with_1<double>(4),2)), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T5), (std::pow(fid_with_1<double>(5),2)), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T6), (std::pow(fid_with_1<double>(6),2)), tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), (A*rho1).real().trace(), tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), (A*rho2).real().trace(), tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2b), (A*rho2).real().trace(), tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T3), (A*rho3).real().trace(), tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T4), (A*rho4).real().trace(), tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T5), (A*rho5).real().trace(), tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T6), (A*rho6).real().trace(), tol);
 }
 BOOST_FIXTURE_TEST_CASE(ObservableValueCalculator_2_f, distmeasures_qubit_fixture<float>)
 {
-  Tomographer::DenseDM::ObservableValueCalculator<DMTypes> f(dmt, Tomographer::DenseDM::ParamX<DMTypes>(dmt).HermToX(rho1));
+  typedef DMTypes::ComplexScalar Cplx;
+  MatrixType A;
+  A<<
+    Cplx(5.769321416135639e-01, + 0.000000000000000e+00),      Cplx(3.720330764264117e-01, + 3.250735849487777e-01),
+    Cplx(3.720330764264117e-01, - 3.250735849487777e-01),      Cplx(4.230678583864360e-01, + 0.000000000000000e+00);
+  Tomographer::DenseDM::ObservableValueCalculator<DMTypes> f(dmt, A);
 
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), (std::pow(fid_with_1<float>(1),2)), tol_f);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), (std::pow(fid_with_1<float>(2),2)), tol_f);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2b), (std::pow(fid_with_1<float>(2),2)), tol_f);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T3), (std::pow(fid_with_1<float>(3),2)), tol_f);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T4), (std::pow(fid_with_1<float>(4),2)), tol_f);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T5), (std::pow(fid_with_1<float>(5),2)), tol_f);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T6), (std::pow(fid_with_1<float>(6),2)), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), (A*rho1).real().trace(), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), (A*rho2).real().trace(), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2b), (A*rho2).real().trace(), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T3), (A*rho3).real().trace(), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T4), (A*rho4).real().trace(), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T5), (A*rho5).real().trace(), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T6), (A*rho6).real().trace(), tol_f);
 }
 BOOST_FIXTURE_TEST_CASE(ObservableValueCalculator_4_f, distmeasures_qudit4_fixture<float>)
 {
-  MatrixType A ..............  
-  Tomographer::DenseDM::ObservableValueCalculator<DMTypes> f(dmt, Tomographer::DenseDM::ParamX<DMTypes>(dmt).HermToX(rho1));
+  typedef DMTypes::ComplexScalar Cplx;
+  MatrixType A;
+  A <<
+    Cplx( 1.668309209270559e+00, - 2.775557561562891e-17),     Cplx(-7.439487529186134e-01, - 5.855920232909842e-02),
+    Cplx(-4.537721235745775e-01, + 4.228424897118110e-03),     Cplx( 1.799138697503067e-02, + 2.706936451208813e-02),
+    
+    Cplx(-7.439487529186133e-01, + 5.855920232909838e-02),     Cplx( 9.029493599494294e-01, + 5.551115123125783e-17),
+    Cplx(-2.149554776206607e-01, + 6.525886338252280e-01),     Cplx( 3.469407736574681e-01, + 3.089648739998575e-01),
+    
+    Cplx(-4.537721235745775e-01, - 4.228424897118249e-03),     Cplx(-2.149554776206607e-01, - 6.525886338252280e-01),
+    Cplx( 1.411783000531320e+00, + 5.551115123125783e-17),     Cplx( 6.555785447953847e-01, - 5.371466754457879e-01),
+    
+    Cplx( 1.799138697503067e-02, - 2.706936451208811e-02),     Cplx( 3.469407736574681e-01, - 3.089648739998575e-01),
+    Cplx( 6.555785447953847e-01, + 5.371466754457879e-01),     Cplx( 2.016958430248692e+00, + 0.000000000000000e+00) ;
 
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), , tol_f);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), , tol_f);
+  Tomographer::DenseDM::ObservableValueCalculator<DMTypes> f(dmt, A);
+
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), (A*rho1).real().trace(), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), (A*rho2).real().trace(), tol_f);
 }
 
 
