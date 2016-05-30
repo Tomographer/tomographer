@@ -192,10 +192,10 @@ check_eigen_dense_equal(const Eigen::DenseBase<Derived1> & a, const Eigen::Dense
   BOOST_CHECK( check_eigen_dense_equal((a), (b), (tol)) )
 
 #define MY_BOOST_CHECK_FLOATS_EQUAL(a, b, tol_abs)	\
-  do { if (b < tol_abs && -b < tol_abs) {		\
-    BOOST_CHECK_SMALL(a, tol_abs) ;			\
-  } else {						\
-    BOOST_CHECK_CLOSE(a, b, tol_abs*100) ;		\
+  do { if ((b) < (tol_abs) && -(b) < (tol_abs)) {       \
+      BOOST_CHECK_SMALL((a), tol_abs) ;			\
+    } else {						\
+      BOOST_CHECK_CLOSE((a), (b), (tol_abs)*100) ;      \
     } } while (0)
 
 

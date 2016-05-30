@@ -28,6 +28,8 @@
 
 #include <tomographer/densedm/dmtypes.h>
 #include <tomographer/densedm/distmeasures.h>
+#include <tomographer/densedm/param_herm_x.h>
+
 
 
 namespace Tomographer {
@@ -40,13 +42,13 @@ namespace DenseDM {
  *
  * \see fidelity_T(rho,sigma)
  */
-template<typename DenseDMTypes_, typename ValueType_ = double>
+template<typename DMTypes_, typename ValueType_ = double>
 class FidelityToRefCalculator
 {
 public:
-  typedef typename DenseDMTypes_ DenseDMTypes;
-  typedef typename DenseDMTypes::MatrixType MatrixType;
-  typedef typename DenseDMTypes::MatrixTypeConstRef MatrixTypeConstRef;
+  typedef DMTypes_ DMTypes;
+  typedef typename DMTypes::MatrixType MatrixType;
+  typedef typename DMTypes::MatrixTypeConstRef MatrixTypeConstRef;
 
   //! For ValueCalculator interface : value type
   typedef ValueType_ ValueType;
@@ -77,13 +79,13 @@ public:
  *   P\left(\rho,\sigma\right) = \sqrt{1 - F^2\left(\rho,\sigma\right)}\ .
  * \f]
  */
-template<typename DenseDMTypes_, typename ValueType_ = double>
+template<typename DMTypes_, typename ValueType_ = double>
 class PurifDistToRefCalculator
 {
 public:
-  typedef typename DenseDMTypes_ DenseDMTypes;
-  typedef typename DenseDMTypes::MatrixType MatrixType;
-  typedef typename DenseDMTypes::MatrixTypeConstRef MatrixTypeConstRef;
+  typedef DMTypes_ DMTypes;
+  typedef typename DMTypes::MatrixType MatrixType;
+  typedef typename DMTypes::MatrixTypeConstRef MatrixTypeConstRef;
 
   //! For ValueCalculator interface : value type
   typedef ValueType_ ValueType;
@@ -100,7 +102,10 @@ public:
 
   inline ValueType getValue(MatrixTypeConstRef T) const
   {
-    auto F = fidelity_T<ValueType>(T, _ref_T);
+    ValueType F = fidelity_T<ValueType>(T, _ref_T);
+    if (F >= ValueType(1)) {
+      return 0;
+    }
     return std::sqrt(ValueType(1) - F*F);
   }
 };
@@ -108,13 +113,13 @@ public:
 /** \brief Calculate the trace distance to a reference state for each sample
  *
  */
-template<typename DenseDMTypes_, typename ValueType_ = double>
+template<typename DMTypes_, typename ValueType_ = double>
 class TrDistToRefCalculator
 {
 public:
-  typedef typename DenseDMTypes_ DenseDMTypes;
-  typedef typename DenseDMTypes::MatrixType MatrixType;
-  typedef typename DenseDMTypes::MatrixTypeConstRef MatrixTypeConstRef;
+  typedef DMTypes_ DMTypes;
+  typedef typename DMTypes::MatrixType MatrixType;
+  typedef typename DMTypes::MatrixTypeConstRef MatrixTypeConstRef;
 
   //! For ValueCalculator interface : value type
   typedef ValueType_ ValueType;
@@ -131,7 +136,7 @@ public:
 
   inline ValueType getValue(MatrixTypeConstRef T) const
   {
-    return trace_dist(T*T.adjoint(), _ref_rho)
+    return trace_dist<ValueType>(T*T.adjoint(), _ref_rho);
   }
 };
 
@@ -140,35 +145,35 @@ public:
 /** \brief Calculate expectation value of an observable for each sample
  *
  */
-template<typename DenseDMTypes_>
+template<typename DMTypes_>
 class ObservableValueCalculator
 {
 public:
-  typedef typename DenseDMTypes_ DenseDMTypes;
-  typedef typename DenseDMTypes::MatrixType MatrixType;
-  typedef typename DenseDMTypes::MatrixTypeConstRef MatrixTypeConstRef;
-  typedef typename DenseDMTypes::VectorParamType VectorParamType;
-  typedef typename DenseDMTypes::VectorParamTypeConstRef VectorParamTypeConstRef;
+  typedef DMTypes_ DMTypes;
+  typedef typename DMTypes::MatrixType MatrixType;
+  typedef typename DMTypes::MatrixTypeConstRef MatrixTypeConstRef;
+  typedef typename DMTypes::VectorParamType VectorParamType;
+  typedef typename DMTypes::VectorParamTypeConstRef VectorParamTypeConstRef;
 
   //! For ValueCalculator interface : value type
-  typedef typename DenseDMTypes::RealScalar ValueType;
+  typedef typename DMTypes::RealScalar ValueType;
 
 private:
+  //! The parametrization object, allowing us to convert rho to its \ref pageParamsX
+  ParamX<DMTypes> _param_x;
+
   //! The observable we wish to watch the expectation value with (in \ref pageParamsX)
   VectorParamType _A_x;
 
-  //! The parametrization object, allowing us to convert rho to its \ref pageParamsX
-  DenseDM::ParamX _param_x;
-
 public:
   //! Constructor directly accepting \a A as a hermitian matrix
-  ObservableValueCalculator(DenseDMTypes dmt, MatrixTypeConstRef A)
-    : _A_x(ParamX::herm_to_x(A)), _param_x(dmt)
+  ObservableValueCalculator(DMTypes dmt, MatrixTypeConstRef A)
+    : _param_x(dmt), _A_x(_param_x.HermToX(A))
   {
   }
   //! Constructor directly accepting the X parameterization of \a A
-  ObservableValueCalculator(DenseDMTypes dmt, VectorParamTypeConstRef A_x)
-    : _A_x(A_x), _param_x(dmt)
+  ObservableValueCalculator(DMTypes dmt, VectorParamTypeConstRef A_x)
+    : _param_x(dmt), _A_x(A_x)
   {
   }
 

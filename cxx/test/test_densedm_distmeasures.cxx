@@ -36,10 +36,8 @@
 #include "test_tomographer.h"
 
 #include <tomographer/densedm/distmeasures.h>
+#include <tomographer/densedm/dmtypes.h>
 
-
-#define SQRT2  boost::math::constants::root_two<double>()
-#define INVSQRT2  boost::math::constants::half_root_two<double>()
 
 
 
@@ -106,33 +104,33 @@ BOOST_AUTO_TEST_CASE(internal_test_fixture)
 
 BOOST_AUTO_TEST_CASE(trace_dist)
 {
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho1), trdist_with_1(1), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho2), trdist_with_1(2), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho3), trdist_with_1(3), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho4), trdist_with_1(4), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho5), trdist_with_1(5), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho6), trdist_with_1(6), tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho1), trdist_with_1(1), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho2), trdist_with_1(2), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho3), trdist_with_1(3), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho4), trdist_with_1(4), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho5), trdist_with_1(5), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho6), trdist_with_1(6), tol_f);
 }
 
 BOOST_AUTO_TEST_CASE(fidelity)
 {
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho1), fid_with_1(1), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho2), fid_with_1(2), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho3), fid_with_1(3), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho4), fid_with_1(4), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho5), fid_with_1(5), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho6), fid_with_1(6), tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho1), fid_with_1(1), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho2), fid_with_1(2), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho3), fid_with_1(3), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho4), fid_with_1(4), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho5), fid_with_1(5), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho6), fid_with_1(6), tol_f);
 }
 
 BOOST_AUTO_TEST_CASE(fidelity_T)
 {
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T1), fid_with_1(1), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T2), fid_with_1(2), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T2b), fid_with_1(2), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T3), fid_with_1(3), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T4), fid_with_1(4), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T5), fid_with_1(5), tol);
-  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T6), fid_with_1(6), tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T1), fid_with_1(1), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T2), fid_with_1(2), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T2b), fid_with_1(2), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T3), fid_with_1(3), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T4), fid_with_1(4), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T5), fid_with_1(5), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T6), fid_with_1(6), tol_f);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
@@ -161,9 +159,22 @@ BOOST_AUTO_TEST_SUITE_END()
 
 BOOST_FIXTURE_TEST_SUITE(qudit4_f, distmeasures_qudit4_fixture<float>)
 
-BOOST_AUTO_TEST_CASE(qudit4_f)
+BOOST_AUTO_TEST_CASE(trace_dist)
 {
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho1), trdist_with_1(1), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::trace_dist<RealScalar>(rho1, rho2), trdist_with_1(2), tol_f);
+}
+BOOST_AUTO_TEST_CASE(fidelity)
+{
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho1), fid_with_1(1), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity<RealScalar>(rho1, rho2), fid_with_1(2), tol_f);
+}
+BOOST_AUTO_TEST_CASE(fidelity_T)
+{
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T1), fid_with_1(1), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(Tomographer::DenseDM::fidelity_T<RealScalar>(T1, T2), fid_with_1(2), tol_f);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
 
+BOOST_AUTO_TEST_SUITE_END()

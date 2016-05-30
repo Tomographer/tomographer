@@ -1,14 +1,18 @@
 
 
-#include <Eigen/unsupported/MatrixFunctions>
+#include <unsupported/Eigen/MatrixFunctions>
 
 
-template<typename RealScalar = double>
-struct distmeasures_qubit_fixture {
+template<typename RealScalar_ = double>
+struct distmeasures_qubit_fixture
+{
+  typedef RealScalar_ RealScalar;
 
   typedef Tomographer::DenseDM::DMTypes<2, RealScalar>  DMTypes;
 
-  typedef DMTypes::MatrixType  MatrixType;
+  const DMTypes dmt;
+
+  typedef typename DMTypes::MatrixType  MatrixType;
 
   MatrixType  rho1, rho2, rho3, rho4, rho5, rho6;
   MatrixType  T1, T2, T2b, T3, T4, T5, T6;
@@ -16,6 +20,7 @@ struct distmeasures_qubit_fixture {
   static constexpr RealScalar INVSQRT2 = boost::math::constants::half_root_two<RealScalar>();
 
   distmeasures_qubit_fixture()
+    : dmt()
   {
     rho1 << 1, 0,
       0, 0;
@@ -38,8 +43,8 @@ struct distmeasures_qubit_fixture {
     T3 << 0, 0,
       0, 1;
     T4 = rho4; // rho4 is pure, so sqrt(rho4)==rho4
-    T5 << std::sqrt(0.8), 0,
-      0, std::sqrt(0.2);
+    T5 << std::sqrt(RealScalar(0.8)), 0,
+      0, std::sqrt(RealScalar(0.2));
     T6 << INVSQRT2, 0,
       0, INVSQRT2;
   }
@@ -60,36 +65,38 @@ struct distmeasures_qubit_fixture {
   }
 
 
-  inline RealScalar fid_with_1(int which) const {
+  template<typename OtherRealScalar = RealScalar>
+  inline OtherRealScalar fid_with_1(int which) const {
     switch (which) {
     case 1:
       return 1;
     case 2:
-      return INVSQRT2;
+      return boost::math::constants::half_root_two<OtherRealScalar>();
     case 3:
       return 0;
     case 4:
-      return INVSQRT2;
+      return boost::math::constants::half_root_two<OtherRealScalar>();
     case 5:
-      return std::sqrt(0.8);
+      return std::sqrt(OtherRealScalar(0.8));
     case 6:
-      return INVSQRT2;
+      return boost::math::constants::half_root_two<OtherRealScalar>();
     default:
       fprintf(stderr, "INVALID 'which' for test fixture fid_with_1: %d", which);
       assert(false);
     }
   }
 
-  inline RealScalar trdist_with_1(int which) const {
+  template<typename OtherRealScalar = RealScalar>
+  inline OtherRealScalar trdist_with_1(int which) const {
     switch (which) {
     case 1:
       return 0;
     case 2:
-      return INVSQRT2;
+      return boost::math::constants::half_root_two<OtherRealScalar>();
     case 3:
       return 1;
     case 4:
-      return INVSQRT2;
+      return boost::math::constants::half_root_two<OtherRealScalar>();
     case 5:
       return 0.2;
     case 6:
@@ -103,18 +110,24 @@ struct distmeasures_qubit_fixture {
 
 
 
-template<typename RealScalar = double>
+template<typename RealScalar_ = double>
 struct distmeasures_qudit4_fixture
 {
-
+  typedef RealScalar_ RealScalar;
   typedef Tomographer::DenseDM::DMTypes<4, RealScalar>  DMTypes;
 
-  typedef DMTypes::MatrixType  MatrixType;
+  const DMTypes dmt;
+
+  typedef typename DMTypes::MatrixType  MatrixType;
 
   MatrixType  rho1, rho2;
   MatrixType  T1, T2;
 
-  distmeasures_qudit4_fixture() {
+  distmeasures_qudit4_fixture()
+    : dmt()
+  {
+    typedef typename DMTypes::ComplexScalar CD;
+    
     rho1 <<
       CD(1.895222898432606e-01,  + 0.000000000000000e+00),      CD(1.084025272341251e-01,  + 1.516096020672695e-02),
       CD(8.314826089318567e-02,  - 1.441693960987760e-01),     CD(-4.849903197599588e-02,  - 9.894562194279641e-02),
@@ -145,8 +158,9 @@ struct distmeasures_qudit4_fixture
     T2 = rho2.sqrt();
   }
     
-  
-  inline RealScalar fid_with_1(int which) const {
+
+  template<typename OtherRealScalar = RealScalar>
+  inline OtherRealScalar fid_with_1(int which) const {
     switch (which) {
     case 1:
       return 1;
@@ -157,14 +171,15 @@ struct distmeasures_qudit4_fixture
       assert(false);
     }
   }
-  inline RealScalar trdist_with_1(int which) const {
+  template<typename OtherRealScalar = RealScalar>
+  inline OtherRealScalar trdist_with_1(int which) const {
     switch (which) {
     case 1:
-      return 1;
+      return 0;
     case 2:
       return 6.208689785356507e-01;
     default:
-      fprintf(stderr, "INVALID 'which' for test fixture fid_with_1: %d", which);
+      fprintf(stderr, "INVALID 'which' for test fixture trdist_with_1: %d", which);
       assert(false);
     }
   }
