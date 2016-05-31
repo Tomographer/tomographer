@@ -74,7 +74,7 @@ inline void random_unitary(Eigen::MatrixBase<DerU> & U, Rng & rng, Log & logger)
   MatrixType A(n,n);
 
   std::normal_distribution<> normdist(0.0, 1.0);
-  A = Tomographer::dense_random<MatrixType>(rng, normdist, n, n);
+  A = Tomographer::Tools::dense_random<MatrixType>(rng, normdist, n, n);
 
   //  logger.longdebug("random_unitary()", [&](std::ostream& str) {
   //      str << "got A = \n" << A;

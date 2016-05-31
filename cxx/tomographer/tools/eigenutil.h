@@ -239,8 +239,8 @@ namespace tomo_internal {
   {
     typedef Scalar result_type;
 
-    IndexType k;
-    IndexType j;
+    const IndexType k;
+    const IndexType j;
 
     can_basis_vec_generator(IndexType k_, IndexType j_ = 0)
       : k(k_), j(j_)
@@ -260,6 +260,9 @@ namespace Eigen {
     template<typename Scalar, typename IndexType>
     struct functor_traits<Tomographer::Tools::tomo_internal::can_basis_vec_generator<Scalar, IndexType> >
     { enum { Cost = 2 * NumTraits<Scalar>::MulCost, PacketAccess = false, IsRepeatable = true }; };
+    template<typename Scalar, typename IndexType>
+    struct functor_has_linear_access<Tomographer::Tools::tomo_internal::can_basis_vec_generator<Scalar, IndexType> >
+    { enum { ret = 0 }; };
   }
 } // end namespace Eigen
 
@@ -356,6 +359,10 @@ namespace Tools {
  *
  * \param sizes You may either specify the length of the vector (1 parameter), or the size
  *        of a column matrix (2 parameters, the second being equal to one).
+ *
+ * If you specify a 2-D matrix size here (not a column or row vector), then the elements
+ * of the matrix are populated linearly with powers of two (with linear access, i.e. by
+ * default column-wise).
  */
 template<typename Der, typename... IndexTypes>
 inline auto powers_of_two(IndexTypes... sizes)

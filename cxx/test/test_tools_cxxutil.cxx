@@ -40,6 +40,23 @@ TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::extractFuncName("int operator==(cons
 
 
 
+BOOST_AUTO_TEST_CASE(NOT_IMPLEMENTED)
+{
+  // need to implement more tests
+  BOOST_CHECK(false);
+}
+
+
+
+
+
+
+
+
+
+
+
+
 // we need to add at least one boost test, otherwise the executable reports failure
 // because it has no tests.
 BOOST_AUTO_TEST_CASE(a)

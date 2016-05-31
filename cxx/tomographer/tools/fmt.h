@@ -44,11 +44,8 @@
 #include <tomographer/tools/cxxutil.h> // PRINTFN_ARGS_SAFE
 
 
-namespace Tomographer
-{
-namespace Tools
-{
-
+namespace Tomographer {
+namespace Tools {
 
 
 //

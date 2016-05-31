@@ -557,8 +557,8 @@ public:
   inline auto get_bin_sqmeans() const
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
     -> decltype(
-	bin_sumsq.cwiseQuotient(n_flushes * replicated<NumTrackValuesCTime,1>(
-				    powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
+	bin_sumsq.cwiseQuotient(n_flushes * Tools::replicated<NumTrackValuesCTime,1>(
+				    Tools::powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
 				    .transpose().reverse(),
 				    // replicated by:
 				    num_track_values(), 1
@@ -566,8 +566,8 @@ public:
 	)
 #endif
   {
-    return bin_sumsq.cwiseQuotient(n_flushes * replicated<NumTrackValuesCTime,1>(
-                                  powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
+    return bin_sumsq.cwiseQuotient(n_flushes * Tools::replicated<NumTrackValuesCTime,1>(
+                                  Tools::powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
                                   .transpose().reverse(),
                                   // replicated by:
                                   num_track_values(), 1
@@ -616,15 +616,15 @@ public:
      */
 
     return (
-	get_bin_sqmeans() - replicated<1,NumLevelsPlusOneCTime>(
+	get_bin_sqmeans() - Tools::replicated<1,NumLevelsPlusOneCTime>(
             means.cwiseProduct(means).template cast<ValueType>(),
             // replicated by:
             1, n_levels_plus_one
             )
 	).cwiseMax(0).cwiseQuotient(
 	    // divide by the number of samples from which these bin-means were obtained, minus one.
-	    replicated<NumTrackValuesCTime,1>(
-		powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(n_levels_plus_one)
+	    Tools::replicated<NumTrackValuesCTime,1>(
+		Tools::powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(n_levels_plus_one)
 		.transpose().reverse(),
 		// replicated by:
 		n_track_values, 1

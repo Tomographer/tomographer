@@ -1105,7 +1105,7 @@ public:
   {
     std::size_t histindex = value_histogram.process_sample(k, n, curpt, curptval, mh);
     binning_analysis.process_new_values(
-	can_basis_vec<Eigen::Array<ValueType,Eigen::Dynamic,1> >(histindex, value_histogram.histogram().num_bins())
+	Tools::can_basis_vec<Eigen::Array<ValueType,Eigen::Dynamic,1> >(histindex, value_histogram.histogram().num_bins())
 	);
   }
 

@@ -108,7 +108,6 @@ endmacro(addTomographerTest)
 
 # add tests for tomographer library.
 
-addTomographerTest(test_mathtools_sphcoords.cxx  "")
 addTomographerTest(test_densedm_dmtypes.cxx "")
 addTomographerTest(test_densedm_distmeasures.cxx "")
 addTomographerTest(test_densedm_param_herm_x.cxx "")
@@ -117,25 +116,32 @@ addTomographerTest(test_densedm_indepmeasllh.cxx "")
 addTomographerTest(test_densedm_dmmhrw.cxx "")
 addTomographerTest(test_densedm_figofmerit.cxx "")
 addTomographerTest(test_tools_loggers.cxx  "")
-addTomographerTest(test_tools_util.cxx  "")
+addTomographerTest(test_tools_cxxutil.cxx  "")
+addTomographerTest(test_tools_eigenutil.cxx  "")
+addTomographerTest(test_tools_fmt.cxx  "")
 addTomographerTest(test_tools_conststr.cxx  "")
 addTomographerTest(test_tools_ezmatio_1.cxx  "matio")
 addTomographerTest(test_tools_ezmatio_2.cxx  "matio")
 addTomographerTest(test_tools_ezmatio_3.cxx  "matio")
+addTomographerTest(test_tools_eigen_assert_exception.cxx "")
 addTomographerTest(test_mathtools_simple_find_zero.cxx  "")
 addTomographerTest(test_mathtools_random_unitary.cxx  "")
 addTomographerTest(test_mathtools_pos_semidef_util.cxx  "")
 addTomographerTest(test_mathtools_check_derivatives.cxx  "")
+addTomographerTest(test_mathtools_sphcoords.cxx  "")
+addTomographerTest(test_mathtools_solveclyap.cxx "")
 #
 addTomographerTest(test_histogram.cxx  "")
 addTomographerTest(test_mhrw.cxx  "")
 addTomographerTest(test_mhrw_bin_err.cxx  "")
 
 # tests need to be converted to new API:
-addTomographerTest(test_qit_util.cxx  "")
-addTomographerTest(test_lib_basics.cxx  "")
+#addTomographerTest(test_multi_omp.cxx  "openmp")
+#addTomographerTest(test_integrator_basic.cxx "")
+# converted & renamed:
+#addTomographerTest(test_lib_basics.cxx  "")
+#addTomographerTest(test_qit_util.cxx  "")
 #addTomographerTest(test_param.cxx  "")
-addTomographerTest(test_multi_omp.cxx  "openmp")
 
 
 add_executable(test_tomorun_1qubit_analytic_solution_check

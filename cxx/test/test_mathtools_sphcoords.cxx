@@ -33,17 +33,13 @@
 
 #include <boost/math/constants/constants.hpp>
 
-// we want `eigen_assert()` to raise an `eigen_assert_exception` here
-#include <tomographer/tools/eigen_assert_exception.h>
-
-#include <Eigen/Eigen>
+// definitions for Tomographer test framework -- this must be included before any
+// <Eigen/...> or <tomographer/...> header
+#include "test_tomographer.h"
 
 #include <tomographer/mathtools/sphcoords.h>
 #include <tomographer/tools/eigenutil.h>
 #include <tomographer/mathtools/check_derivatives.h>
-
-#include <boost/test/unit_test.hpp>
-#include <boost/test/floating_point_comparison.hpp>
 
 
 
@@ -97,7 +93,7 @@ struct TestSphJacFixture
     
     for (std::size_t k = 0; k < npoints; ++k) {
       // get a random point in theta-space; weigh with jacobian to estimate volume of n-ball
-      rtheta = Tomographer::dense_random<Eigen::VectorXd>(rng, dist, CART_DIM);
+      rtheta = Tomographer::Tools::dense_random<Eigen::VectorXd>(rng, dist, CART_DIM);
       // so translate them to the correct ranges.
       rtheta(0) *= R; // rtheta(0) in [0, R]
       rtheta.block(1,0,ds-1,1) = rtheta.block(1,0,ds-1,1) * pi; // theta_i in [0, pi] for 1 <= i < ds
@@ -131,7 +127,7 @@ struct TestSphJacFixture
 
     for (std::size_t k = 0; k < npoints; ++k) {
       // get a random point in theta-space; add weighted with Jacobian to estimate surface of n-sphere
-      theta = Tomographer::dense_random<Eigen::VectorXd>(rng, dist, SPH_DIM);
+      theta = Tomographer::Tools::dense_random<Eigen::VectorXd>(rng, dist, SPH_DIM);
       // so translate them to the correct ranges.
       theta.block(0,0,ds-1,1) = theta.block(0,0,ds-1,1) * pi; // theta_i in [0, pi] for 0 <= i < ds-1
       theta(ds-1) = theta(ds-1) * 2 * pi; // theta_{ds-1} in [0, 2*pi]
@@ -151,9 +147,6 @@ struct TestSphJacFixture
 
 // -----------------------------------------------------------------------------
 // test suites
-
-// tolerance in *percent*; i.e. the actual relative tolerance is (tol_percent*0.01)
-const double tol_percent = 1e-8;
 
 BOOST_AUTO_TEST_SUITE(test_sph_cart)
 
@@ -328,7 +321,7 @@ BOOST_FIXTURE_TEST_CASE(test_diffjac, test_diffjac_fixture<11>)
   Tomographer::SphCoords::sphsurf_diffjac(dxdtheta, theta);
 
   std::stringstream msgstream;
-  bool ok = Tomographer::Tools::check_derivatives(
+  bool ok = Tomographer::MathTools::check_derivatives(
       dxdtheta, // derivatives
       theta, // point
       sphsurf_to_cart_fn(), // fn
@@ -360,7 +353,7 @@ BOOST_FIXTURE_TEST_CASE(test_diffjac2, test_diffjac_fixture<8>)
   }
 
   std::stringstream msgstream;
-  bool ok = Tomographer::Tools::check_derivatives(
+  bool ok = Tomographer::MathTools::check_derivatives(
       ddxddtheta_reshaped, // derivatives of the derivatives :)
       theta, // point
       sphsurf_to_diffcart_fn<DEF_N,DEF_DS>(), //fn

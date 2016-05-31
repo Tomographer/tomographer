@@ -130,7 +130,7 @@ struct TestFixtureQuditRand : public TestParamsFixture<Tomographer::DenseDM::DMT
 
     std::mt19937 rng(RandSeed); // seeded, deterministic random number generator
 
-    Tomographer::random_unitary(U, rng);
+    Tomographer::MathTools::random_unitary(U, rng);
 
     //    BOOST_MESSAGE("U = \n" << U);
 
