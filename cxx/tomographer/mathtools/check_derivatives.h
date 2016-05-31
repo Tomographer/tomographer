@@ -32,18 +32,19 @@
 
 #include <Eigen/Core>
 
+#include <tomographer/tools/cxxutil.h> // TOMO_STATIC_ASSERT_EXPR
+
+
 /** \file check_derivatives.h
  *
  * \brief Tools to check numerical derivatives.
  *
- * See \ref Tomographer::Tools::check_derivatives().
+ * See \ref Tomographer::MathTools::check_derivatives().
  *
  */
 
-namespace Tomographer
-{
-namespace Tools
-{
+namespace Tomographer {
+namespace MathTools {
 
 /** \brief Check given derivatives against numerically-calculated finite differences
  *
@@ -97,26 +98,40 @@ namespace Tools
 template<typename Der1, typename Der2, typename fnType, typename ErrorStream>
 bool check_derivatives(const Eigen::ArrayBase<Der1> & derivatives, const Eigen::MatrixBase<Der2> & point,
                        fnType fn, std::size_t valdims,
-                       typename Eigen::MatrixBase<Der2>::Scalar delta = 1e-6,
-                       typename Eigen::MatrixBase<Der1>::Scalar tol = 1e-6,
+                       const typename Eigen::MatrixBase<Der2>::Scalar delta = 1e-6,
+                       const typename Eigen::MatrixBase<Der1>::Scalar tol = 1e-6,
 		       ErrorStream & error_stream = std::cerr
                        )
 {
   bool ok = true;
+
+  typedef typename Eigen::MatrixBase<Der2>::Scalar XScalar;
+  typedef typename Eigen::MatrixBase<Der1>::Scalar ValScalar;
+
+  TOMO_STATIC_ASSERT_EXPR( ! Eigen::NumTraits<XScalar>::IsComplex ) ;
+  TOMO_STATIC_ASSERT_EXPR( ! Eigen::NumTraits<ValScalar>::IsComplex ) ;
 
   const std::size_t xdims = derivatives.cols();
   eigen_assert(point.rows() == (int)xdims);
   eigen_assert(point.cols() == (int)1);
   eigen_assert(derivatives.rows() == (int)valdims);
 
-  Eigen::VectorXd val0(valdims);
-  Eigen::VectorXd dval1(valdims);
-  Eigen::VectorXd dvalFromDer(valdims);
+  typedef Eigen::Matrix<XScalar, Eigen::Dynamic, 1>  XVector;
+  typedef Eigen::Matrix<ValScalar, Eigen::Dynamic, 1>  ValVector;
 
-  Eigen::VectorXd pt2(point.rows());
+  ValVector val0(valdims);
+  ValVector dval1(valdims);
+  ValVector dvalFromDer(valdims);
+
+  XVector pt2(point.rows());
+
+  eigen_assert(derivatives.allFinite());
+  eigen_assert(point.allFinite());
 
   // calculate the base point
   fn(val0, point);
+
+  eigen_assert(val0.allFinite());
 
   std::size_t i;
   for (i = 0; i < xdims; ++i) {
@@ -128,15 +143,17 @@ bool check_derivatives(const Eigen::ArrayBase<Der1> & derivatives, const Eigen::
     fn(dval1, pt2);
     dval1 -= val0;
 
+    eigen_assert(dval1.allFinite());
+
     dvalFromDer = delta * derivatives.matrix().col(i);//derivatives.matrix() * (delta*dir);
 
-    double thediff = (dval1 - dvalFromDer).norm();
+    XScalar thediff = (dval1 - dvalFromDer).norm();
 
     if (thediff/delta > tol ) {
       // Error in the derivative
 
       // direction in which we probed, for the error_stream
-      Eigen::VectorXd dir = Eigen::VectorXd::Zero(xdims);
+      XVector dir = XVector::Zero(xdims);
       dir(i) = 1.0;
 
       ok = false;
@@ -158,7 +175,7 @@ bool check_derivatives(const Eigen::ArrayBase<Der1> & derivatives, const Eigen::
 
 
 
-} // Tools
+} // MathTools
 } // Tomographer
 
 

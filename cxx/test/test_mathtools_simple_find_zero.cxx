@@ -28,14 +28,12 @@
 #include <limits>
 #include <iostream>
 
-// we want `eigen_assert()` to raise an `eigen_assert_exception` here
-#include <tomographer/tools/eigen_assert_exception.h>
+// definitions for Tomographer test framework -- this must be included before any
+// <Eigen/...> or <tomographer/...> header
+#include "test_tomographer.h"
 
+#include <tomographer/mathtools/simple_find_zero.h>
 #include <tomographer/tools/loggers.h>
-#include <tomographer/qit/simple_find_zero.h>
-
-#include <boost/test/unit_test.hpp>
-#include <boost/test/floating_point_comparison.hpp>
 
 
 

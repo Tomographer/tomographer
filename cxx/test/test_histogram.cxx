@@ -31,10 +31,6 @@
 #include "test_tomographer.h"
 
 #include <tomographer/histogram.h>
-#include <tomographer/qit/matrq.h>
-#include <tomographer/qit/random_unitary.h>
-#include <tomographer/qit/pos_semidef_util.h>
-#include <tomographer/tomoproblem.h>
 
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>

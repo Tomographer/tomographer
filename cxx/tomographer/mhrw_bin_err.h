@@ -28,9 +28,9 @@
 #define TOMOGRAPHER_MHRW_BIN_ERR_H
 
 
-//#include <tomographer/qit/util.h>
-#include <tomographer/tools/cxxutil.h>
 #include <tomographer/tools/loggers.h>
+#include <tomographer/tools/eigenutil.h> // replicated(), powers_of_two()
+#include <tomographer/tools/cxxutil.h>
 
 #include <boost/math/constants/constants.hpp>
 

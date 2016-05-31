@@ -33,7 +33,7 @@
 
 #include <tomographer/mhrw.h>
 
-#include "test_mh_random_walk.h" // our test-case random walk
+#include "test_mh_random_walk_common.h" // our test-case random walk
 
 
 BOOST_AUTO_TEST_SUITE(test_mhrw)

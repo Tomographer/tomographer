@@ -43,8 +43,8 @@
 #include <tomographer/tools/loggers.h>
 
 
-namespace Tomographer
-{
+namespace Tomographer {
+namespace MathTools {
 
 
 /** \brief Generate a Haar-distributed random unitary
@@ -117,7 +117,8 @@ inline void random_unitary(Eigen::MatrixBase<Der1> & U, Rng & rng)
 }
 
 
-
+} // namespace MathTools
 } // namespace Tomographer
+
 
 #endif

@@ -25,8 +25,8 @@
  */
 
 
-#ifndef POS_SEMIDEF_UTIL
-#define POS_SEMIDEF_UTIL
+#ifndef _TOMOGRAPHER_MATHTOOLS_POS_SEMIDEF_UTIL
+#define _TOMOGRAPHER_MATHTOOLS_POS_SEMIDEF_UTIL
 
 /** \file pos_semidef_util.h
  *
@@ -39,7 +39,7 @@
 
 
 namespace Tomographer {
-namespace Tools {
+namespace MathTools {
 
 
 /** \brief Make sure that the given vector is numerically positive
@@ -163,7 +163,7 @@ inline MatrixType safe_operator_inv_sqrt(const Eigen::Ref<const MatrixType> & A,
 
 
 
-} // Tools
+} // MathTools
 } // Tomographer
 
 

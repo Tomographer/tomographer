@@ -47,10 +47,8 @@
 // C++ Helper for Complex Type
 // -----------------------------------------------------------------------------
 
-namespace Tomographer
-{
-namespace Tools
-{
+namespace Tomographer {
+namespace Tools {
 
 /** \brief statically determine whether a type is complex
  *
@@ -146,6 +144,7 @@ struct eigen_std_vector
 // -----------------------------------------------------------------------------
 
 namespace Tomographer {
+namespace Tools {
 
 namespace tomo_internal {
 
@@ -188,19 +187,21 @@ namespace tomo_internal {
   };
 } // end namespace tomo_internal
 
+} // namespace Tools
 } // namespace Tomographer
 
 namespace Eigen {
   namespace internal {
     /** \internal */
     template<typename Rng, typename RndDist, typename Scalar>
-    struct functor_traits<Tomographer::tomo_internal::random_generator<Rng, RndDist, Scalar> >
+    struct functor_traits<Tomographer::Tools::tomo_internal::random_generator<Rng, RndDist, Scalar> >
     { enum { Cost = 50 * NumTraits<Scalar>::MulCost, PacketAccess = false, IsRepeatable = false }; };
   }
 } // end namespace Eigen
 
 
 namespace Tomographer {
+namespace Tools {
 
 
 /** \brief a matrix populated with random entries using C++'s \c random framework
@@ -251,18 +252,19 @@ namespace tomo_internal {
     }
   };
 } // namespace tomo_internal
+} // namespace Tools
 } // namespace Tomographer
 namespace Eigen {
   namespace internal {
     /** \internal */
     template<typename Scalar, typename IndexType>
-    struct functor_traits<Tomographer::tomo_internal::can_basis_vec_generator<Scalar, IndexType> >
+    struct functor_traits<Tomographer::Tools::tomo_internal::can_basis_vec_generator<Scalar, IndexType> >
     { enum { Cost = 2 * NumTraits<Scalar>::MulCost, PacketAccess = false, IsRepeatable = true }; };
   }
 } // end namespace Eigen
 
 namespace Tomographer {
-
+namespace Tools {
 
 /** \brief Expression for the k-th canonical basis vector of given dimension
  *
@@ -328,21 +330,23 @@ namespace tomo_internal {
 
   };
 } // namespace tomo_internal
+} // namespace Tools
 } // namespace Tomographer
 namespace Eigen {
   namespace internal {
     /** \internal */
     template<typename Scalar>
-    struct functor_traits<Tomographer::tomo_internal::powers_of_two_generator<Scalar> >
+    struct functor_traits<Tomographer::Tools::tomo_internal::powers_of_two_generator<Scalar> >
     { enum { Cost = 8 * NumTraits<Scalar>::MulCost, PacketAccess = false, IsRepeatable = true }; };
 
   //    template<typename Scalar>
-  //    struct functor_has_linear_access<Tomographer::tomo_internal::powers_of_two_generator<Scalar> >
+  //    struct functor_has_linear_access<Tomographer::Tools::tomo_internal::powers_of_two_generator<Scalar> >
   //    { enum { ret = 0 }; };
   }
 } // end namespace Eigen
 
 namespace Tomographer {
+namespace Tools {
 
 
 /** \brief Expression for a 1-D expression of powers of two
@@ -413,7 +417,7 @@ inline auto replicated(const Eigen::DenseBase<Derived> & x, int row_factor, int 
   return x.template replicate<RowFactorCTime, ColFactorCTime>();
 }
 
-
+} // namespace Tools
 } // namespace Tomographer
 
 

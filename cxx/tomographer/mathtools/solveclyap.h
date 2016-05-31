@@ -44,14 +44,12 @@ extern "C" void ztrsyl_(char *TRANA, char *TRANB, int *ISGN, int *M, int *N,
                         double *A, int *lda, double *B, int *ldb,
                         double *C, int *ldc, double *scale, int *info);
 
-namespace Tomographer
-{
+namespace Tomographer {
 /** \brief Definitions for solving the Complex Lyapunov Equation
  *
  * See \ref SolveCLyap::solve().
  */
-namespace SolveCLyap
-{
+namespace SolveCLyap {
 
 /** \brief Error while attempting to solve complex Lyapunov/Sylvester equation
  *
