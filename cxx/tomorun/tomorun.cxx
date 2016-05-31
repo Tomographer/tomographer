@@ -48,18 +48,19 @@
 
 #include <Eigen/Core>
 
-#include <tomographer/tools/util.h>
+#include <tomographer/tools/cxxutil.h>
 #include <tomographer/tools/loggers.h>
 #include <tomographer/tools/ezmatio.h>
 #include <tomographer/tools/signal_status_report.h>
-#include <tomographer/qit/matrq.h>
-#include <tomographer/qit/util.h>
-#include <tomographer/qit/param_herm_x.h>
-#include <tomographer/tomoproblem.h>
+#include <tomographer/tools/eigenutil.h>
+#include <tomographer/densedm/dmtypes.h>
+#include <tomographer/densedm/param_herm_x.h>
+#include <tomographer/densedm/indepmeasllh.h>
+#include <tomographer/densedm/figofmerit.h>
 #include <tomographer/mhrw.h>
 #include <tomographer/mhrwtasks.h>
-#include <tomographer/dmmhrw.h>
 #include <tomographer/multiprocomp.h>
+#include <tomographer/densedm/dmmhrw.h>
 #include <tomographer/tomographer_version.h>
 
 #include "tomorun_config.h"
