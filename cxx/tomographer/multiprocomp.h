@@ -37,6 +37,9 @@ inline constexpr int omp_get_num_threads() { return 1; }
 #endif
 
 
+#include <tomographer/tools/loggers.h>
+
+
 /** \file multiprocomp.h
  *
  * \brief Multiprocessing with OpenMP parallel multithreading.

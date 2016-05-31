@@ -46,7 +46,8 @@ extern "C" {
 
 #include <Eigen/Core>
 
-#include <tomographer/qit/util.h>
+#include <tomographer/tools/cxxutil.h>
+#include <tomographer/tools/eigenutil.h>
 #include <tomographer/tools/fmt.h>
 
 
@@ -57,11 +58,9 @@ extern "C" {
 
 
 
-namespace Tomographer
-{
+namespace Tomographer {
 // namespace doc in doc/doxdocs/namespaces.cxx
-namespace MAT
-{
+namespace MAT {
 
 
 /** \brief Base Exception class for errors within our MAT routines

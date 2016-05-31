@@ -27,7 +27,7 @@
 
 #include "test_tomographer.h"
 
-#include <tomographer/tools/util.h>
+#include <tomographer/tools/cxxutil.h>
 
 
 
@@ -39,8 +39,36 @@ TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::extractFuncName("int ns::subclass::o
 TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::extractFuncName("int operator==(const ns::subclass&, char)") == "operator==(const ns::subclass&, char)");
 
 
+BOOST_AUTO_TEST_SUITE(test_tools_cxxutil)
 
-BOOST_AUTO_TEST_CASE(NOT_IMPLEMENTED)
+BOOST_AUTO_TEST_CASE(is_complex)
+{
+  BOOST_CHECK( ! Tomographer::Tools::is_complex<double>::value ) ;
+  BOOST_CHECK( ! Tomographer::Tools::is_complex<float>::value ) ;
+  BOOST_CHECK( ! Tomographer::Tools::is_complex<int>::value ) ;
+  BOOST_CHECK( Tomographer::Tools::is_complex<std::complex<double> >::value ) ;
+  BOOST_CHECK( Tomographer::Tools::is_complex<std::complex<float> >::value ) ;
+  BOOST_CHECK( Tomographer::Tools::is_complex<std::complex<long double> >::value ) ;
+}
+
+BOOST_AUTO_TEST_CASE(is_positive)
+{
+  BOOST_CHECK( Tomographer::Tools::is_positive(1.0) ) ;
+  BOOST_CHECK( Tomographer::Tools::is_positive(1.e-12) ) ;
+  BOOST_CHECK( Tomographer::Tools::is_positive(0.0) ) ;
+  BOOST_CHECK( ! Tomographer::Tools::is_positive(-1.e-12) ) ;
+  BOOST_CHECK( ! Tomographer::Tools::is_positive(-1) ) ;
+  BOOST_CHECK( Tomographer::Tools::is_positive(0) ) ;
+  BOOST_CHECK( Tomographer::Tools::is_positive<unsigned int>(0xffffffffu) ) ;
+  BOOST_CHECK(Tomographer::Tools::is_positive(1u)) ;
+  BOOST_CHECK(Tomographer::Tools::is_positive(1)) ;
+  BOOST_CHECK(Tomographer::Tools::is_positive(1.f)) ;
+  BOOST_CHECK(Tomographer::Tools::is_positive(1.0)) ;
+  BOOST_CHECK(!Tomographer::Tools::is_positive(-1)) ;
+  BOOST_CHECK(!Tomographer::Tools::is_positive(-1.0)) ;
+}
+
+BOOST_AUTO_TEST_CASE(not_implemented)
 {
   // need to implement more tests
   BOOST_CHECK(false);
@@ -48,18 +76,4 @@ BOOST_AUTO_TEST_CASE(NOT_IMPLEMENTED)
 
 
 
-
-
-
-
-
-
-
-
-
-// we need to add at least one boost test, otherwise the executable reports failure
-// because it has no tests.
-BOOST_AUTO_TEST_CASE(a)
-{
-  BOOST_CHECK(true);
-}
+BOOST_AUTO_TEST_SUITE_END()

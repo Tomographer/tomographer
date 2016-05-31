@@ -134,14 +134,15 @@ addTomographerTest(test_mathtools_solveclyap.cxx "")
 addTomographerTest(test_histogram.cxx  "")
 addTomographerTest(test_mhrw.cxx  "")
 addTomographerTest(test_mhrw_bin_err.cxx  "")
+addTomographerTest(test_multiprocomp.cxx  "openmp")
 
 # tests need to be converted to new API:
 #addTomographerTest(test_multi_omp.cxx  "openmp")
-#addTomographerTest(test_integrator_basic.cxx "")
 # converted & renamed:
 #addTomographerTest(test_lib_basics.cxx  "")
 #addTomographerTest(test_qit_util.cxx  "")
 #addTomographerTest(test_param.cxx  "")
+#addTomographerTest(test_integrator_basic.cxx "")
 
 
 add_executable(test_tomorun_1qubit_analytic_solution_check

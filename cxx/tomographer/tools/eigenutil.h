@@ -24,10 +24,10 @@
  * SOFTWARE.
  */
 
-#ifndef QIT_UTIL_H
-#define QIT_UTIL_H
+#ifndef TOMOGRAPHER_TOOLS_EIGENUTIL_H
+#define TOMOGRAPHER_TOOLS_EIGENUTIL_H
 
-/** \file tomographer/qit/util.h
+/** \file tomographer/tools/eigenutil.h
  *
  * \brief Basic utilities for dealing with Eigen matrices and other types.
  *
@@ -42,70 +42,6 @@
 #include <Eigen/StdVector>
 
 
-
-// -----------------------------------------------------------------------------
-// C++ Helper for Complex Type
-// -----------------------------------------------------------------------------
-
-namespace Tomographer {
-namespace Tools {
-
-/** \brief statically determine whether a type is complex
- *
- * This class provides an enum memeber named \a value which is either set to \c 1 if
- * the type \a Scalar is of type \a std::complex<>, or else set to \c 0.
- */
-template<typename Scalar>
-struct is_complex {
-  // use Eigen's existing implementation
-  enum { value = Eigen::NumTraits<Scalar>::IsComplex };
-};
-
-
-/** \brief The Real scalar type corresponding to a std::complex type
- *
- * If the type \a Scalar is of the form \a std::complex<T>, then this struct has a single
- * member \a type which is an alias of \a T.
- *
- * If the type \a Scalar is not an \a std::complex<T> type, then the member \a type is
- * just an alias of \a Scalar.
- */
-template<typename Scalar>
-struct complex_real_scalar {
-  typedef Scalar type;
-};
-
-//! Implementation of \ref complex_real_scalar for complex types.
-template<typename RealScalar>
-struct complex_real_scalar<std::complex<RealScalar> >
-{
-  typedef RealScalar type;
-};
-
-
-
-
-/** \brief Test whether the given value is positive or zero.
- *
- * This helper is useful to silence warnings in templates about `comparision of unsigned
- * >= 0 is always true'.
- */
-template<typename X>
-inline typename std::enable_if<std::is_unsigned<X>::value, bool>::type is_positive(const X /* val */)
-{
-  return true;
-}
-//! See \ref is_positive()
-template<typename X>
-inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type is_positive(const X val)
-{
-  return val >= 0;
-}
-
-
-
-} // namespace Tools
-} // namespace Tomographer
 
 
 

@@ -63,33 +63,6 @@ TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_complex<std::complex<double> >::v
 
 BOOST_AUTO_TEST_SUITE(test_mathtools_eigenutil)
 
-BOOST_AUTO_TEST_CASE(is_complex)
-{
-  BOOST_CHECK( ! Tomographer::Tools::is_complex<double>::value ) ;
-  BOOST_CHECK( ! Tomographer::Tools::is_complex<float>::value ) ;
-  BOOST_CHECK( ! Tomographer::Tools::is_complex<int>::value ) ;
-  BOOST_CHECK( Tomographer::Tools::is_complex<std::complex<double> >::value ) ;
-  BOOST_CHECK( Tomographer::Tools::is_complex<std::complex<float> >::value ) ;
-  BOOST_CHECK( Tomographer::Tools::is_complex<std::complex<long double> >::value ) ;
-}
-
-BOOST_AUTO_TEST_CASE(is_positive)
-{
-  BOOST_CHECK( Tomographer::Tools::is_positive(1.0) ) ;
-  BOOST_CHECK( Tomographer::Tools::is_positive(1.e-12) ) ;
-  BOOST_CHECK( Tomographer::Tools::is_positive(0.0) ) ;
-  BOOST_CHECK( ! Tomographer::Tools::is_positive(-1.e-12) ) ;
-  BOOST_CHECK( ! Tomographer::Tools::is_positive(-1) ) ;
-  BOOST_CHECK( Tomographer::Tools::is_positive(0) ) ;
-  BOOST_CHECK( Tomographer::Tools::is_positive<unsigned int>(0xffffffffu) ) ;
-  BOOST_CHECK(Tomographer::Tools::is_positive(1u)) ;
-  BOOST_CHECK(Tomographer::Tools::is_positive(1)) ;
-  BOOST_CHECK(Tomographer::Tools::is_positive(1.f)) ;
-  BOOST_CHECK(Tomographer::Tools::is_positive(1.0)) ;
-  BOOST_CHECK(!Tomographer::Tools::is_positive(-1)) ;
-  BOOST_CHECK(!Tomographer::Tools::is_positive(-1.0)) ;
-}
-
 BOOST_AUTO_TEST_CASE(dense_random)
 {
   std::mt19937 rng;

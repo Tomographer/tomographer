@@ -77,6 +77,12 @@ struct DMTypes {
   //! The corresponding complex scalar type
   typedef std::complex<RealScalar> ComplexScalar;
 
+  //! Utility to initialize a complex number using the current scalar type
+  static inline ComplexScalar cplx(RealScalar a, RealScalar b)
+  {
+    return ComplexScalar(a, b);
+  }
+
   //! Matrix type, to store the density operator as a dense matrix
   typedef Eigen::Matrix<ComplexScalar, FixedDim, FixedDim>  MatrixType;
   //! Shorthand for a const reference to a MatrixType-like Eigen object
