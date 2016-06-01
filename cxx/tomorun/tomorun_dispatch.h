@@ -502,7 +502,7 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
   // create the OMP Task Manager and run.
   //
 
-  auto valcalc = makeValueCalculator(llh);
+  auto valcalc = makeValueCalculator();
   typedef decltype(valcalc) ValueCalculator;
 
   typedef typename TomorunModeTypes<BinningAnalysisErrorBars, DenseLLH, ValueCalculator>::CData OurCData;
@@ -727,24 +727,24 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
       tomorun<BinningAnalysisErrorBars>(
           llh,
           opt,
-          [&T_ref](const DenseLLH & llh) {
-            return Tomographer::FidelityToRefCalculator<OurDMTypes, double>(T_ref);
+          [&T_ref]() {
+            return Tomographer::DenseDM::FidelityToRefCalculator<OurDMTypes, double>(T_ref);
           },
           logger);
     } else if (opt->valtype.valtype == val_type_spec::PURIF_DIST) {
       tomorun<BinningAnalysisErrorBars>(
           llh,
           opt,
-          [&T_ref](const DenseLLH & llh) {
-            return Tomographer::PurifDistToRefCalculator<OurDMTypes, double>(T_ref);
+          [&T_ref]() {
+            return Tomographer::DenseDM::PurifDistToRefCalculator<OurDMTypes, double>(T_ref);
           },
           logger);
     } else if (opt->valtype.valtype == val_type_spec::TR_DIST) {
       tomorun<BinningAnalysisErrorBars>(
           llh,
           opt,
-          [&rho_ref](const DenseLLH & llh) {
-              return Tomographer::TrDistToRefCalculator<OurDMTypes, double>(rho_ref);
+          [&rho_ref]() {
+              return Tomographer::DenseDM::TrDistToRefCalculator<OurDMTypes, double>(rho_ref);
           },
           logger);
     } else {
@@ -776,8 +776,8 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
     tomorun<BinningAnalysisErrorBars>(
         llh,
         opt,
-        [&A](const OurTomoProblem & tomo) {
-          return Tomographer::ObservableValueCalculator<OurTomoProblem>(tomo, A);
+        [&A, dmt]() {
+          return Tomographer::DenseDM::ObservableValueCalculator<OurDMTypes>(dmt, A);
         },
         logger);
 
