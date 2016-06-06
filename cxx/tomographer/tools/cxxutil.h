@@ -155,7 +155,7 @@ inline tomo_internal::FinalAction<F> finally(F f)
  *         \c IsDynamic is \c false. 
  *
  */
-template<typename T_, bool IsDynamic_, T_ StaticValue_>
+template<typename T_, bool IsDynamic_, T_ StaticValue_ = T_()>
 class static_or_dynamic
 {
 
@@ -194,6 +194,11 @@ public:
    */
   inline T operator()() const { return StaticValue; }
 };
+// static properties
+template<typename T_, bool IsDynamic_, T_ StaticValue_>
+constexpr bool static_or_dynamic<T_, IsDynamic_, StaticValue_>::IsDynamic;
+template<typename T_, bool IsDynamic_, T_ StaticValue_>
+constexpr typename static_or_dynamic<T_, IsDynamic_, StaticValue_>::T static_or_dynamic<T_, IsDynamic_, StaticValue_>::StaticValue;
 
 /** \brief Template Specialization -- see \ref static_or_dynamic<T_,IsDynamic_,StaticValue_>
  *
@@ -230,6 +235,9 @@ private:
   //! The dynamically stored value
   const T _dyn_value;
 };
+// static properties
+template<typename T_, T_ StaticValue_>
+constexpr bool static_or_dynamic<T_, true, StaticValue_>::IsDynamic;
 
 
 // -----------------------------------------------------------------------------
@@ -238,6 +246,7 @@ private:
 /** \brief Utility that stores a data type if a compile-time flag is enabled.
  *
  * If \a enabled is \c true, then this type defines a public member \a value of type \a T.
+ * It is not declared constant, and can be used as a regular variable.
  *
  * The constructor always accepts any number of arguments. They are either ignored (if
  * nothing is stored), or relayed on to the \a value's constructor.
@@ -249,12 +258,15 @@ struct store_if_enabled
   //! The type we're storing
   typedef T_ T;
   //! Whether we're storing a value or not -- by default no
-  static constexpr bool is_enabled = false;
+  static constexpr bool IsEnabled = false;
 
   //! Constructor
   template<typename... Args>
   explicit store_if_enabled(Args...) { }
 };
+// static properties
+template<typename T_, bool enabled>
+constexpr bool store_if_enabled<T_, enabled>::IsEnabled;
 /** \brief Specialization of \ref store_if_enabled<T_,enabled> for if we're storing a
  *         value
  *
@@ -265,7 +277,7 @@ struct store_if_enabled<T_, true>
   //! The type we're storing
   typedef T_ T;
   //! Whether we're storing a value or not -- yes.
-  static constexpr bool is_enabled = true;
+  static constexpr bool IsEnabled = true;
 
   //! This property keeps the value we're supposed to store.
   T value;
@@ -274,24 +286,29 @@ struct store_if_enabled<T_, true>
   template<typename... ArgTypes>
   explicit store_if_enabled(const ArgTypes& ...  args) : value(args...) { }
 };
+// static properties:
+template<typename T_>
+constexpr bool store_if_enabled<T_, true>::IsEnabled;
 
 /** \brief C++ Stream operators for \ref store_if_enabled<T,enabled>
  *
  * Produces human-readable output.
  */
 template<typename T>
-inline std::ostream & operator<<(std::ostream & str, store_if_enabled<T, false> /*val*/)
+inline std::ostream & operator<<(std::ostream & str, const store_if_enabled<T, false>& /*val*/)
 {
-  return str << "[-]";
+  str << "[-]";
+  return str;
 }
 /** \brief C++ Stream operators for \ref store_if_enabled<T,enabled>
  *
  * Produces human-readable output.
  */
 template<typename T>
-inline std::ostream & operator<<(std::ostream & str, store_if_enabled<T, true> val)
+inline std::ostream & operator<<(std::ostream & str, const store_if_enabled<T, true>& val)
 {
-  return str << val.value;
+  str << val.value;
+  return str;
 }
 
 
@@ -301,7 +318,8 @@ inline std::ostream & operator<<(std::ostream & str, store_if_enabled<T, true> v
 
 /** \brief Return true if the argument is a power of two, false otherwise.
  */
-inline constexpr bool is_power_of_two(int N)
+template<typename IntType = int>
+inline constexpr bool is_power_of_two(IntType N)
 {
   // taken from http://stackoverflow.com/q/10585450/1694896
   return N && !(N & (N - 1));

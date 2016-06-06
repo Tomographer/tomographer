@@ -1662,7 +1662,7 @@ template<typename BaseLoggerType_>  class LocalLogger;
 
 //! Specialized Traits for \ref LocalLogger. See \ref LoggerTraits<BaseLoggerType_>
 template<typename BaseLoggerType_>
-struct LoggerTraits<LocalLogger<BaseLoggerType_> > : LoggerTraits<BaseLoggerType_>
+struct LoggerTraits<LocalLogger<BaseLoggerType_> > : public LoggerTraits<BaseLoggerType_>
 {
   enum {
     //! Logger will delegate calls for current level() to base logger
