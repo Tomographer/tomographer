@@ -24,8 +24,8 @@
  * SOFTWARE.
  */
 
-#ifndef SOLVECLYAP_H
-#define SOLVECLYAP_H
+#ifndef TOMOGRAPHER_MATHTOOLS_SOLVECLYAP_H
+#define TOMOGRAPHER_MATHTOOLS_SOLVECLYAP_H
 
 /** \file solveclyap.h
  *
@@ -77,8 +77,8 @@ namespace tomo_internal {
 
   template<bool debug_perform_check>
   struct solve_check_helper {
-    template<typename XT, typename AT, typename CT, typename Log>
-    static inline void check(const XT&, const AT&, const CT&, Log&)
+    template<typename XT, typename AT, typename CT, typename LoggerType>
+    static inline void check(const XT&, const AT&, const CT&, LoggerType&)
     {
       // no-op.
     }
@@ -86,8 +86,8 @@ namespace tomo_internal {
   // specialize for if we want debug checks
   template<>
   struct solve_check_helper<true> {
-    template<typename XT, typename AT, typename CT, typename Log>
-    static inline void check(const XT& X, const AT& A, const CT& C, Log & logger)
+    template<typename XT, typename AT, typename CT, typename LoggerType>
+    static inline void check(const XT& X, const AT& A, const CT& C, LoggerType & logger)
     {
       //logger.debug("LyapCSolve::solve/check", "checking solution ...");
 
@@ -116,25 +116,38 @@ namespace tomo_internal {
  *
  * If an error occurs, a \ref SolveError is thrown.
  *
+ * This function requires you to link to the LAPACK library (external symbol used is \c
+ * ztrsyl_).
+ *
+ * Note that only complex double type is supported.  In the future we might support other
+ * complex types, by calling the other LAPACK routines.
+ *
  * If the template parameter \a debug_perform_check is set to \c true, then some debugging
  * consistency checks are performed.
  */
-template<bool debug_perform_check = false, typename Log, typename DerX, typename DerA, typename DerC>
-void solve(Eigen::MatrixBase<DerX> & X, const Eigen::MatrixBase<DerA> & A,
-	   const Eigen::MatrixBase<DerC> & C, Log & logger, const double tol = 1e-8)
+template<bool debug_perform_check = false, typename LoggerType>
+void solve(Eigen::Ref<Eigen::MatrixXcd> X, const Eigen::Ref<const Eigen::MatrixXcd> & A,
+	   const Eigen::Ref<const Eigen::MatrixXcd> & C,
+	   LoggerType & logger, const double tol = 1e-8)
 {
   // do an eigenvalue decomposition of A
 
   const int d = A.rows(); // dimension of problem
 
-  Eigen::SelfAdjointEigenSolver<DerA> eigA(A);
+  eigen_assert(X.rows() == X.cols() && X.rows() == d);
+  eigen_assert(A.rows() == A.cols() && A.rows() == d);
+  eigen_assert(C.rows() == C.cols() && C.rows() == d);
+
+  typedef Eigen::MatrixXcd MatType;
+
+  Eigen::SelfAdjointEigenSolver<MatType> eigA(A);
 
   if (eigA.info() == Eigen::NoConvergence) {
     throw SolveError("Can't diagonalize matrix A: No Convergence");
   }
 
-  const typename Eigen::SelfAdjointEigenSolver<DerA>::RealVectorType& eigvalsA = eigA.eigenvalues();
-  const typename Eigen::SelfAdjointEigenSolver<DerA>::MatrixType& eigU = eigA.eigenvectors();
+  const typename Eigen::SelfAdjointEigenSolver<MatType>::RealVectorType& eigvalsA = eigA.eigenvalues();
+  const typename Eigen::SelfAdjointEigenSolver<MatType>::MatrixType& eigU = eigA.eigenvectors();
 
   int M = 0;
   for (int k = 0; k < d; ++k) {
@@ -144,8 +157,6 @@ void solve(Eigen::MatrixBase<DerX> & X, const Eigen::MatrixBase<DerA> & A,
   }
  
   //  cout << "there are M="<< M << " nonzero eigenvalues\n";
-
-  typedef Eigen::Matrix<typename DerA::Scalar, Eigen::Dynamic, Eigen::Dynamic> MatType;
 
   MatType D = MatType::Zero(M, M);
   MatType W = MatType::Zero(d, M);
@@ -173,7 +184,7 @@ void solve(Eigen::MatrixBase<DerX> & X, const Eigen::MatrixBase<DerA> & A,
   //
   // we can now solve the Sylvester equation with ZTRSYL, for W^{-1}*X*W =: Z
 
-  Eigen::Matrix<typename DerA::Scalar, Eigen::Dynamic, Eigen::Dynamic> Z(M, M);
+  MatType Z(M, M);
   
   Z = W.adjoint() * C * W;
 

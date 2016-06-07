@@ -67,7 +67,7 @@ endif(NOT OPENMP_FOUND)
 
 # Find MatIO library (https://sourceforge.net/projects/matio/)
 if(NOT MATIO_FOUND)
-find_package(MatIO REQUIRED)
+  find_package(MatIO REQUIRED)
 endif(NOT MATIO_FOUND)
 
 # ... which requires the libz library
@@ -79,6 +79,11 @@ endif(NOT ZLIB_FOUND)
 if(NOT BOOST_FOUND)
   find_package(Boost 1.40 COMPONENTS program_options unit_test_framework REQUIRED)
 endif(NOT BOOST_FOUND)
+
+# LAPACK is only required if you want to run all the tests (but not for tomorun)
+if(NOT LAPACK_FOUND)
+  find_package(LAPACK)
+endif(NOT LAPACK_FOUND)
 
 
 # activate warning flags on debug builds

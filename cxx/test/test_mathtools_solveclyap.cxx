@@ -37,11 +37,107 @@
 #include "test_tomographer.h"
 
 #include <tomographer/mathtools/solveclyap.h>
-
+#include <tomographer/tools/eigenutil.h> // dense_random
+#include <tomographer/tools/loggers.h>
+#include <tomographer/mathtools/random_unitary.h>
 
 
 // -----------------------------------------------------------------------------
 // fixture(s)
+
+
+// template<typename MatrixType_, typename Rng_>
+// class RandomPosSemiDef
+// {
+// public:
+//   typedef MatrixType_ MatrixType;
+//   typedef typename MatrixType::Scalar Scalar;
+//   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
+//   typedef typename MatrixType::Index IndexType;
+//   typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, 1> RealVectorType;
+
+//   typedef Rng_ Rng;
+
+// private:
+//   Rng & _rng;
+//   IndexType _dim;
+
+//   MatrixType _U;
+//   RealVectorType _diag;
+
+// public:
+//   RandomPosSemiDef(Rng & rng, IndexType dim)
+//     : _rng(rng), _dim(dim), _U(dim, dim), _diag(dim)
+//   {
+//   }
+
+//   MatrixType withUnifEig(RealScalar max_eigenval = RealScalar(1),
+// 			 IndexType max_rank = std::numeric_limits<IndexType>::max())
+//   {
+//     std::uniform_real_distribution<RealScalar> dist(0, max_eigenval);
+
+//     Tomographer::MathTools::random_unitary<MatrixType>(_U, _rng);
+    
+//     _diag = Tomographer::Tools::dense_random<Eigen::VectorXd>(_rng, dist, _dim);
+
+//     for (int i = max_rank; i < _dim; ++i) {
+//       _diag(i) = 0;
+//     }
+
+//     // this is positive semidefinite.
+//     return _U*_diag.asDiagonal()*_U.adjoint();
+//   }
+
+//   inline const MatrixType & lastU() const { return _U; }
+//   inline const RealVectorType & lastDiag() const { return _diag; }
+
+// };
+
+
+
+
+struct test_solveclyap_fixture
+{
+  template<typename Rng>
+  void do_test(Rng & rng, int d, int A_rank)
+  {
+    typedef Eigen::MatrixXcd MatType;
+
+    std::uniform_real_distribution<double> dist(0.0, 1.0);
+
+    MatType U(d,d);
+    Tomographer::MathTools::random_unitary<MatType>(U, rng);
+    MatType W(U.block(0,0,d,A_rank));
+
+    Eigen::VectorXd eigvals(Tomographer::Tools::dense_random<Eigen::VectorXd>(rng, dist, A_rank));
+    // this is positive semidefinite.
+    MatType A(W * eigvals.asDiagonal() * W.adjoint());
+
+    BOOST_MESSAGE("A = " << A) ;
+
+    // create a random X in the support of A
+    // MatType X(W * RandomPosSemiDef<MatType, std::mt19937>(rng, A_rank).withUnifEig(1.0, A_rank) * W.adjoint());
+    MatType X(W * Tomographer::Tools::dense_random<MatType>(rng, dist, A_rank, A_rank) * W.adjoint());
+
+    BOOST_MESSAGE("X = " << X) ;
+
+    const MatType C(A.adjoint()*X + X*A);
+
+    BOOST_MESSAGE("--> C = " << C) ;
+
+    MatType X2(d,d);
+
+    Tomographer::Logger::BufferLogger logger(Tomographer::Logger::DEBUG);
+
+    Tomographer::SolveCLyap::solve<true>(X2, A, C, logger, 1e-8);
+
+    std::string msg = logger.get_contents();
+    BOOST_MESSAGE(msg);
+
+    MY_BOOST_CHECK_EIGEN_EQUAL(X, X2, 1e-8);
+  }
+};
+
 
 
 
@@ -49,12 +145,31 @@
 // test suites
 
 
-BOOST_AUTO_TEST_SUITE(test_mathtools_solveclyap)
+BOOST_FIXTURE_TEST_SUITE(test_mathtools_solveclyap, test_solveclyap_fixture)
 
-BOOST_AUTO_TEST_CASE(NOT_IMPLEMENTED)
+BOOST_AUTO_TEST_CASE(random_test_7_4)
 {
-  // TODO: WRITE TEST !
-  BOOST_CHECK( false ) ;
+  std::mt19937 rng(4938221);
+
+  const int d = 7; // dimension of problem
+  const int A_rank = 4; // rank of A
+  for (int repeat = 0; repeat < 1000; ++repeat) {
+    BOOST_MESSAGE("Repeat : iteration #" << repeat) ;
+    do_test(rng, d, A_rank);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(random_test_15_15)
+{
+  std::mt19937 rng(89120);
+
+  const int d = 15; // dimension of problem
+  const int A_rank = 15; // rank of A
+
+  for (int repeat = 0; repeat < 100; ++repeat) {
+    BOOST_MESSAGE("Repeat : iteration #" << repeat) ;
+    do_test(rng, d, A_rank);
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END()

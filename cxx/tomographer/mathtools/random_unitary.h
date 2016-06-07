@@ -80,7 +80,7 @@ inline void random_unitary(Eigen::MatrixBase<DerU> & U, Rng & rng, Log & logger)
   //      str << "got A = \n" << A;
   //    });
 
-  // gram-schmidt orthogonalization
+  // Gram-Schmidt orthogonalization
 
   for (int j = 0; j < n; ++j) {
 

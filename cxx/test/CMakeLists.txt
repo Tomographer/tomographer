@@ -66,17 +66,27 @@ enable_testing()
 # Add the tests.
 # ==============================================================================
 
+set(LIST_OF_ALL_TESTS "")
 
 macro(addTomographerTest test_cxx NeedsList)
 
   # file name without extension (NAME_WE)
   get_filename_component(test_name ${test_cxx} NAME_WE)
         
+  if (";${NeedsList};" MATCHES ";LAPACK;")
+    # compile & link with LAPACK, but only if it is available.
+    if(NOT LAPACK_FOUND)
+      return()
+    endif()
+  endif()
+
   # the test binary executable
   add_executable(${test_name}
     ${test_cxx}
     test_tomographer.cxx
     )
+  
+  set(LIST_OF_ALL_TESTS ${LIST_OF_ALL_TESTS} ${test_name})
 
   if (";${NeedsList};" MATCHES ";openmp;")
     # compile & link with OpenMP
@@ -87,6 +97,14 @@ macro(addTomographerTest test_cxx NeedsList)
     COMPILE_FLAGS
     "-DBOOST_TEST_MODULE=${test_name} -I${MATIO_INCLUDE_DIR} -I${Boost_INCLUDE_DIR} -I${ZLIB_INCLUDE_DIRS}"
     )
+
+  if (";${NeedsList};" MATCHES ";LAPACK;")
+    AppendTargetProperty(${test_name}
+      LINKER_FLAGS
+      "${LAPACK_LINKER_FLAGS}"
+      )
+    target_link_libraries(${test_name} ${LAPACK_LIBRARIES})
+  endif()
 
   # link with Boost.Test framework
   target_link_libraries(${test_name} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
@@ -129,7 +147,7 @@ addTomographerTest(test_mathtools_random_unitary.cxx  "")
 addTomographerTest(test_mathtools_pos_semidef_util.cxx  "")
 addTomographerTest(test_mathtools_check_derivatives.cxx  "")
 addTomographerTest(test_mathtools_sphcoords.cxx  "")
-addTomographerTest(test_mathtools_solveclyap.cxx "")
+addTomographerTest(test_mathtools_solveclyap.cxx "LAPACK")
 #
 addTomographerTest(test_histogram.cxx  "")
 addTomographerTest(test_mhrw.cxx  "")
@@ -177,3 +195,4 @@ set_tests_properties(test_tomorun_1qubit_analytic_solution_runcheck_binerr
   PROPERTIES DEPENDS "test_tomorun_1qubit_analytic_solution_check;test_tomorun_1qubit_analytic_solution_run_binerr")
 
 message(STATUS "Added test targets")
+
