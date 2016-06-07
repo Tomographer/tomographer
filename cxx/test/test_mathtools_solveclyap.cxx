@@ -129,7 +129,7 @@ struct test_solveclyap_fixture
 
     Tomographer::Logger::BufferLogger logger(Tomographer::Logger::DEBUG);
 
-    Tomographer::SolveCLyap::solve<true>(X2, A, C, logger, 1e-8);
+    Tomographer::MathTools::SolveCLyap::solve<true>(X2, A, C, logger, 1e-8);
 
     std::string msg = logger.get_contents();
     BOOST_MESSAGE(msg);

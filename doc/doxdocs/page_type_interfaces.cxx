@@ -45,8 +45,6 @@
  *
  * Documented Type Interfaces in the %Tomographer framwork are:
  *
- *  - \subpage pageInterfaceMatrQ
- *  - \subpage pageInterfaceTomoSetting
  *  - \subpage pageInterfaceRandomWalk
  *  - \subpage pageInterfaceMHWalker
  *  - \subpage pageInterfaceMHRWStatsCollector
@@ -55,131 +53,9 @@
  *  - \subpage pageInterfaceMHRandomWalkTaskCData
  *  - \subpage pageTaskManagerDispatcher
  *  - \subpage pageInterfaceHistogram
- *
+ *  - \subpage pageDenseDMTypeInterfaces
  */
 
-
-// =============================================================================
-// MatrQ
-// =============================================================================
-
-/** \page pageInterfaceMatrQ MatrQ Interface
- *
- * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
- * for more info on what that is.</em>
- *
- * Declares types for dealing with quantum states and POVMs of a fixed dimension which
- * we'll call here \a dim. See also \ref Tomographer::MatrQ.
- *
- * \par typedef ... RealScalar
- * The real scalar type we're working with.
- *
- * \par typedef ... ComplexScalar
- * The complex scalar type we're working with.
- *
- * \par typedef ... IntFreqType
- * The integral type to use for measurement counts. Usually \c int is enough, except if in
- * your experiment you take >1e9 measurements
- *
- * \par typedef ... MatrixType
- * The type needed to represent a density matrix. This is usually expected to be a Eigen
- * type.
- *
- * \par int dim() const
- * The dimension of the quantum system. Return any integer type, usually
- * std::size_t. Inline of course is better.
- *
- * \par int dim2() const
- * The squared dimension of the quantum system. Return any integer type, usually
- * std::size_t. Inline of course is better.
- *
- * \par int ndof() const
- * The squared dimension of the quantum system, minus one. This is the number of degrees
- * of freedom of the density matrix. Return any integer type, usually std::size_t. Inline
- * of course is better.
- *
- * \par MatrixType initMatrixType() const
- * Returns an expression which can be assigned to a \a MatrixType such that the matrix is
- * initialized to a square \a dim x \a dim zero matrix.
- *
- * \par typedef ... VectorParamType
- * The type needed to represent a X-parameterization of a density matrix. This is usually
- * expected to be a Eigen type.
- *
- * \par MatrixType initVectorParamType() const
- * Returns an expression which can be assigned to a \a VectorParamType such that the
- * vector is initialized to a zero column vector with <em>dim*dim</em> entries.
- *
- * \par typedef ... VectorParamNdofType
- * The type needed to represent some parameterization of a density matrix with
- * <em>dim*dim-1</em> parameters. This is usually expected to be a Eigen type.
- *
- * \par MatrixType initVectorParamNdofType() const
- * Returns an expression which can be assigned to a \a VectorParamNdofType such that the
- * vector is initialized to a zero column vector with <em>dim*dim-1</em> entries.
- *
- * \par typedef ... VectorParamListType
- * The type needed to represent a list of X-parameterizations of e.g. POVM effects, each
- * with <em>dim*dim</em> parameters. This is usually expected to be a Eigen type.
- *
- * \par MatrixType initVectorParamListType(std::size_t length) const
- * Returns an expression which can be assigned to a \a VectorParamListType such that the
- * list is initialized to a list with \a length copies of a zero column vector with
- * <em>dim*dim</em> entries.
- *
- * \par typedef ... FreqListType
- * The type needed to represent frequency counts of measurements. This is typically an
- * \ref Eigen::Array integral type. 
- *
- * \par MatrixType initFreqListType(std::size_t len) const
- * Returns an expression which can be assigned to a \a FreqListType such that the vector
- * is initialized to \a len items with zero counts each.
- *
- *
- */
-
-
-// =============================================================================
-// TomoSetting
-// =============================================================================
-
-/** \page pageInterfaceTomoSetting TomoSetting Interface
- *
- * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
- * for more info on what that is.</em>
- *
- * Stores the data relevant for a quantum tomography setting. Includes:
- *
- *   - ........
- *
- * See also: \ref Tomographer::IndepMeasTomoProblem<MatrQ_,LLHValueType_,UseCLoopInstead>
- *
- *
- * \par typedef ... QuStateReprType;
- * The type used to represent (store) a quantum state.
- *
- * \par const IntegralType dim;
- * Dimension of the quantum system.
- *
- * \par const IntegralType dim2;
- * Cached value of <em>dim*dim</em>
- *
- * \par const IntegralType Ndof;
- * Cached value of <em>dim*dim-1</em>
- *
- * \par typedef .. LLHValueType;
- * The type to use to store the value of the loglikelihood function calculated by \a
- * calc_llh().
- *
- * \par LLHValueType calc_llh(const QuStateReprType & rho) const;
- * Calculate the loglikelihood function, defined as
- * \f[
- *   \lambda\left(\rho\right) = -2\,\ln\,\mathrm{tr}\left[B^n\,\rho^{\otimes n}\right]\ .
- * \f]
- * The argument \a rho is the quantum state at which the loglikelihood function is to be
- * evaluated.
- *
- */
 
 
 // =============================================================================

@@ -59,8 +59,8 @@ BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
   typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> DenseLLH;
   DenseLLH llh(dmt);
 
-  llh.initMeasVector(6);
-  llh.Exn <<
+  DenseLLH::VectorParamListType Exn(6, dmt.dim2());
+  Exn <<
     0.5, 0.5,  0.707107,  0,
     0.5, 0.5, -0.707107,  0,
     0.5, 0.5,  0,         0.707107,
@@ -68,7 +68,10 @@ BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
     1,   0,    0,         0,
     0,   1,    0,         0
     ;
-  llh.Nx << 1500, 800, 300, 300, 10, 30;
+  DenseLLH::FreqListType Nx(6);
+  Nx << 1500, 800, 300, 300, 10, 30;
+
+  llh.setMeas(Exn, Nx);
 
   typedef Tomographer::Logger::BufferLogger LoggerType;
   LoggerType buflog(Tomographer::Logger::DEBUG);
@@ -88,7 +91,7 @@ BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
   dmmhrw.thermalizing_done();
 
   const DMTypes::MatrixType Tconst(T); // make sure that fnlogval() accepts const argument
-  BOOST_CHECK_CLOSE(dmmhrw.fnlogval(Tconst), -0.5*llh.calc_llh(x), tol_percent);
+  BOOST_CHECK_CLOSE(dmmhrw.fnlogval(Tconst), llh.logLikelihoodX(x), tol_percent);
 
   DMTypes::MatrixType newT = dmmhrw.jump_fn(T, 0.2);
   BOOST_CHECK_CLOSE(newT.norm(), 1.0, tol_percent);
@@ -112,11 +115,10 @@ BOOST_AUTO_TEST_CASE(basic1)
   DMTypes dmt;
   
   typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> DenseLLH;
-  DenseLLH dat(dmt);
+  DenseLLH llh(dmt);
 
-  dat.initMeasVector(6);
-  //std::cout << "Exn.size = " << dat.Exn.rows() << " x " << dat.Exn.cols() << "\n";
-  dat.Exn <<
+  DenseLLH::VectorParamListType Exn(6, dmt.dim2());
+  Exn <<
     0.5, 0.5,  0.707107,  0,
     0.5, 0.5, -0.707107,  0,
     0.5, 0.5,  0,         0.707107,
@@ -124,8 +126,10 @@ BOOST_AUTO_TEST_CASE(basic1)
     1,   0,    0,         0,
     0,   1,    0,         0
     ;
-  // try to reproduce the nice "1qubit-test9-pureup-extreme-onlyupmeas" curve
-  dat.Nx << 0, 0, 0, 0, 250, 0;
+  DenseLLH::FreqListType Nx(6);
+  Nx << 0, 0, 0, 0, 250, 0;
+
+  llh.setMeas(Exn, Nx);
 
   // now, prepare the integrator.
   std::mt19937 rng(0); // seeded random number generator
@@ -164,7 +168,7 @@ BOOST_AUTO_TEST_CASE(basic1)
   typedef Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,std::mt19937,LoggerType>
     MyMHWalker;
 
-  MyMHWalker mhwalker(start_T, dat, rng, flog);
+  MyMHWalker mhwalker(start_T, llh, rng, flog);
 
   //  std::cout << "About to create the randomwalk object ...\n";
   Tomographer::MHRandomWalk<std::mt19937,MyMHWalker,OurMultiMHRWStatsCollector,LoggerType,long>
@@ -209,13 +213,17 @@ BOOST_AUTO_TEST_CASE(with_binning_analysis)
   typedef Tomographer::DenseDM::DMTypes<2> DMTypes;
   DMTypes dmt;
   typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> DenseLLH;
-  DenseLLH dat(dmt);
-  dat.initMeasVector(2);
-  dat.Exn <<
+  DenseLLH llh(dmt);
+
+  DenseLLH::VectorParamListType Exn(2, dmt.dim2());
+  Exn <<
     1,   0,    0,         0,
     0,   1,    0,         0
     ;
-  dat.Nx << 250, 0;
+  DenseLLH::FreqListType Nx(2);
+  Nx << 250, 0;
+
+  llh.setMeas(Exn, Nx);
 
   // --------
 
@@ -247,7 +255,7 @@ BOOST_AUTO_TEST_CASE(with_binning_analysis)
   DMTypes::MatrixType start_T = dmt.initMatrixType();
   start_T << 1.0/sqrt(2.0), 0, 0, 1.0/sqrt(2.0);
 
-  MHWalkerType mhwalker(start_T, dat, rng, buflog);
+  MHWalkerType mhwalker(start_T, llh, rng, buflog);
 
   //  std::cout << "About to create the randomwalk object ...\n";
   Tomographer::MHRandomWalk<std::mt19937,MHWalkerType,ValWBinningMHRWStatsCollectorType,LoggerType,unsigned long>

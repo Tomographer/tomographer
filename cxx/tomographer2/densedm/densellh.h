@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -24,51 +24,52 @@
  * SOFTWARE.
  */
 
-#ifndef MULTIPROC_H
-#define MULTIPROC_H
+#ifndef TOMOGRAPHER_DENSEDM_DENSELLH_H
+#define TOMOGRAPHER_DENSEDM_DENSELLH_H
 
-#include <string>
+#include <cstddef>
+#include <cmath>
 
+#include <random>
 
-/** \file multiproc.h
+#include <boost/math/constants/constants.hpp>
+
+/** \file densellh.h
  *
- * \brief Some common definitions for multiprocessing interfaces.
+ * \brief Some declarations for the DenseLLH type interface
  *
- * See also \ref pageTaskManagerDispatcher as well as \ref Tomographer::MultiProc::OMP.
+ * See the \ref pageInterfaceDenseLLH
  */
 
-
 namespace Tomographer {
+namespace DenseDM {
 
-namespace MultiProc {
+/** \brief Possible ways a \ref pageInterfaceDenseLLH "DenseLLH-compatible type" can
+ *         calculate the llh function
+ */
+enum {
 
-  /** \brief Basic status report class
-   *
-   * This may serve as base class for a more detailed and specific status report.
-   *
-   * See also:
-   *  - \ref pageTaskManagerDispatcher;
-   *  - \ref OMPTaskDispatcher's status report mechanism;
-   *  - \ref DMIntegratorTasks::MHRandomWalkTask::StatusReport for an example usage.
-   *
+  /** \brief The DenseLLH-compatible type cannot calculate the LLH function; it is
+   *         useless.
    */
-  struct StatusReport
-  {
-    StatusReport()
-      : fraction_done(0), msg("<unknown>")
-    { }
-    StatusReport(double fraction_done_, const std::string& msg_)
-      : fraction_done(fraction_done_), msg(msg_)
-    { }
+  LLHCalcTypeInvalid = 0,
+  
+  /** \brief The DenseLLH-compatible object exposes a method \c logLikelihoodRho(), taking as
+   *         argument a (const ref to a) DMTypes::MatrixType
+   */
+  LLHCalcTypeRho = 1,
 
-    double fraction_done;
-    std::string msg;
-  };
+  /** \brief The DenseLLH-compatible object exposes a method \c logLikelihoodX(), taking as
+   *         argument a (const ref to a) DMTypes::VectorParamType
+   */
+  LLHCalcTypeX = 2
+
+};
 
 
+} // namespace DenseDM
+} // namespace Tomographer
 
-}; // namespace MultiProc
 
-}; // namespace Tomographer
 
 #endif

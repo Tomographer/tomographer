@@ -50,14 +50,8 @@ inline constexpr int omp_get_num_threads() { return 1; }
 
 
 namespace Tomographer {
-
-
-
-namespace MultiProc
-{
-//! Definitions for multitasking using OpenMP multithreading.
-namespace OMP
-{
+namespace MultiProc {
+namespace OMP {
 
   namespace tomo_internal {
 

@@ -35,8 +35,10 @@
 #include <boost/math/constants/constants.hpp>
 
 #include <tomographer2/tools/loggers.h>
-#include <tomographer2/mhrw.h>
+#include <tomographer2/densedm/densellh.h>
+#include <tomographer2/densedm/dmtypes.h>
 #include <tomographer2/densedm/param_herm_x.h>
+#include <tomographer2/mhrw.h>
 
 /** \file tspacellhwalker.h
  *
@@ -59,7 +61,6 @@ namespace TSpace {
  *
  * \tparam DenseLLH a type satisfying the LLH type interface (\ref pageInterfaceLLH)
  *
- * \todo DOCUMENT DenseLLH TYPE INTERFACE
  *
  * \tparam Rng a \c std::random random number \a generator (such as \ref std::mt19937)
  *
@@ -175,22 +176,36 @@ public:
 
   /** \brief Calculate the logarithm of the Metropolis-Hastings function value.
    *
-   * \return <code>-0.5 * (-2-log-likelihood)</code>, where the
-   * <code>-2-log-likelihood</code> is computed using \ref
-   * IndepMeasTomoProblem::calc_llh()
+   * \return the log-likelihood, which is computed via the DenseLLH object.
+   *
+   * This implementation deals for DenseLLH objects which expose a \a logLikelihoodX()
+   * function (see \ref pageInterfaceDenseLLH)
    */
+  TOMOGRAPHER_ENABLED_IF(DenseLLH::LLHCalcType == LLHCalcTypeX)
   inline LLHValueType fnlogval(const MatrixType & T) const
   {
     MatrixType rho(T*T.adjoint());
-
     VectorParamType x = _px.HermToX(rho);
-
-    LLHValueType llhval = -boost::math::constants::half<RealScalar>() * _llh.calc_llh(x);
-
+    LLHValueType llhval =  _llh.logLikelihoodX(x);
     // _log.longdebug("fnlogval(%s) = %g\n", streamcstr(x.transpose()), llhval);
-
     return llhval;
   }
+
+  /** \brief Calculate the logarithm of the Metropolis-Hastings function value.
+   *
+   * \return the log-likelihood, which is computed via the DenseLLH object.
+   *
+   * This implementation deals for DenseLLH objects which expose a \a logLikelihoodRho()
+   * function (see \ref pageInterfaceDenseLLH)
+   */
+  TOMOGRAPHER_ENABLED_IF(DenseLLH::LLHCalcType == LLHCalcTypeRho)
+  inline LLHValueType fnlogval(const MatrixType & T) const
+  {
+    LLHValueType llhval =  _llh.logLikelihoodRho(T*T.adjoint());
+    // _log.longdebug("fnlogval( %s ) = %g\n", streamcstr(T*T.adjoint()), llhval);
+    return llhval;
+  }
+
 
   //! Decides of a new point to jump to for the random walk
   inline MatrixType jump_fn(const MatrixType& cur_T, RealScalar step_size)

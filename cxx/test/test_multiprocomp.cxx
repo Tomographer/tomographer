@@ -233,13 +233,10 @@ BOOST_AUTO_TEST_CASE(dmmhrwtask)
   logger.info("main()", "testing our integrator with Pauli meas. on a qubit ... ");
 
   DMTypes dmt;
-  DenseLLH dat(dmt);
+  DenseLLH llh(dmt);
 
-  dat.initMeasVector(6);
-  logger.debug("main()", [&](std::ostream& str) {
-      str << "Exn.size = " << dat.Exn.rows() << " x " << dat.Exn.cols() << "\n";
-    });
-  dat.Exn <<
+  typename DenseLLH::VectorParamListType Exn(6,dmt.dim2());
+  Exn <<
     0.5, 0.5,  0.707107,  0,
     0.5, 0.5, -0.707107,  0,
     0.5, 0.5,  0,         0.707107,
@@ -247,8 +244,11 @@ BOOST_AUTO_TEST_CASE(dmmhrwtask)
     1,   0,    0,         0,
     0,   1,    0,         0
     ;
+  typename DenseLLH::FreqListType Nx(6);
   // try to reproduce the nice "1qubit-test9-pureup-extreme-onlyupmeas" curve
-  dat.Nx << 0, 0, 0, 0, 250, 0;
+  Nx << 0, 0, 0, 0, 250, 0;
+
+  llh.setMeas(Exn, Nx);
 
   // NOW, RUN THE MH TASKS:
 
@@ -261,7 +261,7 @@ BOOST_AUTO_TEST_CASE(dmmhrwtask)
     1.0, 0,
     0,   0;
 
-  MyCData taskcdat(dat, ref_T);
+  MyCData taskcdat(llh, ref_T);
   // seed for random number generator
   taskcdat.base_seed = 1000; // fixed seed for deterministic results in this test case.
   //taskcdat.base_seed = std::chrono::system_clock::now().time_since_epoch().count();

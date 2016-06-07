@@ -39,6 +39,7 @@
 
 
 namespace Tomographer {
+namespace MathTools {
 namespace SphCoords {
 
 
@@ -447,6 +448,7 @@ void sphsurf_diffjac2(Eigen::ArrayBase<Der1> & ddxddtheta, const Eigen::MatrixBa
 
 
 } // namespace SphCoords
+} // namespace MathTools
 } // namespace Tomographer
 
 

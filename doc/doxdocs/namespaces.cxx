@@ -64,6 +64,33 @@
 
 
 
+/** \namespace Tomographer::MHRWTasks
+ *
+ * \brief Definitions for running multiple random walks
+ *
+ * Provides class definitions for interfacing with a task manager/dispatcher (see \ref
+ * pageTaskManagerDispatcher).
+ *
+ */
+
+
+
+/** \namespace Tomographer::MultiProc
+ *
+ * \brief Definitions for multi-processing classes and helpers
+ *
+ * This namespace encompasses classes and functions allowing to dispatch and process
+ * several tasks simultaneously.
+ *
+ * Currently, only an OpenMP implementation is provided, see \ref MultiProc::OMP and \ref
+ * MultiProc::OMP::TaskDispatcher.
+ */
+
+/** \namespace Tomographer::MultiProc::OMP
+ *
+ * \brief Definitions for multitasking using OpenMP multithreading
+ *
+ */
 
 
 /** \namespace Tomographer::Tools
@@ -80,11 +107,19 @@
  */
 
 
-/** \namespace Tomographer::SphCoords
+/** \namespace Tomographer::MathTools::SphCoords
  *
  * \brief Utilities for hyperspherical coordinates.
  *
  * See also the corresponding theory page \ref pageParamsSphericalCoords.
+ */
+
+
+/** \namespace Tomographer::MathTools::SolveCLyap
+ *
+ * \brief Definitions for solving the Complex Lyapunov Equation
+ *
+ * See \ref SolveCLyap::solve().
  */
 
 

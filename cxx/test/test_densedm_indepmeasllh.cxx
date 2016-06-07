@@ -53,10 +53,11 @@ BOOST_AUTO_TEST_CASE(basic)
   typedef Tomographer::DenseDM::DMTypes<2> DMTypes;
   DMTypes dmt;
   
-  Tomographer::DenseDM::IndepMeasLLH<DMTypes> dat(dmt);
+  typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> IndepMeasLLH;
+  IndepMeasLLH dat(dmt);
 
-  dat.initMeasVector(6);
-  dat.Exn <<
+  IndepMeasLLH::VectorParamListType Exn(6, dmt.dim2());
+  Exn <<
     0.5, 0.5,  0.707107,  0,
     0.5, 0.5, -0.707107,  0,
     0.5, 0.5,  0,         0.707107,
@@ -64,12 +65,15 @@ BOOST_AUTO_TEST_CASE(basic)
     1,   0,    0,         0,
     0,   1,    0,         0
     ;
-  dat.Nx << 1500, 800, 300, 300, 10, 30;
+  IndepMeasLLH::FreqListType Nx(6);
+  Nx << 1500, 800, 300, 300, 10, 30;
+
+  dat.setMeas(Exn, Nx);
 
   DMTypes::VectorParamType x(dmt.initVectorParamType());
   x << 0.5, 0.5, 0, 0; // maximally mixed state
   
-  DMTypes::RealScalar value = dat.calc_llh(x);
+  DMTypes::RealScalar value = -2*dat.logLikelihoodX(x);
   
   BOOST_CHECK_CLOSE(value, 4075.70542169248, 1e-4);
   //std::cout << "llh @ mixed state = " << std::setprecision(15) << value << "\n";
@@ -80,10 +84,11 @@ BOOST_AUTO_TEST_CASE(basic_dyn)
   typedef Tomographer::DenseDM::DMTypes<Eigen::Dynamic> DMTypes;
   DMTypes dmt(2);
   
-  Tomographer::DenseDM::IndepMeasLLH<DMTypes> dat(dmt);
+  typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> IndepMeasLLH;
+  IndepMeasLLH dat(dmt);
 
-  dat.initMeasVector(6);
-  dat.Exn <<
+  IndepMeasLLH::VectorParamListType Exn(6, dmt.dim2());
+  Exn <<
     0.5, 0.5,  0.707107,  0,
     0.5, 0.5, -0.707107,  0,
     0.5, 0.5,  0,         0.707107,
@@ -91,16 +96,95 @@ BOOST_AUTO_TEST_CASE(basic_dyn)
     1,   0,    0,         0,
     0,   1,    0,         0
     ;
-  dat.Nx << 1500, 800, 300, 300, 10, 30;
+  IndepMeasLLH::FreqListType Nx(6);
+  Nx << 1500, 800, 300, 300, 10, 30;
+
+  dat.setMeas(Exn, Nx);
 
   DMTypes::VectorParamType x(dmt.initVectorParamType());
   x << 0.5, 0.5, 0, 0; // maximally mixed state
   
-  const DMTypes::VectorParamType xconst(x); // make sure calc_llh() accepts const argument
-  DMTypes::RealScalar value = dat.calc_llh(xconst);
+  const DMTypes::VectorParamType xconst(x); // make sure logLikelihoodX() accepts const argument
+  DMTypes::RealScalar value = -2*dat.logLikelihoodX(xconst);
   
   BOOST_CHECK_CLOSE(value, 4075.70542169248, 1e-4);
   //std::cout << "llh @ mixed state = " << std::setprecision(15) << value << "\n";
+}
+
+BOOST_AUTO_TEST_CASE(reset_meas)
+{
+  typedef Tomographer::DenseDM::DMTypes<2> DMTypes;
+  DMTypes dmt(2);
+  
+  typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> IndepMeasLLH;
+  IndepMeasLLH dat(dmt);
+
+  IndepMeasLLH::VectorParamListType Exn(2,4);
+  Exn <<
+    1, 0, 0, 0,
+    0, 1, 0, 0
+    ;
+  IndepMeasLLH::FreqListType Nx(2);
+  Nx << 50, 50;
+  dat.setMeas(Exn, Nx);
+
+  BOOST_CHECK_EQUAL(dat.numEffects(), 2);
+  BOOST_CHECK_EQUAL(dat.Exn().rows(), 2);
+  { DMTypes::VectorParamType x; x << 0.0,1,0,0; MY_BOOST_CHECK_EIGEN_EQUAL(dat.Exn(1), x, tol); }
+  BOOST_CHECK_EQUAL(dat.Nx(0), 50);
+  BOOST_CHECK_EQUAL(dat.Nx(1), 50);
+
+  // test resetMeas()
+  dat.resetMeas();
+
+  BOOST_CHECK_EQUAL(dat.numEffects(), 0);
+  BOOST_CHECK_EQUAL(dat.Exn().rows(), 0);
+  BOOST_CHECK_EQUAL(dat.Nx().rows(), 0);
+}
+
+BOOST_AUTO_TEST_CASE(add_meas)
+{
+  typedef Tomographer::DenseDM::DMTypes<2> DMTypes;
+  DMTypes dmt(2);
+  typedef DMTypes::VectorParamType VectorParamType;
+  typedef DMTypes::MatrixType MatrixType;
+  
+  typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> IndepMeasLLH;
+  IndepMeasLLH dat(dmt);
+
+  IndepMeasLLH::VectorParamListType Exn(2,4);
+  Exn <<
+    1, 0, 0, 0,
+    0, 1, 0, 0
+    ;
+  IndepMeasLLH::FreqListType Nx(2);
+  Nx << 50, 50;
+  dat.setMeas(Exn, Nx);
+
+  // test addMeasEffect(MatrixType)
+  dat.addMeasEffect(0.5*MatrixType::Identity(), 75);
+
+  BOOST_CHECK_EQUAL(dat.numEffects(), 3);
+  { VectorParamType x; x<<0.5,0.5,0,0; MY_BOOST_CHECK_EIGEN_EQUAL(dat.Exn().row(2), x.transpose(), tol); }
+  BOOST_CHECK_EQUAL(dat.Nx().rows(), 3);
+  BOOST_CHECK_EQUAL(dat.Nx(2), 75);
+  BOOST_CHECK_EQUAL(dat.Nx()(2), 75);
+
+  // test addMeasEffect(VectorParamType)
+  dat.addMeasEffect((VectorParamType()<<0.5,0.5,-std::sqrt(2),0).finished(), 1175);
+
+  BOOST_CHECK_EQUAL(dat.numEffects(), 4);
+  { VectorParamType x; x <<0.5,0.5,-std::sqrt(2),0; MY_BOOST_CHECK_EIGEN_EQUAL(dat.Exn().row(2), x.transpose(), tol); }
+  BOOST_CHECK_EQUAL(dat.Nx().rows(), 4);
+  BOOST_CHECK_EQUAL(dat.Nx(3), 1175);
+  BOOST_CHECK_EQUAL(dat.Nx()(3), 1175);
+
+  // and check that the second addMeasEffect() didn't affect the previous data
+  BOOST_CHECK_EQUAL(dat.numEffects(), 3);
+  { VectorParamType x; x<<0.5,0.5,0,0;  MY_BOOST_CHECK_EIGEN_EQUAL(dat.Exn().row(2), x.transpose(), tol); }
+  BOOST_CHECK_EQUAL(dat.Nx().rows(), 3);
+  BOOST_CHECK_EQUAL(dat.Nx(2), 75);
+  BOOST_CHECK_EQUAL(dat.Nx()(2), 75);
 }
 
 BOOST_AUTO_TEST_SUITE_END()

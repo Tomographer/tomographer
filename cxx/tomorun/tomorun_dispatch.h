@@ -591,7 +591,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   //
 
   typedef Tomographer::DenseDM::DMTypes<FixedDim, double> OurDMTypes;
-  typedef Tomographer::DenseDM::IndepMeasLLH<OurDMTypes, double, int, FixedMaxPOVMEffects> OurDenseLLH;
+  typedef Tomographer::DenseDM::IndepMeasLLH<OurDMTypes, double, int, FixedMaxPOVMEffects, true> OurDenseLLH;
 
   //
   // Read data from file
@@ -620,7 +620,11 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
     }
   }
   logger.debug("tomorun_dispatch()", "Npovmeffects=%d", Npovmeffects);
-  llh.initMeasVector(Npovmeffects);
+  ///
+  /// \todo TODO: simply use llh.addMeasEffect()
+  ///
+  typename OurDenseLLH::VectorParamListType Exn(Npovmeffects, dmt.dim2());
+  typename OurDenseLLH::FreqListType Nx(Npovmeffects);
   j = 0;
   Tomographer::DenseDM::ParamX<OurDMTypes> xp(dmt);
   for (k = 0; k < Emn.size(); ++k) {
@@ -644,18 +648,19 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 #endif
 
     // don't need to reset `row` to zero, param_herm_to_x doesn't require it
-    llh.Exn.row(j) = xp.HermToX(Emn[k]).transpose();
-    llh.Nx[j] = Nm[k];
+    Exn.row(j) = xp.HermToX(Emn[k]).transpose();
+    Nx[j] = Nm[k];
     ++j;
   }
+  llh.setMeas(Exn, Nx);
   // done.
 
   logger.debug("tomorun_dispatch()", [&](std::ostream & ss) {
-                 ss << "\n\nExn: size="<<llh.Exn.size()<<"\n"
-                    << llh.Exn << "\n";
-                 ss << "\n\nNx: size="<<llh.Nx.size()<<"\n"
-                    << llh.Nx << "\n";
-               });
+      ss << "\n\nExn: size="<<llh.Exn().size()<<"\n"
+	 << llh.Exn() << "\n";
+      ss << "\n\nNx: size="<<llh.Nx().size()<<"\n"
+	 << llh.Nx() << "\n";
+    });
 
   //tomodat.rho_MLE = Tomographer::MAT::value<typename OurMatrQ::MatrixType>(matf->var("rho_MLE"));
 

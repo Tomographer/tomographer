@@ -45,10 +45,7 @@ extern "C" void ztrsyl_(char *TRANA, char *TRANB, int *ISGN, int *M, int *N,
                         double *C, int *ldc, double *scale, int *info);
 
 namespace Tomographer {
-/** \brief Definitions for solving the Complex Lyapunov Equation
- *
- * See \ref SolveCLyap::solve().
- */
+namespace MathTools {
 namespace SolveCLyap {
 
 /** \brief Error while attempting to solve complex Lyapunov/Sylvester equation
@@ -218,6 +215,7 @@ void solve(Eigen::Ref<Eigen::MatrixXcd> X, const Eigen::Ref<const Eigen::MatrixX
 }
 
 } // namespace SolveCLyap
+} // namespace MathTools
 } // namespace Tomographer
 
 #endif

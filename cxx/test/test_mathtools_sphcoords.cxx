@@ -99,7 +99,7 @@ struct TestSphJacFixture
       rtheta.block(1,0,ds-1,1) = rtheta.block(1,0,ds-1,1) * pi; // theta_i in [0, pi] for 1 <= i < ds
       rtheta(ds) = rtheta(ds) * 2 * pi; // theta_{ds} in [0, 2*pi]
 
-      vol += Tomographer::SphCoords::cart_to_sph_jacobian(rtheta);
+      vol += Tomographer::MathTools::SphCoords::cart_to_sph_jacobian(rtheta);
     }
 
     // average all volume elements
@@ -132,7 +132,7 @@ struct TestSphJacFixture
       theta.block(0,0,ds-1,1) = theta.block(0,0,ds-1,1) * pi; // theta_i in [0, pi] for 0 <= i < ds-1
       theta(ds-1) = theta(ds-1) * 2 * pi; // theta_{ds-1} in [0, 2*pi]
 
-      surf += Tomographer::SphCoords::surf_sph_jacobian(theta);
+      surf += Tomographer::MathTools::SphCoords::surf_sph_jacobian(theta);
     }
 
     // average all volume elements
@@ -156,7 +156,7 @@ BOOST_AUTO_TEST_CASE(test_cart_to_sph_3)
   cart << 1.0, 2.0, 3.0; // a random point in 3d space
 
   Eigen::Vector3d rtheta;
-  Tomographer::SphCoords::cart_to_sph(rtheta, cart); // cart -> rtheta
+  Tomographer::MathTools::SphCoords::cart_to_sph(rtheta, cart); // cart -> rtheta
 
   BOOST_CHECK_CLOSE(rtheta(0), cart.norm(), tol_percent);
   BOOST_CHECK_CLOSE(rtheta(0)*std::cos(rtheta(1)), cart(0), tol_percent);
@@ -164,7 +164,7 @@ BOOST_AUTO_TEST_CASE(test_cart_to_sph_3)
   BOOST_CHECK_CLOSE(rtheta(0)*std::sin(rtheta(1))*std::sin(rtheta(2)), cart(2), tol_percent);
 
   Eigen::Vector3d backtocart = Eigen::Vector3d::Zero();
-  Tomographer::SphCoords::sph_to_cart(backtocart, rtheta); // back to -> cart
+  Tomographer::MathTools::SphCoords::sph_to_cart(backtocart, rtheta); // back to -> cart
   BOOST_CHECK_CLOSE(backtocart(0), cart(0), tol_percent);
   BOOST_CHECK_CLOSE(backtocart(1), cart(1), tol_percent);
   BOOST_CHECK_CLOSE(backtocart(2), cart(2), tol_percent);
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(test_cart_to_sph_3)
 
   // test sphsurf
   Eigen::Vector3d cartonsphsurf = Eigen::Vector3d::Zero();
-  Tomographer::SphCoords::sphsurf_to_cart(cartonsphsurf, rtheta.block(1,0,2,1));
+  Tomographer::MathTools::SphCoords::sphsurf_to_cart(cartonsphsurf, rtheta.block(1,0,2,1));
   double orignorm = cart.norm();
   BOOST_CHECK_CLOSE(cartonsphsurf(0)*orignorm, cart(0), tol_percent);
   BOOST_CHECK_CLOSE(cartonsphsurf(1)*orignorm, cart(1), tol_percent);
@@ -185,7 +185,7 @@ BOOST_AUTO_TEST_CASE(test_cart_to_sph_7)
   cart << 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0;
 
   Eigen::VectorXd rtheta(7);
-  Tomographer::SphCoords::cart_to_sph(rtheta, cart); // cart -> rtheta
+  Tomographer::MathTools::SphCoords::cart_to_sph(rtheta, cart); // cart -> rtheta
 
   BOOST_CHECK_CLOSE(rtheta(0), cart.norm(), tol_percent);
   BOOST_CHECK_CLOSE(rtheta(0)*std::cos(rtheta(1)), cart(0), tol_percent);
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(test_cart_to_sph_7)
   BOOST_CHECK_CLOSE(rtheta(0)*std::sin(rtheta(1))*std::sin(rtheta(2))*std::sin(rtheta(3))*std::sin(rtheta(4))*std::sin(rtheta(5))*std::sin(rtheta(6)), cart(6), tol_percent);
 
   Eigen::VectorXd backtocart = Eigen::VectorXd::Zero(7);
-  Tomographer::SphCoords::sph_to_cart(backtocart, rtheta); // back to -> cart
+  Tomographer::MathTools::SphCoords::sph_to_cart(backtocart, rtheta); // back to -> cart
   BOOST_CHECK_CLOSE(backtocart(0), cart(0), tol_percent);
   BOOST_CHECK_CLOSE(backtocart(1), cart(1), tol_percent);
   BOOST_CHECK_CLOSE(backtocart(2), cart(2), tol_percent);
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(test_cart_to_sph_7)
 
   // test sphsurf
   Eigen::VectorXd cartonsphsurf = Eigen::VectorXd::Zero(7);
-  Tomographer::SphCoords::sphsurf_to_cart(cartonsphsurf, rtheta.block(1,0,6,1));
+  Tomographer::MathTools::SphCoords::sphsurf_to_cart(cartonsphsurf, rtheta.block(1,0,6,1));
   double orignorm = cart.norm();
   BOOST_CHECK_CLOSE(cartonsphsurf(0)*orignorm, cart(0), tol_percent);
   BOOST_CHECK_CLOSE(cartonsphsurf(1)*orignorm, cart(1), tol_percent);
@@ -274,7 +274,7 @@ BOOST_AUTO_TEST_SUITE_END()
 struct sphsurf_to_cart_fn {
   template<typename Der1, typename Der2>
   void operator()(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<Der1>& theta) {
-    Tomographer::SphCoords::sphsurf_to_cart(cart, theta);
+    Tomographer::MathTools::SphCoords::sphsurf_to_cart(cart, theta);
   }
 };
 
@@ -284,7 +284,7 @@ struct sphsurf_to_diffcart_fn {
   void operator()(Eigen::MatrixBase<Der2>& dxdthetalinear, const Eigen::MatrixBase<Der1>& theta) {
     Eigen::Array<double, N, DS> dxdtheta;
     //std::cout << "start fn eval\n";
-    Tomographer::SphCoords::sphsurf_diffjac(dxdtheta, theta);
+    Tomographer::MathTools::SphCoords::sphsurf_diffjac(dxdtheta, theta);
     //std::cout << "mid fn eval, dxdtheta's shape is (rows="<<dxdtheta.rows()<<",cols="<<dxdtheta.cols()<<")\n";
     for (int i = 0; i < DS; ++i) {
       dxdthetalinear.block(N*i, 0, N, 1) = dxdtheta.block(0, i, N, 1);
@@ -318,7 +318,7 @@ const double tol_der = 1e-6;
 BOOST_FIXTURE_TEST_CASE(test_diffjac, test_diffjac_fixture<11>)
 {
   Eigen::Array<double, DEF_N, DEF_DS> dxdtheta;
-  Tomographer::SphCoords::sphsurf_diffjac(dxdtheta, theta);
+  Tomographer::MathTools::SphCoords::sphsurf_diffjac(dxdtheta, theta);
 
   std::stringstream msgstream;
   bool ok = Tomographer::MathTools::check_derivatives(
@@ -341,7 +341,7 @@ BOOST_FIXTURE_TEST_CASE(test_diffjac2, test_diffjac_fixture<8>)
 {
   // now, check second derivatives
   Eigen::Array<double, DEF_N, DEF_DS*DEF_DS> ddxddtheta;
-  Tomographer::SphCoords::sphsurf_diffjac2(ddxddtheta, theta);
+  Tomographer::MathTools::SphCoords::sphsurf_diffjac2(ddxddtheta, theta);
 
   Eigen::Array<double, DEF_N*DEF_DS, DEF_DS> ddxddtheta_reshaped;
   for (int k = 0; k < DEF_N; ++k) {
