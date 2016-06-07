@@ -27,7 +27,7 @@
 
 #include "test_tomographer.h"
 
-#include <tomographer/tools/cxxutil.h>
+#include <tomographer2/tools/cxxutil.h>
 
 
 

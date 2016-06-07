@@ -36,23 +36,23 @@
 #include <boost/math/constants/constants.hpp>
 
 // definitions for Tomographer test framework -- this must be included before any
-// <Eigen/...> or <tomographer/...> header
+// <Eigen/...> or <tomographer2/...> header
 #include "test_tomographer.h"
 
-#include <tomographer/multiprocomp.h>
-#include <tomographer/tools/loggers.h>
-#include <tomographer/mhrwtasks.h>
-#include <tomographer/densedm/dmtypes.h>
-#include <tomographer/densedm/indepmeasllh.h>
-#include <tomographer/densedm/figofmerit.h>
-#include <tomographer/densedm/dmmhrw.h>
+#include <tomographer2/multiprocomp.h>
+#include <tomographer2/tools/loggers.h>
+#include <tomographer2/mhrwtasks.h>
+#include <tomographer2/densedm/dmtypes.h>
+#include <tomographer2/densedm/indepmeasllh.h>
+#include <tomographer2/densedm/tspacefigofmerit.h>
+#include <tomographer2/densedm/tspacellhwalker.h>
 
 
 // -----------------------------------------------------------------------------
 
 typedef Tomographer::DenseDM::DMTypes<2> DMTypes;
 typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> DenseLLH;
-typedef Tomographer::DenseDM::FidelityToRefCalculator<DMTypes> OurValueCalculator;
+typedef Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes> OurValueCalculator;
 
 typedef Tomographer::UniformBinsHistogram<OurValueCalculator::ValueType> OurHistogramType;
 
@@ -81,10 +81,10 @@ struct MyCData : public Tomographer::MHRWTasks::CDataBase<> {
   }
 
   template<typename Rng, typename LoggerType>
-  inline Tomographer::DenseDM::TSpaceLLHMHWalker<DenseLLH,Rng,LoggerType>
+  inline Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType>
   createMHWalker(Rng & rng, LoggerType & log) const
   {
-    return Tomographer::DenseDM::TSpaceLLHMHWalker<DenseLLH,Rng,LoggerType>(
+    return Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType>(
 	llh.dmt.initMatrixType(),
 	llh,
 	rng,

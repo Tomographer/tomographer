@@ -37,7 +37,7 @@ inline constexpr int omp_get_num_threads() { return 1; }
 #endif
 
 
-#include <tomographer/tools/loggers.h>
+#include <tomographer2/tools/loggers.h>
 
 
 /** \file multiprocomp.h

@@ -39,8 +39,8 @@
 
 #include <Eigen/Core>
 
-#include <tomographer/tools/eigenutil.h>
-#include <tomographer/tools/loggers.h>
+#include <tomographer2/tools/eigenutil.h>
+#include <tomographer2/tools/loggers.h>
 
 
 namespace Tomographer {

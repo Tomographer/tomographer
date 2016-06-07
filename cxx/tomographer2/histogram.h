@@ -40,8 +40,8 @@
 
 #include <Eigen/Core>
 
-#include <tomographer/tools/fmt.h>
-#include <tomographer/tools/eigenutil.h>
+#include <tomographer2/tools/fmt.h>
+#include <tomographer2/tools/eigenutil.h>
 
 
 /** \file histogram.h

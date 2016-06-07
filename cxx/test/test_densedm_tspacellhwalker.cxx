@@ -35,10 +35,10 @@
 // include before <Eigen/*> !
 #include "test_tomographer.h"
 
-#include <tomographer/densedm/dmmhrw.h>
+#include <tomographer2/densedm/tspacellhwalker.h>
 
-#include <tomographer/densedm/indepmeasllh.h>
-#include <tomographer/densedm/figofmerit.h>
+#include <tomographer2/densedm/indepmeasllh.h>
+#include <tomographer2/densedm/tspacefigofmerit.h>
 
 
 // -----------------------------------------------------------------------------
@@ -75,7 +75,7 @@ BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
 
   std::mt19937 rng(0); // seeded rng, deterministic results
   
-  Tomographer::DenseDM::TSpaceLLHMHWalker<DenseLLH, std::mt19937, LoggerType>
+  Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH, std::mt19937, LoggerType>
     dmmhrw(DMTypes::MatrixType::Zero(), llh, rng, buflog);
 
   DMTypes::VectorParamType x(dmt.initVectorParamType());
@@ -137,7 +137,7 @@ BOOST_AUTO_TEST_CASE(basic1)
   start_T << 1.0/sqrt(2.0), 0,
               0, 1.0/sqrt(2.0);
 
-  typedef Tomographer::DenseDM::FidelityToRefCalculator<DMTypes> OurValueCalculator;
+  typedef Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes> OurValueCalculator;
   typedef Tomographer::UniformBinsHistogram<typename OurValueCalculator::ValueType> OurHistogramType;
   typedef Tomographer::ValueHistogramMHRWStatsCollector<
     OurValueCalculator,
@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(basic1)
 
   OurMultiMHRWStatsCollector multistats(fidstats, fidstats2);
 
-  typedef Tomographer::DenseDM::TSpaceLLHMHWalker<DenseLLH,std::mt19937,LoggerType>
+  typedef Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,std::mt19937,LoggerType>
     MyMHWalker;
 
   MyMHWalker mhwalker(start_T, dat, rng, flog);
@@ -222,7 +222,7 @@ BOOST_AUTO_TEST_CASE(with_binning_analysis)
   typedef Tomographer::Logger::BufferLogger LoggerType;
   LoggerType buflog(Tomographer::Logger::DEBUG);
 
-  typedef Tomographer::DenseDM::FidelityToRefCalculator<DMTypes> OurValueCalculator;
+  typedef Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes> OurValueCalculator;
   typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<
     Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<OurValueCalculator,
                                                                    int,
@@ -231,7 +231,7 @@ BOOST_AUTO_TEST_CASE(with_binning_analysis)
     > ValWBinningMHRWStatsCollectorType;
 
   typedef ValWBinningMHRWStatsCollectorType::HistogramParams HistogramParams;
-  typedef Tomographer::DenseDM::TSpaceLLHMHWalker<DenseLLH,std::mt19937,LoggerType> MHWalkerType;
+  typedef Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,std::mt19937,LoggerType> MHWalkerType;
 
   DMTypes::MatrixType ref_T(dmt.initMatrixType());
   ref_T << 1, 0, 0, 0;

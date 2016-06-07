@@ -31,13 +31,13 @@
 
 
 // definitions for Tomographer test framework -- this must be included before any
-// <Eigen/...> or <tomographer/...> header
+// <Eigen/...> or <tomographer2/...> header
 #include "test_tomographer.h"
 
-#include <tomographer/mhrw_bin_err.h>
-#include <tomographer/tools/loggers.h>
-#include <tomographer/mhrw.h>
-//#include <tomographer/densedm/dmmhrw.h>
+#include <tomographer2/mhrw_bin_err.h>
+#include <tomographer2/tools/loggers.h>
+#include <tomographer2/mhrw.h>
+//#include <tomographer2/densedm/dmmhrw.h>
 
 
 

@@ -33,13 +33,13 @@
 #include <boost/math/constants/constants.hpp>
 
 // definitions for Tomographer test framework -- this must be included before any
-// <Eigen/...> or <tomographer/...> header
+// <Eigen/...> or <tomographer2/...> header
 #include "test_tomographer.h"
 
-#include <tomographer/mathtools/solveclyap.h>
-#include <tomographer/tools/eigenutil.h> // dense_random
-#include <tomographer/tools/loggers.h>
-#include <tomographer/mathtools/random_unitary.h>
+#include <tomographer2/mathtools/solveclyap.h>
+#include <tomographer2/tools/eigenutil.h> // dense_random
+#include <tomographer2/tools/loggers.h>
+#include <tomographer2/mathtools/random_unitary.h>
 
 
 // -----------------------------------------------------------------------------

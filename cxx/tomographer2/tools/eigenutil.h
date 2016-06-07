@@ -27,7 +27,7 @@
 #ifndef TOMOGRAPHER_TOOLS_EIGENUTIL_H
 #define TOMOGRAPHER_TOOLS_EIGENUTIL_H
 
-/** \file tomographer/tools/eigenutil.h
+/** \file eigenutil.h
  *
  * \brief Basic utilities for dealing with Eigen matrices and other types.
  *

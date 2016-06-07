@@ -46,12 +46,12 @@ extern "C" {
 
 #include <Eigen/Core>
 
-#include <tomographer/tools/cxxutil.h>
-#include <tomographer/tools/eigenutil.h>
-#include <tomographer/tools/fmt.h>
+#include <tomographer2/tools/cxxutil.h>
+#include <tomographer2/tools/eigenutil.h>
+#include <tomographer2/tools/fmt.h>
 
 
-/** \file tomographer/tools/ezmatio.h
+/** \file ezmatio.h
  *
  * \brief Utilities for reading MATLAB \c "*.mat" data files. See \ref Tomographer::MAT.
  */

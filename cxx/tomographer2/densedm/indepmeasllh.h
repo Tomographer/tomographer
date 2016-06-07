@@ -32,8 +32,8 @@
 
 #include <Eigen/Eigen>
 
-#include <tomographer/tools/cxxutil.h> // static_or_dynamic, TOMOGRAPHER_ENABLED_IF
-#include <tomographer/densedm/dmtypes.h>
+#include <tomographer2/tools/cxxutil.h> // static_or_dynamic, TOMOGRAPHER_ENABLED_IF
+#include <tomographer2/densedm/dmtypes.h>
 
 /** \file indepmeasllh.h
  * \brief C++ types and functions for calculating the log-likelihood for independent measurements

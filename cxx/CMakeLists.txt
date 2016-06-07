@@ -41,9 +41,9 @@ else()
 endif()
 
 # Access <Eigen/...> include path
-include_directories(${EIGEN3_INCLUDE_DIR})
+include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 
-# Include <tomographer/...> include path. Note that the path needs to be relative to get
+# Include <tomographer2/...> include path. Note that the path needs to be relative to get
 # the good automatic header dependencies
 include_directories(.)
 
@@ -56,7 +56,7 @@ include_directories(.)
 
 
 # Tomographer library
-add_subdirectory(tomographer)
+add_subdirectory(tomographer2)
 
 
 # TomoRun executable

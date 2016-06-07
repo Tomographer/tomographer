@@ -31,9 +31,10 @@
 #include <cassert>
 
 #include <Eigen/Eigen>
-#include <tomographer/tools/cxxutil.h> // static_or_dynamic, TOMOGRAPHER_ENABLED_IF
 
-/** \file densedmtypes.h
+#include <tomographer2/tools/cxxutil.h> // static_or_dynamic, TOMOGRAPHER_ENABLED_IF
+
+/** \file densedm/dmtypes.h
  * \brief C++ types for describing dense density matrices in various parameterizations
  *
  */

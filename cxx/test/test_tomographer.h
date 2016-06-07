@@ -42,7 +42,7 @@
 #include <iomanip>
 
 // define the exception class, but don't override eigen's eigen_assert() macro itself
-#include <tomographer/tools/eigen_assert_exception.h>
+#include <tomographer2/tools/eigen_assert_exception.h>
 
 
 

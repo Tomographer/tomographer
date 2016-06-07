@@ -48,20 +48,20 @@
 
 #include <Eigen/Core>
 
-#include <tomographer/tools/cxxutil.h>
-#include <tomographer/tools/loggers.h>
-#include <tomographer/tools/ezmatio.h>
-#include <tomographer/tools/signal_status_report.h>
-#include <tomographer/tools/eigenutil.h>
-#include <tomographer/densedm/dmtypes.h>
-#include <tomographer/densedm/param_herm_x.h>
-#include <tomographer/densedm/indepmeasllh.h>
-#include <tomographer/densedm/figofmerit.h>
-#include <tomographer/mhrw.h>
-#include <tomographer/mhrwtasks.h>
-#include <tomographer/multiprocomp.h>
-#include <tomographer/densedm/dmmhrw.h>
-#include <tomographer/tomographer_version.h>
+#include <tomographer2/tools/cxxutil.h>
+#include <tomographer2/tools/loggers.h>
+#include <tomographer2/tools/ezmatio.h>
+#include <tomographer2/tools/signal_status_report.h>
+#include <tomographer2/tools/eigenutil.h>
+#include <tomographer2/densedm/dmtypes.h>
+#include <tomographer2/densedm/param_herm_x.h>
+#include <tomographer2/densedm/indepmeasllh.h>
+#include <tomographer2/densedm/tspacefigofmerit.h>
+#include <tomographer2/mhrw.h>
+#include <tomographer2/mhrwtasks.h>
+#include <tomographer2/multiprocomp.h>
+#include <tomographer2/densedm/tspacellhwalker.h>
+#include <tomographer2/tomographer_version.h>
 
 #include "tomorun_config.h"
 #include "tomorun_opts.h"

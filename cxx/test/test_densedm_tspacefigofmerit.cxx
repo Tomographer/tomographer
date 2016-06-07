@@ -35,7 +35,7 @@
 // include before <Eigen/*> !
 #include "test_tomographer.h"
 
-#include <tomographer/densedm/figofmerit.h>
+#include <tomographer2/densedm/tspacefigofmerit.h>
 
 
 
@@ -54,7 +54,7 @@ BOOST_AUTO_TEST_SUITE(test_densedm_densedmtypes)
 
 BOOST_FIXTURE_TEST_CASE(FidelityToRefCalculator_2_d, distmeasures_qubit_fixture<double>)
 {
-  Tomographer::DenseDM::FidelityToRefCalculator<DMTypes, double> f(T1);
+  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, double> f(T1);
 
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), fid_with_1<double>(1), tol);
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), fid_with_1<double>(2), tol);
@@ -66,7 +66,7 @@ BOOST_FIXTURE_TEST_CASE(FidelityToRefCalculator_2_d, distmeasures_qubit_fixture<
 }
 BOOST_FIXTURE_TEST_CASE(FidelityToRefCalculator_2_f, distmeasures_qubit_fixture<float>)
 {
-  Tomographer::DenseDM::FidelityToRefCalculator<DMTypes, float> f(T1);
+  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, float> f(T1);
 
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), fid_with_1<float>(1), tol_f);
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), fid_with_1<float>(2), tol_f);
@@ -78,7 +78,7 @@ BOOST_FIXTURE_TEST_CASE(FidelityToRefCalculator_2_f, distmeasures_qubit_fixture<
 }
 BOOST_FIXTURE_TEST_CASE(FidelityToRefCalculator_4_f, distmeasures_qudit4_fixture<float>)
 {
-  Tomographer::DenseDM::FidelityToRefCalculator<DMTypes, float> f(T1);
+  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, float> f(T1);
 
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), fid_with_1<float>(1), tol_f);
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), fid_with_1<float>(2), tol_f);
@@ -90,7 +90,7 @@ BOOST_FIXTURE_TEST_CASE(FidelityToRefCalculator_4_f, distmeasures_qudit4_fixture
 
 BOOST_FIXTURE_TEST_CASE(PurifDistToRefCalculator_2_d, distmeasures_qubit_fixture<double>)
 {
-  Tomographer::DenseDM::PurifDistToRefCalculator<DMTypes, double> f(T1);
+  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, double> f(T1);
 
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), std::sqrt(1-std::pow(fid_with_1<double>(1),2)), tol);
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), std::sqrt(1-std::pow(fid_with_1<double>(2),2)), tol);
@@ -102,7 +102,7 @@ BOOST_FIXTURE_TEST_CASE(PurifDistToRefCalculator_2_d, distmeasures_qubit_fixture
 }
 BOOST_FIXTURE_TEST_CASE(PurifDistToRefCalculator_2_f, distmeasures_qubit_fixture<float>)
 {
-  Tomographer::DenseDM::PurifDistToRefCalculator<DMTypes, float> f(T1);
+  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, float> f(T1);
 
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), std::sqrt(1-std::pow(fid_with_1<float>(1),2)), tol_f);
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), std::sqrt(1-std::pow(fid_with_1<float>(2),2)), tol_f);
@@ -114,7 +114,7 @@ BOOST_FIXTURE_TEST_CASE(PurifDistToRefCalculator_2_f, distmeasures_qubit_fixture
 }
 BOOST_FIXTURE_TEST_CASE(PurifDistToRefCalculator_4_f, distmeasures_qudit4_fixture<float>)
 {
-  Tomographer::DenseDM::PurifDistToRefCalculator<DMTypes, float> f(T1);
+  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, float> f(T1);
 
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), 0, tol_f);
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), std::sqrt(1-std::pow(fid_with_1<float>(2),2)), tol_f);
@@ -126,7 +126,7 @@ BOOST_FIXTURE_TEST_CASE(PurifDistToRefCalculator_4_f, distmeasures_qudit4_fixtur
 
 BOOST_FIXTURE_TEST_CASE(TrDistToRefCalculator_2_d, distmeasures_qubit_fixture<double>)
 {
-  Tomographer::DenseDM::TrDistToRefCalculator<DMTypes, double> f(T1*T1.adjoint());
+  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, double> f(T1*T1.adjoint());
 
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), trdist_with_1<double>(1), tol);
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), trdist_with_1<double>(2), tol);
@@ -138,7 +138,7 @@ BOOST_FIXTURE_TEST_CASE(TrDistToRefCalculator_2_d, distmeasures_qubit_fixture<do
 }
 BOOST_FIXTURE_TEST_CASE(TrDistToRefCalculator_2_f, distmeasures_qubit_fixture<float>)
 {
-  Tomographer::DenseDM::TrDistToRefCalculator<DMTypes, float> f(T1*T1.adjoint());
+  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, float> f(T1*T1.adjoint());
 
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), trdist_with_1<float>(1), tol_f);
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), trdist_with_1<float>(2), tol_f);
@@ -150,7 +150,7 @@ BOOST_FIXTURE_TEST_CASE(TrDistToRefCalculator_2_f, distmeasures_qubit_fixture<fl
 }
 BOOST_FIXTURE_TEST_CASE(TrDistToRefCalculator_4_f, distmeasures_qudit4_fixture<float>)
 {
-  Tomographer::DenseDM::TrDistToRefCalculator<DMTypes, float> f(T1*T1.adjoint());
+  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, float> f(T1*T1.adjoint());
 
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), trdist_with_1<float>(1), tol_f);
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), trdist_with_1<float>(2), tol_f);
@@ -167,7 +167,7 @@ BOOST_FIXTURE_TEST_CASE(ObservableValueCalculator_2_d, distmeasures_qubit_fixtur
   A <<
     Cplx( 6.528329762670850e-01, + 0.000000000000000e+00),    Cplx(-2.828700628152467e-02, - 4.752282889738084e-01),
     Cplx(-2.828700628152467e-02, + 4.752282889738084e-01),    Cplx( 3.471670237329149e-01, + 0.000000000000000e+00) ;
-  Tomographer::DenseDM::ObservableValueCalculator<DMTypes> f(dmt, A);
+  Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes> f(dmt, A);
 
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), (A*rho1).real().trace(), tol);
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), (A*rho2).real().trace(), tol);
@@ -184,7 +184,7 @@ BOOST_FIXTURE_TEST_CASE(ObservableValueCalculator_2_f, distmeasures_qubit_fixtur
   A<<
     Cplx(5.769321416135639e-01, + 0.000000000000000e+00),      Cplx(3.720330764264117e-01, + 3.250735849487777e-01),
     Cplx(3.720330764264117e-01, - 3.250735849487777e-01),      Cplx(4.230678583864360e-01, + 0.000000000000000e+00);
-  Tomographer::DenseDM::ObservableValueCalculator<DMTypes> f(dmt, A);
+  Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes> f(dmt, A);
 
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), (A*rho1).real().trace(), tol_f);
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), (A*rho2).real().trace(), tol_f);
@@ -211,7 +211,7 @@ BOOST_FIXTURE_TEST_CASE(ObservableValueCalculator_4_f, distmeasures_qudit4_fixtu
     Cplx( 1.799138697503067e-02, - 2.706936451208811e-02),     Cplx( 3.469407736574681e-01, - 3.089648739998575e-01),
     Cplx( 6.555785447953847e-01, + 5.371466754457879e-01),     Cplx( 2.016958430248692e+00, + 0.000000000000000e+00) ;
 
-  Tomographer::DenseDM::ObservableValueCalculator<DMTypes> f(dmt, A);
+  Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes> f(dmt, A);
 
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), (A*rho1).real().trace(), tol_f);
   MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), (A*rho2).real().trace(), tol_f);

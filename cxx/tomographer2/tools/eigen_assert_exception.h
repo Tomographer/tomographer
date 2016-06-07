@@ -27,7 +27,7 @@
 #ifndef TOMOGRAPHER_TOOLS_EIGEN_ASSERT_EXCEPTION_H
 #define TOMOGRAPHER_TOOLS_EIGEN_ASSERT_EXCEPTION_H
 
-/** \file
+/** \file eigen_assert_exception.h
  *
  * \brief Define tools for Eigen's \a eigen_assert() to throw an exception instead of
  * assert'ing.

@@ -42,7 +42,7 @@
 #include <cstdio>
 #include <limits>
 
-#include <tomographer/tools/loggers.h>
+#include <tomographer2/tools/loggers.h>
 
 namespace Tomographer
 {

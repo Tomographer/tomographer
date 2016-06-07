@@ -38,9 +38,9 @@
 #include <limits>
 #include <random>
 
-#include <tomographer/tools/fmt.h>
-#include <tomographer/mhrw.h>
-#include <tomographer/multiproc.h> // StatusReport Base
+#include <tomographer2/tools/fmt.h>
+#include <tomographer2/mhrw.h>
+#include <tomographer2/multiproc.h> // StatusReport Base
 
 
 namespace Tomographer {

@@ -40,8 +40,8 @@
 
 #include <boost/algorithm/string.hpp> // to_upper()
 
-#include <tomographer/tools/fmt.h>
-#include <tomographer/tools/conststr.h>
+#include <tomographer2/tools/fmt.h>
+#include <tomographer2/tools/conststr.h>
 
 
 /** \file loggers.h

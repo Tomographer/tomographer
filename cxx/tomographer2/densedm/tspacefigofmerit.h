@@ -25,15 +25,25 @@
  */
 
 
+#ifndef TOMOGRAPHER_DENSEDM_TSPACEFIGOFMERIT_H
+#define TOMOGRAPHER_DENSEDM_TSPACEFIGOFMERIT_H
 
-#include <tomographer/densedm/dmtypes.h>
-#include <tomographer/densedm/distmeasures.h>
-#include <tomographer/densedm/param_herm_x.h>
 
+#include <tomographer2/densedm/dmtypes.h>
+#include <tomographer2/densedm/distmeasures.h>
+#include <tomographer2/densedm/param_herm_x.h>
+
+
+/** \file tspacefigofmerit.h
+ *
+ * \brief Implement some standard figures of merit for when integrating in T space densely
+ *        represented density matrices
+ */
 
 
 namespace Tomographer {
 namespace DenseDM {
+namespace TSpace {
 
 
 /** \brief Calculate the fidelity to a reference state for each sample
@@ -63,6 +73,7 @@ public:
   {
   }
 
+  //! Calculate the fidelity of the state represented by T to the reference state
   inline ValueType getValue(MatrixTypeConstRef T) const
   {
     return fidelity_T<ValueType>(T, _ref_T);
@@ -100,6 +111,7 @@ public:
   {
   }
 
+  //! Calculate the purified distance of the state represented by T to the reference state
   inline ValueType getValue(MatrixTypeConstRef T) const
   {
     ValueType F = fidelity_T<ValueType>(T, _ref_T);
@@ -134,6 +146,7 @@ public:
   {
   }
 
+  //! Calculate the trace distance of the state represented by T to the reference state
   inline ValueType getValue(MatrixTypeConstRef T) const
   {
     return trace_dist<ValueType>(T*T.adjoint(), _ref_rho);
@@ -177,6 +190,7 @@ public:
   {
   }
 
+  //! Calculate the expectation value of the observable for the state represented by T
   inline ValueType getValue(MatrixTypeConstRef T) const
   {
     return _A_x.transpose() * _param_x.HermToX(T*T.adjoint());
@@ -184,6 +198,9 @@ public:
 };
 
 
-
+} // namespace TSpace
 } // namespace DenseDM
 } // namespace Tomographer
+
+
+#endif

@@ -27,7 +27,7 @@
 #ifndef TOMORUN_DISPATCH
 #define TOMORUN_DISPATCH
 
-#include <tomographer/mathtools/pos_semidef_util.h>
+#include <tomographer2/mathtools/pos_semidef_util.h>
 
 // -----------------------------------------------------------------------------
 
@@ -49,10 +49,10 @@ struct TomorunCDataBase : public Tomographer::MHRWTasks::CDataBase<>
   const ValueCalculator vcalc;
 
   template<typename Rng, typename LoggerType>
-  inline Tomographer::DenseDM::TSpaceLLHMHWalker<DenseLLH,Rng,LoggerType>
+  inline Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType>
   createMHWalker(Rng & rng, LoggerType & logger) const
   {
-    return Tomographer::DenseDM::TSpaceLLHMHWalker<DenseLLH,Rng,LoggerType>(
+    return Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType>(
 	llh.dmt.initMatrixType(),
 	llh,
 	rng,
@@ -728,7 +728,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
           llh,
           opt,
           [&T_ref]() {
-            return Tomographer::DenseDM::FidelityToRefCalculator<OurDMTypes, double>(T_ref);
+            return Tomographer::DenseDM::TSpace::FidelityToRefCalculator<OurDMTypes, double>(T_ref);
           },
           logger);
     } else if (opt->valtype.valtype == val_type_spec::PURIF_DIST) {
@@ -736,7 +736,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
           llh,
           opt,
           [&T_ref]() {
-            return Tomographer::DenseDM::PurifDistToRefCalculator<OurDMTypes, double>(T_ref);
+            return Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<OurDMTypes, double>(T_ref);
           },
           logger);
     } else if (opt->valtype.valtype == val_type_spec::TR_DIST) {
@@ -744,7 +744,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
           llh,
           opt,
           [&rho_ref]() {
-              return Tomographer::DenseDM::TrDistToRefCalculator<OurDMTypes, double>(rho_ref);
+	    return Tomographer::DenseDM::TSpace::TrDistToRefCalculator<OurDMTypes, double>(rho_ref);
           },
           logger);
     } else {
@@ -777,7 +777,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
         llh,
         opt,
         [&A, dmt]() {
-          return Tomographer::DenseDM::ObservableValueCalculator<OurDMTypes>(dmt, A);
+          return Tomographer::DenseDM::TSpace::ObservableValueCalculator<OurDMTypes>(dmt, A);
         },
         logger);
 

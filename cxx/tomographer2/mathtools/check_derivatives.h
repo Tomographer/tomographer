@@ -32,7 +32,7 @@
 
 #include <Eigen/Core>
 
-#include <tomographer/tools/cxxutil.h> // TOMO_STATIC_ASSERT_EXPR
+#include <tomographer2/tools/cxxutil.h> // TOMO_STATIC_ASSERT_EXPR
 
 
 /** \file check_derivatives.h

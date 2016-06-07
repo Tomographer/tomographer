@@ -28,8 +28,8 @@
 #include "test_tomographer.h"
 
 
-#include <tomographer/tools/conststr.h>
-#include <tomographer/tools/cxxutil.h>
+#include <tomographer2/tools/conststr.h>
+#include <tomographer2/tools/cxxutil.h>
 
 
 TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::conststr("abcdef") == Tomographer::Tools::conststr("abcdef"));

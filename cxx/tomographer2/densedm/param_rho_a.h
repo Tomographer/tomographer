@@ -37,8 +37,8 @@
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 
-#include <tomographer/densedm/dmtypes.h>
-#include <tomographer/tools/eigenutil.h>
+#include <tomographer2/densedm/dmtypes.h>
+#include <tomographer2/tools/eigenutil.h>
 
 #include <boost/math/constants/constants.hpp>
 

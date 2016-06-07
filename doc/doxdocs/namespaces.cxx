@@ -25,6 +25,9 @@
  */
 
 
+
+
+
 /** \namespace Tomographer
  * \brief Base namespace for the \c Tomographer project
  *
@@ -43,11 +46,48 @@
  */
 
 
+
+
+/** \namespace Tomographer::DenseDM
+ *
+ * \brief Main implementation for densely represented density matrices
+ *
+ */
+
+/** \namespace Tomographer::DenseDM::TSpace
+ *
+ * \brief Implementation of the random walk and figures of merit in T space, for densely
+ *        represented density matrices
+ *
+ */
+
+
+
+
+
+
 /** \namespace Tomographer::Tools
  *
  * \brief Various useful tools.
  *
  */
+
+
+/** \namespace Tomographer::MathTools
+ *
+ * \brief General math routines
+ *
+ */
+
+
+/** \namespace Tomographer::SphCoords
+ *
+ * \brief Utilities for hyperspherical coordinates.
+ *
+ * See also the corresponding theory page \ref pageParamsSphericalCoords.
+ */
+
+
 
 
 /** \namespace Tomographer::MAT
@@ -86,8 +126,6 @@
  */
 
 
-/** \namespace Tomographer::SphCoords
- *
- * Utilities for hyperspherical coordinates. See also the corresponding theory page \ref
- * pageParamsSphericalCoords.
- */
+
+
+

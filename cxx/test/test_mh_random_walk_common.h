@@ -29,7 +29,7 @@
 
 #include <random>
 
-#include <tomographer/mhrw.h>
+#include <tomographer2/mhrw.h>
 
 #include <Eigen/Core>
 

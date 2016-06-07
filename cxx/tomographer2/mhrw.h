@@ -36,13 +36,9 @@
 #include <utility>
 #include <type_traits>
 
-//#include <tomographer/qit/matrq.h>
-//#include <tomographer/qit/util.h>
-//#include <tomographer/qit/param_herm_x.h>
-//#include <tomographer/tomoproblem.h>
-#include <tomographer/histogram.h>
-#include <tomographer/tools/loggers.h>
-#include <tomographer/mhrw_bin_err.h>
+#include <tomographer2/histogram.h>
+#include <tomographer2/tools/loggers.h>
+#include <tomographer2/mhrw_bin_err.h>
 
 
 /** \file mhrw.h

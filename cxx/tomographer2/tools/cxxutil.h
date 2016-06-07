@@ -27,7 +27,7 @@
 #ifndef TOMOGRAPHER_TOOLS_UTILS_H
 #define TOMOGRAPHER_TOOLS_UTILS_H
 
-/** \file tomographer/tools/util.h
+/** \file cxxutil.h
  *
  * \brief Some C++ utilities, with a tad of C++11 tricks.
  *
@@ -37,7 +37,7 @@
 
 #include <Eigen/Core> // NumTraits
 
-#include <tomographer/tools/conststr.h>
+#include <tomographer2/tools/conststr.h>
 
 
 // -----------------------------------------------------------------------------

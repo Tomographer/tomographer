@@ -38,10 +38,8 @@
  */
 
 
-namespace Tomographer
-{
-namespace SphCoords
-{
+namespace Tomographer {
+namespace SphCoords {
 
 
 /** \brief Convert Cartesian coordinates to spherical coordinates in N dimensions

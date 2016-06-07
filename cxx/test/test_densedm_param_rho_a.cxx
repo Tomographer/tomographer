@@ -35,8 +35,8 @@
 // include before <Eigen/*> !
 #include "test_tomographer.h"
 
-#include <tomographer/densedm/param_rho_a.h>
-#include <tomographer/densedm/param_herm_x.h>
+#include <tomographer2/densedm/param_rho_a.h>
+#include <tomographer2/densedm/param_herm_x.h>
 
 
 #define SQRT2  boost::math::constants::root_two<double>()

@@ -32,7 +32,7 @@
 
 #include "test_tomographer.h"
 
-#include <tomographer/tools/ezmatio.h>
+#include <tomographer2/tools/ezmatio.h>
 
 
 #include "test_tools_ezmatio_common.h"

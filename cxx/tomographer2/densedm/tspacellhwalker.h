@@ -24,8 +24,8 @@
  * SOFTWARE.
  */
 
-#ifndef TOMOGRAPHER_DENSEDM_DMMHRW_H
-#define TOMOGRAPHER_DENSEDM_DMMHRW_H
+#ifndef TOMOGRAPHER_DENSEDM_TSPACELLHWALKER_H
+#define TOMOGRAPHER_DENSEDM_TSPACELLHWALKER_H
 
 #include <cstddef>
 #include <cmath>
@@ -34,20 +34,21 @@
 
 #include <boost/math/constants/constants.hpp>
 
-#include <tomographer/tools/loggers.h>
-#include <tomographer/mhrw.h>
-#include <tomographer/densedm/param_herm_x.h>
+#include <tomographer2/tools/loggers.h>
+#include <tomographer2/mhrw.h>
+#include <tomographer2/densedm/param_herm_x.h>
 
-/** \file dmmhrw.h
+/** \file tspacellhwalker.h
  *
  * \brief Definitions for a Metropolis-Hastings random walk on a quantum state space with
  *        dense matrix type
  *
- * See mainly \ref Tomographer::TSpaceLLHMHWalker.
+ * See mainly \ref Tomographer::DenseDM::TSpace::LLHMHWalker.
  */
 
 namespace Tomographer {
 namespace DenseDM {
+namespace TSpace {
 
 /** \brief A random walk in the density matrix space of a Hilbert state space of a quantum
  * system
@@ -66,7 +67,7 @@ namespace DenseDM {
  *      pageInterfaceMHRWStatsCollector)
  */
 template<typename DenseLLH, typename Rng, typename LoggerType>
-class TSpaceLLHMHWalker
+class LLHMHWalker
 {
 public:
   //! The data types of our problem
@@ -86,6 +87,7 @@ public:
   typedef MatrixType PointType;
   //! Provided for MHRandomWalk. The function value type is the loglikelihood value type
   typedef LLHValueType FnValueType;
+  //! see \ref pageInterfaceMHWalker
   enum {
     /** \brief We will calculate the log-likelihood function, which is the logarithm of
      * the Metropolis-Hastings function we should be calculating
@@ -113,7 +115,7 @@ public:
    *     using the \a rng random number generator to generate a random point on the
    *     sphere.
    */
-  TSpaceLLHMHWalker(const MatrixType & startpt, const DenseLLH & llh, Rng & rng,
+  LLHMHWalker(const MatrixType & startpt, const DenseLLH & llh, Rng & rng,
                         LoggerType & log_)
     : _llh(llh),
       _rng(rng),
@@ -135,7 +137,7 @@ public:
    */
   inline void init()
   {
-    _log.debug("TSpaceLLHMHWalker", "Starting random walk");
+    _log.debug("TSpace::LLHMHWalker", "Starting random walk");
   }
 
   //! Return the starting point given in the constructor, or a random start point
@@ -153,7 +155,7 @@ public:
 	);
     _startpt = T/T.norm(); // normalize to be on surface of the sphere
 
-    _log.debug("TSpaceLLHMHWalker", [&T](std::ostream & str) {
+    _log.debug("TSpace::LLHMHWalker", [&T](std::ostream & str) {
 	str << "Chosen random start point T = \n" << T;
       });
 
@@ -214,6 +216,7 @@ public:
 
 
 
+} // namespace TSpace
 } // namespace DenseDM
 } // namespace Tomographer
 

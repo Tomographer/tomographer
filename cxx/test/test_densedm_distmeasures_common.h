@@ -17,7 +17,7 @@ struct distmeasures_qubit_fixture
   MatrixType  rho1, rho2, rho3, rho4, rho5, rho6;
   MatrixType  T1, T2, T2b, T3, T4, T5, T6;
 
-  static constexpr RealScalar INVSQRT2 = boost::math::constants::half_root_two<RealScalar>();
+  inline RealScalar INVSQRT2() const { return boost::math::constants::half_root_two<RealScalar>(); }
 
   distmeasures_qubit_fixture()
     : dmt()
@@ -37,16 +37,16 @@ struct distmeasures_qubit_fixture
 
     T1 << 1, 0,
       0, 0;
-    T2 << INVSQRT2, 0,
-      INVSQRT2, 0;
+    T2 << INVSQRT2(), 0,
+      INVSQRT2(), 0;
     T2b = rho2; // rho2 is pure, so sqrt(rho2)==rho2
     T3 << 0, 0,
       0, 1;
     T4 = rho4; // rho4 is pure, so sqrt(rho4)==rho4
     T5 << std::sqrt(RealScalar(0.8)), 0,
       0, std::sqrt(RealScalar(0.2));
-    T6 << INVSQRT2, 0,
-      0, INVSQRT2;
+    T6 << INVSQRT2(), 0,
+      0, INVSQRT2();
   }
   ~distmeasures_qubit_fixture()
   {

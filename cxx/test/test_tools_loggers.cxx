@@ -30,11 +30,11 @@
 #include <tuple>
 
 // we want `eigen_assert()` to raise an `eigen_assert_exception` here
-#include <tomographer/tools/eigen_assert_exception.h>
+#include <tomographer2/tools/eigen_assert_exception.h>
 
 #include <Eigen/Core>
 
-#include <tomographer/tools/loggers.h>
+#include <tomographer2/tools/loggers.h>
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>
