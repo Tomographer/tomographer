@@ -58,10 +58,10 @@ BOOST_AUTO_TEST_CASE(basic)
 
   IndepMeasLLH::VectorParamListType Exn(6, dmt.dim2());
   Exn <<
-    0.5, 0.5,  0.707107,  0,
-    0.5, 0.5, -0.707107,  0,
-    0.5, 0.5,  0,         0.707107,
-    0.5, 0.5,  0,        -0.707107,
+    0.5, 0.5,  1./std::sqrt(2.0),  0,
+    0.5, 0.5, -1./std::sqrt(2.0),  0,
+    0.5, 0.5,  0,         1./std::sqrt(2.0),
+    0.5, 0.5,  0,        -1./std::sqrt(2.0),
     1,   0,    0,         0,
     0,   1,    0,         0
     ;
@@ -89,10 +89,10 @@ BOOST_AUTO_TEST_CASE(basic_dyn)
 
   IndepMeasLLH::VectorParamListType Exn(6, dmt.dim2());
   Exn <<
-    0.5, 0.5,  0.707107,  0,
-    0.5, 0.5, -0.707107,  0,
-    0.5, 0.5,  0,         0.707107,
-    0.5, 0.5,  0,        -0.707107,
+    0.5, 0.5,  1./std::sqrt(2.0),  0,
+    0.5, 0.5, -1./std::sqrt(2.0),  0,
+    0.5, 0.5,  0,         1./std::sqrt(2.0),
+    0.5, 0.5,  0,        -1./std::sqrt(2.0),
     1,   0,    0,         0,
     0,   1,    0,         0
     ;
@@ -171,20 +171,67 @@ BOOST_AUTO_TEST_CASE(add_meas)
   BOOST_CHECK_EQUAL(dat.Nx()(2), 75);
 
   // test addMeasEffect(VectorParamType)
-  dat.addMeasEffect((VectorParamType()<<0.5,0.5,-std::sqrt(2),0).finished(), 1175);
+  dat.addMeasEffect((VectorParamType()<<0.5,0.5,-1./std::sqrt(2),0).finished(), 1175);
 
   BOOST_CHECK_EQUAL(dat.numEffects(), 4);
-  { VectorParamType x; x <<0.5,0.5,-std::sqrt(2),0; MY_BOOST_CHECK_EIGEN_EQUAL(dat.Exn().row(2), x.transpose(), tol); }
+  { VectorParamType x; x <<0.5,0.5,-1./std::sqrt(2),0; MY_BOOST_CHECK_EIGEN_EQUAL(dat.Exn().row(3), x.transpose(), tol); }
   BOOST_CHECK_EQUAL(dat.Nx().rows(), 4);
   BOOST_CHECK_EQUAL(dat.Nx(3), 1175);
   BOOST_CHECK_EQUAL(dat.Nx()(3), 1175);
 
   // and check that the second addMeasEffect() didn't affect the previous data
-  BOOST_CHECK_EQUAL(dat.numEffects(), 3);
   { VectorParamType x; x<<0.5,0.5,0,0;  MY_BOOST_CHECK_EIGEN_EQUAL(dat.Exn().row(2), x.transpose(), tol); }
-  BOOST_CHECK_EQUAL(dat.Nx().rows(), 3);
   BOOST_CHECK_EQUAL(dat.Nx(2), 75);
   BOOST_CHECK_EQUAL(dat.Nx()(2), 75);
+}
+
+
+BOOST_AUTO_TEST_CASE(add_meas_checkmeas)
+{
+  typedef Tomographer::DenseDM::DMTypes<2> DMTypes;
+  DMTypes dmt(2);
+  //typedef DMTypes::VectorParamType VectorParamType;
+  typedef DMTypes::MatrixType MatrixType;
+  
+  typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> IndepMeasLLH;
+  IndepMeasLLH dat(dmt);
+
+  IndepMeasLLH::VectorParamListType Exn(2,4);
+  Exn <<
+    1, 0, 0, 0,
+    0, 1, 0, 0
+    ;
+  IndepMeasLLH::FreqListType Nx(2);
+  Nx << 50, 50;
+  dat.setMeas(Exn, Nx);
+  
+  // test addMeasEffect(MatrixType) --> must raise exception because matrix is not Hermitian
+  {
+    MatrixType Ebad(dmt.initMatrixType());
+    Ebad << 1, 0.5,
+            0, 1;
+    auto call = [&Ebad,&dat]() { dat.addMeasEffect(Ebad, 500); };
+    BOOST_CHECK_THROW(call(), Tomographer::DenseDM::InvalidMeasData);
+  }
+
+  // test addMeasEffect(MatrixType) --> must raise exception because matrix is not pos semidef
+  {
+    MatrixType Ebad(dmt.initMatrixType());
+    Ebad << 0, 1e-2,
+      1e-2, 1;
+    auto call = [&Ebad,&dat]() { dat.addMeasEffect(Ebad, 500); };
+    BOOST_CHECK_THROW(call(), Tomographer::DenseDM::InvalidMeasData);
+  }
+
+  // test addMeasEffect(MatrixType) --> must raise exception because matrix is zero
+  {
+    MatrixType Ebad(dmt.initMatrixType());
+    Ebad << 0, 1e-12,
+      1e-12, 1e-15;
+    auto call = [&Ebad,&dat]() { dat.addMeasEffect(Ebad, 500); };
+    BOOST_CHECK_THROW(call(), Tomographer::DenseDM::InvalidMeasData);
+  }
+  
 }
 
 BOOST_AUTO_TEST_SUITE_END()

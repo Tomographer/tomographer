@@ -71,7 +71,7 @@ BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
   DenseLLH::FreqListType Nx(6);
   Nx << 1500, 800, 300, 300, 10, 30;
 
-  llh.setMeas(Exn, Nx);
+  llh.setMeas(Exn, Nx, false);
 
   typedef Tomographer::Logger::BufferLogger LoggerType;
   LoggerType buflog(Tomographer::Logger::DEBUG);
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(basic1)
   DenseLLH::FreqListType Nx(6);
   Nx << 0, 0, 0, 0, 250, 0;
 
-  llh.setMeas(Exn, Nx);
+  llh.setMeas(Exn, Nx, false);
 
   // now, prepare the integrator.
   std::mt19937 rng(0); // seeded random number generator

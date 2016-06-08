@@ -67,6 +67,39 @@ enum {
 };
 
 
+
+
+
+
+
+
+/** \brief Exception class notifying of invalid measurement data
+ *
+ * Implementations of a \ref pageInterfaceDenseLLH compliant type may throw this exception
+ * to notify that the provided measurement data is invalid.
+ *
+ *
+ */
+class InvalidMeasData : public std::exception
+{
+  std::string _msg;
+  std::string _fullmsg;
+public:
+  InvalidMeasData(const std::string& msg)
+    : _msg(msg), _fullmsg("Invalid Measurement Data: " + _msg) { }
+  InvalidMeasData(std::string&& msg)
+    : _msg(std::move(msg)), _fullmsg("Invalid Measurement Data: " + _msg) { }
+
+  virtual ~InvalidMeasData() throw() { }
+
+  inline std::string msg() const noexcept { return _msg; }
+  inline std::string fullMsg() const noexcept { return _fullmsg; }
+    
+  virtual const char * what() const noexcept { return _msg.c_str(); }
+};
+
+
+
 } // namespace DenseDM
 } // namespace Tomographer
 

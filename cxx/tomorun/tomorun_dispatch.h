@@ -652,7 +652,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
     Nx[j] = Nm[k];
     ++j;
   }
-  llh.setMeas(Exn, Nx);
+  llh.setMeas(Exn, Nx, false); // input checks already done (if requested)
   // done.
 
   logger.debug("tomorun_dispatch()", [&](std::ostream & ss) {
@@ -680,7 +680,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   //  Eigen::SelfAdjointEigenSolver<typename OurMatrQ::MatrixType> rho_MLE_eig(tomodat.rho_MLE);
   //  tomodat.T_MLE = rho_MLE_eig.operatorSqrt();
 
-  llh.NMeasAmplifyFactor = opt->NMeasAmplifyFactor;
+  llh.setNMeasAmplifyFactor(opt->NMeasAmplifyFactor);
 
 
   typedef typename OurDMTypes::MatrixType MatrixType;

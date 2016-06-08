@@ -29,6 +29,7 @@
 
 #include <cstddef>
 #include <cassert>
+#include <string>
 
 #include <Eigen/Eigen>
 
@@ -46,6 +47,8 @@
 
 namespace Tomographer {
 namespace DenseDM {
+
+
 
 
 /** \brief C++ types and functions for calculating the log-likelihood for independent measurements
@@ -204,6 +207,12 @@ public:
 
     eigen_assert(n > 0);
 
+    if (check_validity) { // check validity of measurement data
+      typename DMTypes::MatrixType E_m(dmt.initMatrixType());
+      E_m = ParamX<DMTypes>(dmt).XToHerm(E_x);
+      _check_effect(E_m);
+    }
+
     IndexType newi = _Exn.rows();
     eigen_assert(newi == _Nx.rows());
 
@@ -211,10 +220,6 @@ public:
     _Exn.row(newi) = E_x.transpose();
     _Nx.conservativeResize(newi + 1, Eigen::NoChange);
     _Nx(newi) = n;
-
-    if (check_validity) { // check validity of measurement data
-      _check_effect(_Exn.row(newi).transpose());
-    }
 
     eigen_assert(_Exn.rows() == _Nx.rows());
   }
@@ -230,14 +235,19 @@ public:
       return;
     }
 
-    addMeasEffect(Tomographer::DenseDM::ParamX<DMTypes>(dmt).HermToX(E_m), n, check_validity);
+    if (check_validity) { // check validity of measurement data
+      eigen_assert(n > 0);
+      _check_effect(E_m);
+    }
+
+    addMeasEffect(Tomographer::DenseDM::ParamX<DMTypes>(dmt).HermToX(E_m), n, false);
   }
 
   inline void setMeas(VectorParamListTypeConstRef Exn_, FreqListTypeConstRef Nx_, bool check_validity = true)
   {
     eigen_assert(Exn_.cols() == (IndexType)dmt.dim2());
-    eigen_assert(Exn_.rows() == Nx_.cols());
-    eigen_assert(Nx_.rows() == 1);
+    eigen_assert(Exn_.rows() == Nx_.rows());
+    eigen_assert(Nx_.cols() == 1);
 
     if ((Nx_ > 0).all()) {
       // all measurements are OK, so we can just copy the data.
@@ -257,27 +267,19 @@ public:
     }
   }
 
-
-  class InvalidMeasData : public std::exception
-  {
-    std::string _msg;
-  public:
-    InvalidMeasData(const std::string& msg) : _msg(msg) { }
-    virtual ~InvalidMeasData() throw() { }
-    
-    virtual const char * what() const throw() {
-      return (std::string("Invalid Measurement Data: ") + _msg).c_str();
-    }
-  };
-
   inline void checkAllMeas() const
   {
     eigen_assert(_Exn.cols() == (IndexType)dmt.dim2());
     eigen_assert(_Exn.rows() == _Nx.rows());
     eigen_assert(_Nx.cols() == 1);
+
     for (IndexType i = 0; i < _Exn.rows(); ++i) {
+
       eigen_assert(_Nx(i) > 0);
-      _check_effect(_Exn.row(i).transpose());
+
+      typename DMTypes::MatrixType E_m(dmt.initMatrixType());
+      E_m = ParamX<DMTypes>(dmt).XToHerm(_Exn.row(i).transpose());
+      _check_effect(E_m);
     }
   }
   inline void checkEffect(IndexType i) const
@@ -287,20 +289,24 @@ public:
     eigen_assert(_Nx.cols() == 1);
     eigen_assert(i >= 0 && i < _Exn.rows());
     eigen_assert(_Nx(i) > 0);
-    _check_effect(_Exn.row(i).transpose());
+
+    typename DMTypes::MatrixType E_m(dmt.initMatrixType());
+    E_m = ParamX<DMTypes>(dmt).XToHerm(_Exn.row(i).transpose());
+    _check_effect(E_m);
   }
 
 private:
-  inline void _check_effect(typename DMTypes::VectorParamTypeConstRef E_x) const // k == index in list, for message
+  inline void _check_effect(typename DMTypes::MatrixType E_m) const
   {
-    typename DMTypes::MatrixType E_m(dmt.initMatrixType());
-    E_m = ParamX<DMTypes>(dmt).XToHerm(E_x.transpose());
-
     if ( ! (double( (E_m - E_m.adjoint()).norm() ) < 1e-8) ) { // matrix not Hermitian
-      throw InvalidMeasData(streamstr("POVM effect is not hermitian : E_m =\n" << E_m));
+      throw InvalidMeasData(streamstr("POVM effect is not hermitian : E_m =\n"
+				      << std::setprecision(10) << E_m));
     }
-    if ( ! (double(E_m.eigenvalues().real().minCoeff()) >= -1e-12) ) { // not positive semidef
-      throw InvalidMeasData(streamstr("POVM effect is not positive semidefinite : E_m =\n" << E_m));
+    Eigen::SelfAdjointEigenSolver<typename DMTypes::MatrixType> slv(E_m);
+    const double mineigval = slv.eigenvalues().minCoeff();
+    if ( ! (mineigval >= -1e-12) ) { // not positive semidef
+      throw InvalidMeasData(streamstr("POVM effect is not positive semidefinite (min eigval="<<mineigval<<") : E_m =\n"
+				      << std::setprecision(10) << E_m));
     }
     if ( ! (double(E_m.norm()) > 1e-6) ) { // POVM effect is zero
       throw InvalidMeasData(streamstr("POVM effect is zero : E_m =\n" << E_m));
@@ -313,7 +319,6 @@ public:
    *
    * This should always be set to one for any physical experiment.  It is only useful for
    * tests.
-   *
    */
   TOMOGRAPHER_ENABLED_IF(UseNMeasAmplifyFactor)
   inline LLHValueType NMeasAmplifyFactor() const { return _NMeasAmplifyFactor.value; }
@@ -352,7 +357,7 @@ private:
   template<typename Expr, TOMOGRAPHER_ENABLED_IF_TMPL(UseNMeasAmplifyFactor)>
   inline auto _mult_by_nmeasfactor(Expr&& expr) const -> decltype(LLHValueType(1) * expr)
   {
-    return _NMeasAmplifyFactor * expr;
+    return _NMeasAmplifyFactor.value * expr;
   }
   template<typename Expr, TOMOGRAPHER_ENABLED_IF_TMPL(!UseNMeasAmplifyFactor)>
   inline auto _mult_by_nmeasfactor(Expr&& expr) const -> decltype(std::forward<Expr>(expr))
