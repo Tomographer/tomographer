@@ -37,6 +37,7 @@
 #include <string>
 #include <limits>
 #include <random>
+#include <sstream>
 
 #include <tomographer2/tools/fmt.h>
 #include <tomographer2/mhrw.h>
@@ -99,6 +100,25 @@ namespace MHRWTasks {
      * randomize \a base_seed, e.g. using the current time.
      */
     int base_seed;
+
+    /** \brief Get some human-readable info about the random walk as a string.
+     */
+    inline void printBasicCDataMhrwInfo(std::ostream & str)
+    {
+      str << "\t# iter. / sweep = " << n_sweep << "\n"
+	  << "\t# therm. sweeps = " << n_therm << "\n"
+	  << "\t# run sweeps    = " << n_run << "\n"
+	  << "\tstep size       = " << std::setprecision(4) << step_size << "\n";
+    }
+    /** \brief Get some human-readable info about the random walk as a string, see \ref
+     *         printBasicCDataMhrwInfo()
+     */
+    inline std::string getBasicCDataMhrwInfo()
+    {
+      std::ostringstream ss;
+      printBasicCDataMhrwInfo(ss);
+      return ss.str();
+    }
   };
 
   /** \brief Result of a task run.

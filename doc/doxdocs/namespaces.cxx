@@ -73,6 +73,16 @@
  *
  */
 
+/** \namespace Tomographer::MHRWTasks::ValueHistogramTasks
+ *
+ * \brief Definitions for running multiple random walks and collecting a histogram of values
+ *
+ * Provides class definitions for interfacing with a task manager/dispatcher (see \ref
+ * pageTaskManagerDispatcher), building up on top of the more basic stuff in \ref
+ * Tomographer::MHRWTasks.
+ *
+ */
+
 
 
 /** \namespace Tomographer::MultiProc
