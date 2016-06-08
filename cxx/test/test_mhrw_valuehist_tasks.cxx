@@ -70,7 +70,7 @@ struct OurCDataTask : CDataBaseType
   {
     // 100x100 lattice
     return TestLatticeMHRWGaussPeak<int,Rng>(
-	100*Eigen::Vector2i::Ones(), Eigen::Matrix2i::Identity()*30, Eigen::Vector2i::Zero(2),
+	100*Eigen::Vector2i::Ones(), Eigen::Matrix2i::Identity(), 30, Eigen::Vector2i::Zero(2),
 	rng()
 	);
   }
@@ -86,19 +86,19 @@ BOOST_AUTO_TEST_CASE(simple)
 {
   typedef NormValueCalculator ValueCalculator;
 
-  typedef Tomographer::Logger::VacuumLogger LoggerType;
-  LoggerType logger;
+  typedef Tomographer::Logger::BufferLogger LoggerType;
+  LoggerType logger(Tomographer::Logger::DEBUG);
 
   typedef std::mt19937 Rng;
 
-  const int ntherm = 50;
-  const int nrun = 100;
-  const int nsweep = 10;
+  const int ntherm = 500;
+  const int nrun = 10000;
+  const int nsweep = 100;
   const int step_size = 2;
 
   typedef OurCDataTask<Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<ValueCalculator, false> > OurCDataSimple;
   typedef OurCDataSimple::HistogramParams HistogramParams;
-  OurCDataSimple taskcdat(NormValueCalculator(), HistogramParams(0, 100, 1));
+  OurCDataSimple taskcdat(NormValueCalculator(), HistogramParams(0, 100, 100));
   taskcdat.n_therm = ntherm;
   taskcdat.n_sweep = nsweep;
   taskcdat.n_run = nrun;
@@ -109,7 +109,7 @@ BOOST_AUTO_TEST_CASE(simple)
 
   OurCDataSimple::ResultsCollectorType<LoggerType>::type results(logger);
 
-  const int n_repeat = 10;
+  const int n_repeat = 2;
 
   auto tasks = Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
       &taskcdat, // constant data
@@ -120,6 +120,12 @@ BOOST_AUTO_TEST_CASE(simple)
       );
 
   tasks.run();
+
+  BOOST_MESSAGE( logger.get_contents() );
+
+  std::string msg;
+  { std::ostringstream ss; results.print_histogram_csv(ss); msg = ss.str(); }
+  BOOST_MESSAGE( msg ) ;
 
   //  ........ perform a check ! ............
   BOOST_CHECK( false ) ; // TODO: WRITE ME

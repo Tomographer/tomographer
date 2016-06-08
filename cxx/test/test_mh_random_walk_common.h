@@ -102,26 +102,27 @@ struct TestLatticeMHRWGaussPeak
   typedef typename TestLatticeMHRWBase<IntType,Rng>::PointType PointType;
 
   SigmaType Sigma;
+  IntType SigmaInvScale;
   PointType Offset;
 
   template<typename Der1, typename Der2, typename Der3>
   TestLatticeMHRWGaussPeak(const Eigen::DenseBase<Der1> & dims, const Eigen::DenseBase<Der2>& Sigma_,
-			   const Eigen::DenseBase<Der3> Offset_,
+			   IntType SigmaInvScale_, const Eigen::DenseBase<Der3> Offset_,
 			   int seed = 0)
     : TestLatticeMHRWBase<IntType,Rng>(dims, seed),
-      Sigma(dims.size(), dims.size()),
+      Sigma(dims.size(), dims.size()), SigmaInvScale(SigmaInvScale_),
       Offset(dims.size())
   {
     Sigma = Sigma_;
     Offset = Offset_;
   }
 
-  typedef int FnValueType; // make everything deterministic.
+  typedef IntType FnValueType; // make everything deterministic.
   enum { UseFnSyntaxType = Tomographer::MHUseFnLogValue } ;
 
   inline FnValueType fnlogval(const PointType & pt)
   {
-    return (pt - Offset).transpose() * Sigma * (pt - Offset);
+    return - FnValueType((pt - Offset).transpose() * Sigma * (pt - Offset)) / SigmaInvScale;
   }
 
 };
