@@ -472,6 +472,17 @@ constexpr inline conststr extractFuncName(const conststr & funcname)
   bool _dummy__enabledif = false,				\
   typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
                                                  _dummy__enabledif2 = true
+
+/** \brief Altenative to \ref TOMOGRAPHER_ENABLED_IF_TMPL()
+ *
+ * Use this alternative to \ref TOMOGRAPHER_ENABLED_IF_TMPL() in case you get compiler
+ * errors about "repeated default value for argument _dummy__enabledif" because of another
+ * similar declaration just before.
+ */
+#define TOMOGRAPHER_ENABLED_IF_TMPL_REPEAT(...)				\
+  bool _dummy__enabledif,						\
+  typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
+			  _dummy__enabledifAlt2 = true
 #endif
 
 

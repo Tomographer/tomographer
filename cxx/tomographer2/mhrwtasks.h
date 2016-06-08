@@ -57,7 +57,7 @@ namespace MHRWTasks {
    * Stores the parameters to the random walk.
    *
    */
-  template<typename CountIntType_ = unsigned int, typename RealType_ = double>
+  template<typename CountIntType_ = unsigned int, typename StepRealType_ = double>
   struct CDataBase
   {
     /** \brief Constructor.
@@ -74,7 +74,7 @@ namespace MHRWTasks {
     //! Type used to count the number of iterations
     typedef CountIntType_ CountIntType;
     //! Type used to specify the step size
-    typedef RealType_ RealType;
+    typedef StepRealType_ StepRealType;
 
     //! Parameter of the random walk -- number of iterations per sweep
     CountIntType n_sweep;
@@ -83,7 +83,7 @@ namespace MHRWTasks {
     //! Parameter of the random walk -- number of "live" sweeps
     CountIntType n_run;
     //! Parameter of the random walk -- step size of the random walk
-    RealType step_size;
+    StepRealType step_size;
 
     /** \brief A base random seed from which each run seed will be derived
      *
@@ -164,7 +164,7 @@ namespace MHRWTasks {
    *
    * \tparam MHRandomWalkTaskCData must comply with the \ref
    *         pageInterfaceMHRandomWalkTaskCData and inherit from \ref
-   *         CDataBase<CountIntType,RealType> with appropriate types as required.  The
+   *         CDataBase<CountIntType,StepRealType> with appropriate types as required.  The
    *         parameters to the random walk, as well as types to use, stats collector
    *         etc. are specified using this class.
    */

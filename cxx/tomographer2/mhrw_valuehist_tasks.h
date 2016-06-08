@@ -78,12 +78,21 @@ struct histogram_types<CDataBaseType, true> {// version WITH binning analysis:
   typedef typename BinningMHRWStatsCollectorParams::HistogramType HistogramType;
   typedef typename BinningMHRWStatsCollectorParams::HistogramParams HistogramParams;
 };
+// -----------------
+template<typename CDataBaseType, typename LoggerType, bool UseBinningAnalysis>
+struct ResultsCollectorTypeHelper {
+  typedef ResultsCollectorSimple<CDataBaseType, LoggerType> type;
+};
+template<typename CDataBaseType, typename LoggerType>
+struct ResultsCollectorTypeHelper<CDataBaseType, LoggerType, true> {
+  typedef ResultsCollectorWithBinningAnalysis<CDataBaseType, LoggerType> type;
+};
 }
 
 
-template<typename ValueCalculator_, bool UseBinningAnalysis_ = true,
-	 typename CountIntType_ = int, typename StepRealType_ = double,
-	 typename CountRealType_ = double>
+template<typename ValueCalculator_, bool UseBinningAnalysis_,
+	 typename CountIntType_, typename StepRealType_,
+	 typename CountRealType_>
 struct CDataBase : public MHRWTasks::CDataBase<CountIntType_, StepRealType_>
 {
   typedef MHRWTasks::CDataBase<CountIntType_, StepRealType_> Base; // base class
@@ -104,13 +113,13 @@ struct CDataBase : public MHRWTasks::CDataBase<CountIntType_, StepRealType_>
 
   TOMOGRAPHER_ENABLED_IF(!UseBinningAnalysis)
   CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_)
-    : valcalc(valcalc_), _histogram_params(histogram_params_)
+    : valcalc(valcalc_), histogram_params(histogram_params_)
   {
   }
 
   TOMOGRAPHER_ENABLED_IF(UseBinningAnalysis)
   CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_, int binning_num_levels_)
-    : valcalc(valcalc_), _histogram_params(histogram_params_),
+    : valcalc(valcalc_), histogram_params(histogram_params_),
       binning_num_levels(binning_num_levels_)
   {
   }
@@ -150,19 +159,18 @@ struct CDataBase : public MHRWTasks::CDataBase<CountIntType_, StepRealType_>
 	);
   }
 
-  // corresponding results collector : case WITHOUT binning analysis
-  template<typename LoggerType, typename CountRealType,
-	   TOMOGRAPHER_ENABLED_IF_TMPL(!UseBinningAnalysis)>
+  //! Helper to get the results collector type
+  template<typename LoggerType>
   struct ResultsCollectorType {
-    typedef ResultsCollectorSimple<CDataBase<ValueCalculator,UseBinningAnalysis,CountIntType,StepRealType,CountRealType>,
-				   CountRealType> type;
-  };
-  // corresponding results collector : case WITH binning analysis
-  template<typename LoggerType, typename CountRealType,
-	   TOMOGRAPHER_ENABLED_IF_TMPL(!UseBinningAnalysis)>
-  struct ResultsCollectorType {
-    typedef ResultsCollectorWithBinningAnalysis<CDataBase<ValueCalculator,UseBinningAnalysis,CountIntType,StepRealType,CountRealType>,
-						CountRealType> type;
+    typedef
+#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
+    typename
+    tomo_internal::ResultsCollectorTypeHelper<CDataBase<ValueCalculator,UseBinningAnalysis,CountIntType,StepRealType,CountRealType>,
+					      LoggerType, UseBinningAnalysis>::type
+#else
+    THE_CORRECT_RESULTS_COLLECTOR_TYPE // parsed by doxygen -- make this more readable
+#endif
+    type;
   };
 };
 // define static members:
@@ -224,7 +232,7 @@ struct ResultsCollectorSimple
   typedef Tomographer::AveragedHistogram<NormalizedHistogramType, CountRealType> FinalHistogramType;
   
   ResultsCollectorSimple(LoggerType & logger_)
-    : _finalized(false), finalhistogram(HistogramParams()),
+    : _finalized(false), _finalhistogram(HistogramParams()),
       _collected_runtaskinfos(), _collected_histograms(),
       _llogger("MHRWTasks::ValueHistogramTasks::ResultsCollectorSimple", logger_)
   {
@@ -252,16 +260,16 @@ struct ResultsCollectorSimple
   {
     stream << "Value\tCounts\tError\n"
 	   << std::scientific << std::setprecision(10);
-    for (int kk = 0; kk < finalhistogram.bins.size(); ++kk) {
-      stream << (double)finalhistogram.params.bin_lower_value(kk) << "\t"
-	     << (double)finalhistogram.bins(kk) << "\t"
-	     << (double)finalhistogram.delta(kk) << "\n";
+    for (int kk = 0; kk < _finalhistogram.bins.size(); ++kk) {
+      stream << (double)_finalhistogram.params.bin_lower_value(kk) << "\t"
+	     << (double)_finalhistogram.bins(kk) << "\t"
+	     << (double)_finalhistogram.delta(kk) << "\n";
     }
   }
 
 private:
   bool _finalized;
-  FinalHistogramType finalhistogram;
+  FinalHistogramType _finalhistogram;
 
   std::vector<RunTaskInfo> _collected_runtaskinfos;
   std::vector<NormalizedHistogramType> _collected_histograms;
@@ -332,6 +340,8 @@ struct ResultsCollectorWithBinning
   typedef typename tomo_internal::histogram_types<CDataBaseType_,true>::BinningMHRWStatsCollectorParams
     BinningMHRWStatsCollectorParams;
 
+  typedef typename BinningMHRWStatsCollectorParams::BinningAnalysisParamsType BinningAnalysisParamsType;
+
   typedef typename CDataBaseType::HistogramType HistogramType;
   typedef typename CDataBaseType::HistogramParams HistogramParams;
 
@@ -343,8 +353,8 @@ struct ResultsCollectorWithBinning
    * Note we need a `double` counting type, because the histograms we'll be recording
    * are normalized.
    */
-  typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> NormalizedSimpleHistogramType;
-  typedef Tomographer::AveragedHistogram<NormalizedSimpleHistogramType, double> SimpleFinalHistogramType;
+  typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> SimpleNormalizedHistogramType;
+  typedef Tomographer::AveragedHistogram<SimpleNormalizedHistogramType, double> SimpleFinalHistogramType;
 
   ResultsCollectorWithBinning(LoggerType & logger_)
     : _finalized(false), _finalhistogram(), _simplefinalhistogram(),
@@ -370,7 +380,7 @@ struct ResultsCollectorWithBinning
     return _collected_runtaskinfos;
   }
 
-  inline const std::vector<NormalizedHistogramType> & collectedHistograms() const {
+  inline const std::vector<SimpleNormalizedHistogramType> & collectedHistograms() const {
     assert(isFinalized() && "You may only call collectedHistograms() after the runs have been finalized.");
     return _collected_histograms;
   }
@@ -380,11 +390,11 @@ struct ResultsCollectorWithBinning
   {
     stream << "Value\tCounts\tError\tSimpleError\n"
            << std::scientific << std::setprecision(10);
-    for (int kk = 0; kk < finalhistogram.bins.size(); ++kk) {
-      stream << (double)finalhistogram.params.bin_lower_value(kk) << "\t"
-             << (double)finalhistogram.bins(kk) << "\t"
-             << (double)finalhistogram.delta(kk) << "\t"
-             << (double)simplefinalhistogram.delta(kk) << "\n";
+    for (int kk = 0; kk < _finalhistogram.bins.size(); ++kk) {
+      stream << (double)_finalhistogram.params.bin_lower_value(kk) << "\t"
+             << (double)_finalhistogram.bins(kk) << "\t"
+             << (double)_finalhistogram.delta(kk) << "\t"
+             << (double)_simplefinalhistogram.delta(kk) << "\n";
     }
   }
 
@@ -394,7 +404,7 @@ private:
   SimpleFinalHistogramType _simplefinalhistogram;
 
   std::vector<RunTaskInfo> _collected_runtaskinfos;
-  std::vector<NormalizedHistogramType> _collected_histograms;
+  std::vector<SimpleNormalizedHistogramType> _collected_histograms;
 
   Logger::LocalLogger<LoggerType>  _llogger;
     
@@ -453,7 +463,7 @@ public:
     
     // because stats_coll_result is a histogram WITH error bars, add_histogram will do the
     // right thing and take them into account.
-    finalhistogram.add_histogram(stats_coll_result.hist);
+    _finalhistogram.add_histogram(stats_coll_result.hist);
     
     logger.debug("added histogram.");
     
@@ -461,9 +471,9 @@ public:
     // UniformBinsHistogram), so it will just ignore the error bars.
     logger.debug([&](std::ostream & str) {
 	str << "Simple histogram is:\n";
-	histogram_pretty_print<SimpleHistogramType>(str, stats_coll_result.hist);
+	histogram_pretty_print<SimpleNormalizedHistogramType>(str, stats_coll_result.hist);
       });
-    simplefinalhistogram.add_histogram(stats_coll_result.hist);
+    _simplefinalhistogram.add_histogram(stats_coll_result.hist);
     logger.debug("done.");
   }
   template<typename Cnt, typename CData>

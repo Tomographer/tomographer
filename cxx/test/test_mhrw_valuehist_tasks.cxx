@@ -36,30 +36,96 @@
 // <Eigen/...> or <tomographer2/...> header
 #include "test_tomographer.h"
 
-#include <tomographer2/HEADER.h>
+#include <tomographer2/mhrw_valuehist_tasks.h>
+#include <tomographer2/multiprocomp.h>
 
+#include "test_mh_random_walk_common.h" // our test-case random walk
 
 
 // -----------------------------------------------------------------------------
 // fixture(s)
 
+struct NormValueCalculator
+{
+  typedef double ValueType;
 
-struct HEADER_fixture {
-  HEADER_fixture() { }
-  ~HEADER_fixture() { }
-  void method() { }
+  template<typename EigenObject>
+  ValueType getValue(EigenObject&& pt) const
+  {
+    return pt.norm();
+  }
 };
 
+template<typename CDataBaseType>
+struct OurCDataTask : CDataBaseType
+{
+  template<typename... Args>
+  OurCDataTask(Args&&... args)
+    : CDataBaseType(std::forward<Args>(args)...)
+  {
+  }
+
+  template<typename Rng, typename LoggerType>
+  inline TestLatticeMHRWGaussPeak<int,Rng>  createMHWalker(Rng & rng, LoggerType & /*logger*/) const
+  {
+    // 100x100 lattice
+    return TestLatticeMHRWGaussPeak<int,Rng>(
+	100*Eigen::Vector2i::Ones(), Eigen::Matrix2i::Identity()*30, Eigen::Vector2i::Zero(2),
+	rng()
+	);
+  }
+};
 
 // -----------------------------------------------------------------------------
 // test suites
 
 
-BOOST_FIXTURE_TEST_SUITE(test_HEADER, HEADER_fixture)
+BOOST_AUTO_TEST_SUITE(test_mhrw_valuehist_tasks)
 
-BOOST_AUTO_TEST_CASE(testcase1)
+BOOST_AUTO_TEST_CASE(simple)
 {
-  MY_BOOST_CHECK_FLOATS_EQUAL(1, 1, tol);
+  typedef NormValueCalculator ValueCalculator;
+
+  typedef Tomographer::Logger::VacuumLogger LoggerType;
+  LoggerType logger;
+
+  typedef std::mt19937 Rng;
+
+  const int ntherm = 50;
+  const int nrun = 100;
+  const int nsweep = 10;
+  const int step_size = 2;
+
+  typedef OurCDataTask<Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<ValueCalculator, false> > OurCDataSimple;
+  typedef OurCDataSimple::HistogramParams HistogramParams;
+  OurCDataSimple taskcdat(NormValueCalculator(), HistogramParams(0, 100, 1));
+  taskcdat.n_therm = ntherm;
+  taskcdat.n_sweep = nsweep;
+  taskcdat.n_run = nrun;
+  taskcdat.step_size = step_size;
+  taskcdat.base_seed = 29329;
+
+  typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCDataSimple, Rng>  OurMHRandomWalkTask;
+
+  OurCDataSimple::ResultsCollectorType<LoggerType>::type results(logger);
+
+  const int n_repeat = 10;
+
+  auto tasks = Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
+      &taskcdat, // constant data
+      &results, // results collector
+      logger, // the main logger object
+      n_repeat, // num_repeats
+      1 // n_chunk
+      );
+
+  tasks.run();
+
+  //  ........ perform a check ! ............
+  BOOST_CHECK( false ) ; // TODO: WRITE ME
+}
+BOOST_AUTO_TEST_CASE(binning)
+{
 }
 
 BOOST_AUTO_TEST_SUITE_END()
