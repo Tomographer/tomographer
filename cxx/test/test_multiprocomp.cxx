@@ -57,8 +57,10 @@ typedef Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes> OurValueC
 typedef Tomographer::UniformBinsHistogram<OurValueCalculator::ValueType> OurHistogramType;
 
 struct MyCData : public Tomographer::MHRWTasks::CDataBase<> {
-  MyCData(const DenseLLH & llh_, const typename DMTypes::MatrixType & ref_T)
-    : llh(llh_), vcalc(ref_T), histogram_params()
+  MyCData(const DenseLLH & llh_, const typename DMTypes::MatrixType & ref_T,
+	  OurHistogramType::Params p, MHRWParamsType mhrwp, int base_seed)
+    : Tomographer::MHRWTasks::CDataBase<>(mhrwp, base_seed),
+      llh(llh_), vcalc(ref_T), histogram_params(p)
   {
   }
 
@@ -261,17 +263,15 @@ BOOST_AUTO_TEST_CASE(dmmhrwtask)
     1.0, 0,
     0,   0;
 
-  MyCData taskcdat(llh, ref_T);
   // seed for random number generator
-  taskcdat.base_seed = 1000; // fixed seed for deterministic results in this test case.
+  int base_seed = 1000; // fixed seed for deterministic results in this test case.
   //taskcdat.base_seed = std::chrono::system_clock::now().time_since_epoch().count();
-  // parameters for the fidelity histogram
-  taskcdat.histogram_params = OurHistogramType::Params(0.98, 1.0, 50);
+
   // parameters of the random walk
-  taskcdat.mhrw_params.n_sweep = 20;
-  taskcdat.mhrw_params.step_size = 0.05;
-  taskcdat.mhrw_params.n_therm = 100;
-  taskcdat.mhrw_params.n_run = 1000;
+  MyCData taskcdat(llh, ref_T,
+		   OurHistogramType::Params(0.98, 1.0, 50),  // parameters for the fidelity histogram
+		   MyCData::MHRWParamsType(20, 0.05, 100, 1000),
+		   base_seed);
 
   MyResultsCollector results;
 

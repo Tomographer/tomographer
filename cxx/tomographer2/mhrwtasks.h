@@ -66,16 +66,6 @@ namespace MHRWTasks {
      * in seconds) so that independent runs of your program won't produce the exact same
      * results.
      */
-    CDataBase(int base_seed_ = 0)
-      : base_seed(base_seed_)
-    {
-    }
-    /** \brief Constructor.
-     *
-     * Make sure to initialize \a base_seed to something quite random (e.g. current time
-     * in seconds) so that independent runs of your program won't produce the exact same
-     * results.
-     */
     template<typename MHRWParamsType>
     CDataBase(MHRWParamsType&& p, int base_seed_ = 0)
       : mhrw_params(std::forward<MHRWParamsType>(p)), base_seed(base_seed_)
@@ -87,6 +77,13 @@ namespace MHRWTasks {
     //! Type used to specify the step size
     typedef StepRealType_ StepRealType;
 
+    /** \brief Type to store the parameters of the Metropolis-Hastings random walk (number of
+     *         runs, sweep size, etc.)
+     *
+     * See \ref MHRWParams<CountIntType,StepRealType>
+     */
+    typedef MHRWParams<CountIntType, StepRealType> MHRWParamsType;
+
     /** \brief Parameters of the random walk
      *
      * Stores the number of iterations per sweep, the number of thermalizing sweeps, the
@@ -94,7 +91,7 @@ namespace MHRWTasks {
      *
      * See \ref MHRWParams<CountIntType,StepRealType>
      */
-    MHRWParams<CountIntType, StepRealType> mhrw_params;
+    const MHRWParamsType mhrw_params;
 
     /** \brief A base random seed from which each run seed will be derived
      *
@@ -110,24 +107,24 @@ namespace MHRWTasks {
      * if it is run a second time, and to make sure the points are indeed random, you must
      * randomize \a base_seed, e.g. using the current time.
      */
-    int base_seed;
+    const int base_seed;
 
     /** \brief Get some human-readable info about the random walk as a string.
      */
-    inline void printBasicCDataMhrwInfo(std::ostream & str) const
+    inline void printBasicCDataMHRWInfo(std::ostream & str) const
     {
       str << "\t# iter. / sweep = " << mhrw_params.n_sweep << "\n"
+	  << "\tstep size       = " << std::setprecision(4) << mhrw_params.step_size << "\n"
 	  << "\t# therm. sweeps = " << mhrw_params.n_therm << "\n"
-	  << "\t# run sweeps    = " << mhrw_params.n_run << "\n"
-	  << "\tstep size       = " << std::setprecision(4) << mhrw_params.step_size << "\n";
+	  << "\t# run sweeps    = " << mhrw_params.n_run << "\n";
     }
     /** \brief Get some human-readable info about the random walk as a string, see \ref
      *         printBasicCDataMhrwInfo()
      */
-    inline std::string getBasicCDataMhrwInfo() const
+    inline std::string getBasicCDataMHRWInfo() const
     {
       std::ostringstream ss;
-      printBasicCDataMhrwInfo(ss);
+      printBasicCDataMHRWInfo(ss);
       return ss.str();
     }
   };

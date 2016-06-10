@@ -50,34 +50,9 @@
 namespace Tomographer {
 
 
-/** \brief Base class performing an abstract random walk
- *
- *
- * \note You should not instantiate this class. Just call its static \ref run() method.
- *
- * You might not even need to refer to this class directly. For example, you can call
- * directly \ref DMStateSpaceRandomWalk::run().
- */
-template<typename RandomWalk_>
-struct RandomWalkBase
-{
-  typedef RandomWalk_ RandomWalk;
-  typedef typename RandomWalk::CountIntType CountIntType;
 
 
 
-
-private:
-  RandomWalkBase() { } // static-only class
-};
-
-
-
-
-
-
-
-// -----------------
 
 
 

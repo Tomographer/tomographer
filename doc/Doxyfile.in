@@ -892,6 +892,9 @@ EXCLUDE_PATTERNS       =
 EXCLUDE_SYMBOLS        = \
 		         Tomographer::tomo_internal \
 		         Tomographer::Tools::tomo_internal \
+		         Tomographer::MathTools::tomo_internal \
+		         Tomographer::MHRWTasks::tomo_internal \
+		         Tomographer::MHRWTasks::ValueHistogramTasks::tomo_internal \
 		         Tomographer::Logger::tomo_internal \
 		         Tomographer::MultiProc::tomo_internal \
 		         Tomographer::MultiProc::OMP::tomo_internal \

@@ -298,11 +298,11 @@ class bad_options : public std::exception
 {
   std::string _msg;
 public:
-  bad_options(const std::string& msg) : _msg(msg) { }
+  bad_options(const std::string& msg) : _msg("Bad program options: " + msg) { }
   virtual ~bad_options() throw() { }
 
   virtual const char * what() const throw() {
-    return (std::string("Bad program options: ") + _msg).c_str();
+    return _msg.c_str();
   }
 };
 
@@ -310,11 +310,11 @@ class invalid_input : public std::exception
 {
   std::string _msg;
 public:
-  invalid_input(const std::string& msg) : _msg(msg) { }
+  invalid_input(const std::string& msg) : _msg("Invalid Input: " + msg) { }
   virtual ~invalid_input() throw() { }
 
   virtual const char * what() const throw() {
-    return (std::string("Invalid Input: ") + _msg).c_str();
+    return _msg.c_str();
   }
 };
 

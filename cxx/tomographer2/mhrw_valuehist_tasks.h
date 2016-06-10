@@ -462,14 +462,14 @@ struct CDataBase : public MHRWTasks::CDataBase<CountIntType_, StepRealType_>
 
   TOMOGRAPHER_ENABLED_IF(!UseBinningAnalysis)
   CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_,
-	    MHRWParamsType p = MHRWParamsType(), int base_seed = 0)
+	    MHRWParamsType p, int base_seed = 0)
     : Base(std::move(p), base_seed), valcalc(valcalc_), histogram_params(histogram_params_)
   {
   }
 
   TOMOGRAPHER_ENABLED_IF(UseBinningAnalysis)
   CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_, int binning_num_levels_,
-	    MHRWParamsType p = MHRWParamsType(), int base_seed = 0)
+	    MHRWParamsType p, int base_seed = 0)
     : Base(std::move(p), base_seed), valcalc(valcalc_), histogram_params(histogram_params_),
       binning_num_levels(binning_num_levels_)
   {

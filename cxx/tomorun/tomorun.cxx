@@ -192,15 +192,38 @@ int main(int argc, char **argv)
     // some special cases where we can avoid dynamic memory allocation for Eigen matrices
     // by using compile-time sizes
     
-    if (dim == 2 && n_povms <= 6) {
+#if defined(TOMORUN_CUSTOM_FIXED_DIM) && defined(TOMORUN_CUSTOM_MAX_POVM_EFFECTS)
+    
+    //
+    // We want a single customized case, with a fixed dimension of
+    // TOMORUN_CUSTOM_FIXED_DIM (which may be "Eigen::Dynamic"), and a fixed maximum
+    // number of POVM effects TOMORUN_CUSTOM_MAX_POVM_EFFECTS (which may also be
+    // "Eigen::Dynamic").
+    //
+    // These macros can be defined in  "tomorun_config.h"
+    //
+    logger.debug("Using custom fixed dim = %d and fixed max POVM effects = %d  (%d=dynamic)",
+		 TOMORUN_CUSTOM_FIXED_DIM, TOMORUN_CUSTOM_MAX_POVM_EFFECTS, Eigen::Dynamic);
+    tomorun_dispatch_eb<TOMORUN_CUSTOM_FIXED_DIM,TOMORUN_CUSTOM_MAX_POVM_EFFECTS>(dim, &opt, matf, mlog);
+
+#else
+    
+    //
+    // Provide some standard fixed-size cases, in order to avoid dynamic memory allocation
+    // for small matrices for common system sizes (e.g. a single qubit)
+    //
+    if (dim == 2 && n_povms <= 6) { // qubit problems are really common
       tomorun_dispatch_eb<2, 6>(dim, &opt, matf, mlog);
     } else if (dim == 2) {
       tomorun_dispatch_eb<2, Eigen::Dynamic>(dim, &opt, matf, mlog);
-    } else if (dim == 4) {
+    } else if (dim == 4) { // two-qubit systems are also common
       tomorun_dispatch_eb<4, Eigen::Dynamic>(dim, &opt, matf, mlog);
     } else {
       tomorun_dispatch_eb<Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
     }
+
+#endif
+
   } catch (const std::exception& e) {
     logger.error("Exception: %s", e.what());
     throw;

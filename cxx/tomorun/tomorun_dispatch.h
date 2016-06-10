@@ -27,26 +27,58 @@
 #ifndef TOMORUN_DISPATCH
 #define TOMORUN_DISPATCH
 
+#include <tomographer2/tools/cxxutil.h>
+#include <tomographer2/tools/loggers.h>
+#include <tomographer2/tools/ezmatio.h>
+#include <tomographer2/tools/signal_status_report.h>
+#include <tomographer2/tools/eigenutil.h>
+#include <tomographer2/densedm/dmtypes.h>
+#include <tomographer2/densedm/param_herm_x.h>
+#include <tomographer2/densedm/indepmeasllh.h>
+#include <tomographer2/densedm/tspacefigofmerit.h>
+#include <tomographer2/mhrw.h>
+#include <tomographer2/mhrwtasks.h>
+#include <tomographer2/mhrw_valuehist_tasks.h>
+#include <tomographer2/multiprocomp.h>
+#include <tomographer2/densedm/tspacellhwalker.h>
 #include <tomographer2/mathtools/pos_semidef_util.h>
 
 // -----------------------------------------------------------------------------
 
 
-template<typename DenseLLH_, typename ValueCalculator_>
-struct TomorunCDataBase : public Tomographer::MHRWTasks::CDataBase<>
+template<typename DenseLLH_, typename CDataBaseType_>
+struct TomorunCData : public CDataBaseType_
 {
-  typedef Tomographer::MHRWTasks::CDataBase<> Base; // base class
+  typedef CDataBaseType_ Base; // base class
+
+  static constexpr bool BinningAnalysisEnabled = Base::UseBinningAnalysis;
 
   typedef DenseLLH_ DenseLLH;
-  typedef ValueCalculator_ ValueCalculator;
+  typedef typename Base::ValueCalculator ValueCalculator;
+
  
-  TomorunCDataBase(const DenseLLH & llh_, const ValueCalculator & vcalc_)
-    : llh(llh_), vcalc(vcalc_)
+  TOMOGRAPHER_ENABLED_IF(!BinningAnalysisEnabled)
+  TomorunCData(const DenseLLH & llh_, ValueCalculator valcalc, const ProgOptions * opt, std::size_t base_seed)
+    : Base(valcalc,
+	   typename Base::HistogramParams(opt->val_min, opt->val_max, opt->val_nbins),
+	   typename Base::MHRWParamsType(opt->Nsweep, opt->step_size, opt->Ntherm, opt->Nrun),
+	   base_seed),
+      llh(llh_)
+  {
+  }
+
+  TOMOGRAPHER_ENABLED_IF(BinningAnalysisEnabled)
+  TomorunCData(const DenseLLH & llh_, ValueCalculator valcalc, const ProgOptions * opt, std::size_t base_seed)
+    : Base(valcalc,
+	   typename Base::HistogramParams(opt->val_min, opt->val_max, opt->val_nbins),
+	   opt->binning_analysis_num_levels,
+	   typename Base::MHRWParamsType(opt->Nsweep, opt->step_size, opt->Ntherm, opt->Nrun),
+	   base_seed),
+      llh(llh_)
   {
   }
 
   const DenseLLH llh;
-  const ValueCalculator vcalc;
 
   template<typename Rng, typename LoggerType>
   inline Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType>
@@ -60,47 +92,16 @@ struct TomorunCDataBase : public Tomographer::MHRWTasks::CDataBase<>
 	);
   }
 
-  inline void print_basic_cdata_mhrw_info(std::ostream & str)
-  {
-    str << "\t# iter. / sweep = " << Base::mhrw_params.n_sweep << "\n"
-	<< "\t# therm. sweeps = " << Base::mhrw_params.n_therm << "\n"
-	<< "\t# run sweeps    = " << Base::mhrw_params.n_run << "\n"
-	<< "\tstep size       = " << std::setprecision(4) << Base::mhrw_params.step_size << "\n";
-  }
 };
 
-
-struct RunTaskInfo
-{
-  RunTaskInfo()
-    : n_run(0), n_therm(0), n_sweep(0),
-      step_size(std::numeric_limits<double>::quiet_NaN()),
-      acceptance_ratio(std::numeric_limits<double>::quiet_NaN())
-  {
-  }
-
-  template<typename TaskResultType>
-  RunTaskInfo(TaskResultType && t)
-    : n_run(t.mhrw_params.n_run),
-      n_therm(t.mhrw_params.n_therm),
-      n_sweep(t.mhrw_params.n_sweep),
-      step_size(t.mhrw_params.step_size),
-      acceptance_ratio(t.acceptance_ratio)
-  {
-  }
-
-  std::size_t n_run;
-  std::size_t n_therm;
-  std::size_t n_sweep;
-  double step_size;
-  double acceptance_ratio;
-};
+// ------------------------------------------------------------------------------
+// Utility to generate report
+// ------------------------------------------------------------------------------
 
 
-
-template<typename HistType>
+template<typename HistType, typename RunTaskInfoType>
 inline void print_short_bar_and_accept_ratio(std::ostream & str, int j, HistType && hist,
-					     const RunTaskInfo & inf,
+					     const RunTaskInfoType & inf,
 					     int dig_width)
 {
   std::string accept_ratio_appendstr =
@@ -124,403 +125,122 @@ static const std::string report_final_histogram =
   "                                          Final Histogram                                           \n";
 
 
-// -----------------------------------------------------------------------------
-// Version without binning analysis
-// -----------------------------------------------------------------------------
-
-template<typename DenseLLH_, typename ValueCalculator_>
-struct TomorunCDataSimple : public TomorunCDataBase<DenseLLH_, ValueCalculator_>
+template<typename TomorunCDataType, typename ResultsCollector, typename LoggerType,
+	 TOMOGRAPHER_ENABLED_IF_TMPL(!TomorunCDataType::BinningAnalysisEnabled)>
+static inline void produce_final_report(TomorunCDataType & cdata, ResultsCollector & res,
+					LoggerType & logger)
 {
-  typedef DenseLLH_ DenseLLH;
-  typedef ValueCalculator_ ValueCalculator;
-
-  typedef TomorunCDataBase<DenseLLH_, ValueCalculator_> Base_;
-
-  typedef typename Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator>::Result
-    MHRWStatsCollectorResultType;
-  typedef MHRWStatsCollectorResultType HistogramType;
-  typedef typename HistogramType::Params HistogramParams;
-
-  HistogramParams histogram_params;
-
-  TomorunCDataSimple(const DenseLLH & llh_, const ValueCalculator & vcalc_, const ProgOptions * /*opt*/)
-    : Base_(llh_, vcalc_), histogram_params()
-  {
-  }
-
-  template<typename LoggerType>
-  inline Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>
-  createStatsCollector(LoggerType & logger) const
-  {
-    return Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>(
-	histogram_params,
-	Base_::vcalc,
-	logger
-	);
-  }
-
-  // corresponding results collector
-  template<typename LoggerType>
-  struct ResultsCollector
-  {
-    typedef DenseLLH_ DenseLLH;
-    typedef ValueCalculator_ ValueCalculator;
-    typedef typename Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator>::Result HistogramType;
-    typedef typename HistogramType::Params HistogramParams;
-    typedef Tomographer::UniformBinsHistogram<typename HistogramType::Scalar, double>
-	NormalizedHistogramType;
-    typedef Tomographer::AveragedHistogram<NormalizedHistogramType, typename NormalizedHistogramType::CountType>
-        FinalHistogramType;
-
-    std::vector<RunTaskInfo> collected_runtaskinfos;
-    std::vector<NormalizedHistogramType> collected_histograms;
-    FinalHistogramType finalhistogram;
-
-    Tomographer::Logger::LocalLogger<LoggerType>  llogger;
-    
-    ResultsCollector(LoggerType & logger_)
-      : finalhistogram(HistogramParams()), llogger("TomorunCDataSimple::ResultsCollector", logger_)
-    {
-    }
-    
-    template<typename Cnt, typename CData>
-    inline void init(Cnt num_total_runs, Cnt /*n_chunk*/,
-                     const CData * pcdata)
-    {
-      collected_histograms.resize(num_total_runs);
-      collected_runtaskinfos.reserve(num_total_runs);
-      finalhistogram.reset(pcdata->histogram_params);
-    }
-    template<typename Cnt, typename TaskResultType, typename CData>
-    inline void collect_result(Cnt task_no, const TaskResultType& taskresult, const CData * /*pcdata*/)
-    {
-      llogger.sublogger(TOMO_ORIGIN).debug([&](std::ostream & str) {
-          str << "Got task result. Histogram is:\n" << taskresult.stats_collector_result.pretty_print();
-        });
-      NormalizedHistogramType thishistogram = taskresult.stats_collector_result;
-      typename NormalizedHistogramType::CountType normalization =
-	thishistogram.bins.sum() + thishistogram.off_chart;
-      thishistogram.bins /= normalization;
-      thishistogram.off_chart /= normalization;
-
-      collected_histograms[task_no] = thishistogram;
-      collected_runtaskinfos[task_no] = RunTaskInfo(taskresult);
-      finalhistogram.add_histogram(thishistogram);
-    }
-    template<typename Cnt, typename CData>
-    inline void runs_finished(Cnt, const CData *)
-    {
-      finalhistogram.finalize();
-    }
-
-    template<typename CDataType>
-    inline void produce_final_report(CDataType && cdata)
-    {
-      // produce report on runs
-      auto logger = llogger.sublogger(TOMO_ORIGIN);
-      logger.info([&](std::ostream & str) {
-          str << "\n"
-              << report_final_header
-              << report_hline
-            ;
-	  cdata.print_basic_cdata_mhrw_info(str);
-          std::size_t j;
-          int w = (int)std::ceil(std::log10(collected_histograms.size()));
-          for (j = 0; j < collected_histograms.size(); ++j) {
-	    print_short_bar_and_accept_ratio(str, j, collected_histograms[j], collected_runtaskinfos[j], w);
-          }
-          str << report_hline
-              << "\n";
-          // and the final histogram
-          str << report_final_histogram
-              << report_hline;
-          histogram_pretty_print(str, finalhistogram);
-          str << report_hline
-              << "\n";
-        });
-    }
-
-    inline void write_histogram_file(const std::string & csvfname)
-    {
-      auto l = llogger.sublogger(TOMO_ORIGIN);
-      //l.info("()");
-
-      std::ofstream outf;
-      outf.open(csvfname);
-      outf << "Value\tCounts\tError\n"
-           << std::scientific << std::setprecision(10);
-      for (int kk = 0; kk < finalhistogram.bins.size(); ++kk) {
-        outf << (double)finalhistogram.params.bin_lower_value(kk) << "\t"
-             << (double)finalhistogram.bins(kk) << "\t"
-             << (double)finalhistogram.delta(kk) << "\n";
+  logger.debug("produce_final_report()", "about to produce final report.");
+  // produce report on runs
+  logger.info("produce_final_report()", [&](std::ostream & str) {
+      auto collected_histograms = res.collectedResults();
+      auto collected_runtaskinfos = res.collectedRunTaskInfos();
+      auto finalhistogram = res.finalHistogram();
+      str << "\n"
+	  << report_final_header
+	  << report_hline
+	;
+      cdata.printBasicCDataMHRWInfo(str);
+      std::size_t j;
+      int w = (int)std::ceil(std::log10(collected_histograms.size()));
+      for (j = 0; j < collected_histograms.size(); ++j) {
+	print_short_bar_and_accept_ratio(str, j, collected_histograms[j], collected_runtaskinfos[j], w);
       }
-      l.info("Wrote histogram to CSV file %s (Value/Counts/Error)", csvfname.c_str());
-    }
-  };
-};
+      str << report_hline
+	  << "\n";
+      // and the final histogram
+      str << report_final_histogram
+	  << report_hline;
+      histogram_pretty_print(str, finalhistogram);
+      str << report_hline
+	  << "\n";
+    });
+}
 
-
-// -----------------------------------------------------------------------------
-// Version with the Binning Analysis
-// -----------------------------------------------------------------------------
-
-template<typename DenseLLH_, typename ValueCalculator_>
-struct TomorunCDataBinning : public TomorunCDataBase<DenseLLH_, ValueCalculator_>
+template<typename TomorunCDataType, typename ResultsCollector, typename LoggerType,
+	 TOMOGRAPHER_ENABLED_IF_TMPL(TomorunCDataType::BinningAnalysisEnabled)>
+inline void produce_final_report(TomorunCDataType & cdata, ResultsCollector & res,
+				 LoggerType & logger)
 {
-  typedef DenseLLH_ DenseLLH;
-  typedef ValueCalculator_ ValueCalculator;
-  typedef TomorunCDataBase<DenseLLH_, ValueCalculator_> Base_;
-
-  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<ValueCalculator>
-    BinningMHRWStatsCollectorParams;
-  typedef typename BinningMHRWStatsCollectorParams::Result MHRWStatsCollectorResultType;
-  typedef typename BinningMHRWStatsCollectorParams::HistogramType HistogramType;
-  typedef typename BinningMHRWStatsCollectorParams::HistogramParams HistogramParams;
-
-  HistogramParams histogram_params;
-  int binning_num_levels;
-
-  TomorunCDataBinning(const DenseLLH & llh_, const ValueCalculator & vcalc_, const ProgOptions * opt)
-    : Base_(llh_, vcalc_), histogram_params()
-  {
-    binning_num_levels = opt->binning_analysis_num_levels;
-  }
-
-  template<typename LoggerType>
-  inline Tomographer::ValueHistogramWithBinningMHRWStatsCollector<BinningMHRWStatsCollectorParams,LoggerType>
-  createStatsCollector(LoggerType & logger) const
-  {
-    return Tomographer::ValueHistogramWithBinningMHRWStatsCollector<BinningMHRWStatsCollectorParams,LoggerType>(
-	histogram_params,
-	Base_::vcalc,
-        binning_num_levels,
-	logger
-	);
-  }
-
-  // corresponding results collector
-  template<typename LoggerType>
-  struct ResultsCollector
-  {
-    typedef DenseLLH_ DenseLLH;
-    typedef ValueCalculator_ ValueCalculator;
-
-    typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<ValueCalculator> MHRWStatsCollectorParams;
-
-    typedef typename MHRWStatsCollectorParams::Result Result;
-    typedef typename MHRWStatsCollectorParams::HistogramType HistogramType;
-    typedef typename HistogramType::Params HistogramParams;
-    
-    std::vector<RunTaskInfo> collected_runtaskinfos;
-    //! All collected histograms for each run
-    std::vector<Result> collected_histograms;
-    //! The final histogram, properly averaged
-    Tomographer::AveragedHistogram<HistogramType, double> finalhistogram;
-
-    /** \brief The "simple" histogram, as if without binning analysis.
-     *
-     * Note we need a `double` counting type, because the histograms we'll be recording
-     * are normalized.
-     */
-    typedef Tomographer::UniformBinsHistogram<typename HistogramType::Scalar, double> SimpleHistogramType;
-    //typedef typename MHRWStatsCollectorParams::BaseHistogramType SimpleHistogramType;
-    Tomographer::AveragedHistogram<SimpleHistogramType, double> simplefinalhistogram;
-
-    Tomographer::Logger::LocalLogger<LoggerType>  llogger;
-    
-    typedef typename MHRWStatsCollectorParams::BinningAnalysisParamsType BinningAnalysisParamsType;
-
-    ResultsCollector(LoggerType & logger_)
-      : finalhistogram(), simplefinalhistogram(), llogger("TomorunCDataBinning::ResultsCollector", logger_)
-    {
-    }
-    
-    template<typename Cnt, typename CData>
-    inline void init(Cnt num_total_runs, Cnt /*n_chunk*/,
-                     const CData * pcdata)
-    {
-      collected_histograms.resize(num_total_runs);
-      collected_runtaskinfos.resize(num_total_runs);
-      finalhistogram.reset(pcdata->histogram_params);
-      simplefinalhistogram.reset(pcdata->histogram_params);
-    }
-    template<typename Cnt, typename TaskResultType, typename CData>
-    inline void collect_result(Cnt task_no, TaskResultType && taskresult, const CData *)
-    {
-      auto logger = llogger.sublogger(TOMO_ORIGIN);
-
-      collected_runtaskinfos[task_no] = RunTaskInfo(taskresult);
-      auto stats_coll_result = taskresult.stats_collector_result;
-      collected_histograms[task_no] = stats_coll_result;
-
-      logger.debug([&](std::ostream & str) {
-          str << "(). Got task result. Histogram (w/ error bars from binning analysis):\n"
-              << stats_coll_result.hist.pretty_print();
-        });
-      
-      if ((stats_coll_result.converged_status !=
-           Eigen::ArrayXi::Constant(stats_coll_result.hist.num_bins(), BinningAnalysisParamsType::CONVERGED)).any()) {
-        logger.debug([&,this](std::ostream & str) {
-            str << "Error bars have not converged! The error bars at different binning levels are:\n"
-                << stats_coll_result.error_levels << "\n"
-                << "\t-> convergence analysis: \n";
-            for (std::size_t k = 0; k < stats_coll_result.hist.num_bins(); ++k) {
-              str << "\t    val[" << std::setw(3) << k << "] = "
-                  << std::setw(12) << stats_coll_result.hist.bins(k)
-                  << " +- " << std::setw(12) << stats_coll_result.hist.delta(k);
-              if (stats_coll_result.converged_status(k) == BinningAnalysisParamsType::CONVERGED) {
-                str << "  [CONVERGED]";
-              } else if (stats_coll_result.converged_status(k) == BinningAnalysisParamsType::NOT_CONVERGED) {
-                str << "  [NOT CONVERGED]";
-              } else if (stats_coll_result.converged_status(k) == BinningAnalysisParamsType::UNKNOWN_CONVERGENCE) {
-                str << "  [UNKNOWN]";
-              } else {
-                str << "  [UNKNOWN CONVERGENCE STATUS: " << stats_coll_result.converged_status(k) << "]";
-              }
-              str << "\n";
-            }
-          });
+  logger.debug("produce_final_report()", "about to produce final report.");
+  // produce report on runs
+  logger.info("produce_final_report()", [&](std::ostream & str) {
+      auto collected_histograms = res.collectedResults();
+      auto collected_runtaskinfos = res.collectedRunTaskInfos();
+      auto finalhistogram = res.finalHistogram();
+      str << "\n"
+	  << report_final_header
+	  << report_hline
+	;
+      cdata.printBasicCDataMHRWInfo(str);
+      std::size_t j;
+      int w = (int)std::ceil(std::log10(collected_histograms.size()));
+      for (j = 0; j < collected_histograms.size(); ++j) {
+	print_short_bar_and_accept_ratio(str, j, collected_histograms[j].hist, collected_runtaskinfos[j], w);
+	// error bars stats:
+	const int nbins = collected_histograms[j].converged_status.size();
+	const int n_conv = collected_histograms[j].converged_status
+	  .cwiseEqual(ResultsCollector::BinningAnalysisParamsType::CONVERGED).count();
+	Eigen::ArrayXi unkn_arr = (collected_histograms[j].converged_status
+				   .cwiseEqual(ResultsCollector::BinningAnalysisParamsType::UNKNOWN_CONVERGENCE))
+	  .template cast<int>();
+	const int n_unknown = unkn_arr.count();
+	const int n_unknown_followingotherunknown
+	  = unkn_arr.segment(0,nbins-1).cwiseProduct(unkn_arr.segment(1,nbins-1)).count();
+	const int n_unknown_isolated = n_unknown - n_unknown_followingotherunknown;
+	const int n_notconv = collected_histograms[j].converged_status
+	  .cwiseEqual(ResultsCollector::BinningAnalysisParamsType::NOT_CONVERGED).count();
+	str << "    error bars: " << n_conv << " converged / "
+	    << n_unknown << " maybe (" << n_unknown_isolated << " isolated) / "
+	    << n_notconv << " not converged\n";
       }
-
-      // because stats_coll_result is a histogram WITH error bars, add_histogram will do the
-      // right thing and take them into account.
-      finalhistogram.add_histogram(stats_coll_result.hist);
-
-      logger.debug("added first histogram.");
-
-
-      // this one is declared for histograms WITHOUT error bars (SimpleHistogramType is a
-      // UniformBinsHistogram), so it will just ignore the error bars.
-      logger.debug([&](std::ostream & str) {
-	  str << "Simple histogram is:\n";
-	  Tomographer::histogram_pretty_print<SimpleHistogramType>(str, stats_coll_result.hist);
-	});
-      simplefinalhistogram.add_histogram(stats_coll_result.hist);
-      logger.debug("done.");
-    }
-    template<typename Cnt, typename CData>
-    inline void runs_finished(Cnt, const CData *)
-    {
-      finalhistogram.finalize();
-      simplefinalhistogram.finalize();
-    }
-
-    template<typename CDataType>
-    inline void produce_final_report(CDataType && cdata)
-    {
-      // produce report on runs
-      auto logger = llogger.sublogger(TOMO_ORIGIN);
-      logger.info([&](std::ostream & str) {
-          str << "\n"
-              << report_final_header
-              << report_hline
-            ;
-	  cdata.print_basic_cdata_mhrw_info(str);
-          std::size_t j;
-          int w = (int)std::ceil(std::log10(collected_histograms.size()));
-          for (j = 0; j < collected_histograms.size(); ++j) {
-	    print_short_bar_and_accept_ratio(str, j, collected_histograms[j].hist, collected_runtaskinfos[j], w);
-	    // error bars stats:
-            const int nbins = collected_histograms[j].converged_status.size();
-            const int n_conv = collected_histograms[j].converged_status
-              .cwiseEqual(BinningAnalysisParamsType::CONVERGED).count();
-            Eigen::ArrayXi unkn_arr = (collected_histograms[j].converged_status
-				       .cwiseEqual(BinningAnalysisParamsType::UNKNOWN_CONVERGENCE))
-              .template cast<int>();
-            const int n_unknown = unkn_arr.count();
-            const int n_unknown_followingotherunknown
-              = unkn_arr.segment(0,nbins-1).cwiseProduct(unkn_arr.segment(1,nbins-1)).count();
-            const int n_unknown_isolated = n_unknown - n_unknown_followingotherunknown;
-            const int n_notconv = collected_histograms[j].converged_status
-              .cwiseEqual(BinningAnalysisParamsType::NOT_CONVERGED).count();
-            str << "    error bars: " << n_conv << " converged / "
-                << n_unknown << " maybe (" << n_unknown_isolated << " isolated) / "
-                << n_notconv << " not converged\n";
-          }
-          str << report_hline
+      str << report_hline
+	  << "\n";
+      // and the final histogram
+      str << report_final_histogram
+	  << report_hline;
+      histogram_pretty_print(str, finalhistogram);
+      str << report_hline
               << "\n";
-          // and the final histogram
-          str << report_final_histogram
-              << report_hline;
-          histogram_pretty_print(str, finalhistogram);
-          str << report_hline
-              << "\n";
-        });
-    }
-
-    inline void write_histogram_file(const std::string & csvfname)
-    {
-      auto logger = llogger.sublogger(TOMO_ORIGIN);
-      //logger.info("()");
-      
-      std::ofstream outf;
-      outf.open(csvfname);
-      outf << "Value\tCounts\tError\tSimpleError\n"
-           << std::scientific << std::setprecision(10);
-      for (int kk = 0; kk < finalhistogram.bins.size(); ++kk) {
-        outf << (double)finalhistogram.params.bin_lower_value(kk) << "\t"
-             << (double)finalhistogram.bins(kk) << "\t"
-             << (double)finalhistogram.delta(kk) << "\t"
-             << (double)simplefinalhistogram.delta(kk) << "\n";
-      }
-      logger.info("Wrote histogram to CSV file %s (Value/Counts/Error/SimpleError)", csvfname.c_str());
-    }
-  };
-};
+    });
+}
 
 
-// =============================================================================
 
-template<bool BinningAnalysisErrorBars, typename DenseLLH, typename ValueCalculator>
-struct TomorunModeTypes
-{
-};
-
-template<typename DenseLLH, typename ValueCalculator>
-struct TomorunModeTypes<true, DenseLLH, ValueCalculator>
-{
-  typedef TomorunCDataBinning<DenseLLH, ValueCalculator> CData;
-};
-template<typename DenseLLH, typename ValueCalculator>
-struct TomorunModeTypes<false, DenseLLH, ValueCalculator>
-{
-  typedef TomorunCDataSimple<DenseLLH, ValueCalculator> CData;
-};
 
 
 //
-// Here goes the actual program. This is templated, because then we can let Eigen use
-// allocation on the stack rather than malloc'ing 2x2 matrices...
+// Here goes the actual program. Now the program options have been translated to template
+// parameters appropriately.
 //
-template<bool BinningAnalysisErrorBars, typename DenseLLH,
-         typename FnMakeValueCalculator, typename LoggerType>
+template<bool UseBinningAnalysisErrorBars, typename DenseLLH,
+         typename ValueCalculator, typename LoggerType>
 inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
-		    FnMakeValueCalculator makeValueCalculator, LoggerType & baselogger)
+		    ValueCalculator valcalc, LoggerType & baselogger)
 {
   Tomographer::Logger::LocalLogger<LoggerType> logger(TOMO_ORIGIN, baselogger);
   //
   // create the OMP Task Manager and run.
   //
 
-  auto valcalc = makeValueCalculator();
-  typedef decltype(valcalc) ValueCalculator;
-
-  typedef typename TomorunModeTypes<BinningAnalysisErrorBars, DenseLLH, ValueCalculator>::CData OurCData;
+  typedef TomorunCData<
+    DenseLLH,
+    Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<
+      ValueCalculator,
+      UseBinningAnalysisErrorBars,
+      TomorunInt, // CountIntType
+      TomorunReal, // StepRealType
+      TomorunReal> // CountRealType
+    > OurCData;
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>  OurMHRandomWalkTask;
 
-  typedef typename OurCData::template ResultsCollector<LoggerType> OurResultsCollector;
+  typedef typename OurCData::template ResultsCollectorType<LoggerType>::type OurResultsCollector;
 
-  OurCData taskcdat(llh, valcalc, opt);
   // seed for random number generator
-  taskcdat.base_seed = std::chrono::system_clock::now().time_since_epoch().count();
-  // parameters for the value histogram
-  taskcdat.histogram_params = typename OurCData::HistogramParams(opt->val_min, opt->val_max, opt->val_nbins);
-  // parameters of the random walk
-  taskcdat.mhrw_params.n_sweep = opt->Nsweep;
-  taskcdat.mhrw_params.step_size = opt->step_size;
-  taskcdat.mhrw_params.n_therm = opt->Ntherm;
-  taskcdat.mhrw_params.n_run = opt->Nrun;
+  auto base_seed = std::chrono::system_clock::now().time_since_epoch().count();
+
+  OurCData taskcdat(llh, valcalc, opt, base_seed);
 
   OurResultsCollector results(logger.baselogger());
 
@@ -535,9 +255,6 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
   // set up signal handling
   auto srep = Tomographer::Tools::makeSigHandlerTaskDispatcherStatusReporter(&tasks, logger.baselogger());
   Tomographer::Tools::installSignalStatusReportHandler(SIGINT, &srep);
-  //  auto srep = makeSigHandlerStatusReporter(&tasks, logger.baselogger());
-  //  signal_handler = &srep;
-  //  signal(SIGINT, sig_int_handler);
 
   // and run our tomo process
 
@@ -554,19 +271,19 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
   // delta-time, in seconds and fraction of seconds
   std::string elapsed_s = Tomographer::Tools::fmt_duration(time_end - time_start);
 
-  results.produce_final_report(taskcdat);
+  produce_final_report(taskcdat, results, logger.baselogger());
 
   // save the histogram to a CSV file if the user required it
   if (opt->write_histogram.size()) {
-    results.write_histogram_file(opt->write_histogram+"-histogram.csv");
+    std::string csvfname = opt->write_histogram + "-histogram.csv";
+    std::ofstream outf;
+    outf.open(csvfname);
+    results.print_histogram_csv(outf);
+    logger.info([&](std::ostream & str) { str << "Wrote histogram to CSV file " << csvfname << "."; });
   }
 
   logger.info("Computation time: %s\n\n", elapsed_s.c_str());
 }
-
-
-
-
 
 
 
@@ -580,7 +297,7 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
 // correct template parameters), depending on what we were asked to do.
 //
 //
-template<int FixedDim, int FixedMaxPOVMEffects, bool BinningAnalysisErrorBars, typename LoggerType>
+template<int FixedDim, int FixedMaxPOVMEffects, bool UseBinningAnalysisErrorBars, typename LoggerType>
 inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::MAT::File * matf, LoggerType & logger)
 {
   logger.debug("tomorun_dispatch()", "Running tomography program! FixedDim=%d and FixedMaxPOVMEffects=%d",
@@ -590,8 +307,8 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   // Typedefs for tomography data types
   //
 
-  typedef Tomographer::DenseDM::DMTypes<FixedDim, double> OurDMTypes;
-  typedef Tomographer::DenseDM::IndepMeasLLH<OurDMTypes, double, int, FixedMaxPOVMEffects, true> OurDenseLLH;
+  typedef Tomographer::DenseDM::DMTypes<FixedDim, TomorunReal> OurDMTypes;
+  typedef Tomographer::DenseDM::IndepMeasLLH<OurDMTypes, TomorunReal, TomorunInt, FixedMaxPOVMEffects, true> OurDenseLLH;
 
   //
   // Read data from file
@@ -611,49 +328,15 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 		       Tomographer::Tools::fmts("POVM effects don't have dimension %d x %d", dim, dim));
   }
 
-  // convert to x-parameterization
-  unsigned int k, j;
-  int Npovmeffects = 0;
-  for (k = 0; k < (unsigned int)Nm.size(); ++k) {
-    if (Nm[k] > 0) {
-      ++Npovmeffects;
-    }
-  }
-  logger.debug("tomorun_dispatch()", "Npovmeffects=%d", Npovmeffects);
-  ///
-  /// \todo TODO: simply use llh.addMeasEffect()
-  ///
-  typename OurDenseLLH::VectorParamListType Exn(Npovmeffects, dmt.dim2());
-  typename OurDenseLLH::FreqListType Nx(Npovmeffects);
-  j = 0;
-  Tomographer::DenseDM::ParamX<OurDMTypes> xp(dmt);
-  for (k = 0; k < Emn.size(); ++k) {
-    if (Nm[k] == 0) {
-      continue;
-    }
-    // do some tests: positive semidefinite and non-zero
+  for (std::size_t k = 0; k < Emn.size(); ++k) {
+    llh.addMeasEffect(Emn[k], Nm(k),
 #ifdef DO_SLOW_POVM_CONSISTENCY_CHECKS
-    logger.longdebug("tomorun_dispatch()", [&](std::ostream & str) {
-                       str << "Emn["<<k<<"] = \n" << Emn[k] << "\n"
-                           << "\tEV=" << Emn[k].eigenvalues().transpose().real() << "\n"
-                           << "\tnorm=" << double(Emn[k].norm()) << "\n" ;
-                     });
-    ensure_valid_input(double( (Emn[k] - Emn[k].adjoint()).norm() ) < 1e-8,
-		       Tomographer::Tools::fmts("POVM effect #%d is not hermitian!", k)); // Hermitian
-    ensure_valid_input(double(Emn[k].eigenvalues().real().minCoeff()) >= -1e-12,
-		       Tomographer::Tools::fmts("POVM effect #%d is not positive semidefinite!", k)); // Pos semidef
-    ensure_valid_input(double(Emn[k].norm()) > 1e-6,
-		       Tomographer::Tools::fmts("POVM effect #%d is zero!", k));
-    logger.debug("tomorun_dispatch()", "Consistency checks passed for Emn[%u].", k);
+		      true
+#else
+		      false
 #endif
-
-    // don't need to reset `row` to zero, param_herm_to_x doesn't require it
-    Exn.row(j) = xp.HermToX(Emn[k]).transpose();
-    Nx[j] = Nm[k];
-    ++j;
+	);
   }
-  llh.setMeas(Exn, Nx, false); // input checks already done (if requested)
-  // done.
 
   logger.debug("tomorun_dispatch()", [&](std::ostream & ss) {
       ss << "\n\nExn: size="<<llh.Exn().size()<<"\n"
@@ -662,29 +345,9 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 	 << llh.Nx() << "\n";
     });
 
-  //tomodat.rho_MLE = Tomographer::MAT::value<typename OurMatrQ::MatrixType>(matf->var("rho_MLE"));
-
-  //  ensure_valid_input(tomodat.rho_MLE.cols() == dim && tomodat.rho_MLE.rows() == dim,
-  //		     Tomographer::Tools::fmts("rho_MLE is expected to be a square matrix %d x %d", dim, dim));
-
-  //  tomodat.x_MLE = matq.initVectorParamType();
-  //  Tomographer::param_herm_to_x(tomodat.x_MLE, tomodat.rho_MLE);
-
-  //  tomodat.T_MLE = matq.initMatrixType();
-
-  //  Eigen::LDLT<typename OurMatrQ::MatrixType> ldlt(tomodat.rho_MLE);
-  //  typename OurMatrQ::MatrixType P = matq.initMatrixType();
-  //  P = ldlt.transpositionsP().transpose() * OurMatrQ::MatrixType::Identity(dim,dim);
-  //  tomodat.T_MLE.noalias() = P * ldlt.matrixL() * ldlt.vectorD().cwiseSqrt().asDiagonal();
-
-  //  Eigen::SelfAdjointEigenSolver<typename OurMatrQ::MatrixType> rho_MLE_eig(tomodat.rho_MLE);
-  //  tomodat.T_MLE = rho_MLE_eig.operatorSqrt();
-
   llh.setNMeasAmplifyFactor(opt->NMeasAmplifyFactor);
 
-
   typedef typename OurDMTypes::MatrixType MatrixType;
-
   
   //
   // Data has now been successfully read. Now, dispatch to the correct template function
@@ -692,7 +355,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   //
 
   //
-  // Instantiate The Correct Figure Of Merit Calculator
+  // ::::: Instantiate The Correct Figure Of Merit Calculator :::::
   //
 
   //
@@ -729,28 +392,22 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
       });
 
     if (opt->valtype.valtype == val_type_spec::FIDELITY) {
-      tomorun<BinningAnalysisErrorBars>(
+      tomorun<UseBinningAnalysisErrorBars>(
           llh,
           opt,
-          [&T_ref]() {
-            return Tomographer::DenseDM::TSpace::FidelityToRefCalculator<OurDMTypes, double>(T_ref);
-          },
+	  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<OurDMTypes, double>(T_ref),
           logger);
     } else if (opt->valtype.valtype == val_type_spec::PURIF_DIST) {
-      tomorun<BinningAnalysisErrorBars>(
+      tomorun<UseBinningAnalysisErrorBars>(
           llh,
           opt,
-          [&T_ref]() {
-            return Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<OurDMTypes, double>(T_ref);
-          },
+	  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<OurDMTypes, double>(T_ref),
           logger);
     } else if (opt->valtype.valtype == val_type_spec::TR_DIST) {
-      tomorun<BinningAnalysisErrorBars>(
+      tomorun<UseBinningAnalysisErrorBars>(
           llh,
           opt,
-          [&rho_ref]() {
-	    return Tomographer::DenseDM::TSpace::TrDistToRefCalculator<OurDMTypes, double>(rho_ref);
-          },
+	  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<OurDMTypes, double>(rho_ref),
           logger);
     } else {
       throw std::logic_error("WTF?? You shouldn't be here!");
@@ -778,12 +435,10 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 						obsname.c_str(), dim, dim));
 
     // and run our main program
-    tomorun<BinningAnalysisErrorBars>(
+    tomorun<UseBinningAnalysisErrorBars>(
         llh,
         opt,
-        [&A, dmt]() {
-          return Tomographer::DenseDM::TSpace::ObservableValueCalculator<OurDMTypes>(dmt, A);
-        },
+	Tomographer::DenseDM::TSpace::ObservableValueCalculator<OurDMTypes>(dmt, A),
         logger);
 
     return;

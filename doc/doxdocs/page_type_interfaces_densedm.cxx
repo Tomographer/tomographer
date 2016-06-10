@@ -35,7 +35,7 @@
  * of the parameterizations \ref pageParamsX or \ref pageParamsT.
  *
  * Type interfaces:
- *   - \page pageInterfaceDenseLLH
+ *   - \subpage pageInterfaceDenseLLH
  *
  */
 
@@ -50,7 +50,7 @@
  * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
  *
- *
+ * ................ DOC HERE ................
  * 
  *
  *
