@@ -137,11 +137,12 @@ struct ResultsCollectorSimple
   typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> NormalizedHistogramType;
   typedef Tomographer::AveragedHistogram<NormalizedHistogramType, CountRealType> FinalHistogramType;
 
+  typedef HistogramType TaskResultType;
   typedef typename CDataBaseType::RunTaskInfoType RunTaskInfoType;
 
   ResultsCollectorSimple(LoggerType & logger_)
     : _finalized(false), _finalhistogram(HistogramParams()),
-      _collected_runtaskinfos(), _collected_histograms(),
+      _collected_runtaskinfos(), _collected_results(), _collected_histograms(),
       _llogger("MHRWTasks::ValueHistogramTasks::ResultsCollectorSimple", logger_)
   {
   }
@@ -164,11 +165,10 @@ struct ResultsCollectorSimple
   }
 
   /**
-   * Same as collectedHistograms(), but shares the same name as for \ref ResultsCollectorWithBinningAnalysis
    */
-  inline const std::vector<NormalizedHistogramType> & collectedResults() const {
-    assert(isFinalized() && "You may only call collectedHistograms() after the runs have been finalized.");
-    return _collected_histograms;
+  inline const std::vector<TaskResultType> & collectedResults() const {
+    assert(isFinalized() && "You may only call collectedResults() after the runs have been finalized.");
+    return _collected_results;
   }
 
 
@@ -188,6 +188,7 @@ private:
   FinalHistogramType _finalhistogram;
 
   std::vector<RunTaskInfoType> _collected_runtaskinfos;
+  std::vector<TaskResultType> _collected_results;
   std::vector<NormalizedHistogramType> _collected_histograms;
 
   Logger::LocalLogger<LoggerType>  _llogger;
@@ -202,6 +203,7 @@ public:
     assert(!isFinalized() && "init() called after results have been finalized!");
 
     _collected_histograms.resize(num_total_runs);
+    _collected_results.resize(num_total_runs);
     _collected_runtaskinfos.reserve(num_total_runs);
     _finalhistogram.reset(pcdata->histogram_params);
   }
@@ -222,6 +224,7 @@ public:
     thishistogram.off_chart /= normalization;
 
     _collected_histograms[task_no] = thishistogram;
+    _collected_results[task_no] = taskresult.stats_collector_result;
     _collected_runtaskinfos[task_no] = RunTaskInfoType(taskresult);
     _finalhistogram.add_histogram(thishistogram);
   }
@@ -258,7 +261,7 @@ struct ResultsCollectorWithBinningAnalysis
 
   typedef typename BinningMHRWStatsCollectorParams::BinningAnalysisParamsType BinningAnalysisParamsType;
 
-  typedef typename BinningMHRWStatsCollectorParams::Result TaskResult;
+  typedef typename BinningMHRWStatsCollectorParams::Result TaskResultType;
 
   typedef typename CDataBaseType::HistogramType HistogramType;
   typedef typename CDataBaseType::HistogramParams HistogramParams;
@@ -301,7 +304,7 @@ struct ResultsCollectorWithBinningAnalysis
     return _collected_runtaskinfos;
   }
 
-  inline const std::vector<TaskResult> & collectedResults() const {
+  inline const std::vector<TaskResultType> & collectedResults() const {
     assert(isFinalized() && "You may only call collectedResults() after the runs have been finalized.");
     return _collected_results;
   }
@@ -325,7 +328,7 @@ private:
   SimpleFinalHistogramType _simplefinalhistogram;
 
   std::vector<RunTaskInfoType> _collected_runtaskinfos;
-  std::vector<TaskResult> _collected_results;
+  std::vector<TaskResultType> _collected_results;
 
   Logger::LocalLogger<LoggerType>  _llogger;
     
@@ -342,8 +345,8 @@ public:
     _simplefinalhistogram.reset(pcdata->histogram_params);
   }
 
-  template<typename Cnt, typename TaskResultType, typename CData>
-  inline void collect_result(Cnt task_no, TaskResultType && taskresult, const CData *)
+  template<typename Cnt, typename TaskResultType2, typename CData>
+  inline void collect_result(Cnt task_no, TaskResultType2 && taskresult, const CData *)
   {
     assert(!isFinalized() && "collect_result() called after results have been finalized!");
 

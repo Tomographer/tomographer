@@ -133,9 +133,9 @@ static inline void produce_final_report(TomorunCDataType & cdata, ResultsCollect
   logger.debug("produce_final_report()", "about to produce final report.");
   // produce report on runs
   logger.info("produce_final_report()", [&](std::ostream & str) {
-      auto collected_histograms = res.collectedResults();
-      auto collected_runtaskinfos = res.collectedRunTaskInfos();
-      auto finalhistogram = res.finalHistogram();
+      const std::vector<typename ResultsCollector::NormalizedHistogramType> collected_histograms = res.collectedHistograms();
+      const std::vector<typename ResultsCollector::RunTaskInfoType> collected_runtaskinfos = res.collectedRunTaskInfos();
+      const typename ResultsCollector::FinalHistogramType finalhistogram = res.finalHistogram();
       str << "\n"
 	  << report_final_header
 	  << report_hline
@@ -165,9 +165,9 @@ inline void produce_final_report(TomorunCDataType & cdata, ResultsCollector & re
   logger.debug("produce_final_report()", "about to produce final report.");
   // produce report on runs
   logger.info("produce_final_report()", [&](std::ostream & str) {
-      auto collected_histograms = res.collectedResults();
-      auto collected_runtaskinfos = res.collectedRunTaskInfos();
-      auto finalhistogram = res.finalHistogram();
+      const std::vector<typename ResultsCollector::TaskResultType> collected_histograms = res.collectedResults();
+      const std::vector<typename ResultsCollector::RunTaskInfoType> collected_runtaskinfos = res.collectedRunTaskInfos();
+      const typename ResultsCollector::FinalHistogramType finalhistogram = res.finalHistogram();
       str << "\n"
 	  << report_final_header
 	  << report_hline
