@@ -52,25 +52,6 @@ namespace Tomographer {
 
 /** \brief Base class performing an abstract random walk
  *
- * This class takes care to update the state of a random walk for it to perform
- * thermalizing sweeps, followed by "live" runs.
- *
- * The random walk is composed of <em>iterations</em>. There are \c n_sweep iterations per
- * "sweep". This number should be approximately chosen such that \c step_size * n_sweep is
- * of order of the size of the state space. (This is in order to better decorrelate the
- * samples.)
- *
- * Initially, a number \c n_therm <em>thermalizing</em> sweeps are performed. No samples
- * are taken during this period, and this is meant for a Metropolis random walk to find
- * its "valley".
- *
- * After the thermalizing runs, a number of <em>run</em> sweeps are performed, in which a
- * <em>live</em> sample is taken at the last iteration of each sweep.
- *
- * This class doesn't actually keep the state of the random walk, nor does it have any
- * notion about which space is being explored. All of this is delegated to an object
- * instance of type \a RandomWalk, which must implement the \a RandomWalk type interface
- * (see \ref pageInterfaceRandomWalk).
  *
  * \note You should not instantiate this class. Just call its static \ref run() method.
  *
@@ -83,54 +64,8 @@ struct RandomWalkBase
   typedef RandomWalk_ RandomWalk;
   typedef typename RandomWalk::CountIntType CountIntType;
 
-  /** \brief Run the random walk. (pun intended)
-   *
-   * This will repeatedly call <code>move()</code> on the random walk object \a rw, first
-   * a number of times for the thermalizing runs, then a number of times for the "live"
-   * runs. The corresponding callbacks in \a rw will be called as documented in \ref
-   * pageInterfaceRandomWalk and in this class documentation.
-   */
-  static void run(RandomWalk & rw)
-  {
-    const CountIntType Nsweep = rw.n_sweep();
-    const CountIntType Ntherm = rw.n_therm();
-    const CountIntType Nrun = rw.n_run();
-
-    rw.init();
-
-    CountIntType k;
-
-    const CountIntType num_thermalize = Nsweep*Ntherm;
-
-    for (k = 0; k < num_thermalize; ++k) {
-      // calculate a candidate jump point and see if we accept the move
-      rw.move(k, true, false);
-    }
 
 
-    rw.thermalizing_done();
-
-    const CountIntType num_run = Nsweep*Nrun;
-
-    CountIntType n = 0; // number of live samples
-
-    for (k = 0; k < num_run; ++k) {
-
-      bool is_live_iter = ((k+1) % Nsweep == 0);
-      
-      // calculate a candidate jump point and see if we accept the move
-      rw.move(k, false, is_live_iter);
-
-      if (is_live_iter) {
-        rw.process_sample(k, n);
-        ++n;
-      }
-
-    }
-
-    rw.done();
-    return;
-  }
 
 private:
   RandomWalkBase() { } // static-only class
@@ -279,23 +214,96 @@ namespace tomo_internal {
 
 
 
+/** \brief Specify the parameters of a Metropolis-Hastings random walk
+ *
+ * Specifies the parameters of a Metropolis-Hastings random walk (number of thermalization
+ * runs, sweep size, number of live runs, step size).
+ */
+template<typename CountIntType_, typename StepRealType_>
+struct MHRWParams
+{
+  typedef CountIntType_ CountIntType;
+  typedef StepRealType_ StepRealType;
+
+  explicit MHRWParams()
+    : n_sweep(0), step_size(0), n_therm(0), n_run(0)
+  {
+  }
+  MHRWParams(CountIntType n_sweep_, StepRealType step_size_, CountIntType n_therm_, CountIntType n_run_)
+    : n_sweep(n_sweep_), step_size(step_size_), n_therm(n_therm_), n_run(n_run_)
+  {
+  }
+
+  /** \brief The number of individual updates to collect together in a "sweep"
+   */
+  CountIntType n_sweep;
+
+  /** \brief The step size of the random walk
+   */
+  StepRealType step_size;
+
+  /** \brief Number of thermalization sweeps
+   */
+  CountIntType n_therm;
+
+  /** \brief Number of live sweeps
+   */
+  CountIntType n_run;
+};
+
+
+
+template<typename CountIntType, typename StepRealType>
+std::ostream & operator<<(std::ostream & str, const MHRWParams<CountIntType,StepRealType> & p)
+{
+  str << "MHRWParams(n_sweep=" << p.n_sweep << ",step_size=" << p.step_size
+      << ",n_therm=" << p.n_therm << ",n_run=" << p.n_run << ")";
+  return str;
+}
+
+
+
 /** \brief A Metropolis-Hastings Random Walk
  *
  * Implements a <a
  * href="http://en.wikipedia.org/wiki/Metropolis%E2%80%93Hastings_algorithm">Metropolis-Hastings
  * random walk</a>. This takes care of accepting or rejecting a new point and taking samples.
  *
- * The \a MHWalker is responsible for dealing with the state space, providing a new
- * proposal point and calculating the function value at different points. See \ref
- * pageInterfaceMHWalker.
+ * This class takes care to update the state of a random walk for it to perform
+ * thermalizing sweeps, followed by "live" runs.
  *
- * A \a MHRWStatsCollector takes care of collecting useful data during a random walk. It
- * should be a type implementing a \a MHRWStatsCollector interface, see \ref
- * pageInterfaceMHRWStatsCollector.
+ * The random walk is composed of \em iterations. There are \c n_sweep iterations per
+ * "sweep". This number should be approximately chosen such that \c step_size * n_sweep is
+ * of order of the size of the state space. (This is in order to better decorrelate the
+ * samples.)
+ *
+ * Initially, a number \c n_therm of \em thermalizing sweeps are performed. No samples
+ * are taken during this period, and this is meant for a Metropolis random walk to find
+ * its "valley".
+ *
+ * After the thermalizing runs, a number of <em>run</em> sweeps are performed, in which a
+ * <em>live</em> sample is taken at the last iteration of each sweep.
+ *
+ * \tparam Rng is a C++ random number generator (for example, \ref std::mt19937)
+ *
+ * \tparam MHWalker is responsible for dealing with the state space, providing a new
+ *         proposal point and calculating the function value at different points. See \ref
+ *         pageInterfaceMHWalker.
+ *
+ * \tparam MHRWStatsCollector takes care of collecting useful data during a random
+ *         walk. It should be a type implementing a \a MHRWStatsCollector interface, see
+ *         \ref pageInterfaceMHRWStatsCollector.
+ *
+ * \tparam LoggerType is a logger type to which log messages can be generated (see \ref
+ *         Tomographer::Loggers)
+ *
+ * \tparam CountIntType is an integer type used to count the number of iterations.  You'll
+ *         want to use \a int here, unless you really want to pursue exceptionally long
+ *         random walks.
  *
  */
 template<typename Rng_, typename MHWalker_, typename MHRWStatsCollector_, typename LoggerType_,
-         typename CountIntType_ = unsigned int>
+         typename CountIntType_ = int>
 class MHRandomWalk
 {
 public:
@@ -313,7 +321,10 @@ public:
   //! The type of a point in the random walk
   typedef typename MHWalker::PointType PointType;
   //! The type of a step size of the random walk
-  typedef typename MHWalker::RealScalar RealScalar;
+  typedef typename MHWalker::StepRealType StepRealType;
+
+  //! The struct which can hold the parameters of this random walk
+  typedef MHRWParams<CountIntType, StepRealType> MHRWParamsType;
 
   //! The type of the Metropolis-Hastings function value. (See class documentation)
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
@@ -329,10 +340,7 @@ public:
   };
 
 private:
-  const CountIntType _n_sweep;
-  const CountIntType _n_therm;
-  const CountIntType _n_run;
-  const RealScalar _step_size;
+  const MHRWParamsType _n;
 
   Rng & _rng;
   MHWalker & _mhwalker;
@@ -348,22 +356,21 @@ private:
 
   /** \brief Keeps track of the total number of accepted moves during the "live" runs
    * (i.e., not thermalizing). This is used to track the acceptance ratio (see \ref
-   * acceptance_ratio())
+   * acceptanceRatio())
    */
   CountIntType num_accepted;
   /** \brief Keeps track of the total number of moves during the "live" runs, i.e. not
-   * thermalizing. This is used to track the acceptance ratio (see \ref acceptance_ratio())
+   * thermalizing. This is used to track the acceptance ratio (see \ref acceptanceRatio())
    */
   CountIntType num_live_points;
 
 public:
 
   //! Simple constructor, initializes the given fields
-  MHRandomWalk(CountIntType n_sweep, CountIntType n_therm, CountIntType n_run, RealScalar step_size,
+  MHRandomWalk(CountIntType n_sweep, StepRealType step_size, CountIntType n_therm, CountIntType n_run,
 	       MHWalker & mhwalker, MHRWStatsCollector & stats,
                Rng & rng, LoggerType & logger_)
-    : _n_sweep(n_sweep), _n_therm(n_therm), _n_run(n_run),
-      _step_size(step_size),
+    : _n(n_sweep, step_size, n_therm, n_run),
       _rng(rng),
       _mhwalker(mhwalker),
       _stats(stats),
@@ -376,54 +383,60 @@ public:
     _logger.debug("MHRandomWalk", "constructor(). n_sweep=%lu, n_therm=%lu, n_run=%lu, step_size=%g",
 	       (unsigned long)n_sweep, (unsigned long)n_therm, (unsigned long)n_run, (double)step_size);
   }
+  //! Simple constructor, initializes the given fields
+  template<typename MHRWParamsType>
+  MHRandomWalk(MHRWParamsType&& n_rw,
+	       MHWalker & mhwalker, MHRWStatsCollector & stats,
+               Rng & rng, LoggerType & logger_)
+    : _n(std::forward<MHRWParamsType>(n_rw)),
+      _rng(rng),
+      _mhwalker(mhwalker),
+      _stats(stats),
+      _logger(logger_),
+      curpt(),
+      curptval(),
+      num_accepted(0),
+      num_live_points(0)
+  {
+    _logger.debug("MHRandomWalk", [&](std::ostream & s) { s << "constructor(). parameters = " << _n; });
+  }
 
-  //! Required for \ref pageInterfaceRandomWalk. Number of iterations in a sweep.
-  inline CountIntType n_sweep() const { return _n_sweep; }
-  //! Required for \ref pageInterfaceRandomWalk. Number of thermalizing sweeps.
-  inline CountIntType n_therm() const { return _n_therm; }
-  //! Required for \ref pageInterfaceRandomWalk. Number of live run sweeps.
-  inline CountIntType n_run() const { return _n_run; }
+  //! The parameters of the random walk.
+  inline MHRWParamsType mhrwParams() const { return _n; }
+
+  //! Number of iterations in a sweep.
+  inline CountIntType nSweep() const { return _n.n_sweep; }
+  //! Number of thermalizing sweeps.
+  inline CountIntType nTherm() const { return _n.n_therm; }
+  //! Number of live run sweeps.
+  inline CountIntType nRun() const { return _n.n_run; }
 
   //! Get the step size of the random walk.
-  inline RealScalar step_size() const { return _step_size; }
+  inline StepRealType stepSize() const { return _n.step_size; }
 
-  /** \brief Required for \ref pageInterfaceRandomWalk. Resets counts and relays to the
-   * MHWalker and the MHRWStatsCollector.
-   */
-  inline void init()
-  {
-    num_accepted = 0;
-    num_live_points = 0;
 
-    // starting point
-    curpt = _mhwalker.startpoint();
-    curptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, curpt);
 
-    _mhwalker.init();
-    _stats.init();
-  }
-  /** \brief Required for \ref pageInterfaceRandomWalk. Relays to the MHWalker and the
-   * MHRWStatsCollector.
+  /** \brief Query whether we have any statistics about acceptance ratio. This is \c
+   * false, for example, during the thermalizing runs.
    */
-  inline void thermalizing_done()
+  inline bool hasAcceptanceRatio() const
   {
-    _mhwalker.thermalizing_done();
-    _stats.thermalizing_done();
+    return (num_live_points > 0);
   }
-  /** \brief Required for \ref pageInterfaceRandomWalk. Relays to the MHWalker and the
-   * MHRWStatsCollector.
+  /** \brief Return the acceptance ratio so far.
    */
-  inline void done()
+  template<typename RatioType = double>
+  inline RatioType acceptanceRatio() const
   {
-    _mhwalker.done();
-    _stats.done();
+    return RatioType(num_accepted) / RatioType(num_live_points);
   }
+
 
   /** \brief Access the current state of the random walk
    *
    * \returns the current point the random walk is located at.
    */
-  inline const PointType & get_curpt() const
+  inline const PointType & getCurrentPoint() const
   {
     return curpt;
   }
@@ -435,7 +448,7 @@ public:
    * \warning the meaning of this value depends on \c MHRandomWalk::UseFnSyntaxType. It is
    * either the value of the function, its logarithm, or a dummy value.
    */
-  inline const FnValueType & get_curptval() const
+  inline const FnValueType & getCurrentPointValue() const
   {
     return curptval;
   }
@@ -445,29 +458,61 @@ public:
    * This may be called to force setting the current state of the random walk to the given
    * point \c pt.
    */
-  inline void set_curpt(const PointType& pt)
+  inline void setCurrentPoint(const PointType& pt)
   {
     curpt = pt;
     curptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, curpt);
-    _logger.longdebug("MHRandomWalk",
-                   streamstr("set_curpt(): set internal state. Value = "<<curptval<<"; Point =\n"<<pt<<"\n"));
-                   
+    _logger.longdebug("MHRandomWalk", [&](std::ostream & s) {
+	s << "set_curpt(): set internal state. Value = " << curptval << "; Point =\n" << pt << "\n";
+      });
   }
 
-  /** \brief Required for \ref pageInterfaceRandomWalk. Processes a single move in the random walk.
+
+private:
+
+  /** \brief Resets counts and relays to the MHWalker and the MHRWStatsCollector.
+   */
+  inline void _init()
+  {
+    num_accepted = 0;
+    num_live_points = 0;
+
+    // starting point
+    curpt = _mhwalker.startpoint();
+    curptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, curpt);
+
+    _mhwalker.init();
+    _stats.init();
+  }
+  /** \brief Relays to the MHWalker and the MHRWStatsCollector.
+   */
+  inline void _thermalizing_done()
+  {
+    _mhwalker.thermalizing_done();
+    _stats.thermalizing_done();
+  }
+  /** \brief Relays to the MHWalker and the MHRWStatsCollector.
+   */
+  inline void _done()
+  {
+    _mhwalker.done();
+    _stats.done();
+  }
+
+  /** \brief Processes a single move in the random walk.
    *
    * This function gets a new move proposal from the MHWalker object, and calculates the
    * \a a value, which tells us with which probability we should accept the move. This \a
    * a value is calculated according to the documentation in \ref
    * labelMHWalkerUseFnSyntaxType "Role of UseFnSyntaxType".
    */
-  inline void move(CountIntType k, bool is_thermalizing, bool is_live_iter)
+  inline void _move(CountIntType k, bool is_thermalizing, bool is_live_iter)
   {
     // The reason `step_size` is passed to jump_fn instead of leaving jump_fn itself
     // handle the step size, is that we might in the future want to dynamically adapt the
     // step size according to the acceptance ratio. That would have to be done in this
     // class.
-    PointType newpt = _mhwalker.jump_fn(curpt, _step_size);
+    PointType newpt = _mhwalker.jump_fn(curpt, _n.step_size);
 
     FnValueType newptval;
 
@@ -496,7 +541,7 @@ public:
                    (is_thermalizing?"T":"#"),
                    (unsigned long)k, accept?"AC":"RJ", (double)a, (double)newptval, -2.0*newptval,
 		   (double)curptval, -2.0*curptval,
-                   (!is_thermalizing?Tools::fmts("%.2g", acceptance_ratio()).c_str():"N/A"));
+                   (!is_thermalizing?Tools::fmts("%.2g", acceptanceRatio()).c_str():"N/A"));
 
     if (accept) {
       // update the internal state of the random walk
@@ -505,34 +550,68 @@ public:
     }
   }
 
-  /** \brief Query whether we have any statistics about acceptance ratio. This is \c
-   * false, for example, during the thermalizing runs.
-   */
-  inline bool has_acceptance_ratio() const
-  {
-    return (num_live_points > 0);
-  }
-  /** \brief Return the acceptance ratio so far.
-   */
-  template<typename RatioType = double>
-  inline RatioType acceptance_ratio() const
-  {
-    return (RatioType) num_accepted / num_live_points;
-  }
-
   /** \brief Required for \ref pageInterfaceRandomWalk. Process a new live sample in the
    * random walk. Relays the call to the \a MHRWStatsCollector (see \ref
    * pageInterfaceMHRWStatsCollector).
    */
-  inline void process_sample(CountIntType k, CountIntType n)
+  inline void _process_sample(CountIntType k, CountIntType n)
   {
     _stats.process_sample(k, n, curpt, curptval, *this);
   }
- 
 
-  inline void run()
+
+public:
+
+  /** \brief Run the random walk. (pun intended)
+   *
+   * This will repeatedly call \ref move(), first a number of times for the thermalizing
+   * runs, then a number of times for the "live" runs.
+   */
+  void run()
   {
-    RandomWalkBase<MHRandomWalk>::run(*this);
+    _init();
+
+    CountIntType k;
+
+    _logger.longdebug("MHRandomWalk", [&](std::ostream & s) {
+	s << "Starting random walk, sweep size = " << _n.n_sweep << ", step size = " << _n.step_size
+	  << ", # therm sweeps = " << _n.n_therm << ", # live sweeps = " << _n.n_run;
+      });
+
+    const CountIntType num_thermalize = _n.n_sweep * _n.n_therm;
+
+    for (k = 0; k < num_thermalize; ++k) {
+      // calculate a candidate jump point and see if we accept the move
+      _move(k, true, false);
+    }
+
+    _thermalizing_done();
+
+    _logger.longdebug("MHRandomWalk", "Thermalizing done, starting live runs.");
+
+    const CountIntType num_run = _n.n_sweep * _n.n_run;
+
+    CountIntType n = 0; // number of live samples
+
+    for (k = 0; k < num_run; ++k) {
+
+      bool is_live_iter = ((k+1) % _n.n_sweep == 0);
+      
+      // calculate a candidate jump point and see if we accept the move
+      _move(k, false, is_live_iter);
+
+      if (is_live_iter) {
+        _process_sample(k, n);
+        ++n;
+      }
+
+    }
+
+    _done();
+
+    _logger.longdebug("MHRandomWalk", "Random walk completed.");
+
+    return;
   }
 };
 

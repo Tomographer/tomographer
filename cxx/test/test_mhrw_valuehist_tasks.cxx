@@ -66,72 +66,117 @@ struct OurCDataTask : CDataBaseType
   }
 
   template<typename Rng, typename LoggerType>
-  inline TestLatticeMHRWGaussPeak<int,Rng>  createMHWalker(Rng & rng, LoggerType & /*logger*/) const
+  inline TestLatticeMHRWGaussPeak<double,Rng>  createMHWalker(Rng & rng, LoggerType & /*logger*/) const
   {
     // 100x100 lattice
-    return TestLatticeMHRWGaussPeak<int,Rng>(
-	100*Eigen::Vector2i::Ones(), Eigen::Matrix2i::Identity(), 30, Eigen::Vector2i::Zero(2),
+    return TestLatticeMHRWGaussPeak<double,Rng>(
+	100*Eigen::Vector2i::Ones(), Eigen::Matrix2d::Identity(), 20*20, Eigen::Vector2d::Zero(2),
 	rng()
 	);
   }
 };
 
+
+
+
+template<bool UseBinningAnalysis>
+struct run_test {
+
+  typedef NormValueCalculator ValueCalculator;
+    
+  typedef Tomographer::Logger::BufferLogger LoggerType;
+
+  typedef std::mt19937 Rng;
+    
+  typedef OurCDataTask<Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<ValueCalculator,
+									      UseBinningAnalysis> > OurCDataSimple;
+  typedef typename OurCDataSimple::HistogramParams HistogramParams;
+
+  typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCDataSimple, Rng>  OurMHRandomWalkTask;
+  typedef typename OurCDataSimple::template ResultsCollectorType<LoggerType>::type OurResultsCollector;
+
+  typedef Tomographer::MHRWParams<int,double> MHRWParamsType;
+    
+  typedef Tomographer::MultiProc::OMP::TaskDispatcher<OurMHRandomWalkTask, OurCDataSimple, OurResultsCollector,
+						      LoggerType, int>
+    TaskDispatcherType;
+
+  LoggerType logger;
+  OurCDataSimple taskcdat;
+  OurResultsCollector results;
+
+  TaskDispatcherType tasks;
+
+  TOMOGRAPHER_ENABLED_IF(!UseBinningAnalysis)
+  run_test()
+    : logger(Tomographer::Logger::DEBUG),
+      taskcdat(NormValueCalculator(), HistogramParams(0, 100, 100),
+	       MHRWParamsType(50, // n_sweep
+			      2, // step_size
+			      500, // n_therm
+			      25000 // n_run
+		   ), 29329),
+      results(logger),
+      tasks(Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
+	&taskcdat, // constant data
+	&results, // results collector
+	logger, // the main logger object
+	6, // num_repeats
+	1 // n_chunk
+		))
+  {
+  }
+  TOMOGRAPHER_ENABLED_IF(UseBinningAnalysis)
+  run_test()
+    : logger(Tomographer::Logger::DEBUG),
+      taskcdat(NormValueCalculator(), HistogramParams(0, 100, 100), 5,
+	       MHRWParamsType(50, // n_sweep
+			      2, // step_size
+			      500, // n_therm
+			      25000 // n_run
+		   ), 29329),
+      results(logger),
+      tasks(Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
+	&taskcdat, // constant data
+	&results, // results collector
+	logger, // the main logger object
+	6, // num_repeats
+	1 // n_chunk
+		))
+  {
+  }
+
+  virtual ~run_test() { }
+};
+
+
+
+
+
 // -----------------------------------------------------------------------------
 // test suites
 
-
 BOOST_AUTO_TEST_SUITE(test_mhrw_valuehist_tasks)
 
-BOOST_AUTO_TEST_CASE(simple)
+BOOST_FIXTURE_TEST_CASE(simple, run_test<false>)
 {
-  typedef NormValueCalculator ValueCalculator;
-
-  typedef Tomographer::Logger::BufferLogger LoggerType;
-  LoggerType logger(Tomographer::Logger::DEBUG);
-
-  typedef std::mt19937 Rng;
-
-  const int ntherm = 500;
-  const int nrun = 10000;
-  const int nsweep = 100;
-  const int step_size = 2;
-
-  typedef OurCDataTask<Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<ValueCalculator, false> > OurCDataSimple;
-  typedef OurCDataSimple::HistogramParams HistogramParams;
-  OurCDataSimple taskcdat(NormValueCalculator(), HistogramParams(0, 100, 100));
-  taskcdat.n_therm = ntherm;
-  taskcdat.n_sweep = nsweep;
-  taskcdat.n_run = nrun;
-  taskcdat.step_size = step_size;
-  taskcdat.base_seed = 29329;
-
-  typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCDataSimple, Rng>  OurMHRandomWalkTask;
-
-  OurCDataSimple::ResultsCollectorType<LoggerType>::type results(logger);
-
-  const int n_repeat = 2;
-
-  auto tasks = Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
-      &taskcdat, // constant data
-      &results, // results collector
-      logger, // the main logger object
-      n_repeat, // num_repeats
-      1 // n_chunk
-      );
-
   tasks.run();
-
+  
   BOOST_MESSAGE( logger.get_contents() );
 
   std::string msg;
   { std::ostringstream ss; results.print_histogram_csv(ss); msg = ss.str(); }
   BOOST_MESSAGE( msg ) ;
-
-  //  ........ perform a check ! ............
-  BOOST_CHECK( false ) ; // TODO: WRITE ME
 }
-BOOST_AUTO_TEST_CASE(binning)
+BOOST_FIXTURE_TEST_CASE(binning, run_test<true>)
 {
+  //  tasks.run();
+  
+  //  BOOST_MESSAGE( logger.get_contents() );
+
+  //  std::string msg;
+  //  { std::ostringstream ss; results.print_histogram_csv(ss); msg = ss.str(); }
+  //  BOOST_MESSAGE( msg ) ;
 }
 
 BOOST_AUTO_TEST_SUITE_END()

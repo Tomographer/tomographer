@@ -47,15 +47,15 @@ namespace ValueHistogramTasks {
 
 
 // forward declaration of the CDataBase type
-template<typename ValueCalculator_, bool UseBinningAnalysis_ = true,
-	 typename CountIntType_ = int, typename StepRealType_ = double,
-	 typename CountRealType_ = double>
-struct CDataBase;
+//template<typename ValueCalculator_, bool UseBinningAnalysis_ = true,
+//	 typename CountIntType_ = int, typename StepRealType_ = double,
+//	 typename CountRealType_ = double>
+//struct CDataBase;
 // forward declarations of the ResultsCollectors
-template<typename CDataBaseType, typename LoggerType>
-struct ResultsCollectorSimple;
-template<typename CDataBaseType, typename LoggerType>
-struct ResultsCollectorWithBinningAnalysis;
+//template<typename CDataBaseType, typename LoggerType>
+//struct ResultsCollectorSimple;
+//template<typename CDataBaseType, typename LoggerType>
+//struct ResultsCollectorWithBinningAnalysis;
 
 
 namespace tomo_internal {
@@ -78,106 +78,13 @@ struct histogram_types<CDataBaseType, true> {// version WITH binning analysis:
   typedef typename BinningMHRWStatsCollectorParams::HistogramType HistogramType;
   typedef typename BinningMHRWStatsCollectorParams::HistogramParams HistogramParams;
 };
-// -----------------
-template<typename CDataBaseType, typename LoggerType, bool UseBinningAnalysis>
-struct ResultsCollectorTypeHelper {
-  typedef ResultsCollectorSimple<CDataBaseType, LoggerType> type;
-};
-template<typename CDataBaseType, typename LoggerType>
-struct ResultsCollectorTypeHelper<CDataBaseType, LoggerType, true> {
-  typedef ResultsCollectorWithBinningAnalysis<CDataBaseType, LoggerType> type;
-};
-}
-
-
-template<typename ValueCalculator_, bool UseBinningAnalysis_,
-	 typename CountIntType_, typename StepRealType_,
-	 typename CountRealType_>
-struct CDataBase : public MHRWTasks::CDataBase<CountIntType_, StepRealType_>
-{
-  typedef MHRWTasks::CDataBase<CountIntType_, StepRealType_> Base; // base class
-
-  using typename Base::CountIntType;
-  using typename Base::StepRealType;
-
-  typedef ValueCalculator_ ValueCalculator;
-  typedef CountRealType_ CountRealType;
-
-  static constexpr bool UseBinningAnalysis = UseBinningAnalysis_;
-
-  typedef typename tomo_internal::histogram_types<CDataBase,UseBinningAnalysis>::MHRWStatsCollectorResultType
-    MHRWStatsCollectorResultType;
-  typedef typename tomo_internal::histogram_types<CDataBase,UseBinningAnalysis>::HistogramType HistogramType;
-  typedef typename tomo_internal::histogram_types<CDataBase,UseBinningAnalysis>::HistogramParams HistogramParams;
-
-
-  TOMOGRAPHER_ENABLED_IF(!UseBinningAnalysis)
-  CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_)
-    : valcalc(valcalc_), histogram_params(histogram_params_)
-  {
-  }
-
-  TOMOGRAPHER_ENABLED_IF(UseBinningAnalysis)
-  CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_, int binning_num_levels_)
-    : valcalc(valcalc_), histogram_params(histogram_params_),
-      binning_num_levels(binning_num_levels_)
-  {
-  }
-
-  const ValueCalculator valcalc;
-  const HistogramParams histogram_params;
-  const Tools::store_if_enabled<int, UseBinningAnalysis> binning_num_levels;
+} // namespace tomo_internal
 
 
 
 
-  template<typename LoggerType, TOMOGRAPHER_ENABLED_IF_TMPL(!UseBinningAnalysis)>
-  inline ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>
-  createStatsCollector(LoggerType & logger) const
-  {
-    return Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>(
-	histogram_params,
-	valcalc,
-	logger
-	);
-  }
+// ------------------------------------------------
 
-  template<typename LoggerType, TOMOGRAPHER_ENABLED_IF_TMPL(UseBinningAnalysis)>
-  inline ValueHistogramWithBinningMHRWStatsCollector<
-    typename tomo_internal::histogram_types<CDataBase, true>::BinningMHRWStatsCollectorParams,
-    LoggerType>
-  createStatsCollector(LoggerType & logger) const
-  {
-    typedef typename tomo_internal::histogram_types<CDataBase, true>::BinningMHRWStatsCollectorParams
-      BinningMHRWStatsCollectorParams;
-
-    return Tomographer::ValueHistogramWithBinningMHRWStatsCollector<BinningMHRWStatsCollectorParams,LoggerType>(
-	histogram_params,
-	valcalc,
-        binning_num_levels,
-	logger
-	);
-  }
-
-  //! Helper to get the results collector type
-  template<typename LoggerType>
-  struct ResultsCollectorType {
-    typedef
-#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
-    typename
-    tomo_internal::ResultsCollectorTypeHelper<CDataBase<ValueCalculator,UseBinningAnalysis,CountIntType,StepRealType,CountRealType>,
-					      LoggerType, UseBinningAnalysis>::type
-#else
-    THE_CORRECT_RESULTS_COLLECTOR_TYPE // parsed by doxygen -- make this more readable
-#endif
-    type;
-  };
-};
-// define static members:
-template<typename ValueCalculator_, bool UseBinningAnalysis_,
-	 typename CountIntType_, typename StepRealType_,
-	 typename CountRealType_>
-constexpr bool CDataBase<ValueCalculator_,UseBinningAnalysis_,CountIntType_,StepRealType_,CountRealType_>::UseBinningAnalysis;
 
 
 
@@ -186,29 +93,28 @@ constexpr bool CDataBase<ValueCalculator_,UseBinningAnalysis_,CountIntType_,Step
 // RUN TASK INFO
 //
 
+template<typename CountIntType_, typename StepRealType_>
 struct RunTaskInfo
 {
+
+  typedef CountIntType_ CountIntType;
+  typedef StepRealType_ StepRealType;
+
   RunTaskInfo()
-    : n_run(0), n_therm(0), n_sweep(0),
-      step_size(std::numeric_limits<double>::quiet_NaN()),
+    : mhrw_params(0, std::numeric_limits<double>::quiet_NaN(), 0, 0),
       acceptance_ratio(std::numeric_limits<double>::quiet_NaN())
   {
   }
 
   template<typename TaskResultType>
   RunTaskInfo(TaskResultType && t)
-    : n_run(t.n_run),
-      n_therm(t.n_therm),
-      n_sweep(t.n_sweep),
-      step_size(t.step_size),
+    : mhrw_params(t.mhrw_params),
       acceptance_ratio(t.acceptance_ratio)
   {
   }
 
-  std::size_t n_run;
-  std::size_t n_therm;
-  std::size_t n_sweep;
-  double step_size;
+  MHRWParams<CountIntType,StepRealType> mhrw_params;
+
   double acceptance_ratio;
 };
 
@@ -230,7 +136,9 @@ struct ResultsCollectorSimple
   typedef typename CDataBaseType::HistogramParams HistogramParams;
   typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> NormalizedHistogramType;
   typedef Tomographer::AveragedHistogram<NormalizedHistogramType, CountRealType> FinalHistogramType;
-  
+
+  typedef typename CDataBaseType::RunTaskInfoType RunTaskInfoType;
+
   ResultsCollectorSimple(LoggerType & logger_)
     : _finalized(false), _finalhistogram(HistogramParams()),
       _collected_runtaskinfos(), _collected_histograms(),
@@ -245,12 +153,20 @@ struct ResultsCollectorSimple
     return _finalhistogram;
   }
     
-  inline const std::vector<RunTaskInfo> & collectedRunTaskInfos() const {
+  inline const std::vector<RunTaskInfoType> & collectedRunTaskInfos() const {
     assert(isFinalized() && "You may only call collectedRunTaskInfos() after the runs have been finalized.");
     return _collected_runtaskinfos;
   }
 
   inline const std::vector<NormalizedHistogramType> & collectedHistograms() const {
+    assert(isFinalized() && "You may only call collectedHistograms() after the runs have been finalized.");
+    return _collected_histograms;
+  }
+
+  /**
+   * Same as collectedHistograms(), but shares the same name as for \ref ResultsCollectorWithBinningAnalysis
+   */
+  inline const std::vector<NormalizedHistogramType> & collectedResults() const {
     assert(isFinalized() && "You may only call collectedHistograms() after the runs have been finalized.");
     return _collected_histograms;
   }
@@ -271,7 +187,7 @@ private:
   bool _finalized;
   FinalHistogramType _finalhistogram;
 
-  std::vector<RunTaskInfo> _collected_runtaskinfos;
+  std::vector<RunTaskInfoType> _collected_runtaskinfos;
   std::vector<NormalizedHistogramType> _collected_histograms;
 
   Logger::LocalLogger<LoggerType>  _llogger;
@@ -306,7 +222,7 @@ public:
     thishistogram.off_chart /= normalization;
 
     _collected_histograms[task_no] = thishistogram;
-    _collected_runtaskinfos[task_no] = RunTaskInfo(taskresult);
+    _collected_runtaskinfos[task_no] = RunTaskInfoType(taskresult);
     _finalhistogram.add_histogram(thishistogram);
   }
   template<typename Cnt, typename CData>
@@ -330,17 +246,19 @@ public:
  * "CDataBase::ResultsCollectorType<..>::type".
  */
 template<typename CDataBaseType_, typename LoggerType_>
-struct ResultsCollectorWithBinning
+struct ResultsCollectorWithBinningAnalysis
 {
   typedef CDataBaseType_ CDataBaseType;
   typedef typename CDataBaseType::ValueCalculator ValueCalculator;
-  typedef typename CDataBaseType::CountRealType_ CountRealType;
+  typedef typename CDataBaseType::CountRealType CountRealType;
   typedef LoggerType_ LoggerType;
   
   typedef typename tomo_internal::histogram_types<CDataBaseType_,true>::BinningMHRWStatsCollectorParams
     BinningMHRWStatsCollectorParams;
 
   typedef typename BinningMHRWStatsCollectorParams::BinningAnalysisParamsType BinningAnalysisParamsType;
+
+  typedef typename BinningMHRWStatsCollectorParams::Result TaskResult;
 
   typedef typename CDataBaseType::HistogramType HistogramType;
   typedef typename CDataBaseType::HistogramParams HistogramParams;
@@ -356,10 +274,13 @@ struct ResultsCollectorWithBinning
   typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> SimpleNormalizedHistogramType;
   typedef Tomographer::AveragedHistogram<SimpleNormalizedHistogramType, double> SimpleFinalHistogramType;
 
-  ResultsCollectorWithBinning(LoggerType & logger_)
+  typedef typename CDataBaseType::RunTaskInfoType RunTaskInfoType;
+
+
+  ResultsCollectorWithBinningAnalysis(LoggerType & logger_)
     : _finalized(false), _finalhistogram(), _simplefinalhistogram(),
-      _collected_runtaskinfos(), _collected_histograms(),
-      _llogger("MHRWTasks::ValueHistogramTasks::ResultsCollectorWithBinning", logger_)
+      _collected_runtaskinfos(), _collected_results(),
+      _llogger("MHRWTasks::ValueHistogramTasks::ResultsCollectorWithBinningAnalysis", logger_)
   {
   }
 
@@ -375,14 +296,14 @@ struct ResultsCollectorWithBinning
     return _simplefinalhistogram;
   }
     
-  inline const std::vector<RunTaskInfo> & collectedRunTaskInfos() const {
+  inline const std::vector<RunTaskInfoType> & collectedRunTaskInfos() const {
     assert(isFinalized() && "You may only call collectedRunTaskInfos() after the runs have been finalized.");
     return _collected_runtaskinfos;
   }
 
-  inline const std::vector<SimpleNormalizedHistogramType> & collectedHistograms() const {
-    assert(isFinalized() && "You may only call collectedHistograms() after the runs have been finalized.");
-    return _collected_histograms;
+  inline const std::vector<TaskResult> & collectedResults() const {
+    assert(isFinalized() && "You may only call collectedResults() after the runs have been finalized.");
+    return _collected_results;
   }
 
 
@@ -403,8 +324,8 @@ private:
   FinalHistogramType _finalhistogram;
   SimpleFinalHistogramType _simplefinalhistogram;
 
-  std::vector<RunTaskInfo> _collected_runtaskinfos;
-  std::vector<SimpleNormalizedHistogramType> _collected_histograms;
+  std::vector<RunTaskInfoType> _collected_runtaskinfos;
+  std::vector<TaskResult> _collected_results;
 
   Logger::LocalLogger<LoggerType>  _llogger;
     
@@ -415,7 +336,7 @@ public:
   {
     assert(!isFinalized() && "init() called after results have been finalized!");
 
-    _collected_histograms.resize(num_total_runs);
+    _collected_results.resize(num_total_runs);
     _collected_runtaskinfos.resize(num_total_runs);
     _finalhistogram.reset(pcdata->histogram_params);
     _simplefinalhistogram.reset(pcdata->histogram_params);
@@ -428,9 +349,9 @@ public:
 
     auto logger = _llogger.sublogger(TOMO_ORIGIN);
     
-    _collected_runtaskinfos[task_no] = RunTaskInfo(taskresult);
+    _collected_runtaskinfos[task_no] = RunTaskInfoType(taskresult);
     auto stats_coll_result = taskresult.stats_collector_result;
-    _collected_histograms[task_no] = stats_coll_result;
+    _collected_results[task_no] = stats_coll_result;
     
     logger.debug([&](std::ostream & str) {
 	str << "(). Got task result. Histogram (w/ error bars from binning analysis):\n"
@@ -487,6 +408,127 @@ public:
   }
 
 };
+
+
+
+
+
+
+
+// ------------------------------------------------
+
+
+namespace tomo_internal {
+template<typename CDataBaseType, typename LoggerType, bool UseBinningAnalysis>
+struct ResultsCollectorTypeHelper {
+  typedef ResultsCollectorSimple<CDataBaseType, LoggerType> type;
+};
+template<typename CDataBaseType, typename LoggerType>
+struct ResultsCollectorTypeHelper<CDataBaseType, LoggerType, true> {
+  typedef ResultsCollectorWithBinningAnalysis<CDataBaseType, LoggerType> type;
+};
+} // namespace tomo_internal
+
+
+
+
+/** \brief constant data for our MH random walk tasks with value histogram stats collector
+ *
+ */
+template<typename ValueCalculator_, bool UseBinningAnalysis_ = true,
+	 typename CountIntType_ = int, typename StepRealType_ = double,
+	 typename CountRealType_ = double>
+struct CDataBase : public MHRWTasks::CDataBase<CountIntType_, StepRealType_>
+{
+  typedef MHRWTasks::CDataBase<CountIntType_, StepRealType_> Base; // base class
+
+  using typename Base::CountIntType;
+  using typename Base::StepRealType;
+
+  typedef ValueCalculator_ ValueCalculator;
+  typedef CountRealType_ CountRealType;
+
+  static constexpr bool UseBinningAnalysis = UseBinningAnalysis_;
+
+  typedef typename tomo_internal::histogram_types<CDataBase,UseBinningAnalysis>::MHRWStatsCollectorResultType
+    MHRWStatsCollectorResultType;
+  typedef typename tomo_internal::histogram_types<CDataBase,UseBinningAnalysis>::HistogramType HistogramType;
+  typedef typename tomo_internal::histogram_types<CDataBase,UseBinningAnalysis>::HistogramParams HistogramParams;
+
+  typedef MHRWParams<CountIntType, StepRealType> MHRWParamsType;
+ 
+  typedef RunTaskInfo<CountIntType, StepRealType> RunTaskInfoType;
+  
+
+  TOMOGRAPHER_ENABLED_IF(!UseBinningAnalysis)
+  CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_,
+	    MHRWParamsType p = MHRWParamsType(), int base_seed = 0)
+    : Base(std::move(p), base_seed), valcalc(valcalc_), histogram_params(histogram_params_)
+  {
+  }
+
+  TOMOGRAPHER_ENABLED_IF(UseBinningAnalysis)
+  CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_, int binning_num_levels_,
+	    MHRWParamsType p = MHRWParamsType(), int base_seed = 0)
+    : Base(std::move(p), base_seed), valcalc(valcalc_), histogram_params(histogram_params_),
+      binning_num_levels(binning_num_levels_)
+  {
+  }
+
+  const ValueCalculator valcalc;
+  const HistogramParams histogram_params;
+  const Tools::store_if_enabled<int, UseBinningAnalysis> binning_num_levels;
+
+
+  template<typename LoggerType, TOMOGRAPHER_ENABLED_IF_TMPL(!UseBinningAnalysis)>
+  inline ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>
+  createStatsCollector(LoggerType & logger) const
+  {
+    return Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>(
+	histogram_params,
+	valcalc,
+	logger
+	);
+  }
+
+  template<typename LoggerType, TOMOGRAPHER_ENABLED_IF_TMPL(UseBinningAnalysis)>
+  inline ValueHistogramWithBinningMHRWStatsCollector<
+    typename tomo_internal::histogram_types<CDataBase, true>::BinningMHRWStatsCollectorParams,
+    LoggerType>
+  createStatsCollector(LoggerType & logger) const
+  {
+    typedef typename tomo_internal::histogram_types<CDataBase, true>::BinningMHRWStatsCollectorParams
+      BinningMHRWStatsCollectorParams;
+
+    return Tomographer::ValueHistogramWithBinningMHRWStatsCollector<BinningMHRWStatsCollectorParams,LoggerType>(
+	histogram_params,
+	valcalc,
+        binning_num_levels.value,
+	logger
+	);
+  }
+
+  //! Helper to get the results collector type
+  template<typename LoggerType>
+  struct ResultsCollectorType {
+    typedef
+#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
+    typename
+    tomo_internal::ResultsCollectorTypeHelper<CDataBase<ValueCalculator,UseBinningAnalysis,CountIntType,StepRealType,CountRealType>,
+					      LoggerType, UseBinningAnalysis>::type
+#else
+    THE_CORRECT_RESULTS_COLLECTOR_TYPE // parsed by doxygen -- make this more readable
+#endif
+    type;
+  };
+};
+// define static members:
+template<typename ValueCalculator_, bool UseBinningAnalysis_,
+	 typename CountIntType_, typename StepRealType_,
+	 typename CountRealType_>
+constexpr bool CDataBase<ValueCalculator_,UseBinningAnalysis_,CountIntType_,StepRealType_,CountRealType_>::UseBinningAnalysis;
+
+
 
 
 

@@ -62,10 +62,10 @@ struct TomorunCDataBase : public Tomographer::MHRWTasks::CDataBase<>
 
   inline void print_basic_cdata_mhrw_info(std::ostream & str)
   {
-    str << "\t# iter. / sweep = " << Base::n_sweep << "\n"
-	<< "\t# therm. sweeps = " << Base::n_therm << "\n"
-	<< "\t# run sweeps    = " << Base::n_run << "\n"
-	<< "\tstep size       = " << std::setprecision(4) << Base::step_size << "\n";
+    str << "\t# iter. / sweep = " << Base::mhrw_params.n_sweep << "\n"
+	<< "\t# therm. sweeps = " << Base::mhrw_params.n_therm << "\n"
+	<< "\t# run sweeps    = " << Base::mhrw_params.n_run << "\n"
+	<< "\tstep size       = " << std::setprecision(4) << Base::mhrw_params.step_size << "\n";
   }
 };
 
@@ -81,10 +81,10 @@ struct RunTaskInfo
 
   template<typename TaskResultType>
   RunTaskInfo(TaskResultType && t)
-    : n_run(t.n_run),
-      n_therm(t.n_therm),
-      n_sweep(t.n_sweep),
-      step_size(t.step_size),
+    : n_run(t.mhrw_params.n_run),
+      n_therm(t.mhrw_params.n_therm),
+      n_sweep(t.mhrw_params.n_sweep),
+      step_size(t.mhrw_params.step_size),
       acceptance_ratio(t.acceptance_ratio)
   {
   }
@@ -517,10 +517,10 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
   // parameters for the value histogram
   taskcdat.histogram_params = typename OurCData::HistogramParams(opt->val_min, opt->val_max, opt->val_nbins);
   // parameters of the random walk
-  taskcdat.n_sweep = opt->Nsweep;
-  taskcdat.n_therm = opt->Ntherm;
-  taskcdat.n_run = opt->Nrun;
-  taskcdat.step_size = opt->step_size;
+  taskcdat.mhrw_params.n_sweep = opt->Nsweep;
+  taskcdat.mhrw_params.step_size = opt->step_size;
+  taskcdat.mhrw_params.n_therm = opt->Ntherm;
+  taskcdat.mhrw_params.n_run = opt->Nrun;
 
   OurResultsCollector results(logger.baselogger());
 

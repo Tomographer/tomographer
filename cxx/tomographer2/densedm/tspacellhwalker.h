@@ -84,6 +84,11 @@ public:
   //! The complex real scalar corresponding to our data types. Usually a \c std::complex<double>.
   typedef typename DMTypes::ComplexScalar ComplexScalar;
 
+  /** \brief The real scalar type for the step size &mdash; this is our scalar type (see
+   *         \ref pageInterfaceMHWalker)
+   */
+  typedef RealScalar StepRealType;
+
   //! Provided for MHRandomWalk. A point in our random walk = a density matrix
   typedef MatrixType PointType;
   //! Provided for MHRandomWalk. The function value type is the loglikelihood value type
@@ -91,7 +96,7 @@ public:
   //! see \ref pageInterfaceMHWalker
   enum {
     /** \brief We will calculate the log-likelihood function, which is the logarithm of
-     * the Metropolis-Hastings function we should be calculating
+     *         the Metropolis-Hastings function we should be calculating
      */
     UseFnSyntaxType = MHUseFnLogValue
   };

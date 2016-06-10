@@ -56,6 +56,7 @@ template<typename RealScalar_, int Dim = 4>
 struct test_hypercube_mhwalker
 {
   typedef RealScalar_ RealScalar;
+  typedef RealScalar_ StepRealType;
   typedef Eigen::Matrix<RealScalar, Dim, 1> PointType;
 
   typedef float FnValueType;
@@ -294,7 +295,7 @@ BOOST_AUTO_TEST_CASE(simple1)
   std::mt19937 rng(0); // seeded rng, deterministic results
 
   MHWalkerType mhwalker;
-  MHRandomWalkType rwalk(5, 50, 500000, 0.03, mhwalker, vhist, rng, buflog);
+  MHRandomWalkType rwalk(5, 0.03, 50, 500000, mhwalker, vhist, rng, buflog);
 
   rwalk.run();
 

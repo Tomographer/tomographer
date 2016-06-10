@@ -110,7 +110,7 @@ struct MyResultsCollector {
   template<typename MyStatsCollectorResultType, typename IntType>
   inline void collect_result(unsigned int /*task_no*/,
 			     const Tomographer::MHRWTasks::MHRandomWalkTaskResult<MyStatsCollectorResultType,
-										  IntType> &
+										  IntType, double> &
 			     taskresult,
 			     const MyCData *)
   {
@@ -268,10 +268,10 @@ BOOST_AUTO_TEST_CASE(dmmhrwtask)
   // parameters for the fidelity histogram
   taskcdat.histogram_params = OurHistogramType::Params(0.98, 1.0, 50);
   // parameters of the random walk
-  taskcdat.n_sweep = 20;
-  taskcdat.n_therm = 100;
-  taskcdat.n_run = 1000;
-  taskcdat.step_size = 0.05;
+  taskcdat.mhrw_params.n_sweep = 20;
+  taskcdat.mhrw_params.step_size = 0.05;
+  taskcdat.mhrw_params.n_therm = 100;
+  taskcdat.mhrw_params.n_run = 1000;
 
   MyResultsCollector results;
 

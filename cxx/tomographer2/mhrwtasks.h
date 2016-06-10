@@ -70,20 +70,31 @@ namespace MHRWTasks {
       : base_seed(base_seed_)
     {
     }
+    /** \brief Constructor.
+     *
+     * Make sure to initialize \a base_seed to something quite random (e.g. current time
+     * in seconds) so that independent runs of your program won't produce the exact same
+     * results.
+     */
+    template<typename MHRWParamsType>
+    CDataBase(MHRWParamsType&& p, int base_seed_ = 0)
+      : mhrw_params(std::forward<MHRWParamsType>(p)), base_seed(base_seed_)
+    {
+    }
 
     //! Type used to count the number of iterations
     typedef CountIntType_ CountIntType;
     //! Type used to specify the step size
     typedef StepRealType_ StepRealType;
 
-    //! Parameter of the random walk -- number of iterations per sweep
-    CountIntType n_sweep;
-    //! Parameter of the random walk -- number of thermalizing sweeps
-    CountIntType n_therm;
-    //! Parameter of the random walk -- number of "live" sweeps
-    CountIntType n_run;
-    //! Parameter of the random walk -- step size of the random walk
-    StepRealType step_size;
+    /** \brief Parameters of the random walk
+     *
+     * Stores the number of iterations per sweep, the number of thermalizing sweeps, the
+     * number of "live" sweeps, and the step size of the random walk.
+     *
+     * See \ref MHRWParams<CountIntType,StepRealType>
+     */
+    MHRWParams<CountIntType, StepRealType> mhrw_params;
 
     /** \brief A base random seed from which each run seed will be derived
      *
@@ -103,17 +114,17 @@ namespace MHRWTasks {
 
     /** \brief Get some human-readable info about the random walk as a string.
      */
-    inline void printBasicCDataMhrwInfo(std::ostream & str)
+    inline void printBasicCDataMhrwInfo(std::ostream & str) const
     {
-      str << "\t# iter. / sweep = " << n_sweep << "\n"
-	  << "\t# therm. sweeps = " << n_therm << "\n"
-	  << "\t# run sweeps    = " << n_run << "\n"
-	  << "\tstep size       = " << std::setprecision(4) << step_size << "\n";
+      str << "\t# iter. / sweep = " << mhrw_params.n_sweep << "\n"
+	  << "\t# therm. sweeps = " << mhrw_params.n_therm << "\n"
+	  << "\t# run sweeps    = " << mhrw_params.n_run << "\n"
+	  << "\tstep size       = " << std::setprecision(4) << mhrw_params.step_size << "\n";
     }
     /** \brief Get some human-readable info about the random walk as a string, see \ref
      *         printBasicCDataMhrwInfo()
      */
-    inline std::string getBasicCDataMhrwInfo()
+    inline std::string getBasicCDataMhrwInfo() const
     {
       std::ostringstream ss;
       printBasicCDataMhrwInfo(ss);
@@ -129,32 +140,33 @@ namespace MHRWTasks {
    * \tparam MHRWStatsCollectorResultType_ the result type of the MHRWStatsCollector which
    *         the task will be running.
    * \tparam CountIntType the integer type used for counting in the MHRW task.
+   * \tparam StepRealType the real type used to describe the step size.
    *
    * \note This type is not default-constructible.
    */
-  template<typename MHRWStatsCollectorResultType_, typename CountIntType>
+template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename StepRealType>
   struct MHRandomWalkTaskResult
   {
     typedef MHRWStatsCollectorResultType_ MHRWStatsCollectorResultType;
+    
+    typedef MHRWParams<CountIntType, StepRealType> MHRWParamsType;
     
     template<typename MHRWStatsCollectorResultTypeInit, typename MHRandomWalkType>
     MHRandomWalkTaskResult(MHRWStatsCollectorResultTypeInit && stats_collector_result_,
 			   const MHRandomWalkType & mhrandomwalk)
       : stats_collector_result(std::forward<MHRWStatsCollectorResultTypeInit>(stats_collector_result_)),
-	n_sweep(mhrandomwalk.n_sweep()),
-	n_therm(mhrandomwalk.n_therm()),
-	n_run(mhrandomwalk.n_run()),
-	step_size(mhrandomwalk.step_size()),
-	acceptance_ratio(mhrandomwalk.acceptance_ratio())
+	mhrw_params(mhrandomwalk.mhrwParams()),
+	acceptance_ratio(mhrandomwalk.acceptanceRatio())
     {
     }
     
+    //! The result furnished by the stats collector itself
     const MHRWStatsCollectorResultType stats_collector_result;
     
-    const CountIntType n_sweep;
-    const CountIntType n_therm;
-    const CountIntType n_run;
-    const double step_size;
+    //! The parameters of the random walk (see \ref MHRWParams<CountIntType,StepRealType>)
+    const MHRWParamsType mhrw_params;
+
+    //! The acceptance ratio of the Metropolis-Hastings random walk
     const double acceptance_ratio;
   };
 
@@ -173,13 +185,16 @@ namespace MHRWTasks {
   struct MHRandomWalkTask
   {
     typedef typename MHRandomWalkTaskCData::CountIntType CountIntType;
+    typedef typename MHRandomWalkTaskCData::StepRealType StepRealType;
+
+    typedef MHRWParams<CountIntType, StepRealType> MHRWParamsType;
 
     /** \brief Result type of a single task run.
      *
      * See \ref MHRandomWalkTaskResult.
      */    
     typedef MHRandomWalkTaskResult<typename MHRandomWalkTaskCData::MHRWStatsCollectorResultType,
-				   CountIntType> Result;
+				   CountIntType, StepRealType> Result;
 
     /** \brief Status Report for a \ref MHRandomWalkTask
      *
@@ -192,30 +207,34 @@ namespace MHRWTasks {
     {
       /** \brief Constructor which initializes all fields */
       StatusReport(double fdone = 0.0, const std::string & msg = std::string(),
-                   CountIntType kstep_ = 0, CountIntType n_sweep_ = 0,
-                   CountIntType n_therm_ = 0, CountIntType n_run_ = 0,
+                   CountIntType kstep_ = 0, MHRWParamsType mhrw_params_ = MHRWParamsType(),
                    double acceptance_ratio_ = 0.0)
         : MultiProc::StatusReport(fdone, msg),
           kstep(kstep_),
-          n_sweep(n_sweep_),
-          n_therm(n_therm_),
-          n_run(n_run_),
+	  mhrw_params(mhrw_params_),
           acceptance_ratio(acceptance_ratio_),
-          n_total_iters(n_sweep*(n_therm+n_run))
+          n_total_iters(mhrw_params.n_sweep*(mhrw_params.n_therm + mhrw_params.n_run))
       {
       }
+
       /** \brief the current iteration number */
       CountIntType kstep;
-      /** \brief the number of iterations that form a sweep (see \ref MHRandomWalk) */
-      CountIntType n_sweep;
-      /** \brief the number of thermalization sweeps (see \ref MHRandomWalk) */
-      CountIntType n_therm;
-      /** \brief the number of live run sweeps (see \ref MHRandomWalk) */
-      CountIntType n_run;
+
+      /** \brief the parameters of the random walk
+       *
+       * Stores the number of iterations that form a sweep (\a n_sweep), the total number
+       * of thermalization sweeps (\a n_therm), the total number of live run sweeps (\a
+       * n_run) as well as the step size of the random walk (\a step_size).
+       *
+       * See also \ref MHRandomWalk
+       */
+      MHRWParamsType mhrw_params;
+
       /** \brief the current acceptance ratio of the random walk (see
-       *    \ref Tomographer::MHRandomWalk::acceptance_ratio()
+       *    \ref Tomographer::MHRandomWalk::acceptanceRatio()
        * ) */
       double acceptance_ratio;
+
       /** \brief the total number of iterations required for this random walk
        *
        * This is calculated as \f$
@@ -309,10 +328,7 @@ namespace MHRWTasks {
 
       MHRandomWalk<Rng, MHWalkerType, OurStatsCollectors, LoggerType, CountIntType> rwalk(
 	  // MH random walk parameters
-	  pcdata->n_sweep,
-	  pcdata->n_therm,
-	  pcdata->n_run,
-	  pcdata->step_size,
+	  pcdata->mhrw_params,
 	  // the MHWalker
 	  mhwalker,
 	  // our stats collectors
@@ -364,12 +380,12 @@ namespace MHRWTasks {
         //        fprintf(stderr, "StatusReportCheck::raw_move(): testing for status report requested!\n");
         if (tmgriface->status_report_requested()) {
           // prepare & provide status report
-          CountIntType totiters = rw.n_sweep()*(rw.n_therm()+rw.n_run());
+          CountIntType totiters = rw.nSweep()*(rw.nTherm()+rw.nRun());
           double fdone = (double)k/totiters;
 	  double accept_ratio = std::numeric_limits<double>::quiet_NaN();
 	  bool warn_accept_ratio = false;
-	  if (rw.has_acceptance_ratio()) {
-	    accept_ratio = rw.acceptance_ratio();
+	  if (rw.hasAcceptanceRatio()) {
+	    accept_ratio = rw.acceptanceRatio();
 	    warn_accept_ratio = (accept_ratio > 0.35 || accept_ratio < 0.2);
 	  }
 	  std::string msg = Tools::fmts(
@@ -377,8 +393,8 @@ namespace MHRWTasks {
               ( ! is_thermalizing
 		? "iteration"
 		: "[therm.] "),
-              (unsigned long)k, (unsigned long)totiters, (unsigned long)rw.n_sweep(),
-              (unsigned long)rw.n_therm(), (unsigned long)rw.n_run(),
+              (unsigned long)k, (unsigned long)totiters, (unsigned long)rw.nSweep(),
+              (unsigned long)rw.nTherm(), (unsigned long)rw.nRun(),
               fdone*100.0,
 	      warn_accept_ratio ? "!!** " : "",
 	      accept_ratio,
@@ -397,8 +413,7 @@ namespace MHRWTasks {
 	      }
 	    }
           }
-          tmgriface->submit_status_report(StatusReport(fdone, msg, k, rw.n_sweep(), rw.n_therm(),
-                                                       rw.n_run(), accept_ratio));
+          tmgriface->submit_status_report(StatusReport(fdone, msg, k, rw.mhrwParams(), accept_ratio));
         }
         //        fprintf(stderr, "StatusReportCheck::raw_move(): done\n");
       }

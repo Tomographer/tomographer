@@ -45,7 +45,6 @@
  *
  * Documented Type Interfaces in the %Tomographer framwork are:
  *
- *  - \subpage pageInterfaceRandomWalk
  *  - \subpage pageInterfaceMHWalker
  *  - \subpage pageInterfaceMHRWStatsCollector
  *  - \subpage pageInterfaceResultable
@@ -56,6 +55,7 @@
  *  - \subpage pageDenseDMTypeInterfaces
  */
 
+// no longer: *  - \subpage pageInterfaceRandomWalk
 
 
 // =============================================================================
@@ -162,7 +162,7 @@
  *     copy-constructed from another \a PointType. One should also be able to assign a \a
  *     PointType to another \c PointType (e.g. <code>curpt = other_point</code>).
  *
- * \par typedef ... RealScalar
+ * \par typedef ... StepRealType
  *     The type needed to represent a step size. This will most likely be a \c double
  *     or some floating-point type.
  *
@@ -192,7 +192,7 @@
  *
  * \par void done()
  *
- * \par PointType jump_fn(const PointType & curpt, RealScalar step_size)
+ * \par PointType jump_fn(const PointType & curpt, StepRealType step_size)
  *
  * \par FnValueType fnval(const PointType & curpt) &mdash; required only if UseFnSyntaxType == MHUseFnValue
  *
@@ -221,9 +221,9 @@
 // RandomWalk
 // =============================================================================
 
+// REMOVED -- NO LONGER THERE -- [ too abstract and useless ]
 
-
-/** \page pageInterfaceRandomWalk RandomWalk Interface
+/* \page pageInterfaceRandomWalk RandomWalk Interface
  *
  * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
@@ -282,6 +282,8 @@
  *
  */
 
+// --- END REMOVED ---
+
 
 /** \page pageInterfaceValueCalculator ValueCalculator Interface
  *
@@ -319,7 +321,7 @@
  * data.
  *
  * A \a MHRandomWalkTaskCData must inherit \ref
- * Tomographer::MHRWTasks::CDataBase<CountIntType,RealType>, in order to expose some basic
+ * Tomographer::MHRWTasks::CDataBase<CountIntType,StepRealType>, in order to expose some basic
  * types and functions.
  *
  * A \a MHRandomWalkTaskCData must be copy-constructible, and different threads must be

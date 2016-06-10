@@ -53,7 +53,7 @@ struct test_mhrandomwalk_fixture
     TestMHWalker(int sweep_size, int check_n_therm, int check_n_run)
       : TestLatticeMHRWGaussPeak(
 	  Eigen::Vector2i::Constant(100),
-	  (Eigen::Matrix2i() << 10, -5, 5, 10).finished(),
+	  (Eigen::Matrix2i() << 10, -5, 5, 10).finished(), 1,
 	  (Eigen::Vector2i() << 40, 50).finished(),
 	  414367 // seed, fixed -> deterministic
 	  ),
@@ -88,7 +88,7 @@ struct test_mhrandomwalk_fixture
     }
     
     template<typename PT>
-    inline PointType jump_fn(PT&& curpt, const RealScalar step_size)
+    inline PointType jump_fn(PT&& curpt, const StepRealType step_size)
     {
       ++count_jump;
       return Base::jump_fn(std::forward<PointType>(curpt), step_size);
@@ -175,27 +175,44 @@ BOOST_FIXTURE_TEST_CASE(mhrandomwalk, test_mhrandomwalk_fixture)
 
   TestMHWalker mhwalker(nsweep, ntherm, nrun);
   TestMHRWStatsCollector stats(nsweep, ntherm, nrun);
-  MHRandomWalkType rw(nsweep, ntherm, nrun, 2, mhwalker, stats, rng, logger);
+  MHRandomWalkType rw(nsweep, 2, ntherm, nrun, mhwalker, stats, rng, logger);
 
-  BOOST_CHECK_EQUAL(rw.n_sweep(), nsweep);
-  BOOST_CHECK_EQUAL(rw.n_therm(), ntherm);
-  BOOST_CHECK_EQUAL(rw.n_run(), nrun);
+  BOOST_CHECK_EQUAL(rw.nSweep(), nsweep);
+  BOOST_CHECK_EQUAL(rw.nTherm(), ntherm);
+  BOOST_CHECK_EQUAL(rw.nRun(), nrun);
 
-  BOOST_CHECK(!rw.has_acceptance_ratio());
+  BOOST_CHECK(!rw.hasAcceptanceRatio());
 
   rw.run();
 
 }
 
 
+BOOST_FIXTURE_TEST_CASE(mhrandomwalksetup, test_mhrandomwalk_fixture)
+{
+  typedef Tomographer::Logger::VacuumLogger LoggerType;
+  LoggerType logger;
 
-// BOOST_AUTO_TEST_CASE(MultiMHRW)
-// {
-//   struct statscollector {
-//     int cnt...............................;
-//   };
+  typedef std::mt19937 Rng;
+  Rng rng(3040); // fixed seed
 
-// }
+  typedef Tomographer::MHRandomWalk<Rng, TestMHWalker, TestMHRWStatsCollector, LoggerType, int>
+    MHRandomWalkType;
+
+  const int ntherm = 50;
+  const int nrun = 100;
+  const int nsweep = 10;
+
+  TestMHWalker mhwalker(nsweep, ntherm, nrun);
+  TestMHRWStatsCollector stats(nsweep, ntherm, nrun);
+  MHRandomWalkType rw(Tomographer::MHRWParams<int,double>(nsweep, 2, ntherm, nrun), mhwalker, stats, rng, logger);
+
+  BOOST_CHECK_EQUAL(rw.nSweep(), nsweep);
+  BOOST_CHECK_EQUAL(rw.nTherm(), ntherm);
+  BOOST_CHECK_EQUAL(rw.nRun(), nrun);
+
+  BOOST_CHECK(!rw.hasAcceptanceRatio());
+}
 
 
 // -----------------------------------------------------------------------------
