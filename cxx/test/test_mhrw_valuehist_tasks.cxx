@@ -165,18 +165,38 @@ BOOST_FIXTURE_TEST_CASE(simple, run_test<false>)
   BOOST_MESSAGE( logger.get_contents() );
 
   std::string msg;
-  { std::ostringstream ss; results.print_histogram_csv(ss); msg = ss.str(); }
+  { std::ostringstream ss; results.print_histogram_csv(ss, ","); msg = ss.str(); }
   BOOST_MESSAGE( msg ) ;
+
+  const std::string hist = results.finalHistogram().pretty_print(100);
+  BOOST_MESSAGE("FINAL HISTOGRAM:\n" << hist);
+
+  boost::test_tools::output_test_stream output(
+      TOMOGRAPHER_TEST_PATTERNS_DIR "test_mhrw_valuehist_tasks/hist_simple.txt",
+      true // true = match mode, false = write mode
+      );
+  dump_histogram_test(output, results.finalHistogram(), 2);
+  BOOST_CHECK(output.match_pattern());
 }
 BOOST_FIXTURE_TEST_CASE(binning, run_test<true>)
 {
-  //  tasks.run();
+  tasks.run();
   
-  //  BOOST_MESSAGE( logger.get_contents() );
+  BOOST_MESSAGE( logger.get_contents() );
 
-  //  std::string msg;
-  //  { std::ostringstream ss; results.print_histogram_csv(ss); msg = ss.str(); }
-  //  BOOST_MESSAGE( msg ) ;
+  std::string msg;
+  { std::ostringstream ss; results.print_histogram_csv(ss, ","); msg = ss.str(); }
+  BOOST_MESSAGE( msg ) ;
+
+  const std::string hist = results.finalHistogram().pretty_print(100);
+  BOOST_MESSAGE("FINAL HISTOGRAM:\n" << hist);
+
+  boost::test_tools::output_test_stream output(
+      TOMOGRAPHER_TEST_PATTERNS_DIR "test_mhrw_valuehist_tasks/hist_binning.txt",
+      true // true = match mode, false = write mode
+      );
+  dump_histogram_test(output, results.finalHistogram(), 2);
+  BOOST_CHECK(output.match_pattern());
 }
 
 BOOST_AUTO_TEST_SUITE_END()

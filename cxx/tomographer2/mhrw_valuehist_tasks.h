@@ -172,14 +172,14 @@ struct ResultsCollectorSimple
   }
 
 
-  inline void print_histogram_csv(std::ostream & stream)
+  inline void print_histogram_csv(std::ostream & stream, std::string sep = "\t", std::string linesep = "\n", int precision = 10)
   {
-    stream << "Value\tCounts\tError\n"
-	   << std::scientific << std::setprecision(10);
+    stream << "Value" << sep << "Counts" << sep << "Error" << linesep
+	   << std::scientific << std::setprecision(precision);
     for (int kk = 0; kk < _finalhistogram.bins.size(); ++kk) {
-      stream << (double)_finalhistogram.params.bin_lower_value(kk) << "\t"
-	     << (double)_finalhistogram.bins(kk) << "\t"
-	     << (double)_finalhistogram.delta(kk) << "\n";
+      stream << (double)_finalhistogram.params.bin_lower_value(kk) << sep
+	     << (double)_finalhistogram.bins(kk) << sep
+	     << (double)_finalhistogram.delta(kk) << linesep;
     }
   }
 
@@ -307,15 +307,15 @@ struct ResultsCollectorWithBinningAnalysis
   }
 
 
-  inline void print_histogram_csv(std::ostream & stream)
+  inline void print_histogram_csv(std::ostream & stream, std::string sep = "\t", std::string linesep = "\n", int precision = 10)
   {
-    stream << "Value\tCounts\tError\tSimpleError\n"
-           << std::scientific << std::setprecision(10);
+    stream << "Value" << sep << "Counts" << sep << "Error" << sep << "SimpleError" << linesep
+           << std::scientific << std::setprecision(precision);
     for (int kk = 0; kk < _finalhistogram.bins.size(); ++kk) {
-      stream << (double)_finalhistogram.params.bin_lower_value(kk) << "\t"
-             << (double)_finalhistogram.bins(kk) << "\t"
-             << (double)_finalhistogram.delta(kk) << "\t"
-             << (double)_simplefinalhistogram.delta(kk) << "\n";
+      stream << (double)_finalhistogram.params.bin_lower_value(kk) << sep
+             << (double)_finalhistogram.bins(kk) << sep
+             << (double)_finalhistogram.delta(kk) << sep
+             << (double)_simplefinalhistogram.delta(kk) << linesep;
     }
   }
 
