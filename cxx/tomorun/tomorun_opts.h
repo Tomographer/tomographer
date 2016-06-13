@@ -380,7 +380,8 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
      "number of thermalizing sweeps")
     ("n-run", value<unsigned int>(& opt->Nrun)->default_value(opt->Nrun),
      "number of running sweeps after thermalizing. If you're doing a binning analysis "
-     "(see --no-binning-analysis-error-bars), use a power of two here.")
+     "(default except if you give --no-binning-analysis-error-bars), use here a "
+     "multiple of 2^(binning-analysis-num-levels).")
     ("n-repeats", value<unsigned int>(& opt->Nrepeats)->default_value(opt->Nrepeats),
      "number of times to repeat the metropolis procedure")
     ("n-chunk", value<unsigned int>(& opt->Nchunk)->default_value(opt->Nchunk),

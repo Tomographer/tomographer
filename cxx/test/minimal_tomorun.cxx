@@ -221,8 +221,10 @@ int main()
   // our main ValueCalculator instance, which is in fact an alias for the  ObservableValueCalculator class
   ValueCalculator valcalc(dmt, phiplus);
 
-  // parameters of the histogram of the figure of merit
-  const OurCData::HistogramParams hist_params(0, 1.0, 100); // cover the range [0.9, 1.0] in 100 bins
+  // parameters of the histogram of the figure of merit: cover the range [0.75, 1.0] by
+  // dividing it into 50 bins
+  const OurCData::HistogramParams hist_params(0.75, 1.0, 50);
+
 
   //
   // Data is ready, prepare & launch the random walks.  Use OpenMP parallelization.
@@ -234,10 +236,10 @@ int main()
 
   // parameters of the random walk
   const OurCData::MHRWParamsType mhrw_params(
-      50, // sweep size (should be chosen such that  sweep_size*step_size ~ 1)
-      0.02, // step size
+      25, // sweep size (should be chosen such that  sweep_size*step_size ~ 1)
+      0.04, // step size (choose such that acceptance ratio ~ 0.25)
       500, // # of thermalization sweeps
-      8192 // # of live sweeps in which samples are collected
+      32768 // # of live sweeps in which samples are collected
       );
 
   // seed for random number generator -- just use the current time
@@ -302,8 +304,30 @@ int main()
   logger.info([&](std::ostream & stream) {
       stream << "FINAL HISTOGRAM OF THE FIGURE OF MERIT:\n"
 	     << histogram.pretty_print()
-	     << "\n\n"
-	     << "Computation time: " << elapsed_s
+	     << "\n\n";
+      // We should report if the error bars from the binning anlaysis have
+      // converged nicely. This is a bit quick-and-dirty, see the
+      // "tomorun_dispatch.h" source for a slightly more sophisticated way
+      int num_converged = 0, num_unknown = 0, num_notconverged = 0;
+      double accept_ratio = 0.0;
+      for (std::size_t j = 0; j < results.numTasks(); ++j) {
+        auto collectedresult = results.collectedRunTaskResult(j);
+        num_converged += collectedresult.stats_collector_result.converged_status
+          .cwiseEqual(OurResultsCollector::BinningAnalysisParamsType::CONVERGED).count();
+        num_unknown += collectedresult.stats_collector_result.converged_status
+          .cwiseEqual(OurResultsCollector::BinningAnalysisParamsType::UNKNOWN_CONVERGENCE).count();
+        num_notconverged += collectedresult.stats_collector_result.converged_status
+          .cwiseEqual(OurResultsCollector::BinningAnalysisParamsType::NOT_CONVERGED).count();
+        accept_ratio += collectedresult.acceptance_ratio;
+      }
+      stream << "Average Acceptance Ratio: "
+             << std::setprecision(2) << accept_ratio / results.numTasks() << "\n\n";
+      stream << "Error bars from binning analysis: "
+             << num_converged << " converged, "
+             << num_unknown << " unknown, "
+             << num_notconverged << " not converged / "
+             << num_converged+num_unknown+num_notconverged << " total\n\n";
+      stream << "Computation time: " << elapsed_s
 	     << "\n\n";
     });
 
