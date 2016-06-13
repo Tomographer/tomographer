@@ -128,9 +128,9 @@ BOOST_AUTO_TEST_CASE(safe_ops2)
     0, 0, 1;
 
   MY_BOOST_CHECK_EIGEN_EQUAL(Tomographer::MathTools::safe_operator_sqrt<Eigen::Matrix3cd>(2*U*A*U.adjoint(), 1e-18),
-                             U*A*U.adjoint()*boost::math::constants::root_two<double>(), 2e-9);
+                             U*A*U.adjoint()*boost::math::constants::root_two<double>(), 1e-7);
   MY_BOOST_CHECK_EIGEN_EQUAL(Tomographer::MathTools::safe_operator_inv_sqrt<Eigen::Matrix3cd>(2*U*A*U.adjoint(), 1e-12),
-                             U*A*U.adjoint()*boost::math::constants::half_root_two<double>(), 2e-6);
+                             U*A*U.adjoint()*boost::math::constants::half_root_two<double>(), 1e-5);
 }
 
 BOOST_AUTO_TEST_SUITE_END();

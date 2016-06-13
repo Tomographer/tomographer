@@ -80,8 +80,8 @@ BOOST_FIXTURE_TEST_CASE(FidelityToRefCalculator_4_f, distmeasures_qudit4_fixture
 {
   Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, float> f(T1);
 
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), fid_with_1<float>(1), tol_f);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), fid_with_1<float>(2), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), fid_with_1<float>(1), 32*tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), fid_with_1<float>(2), 32*tol_f);
 }
 
 
@@ -116,8 +116,8 @@ BOOST_FIXTURE_TEST_CASE(PurifDistToRefCalculator_4_f, distmeasures_qudit4_fixtur
 {
   Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, float> f(T1);
 
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), 0, tol_f);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), std::sqrt(1-std::pow(fid_with_1<float>(2),2)), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), 0.0f, 1e-2f); // Because error diverges at @f=1 -> purif_dist=0
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), std::sqrt(1-std::pow(fid_with_1<float>(2),2)), 32*tol_f);
 }
 
 
@@ -152,8 +152,8 @@ BOOST_FIXTURE_TEST_CASE(TrDistToRefCalculator_4_f, distmeasures_qudit4_fixture<f
 {
   Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, float> f(T1*T1.adjoint());
 
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), trdist_with_1<float>(1), tol_f);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), trdist_with_1<float>(2), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), trdist_with_1<float>(1), 32*tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), trdist_with_1<float>(2), 32*tol_f);
 }
 
 
@@ -213,8 +213,8 @@ BOOST_FIXTURE_TEST_CASE(ObservableValueCalculator_4_f, distmeasures_qudit4_fixtu
 
   Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes> f(dmt, A);
 
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), (A*rho1).real().trace(), tol_f);
-  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), (A*rho2).real().trace(), tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T1), (A*rho1).real().trace(), 32*tol_f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(f.getValue(T2), (A*rho2).real().trace(), 32*tol_f);
 }
 
 
