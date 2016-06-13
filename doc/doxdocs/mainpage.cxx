@@ -24,22 +24,24 @@
  * SOFTWARE.
  */
 
+
+
 /** \mainpage %Tomographer C++ Framework: API Documentation
  *
  * The <a href="https://github.com/Tomographer/tomographer" target="_blank">%Tomographer
  * C++ Framework</a> groups a set of classes and functions which allow to reliably analyze
  * data from quantum experiments. These serve in particular as components for the tomorun
- * executable program, which is not part of this Tomographer API documentation.
+ * executable program.
  *
  * <h2>%Tomographer's Components</h2>
  *
- * The classes and routines of the project belong to several categories:
+ * The classes and routines of the project belong to several categories.
  *
  * <h3>Tools</h3>
  *
  * These are basic tools and utilities:
  *
- * - most tools, e.g. C++ language utilities and matrix utilities, are located in the
+ * - most tools, e.g. C++ language utilities and other tools, are defined in the
  *   namespace \ref Tomographer::Tools;
  *
  * - \ref Tomographer::MAT provides a set of routines to read data from MATLAB files
@@ -48,25 +50,10 @@
  * - %Tomographer provides a lightweight mechanism for logging messages. See \ref
  *   pageLoggers;
  *
- * - Some more utilities are provided in \ref Tomographer::SolveCLyap and \ref
- *   Tomographer::SphCoords.
+ * - Some more utilities are provided in the namespace \ref Tomographer::MathTools
+ *   (generate a Haar-random unitary, manipulate spherical coordinates, etc.).
  *
- * <h3>Specifying the Quantum Tomography Problem</h3>
- *
- * A quantum tomography setting with measurement results is specified as following in our
- * generic framework:
- *
- * - A type complying with the \ref pageInterfaceMatrQ specifies which C++ types to use to
- *   store a density matrix and parameterizations of it. For the moment this should be a
- *   \ref Tomographer::MatrQ instance.
- *
- * - A type implementing the \ref pageInterfaceTomoProblem stores the experimental data
- *   and is responsible for calculating the loglikelihood function. For the moment, you
- *   should use \ref Tomographer::IndepMeasTomoProblem.
- *
- * \note These type interfaces above might change in the future.
- * 
- * <h3>Running the Metropolis-Hastings Random Walk</h3>
+ * <h3>Engine for Running a Metropolis-Hastings Random Walk</h3>
  *
  * - The \ref Tomographer::MHRandomWalk takes care of running a Metropolis-Hastings random
  *   walk. You need to give it a specification of the random walk parameters, including
@@ -83,7 +70,7 @@
  *   example, see \ref Tomographer::ValueHistogramMHRWStatsCollector and \ref
  *   Tomographer::ValueHistogramWithBinningMHRWStatsCollector.
  *
- * <h3>Multiprocessing: Running Tasks in Parallel</h3>
+ * <h3>Engine for Multiprocessing: Running Tasks in Parallel</h3>
  *
  * - An abstract multiprocessing framework is specified using a set of interfaces, see
  *   \ref pageTaskManagerDispatcher. This requires on one hand an implementation of a
@@ -95,10 +82,49 @@
  *   target="_blank">OpenMP</a>. This dispatches the tasks over several threads (on a
  *   same machine).
  *
- * - The \ref Tomographer::MHRWTasks namespace groups a set of classes which may be used
- *   to specify tasks to run which consist of abstract Metropolis-Hastings random
- *   walks.
+ * <h3>Both Together: Running Metropolis-Hastings Random Walks in Parallel</h3>
  *
+ * - The \ref Tomographer::MHRWTasks namespace groups a set of classes which may be used
+ *   to specify a series of Metropolis-Hastings random walks to be run in parallel, which
+ *   can be executed by a \ref pageTaskManagerDispatcher such as \ref
+ *   Tomographer::MultiProc::OMP.
+ *
+ * - On top of this the classes in \ref Tomographer::MHRWTasks::ValueHistTasks provide
+ *   more specific definitions for collecting a histogram about a value (e.g. figure of
+ *   merit) during a Metropolis-Hastings random walk.
+ *
+ * <h3>Specific Implementation for Quantum States Specified as Densely Stored Matrices</h3>
+ *
+ * These classes provide the types and specification of how to perform the random walk,
+ * how to calculate the loglikelihood function as well as the figures of merit for quantum
+ * states, with the quantum states and POVM effects stored explicitly as matrices (either
+ * directly, or via a \ref pageParamsX or \ref pageParamsT).  Classes relating to this
+ * implementation are located in the \ref Tomographer::DenseDM namespace.
+ *
+ * Currently, this is the only concrete implementation of our tomography method.  In the
+ * future, one could imagine extensions to other implementations, such as directly
+ * performing the random walk in the X-parameterization space.
+ *
+ * - The \ref Tomographer::DenseDM::DMTypes class defines some canonical types for this
+ *   implementation, such as the type used to store a matrix, the type used to store a
+ *   X-parameterziation vector, etc.
+ *
+ * - A class implementing the \ref pageInterfaceDenseLLH is capable of calculating the
+ *   loglikelihood function for a particular experiment.  Currently, we only support
+ *   observed POVM effects which can be written as a product of POVM effects (though this
+ *   is not necessarily a product POVM!), in the class \ref
+ *   Tomographer::DenseDM::IndepMeasLLH.
+ *
+ * - The class \ref Tomographer::DenseDM::TSpace::LLHMHWalker specifies the random walk in
+ *   T-space on the basis of given types (in DMTypes) and a way to calculate the LLH
+ *   function (via a \ref pageInterfaceDenseLLH compliant object).
+ *
+ * - Some predefined figures of merit for the random walk in T space are defined as \ref
+ *   Tomographer::DenseDM::TSpace::FidelityToRefCalculator "FidelityToRefCalculator", \ref
+ *   Tomographer::DenseDM::TSpace::PurifDistToRefCalculator "PurifDistToRefCalculator", \ref
+ *   Tomographer::DenseDM::TSpace::TrDistToRefCalculator "TrDistToRefCalculator", and \ref
+ *   Tomographer::DenseDM::TSpace::ObservableValueCalculator "ObservableValueCalculator".
+ * 
  *
  * <h2>Documentation Pages</h2>
  *

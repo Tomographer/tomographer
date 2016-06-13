@@ -28,33 +28,31 @@
 #include <iomanip>
 #include <stdexcept>
 #include <tuple>
+#include <string>
 
-// we want `eigen_assert()` to raise an `eigen_assert_exception` here
-#include <tomographer2/tools/eigen_assert_exception.h>
+#include <boost/math/constants/constants.hpp>
+
+// definitions for Tomographer test framework -- this must be included before any
+// <Eigen/...> or <tomographer2/...> header
+#include "test_tomographer.h"
 
 #include <Eigen/Core>
 
 #include <tomographer2/tools/loggers.h>
 
-#include <boost/test/unit_test.hpp>
-#include <boost/test/floating_point_comparison.hpp>
-
-
-// tolerance, in *PERCENT*
-const double tol_percent = 1e-12;
-const double tol = tol_percent * 0.01;
-
-
-
-
-
-
 
 
 
 // #############################################################################
+//
+// Fixtures, helpers, dummy classes etc. for testing.
+//
 
-// Helpers, dummy classes etc. for testing.
+
+
+// needed because if there is a single comma in the string passed to BOOST_CHECK, then the
+// preprocessor thinks it's two macro arguments (!!)
+#define MY_BOOST_CHECK(...) { auto check = [&]() -> bool { return __VA_ARGS__; }; BOOST_CHECK(check()); }
 
 
 //
@@ -137,14 +135,6 @@ DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerOriginFilter, enum {
   });
 
 
-
-
-// #############################################################################
-
-
-BOOST_AUTO_TEST_SUITE(test_loggers);
-
-
 // -----------------------------------------------------------------------------
 
 
@@ -155,7 +145,108 @@ struct fixture_bufferlogger {
   Tomographer::Logger::BufferLogger logger;
 };
 
-BOOST_FIXTURE_TEST_SUITE(bufferlogger, fixture_bufferlogger);
+
+
+// -----------------------------------------------------------------------------
+
+
+struct fixture_originfilteredlogger {
+  Tomographer::Logger::BufferLogger buflog;
+  Tomographer::Logger::OriginFilteredLogger<Tomographer::Logger::BufferLogger> logger;
+
+  fixture_originfilteredlogger() : buflog(Tomographer::Logger::INFO), logger(buflog) {
+    logger.setDomainLevel("my_origin_class", Tomographer::Logger::DEBUG);
+    logger.setDomainLevel("my_origin_class::mymethod()", Tomographer::Logger::LONGDEBUG);
+    logger.setDomainLevel("my_origin_class::mymethod2()", Tomographer::Logger::WARNING);
+    logger.setDomainLevel("my_other_origin_class::nested_class", Tomographer::Logger::ERROR);
+  }
+  ~fixture_originfilteredlogger() { }
+
+  void produce_logs_with_origin(const char * origin) {
+    logger.longdebug(origin, "longdebug level");
+    logger.debug(origin, "debug level");
+    logger.info(origin, "info level");
+    logger.warning(origin, "warning level");
+    logger.error(origin, "error level");
+  }
+};
+
+
+// -----------------------------------------------------------------------------
+
+
+class test_local_logger
+{
+  Tomographer::Logger::LocalLogger<Tomographer::Logger::BufferLogger> _logger;
+
+public:
+
+  test_local_logger(Tomographer::Logger::BufferLogger & logger)
+    : _logger(TOMO_ORIGIN, logger)
+  {
+    _logger.longdebug("constructor!");
+    _logger.debug("constructor!");
+    _logger.info("constructor!");
+    _logger.warning("constructor!");
+    _logger.error("constructor!");
+  }
+
+  ~test_local_logger()
+  {
+    _logger.debug("destructor.");
+    auto l = _logger.sublogger("[destructor]", "-");
+    l.info("destructor.");
+    auto l2 = l.sublogger("yo!");
+    l2.info("depth two!");
+  }
+
+  void some_method()
+  {
+    Tomographer::Logger::LocalLogger<decltype(_logger)> logger(TOMO_ORIGIN, _logger);
+    
+    logger.debug("Hi there!");
+    for (int k = 0; k < 10; ++k) {
+      logger.longdebug("Number = %d", k);
+    }
+  }
+
+  template<int I = 1342, char c = 'Z', typename T = std::string>
+  void tmpl(const T & value = T("fdsk"))
+  {
+    auto l = _logger.sublogger(TOMO_ORIGIN);
+    l.info("info message. Value = %s", value.c_str());
+
+    auto l2 = l.sublogger("inner logger");
+    l2.debug("I = %d, c=%c", I, c);
+  }
+};
+
+
+template<typename BaseLoggerType>
+void test_locallogger_function(int value, BaseLoggerType & b)
+{
+  auto logger = makeLocalLogger(TOMO_ORIGIN, b);
+  logger.debug("value is %d", value);
+  
+  auto some_callback = [&](std::string some_other_value) {
+    auto innerlogger = logger.sublogger("some_callback[lambda]");
+    innerlogger.debug([&](std::ostream& str) {
+	str << "Inside callback: " << some_other_value;
+      });
+  };
+  some_callback("42");
+}
+
+
+
+
+// #############################################################################
+
+
+BOOST_AUTO_TEST_SUITE(test_tools_loggers)
+
+
+BOOST_FIXTURE_TEST_SUITE(bufferlogger, fixture_bufferlogger)
 
 BOOST_AUTO_TEST_CASE(basiclogging)
 {
@@ -257,8 +348,7 @@ BOOST_AUTO_TEST_CASE(optimized_formatting)
 
 
 
-BOOST_AUTO_TEST_SUITE_END(); // test_bufferlogger
-
+BOOST_AUTO_TEST_SUITE_END() // bufferlogger
 
 
 
@@ -268,12 +358,7 @@ BOOST_AUTO_TEST_SUITE_END(); // test_bufferlogger
 // can't call DEFINE_DUMMY_LOGGER_WITH_TRAITS here, because BOOST test suites are in fact
 // class or namespaces declarations, and here we're inside a class/namespace declaration.
 
-
-BOOST_AUTO_TEST_SUITE(loggertraits);
-
-// needed because if there is a single comma in the string passed to BOOST_CHECK, then the
-// preprocessor thinks it's two macro arguments (!!)
-#define MY_BOOST_CHECK(...) { auto check = [&]() -> bool { return __VA_ARGS__; }; BOOST_CHECK(check()); }
+BOOST_AUTO_TEST_SUITE(loggertraits)
 
 BOOST_AUTO_TEST_CASE(helpers)
 {
@@ -494,7 +579,7 @@ BOOST_AUTO_TEST_CASE(originfilter)
         );
 }
 
-BOOST_AUTO_TEST_SUITE_END();
+BOOST_AUTO_TEST_SUITE_END() // loggertraits
 
 
 
@@ -502,28 +587,8 @@ BOOST_AUTO_TEST_SUITE_END();
 // -----------------------------------------------------------------------------
 
 
-struct fixture_originfilteredlogger {
-  Tomographer::Logger::BufferLogger buflog;
-  Tomographer::Logger::OriginFilteredLogger<Tomographer::Logger::BufferLogger> logger;
 
-  fixture_originfilteredlogger() : buflog(Tomographer::Logger::INFO), logger(buflog) {
-    logger.setDomainLevel("my_origin_class", Tomographer::Logger::DEBUG);
-    logger.setDomainLevel("my_origin_class::mymethod()", Tomographer::Logger::LONGDEBUG);
-    logger.setDomainLevel("my_origin_class::mymethod2()", Tomographer::Logger::WARNING);
-    logger.setDomainLevel("my_other_origin_class::nested_class", Tomographer::Logger::ERROR);
-  }
-  ~fixture_originfilteredlogger() { }
-
-  void produce_logs_with_origin(const char * origin) {
-    logger.longdebug(origin, "longdebug level");
-    logger.debug(origin, "debug level");
-    logger.info(origin, "info level");
-    logger.warning(origin, "warning level");
-    logger.error(origin, "error level");
-  }
-};
-
-BOOST_FIXTURE_TEST_SUITE(originfilteredlogger, fixture_originfilteredlogger);
+BOOST_FIXTURE_TEST_SUITE(originfilteredlogger, fixture_originfilteredlogger)
 
 BOOST_AUTO_TEST_CASE(origin1)
 {
@@ -581,94 +646,52 @@ BOOST_AUTO_TEST_CASE(origin_norule)
 }
 
 
-BOOST_AUTO_TEST_SUITE_END();
+BOOST_AUTO_TEST_SUITE_END() // originfilteredlogger
 
 
 
 // -----------------------------------------------------------------------------
 
 
+BOOST_AUTO_TEST_SUITE(locallogger)
 
-
-class test_origin_logger
-{
-  Tomographer::Logger::LocalLogger<Tomographer::Logger::BufferLogger> _logger;
-
-public:
-
-  test_origin_logger(Tomographer::Logger::BufferLogger & logger)
-    : _logger(TOMO_ORIGIN, logger)
-  {
-    _logger.longdebug("constructor!");
-    _logger.debug("constructor!");
-    _logger.info("constructor!");
-    _logger.warning("constructor!");
-    _logger.error("constructor!");
-  }
-
-  ~test_origin_logger()
-  {
-    _logger.debug("destructor.");
-    auto l = _logger.sublogger("[destructor]", "-");
-    l.info("destructor.");
-    auto l2 = l.sublogger("yo!");
-    l2.info("depth two!");
-  }
-
-  void some_method()
-  {
-    Tomographer::Logger::LocalLogger<decltype(_logger)> logger(TOMO_ORIGIN, _logger);
-    
-    logger.debug("Hi there!");
-    for (int k = 0; k < 10; ++k) {
-      logger.longdebug("Number = %d", k);
-    }
-  }
-
-  template<int I = 1342, char c = 'Z', typename T = std::string>
-  void tmpl(const T & value = T("fdsk"))
-  {
-    auto l = _logger.sublogger(TOMO_ORIGIN);
-    l.info("info message. Value = %s", value.c_str());
-
-    auto l2 = l.sublogger("inner logger");
-    l2.debug("I = %d, c=%c", I, c);
-  }
-};
-
-
-BOOST_AUTO_TEST_CASE(local_logger)
+BOOST_AUTO_TEST_CASE(basic)
 {
   Tomographer::Logger::BufferLogger b(Tomographer::Logger::LONGDEBUG);
 
   {
-    test_origin_logger tst(b);
+    test_local_logger tst(b);
     tst.some_method();
     tst.tmpl();
   }
+  {
+    test_locallogger_function(10, b);
+  }
   
   BOOST_CHECK_EQUAL(b.get_contents(),
-                    "[test_origin_logger] constructor!\n"
-                    "[test_origin_logger] constructor!\n"
-                    "[test_origin_logger] constructor!\n"
-                    "[test_origin_logger] constructor!\n"
-                    "[test_origin_logger] constructor!\n"
-                    "[test_origin_logger::some_method()] Hi there!\n"
-                    "[test_origin_logger::some_method()] Number = 0\n"
-                    "[test_origin_logger::some_method()] Number = 1\n"
-                    "[test_origin_logger::some_method()] Number = 2\n"
-                    "[test_origin_logger::some_method()] Number = 3\n"
-                    "[test_origin_logger::some_method()] Number = 4\n"
-                    "[test_origin_logger::some_method()] Number = 5\n"
-                    "[test_origin_logger::some_method()] Number = 6\n"
-                    "[test_origin_logger::some_method()] Number = 7\n"
-                    "[test_origin_logger::some_method()] Number = 8\n"
-                    "[test_origin_logger::some_method()] Number = 9\n"
-                    "[test_origin_logger::tmpl()] info message. Value = fdsk\n"
-                    "[test_origin_logger::tmpl()/inner logger] I = 1342, c=Z\n"
-                    "[test_origin_logger] destructor.\n"
-                    "[test_origin_logger::[destructor]] destructor.\n"
-                    "[test_origin_logger::[destructor]-yo!] depth two!\n"
+                    "[test_local_logger] constructor!\n"
+                    "[test_local_logger] constructor!\n"
+                    "[test_local_logger] constructor!\n"
+                    "[test_local_logger] constructor!\n"
+                    "[test_local_logger] constructor!\n"
+                    "[test_local_logger::some_method()] Hi there!\n"
+                    "[test_local_logger::some_method()] Number = 0\n"
+                    "[test_local_logger::some_method()] Number = 1\n"
+                    "[test_local_logger::some_method()] Number = 2\n"
+                    "[test_local_logger::some_method()] Number = 3\n"
+                    "[test_local_logger::some_method()] Number = 4\n"
+                    "[test_local_logger::some_method()] Number = 5\n"
+                    "[test_local_logger::some_method()] Number = 6\n"
+                    "[test_local_logger::some_method()] Number = 7\n"
+                    "[test_local_logger::some_method()] Number = 8\n"
+                    "[test_local_logger::some_method()] Number = 9\n"
+                    "[test_local_logger::tmpl()] info message. Value = fdsk\n"
+                    "[test_local_logger::tmpl()/inner logger] I = 1342, c=Z\n"
+                    "[test_local_logger] destructor.\n"
+                    "[test_local_logger::[destructor]] destructor.\n"
+                    "[test_local_logger::[destructor]-yo!] depth two!\n"
+		    "[test_locallogger_function()] value is 10\n"
+		    "[test_locallogger_function()/some_callback[lambda]] Inside callback: 42\n"
       );
 
   // ............
@@ -676,11 +699,12 @@ BOOST_AUTO_TEST_CASE(local_logger)
 
 
 
+BOOST_AUTO_TEST_SUITE_END() // locallogger
+
 
 
 // #############################################################################
 
-BOOST_AUTO_TEST_SUITE_END() // test_loggers
-
+BOOST_AUTO_TEST_SUITE_END() // test_tools_loggers
 
 

@@ -50,9 +50,54 @@
  * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
  *
- * ................ DOC HERE ................
- * 
+ * A \a DenseLLH compliant type is one which is capable of calculating the loglikelihood
+ * function for a particular realization of a quantum tomography experiment.
  *
+ * The log-likelihood function is defined as the logarithm of the likelihood function:
+ * \f[
+ *    \texttt{llh}(\rho) = \ln \mathrm{tr}\left(B^n \rho^{\otimes n}\right)\ ,
+ * \f]
+ * where \f$ B^n \f$ is the joint POVM effect observed on the \f$ n \f$ systems (in the
+ * most general scenario of [Christandl & Renner, PRL (2012)]), and where \f$ \rho \f$ is
+ * the quantum state at which to evaluate the log-likelihood function.
+ *
+ * \note Here, the log-likelihood function is defined WITHOUT any \f$ -2 \f$ factor which
+ *       is sometimes conventionally implied.
+ *
+ * Currently, the only implementation is \ref Tomographer::DenseDM::IndepMeasLLH, which
+ * stores the individual POVM effects along with frequencies, while assuming that the
+ * global observed POVM effect (in the general scenario) can be written as a product of
+ * effects (though this does not imply that the POVM itself is a product POVM).
+ *
+ * A \a DenseLLH compliant type should expose the following members:
+ *
+ * \par typedef ... DMTypes
+ *   The \ref Tomographer::DenseDM::DMTypes DMTypes type to use to store quantum states
+ *   and POVM effects as dense objects.
+ * 
+ * \par typedef ... LLHValueType
+ *   The type used to store the value of the loglikelihood function. Typically the boring
+ *   old \a double is suitable.
+ *
+ * \par const DMTypes dmt;
+ *   A public member which is an instance of the corresponding \a DMTypes, which can be
+ *   used to construct dense objects to store quantum states and POVM effects.
+ *
+ * \par enum { LLHCalcType = ... }
+ *   Specifies how this object can calculate the loglikelihood function.  The value must
+ *   be one of \ref Tomographer::DenseDM::LLHCalcTypeX "LLHCalcTypeX" or \ref
+ *   Tomographer::DenseDM::LLHCalcTypeRho "LLHCalcTypeRho".  (In the future, we may add
+ *   more values to this enum to support further parameterizations.)
+ *
+ * \par LLHValueType logLikelihoodX(VectorParamTypeConstRef x)
+ *   <em>(Required only if <code>LLHCalcType = LLHCalcTypeX</code>)</em> Calculate the
+ *   value of the loglikelihood function for the point \a x, given in \ref pageParamsX.
+ *   The argument type \a VectorParamTypeConstRef matches the one declared in \a DMTypes.
+ *
+ * \par LLHValueType logLikelihoodRho(MatrixTypeConstRef rho)
+ *   <em>(Required only if <code>LLHCalcType = LLHCalcTypeRho</code>)</em> Calculate the
+ *   value of the loglikelihood function for the point \a rho, given as a density matrix.
+ *   The argument type \a MatrixTypeConstRef matches the one declared in \a DMTypes.
  *
  */
 

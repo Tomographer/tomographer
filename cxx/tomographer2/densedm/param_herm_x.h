@@ -178,8 +178,6 @@ public:
    * 
    * \note This function only accesses lower triangular part of \c Herm.
    *
-   * \todo Currently, we can't pass an expression as second parameter here. So use \ref
-   *       Eigen::Ref instead to allow for that, too...
    */
   inline VectorParamType HermToX(MatrixTypeConstRef Herm) const
   {

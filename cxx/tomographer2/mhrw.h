@@ -1188,6 +1188,9 @@ struct MHRWStatsCollectorStatus
     return std::string();
   }
 };
+// static members:
+template<typename MHRWStatsCollector_>
+constexpr bool MHRWStatsCollectorStatus<MHRWStatsCollector_>::CanProvideStatus;
 
 
 
@@ -1224,6 +1227,11 @@ struct MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >
   }
 
 };
+// static members:
+template<typename... Args>
+constexpr int MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >::NumStatColl;
+template<typename... Args>
+constexpr bool MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >::CanProvideStatus;
 
 
 
@@ -1249,6 +1257,14 @@ struct MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator
     return "Histogram: " + histogram_short_bar<HistogramType>(stats->histogram(), true, maxbarwidth);
   }
 };
+// static members:
+template<typename ValueCalculator_,
+	 typename LoggerType_,
+	 typename HistogramType_
+	 >
+constexpr bool
+MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator_, LoggerType_, HistogramType_> >::CanProvideStatus;
+
 
 /** \brief Provide status reporting for a ValueHistogramWithBinningMHRWStatsCollector
  *
@@ -1298,6 +1314,12 @@ struct MHRWStatsCollectorStatus<ValueHistogramWithBinningMHRWStatsCollector<Para
       + Tools::fmts("   err: (cnvg/?/fail) %d/%d/%d", n_cnvg, n_unknown, n_not_cnvg);
   }
 };
+// static members:
+template<typename Params_,
+	 typename LoggerType_
+	 >
+constexpr bool
+MHRWStatsCollectorStatus<ValueHistogramWithBinningMHRWStatsCollector<Params_, LoggerType_> >::CanProvideStatus;
 
 
 

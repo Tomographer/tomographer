@@ -251,6 +251,17 @@ dl.todo dd, dl.bug dd {
 }
 
 
+div.fragment {
+   border: 0px none;
+   border-left-width: 1px;
+   border-left-style: solid;
+   border-left-color: #8AEAEA;
+   padding: 4px 1.75em;
+   margin: 4px 0.5em;
+   background-color: transparent;
+}
+
+
 /* fixed width fonts */
 
 div.line,
@@ -279,6 +290,7 @@ div.line {
    font-size: 0.9em;
    line-height: 1.3em;
 }
+
 
 /* ------------------------------ TITLE ------------------------------ */
 

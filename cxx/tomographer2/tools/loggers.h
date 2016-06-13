@@ -79,15 +79,16 @@ enum LogLevelCode
   /** \brief Error logging level
    *
    * A log message with this level signifies that a critical error has occurred which
-   * prevents further processing. The program should terminate.
+   * prevents further processing.  The program is about to terminate.
    */
   ERROR = 0,
 
   /** \brief Warning logging level
    *
    * A log message with this level signifies a warning for the user. The computation may
-   * continue, but most likely the user made provided erroneous input, or there are
-   * features which will not be available.
+   * continue, but most likely the user provided erroneous input, a routine may have
+   * failed to reach the required precision, or there are features which will not be
+   * available.
    */
   WARNING,
 
@@ -105,17 +106,17 @@ enum LogLevelCode
    * \c Tomographer program itself. These messages should make it easier to locate a
    * specific error, and generally give a more specific idea of what the program does.
    *
-   * The \c DEBUG level is meant to still be readable on a terminal output, even with
-   * multiple threads. Don't generate too many messages with this level. Use the
-   * \c LONGDEBUG level to generate as many messages as you want.
+   * The \c DEBUG level is meant to still be readable on a terminal output (with decent
+   * scrollback), even with multiple threads. Don't generate too many messages with this
+   * level. Use the \c LONGDEBUG level to generate as many messages as you want.
    */
   DEBUG,
 
   /** \brief Long Debug logging level
    *
-   * This level is meant to signify very specific messages, such as individual
-   * iterations. The log produced with this level may be very long an no longer readable
-   * on a terminal.
+   * This level is meant to signify very specific messages, such as infomation about
+   * individual iterations. The log produced with this level may be very long an no longer
+   * readable on a terminal.
    *
    * Use this level for messages that are generated very often.
    */
@@ -761,7 +762,7 @@ public:
 #ifdef TOMOGRAPHER_PARSED_BY_DOXYGEN
   // this method is actually implemented by the base class LoggerRuntimeLevel, and is only
   // exposed in the case where the logger doesn't define its own method. This is important
-  // to avoid "ambigous calls to `level()`".
+  // to avoid "ambiguous calls to `level()`".
 
   /** \brief Get the log level set for this logger
    *
@@ -783,16 +784,14 @@ public:
 protected:
 
   // version in case we store our own level
-  template<bool dummy = true,
-           typename std::enable_if<dummy && ! HasOwnGetLevel, bool>::type dummy2 = true>
+  TOMOGRAPHER_ENABLED_IF(!HasOwnGetLevel)
   inline int getLevel() const
   {
     // use base class' implementation
     return tomo_internal::LoggerRuntimeLevel<HasOwnGetLevel>::level();
   }
   // version in case we delegate to derived class' level()
-  template<bool dummy = true,
-           typename std::enable_if<dummy && HasOwnGetLevel, bool>::type dummy2 = true>
+  TOMOGRAPHER_ENABLED_IF(HasOwnGetLevel)
   inline int getLevel() const
   {
     return derived()->level();
@@ -1652,6 +1651,8 @@ constexpr const LocalLoggerOriginSpec extractTomoOrigin(const Tools::conststr fn
 
 
 /** \brief Use this as argument for a \ref Tomographer::Logger::LocalLogger constructor . 
+ *
+ * \warning TOMO_ORIGIN does not work inside C++11 lambda's.
  */
 #define TOMO_ORIGIN Tomographer::Logger::tomo_internal::extractTomoOrigin(TOMO_FUNCTION)
 
@@ -1745,6 +1746,15 @@ public:
   {
   }
 
+  /**
+   * We need this for \ref makeLocalLogger().
+   */
+  LocalLogger(LocalLogger && movecopy)
+    : _origin_prefix(movecopy._origin_prefix), _glue(movecopy._glue),
+      _baselogger(movecopy._baselogger)
+  {
+  }
+
   inline std::string origin_prefix() const { return _origin_prefix; }
   inline std::string glue() const { return _glue; }
 
@@ -1823,6 +1833,53 @@ public:
     return _baselogger.filter_by_origin(level, get_origin(origin).c_str());
   }
 };
+
+
+
+/** \brief Create a local logger
+ *
+ * This function is useful to avoid having to repeat the base logger's type, by using
+ * C++'s \c auto keyword as well as automatic template argument deduction:
+ * \code
+ *   auto logger = makeLocalLogger(TOMO_ORIGIN, baselogger);
+ * \endcode
+ *
+ * The above code is equivalent to
+ * \code
+ *   LocalLogger<decltype(baselogger)> logger(TOMO_ORIGIN, baselogger);
+ * \endcode
+ *
+ * Each overload of \a makeLocalLogger() calls the matching \ref LocalLogger constructor.
+ * As in the example above, you may use \ref TOMO_ORIGIN as the origin argument.
+ */
+template<typename BaseLoggerType>
+LocalLogger<BaseLoggerType> makeLocalLogger(const std::string & origin_fn_name, BaseLoggerType & baselogger)
+{
+  return LocalLogger<BaseLoggerType>(origin_fn_name, baselogger);
+}
+
+/** \brief Create a local logger
+ *
+ * This function overload provides the same functionality as \ref makeLocalLogger(const
+ * std::string&,BaseLoggerType&), but simply calls the other corresponding constructor.
+ */
+template<typename BaseLoggerType>
+LocalLogger<BaseLoggerType> makeLocalLogger(const std::string & origin_prefix, const std::string & glue,
+					    BaseLoggerType & baselogger)
+{
+  return LocalLogger<BaseLoggerType>(origin_prefix, glue, baselogger);
+}
+
+/** \brief Create a local logger
+ *
+ * This function overload provides the same functionality as \ref makeLocalLogger(const
+ * std::string&,BaseLoggerType&), but simply calls the other corresponding constructor.
+ */
+template<typename BaseLoggerType>
+LocalLogger<BaseLoggerType> makeLocalLogger(const LocalLoggerOriginSpec & spec, BaseLoggerType & baselogger)
+{
+  return LocalLogger<BaseLoggerType>(spec, baselogger);
+}
 
 
 

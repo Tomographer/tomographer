@@ -164,6 +164,19 @@ addTomographerTest(test_multiprocomp.cxx  "openmp")
 #addTomographerTest(test_integrator_basic.cxx "")
 
 
+# check "minimal tomorun" program compiles and runs
+add_executable(minimal_tomorun
+  minimal_tomorun.cxx
+  )
+SetOpenMPTarget(minimal_tomorun)
+
+add_test(NAME minimal_tomorun
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  COMMAND "$<TARGET_FILE:minimal_tomorun>"
+  )
+
+
+
 add_executable(test_tomorun_1qubit_analytic_solution_check
   "tomorun/test_tomorun_1qubit_analytic_solution_check.cxx"
   )
@@ -194,6 +207,7 @@ add_test(NAME test_tomorun_1qubit_analytic_solution_runcheck_binerr
   )
 set_tests_properties(test_tomorun_1qubit_analytic_solution_runcheck_binerr
   PROPERTIES DEPENDS "test_tomorun_1qubit_analytic_solution_check;test_tomorun_1qubit_analytic_solution_run_binerr")
+
 
 message(STATUS "Added test targets")
 
