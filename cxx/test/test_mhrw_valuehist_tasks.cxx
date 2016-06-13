@@ -79,7 +79,7 @@ struct OurCDataTask : CDataBaseType
 
 
 
-template<bool UseBinningAnalysis>
+template<bool UseBinningAnalysis, bool FullRun = true>
 struct run_test {
 
   typedef NormValueCalculator ValueCalculator;
@@ -93,7 +93,8 @@ struct run_test {
   typedef typename OurCDataSimple::HistogramParams HistogramParams;
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCDataSimple, Rng>  OurMHRandomWalkTask;
-  typedef typename OurCDataSimple::template ResultsCollectorType<LoggerType>::type OurResultsCollector;
+  typedef typename OurCDataSimple::template ResultsCollectorType<LoggerType>::Type OurResultsCollector;
+  typedef typename OurCDataSimple::template ResultsCollectorType<LoggerType>::RunTaskResultType OurResultsCollectorRunTaskResultType;
 
   typedef Tomographer::MHRWParams<int,double> MHRWParamsType;
     
@@ -107,21 +108,23 @@ struct run_test {
 
   TaskDispatcherType tasks;
 
+  static constexpr int NumRepeats = 6;
+
   TOMOGRAPHER_ENABLED_IF(!UseBinningAnalysis)
   run_test()
     : logger(Tomographer::Logger::DEBUG),
       taskcdat(NormValueCalculator(), HistogramParams(0, 100, 100),
-	       MHRWParamsType(50, // n_sweep
+	       MHRWParamsType(FullRun?50:1, // n_sweep
 			      2, // step_size
-			      500, // n_therm
-			      25000 // n_run
+			      FullRun?500:1, // n_therm
+			      FullRun?25000:1 // n_run
 		   ), 29329),
       results(logger),
       tasks(Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
 	&taskcdat, // constant data
 	&results, // results collector
 	logger, // the main logger object
-	6, // num_repeats
+	NumRepeats, // num_repeats
 	1 // n_chunk
 		))
   {
@@ -130,17 +133,17 @@ struct run_test {
   run_test()
     : logger(Tomographer::Logger::DEBUG),
       taskcdat(NormValueCalculator(), HistogramParams(0, 100, 100), 5,
-	       MHRWParamsType(50, // n_sweep
-			      2, // step_size
-			      500, // n_therm
-			      25000 // n_run
+	       MHRWParamsType(FullRun?50:1, // n_sweep
+			      FullRun?2:1, // step_size
+			      FullRun?500:1, // n_therm
+			      FullRun?25000:1 // n_run
 		   ), 29329),
       results(logger),
       tasks(Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
 	&taskcdat, // constant data
 	&results, // results collector
 	logger, // the main logger object
-	6, // num_repeats
+	NumRepeats, // num_repeats
 	1 // n_chunk
 		))
   {
@@ -148,15 +151,65 @@ struct run_test {
 
   virtual ~run_test() { }
 };
+// static members:
+template<bool UseBinningAnalysis, bool FullRun>
+constexpr int run_test<UseBinningAnalysis,FullRun>::NumRepeats;
 
 
 
+typedef run_test<false, false> run_test_simple_nofullrun;
+typedef run_test<true, false> run_test_binning_nofullrun;
 
 
 // -----------------------------------------------------------------------------
 // test suites
 
 BOOST_AUTO_TEST_SUITE(test_mhrw_valuehist_tasks)
+
+BOOST_FIXTURE_TEST_CASE(simple_runtaskresults, run_test_simple_nofullrun)
+{
+  BOOST_CHECK(!results.isFinalized());
+
+  tasks.run();
+
+  BOOST_CHECK(results.isFinalized());
+
+  BOOST_CHECK_EQUAL(results.numTasks(), NumRepeats);
+  BOOST_CHECK_EQUAL(results.collectedRunTaskResults().size(), NumRepeats);
+  auto taskresults = results.collectedRunTaskResults();
+  for (std::size_t k = 0; k < NumRepeats; ++k) {
+    OurResultsCollectorRunTaskResultType r = results.collectedRunTaskResult(k);
+    BOOST_CHECK_CLOSE(r.histogram.params.min, taskresults[k].histogram.params.min, tol_percent);
+    BOOST_CHECK_CLOSE(r.histogram.params.max, taskresults[k].histogram.params.max, tol_percent);
+    BOOST_CHECK_EQUAL(r.histogram.params.num_bins, taskresults[k].histogram.params.num_bins);
+    BOOST_CHECK_CLOSE(r.acceptance_ratio, taskresults[k].acceptance_ratio, tol_percent);
+    MY_BOOST_CHECK_EIGEN_EQUAL(r.histogram.bins, taskresults[k].histogram.bins, tol);
+  }
+  OurResultsCollector::FinalHistogramType finalhistogram = results.finalHistogram();
+  BOOST_MESSAGE(Tomographer::histogram_pretty_print(finalhistogram));
+}
+
+BOOST_FIXTURE_TEST_CASE(binning_runtaskresults, run_test_binning_nofullrun)
+{
+  BOOST_CHECK(!results.isFinalized());
+
+  tasks.run();
+
+  BOOST_CHECK(results.isFinalized());
+
+  BOOST_CHECK_EQUAL(results.numTasks(), NumRepeats);
+  BOOST_CHECK_EQUAL(results.collectedRunTaskResults().size(), NumRepeats);
+  auto taskresults = results.collectedRunTaskResults();
+  for (std::size_t k = 0; k < NumRepeats; ++k) {
+    OurResultsCollectorRunTaskResultType r = results.collectedRunTaskResult(k);
+    auto stats_coll_result_hist = r.stats_collector_result.hist;
+    MY_BOOST_CHECK_EIGEN_EQUAL(stats_coll_result_hist.bins, taskresults[k].stats_collector_result.hist.bins, tol);
+  }
+  OurResultsCollector::FinalHistogramType finalhistogram = results.finalHistogram();
+  BOOST_MESSAGE(Tomographer::histogram_pretty_print(finalhistogram));
+}
+
+
 
 BOOST_FIXTURE_TEST_CASE(simple, run_test<false>)
 {
@@ -198,6 +251,7 @@ BOOST_FIXTURE_TEST_CASE(binning, run_test<true>)
   dump_histogram_test(output, results.finalHistogram(), 2);
   BOOST_CHECK(output.match_pattern());
 }
+
 
 BOOST_AUTO_TEST_SUITE_END()
 

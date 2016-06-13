@@ -148,6 +148,23 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
     
     typedef MHRWParams<CountIntType, StepRealType> MHRWParamsType;
     
+    MHRandomWalkTaskResult()
+      : stats_collector_result(), mhrw_params(),
+	acceptance_ratio(std::numeric_limits<double>::quiet_NaN())
+    {
+    }
+
+    template<typename MHRWStatsCollectorResultTypeInit,
+	     typename MHRWParamsType>
+    MHRandomWalkTaskResult(MHRWStatsCollectorResultTypeInit && stats_collector_result_,
+			   MHRWParamsType && mhrw_params_,
+			   double acceptance_ratio_)
+      : stats_collector_result(std::forward<MHRWStatsCollectorResultTypeInit>(stats_collector_result_)),
+	mhrw_params(std::forward<MHRWParamsType>(mhrw_params_)),
+	acceptance_ratio(acceptance_ratio_)
+    {
+    }
+
     template<typename MHRWStatsCollectorResultTypeInit, typename MHRandomWalkType>
     MHRandomWalkTaskResult(MHRWStatsCollectorResultTypeInit && stats_collector_result_,
 			   const MHRandomWalkType & mhrandomwalk)

@@ -35,6 +35,7 @@
 #include <sstream> // std::stringstream
 #include <stdexcept> // std::out_of_range
 #include <type_traits> // std::enable_if
+#include <algorithm> // std::max
 
 #include <boost/math/constants/constants.hpp>
 
@@ -42,6 +43,7 @@
 
 #include <tomographer2/tools/fmt.h>
 #include <tomographer2/tools/eigenutil.h>
+#include <tomographer2/tools/cxxutil.h> // TOMOGRAPHER_ENABLED_IF
 
 
 /** \file histogram.h
@@ -648,7 +650,27 @@ struct AveragedHistogram
 namespace tomo_internal {
 // internal helpers
 //
+// find maximum value in the list only among those values which are finite (not inf or nan)
+//
+template<typename Scalar, typename Fn>
+inline Scalar max_finite_value(const std::size_t num_items, Fn val_generator,
+			       const Scalar default_val = Scalar(1.0))
+{
+  bool has_first_val = false;
+  Scalar max_val = default_val;
+  for (std::size_t k = 0; k < num_items; ++k) {
+    const Scalar this_val = val_generator(k);
+    if (std::isfinite(this_val) && (!has_first_val || this_val > max_val)) {
+      max_val = this_val;
+      has_first_val = true;
+    }
+  }
+  return max_val;
+}
+
+//
 // get labels left of histogram (generic HistogramType interface: no information, just bin #)
+//
 template<typename HistogramType>
 struct histogram_pretty_print_label
 {
@@ -718,19 +740,12 @@ struct histogram_pretty_print_value
   const HistogramType & hist;
   histogram_pretty_print_value(const HistogramType & hist_) : hist(hist_) { }
 
-  template<bool dummy = true,
-	   typename std::enable_if<dummy && !HistogramType::HasErrorBars, bool>::type dummy2 = true>
+  TOMOGRAPHER_ENABLED_IF(!HistogramType::HasErrorBars)
   static inline void getStrValues(std::vector<std::string> & svalues, const HistogramType & hist)
   {
     svalues.resize(hist.num_bins());
 
-    std::size_t k;
-    double max_val = 1.0;
-    for (k = 0; k < hist.num_bins(); ++k) {
-      if (k == 0 || hist.count(k) > max_val) {
-	max_val = hist.count(k);
-      }
-    }
+    double max_val = max_finite_value(hist.num_bins(), [&](std::size_t k) { return hist.count(k); }, 1.0);
 
     const int powten = (int)std::floor(std::log10(max_val));
     const int relprecision = 3;
@@ -738,36 +753,29 @@ struct histogram_pretty_print_value
     const int w = (precision > 0) ? (precision+powten+1) : (relprecision+2);
 
     for (std::size_t k = 0; k < hist.num_bins(); ++k) {
-      std::stringstream ss;
+      std::ostringstream ss;
       ss << std::setprecision(precision) << std::fixed << std::right << std::setw(w)
 	 << hist.count(k);
       svalues[k] = ss.str();
     }
   }
-  template<bool dummy = true,
-	   typename std::enable_if<dummy && HistogramType::HasErrorBars, bool>::type dummy2 = true>
+
+  TOMOGRAPHER_ENABLED_IF(HistogramType::HasErrorBars)
   static inline void getStrValues(std::vector<std::string> & svalues, const HistogramType & hist)
   {
     svalues.resize(hist.num_bins());
 
-    std::size_t k;
-    double max_val = 1.0;
-    for (k = 0; k < hist.num_bins(); ++k) {
-      if (k == 0 || hist.count(k) > max_val) {
-	max_val = hist.count(k);
-      }
-    }
+    double max_val = max_finite_value(hist.num_bins(), [&](std::size_t k) { return hist.count(k); }, 1.0);
 
     const int powten = (int)std::floor(std::log10(max_val)); // floor of log_{10}(...)
     const int relprecision = 3;
     const int precision = abs_precision_for(powten, relprecision);
-    const int w = (precision > 0) ? (precision+powten+1) : (relprecision+2);
+    const int w = (precision > 0) ? (precision+powten+2) : (relprecision+2);
 
-    for (k = 0; k < hist.num_bins(); ++k) {
-      std::stringstream ss;
+    for (std::size_t k = 0; k < hist.num_bins(); ++k) {
+      std::ostringstream ss;
       ss << std::setprecision(precision) << std::fixed << std::right << std::setw(w)
-	 << hist.count(k)
-	 << " +- "
+	 << hist.count(k) << " +- "
 	 << std::setprecision(abs_precision_for(powten-1, relprecision-1)) << std::setw(w)
 	 << hist.errorbar(k);
       svalues[k] = ss.str();
@@ -817,12 +825,13 @@ struct histogram_pretty_printer
     histogram_pretty_print_label<HistogramType>::getLabels(labels, hist);
     histogram_pretty_print_value<HistogramType>::getStrValues(svalues, hist);
 
-    std::size_t k;
-    for (k = 0; k < hist.num_bins(); ++k) {
-      double val = maxval(k);
+    bool has_maxval = false;
+    for (std::size_t k = 0; k < hist.num_bins(); ++k) {
+      const double val = maxval(k);
 
-      if (k == 0 || val > max_value) {
+      if (std::isfinite(val) && (!has_maxval || val > max_value)) {
 	max_value = val;
+	has_maxval = true;
       }
       if (k == 0 || (int)labels[k].size() > maxlabelwidth) {
 	maxlabelwidth = labels[k].size();
@@ -830,6 +839,9 @@ struct histogram_pretty_printer
       if (k == 0 || (int)svalues[k].size() > maxsvaluewidth) {
 	maxsvaluewidth = svalues[k].size();
       }
+    }
+    if (!has_maxval) {
+      max_value = 1.0;
     }
 
     max_bar_width = max_width - maxlabelwidth - maxsvaluewidth - lsep.size() - rsep.size();
@@ -841,7 +853,7 @@ struct histogram_pretty_printer
 
   inline int value_to_bar_length(double val) const
   {
-    if (val < 0) {
+    if (val < 0 || !std::isfinite(val)) {
       val = 0;
     }
     int l = (int)(val/barscale+0.5);
@@ -893,29 +905,25 @@ struct histogram_pretty_printer
 
 private:
   // maxval(k): how much this bar may extend in length
-  template<bool dummy = true,
-	   typename std::enable_if<dummy && !HistogramType::HasErrorBars, bool>::type dummy2 = true>
+  TOMOGRAPHER_ENABLED_IF(!HistogramType::HasErrorBars)
   inline double maxval(const std::size_t k) const
   {
     return (double)hist.count(k);
   }
-  template<bool dummy = true,
-	   typename std::enable_if<dummy && HistogramType::HasErrorBars, bool>::type dummy2 = true>
+  TOMOGRAPHER_ENABLED_IF(HistogramType::HasErrorBars)
   inline double maxval(const std::size_t k) const
   {
     return (double)(hist.count(k) + hist.errorbar(k));
   }
   // make_bar(k): produce the histogram bar in characters...
-  template<bool dummy = true,
-	   typename std::enable_if<dummy && !HistogramType::HasErrorBars, bool>::type dummy2 = true>
+  TOMOGRAPHER_ENABLED_IF(!HistogramType::HasErrorBars)
   inline std::string make_bar(std::size_t k) const
   {
     std::string sbar(max_bar_width, ' ');
     fill_str_len(sbar, 0.0, hist.count(k), '*', 0, 0);
     return sbar;
   }
-  template<bool dummy = true,
-	   typename std::enable_if<dummy && HistogramType::HasErrorBars, bool>::type dummy2 = true>
+  TOMOGRAPHER_ENABLED_IF(HistogramType::HasErrorBars)
   inline std::string make_bar(std::size_t k) const
   {
     std::string sbar(max_bar_width, ' ');

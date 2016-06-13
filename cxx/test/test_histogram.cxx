@@ -357,9 +357,11 @@ BOOST_AUTO_TEST_SUITE_END(); // averaged_histogram
 
 // -----------------------------------------------------------------------------
 
-BOOST_AUTO_TEST_SUITE(formatting);
+BOOST_AUTO_TEST_SUITE(formatting)
 
-BOOST_AUTO_TEST_CASE(histogram_pretty_print)
+BOOST_AUTO_TEST_SUITE(histogram_pretty_print)
+
+BOOST_AUTO_TEST_CASE(basic)
 {
   Tomographer::UniformBinsHistogram<double> hist(0.0, 1.0, 5);
   hist.load( (Eigen::VectorXi(5) << 0, 1, 4, 6, 2).finished() );
@@ -383,7 +385,7 @@ BOOST_AUTO_TEST_CASE(histogram_pretty_print)
   Tomographer::histogram_pretty_print(ss, hist, max_width);
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
-BOOST_AUTO_TEST_CASE(histogram_pretty_print_errbars)
+BOOST_AUTO_TEST_CASE(errbars)
 {
   Tomographer::UniformBinsHistogramWithErrorBars<double> hist(0.0, 1.0, 5);
   // make the values small (<1) to make sure that there hasn't been a conversion to int
@@ -411,6 +413,130 @@ BOOST_AUTO_TEST_CASE(histogram_pretty_print_errbars)
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
 
+BOOST_AUTO_TEST_SUITE(nobug)
+
+BOOST_AUTO_TEST_CASE(toolargeerrbar)
+{
+  Tomographer::UniformBinsHistogramWithErrorBars<double> hist(-2.0, 2.0, 2);
+  // make the values small (<1) to make sure that there hasn't been a conversion to int
+  // somewhere in the process
+  hist.load( (Eigen::VectorXd(2) << 3.0, 4.0).finished() );
+  hist.delta = (Eigen::VectorXd(2) << 4.0, 2.0).finished();
+
+  const int max_width = 80;
+
+  const std::string correct_str =
+    "-1.000 ||--------------------------------------------------------|  3.00 +- 4.00\n"
+    " 1.000 |*****************|--------------------------------|         4.00 +- 2.00\n"
+    ;
+
+  const std::string s = Tomographer::histogram_pretty_print(hist, max_width);
+  BOOST_CHECK_EQUAL(s, correct_str) ;
+
+  const std::string s2 = hist.pretty_print(max_width);
+  BOOST_CHECK_EQUAL(s2, correct_str) ;
+
+  std::ostringstream ss;
+  Tomographer::histogram_pretty_print(ss, hist, max_width);
+  BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
+}
+BOOST_AUTO_TEST_CASE(withinf)
+{
+  Tomographer::UniformBinsHistogramWithErrorBars<double> hist(-2.0, 2.0, 2);
+  // make the values small (<1) to make sure that there hasn't been a conversion to int
+  // somewhere in the process
+  hist.load( (Eigen::VectorXd(2) << 3.0, std::numeric_limits<double>::infinity()).finished() );
+  hist.delta = (Eigen::VectorXd(2) << 4.0, 1.0).finished();
+
+  const int max_width = 80;
+
+  const std::string correct_str =
+    "-1.000 ||--------------------------------------------------------|  3.00 +- 4.00\n"
+    " 1.000 ||                                                            inf +- 1.00\n"
+    ;
+
+  const std::string s = Tomographer::histogram_pretty_print(hist, max_width);
+  BOOST_CHECK_EQUAL(s, correct_str) ;
+  const std::string s2 = hist.pretty_print(max_width);
+  BOOST_CHECK_EQUAL(s2, correct_str) ;
+  std::ostringstream ss;
+  Tomographer::histogram_pretty_print(ss, hist, max_width);
+  BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
+}
+BOOST_AUTO_TEST_CASE(withinf2)
+{
+  Tomographer::UniformBinsHistogramWithErrorBars<double> hist(-2.0, 2.0, 2);
+  // make the values small (<1) to make sure that there hasn't been a conversion to int
+  // somewhere in the process
+  hist.load( (Eigen::VectorXd(2) << 3.0, 2.0).finished() );
+  hist.delta = (Eigen::VectorXd(2) << 4.0, std::numeric_limits<double>::infinity()).finished();
+
+  const int max_width = 80;
+
+  const std::string correct_str =
+    "-1.000 ||--------------------------------------------------------|  3.00 +- 4.00\n"
+    " 1.000 ||                                                           2.00 +-  inf\n"
+    ;
+
+  const std::string s = Tomographer::histogram_pretty_print(hist, max_width);
+  BOOST_CHECK_EQUAL("\n"+s, "\n"+correct_str) ;
+  const std::string s2 = hist.pretty_print(max_width);
+  BOOST_CHECK_EQUAL(s2, correct_str) ;
+  std::ostringstream ss;
+  Tomographer::histogram_pretty_print(ss, hist, max_width);
+  BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
+}
+BOOST_AUTO_TEST_CASE(withnan)
+{
+  Tomographer::UniformBinsHistogramWithErrorBars<double> hist(-2.0, 2.0, 2);
+  // make the values small (<1) to make sure that there hasn't been a conversion to int
+  // somewhere in the process
+  hist.load( (Eigen::VectorXd(2) << 3.0, std::numeric_limits<double>::quiet_NaN()).finished() );
+  hist.delta = (Eigen::VectorXd(2) << 4.0, 1.0).finished();
+
+  const int max_width = 80;
+
+  const std::string correct_str =
+    "-1.000 ||--------------------------------------------------------|  3.00 +- 4.00\n"
+    " 1.000 ||                                                            nan +- 1.00\n"
+    ;
+
+  const std::string s = Tomographer::histogram_pretty_print(hist, max_width);
+  BOOST_CHECK_EQUAL("\n"+s, "\n"+correct_str) ;
+  const std::string s2 = hist.pretty_print(max_width);
+  BOOST_CHECK_EQUAL(s2, correct_str) ;
+  std::ostringstream ss;
+  Tomographer::histogram_pretty_print(ss, hist, max_width);
+  BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
+}
+BOOST_AUTO_TEST_CASE(withnan2)
+{
+  Tomographer::UniformBinsHistogramWithErrorBars<double> hist(-2.0, 2.0, 2);
+  // make the values small (<1) to make sure that there hasn't been a conversion to int
+  // somewhere in the process
+  hist.load( (Eigen::VectorXd(2) << 3.0, 2.0).finished() );
+  hist.delta = (Eigen::VectorXd(2) << 4.0, std::numeric_limits<double>::quiet_NaN()).finished();
+
+  const int max_width = 80;
+
+  const std::string correct_str =
+    "-1.000 ||--------------------------------------------------------|  3.00 +- 4.00\n"
+    " 1.000 ||                                                           2.00 +-  nan\n"
+    ;
+
+  const std::string s = Tomographer::histogram_pretty_print(hist, max_width);
+  BOOST_CHECK_EQUAL("\n"+s, "\n"+correct_str) ;
+  const std::string s2 = hist.pretty_print(max_width);
+  BOOST_CHECK_EQUAL(s2, correct_str) ;
+  std::ostringstream ss;
+  Tomographer::histogram_pretty_print(ss, hist, max_width);
+  BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
+}
+
+BOOST_AUTO_TEST_SUITE_END() // nobug
+
+BOOST_AUTO_TEST_SUITE_END() // histogram_pretty_print
+
 
 BOOST_AUTO_TEST_CASE(histogram_short_bar)
 {
@@ -431,6 +557,7 @@ BOOST_AUTO_TEST_CASE(histogram_short_bar)
   Tomographer::histogram_short_bar(ss, hist, false, max_width);
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
+
 BOOST_AUTO_TEST_CASE(histogram_short_bar_log)
 {
   Tomographer::UniformBinsHistogramWithErrorBars<double> hist(0.0, 1.0, 5);
@@ -448,6 +575,7 @@ BOOST_AUTO_TEST_CASE(histogram_short_bar_log)
   Tomographer::histogram_short_bar(ss, hist, true, max_width);
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
+
 
 BOOST_AUTO_TEST_SUITE_END(); // formatting
 

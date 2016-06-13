@@ -88,37 +88,6 @@ struct histogram_types<CDataBaseType, true> {// version WITH binning analysis:
 
 
 
-
-//
-// RUN TASK INFO
-//
-
-template<typename CountIntType_, typename StepRealType_>
-struct RunTaskInfo
-{
-
-  typedef CountIntType_ CountIntType;
-  typedef StepRealType_ StepRealType;
-
-  RunTaskInfo()
-    : mhrw_params(0, std::numeric_limits<double>::quiet_NaN(), 0, 0),
-      acceptance_ratio(std::numeric_limits<double>::quiet_NaN())
-  {
-  }
-
-  template<typename TaskResultType>
-  RunTaskInfo(TaskResultType && t)
-    : mhrw_params(t.mhrw_params),
-      acceptance_ratio(t.acceptance_ratio)
-  {
-  }
-
-  MHRWParams<CountIntType,StepRealType> mhrw_params;
-
-  double acceptance_ratio;
-};
-
-
 /** \brief Results collector, if no binning analysis is being used.
  *
  * You can directly get the right type by querying the type \a
@@ -130,6 +99,8 @@ struct ResultsCollectorSimple
   typedef CDataBaseType_ CDataBaseType;
   typedef typename CDataBaseType::ValueCalculator ValueCalculator;
   typedef typename CDataBaseType::CountRealType CountRealType;
+  typedef typename CDataBaseType::CountIntType CountIntType;
+  typedef typename CDataBaseType::StepRealType StepRealType;
   typedef LoggerType_ LoggerType;
   
   typedef typename CDataBaseType::HistogramType HistogramType;
@@ -138,48 +109,65 @@ struct ResultsCollectorSimple
   typedef Tomographer::AveragedHistogram<NormalizedHistogramType, CountRealType> FinalHistogramType;
 
   typedef HistogramType TaskResultType;
-  typedef typename CDataBaseType::RunTaskInfoType RunTaskInfoType;
+
+  struct RunTaskResult : public MHRandomWalkTaskResult<TaskResultType,CountIntType,StepRealType>
+  {
+    typedef MHRandomWalkTaskResult<TaskResultType,CountIntType,StepRealType> Base;
+
+    RunTaskResult()
+      : Base(), histogram()
+    {
+    }
+
+    template<typename BaseType, typename NormalizedHistogramTypeRef>
+    RunTaskResult(BaseType&& b, NormalizedHistogramTypeRef&& histogram_)
+      : Base(std::forward<BaseType>(b)), histogram(histogram_)
+    {
+    }
+
+    const NormalizedHistogramType histogram;
+  };
+
 
   ResultsCollectorSimple(LoggerType & logger_)
     : _finalized(false), _finalhistogram(HistogramParams()),
-      _collected_runtaskinfos(), _collected_results(), _collected_histograms(),
+      _collected_runtaskresults(),
       _llogger("MHRWTasks::ValueHistogramTasks::ResultsCollectorSimple", logger_)
   {
   }
 
   inline bool isFinalized() const { return _finalized; }
   
-  inline const FinalHistogramType & finalHistogram() const {
+  inline FinalHistogramType finalHistogram() const {
     assert(isFinalized() && "You may only call finalHistogram() after the runs have been finalized.");
     return _finalhistogram;
   }
-    
-  inline const std::vector<RunTaskInfoType> & collectedRunTaskInfos() const {
-    assert(isFinalized() && "You may only call collectedRunTaskInfos() after the runs have been finalized.");
-    return _collected_runtaskinfos;
+  
+  inline std::size_t numTasks() const {
+    assert(isFinalized() && "You may only call numTasks() after the runs have been finalized.");
+    return _collected_runtaskresults.size();
+  }
+  
+  inline const std::vector<RunTaskResult> & collectedRunTaskResults() const {
+    assert(isFinalized() && "You may only call collectedRunTaskResults() after the runs have been finalized.");
+    return _collected_runtaskresults;
   }
 
-  inline const std::vector<NormalizedHistogramType> & collectedHistograms() const {
-    assert(isFinalized() && "You may only call collectedHistograms() after the runs have been finalized.");
-    return _collected_histograms;
+  inline RunTaskResult collectedRunTaskResult(std::size_t task_no) const {
+    assert(isFinalized() && "You may only call collectedRunTaskResult(std::size_t) after the runs have been finalized.");
+    assert(task_no < _collected_runtaskresults.size());
+    return _collected_runtaskresults[task_no];
   }
 
-  /**
-   */
-  inline const std::vector<TaskResultType> & collectedResults() const {
-    assert(isFinalized() && "You may only call collectedResults() after the runs have been finalized.");
-    return _collected_results;
-  }
-
-
+  template<typename RealType = double>
   inline void print_histogram_csv(std::ostream & stream, std::string sep = "\t", std::string linesep = "\n", int precision = 10)
   {
     stream << "Value" << sep << "Counts" << sep << "Error" << linesep
 	   << std::scientific << std::setprecision(precision);
     for (int kk = 0; kk < _finalhistogram.bins.size(); ++kk) {
-      stream << (double)_finalhistogram.params.bin_lower_value(kk) << sep
-	     << (double)_finalhistogram.bins(kk) << sep
-	     << (double)_finalhistogram.delta(kk) << linesep;
+      stream << RealType(_finalhistogram.params.bin_lower_value(kk)) << sep
+	     << RealType(_finalhistogram.bins(kk)) << sep
+	     << RealType(_finalhistogram.delta(kk)) << linesep;
     }
   }
 
@@ -187,9 +175,7 @@ private:
   bool _finalized;
   FinalHistogramType _finalhistogram;
 
-  std::vector<RunTaskInfoType> _collected_runtaskinfos;
-  std::vector<TaskResultType> _collected_results;
-  std::vector<NormalizedHistogramType> _collected_histograms;
+  std::vector<RunTaskResult> _collected_runtaskresults;
 
   Logger::LocalLogger<LoggerType>  _llogger;
     
@@ -202,13 +188,11 @@ public:
   {
     assert(!isFinalized() && "init() called after results have been finalized!");
 
-    _collected_histograms.resize(num_total_runs);
-    _collected_results.resize(num_total_runs);
-    _collected_runtaskinfos.reserve(num_total_runs);
+    _collected_runtaskresults.resize(num_total_runs);
     _finalhistogram.reset(pcdata->histogram_params);
   }
   template<typename Cnt, typename TaskResultType, typename CData>
-  inline void collect_result(Cnt task_no, const TaskResultType& taskresult, const CData * /*pcdata*/)
+  inline void collect_result(Cnt task_no, TaskResultType&& taskresult, const CData * /*pcdata*/)
   {
     assert(!isFinalized() && "collect_result() called after results have been finalized!");
 
@@ -223,10 +207,8 @@ public:
     thishistogram.bins /= normalization;
     thishistogram.off_chart /= normalization;
 
-    _collected_histograms[task_no] = thishistogram;
-    _collected_results[task_no] = taskresult.stats_collector_result;
-    _collected_runtaskinfos[task_no] = RunTaskInfoType(taskresult);
     _finalhistogram.add_histogram(thishistogram);
+    new (&_collected_runtaskresults[task_no]) RunTaskResult(std::forward<TaskResultType>(taskresult), std::move(thishistogram));
   }
   template<typename Cnt, typename CData>
   inline void runs_finished(Cnt, const CData *)
@@ -254,6 +236,8 @@ struct ResultsCollectorWithBinningAnalysis
   typedef CDataBaseType_ CDataBaseType;
   typedef typename CDataBaseType::ValueCalculator ValueCalculator;
   typedef typename CDataBaseType::CountRealType CountRealType;
+  typedef typename CDataBaseType::CountIntType CountIntType;
+  typedef typename CDataBaseType::StepRealType StepRealType;
   typedef LoggerType_ LoggerType;
   
   typedef typename tomo_internal::histogram_types<CDataBaseType_,true>::BinningMHRWStatsCollectorParams
@@ -277,48 +261,56 @@ struct ResultsCollectorWithBinningAnalysis
   typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> SimpleNormalizedHistogramType;
   typedef Tomographer::AveragedHistogram<SimpleNormalizedHistogramType, double> SimpleFinalHistogramType;
 
-  typedef typename CDataBaseType::RunTaskInfoType RunTaskInfoType;
+
+  typedef MHRandomWalkTaskResult<TaskResultType,CountIntType,StepRealType> RunTaskResult;
 
 
   ResultsCollectorWithBinningAnalysis(LoggerType & logger_)
     : _finalized(false), _finalhistogram(), _simplefinalhistogram(),
-      _collected_runtaskinfos(), _collected_results(),
+      _collected_runtaskresults(),
       _llogger("MHRWTasks::ValueHistogramTasks::ResultsCollectorWithBinningAnalysis", logger_)
   {
   }
 
   inline bool isFinalized() const { return _finalized; }
   
-  inline const FinalHistogramType & finalHistogram() const {
+  inline FinalHistogramType finalHistogram() const {
     assert(isFinalized() && "You may only call finalHistogram() after the runs have been finalized.");
     return _finalhistogram;
   }
     
-  inline const SimpleFinalHistogramType & simpleFinalHistogram() const {
+  inline SimpleFinalHistogramType simpleFinalHistogram() const {
     assert(isFinalized() && "You may only call simpleFinalHistogram() after the runs have been finalized.");
     return _simplefinalhistogram;
   }
-    
-  inline const std::vector<RunTaskInfoType> & collectedRunTaskInfos() const {
-    assert(isFinalized() && "You may only call collectedRunTaskInfos() after the runs have been finalized.");
-    return _collected_runtaskinfos;
+  
+  inline std::size_t numTasks() const {
+    assert(isFinalized() && "You may only call numTasks() after the runs have been finalized.");
+    return _collected_runtaskresults.size();
   }
 
-  inline const std::vector<TaskResultType> & collectedResults() const {
-    assert(isFinalized() && "You may only call collectedResults() after the runs have been finalized.");
-    return _collected_results;
+  inline std::vector<RunTaskResult> collectedRunTaskResults() const {
+    assert(isFinalized() && "You may only call collectedRunTaskResults() after the runs have been finalized.");
+    return _collected_runtaskresults;
+  }
+
+  inline RunTaskResult collectedRunTaskResult(std::size_t task_no) const {
+    assert(isFinalized() && "You may only call collectedRunTaskResult(std::size_t) after the runs have been finalized.");
+    assert(task_no < _collected_runtaskresults.size());
+    return _collected_runtaskresults[task_no];
   }
 
 
+  template<typename RealType = double>
   inline void print_histogram_csv(std::ostream & stream, std::string sep = "\t", std::string linesep = "\n", int precision = 10)
   {
     stream << "Value" << sep << "Counts" << sep << "Error" << sep << "SimpleError" << linesep
            << std::scientific << std::setprecision(precision);
     for (int kk = 0; kk < _finalhistogram.bins.size(); ++kk) {
-      stream << (double)_finalhistogram.params.bin_lower_value(kk) << sep
-             << (double)_finalhistogram.bins(kk) << sep
-             << (double)_finalhistogram.delta(kk) << sep
-             << (double)_simplefinalhistogram.delta(kk) << linesep;
+      stream << RealType(_finalhistogram.params.bin_lower_value(kk)) << sep
+             << RealType(_finalhistogram.bins(kk)) << sep
+	     << RealType(_finalhistogram.delta(kk)) << sep
+	     << RealType(_simplefinalhistogram.delta(kk)) << linesep;
     }
   }
 
@@ -327,8 +319,7 @@ private:
   FinalHistogramType _finalhistogram;
   SimpleFinalHistogramType _simplefinalhistogram;
 
-  std::vector<RunTaskInfoType> _collected_runtaskinfos;
-  std::vector<TaskResultType> _collected_results;
+  std::vector<RunTaskResult> _collected_runtaskresults;
 
   Logger::LocalLogger<LoggerType>  _llogger;
     
@@ -339,8 +330,7 @@ public:
   {
     assert(!isFinalized() && "init() called after results have been finalized!");
 
-    _collected_results.resize(num_total_runs);
-    _collected_runtaskinfos.resize(num_total_runs);
+    _collected_runtaskresults.resize(num_total_runs);
     _finalhistogram.reset(pcdata->histogram_params);
     _simplefinalhistogram.reset(pcdata->histogram_params);
   }
@@ -352,10 +342,8 @@ public:
 
     auto logger = _llogger.sublogger(TOMO_ORIGIN);
     
-    _collected_runtaskinfos[task_no] = RunTaskInfoType(taskresult);
     auto stats_coll_result = taskresult.stats_collector_result;
-    _collected_results[task_no] = stats_coll_result;
-    
+
     logger.debug([&](std::ostream & str) {
 	str << "(). Got task result. Histogram (w/ error bars from binning analysis):\n"
 	    << stats_coll_result.hist.pretty_print();
@@ -398,8 +386,12 @@ public:
 	histogram_pretty_print<SimpleNormalizedHistogramType>(str, stats_coll_result.hist);
       });
     _simplefinalhistogram.add_histogram(stats_coll_result.hist);
+
+    new (&_collected_runtaskresults[task_no]) RunTaskResult(std::move(taskresult));
+    
     logger.debug("done.");
   }
+
   template<typename Cnt, typename CData>
   inline void runs_finished(Cnt, const CData *)
   {
@@ -460,8 +452,6 @@ struct CDataBase : public MHRWTasks::CDataBase<CountIntType_, StepRealType_>
 
   typedef MHRWParams<CountIntType, StepRealType> MHRWParamsType;
  
-  typedef RunTaskInfo<CountIntType, StepRealType> RunTaskInfoType;
-  
 
   TOMOGRAPHER_ENABLED_IF(!UseBinningAnalysis)
   CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_,
@@ -520,9 +510,11 @@ struct CDataBase : public MHRWTasks::CDataBase<CountIntType_, StepRealType_>
     tomo_internal::ResultsCollectorTypeHelper<CDataBase<ValueCalculator,UseBinningAnalysis,CountIntType,StepRealType,CountRealType>,
 					      LoggerType, UseBinningAnalysis>::type
 #else
-    THE_CORRECT_RESULTS_COLLECTOR_TYPE // parsed by doxygen -- make this more readable
+    [...] // parsed by doxygen -- make this more readable
 #endif
-    type;
+    Type;
+
+    typedef typename Type::RunTaskResult RunTaskResultType;
   };
 };
 // define static members:
