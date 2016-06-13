@@ -437,8 +437,8 @@ struct CDataBase : public MHRWTasks::CDataBase<CountIntType_, StepRealType_>
 {
   typedef MHRWTasks::CDataBase<CountIntType_, StepRealType_> Base; // base class
 
-  using typename Base::CountIntType;
-  using typename Base::StepRealType;
+  typedef typename Base::CountIntType CountIntType;
+  typedef typename Base::StepRealType StepRealType;
 
   typedef ValueCalculator_ ValueCalculator;
   typedef CountRealType_ CountRealType;
