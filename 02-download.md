@@ -57,8 +57,7 @@ Prerequisites
 
 You'll need:
 
-- a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, clang++ >= 3.6 (>= 3.3 w/o
-  OpenMP))
+- a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14)
 - [CMake >= 2.8.5](http://www.cmake.org/){:target="_blank"}
 - [Boost libraries](http://www.boost.org/){:target="_blank"}
 - [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/){:target="_blank"}
@@ -66,7 +65,8 @@ You'll need:
 
 A recent C++ compiler is required as some C++11 features and elements of its
 standard library are used. Also, make sure it supports OpenMP or you won't
-benefit from parallelization.
+benefit from parallelization. A recent Clang++ will compile as well (tested
+with clang++ >= 3.3), but I haven't managed to get OpenMP working.
 
 Tested on Linux/Ubuntu and Mac OS X. Should theoretically (*big flashing red
 warning light*) also work on Windows.
