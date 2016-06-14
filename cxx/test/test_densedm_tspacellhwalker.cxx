@@ -187,7 +187,7 @@ BOOST_AUTO_TEST_CASE(basic1)
   BOOST_MESSAGE("FINAL HISTOGRAM(1):\n" << hist1.pretty_print(100));
 
   boost::test_tools::output_test_stream output1(
-      TOMOGRAPHER_TEST_PATTERNS_DIR "test_densedm_dmmhrw/hist1.txt",
+      TOMOGRAPHER_TEST_PATTERNS_DIR "test_densedm_tspacellhwalker/hist1.txt",
       true // true = match mode, false = write mode
       );
   dump_histogram_test(output1, hist1);
@@ -197,7 +197,7 @@ BOOST_AUTO_TEST_CASE(basic1)
   BOOST_MESSAGE("FINAL HISTOGRAM(2):\n" << hist2.pretty_print(100));
 
   boost::test_tools::output_test_stream output2(
-      TOMOGRAPHER_TEST_PATTERNS_DIR "test_densedm_dmmhrw/hist2.txt",
+      TOMOGRAPHER_TEST_PATTERNS_DIR "test_densedm_tspacellhwalker/hist2.txt",
       true // true = match mode, false = write mode
       );
   dump_histogram_test(output2, hist2);
@@ -279,14 +279,14 @@ BOOST_AUTO_TEST_CASE(with_binning_analysis)
   BOOST_MESSAGE("Convergence Analysis:\n" << conv_analysis);
 
   boost::test_tools::output_test_stream output_conv_analysis(
-      TOMOGRAPHER_TEST_PATTERNS_DIR "test_densedm_dmmhrw/binning_convergence_analysis.txt",
+      TOMOGRAPHER_TEST_PATTERNS_DIR "test_densedm_tspacellhwalker/binning_convergence_analysis.txt",
       true // true = compare mode, false = write mode
       );
   output_conv_analysis << conv_analysis;
   BOOST_CHECK(output_conv_analysis.match_pattern());
 
   boost::test_tools::output_test_stream output_error_bars(
-      TOMOGRAPHER_TEST_PATTERNS_DIR "test_densedm_dmmhrw/binning_error_bars.txt",
+      TOMOGRAPHER_TEST_PATTERNS_DIR "test_densedm_tspacellhwalker/binning_error_bars.txt",
       true // true = compare mode, false = write mode
       );
   output_error_bars

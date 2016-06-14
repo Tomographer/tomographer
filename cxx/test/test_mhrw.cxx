@@ -128,7 +128,7 @@ struct test_mhrandomwalk_fixture
       BOOST_CHECK_EQUAL(count_samples, Nrunchk);
     }
     template<typename... Args>
-    void process_sample(Args... /*a*/)
+    void process_sample(Args&&... /*a*/)
     //CountIntType k, CountIntType n, const PointType & pt, FnValueType fnval, MHRandomWalk & rw)
     {
       ++count_samples;

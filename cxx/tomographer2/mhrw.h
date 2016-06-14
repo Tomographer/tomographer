@@ -381,6 +381,9 @@ public:
     _logger.debug([&](std::ostream & s) { s << "constructor(). mhrw parameters = " << _n; });
   }
 
+  MHRandomWalk(const MHRandomWalk & other) = delete;
+
+
   //! The parameters of the random walk.
   inline MHRWParamsType mhrwParams() const { return _n; }
 
