@@ -185,7 +185,7 @@
  * \code
  *   #include "hs_dist.h"
  * \endcode
- *  near the top of the file, where the other include directives are.
+ *  near the top of the file, below the other include directives.
  *
  * Then you'll have to code how specifically the program should instantiate your value
  * calculator. Add a conditional in the function <tt>tomorun_dispatch()</tt> which tests
@@ -201,21 +201,20 @@
  *         tomodat,            // the TomoProblem instance
  *         opt,                // the program options
  *         // and a callable which creates and returns a ValueCalculator instance:
- *         [&](const OurTomoProblem & tomo) {
- *           return MyCustomFigureOfMeritValueCalculatorInstance<...>(...);
- *         },
+ *         MyCustomFigureOfMeritValueCalculatorInstance<...>(...),
  *         logger); // and finally the logger instance
  *     return;
  *   }
  * \endcode
  *
  * You're probably best off copying from the built-in examples inside that same function,
- * or the example for the Hilbert-Schmidt distance below. Here are some useful tips:
+ * or the example for the Hilbert-Schmidt distance presented here. Here are some
+ * additional tips:
  *
  *   - The object \c "opt->valtype.ref_obj_name" is an std::string of anything the user
- *     specified in the config file as second part to the \c "--value-type" option (e.g.
- *     the name of the variable in the MATLAB data file containing the reference state
- *     density matrix).
+ *     specified at the command line or in the config file as second part to the \c
+ *     "--value-type" option (e.g., representing the name of the variable in the MATLAB
+ *     data file containing the reference state density matrix).
  *
  *   - You can load data from the MATLAB data file via the \c "matf" object, which is a
  *     \ref Tomographer::MAT::File instance.
@@ -234,7 +233,7 @@
  * \code
  *  if (opt->valtype.valtype == val_type_spec::HS_DIST) {
  *    
- *    MatrixType rho_ref = matq.initMatrixType();
+ *    MatrixType rho_ref(dmt.initMatrixType());
  *
  *    // determine the variable name of the reference state. By default, "rho_MLE".
  *    std::string refname = "rho_MLE";
@@ -251,7 +250,8 @@
  *
  *    // emit debug message; this is displayed in verbose mode
  *    logger.debug("tomorun_dispatch()", [&](std::ostream & str) {
- *        str << "Using rho_ref = \n" << rho_ref << "\n";
+ *        str << "Using HS distance figure of merit with rho_ref = \n"
+ *            << rho_ref << "\n";
  *      });
  *
  *    // finally, dispatch the execution to the main function tomorun().
@@ -260,12 +260,11 @@
  *      tomodat,
  *      // second argument: the command-line options
  *      opt,
- *      // thrid argument: an anonymous lambda function (C++11 feature) which returns a
- *      // new instance of the figure of merit calculator.
+ *      // thrid argument: an instance of the figure of merit calculator
  *      [&rho_ref](const OurTomoProblem & tomo) {
  *        return Tomographer::HsDistToRefCalculator<OurTomoProblem>(tomo, rho_ref);
  *      },
- *      // fourth argument: the logger object to emit log messages.
+ *      // fourth argument: the logger object to emit log messages
  *      logger);
  *  }
  * \endcode

@@ -79,7 +79,7 @@ struct histogram_types<CDataBaseType, true> {// version WITH binning analysis:
 /** \brief Results collector, if no binning analysis is being used.
  *
  * You can directly get the right type by querying the type \a
- * "CDataBase::ResultsCollectorType<..>::type".
+ * "CDataBase::ResultsCollectorType<..>::Type".
  */
 template<typename CDataBaseType_, typename LoggerType_>
 struct ResultsCollectorSimple
