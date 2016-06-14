@@ -69,9 +69,7 @@ if os.path.exists(tomo_name_w_ver) or any((os.path.exists(n) for n in tomo_name_
 print("Packaging Tomographer version", gitversion, "as", install_name)
 
 
-#tomographer_url = "git@github.com:Tomographer/tomographer.git"
-tomographer_url = 'file:///home/pfaist/ETH/PhD/projects/qtomo/tomographer'
-print "WARNING: USED LOCAL URL ---- CHANGE ME !!"
+tomographer_url = "git@github.com:Tomographer/tomographer.git"
 
 
 class MyStore: pass
