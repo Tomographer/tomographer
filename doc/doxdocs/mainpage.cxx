@@ -89,9 +89,9 @@
  *   can be executed by a \ref pageTaskManagerDispatcher such as \ref
  *   Tomographer::MultiProc::OMP.
  *
- * - On top of this the classes in \ref Tomographer::MHRWTasks::ValueHistTasks provide
- *   more specific definitions for collecting a histogram about a value (e.g. figure of
- *   merit) during a Metropolis-Hastings random walk.
+ * - On top of this the classes in \ref Tomographer::MHRWTasks::ValueHistogramTasks
+ *   provide more specific definitions for collecting a histogram about a value
+ *   (e.g. figure of merit) during a Metropolis-Hastings random walk.
  *
  * <h3>Specific Implementation for Quantum States Specified as Densely Stored Matrices</h3>
  *
@@ -131,7 +131,8 @@
  * <h3>Important Namespaces</h3>
  *
  *   - \ref Tomographer — base %Tomographer namespace
- *   - \ref Tomographer::Tools — namespace for various tools
+ *   - \ref Tomographer::Tools — various C++ language-related tools
+ *   - \ref Tomographer::MathTools — various mathematical tools
  *   - Additional tools are available in selected namespaces. See the \htmlonly <a href="namespaces.html">List of Namespaces</a>.\endhtmlonly \latexonly List of Namespaces.\endlatexonly
  *
  * <h3>Specific Topics</h3>
@@ -147,8 +148,15 @@
  *
  * <h3>Tomorun-Executable Related Topics</h3>
  *
- * The \c tomorun program code is not part of the %Tomographer API strictly speaking.
- * Here are just some specific information pages which may be useful.
+ * The \c tomorun program is simply a straightforward piecing together of the different
+ * components detailed above.  Most of the work is already done by the classes in \ref
+ * Tomographer::MHRWTasks::ValueHistogramTasks.
+ *
+ * To get started, you might like to have a look at the test example \a
+ * minimal_tomorun.cxx, which provides a very minimal implementation of tomorun for a
+ * specific example.
+ *
+ * Topics:
  *
  *   - \subpage pageTomorunNewFigureOfMerit
  *

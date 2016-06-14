@@ -124,10 +124,10 @@
  * from a string. So you should add a new enumeration value, as well as adapt the class
  * methods, so that it understands your new figure of merit.
  * 
- * \note As with the other figures of merit, the user may also pass a string argument in
- *       the form \c "HS-dist:string_argument_goes_here" which can specify for example a
- *       reference state.  You don't have to do anything special for that, it's taken care
- *       of for you already.
+ * As with the other figures of merit, the user may also pass a string argument in the
+ * form \c "HS-dist:string_argument_goes_here" which can specify for example a reference
+ * state.  You don't have to do anything special for that, it's taken care of for you
+ * already.
  *
  * Also change the command-line help text to include documentation for your new figure of
  * merit.

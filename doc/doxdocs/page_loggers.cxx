@@ -160,8 +160,8 @@
  * Also, by default there is no public \c setLevel() method, in case your logger's level
  * is statically fixed or otherwise can't be changed, or if you need a thread-safe logger.
  * Some classes provide however their own API for changing the logger level: For example,
- * \ref Tomographer::Loggers::FileLogger "FileLogger" provides a method \ref
- * Tomographer::Loggers::FileLogger::setLevel() "setLevel(level)".
+ * \ref Tomographer::Logger::FileLogger "FileLogger" provides a method \ref
+ * Tomographer::Logger::FileLogger::setLevel() "setLevel(level)".
  *
  * Specific topics:
  *  - \subpage pageCustomLogger

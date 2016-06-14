@@ -31,6 +31,8 @@
 
 /** \page pageParams Some Useful Parameterizations
  *
+ * Just some useful parameterizations for points, matrices and so on.
+ *
  *  - \subpage pageParamsSphericalCoords
  *  - \subpage pageParamsX
  *  - \subpage pageParamsT
@@ -119,10 +121,7 @@
  * \f}
  * The upper triangular off-diagonals are set of course such that \f$ A\f$ is hermitian.
  *
- * See \ref Tomographer::param_herm_to_x() and \ref Tomographer::param_x_to_herm().
- *
- * \note The API for those functions might change and be replaced by a class \a
- * ParamHermX, just like \ref Tomographer::ParamRhoA.
+ * See \ref Tomographer::DenseDM::ParamX.
  */
 
 /** \page pageParamsT \a T Parameterization
@@ -141,11 +140,11 @@
  *   performing a Cholesky (or LLT or LDLT) decomposition.
  *
  * Throughout the project, if we refer to a &lsquo;\a T parameterization,&rsquo; we do not
- * imply any particular gauge.  In our %Tomographer project, we usually use the positive
- * semidefinite gauge in practice. But you should double-check before blindly assuming
- * this!
+ * imply any particular gauge.  For example, the class \ref
+ * Tomographer::DenseDM::TSpace::MHRWLLHWalker does not fix the gauge and performs the
+ * random walk on all valid T matrices.
  *
- * See, for example, \ref Tomographer::fidelity_T().
+ * See, for example, \ref Tomographer::DenseDM::fidelity_T().
  */
 
 

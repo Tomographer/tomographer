@@ -152,7 +152,7 @@
 namespace Tomographer {
 namespace DenseDM {
 
-/** \brief Convert hermitian matrices to vectors via their \ref pageParamX
+/** \brief Convert hermitian matrices to vectors via their \ref pageParamsX
  *
  */
 template<typename DMTypes_>

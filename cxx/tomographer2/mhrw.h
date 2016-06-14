@@ -248,9 +248,9 @@ std::ostream & operator<<(std::ostream & str, const MHRWParams<CountIntType,Step
  * thermalizing sweeps, followed by "live" runs.
  *
  * The random walk is composed of \em iterations. There are \c n_sweep iterations per
- * "sweep". This number should be approximately chosen such that \c step_size * n_sweep is
- * of order of the size of the state space. (This is in order to better decorrelate the
- * samples.)
+ * "sweep". This number should be approximately chosen such that <code>step_size *
+ * n_sweep</code> is of order of the size of the state space. (This is in order to better
+ * decorrelate the samples.)
  *
  * Initially, a number \c n_therm of \em thermalizing sweeps are performed. No samples
  * are taken during this period, and this is meant for a Metropolis random walk to find
@@ -290,7 +290,9 @@ public:
   typedef MHRWStatsCollector_ MHRWStatsCollector;
   //! The logger type (see \ref pageLoggers)
   typedef LoggerType_ LoggerType;
-  //! The type used for counting numbers of iterations (see, e.g. \ref n_sweep())
+  /** \brief The type used for counting numbers of iterations (see, e.g. \ref nSweep() or \ref
+   *         MHRWParams)
+   */
   typedef CountIntType_ CountIntType;
 
   //! The type of a point in the random walk

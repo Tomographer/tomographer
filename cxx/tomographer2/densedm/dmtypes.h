@@ -24,8 +24,8 @@
  * SOFTWARE.
  */
 
-#ifndef _TOMOGRAPHER_DENSEDM_DMTYPES_H
-#define _TOMOGRAPHER_DENSEDM_DMTYPES_H
+#ifndef TOMOGRAPHER_DENSEDM_DMTYPES_H
+#define TOMOGRAPHER_DENSEDM_DMTYPES_H
 
 #include <cstddef>
 #include <cassert>
@@ -34,7 +34,7 @@
 
 #include <tomographer2/tools/cxxutil.h> // static_or_dynamic, TOMOGRAPHER_ENABLED_IF
 
-/** \file densedm/dmtypes.h
+/** \file dmtypes.h
  * \brief C++ types for describing dense density matrices in various parameterizations
  *
  */
@@ -46,17 +46,53 @@ namespace DenseDM {
 
 /** \brief C++ types needed to store a quantum state as a dense matrix.
  *
- * \todo NEEDS DOC...........
+ * The \ref DMTypes template class stores compile-time and run-time information about the
+ * types used to represent density operators as dense Eigen objects (storing a matrix
+ * explicitly as a list of coefficients in memory, as you'd expect), as well as
+ * remembering the dimension of the corresponding Hilbert space.  The latter may be fixed
+ * either at compile-time or set dynamically at run-time.
  *
- * - The dimension is either fixed at compile-time (FixedDim given to positive value), or
- *   at runtime (FixedDim == Eigen::Dynamic (== -1)).
+ * If a compile-time dimension is given, then the corresponding Eigen types (see \ref
+ * Eigen::Matrix) will be allocated on the stack instead of the heap.  For small matrix
+ * sizes, you should get a performance increase.
  *
- * Types provided:
  *
- * - MatrixType
- * - VectorParamType
- * - VectorParamNdofType
+ * \tparam FixedDim The dimension of the Hilbert space, if known at compile-time, or \ref
+ *         Eigen::Dynamic.  If \ref Eigen::Dynamic is specified here, the dimension can be
+ *         specified at run-time to the class's constructor.
  *
+ * \tparam RealScalar The type to use as real scalar.  The default, \c double, should be
+ *         sufficient in most (if not all) cases, but you could try to speed up
+ *         computations by using \c float, or be more precise by using <code>long
+ *         double</code>.
+ *
+ * This class provides several types which are to be used to store matrices acting on the
+ * Hilbert space, a vector of real coefficients which can store an \ref pageParamsX of
+ * Hermitian such matrices, and a vector of real coefficients of length corresponding to
+ * the number of degrees of freedom of a density matrix (e.g. to store a \ref
+ * pageParamsA).  For each such type, there is an initialization method (e.g. \ref
+ * initMatrixType()), which initializes the corresponding object to zero.
+ *
+ * Whenever such a type is needed, one calls for example
+ * \code
+ *   int dim = ...;
+ *   DMTypes<Eigen::Dynamic> dmt(dim);
+ *   ...
+ *   DMTypes<Eigen::Dynamic>::MatrixType matrix(dmt.initMatrixType());
+ *   ... use `matrix' as a dim*dim complex matrix ...
+ * \endcode
+ *
+ * - MatrixType : type used to store a matrix acting on the Hilbert space of dimension
+ *   \ref dim().  This is simply a complex dim()-by-dim() matrix.
+ *
+ * - VectorParamType : a vector of <code>dim()*dim()</code> real entries, as needed for
+ *   example to store the \ref pageParamsX of a Hermitian matrix.
+ *
+ * - VectorParamNdofType : a vector of <code>dim()*dim()-1</code> real entries, as needed
+ *   for example to store the \ref pageParamsA of a density matrix.
+ *
+ * To each of these type corresponds a const-reference type, which is useful to specify
+ * function arguments.
  */
 template<int FixedDim_, typename RealScalar_ = double>
 struct DMTypes {
@@ -89,12 +125,16 @@ struct DMTypes {
   //! Shorthand for a const reference to a MatrixType-like Eigen object
   typedef const Eigen::Ref<const MatrixType> &  MatrixTypeConstRef;
 
-  //! Real dim*dim Vector
+  //! Real vector with dim*dim elements
   typedef Eigen::Matrix<RealScalar, FixedDim2, 1> VectorParamType;
   //! Shorthand for a const reference to a VectorParamType-like Eigen object
   typedef const Eigen::Ref<const VectorParamType> &  VectorParamTypeConstRef;
 
-  /** \brief Real dim*dim-1 Vector */
+  /** \brief Real vector with dim*dim-1 elements
+   *
+   * The number of elements (\f$ \texttt{dim}^2-1\f$) corresponds to the number of degrees
+   * of freedom of a density matrix of dimension \f$ \texttt{dim} \f$.
+   */
   typedef Eigen::Matrix<RealScalar, FixedNdof, 1> VectorParamNdofType;
   //! Shorthand for a const reference to a VectorParamNdofType-like Eigen object
   typedef const Eigen::Ref<const VectorParamNdofType> &  VectorParamNdofTypeConstRef;
@@ -123,15 +163,34 @@ struct DMTypes {
   {
   }
 
+  /** \brief get the dimension of the quantum system (dimension of the Hilbert space)
+   *
+   * If the dimension was fixed at compile-time, then that value is directly returned (and
+   * the compiler should be able to optimize this).  If the dimension is dynamically set
+   * at run-time, then we return that stored value.
+   */
   inline std::size_t dim() const { return _dim.value(); }
+
+  /** \brief get the square of the dimension of the quantum system
+   *
+   * Equivalently, this is the number of complex matrix entries, or the number of real
+   * coefficients needed to specify a Hermitian matrix.  It is the size of a \ref
+   * VectorParamType.
+   */
   inline std::size_t dim2() const { return _dim.value()*_dim.value(); }
+
+  /** \brief get the square of the dimension of the quantum system, minus one
+   *
+   * Equivalently, this is the number of degrees of freedom of a density matrix.  It is
+   * the size of a \ref VectorParamNdofType.
+   */
   inline std::size_t ndof() const { return dim2()-1; }
 
 
   /** \brief Zero initializer for a MatrixType [implementation for static dimension]
    *
    * This function returns an initializer, which when used as constructor argument to \ref
-   * MatrixType, initializes it with a zero matrix.
+   * MatrixType, initializes it with a zero \f$ \texttt{dim}\times\texttt{dim} \f$ matrix.
    */
   TOMOGRAPHER_ENABLED_IF(!IsDynamicDim)
   inline typename MatrixType::ConstantReturnType initMatrixType() const
@@ -141,7 +200,7 @@ struct DMTypes {
   /** \brief Zero initializer for MatrixType [implementation for dynamic dimension]
    *
    * This function returns an initializer, which when used as constructor argument to \ref
-   * MatrixType, initializes it with a zero matrix.
+   * MatrixType, initializes it with a zero \f$ \texttt{dim}\times\texttt{dim} \f$ matrix.
    */
   TOMOGRAPHER_ENABLED_IF(IsDynamicDim)
   inline typename MatrixType::ConstantReturnType initMatrixType() const
@@ -152,7 +211,7 @@ struct DMTypes {
   /** \brief Zero initializer for a VectorParamType [implementation for static dimension]
    *
    * This function returns an initializer, which when used as constructor argument to \ref
-   * VectorParamType, initializes it with a zero matrix.
+   * VectorParamType, initializes it to a zero vector of \f$ \texttt{dim}^2 \f$ entries.
    */
   TOMOGRAPHER_ENABLED_IF(!IsDynamicDim)
   inline typename VectorParamType::ConstantReturnType initVectorParamType() const
@@ -162,7 +221,7 @@ struct DMTypes {
   /** \brief Zero initializer for VectorParamType [implementation for dynamic dimension]
    *
    * This function returns an initializer, which when used as constructor argument to \ref
-   * VectorParamType, initializes it with a zero matrix.
+   * VectorParamType, initializes it to a zero vector of \f$ \texttt{dim}^2 \f$ entries.
    */
   TOMOGRAPHER_ENABLED_IF(IsDynamicDim)
   inline typename VectorParamType::ConstantReturnType initVectorParamType() const
@@ -173,7 +232,8 @@ struct DMTypes {
   /** \brief Zero initializer for a VectorParamNdofType [implementation for static dimension]
    *
    * This function returns an initializer, which when used as constructor argument to \ref
-   * VectorParamNdofType, initializes it with a zero matrix.
+   * VectorParamNdofType, initializes it to a zero vector of \f$ \texttt{dim}^2-1 \f$
+   * entries.
    */
   TOMOGRAPHER_ENABLED_IF(!IsDynamicDim)
   inline typename VectorParamNdofType::ConstantReturnType initVectorParamNdofType() const
@@ -183,7 +243,8 @@ struct DMTypes {
   /** \brief Zero initializer for VectorParamNdofType [implementation for dynamic dimension]
    *
    * This function returns an initializer, which when used as constructor argument to \ref
-   * VectorParamNdofType, initializes it with a zero matrix.
+   * VectorParamNdofType, initializes it to a zero vector of \f$ \texttt{dim}^2-1 \f$
+   * entries.
    */
   TOMOGRAPHER_ENABLED_IF(IsDynamicDim)
   inline typename VectorParamNdofType::ConstantReturnType initVectorParamNdofType() const

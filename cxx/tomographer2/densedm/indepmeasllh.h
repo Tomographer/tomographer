@@ -24,8 +24,8 @@
  * SOFTWARE.
  */
 
-#ifndef _TOMOGRAPHER_DENSEDM_INDEPMEASLLH_H
-#define _TOMOGRAPHER_DENSEDM_INDEPMEASLLH_H
+#ifndef TOMOGRAPHER_DENSEDM_INDEPMEASLLH_H
+#define TOMOGRAPHER_DENSEDM_INDEPMEASLLH_H
 
 #include <cstddef>
 #include <cassert>
@@ -51,7 +51,8 @@ namespace DenseDM {
 
 
 
-/** \brief C++ types and functions for calculating the log-likelihood for independent measurements
+/** \brief C++ types and functions for calculating the log-likelihood for POVM effects
+ * which can be written as a product of individual effects
  *
  * Implements the \ref pageInterfaceDenseLLH.
  */
@@ -74,11 +75,14 @@ public:
   //! Whether we allow NMeasAmplifyFactor to be set
   static constexpr bool UseNMeasAmplifyFactor = UseNMeasAmplifyFactor_;
 
-  /** \brief Declare that this DenseLLH object exposes a logLikelihoodX() method.
+  /** \brief Declare some stuff as part of the \ref pageInterfaceDenseLLH compliance
    *
    * See \ref DenseDM::LLHCalcTypeX and \ref pageInterfaceDenseLLH for details.
    */
-  enum { LLHCalcType = LLHCalcTypeX } ;
+  enum {
+    //! Declare that this DenseLLH object exposes a logLikelihoodX() method.
+    LLHCalcType = LLHCalcTypeX
+  } ;
 
   /** \brief dynamic Matrix with rows = dim*dim Vectors (row-major)
    * [maximum FixedMaxParamList rows, or Dynamic]

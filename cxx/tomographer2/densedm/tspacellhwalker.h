@@ -59,13 +59,12 @@ namespace TSpace {
  * according to the distribution given by the likelihood function on the Hilbert-schmidt
  * uniform prior.
  *
- * \tparam DenseLLH a type satisfying the LLH type interface (\ref pageInterfaceLLH)
- *
+ * \tparam DenseLLH a type satisfying the DenseLLH type interface (\ref
+ *         pageInterfaceDenseLLH)
  *
  * \tparam Rng a \c std::random random number \a generator (such as \ref std::mt19937)
  *
- * \tparam MHRWStatsCollector a type implementing a StatsCollector interface (\ref
- *      pageInterfaceMHRWStatsCollector)
+ * \tparam LoggerType a logger type (see \ref pageLoggers)
  */
 template<typename DenseLLH, typename Rng, typename LoggerType>
 class LLHMHWalker
@@ -73,7 +72,7 @@ class LLHMHWalker
 public:
   //! The data types of our problem
   typedef typename DenseLLH::DMTypes DMTypes;
-  //! The loglikelihood function value type (see \ref pageInterfaceLLH e.g. \ref IndepMeasLLH)
+  //! The loglikelihood function value type (see \ref pageInterfaceDenseLLH e.g. \ref IndepMeasLLH)
   typedef typename DenseLLH::LLHValueType LLHValueType;
   //! The matrix type for a density operator on our quantum system
   typedef typename DMTypes::MatrixType MatrixType;

@@ -224,10 +224,10 @@ public:
   inline explicit static_or_dynamic(T val) : _dyn_value(val) { }
 
 
-  //! See \ref static_or_dynamic<typename T_, int Value>::value()
+  //! See \ref static_or_dynamic<T_,IsDynamic_,StaticValue_>::value()
   inline T value() const { return _dyn_value; }
 
-  //! See \ref static_or_dynamic<typename T_, int Value>::operator()()
+  //! See \ref static_or_dynamic<T_,IsDynamic_,StaticValue_>::operator()()
   inline T operator()() const { return value(); }
 
 private:

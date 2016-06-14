@@ -119,7 +119,7 @@ namespace MHRWTasks {
 	  << "\t# run sweeps    = " << mhrw_params.n_run << "\n";
     }
     /** \brief Get some human-readable info about the random walk as a string, see \ref
-     *         printBasicCDataMhrwInfo()
+     *         printBasicCDataMHRWInfo()
      */
     inline std::string getBasicCDataMHRWInfo() const
     {

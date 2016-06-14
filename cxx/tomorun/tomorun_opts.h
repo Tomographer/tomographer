@@ -365,7 +365,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
      "Do a histogram of the figure of merit for different measured values. Format MIN:MAX/NUM_BINS")
     ("no-binning-analysis-error-bars", bool_switch(& no_binning_analysis_error_bars)
      ->default_value(no_binning_analysis_error_bars),
-     // REFERENCE [2]
+     // REFERENCE [2] is here
      "Don't produce error bars from a binning analysis [2] for each histogram bin")
     ("binning-analysis-num-levels", value<int>(& opt->binning_analysis_num_levels)
      ->default_value(opt->binning_analysis_num_levels),
@@ -437,7 +437,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"\n"
 //      |--------------------------------------------------------------------------------| 80 chars (col. 89)
 	"Produce a histogram of a figure of merit during a random walk in quantum state\n"
-	// REFERENCE [1]
+	// REFERENCE [1] is here
 	"space according to the distribution \\mu_{B^n}(.) defined in Ref. [1]. The\n"
 	"likelihood function is specified with independent POVM effects (see below).\n"
 	"\n"
@@ -463,12 +463,6 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"    - Nm\n"
 	"      A list of (integer) frequencies. Nm(k) is the number of times the POVM\n"
 	"      effect Emn(:,:,k) was observed.\n"
-	"\n"
-	"    - rho_MLE\n"
-	"      (Required now, but in the future might not be required.) The maximum\n"
-	"      likelihood estimate corresponding to the given data. Used mostly as the\n"
-	"      default reference state if none other is specified for some figures of\n"
-	"      merit.\n"
 	"\n"
 	"    - <any other variable name>\n"
 	"      The MATLAB data file may contain further variables for use in some\n"
@@ -524,31 +518,32 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"    - \"tr-dist\": the trace distance to a reference state. <RefObject> should\n"
 	"      be the name of a MATLAB variable present in the MATLAB data file. This\n"
 	"      object should be a complex dim x dim matrix, the density matrix of the\n"
-	"      reference state. If no <RefObject> is specified, then rho_MLE is used.\n"
+	"      reference state. If no <RefObject> is specified, then 'rho_MLE' is used.\n"
 	"\n"
-	// REFERENCE [3]
+	// REFERENCE [3] is here
 	"    - \"fidelity\": the (root) fidelity to a reference state [3]. <RefObject>\n"
 	"      should be the name of a MATLAB variable present in the MATLAB data file.\n"
 	"      This object should be a complex dim x dim matrix, the density matrix of\n"
-	"      the reference state. If no <RefObject> is specified, then rho_MLE is used.\n"
+	"      the reference state. If no <RefObject> is specified, then 'rho_MLE' is\n"
+        "      used.\n"
+	"      \n"
+	"      Note: For the squared fidelity to a pure state (usually preferred in\n"
+	"      experimental papers), you should use \"obs-value\" with the observable\n"
+	// REFERENCE [5] is here
+        "      being the density matrix of the reference state [5].\n"
 	"\n"
-	// REFERENCE [4]
+	// REFERENCE [4] is here
 	"    - \"purif-dist\": the purified distance to a reference state [4].\n"
 	"      <RefObject> should be the name of a MATLAB variable present in the MATLAB\n"
 	"      data file. This object should be a complex dim x dim matrix, the density\n"
 	"      matrix of the reference state. If no <RefObject> is specified, then\n"
-	"      rho_MLE is used.\n"
+	"      'rho_MLE' is used.\n"
         //
         // INSERT CUSTOM FIGURE OF MERIT HERE:
         // Please don't forget to document the option value corresponding to your figure
         // of merit. Document also any possible string that is understood after the colon
         // in the option value.
         //
-	"\n"
-	"Note: For the (squared) fidelity to a pure state (usually preferred in\n"
-	"experimental papers), you should use \"obs-value\" with the observable being\n"
-	// REFERENCE [5]
-	"the density matrix of the reference state [5].\n"
 	"\n"
 	"REFERENCES:\n"
 	" [1] Christandl and Renner, Phys. Rev. Lett. 12:120403 (2012), arXiv:1108.5329\n"
@@ -560,7 +555,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	" [5] Indeed, for pure rho_ref, F^2(rho,rho_ref) = tr(rho*rho_ref).\n"
 	"\n"
 	"CITATION:\n"
-	"If you use this program in your research, we strongly encourage you to cite the\n"
+	"If you use this program in your research, we warmly encourage you to cite the\n"
 	"following works:\n"
 	"\n"
 	"  1. Philippe Faist and Renato Renner. Practical, Reliable Error Bars in Quantum\n"

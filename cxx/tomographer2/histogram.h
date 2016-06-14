@@ -393,8 +393,8 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
 
   //! Shortcut for our base class type.
   typedef UniformBinsHistogram<Scalar_, CountType_> Base_;
-  /** \brief Shortcut for our base class' histogram parameters. See \ref
-   *         UniformBinsHistogram<typename Scalar_, typename CountType_>::Params. */
+  /** \brief Shortcut for our base class' histogram parameters. See
+   *         \ref UniformBinsHistogram<Scalar_,CountType_>::Params. */
   typedef typename Base_::Params Params;
   
   //! For the \ref pageInterfaceHistogram. This type of histogram does provide error bars

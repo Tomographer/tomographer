@@ -46,18 +46,6 @@ namespace MHRWTasks {
 namespace ValueHistogramTasks {
 
 
-// forward declaration of the CDataBase type
-//template<typename ValueCalculator_, bool UseBinningAnalysis_ = true,
-//	 typename CountIntType_ = int, typename StepRealType_ = double,
-//	 typename CountRealType_ = double>
-//struct CDataBase;
-// forward declarations of the ResultsCollectors
-//template<typename CDataBaseType, typename LoggerType>
-//struct ResultsCollectorSimple;
-//template<typename CDataBaseType, typename LoggerType>
-//struct ResultsCollectorWithBinningAnalysis;
-
-
 namespace tomo_internal {
 template<typename CDataBaseType, bool UseBinningAnalysis>
 struct histogram_types {// version WITHOUT binning analysis:

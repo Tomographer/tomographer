@@ -85,16 +85,27 @@ class InvalidMeasData : public std::exception
   std::string _msg;
   std::string _fullmsg;
 public:
+  /** \brief Constructor with error message
+   *
+   * The string \c "Invalid Measurement Data: " is prepended to the given message to
+   * construct the \ref fullMsg() which is also returned by \ref what().
+   */
   InvalidMeasData(const std::string& msg)
     : _msg(msg), _fullmsg("Invalid Measurement Data: " + _msg) { }
+
+  /** \brief Constructor with error message (given as rvalue reference)
+   */
   InvalidMeasData(std::string&& msg)
     : _msg(std::move(msg)), _fullmsg("Invalid Measurement Data: " + _msg) { }
 
   virtual ~InvalidMeasData() throw() { }
 
+  //! Get the message provided to the constructor
   inline std::string msg() const noexcept { return _msg; }
+  //! Get the full error message
   inline std::string fullMsg() const noexcept { return _fullmsg; }
     
+  //! Get the full error message as a pointer to a C string
   virtual const char * what() const noexcept { return _msg.c_str(); }
 };
 
