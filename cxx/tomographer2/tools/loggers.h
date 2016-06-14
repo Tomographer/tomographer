@@ -24,8 +24,8 @@
  * SOFTWARE.
  */
 
-#ifndef LOGGERS_H
-#define LOGGERS_H
+#ifndef TOMOGRAPHER_TOOLS_LOGGERS_H
+#define TOMOGRAPHER_TOOLS_LOGGERS_H
 
 #include <cassert>
 #include <cstdio>

@@ -35,9 +35,11 @@
 #include <tuple>
 #include <utility>
 #include <type_traits>
+#include <typeinfo>
 
 #include <tomographer2/histogram.h>
 #include <tomographer2/tools/loggers.h>
+#include <tomographer2/tools/fmt.h>
 #include <tomographer2/mhrw_bin_err.h>
 
 
@@ -288,11 +290,10 @@ public:
   typedef MHWalker_ MHWalker;
   //! The stats collector type (see \ref pageInterfaceMHRWStatsCollector)
   typedef MHRWStatsCollector_ MHRWStatsCollector;
-  //! The logger type (see \ref pageLoggers)
+  //! The logger type which will be provided by user to constructor (see \ref pageLoggers)
   typedef LoggerType_ LoggerType;
   /** \brief The type used for counting numbers of iterations (see, e.g. \ref nSweep() or \ref
-   *         MHRWParams)
-   */
+   *         MHRWParams) */
   typedef CountIntType_ CountIntType;
 
   //! The type of a point in the random walk
@@ -322,7 +323,7 @@ private:
   Rng & _rng;
   MHWalker & _mhwalker;
   MHRWStatsCollector & _stats;
-  LoggerType & _logger;
+  Logger::LocalLogger<LoggerType> _logger;
 
   //! Current point
   PointType curpt;
@@ -351,14 +352,16 @@ public:
       _rng(rng),
       _mhwalker(mhwalker),
       _stats(stats),
-      _logger(logger_),
+      _logger(TOMO_ORIGIN, logger_),
       curpt(),
       curptval(),
       num_accepted(0),
       num_live_points(0)
   {
-    _logger.debug("MHRandomWalk", "constructor(). n_sweep=%lu, n_therm=%lu, n_run=%lu, step_size=%g",
-	       (unsigned long)n_sweep, (unsigned long)n_therm, (unsigned long)n_run, (double)step_size);
+    _logger.debug([&](std::ostream & stream) {
+	stream << "constructor(). n_sweep=" << n_sweep << ", step_size=" << step_size
+	       << "n_therm=" << n_therm << ", n_run=" << n_run;
+      });
   }
   //! Simple constructor, initializes the given fields
   template<typename MHRWParamsType>
@@ -369,13 +372,13 @@ public:
       _rng(rng),
       _mhwalker(mhwalker),
       _stats(stats),
-      _logger(logger_),
+      _logger(TOMO_ORIGIN, logger_),
       curpt(),
       curptval(),
       num_accepted(0),
       num_live_points(0)
   {
-    _logger.debug("MHRandomWalk", [&](std::ostream & s) { s << "constructor(). parameters = " << _n; });
+    _logger.debug([&](std::ostream & s) { s << "constructor(). mhrw parameters = " << _n; });
   }
 
   //! The parameters of the random walk.
@@ -439,8 +442,8 @@ public:
   {
     curpt = pt;
     curptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, curpt);
-    _logger.longdebug("MHRandomWalk", [&](std::ostream & s) {
-	s << "set_curpt(): set internal state. Value = " << curptval << "; Point =\n" << pt << "\n";
+    _logger.longdebug([&](std::ostream & s) {
+	s << "setCurrentPoint: set internal state. Value = " << curptval << "; Point =\n" << pt << "\n";
       });
   }
 
@@ -460,6 +463,7 @@ private:
 
     _mhwalker.init();
     _stats.init();
+    _logger.longdebug("_init() done.");
   }
   /** \brief Relays to the MHWalker and the MHRWStatsCollector.
    */
@@ -467,6 +471,7 @@ private:
   {
     _mhwalker.thermalizing_done();
     _stats.thermalizing_done();
+    _logger.longdebug("_thermalizing_done() done.");
   }
   /** \brief Relays to the MHWalker and the MHRWStatsCollector.
    */
@@ -474,6 +479,7 @@ private:
   {
     _mhwalker.done();
     _stats.done();
+    _logger.longdebug("_done() done.");
   }
 
   /** \brief Processes a single move in the random walk.
@@ -485,6 +491,7 @@ private:
    */
   inline void _move(CountIntType k, bool is_thermalizing, bool is_live_iter)
   {
+    _logger.longdebug("_move()");
     // The reason `step_size` is passed to jump_fn instead of leaving jump_fn itself
     // handle the step size, is that we might in the future want to dynamically adapt the
     // step size according to the acceptance ratio. That would have to be done in this
@@ -513,18 +520,21 @@ private:
 
     _stats.raw_move(k, is_thermalizing, is_live_iter, accept, a, newpt, newptval, curpt, curptval, *this);
 
-    _logger.longdebug("MHRandomWalk",
-                   "%s%3lu: %s a=%-7.2g, newptval=%5.4g [llh=%.4g], curptval=%5.4g [llh=%.4g]   accept_ratio=%s",
-                   (is_thermalizing?"T":"#"),
-                   (unsigned long)k, accept?"AC":"RJ", (double)a, (double)newptval, -2.0*newptval,
-		   (double)curptval, -2.0*curptval,
-                   (!is_thermalizing?Tools::fmts("%.2g", acceptanceRatio()).c_str():"N/A"));
+    _logger.longdebug([&](std::ostream & stream) {
+	stream << (is_thermalizing?"T":"#") << std::setw(3) << k << ": " << (accept?"AC":"RJ") << " "
+	       << std::setprecision(4)
+	       << "a=" << std::setw(5) << a << ", newptval=" << std::setw(5) << newptval
+	       << ", curptval=" << std::setw(5) << curptval << ", accept_ratio="
+	       << (!is_thermalizing ? Tools::fmts("%.2g", acceptanceRatio()) : std::string("N/A"))
+	       << Tools::streamIfPossible(curpt, "\ncurpt = ", "", "");
+      });
 
     if (accept) {
       // update the internal state of the random walk
       curpt = newpt;
       curptval = newptval;
     }
+    _logger.longdebug("_move() done.");
   }
 
   /** \brief Required for \ref pageInterfaceRandomWalk. Process a new live sample in the
@@ -534,6 +544,7 @@ private:
   inline void _process_sample(CountIntType k, CountIntType n)
   {
     _stats.process_sample(k, n, curpt, curptval, *this);
+    _logger.longdebug("_process_sample() done.");
   }
 
 
@@ -550,7 +561,7 @@ public:
 
     CountIntType k;
 
-    _logger.longdebug("MHRandomWalk", [&](std::ostream & s) {
+    _logger.longdebug([&](std::ostream & s) {
 	s << "Starting random walk, sweep size = " << _n.n_sweep << ", step size = " << _n.step_size
 	  << ", # therm sweeps = " << _n.n_therm << ", # live sweeps = " << _n.n_run;
       });
@@ -564,7 +575,7 @@ public:
 
     _thermalizing_done();
 
-    _logger.longdebug("MHRandomWalk", "Thermalizing done, starting live runs.");
+    _logger.longdebug("Thermalizing done, starting live runs.");
 
     const CountIntType num_run = _n.n_sweep * _n.n_run;
 
@@ -586,7 +597,7 @@ public:
 
     _done();
 
-    _logger.longdebug("MHRandomWalk", "Random walk completed.");
+    _logger.longdebug("Random walk completed.");
 
     return;
   }
@@ -867,7 +878,9 @@ public:
                 double /*a*/, const PointType & /*newpt*/, LLHValueType /*newptval*/,
                 const PointType & /*curpt*/, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
-    _logger.longdebug("ValueHistogramMHRWStatsCollector", "raw_move(): k=%lu", (unsigned long)k);
+    _logger.longdebug("ValueHistogramMHRWStatsCollector", [&](std::ostream & stream) {
+	stream << "raw_move(): k=" << k;
+      });
   }
 
   //! Part of the \ref pageInterfaceMHRWStatsCollector. Records the sample in the histogram.
@@ -877,8 +890,11 @@ public:
   {
     ValueType val = _vcalc.getValue(curpt);
 
-    _logger.longdebug("ValueHistogramMHRWStatsCollector", "in process_sample(): k=%lu, n=%lu, val=%.4g",
-                   (unsigned long)k, (unsigned long)n, val);
+    _logger.longdebug("ValueHistogramMHRWStatsCollector", [&](std::ostream & stream) {
+	stream << "in process_sample(): "
+	       << "k=" << k << ", n=" << n << ", val=" << val
+	       << " [with ValueType=" << typeid(ValueType).name() << "]" ;
+      });
 
     return _histogram.record(val);
 

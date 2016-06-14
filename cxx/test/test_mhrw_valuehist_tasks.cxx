@@ -39,15 +39,17 @@
 #include <tomographer2/mhrw_valuehist_tasks.h>
 #include <tomographer2/multiprocomp.h>
 
+#include "boost_test_logger.h"
 #include "test_mh_random_walk_common.h" // our test-case random walk
 
 
 // -----------------------------------------------------------------------------
 // fixture(s)
 
+template<typename ValueType_>
 struct NormValueCalculator
 {
-  typedef double ValueType;
+  typedef ValueType_ ValueType;
 
   template<typename EigenObject>
   ValueType getValue(EigenObject&& pt) const
@@ -65,13 +67,16 @@ struct OurCDataTask : CDataBaseType
   {
   }
 
+  // using `int' instead of `double' allows us to ensure that everything is deterministic
+  // as there are no floating-point calculations.
   template<typename Rng, typename LoggerType>
-  inline TestLatticeMHRWGaussPeak<double,Rng>  createMHWalker(Rng & rng, LoggerType & /*logger*/) const
+  inline TestLatticeMHRWGaussPeak<int,Rng,LoggerType>
+  createMHWalker(Rng & rng, LoggerType & logger) const
   {
     // 100x100 lattice
-    return TestLatticeMHRWGaussPeak<double,Rng>(
-	100*Eigen::Vector2i::Ones(), Eigen::Matrix2d::Identity(), 20*20, Eigen::Vector2d::Zero(2),
-	rng()
+    return TestLatticeMHRWGaussPeak<int,Rng,LoggerType>(
+	1000*Eigen::Vector2i::Ones(), Eigen::Matrix2i::Identity(), 200*200, Eigen::Vector2i::Zero(2),
+	rng(), logger
 	);
   }
 };
@@ -82,19 +87,22 @@ struct OurCDataTask : CDataBaseType
 template<bool UseBinningAnalysis, bool FullRun = true>
 struct run_test {
 
-  typedef NormValueCalculator ValueCalculator;
+  typedef NormValueCalculator<double> ValueCalculator;
     
-  typedef Tomographer::Logger::BufferLogger LoggerType;
+  typedef BoostTestLogger LoggerType;
 
   typedef std::mt19937 Rng;
     
-  typedef OurCDataTask<Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<ValueCalculator,
-									      UseBinningAnalysis> > OurCDataSimple;
+  typedef OurCDataTask<
+    Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<ValueCalculator,
+							   UseBinningAnalysis>
+    > OurCDataSimple;
   typedef typename OurCDataSimple::HistogramParams HistogramParams;
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCDataSimple, Rng>  OurMHRandomWalkTask;
   typedef typename OurCDataSimple::template ResultsCollectorType<LoggerType>::Type OurResultsCollector;
-  typedef typename OurCDataSimple::template ResultsCollectorType<LoggerType>::RunTaskResultType OurResultsCollectorRunTaskResultType;
+  typedef typename OurCDataSimple::template ResultsCollectorType<LoggerType>::RunTaskResultType
+    OurResultsCollectorRunTaskResultType;
 
   typedef Tomographer::MHRWParams<int,double> MHRWParamsType;
     
@@ -113,39 +121,39 @@ struct run_test {
   TOMOGRAPHER_ENABLED_IF(!UseBinningAnalysis)
   run_test()
     : logger(Tomographer::Logger::DEBUG),
-      taskcdat(NormValueCalculator(), HistogramParams(0, 100, 100),
-	       MHRWParamsType(FullRun?50:1, // n_sweep
+      taskcdat(NormValueCalculator<double>(), HistogramParams(0, 500, 50),
+	       MHRWParamsType(FullRun?500:1, // n_sweep
 			      2, // step_size
 			      FullRun?500:1, // n_therm
-			      FullRun?25000:1 // n_run
+			      FullRun?4096:32 // n_run
 		   ), 29329),
       results(logger),
-      tasks(Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
-	&taskcdat, // constant data
-	&results, // results collector
-	logger, // the main logger object
-	NumRepeats, // num_repeats
-	1 // n_chunk
-		))
+      tasks(
+	  &taskcdat, // constant data
+	  &results, // results collector
+	  logger, // the main logger object
+	  NumRepeats, // num_repeats
+	  1 // n_chunk
+	  )
   {
   }
   TOMOGRAPHER_ENABLED_IF(UseBinningAnalysis)
   run_test()
     : logger(Tomographer::Logger::DEBUG),
-      taskcdat(NormValueCalculator(), HistogramParams(0, 100, 100), 5,
-	       MHRWParamsType(FullRun?50:1, // n_sweep
-			      FullRun?2:1, // step_size
+      taskcdat(NormValueCalculator<double>(), HistogramParams(0, 500, 50), 5,
+	       MHRWParamsType(FullRun?500:1, // n_sweep
+			      2, // step_size
 			      FullRun?500:1, // n_therm
-			      FullRun?25000:1 // n_run
+			      FullRun?4096:32 // n_run
 		   ), 29329),
       results(logger),
-      tasks(Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
+    tasks(
 	&taskcdat, // constant data
 	&results, // results collector
 	logger, // the main logger object
 	NumRepeats, // num_repeats
 	1 // n_chunk
-		))
+	)
   {
   }
 
@@ -211,12 +219,10 @@ BOOST_FIXTURE_TEST_CASE(binning_runtaskresults, run_test_binning_nofullrun)
 
 
 
-BOOST_FIXTURE_TEST_CASE(simple, run_test<false>)
+BOOST_FIXTURE_TEST_CASE(simple_check_pattern, run_test<false>)
 {
   tasks.run();
   
-  BOOST_MESSAGE( logger.get_contents() );
-
   std::string msg;
   { std::ostringstream ss; results.print_histogram_csv(ss, ","); msg = ss.str(); }
   BOOST_MESSAGE( msg ) ;
@@ -231,12 +237,13 @@ BOOST_FIXTURE_TEST_CASE(simple, run_test<false>)
   dump_histogram_test(output, results.finalHistogram(), 2);
   BOOST_CHECK(output.match_pattern());
 }
-BOOST_FIXTURE_TEST_CASE(binning, run_test<true>)
+BOOST_FIXTURE_TEST_CASE(binning_check_pattern, run_test<true>)
 {
+  // for debugging. Beware, generates *LOTS* of output!  Also set NumRepeats=1.
+  //logger.setLevel(Tomographer::Logger::LONGDEBUG);
+
   tasks.run();
   
-  BOOST_MESSAGE( logger.get_contents() );
-
   std::string msg;
   { std::ostringstream ss; results.print_histogram_csv(ss, ","); msg = ss.str(); }
   BOOST_MESSAGE( msg ) ;

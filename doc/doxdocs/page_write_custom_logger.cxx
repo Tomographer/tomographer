@@ -58,7 +58,7 @@
  *   class StderrLogger : public Tomographer::Logger::LoggerBase<StderrLogger>
  *   {
  *   public:
- *     StderrLogger(int level = Logger::INFO)
+ *     StderrLogger(int level = Tomographer::Logger::INFO)
  *       : Tomographer::Logger::LoggerBase<StderrLogger>(level)
  *     {
  *     }

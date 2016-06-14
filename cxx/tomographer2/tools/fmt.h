@@ -40,6 +40,7 @@
 #include <string>
 #include <sstream> // stringstream
 #include <iostream>
+#include <utility> // std::declval
 
 #include <tomographer2/tools/cxxutil.h> // PRINTFN_ARGS_SAFE
 
@@ -150,6 +151,201 @@ inline std::string fmts(const char * fmt, ...)
  * \endcode
  */
 #define streamcstr(tokens)  streamstr(tokens).c_str()
+
+
+
+//
+// utility to stream an object, if possible
+//
+
+namespace tomo_internal {
+// see http://stackoverflow.com/a/9154394/1694896
+struct sfinae_no { typedef int no[1]; };
+template<typename EnabledType = void> struct sfinae_yes { typedef int yes[2]; };
+template<typename T> static auto test_has_stream_op(int)
+  -> typename sfinae_yes<decltype(*((std::ostream*)(NULL)) << *((T*)(NULL)))>::yes&;
+template<typename T> static auto test_has_stream_op(long)
+  -> typename sfinae_no::no&;
+// template<typename T, int dummy_value,
+// 	 typename EnabledIfType = decltype(std::declval<std::ostream&>() << std::declval<T>())>
+// struct test_has_stream_op { static constexpr bool value = true; };
+// template<typename T, long dummy_value>
+// struct test_has_stream_op<T,dummy_value,void> { static constexpr bool value = false; };
+// template<typename T>
+// struct has_stream_op {
+//   static constexpr bool value = test_has_stream_op<T, 0>::value;
+// };
+} // namespace tomo_internal
+
+
+/** \brief Traits class to see whether an object exposes a \c "<<" operator overload for
+ *         std::ostream
+ *
+ * Use the expression
+ * \code
+ *    hasOStream<T>::value
+ * \endcode
+ * to test whether a type \a T can be streamed into a std::ostream.  This value is a
+ * compile-time boolean and can be used in template parametres.
+ */
+template<typename T>
+struct hasOStreamOp {
+  static constexpr bool value = (sizeof(tomo_internal::test_has_stream_op<T>(0))
+				 == sizeof(typename tomo_internal::sfinae_yes<>::yes));
+};
+
+
+namespace tomo_internal {
+//! Helper for streamIfPossible(sophisticated)
+template<typename T_>
+struct StreamIfPossibleWrapper
+{
+  //! The type we are wrapping -- the template parameter
+  typedef T_ T;
+  /** \brief Constructor.
+   *
+   */
+  StreamIfPossibleWrapper(
+      const T& obj_,
+      std::string before_,
+      std::string after_,
+      std::string alternative_
+      )
+    : obj(obj_), before(before_), after(after_), alternative(alternative_)
+  {
+  }
+
+  //! Const reference to the object we are wrapping to the ostream
+  const T & obj;
+
+  //! Text to display before the object's string representation, if \a T is streamable
+  const std::string before;
+  //! Text to display after the object's string representation, if \a T is streamable
+  const std::string after;
+  //! Text to display if \a T is not streamable
+  const std::string alternative;
+
+  // internal :
+  
+  //! Stream currently wrapped object into the given stream. (Internal)
+  template<typename OStream, TOMOGRAPHER_ENABLED_IF_TMPL(!hasOStreamOp<T>::value)>
+  void stream_into(OStream&& stream) const
+  {
+    stream << alternative;
+  }
+  //! Stream currently wrapped object into the given stream. (Internal)
+  template<typename OStream, TOMOGRAPHER_ENABLED_IF_TMPL(hasOStreamOp<T>::value)>
+  void stream_into(OStream&& stream) const
+  {
+    stream << before << obj << after;
+  }
+};
+//! implementation of sending a StreamIfPossibleWrapper through a std::ostream
+template<typename T>
+std::ostream & operator<<(std::ostream & stream, const StreamIfPossibleWrapper<T>& wobj)
+{
+  wobj.stream_into(stream);
+  return stream;
+}
+//! implementation of sending a StreamIfPossibleWrapper through a std::ostream
+template<typename T>
+std::ostream&& operator<<(std::ostream&& stream, const StreamIfPossibleWrapper<T>& wobj)
+{
+  wobj.stream_into(stream);
+  return std::move(stream);
+}
+}
+
+
+
+#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
+template<typename T, TOMOGRAPHER_ENABLED_IF_TMPL(!hasOStreamOp<T>::value)>
+inline std::string streamIfPossible(const T& /*obj*/)
+{
+  // obj is not streamable
+  return std::string("<")+typeid(T).name()+std::string(">");
+}
+template<typename T, TOMOGRAPHER_ENABLED_IF_TMPL(hasOStreamOp<T>::value)>
+inline const T& streamIfPossible(const T& obj)
+{
+  return obj;
+}
+template<typename T>
+inline tomo_internal::StreamIfPossibleWrapper<T>
+streamIfPossible(const T& obj, std::string before,
+		 std::string after = std::string(),
+		 std::string alternative = "<"+std::string(typeid(T).name())+">")
+{
+  return tomo_internal::StreamIfPossibleWrapper<T>(obj, std::move(before),
+						   std::move(after), std::move(alternative));
+}
+#else
+/** \brief Utility to stream an object, but only if \c "<<" overload exists
+ *
+ * You may use this function in a sequence of objects passed to a std::ostream, so that
+ * the object gets printed if it is streamable and it is ignored if not.  The return type
+ * of this function is guaranteed to be streamable for any type \a T.
+ *
+ * A typical use of this function is to generate debugging messages in generic templated
+ * classes for which the data type is not certain to be streamable.
+ *
+ * Example use:
+ * \code
+ *   Eigen::Matrix2d m(Eigen::Matrix2d::Identity());
+ *   struct NotStreamable { int a, b, c;  };
+ *   NotStreamable x;
+ *   std::cout << "The identity matrix is = \n" << streamIfPossible(m) << "\n"
+ *             << "And the value of x is = " << streamIfPossible(x) << "\n";
+ * \endcode
+ * Would output:
+ * 
+ */
+template<typename T>
+inline _Unspecified streamIfPossible(const T& obj)
+{
+}
+/** \brief A slightly more sophisticated alternative to \ref streamIfPossible()
+ *
+ * With this wrapper, you can also specify text to add before and after the object if it
+ * is streamed, and you can specify the alternative text to display if the object is not
+ * streamable.
+ *
+ * Example:
+ * \code
+ *   MyObjectType obj(..);
+ *   std::cout << "Hello !"
+ *             << StreamIfPossibleWrapper(obj, "\nobject is = ", "\n", " [not streamable]\n")
+ *             << "Done !\n";
+ * \endcode
+ * might give you either
+ * <pre>
+ *   Hello!
+ *   object is = ..... string representation of MyObjectType .....
+ *   Done !
+ * </pre>
+ * if the object type \a MyObjectType is streamable, or
+ * <pre>
+ *   Hello! [not streamable]
+ *   Done !
+ * </pre>
+ * if it is not.
+ *
+ * Specify the object const reference in \a obj, the string to display before the
+ * object's string representation (\a before), the string to display after the object's
+ * string representation (\a after), and the alternative string to display if the object
+ * is not streamable (\a alternative).
+ */
+template<typename T>
+inline _Unspecified streamIfPossible(const T& obj,
+				     std::string before,
+				     std::string after = std::string(),
+				     std::string alternative = "<"+std::string(typeid(T).name())+">")
+{
+}
+#endif
+
+
+
 
 
 

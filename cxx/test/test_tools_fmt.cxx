@@ -36,6 +36,7 @@
 // <Eigen/...> or <tomographer2/...> header
 #include "test_tomographer.h"
 
+#include <Eigen/Eigen>
 #include <tomographer2/tools/fmt.h>
 
 
@@ -43,6 +44,8 @@
 // -----------------------------------------------------------------------------
 // fixture(s)
 
+
+struct NotStreamableObject { int a, b, c;  };
 
 // -----------------------------------------------------------------------------
 // test suites
@@ -69,6 +72,36 @@ BOOST_AUTO_TEST_CASE(teststreamstr)
   Eigen::Vector3d r; r << 1, 2, 3.4;
   BOOST_CHECK_EQUAL(streamstr("here is a row vector: " << r.transpose() ),
                     "here is a row vector:   1   2 3.4") ;
+}
+
+BOOST_AUTO_TEST_CASE(streamifpossible)
+{
+  Eigen::Matrix2d m(Eigen::Matrix2d::Identity());
+  NotStreamableObject x;
+  std::ostringstream s;
+  s << "The identity matrix is = \n" << Tomographer::Tools::streamIfPossible(m) << "\n"
+    << "And the value of x is = " << Tomographer::Tools::streamIfPossible(x) << "\n";
+  BOOST_MESSAGE(s.str());
+  BOOST_CHECK_EQUAL("\n"+s.str(), std::string("\n")+
+		    "The identity matrix is = \n"
+		    "1 0\n"
+		    "0 1\n"
+		    "And the value of x is = <"+std::string(typeid(NotStreamableObject).name())+">\n");
+}
+BOOST_AUTO_TEST_CASE(streamifpossible2)
+{
+  Eigen::Matrix2d m(Eigen::Matrix2d::Identity());
+  NotStreamableObject x;
+  std::ostringstream s;
+  s << Tomographer::Tools::streamIfPossible(m, "The identity matrix is = \n")
+    << " -- and -- "
+    << Tomographer::Tools::streamIfPossible(x, "x = ", ".", "Sorry, x is not streamable.")
+    << "\n";
+  BOOST_MESSAGE(s.str());
+  BOOST_CHECK_EQUAL("\n"+s.str(), std::string("\n")+
+		    "The identity matrix is = \n"
+		    "1 0\n"
+		    "0 1 -- and -- Sorry, x is not streamable.\n");
 }
 
 BOOST_AUTO_TEST_CASE(fmt_duration)

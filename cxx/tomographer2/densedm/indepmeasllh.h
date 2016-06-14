@@ -30,6 +30,7 @@
 #include <cstddef>
 #include <cassert>
 #include <string>
+#include <iomanip> // std::setprecision, std::setw and friends.
 
 #include <Eigen/Eigen>
 

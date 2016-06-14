@@ -140,7 +140,7 @@
  * Any logger may be directly queried whether a message at a given log level will be
  * emitted or discarded:
  * \code
- *   if (logger.enabled_for(Logger::INFO)) {
+ *   if (logger.enabled_for(Tomographer::Logger::INFO)) {
  *     logger.info(...); // will emit message and not discard it
  *   }
  * \endcode

@@ -31,6 +31,7 @@
 
 #include <tomographer2/mhrw.h>
 #include <tomographer2/tools/cxxutil.h>
+#include <tomographer2/tools/loggers.h>
 
 #include <Eigen/Core>
 
@@ -39,7 +40,7 @@
 // with integers so that we're sure we have deterministic results (e.g. from different
 // compilers)
 //
-template<typename ScalarType, typename Rng>
+template<typename ScalarType, typename Rng, typename LoggerType = Tomographer::Logger::VacuumLogger>
 struct TestLatticeMHRWBase
 {
   typedef Eigen::Matrix<ScalarType,Eigen::Dynamic,1> PointType;
@@ -48,9 +49,12 @@ struct TestLatticeMHRWBase
   const Eigen::Array<int,Eigen::Dynamic,1> latticeDims;
   Rng rng;
 
-  template<typename Der>
-  TestLatticeMHRWBase(const Eigen::DenseBase<Der> & dims, typename Rng::result_type seed = 0)
-    : latticeDims(dims), rng(seed)
+  Tomographer::Logger::LocalLogger<LoggerType> _logger;
+
+  TestLatticeMHRWBase(const Eigen::Ref<const Eigen::Array<int,Eigen::Dynamic,1> > & dims,
+		      typename Rng::result_type seed = 0,
+		      LoggerType & baselogger = Tomographer::Logger::vacuum_logger)
+    : latticeDims(dims), rng(seed), _logger(TOMO_ORIGIN, baselogger)
   {
   }
 
@@ -68,17 +72,24 @@ struct TestLatticeMHRWBase
   template<typename RealType>
   inline PointType jump_fn(const PointType & curpt, const RealType step_size)
   {
-    ScalarType istep = _maybe_correct_step_size(step_size);
-    std::uniform_int_distribution<int> rnddist(-istep, istep);
-    
+    auto rnddist = _get_step_rnddist(step_size);
+
+    _logger.longdebug([&](std::ostream & stream) {
+	stream << "jump_fn(), step_size="<<step_size<<", rnddist="<<rnddist;
+      });
+
     PointType newpt(latticeDims.size());
     for (int k = 0; k < latticeDims.size(); ++k) {
-      ScalarType newcoord = curpt(k) + rnddist(rng);
-      while (newcoord < 0) {
-	newcoord += latticeDims(k);
+
+      ScalarType delta = rnddist(rng);
+      _logger.longdebug([&](std::ostream&stream){stream << "delta["<<k<<"] = " << delta; });
+
+      ScalarType newcoord = curpt(k) + delta;
+      if (newcoord < 0) {
+	newcoord = 0; // don't wrap around, because fn might be discontinuous += latticeDims(k);
       }
-      while (newcoord >= latticeDims(k)) {
-	newcoord -= latticeDims(k);
+      if (newcoord >= latticeDims(k)) {
+	newcoord = latticeDims(k)-1; // don't wrap around
       }
       newpt(k) = newcoord;
     }
@@ -86,14 +97,26 @@ struct TestLatticeMHRWBase
     return newpt;
   }
 
+  //internal:
+
+  //make sure it's a signed scalar type
+  TOMO_STATIC_ASSERT_EXPR((int)ScalarType(-1) == -1);
+
   template<typename RealType, TOMOGRAPHER_ENABLED_IF_TMPL(std::is_integral<ScalarType>::value)>
-  inline ScalarType _maybe_correct_step_size(RealType step_size) const {
-    return ScalarType(1+step_size);
+  inline std::uniform_int_distribution<ScalarType> _get_step_rnddist(RealType step_size)
+  { 
+    ScalarType istep = ScalarType(1+step_size);
+    return std::uniform_int_distribution<ScalarType>(-istep, istep);
   }
+
   template<typename RealType, TOMOGRAPHER_ENABLED_IF_TMPL(!std::is_integral<ScalarType>::value)>
-  inline ScalarType _maybe_correct_step_size(RealType step_size) const {
-    return step_size; // normal floating type, no need for any correction
+  inline std::uniform_real_distribution<ScalarType> _get_step_rnddist(RealType step_size)
+  { 
+    // normal floating type, no correction needed
+    ScalarType step = ScalarType(step_size);
+    return std::uniform_real_distribution<ScalarType>(-step, step);
   }
+
 };
 
 
@@ -102,35 +125,45 @@ struct TestLatticeMHRWBase
 //
 // Complies to MHWalker type interface.
 //
-template<typename ScalarType, typename Rng = std::mt19937>
+template<typename ScalarType, typename Rng = std::mt19937,
+	 typename LoggerType = Tomographer::Logger::VacuumLogger>
 struct TestLatticeMHRWGaussPeak
-  : public TestLatticeMHRWBase<ScalarType, Rng>
+  : public TestLatticeMHRWBase<ScalarType, Rng, LoggerType>
 {
+  typedef TestLatticeMHRWBase<ScalarType, Rng, LoggerType> Base;
   typedef Eigen::Matrix<ScalarType,Eigen::Dynamic,Eigen::Dynamic> SigmaType;
-  typedef typename TestLatticeMHRWBase<ScalarType,Rng>::PointType PointType;
+  typedef typename Base::PointType PointType;
 
-  SigmaType Sigma;
-  ScalarType SigmaInvScale;
-  PointType Offset;
+  const SigmaType Sigma;
+  const ScalarType SigmaInvScale;
+  const PointType Offset;
 
-  template<typename Der1, typename Der2, typename Der3>
-  TestLatticeMHRWGaussPeak(const Eigen::DenseBase<Der1> & dims, const Eigen::DenseBase<Der2>& Sigma_,
-			   ScalarType SigmaInvScale_, const Eigen::DenseBase<Der3> Offset_,
-			   int seed = 0)
-    : TestLatticeMHRWBase<ScalarType,Rng>(dims, seed),
-      Sigma(dims.size(), dims.size()), SigmaInvScale(SigmaInvScale_),
-      Offset(dims.size())
+  TestLatticeMHRWGaussPeak(const Eigen::Ref<const Eigen::Array<int,Eigen::Dynamic,1> > & dims,
+			   const Eigen::Ref<const SigmaType> & Sigma_,
+			   ScalarType SigmaInvScale_,
+			   const Eigen::Ref<const PointType> & Offset_,
+			   int seed = 0,
+			   LoggerType & logger = Tomographer::Logger::vacuum_logger)
+    : Base(dims, seed, logger),
+      Sigma(Sigma_), SigmaInvScale(SigmaInvScale_),
+      Offset(Offset_)
   {
-    Sigma = Sigma_;
-    Offset = Offset_;
   }
 
-  typedef ScalarType FnValueType; // if scalartype=int, use int here also to make everything deterministic.
+  //typedef ScalarType FnValueType; // if scalartype=int, use int here also to make everything deterministic.
+  typedef double FnValueType; // use 'double' otherwise it's impossible to make MHRW steps "smooth"
   enum { UseFnSyntaxType = Tomographer::MHUseFnLogValue } ;
 
   inline FnValueType fnlogval(const PointType & pt)
   {
-    return - FnValueType((pt - Offset).transpose() * Sigma * (pt - Offset)) / SigmaInvScale;
+    FnValueType vval = - FnValueType((pt - Offset).transpose() * Sigma * (pt - Offset)) / SigmaInvScale;
+    Base::_logger.sublogger(TOMO_ORIGIN).longdebug([&](std::ostream & stream) {
+	stream << "pt = " << pt.transpose() << "; Offset = " << Offset.transpose()
+	       << "; SigmaInvScale = " << SigmaInvScale << "; Sigma =\n"
+	       << Sigma << " --> value is = "
+	       << vval;
+      });
+    return vval;
   }
 
 };
