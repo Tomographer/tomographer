@@ -1754,6 +1754,8 @@ public:
       _baselogger(movecopy._baselogger)
   {
   }
+  //! Not copyable.
+  LocalLogger(const LocalLogger & other) = delete;
 
   inline std::string origin_prefix() const { return _origin_prefix; }
   inline std::string glue() const { return _glue; }

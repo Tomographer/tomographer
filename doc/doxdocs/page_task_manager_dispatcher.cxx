@@ -79,6 +79,10 @@
  *          Provide input to a new task. \c k is the task iteration number
  *          and \c pcdata is a pointer to the shared const data.
  *
+ *          \todo It doesn't make sense to have this method here. It will be moved in the
+ *          near future.  (This won't cause any change to the higher-level API in
+ *          Tomographer::MHRWTasks and Tomographer::MHRWTasks::ValueHistogramTasks)
+ *
  * \par
  *          The return value may be any type. It will be passed directly to the first
  *          argument of the constructor.

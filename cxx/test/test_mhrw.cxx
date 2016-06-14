@@ -49,13 +49,13 @@ struct test_mhrandomwalk_fixture
     int Nthermchk;
     int Nrunchk;
     int Nsweepchk;
-    
-    TestMHWalker(int sweep_size, int check_n_therm, int check_n_run)
+
+    TestMHWalker(int sweep_size, int check_n_therm, int check_n_run, std::mt19937 & rng)
       : TestLatticeMHRWGaussPeak(
 	  Eigen::Vector2i::Constant(100),
 	  (Eigen::Matrix2i() << 10, -5, 5, 10).finished(), 1,
 	  (Eigen::Vector2i() << 40, 50).finished(),
-	  414367 // seed, fixed -> deterministic
+	  rng
 	  ),
 	count_jump(0),
 	Nthermchk(check_n_therm),
@@ -63,6 +63,7 @@ struct test_mhrandomwalk_fixture
 	Nsweepchk(sweep_size)
     {
     }
+    TestMHWalker(TestMHWalker&& other) = default;
     
     inline void init()
     {
@@ -164,6 +165,7 @@ BOOST_FIXTURE_TEST_CASE(mhrandomwalk, test_mhrandomwalk_fixture)
   LoggerType logger;
 
   typedef std::mt19937 Rng;
+  // rng for the random walk engine itself
   Rng rng(3040); // fixed seed
 
   typedef Tomographer::MHRandomWalk<Rng, TestMHWalker, TestMHRWStatsCollector, LoggerType, int>
@@ -173,7 +175,10 @@ BOOST_FIXTURE_TEST_CASE(mhrandomwalk, test_mhrandomwalk_fixture)
   const int nrun = 100;
   const int nsweep = 10;
 
-  TestMHWalker mhwalker(nsweep, ntherm, nrun);
+  // rng for the mhwalker
+  Rng rng2(414367); // seed, fixed -> deterministic
+
+  TestMHWalker mhwalker(nsweep, ntherm, nrun, rng2);
   TestMHRWStatsCollector stats(nsweep, ntherm, nrun);
   MHRandomWalkType rw(nsweep, 2, ntherm, nrun, mhwalker, stats, rng, logger);
 
@@ -203,7 +208,10 @@ BOOST_FIXTURE_TEST_CASE(mhrandomwalksetup, test_mhrandomwalk_fixture)
   const int nrun = 100;
   const int nsweep = 10;
 
-  TestMHWalker mhwalker(nsweep, ntherm, nrun);
+  // rng for the mhwalker
+  Rng rng2(414367); // seed, fixed -> deterministic
+
+  TestMHWalker mhwalker(nsweep, ntherm, nrun, rng2);
   TestMHRWStatsCollector stats(nsweep, ntherm, nrun);
   MHRandomWalkType rw(Tomographer::MHRWParams<int,double>(nsweep, 2, ntherm, nrun), mhwalker, stats, rng, logger);
 

@@ -579,6 +579,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     if (vm.count("version")) {
       std::cout << prog_version_info
 		<< "----\n"
+		<< "using:\n"
 		<< prog_version_info_features();
       ::exit(2);
     }

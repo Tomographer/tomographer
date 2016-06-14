@@ -284,6 +284,7 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
      *
      * This should be considered as the input of the k-th task. Each task must of course
      * have a different seed, otherwise we will just repeat the same "random" walks!
+     *
      */
     static inline int get_input(int k, const MHRandomWalkTaskCData * pcdata)
     {
@@ -338,7 +339,7 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
       OurStatsCollectors ourstatscollectors(stats, statreportcheck);
 
       auto mhwalker = pcdata->createMHWalker(rng, logger);
-      typedef decltype(mhwalker) MHWalkerType;
+      typedef decltype(pcdata->createMHWalker(rng, logger)) MHWalkerType;
 
       MHRandomWalk<Rng, MHWalkerType, OurStatsCollectors, LoggerType, CountIntType> rwalk(
 	  // MH random walk parameters

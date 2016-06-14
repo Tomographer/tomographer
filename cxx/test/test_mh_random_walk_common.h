@@ -47,14 +47,21 @@ struct TestLatticeMHRWBase
   typedef double StepRealType; // needed for MHWalker interface
   
   const Eigen::Array<int,Eigen::Dynamic,1> latticeDims;
-  Rng rng;
+  Rng & rng;
 
   Tomographer::Logger::LocalLogger<LoggerType> _logger;
 
   TestLatticeMHRWBase(const Eigen::Ref<const Eigen::Array<int,Eigen::Dynamic,1> > & dims,
-		      typename Rng::result_type seed = 0,
+		      Rng & rng_,
 		      LoggerType & baselogger = Tomographer::Logger::vacuum_logger)
-    : latticeDims(dims), rng(seed), _logger(TOMO_ORIGIN, baselogger)
+    : latticeDims(dims), rng(rng_), _logger(TOMO_ORIGIN, baselogger)
+  {
+  }
+  // seem to need this for g++4.6
+  TestLatticeMHRWBase(TestLatticeMHRWBase&& m)
+    : latticeDims(std::move(m.latticeDims)),
+      rng(m.rng),
+      _logger(std::move(m._logger))
   {
   }
 
@@ -142,13 +149,23 @@ struct TestLatticeMHRWGaussPeak
 			   const Eigen::Ref<const SigmaType> & Sigma_,
 			   ScalarType SigmaInvScale_,
 			   const Eigen::Ref<const PointType> & Offset_,
-			   int seed = 0,
+			   Rng & rng_,
 			   LoggerType & logger = Tomographer::Logger::vacuum_logger)
-    : Base(dims, seed, logger),
+    : Base(dims, rng_, logger),
       Sigma(Sigma_), SigmaInvScale(SigmaInvScale_),
       Offset(Offset_)
   {
   }
+
+  // seem to need this for g++4.6
+  TestLatticeMHRWGaussPeak(TestLatticeMHRWGaussPeak&& m)
+    : Base(std::move(m)),
+      Sigma(std::move(m.Sigma)),
+      SigmaInvScale(m.SigmaInvScale),
+      Offset(std::move(m.Offset))
+  {
+  }
+
 
   //typedef ScalarType FnValueType; // if scalartype=int, use int here also to make everything deterministic.
   typedef double FnValueType; // use 'double' otherwise it's impossible to make MHRW steps "smooth"

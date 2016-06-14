@@ -528,7 +528,7 @@ private:
 	       << std::setprecision(4)
 	       << "a=" << std::setw(5) << a << ", newptval=" << std::setw(5) << newptval
 	       << ", curptval=" << std::setw(5) << curptval << ", accept_ratio="
-	       << (!is_thermalizing ? Tools::fmts("%.2g", acceptanceRatio()) : std::string("N/A"))
+	       << (!is_thermalizing ? Tools::fmts("%.2g", this->acceptanceRatio()) : std::string("N/A"))
 	       << Tools::streamIfPossible(curpt, "\ncurpt = ", "", "");
       });
 

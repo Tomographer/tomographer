@@ -166,8 +166,9 @@ namespace OMP {
     BaseLogger & _baselogger;
   public:
 
+    // ### why "MoreArgs" ??
     template<typename... MoreArgs>
-    ThreadSanitizerLogger(BaseLogger & logger, MoreArgs...)
+    ThreadSanitizerLogger(BaseLogger & logger, MoreArgs&&...)
       // NOTE: pass the baselogger's level on here. The ThreadSanitizerLogger's level is
       // this one, and is fixed and cannot be changed while running.
       : Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >(logger.level()),
@@ -183,12 +184,14 @@ namespace OMP {
     ~ThreadSanitizerLogger()
     {
     }
+
+    
     
     inline void emit_log(int level, const char * origin, const std::string& msg)
     {
       //printf("ThreadSanitizerLogger::emit_log(%d, %s, %s)\n", level, origin, msg.c_str());
       tomo_internal::ThreadSanitizerLoggerHelper<BaseLogger,
-                                                    Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
+						 Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
         ::emit_log(
             _baselogger, level, origin, msg
 	    );
@@ -199,7 +202,7 @@ namespace OMP {
       filter_by_origin(int level, const char * origin) const
     {
       return tomo_internal::ThreadSanitizerLoggerHelper<BaseLogger,
-                                                           Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
+							Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
         ::filter_by_origin(
             _baselogger, level, origin
 	    );

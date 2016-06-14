@@ -184,6 +184,10 @@
  *
  * And must provide the following members:
  *
+ * \par MHWalker(MHWalker&& other)
+ *     A MHWalker type must have a move constructor. (Of course, replace \a "MHWalker" by
+ *     the name of your class).
+ *
  * \par void init()
  *
  * \par PointType startpoint()

@@ -121,7 +121,7 @@ public:
    *     sphere.
    */
   LLHMHWalker(const MatrixType & startpt, const DenseLLH & llh, Rng & rng,
-                        LoggerType & log_)
+	      LoggerType & log_)
     : _llh(llh),
       _rng(rng),
       _normal_distr_rnd(0.0, 1.0),
@@ -130,6 +130,21 @@ public:
       _startpt(startpt)
   {
   }
+
+  /** \brief A \ref pageInterfaceMHWalker needs to have a move constructor
+   *
+   * [This explicit definition seems to be needed for g++ 4.6.]
+   */
+  LLHMHWalker(LLHMHWalker && moveother)
+    : _llh(std::move(moveother._llh)),
+      _rng(moveother._rng),
+      _normal_distr_rnd(moveother._normal_distr_rnd),
+      _px(std::move(moveother._px)),
+      _log(moveother._log),
+      _startpt(moveother._startpt)
+  {
+  }
+
 
   /** \brief Provided for \ref MHRandomWalk. Initializes some fields and prepares for a
    *     random walk.

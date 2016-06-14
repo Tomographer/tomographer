@@ -76,7 +76,7 @@ struct OurCDataTask : CDataBaseType
     // 100x100 lattice
     return TestLatticeMHRWGaussPeak<int,Rng,LoggerType>(
 	1000*Eigen::Vector2i::Ones(), Eigen::Matrix2i::Identity(), 200*200, Eigen::Vector2i::Zero(2),
-	rng(), logger
+	rng, logger
 	);
   }
 };
