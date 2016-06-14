@@ -155,13 +155,6 @@ addTomographerTest(test_mhrw_bin_err.cxx  "")
 addTomographerTest(test_mhrw_valuehist_tasks.cxx  "openmp")
 addTomographerTest(test_multiprocomp.cxx  "openmp")
 
-# tests need to be converted to new API:
-#addTomographerTest(test_multi_omp.cxx  "openmp")
-# converted & renamed:
-#addTomographerTest(test_lib_basics.cxx  "")
-#addTomographerTest(test_qit_util.cxx  "")
-#addTomographerTest(test_param.cxx  "")
-#addTomographerTest(test_integrator_basic.cxx "")
 
 
 # check "minimal tomorun" program compiles and runs
