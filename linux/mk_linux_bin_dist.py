@@ -90,6 +90,10 @@ def do_rmtree(path):
     print("Removing %s ..."%(path))
     shutil.rmtree(path)
 
+
+# execute everything with lower priority
+os.nice(20)
+
 # git clone
 do_run([e.git, "clone", tomographer_url, tomo_name_w_ver])
 
@@ -125,33 +129,41 @@ do_run([e.cmake, '..',
         '-DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE='+Boost_PROGRAM_OPTIONS_LIB,
         # optimizations & architecture: don't include too many optimizations, so that the
         # binary can run on other machines.
-        '-DTARGET_ARCHITECTURE=generic',
+        '-DTARGET_ARCHITECTURE=none',
+        #'-DUSE_SSE2=on', # but enable sse2 which is available virtually everywhere ## DOESN'T WORK -- WHY??
         # additional C++ compiler flags
-        '-DCMAKE_CXX_FLAGS_RELEASE=-O3',
-        # RPath stuff
-        '-DCMAKE_SKIP_BUILD_RPATH=true',
-        '-DCMAKE_BUILD_WITH_INSTALL_RPATH=false',
-        '-DCMAKE_INSTALL_RPATH=\$ORIGIN/../lib',
+        '-DCMAKE_CXX_FLAGS_RELEASE=-O3 -msse2',
+        # linker flags: RPath stuff etc. ### THESE ARE NOT NECESSARY, WE OVERRIDE THE LINK COMMAND ANYWAY....
+#        '-DCMAKE_SKIP_BUILD_RPATH=true',
+#        '-DCMAKE_BUILD_WITH_INSTALL_RPATH=false',
+#        '-DCMAKE_INSTALL_RPATH=\$ORIGIN/../lib',
         # Finally, our install prefix for packaging,
         '-DCMAKE_INSTALL_PREFIX='+fullinstallpath
         ], cwd=fullbuildpath)
 
 # compile. Since there is only 'tomorun' to make, no need for -j<#CPUs>
-do_run([e.make],
-       cwd=fullbuildpath,
-       preexec_fn=lambda : os.nice(20))
+do_run([e.make, 'VERBOSE=1'],
+       cwd=fullbuildpath)
+
+do_run([CXX_COMPILER,
+        "-O3",
+        "-static", "-static-libgcc", "-static-libstdc++",
+        "-fopenmp",
+        "CMakeFiles/tomorun.dir/tomorun.cxx.o",
+        "-o", "tomorun",
+        MATIO_LIB,
+        ZLIB_LIB,
+        Boost_PROGRAM_OPTIONS_LIB], cwd=os.path.join(fullbuildpath, 'cxx', 'tomorun')
+       );
+
 
 # install/strip
 do_run([e.make, 'install/strip'],
-       cwd=fullbuildpath,
-       preexec_fn=lambda : os.nice(20))
-
-# include some relevant libraries
-#do_run.............
+       cwd=fullbuildpath)
 
 # package
-#do_run([e.tar, "cvfz", os.path.join(fullcwd, tomo_name_w_ver_a['tar.gz']), installdirname],
-#       cwd=fullbuildpath)
+do_run([e.tar, "cvfz", os.path.join(fullcwd, tomo_name_w_ver_a['tar.gz']), install_name],
+       cwd=fullbuildpath)
 
 
 #do_rmtree(tomo_name_w_ver)
