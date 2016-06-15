@@ -38,6 +38,7 @@
 #include <Eigen/StdVector>
 
 #include <tomographer2/densedm/dmtypes.h>
+#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
 #include <tomographer2/tools/eigenutil.h>
 
 #include <boost/math/constants/constants.hpp>
@@ -61,8 +62,8 @@ struct GenGellMannFunctor12
       j(j_),
       k(k_)
   {
-    eigen_assert(j < k);
-    eigen_assert(k <= (MatIndex)matq.dim());
+    tomographer_assert(j < k);
+    tomographer_assert(k <= (MatIndex)matq.dim());
   }
   DMTypes matq;
   MatIndex j;
@@ -119,7 +120,7 @@ struct GenGellMannFunctor3
   {
     // remember: l = 0, 1, ..., d-2   and not: 1, ..., d-1
     normalization = std::sqrt( RealScalar(2) / ((l+1)*(l+2)) );
-    eigen_assert(l < (MatIndex)matq.dim()-1);
+    tomographer_assert(l < (MatIndex)matq.dim()-1);
   }
   DMTypes matq;
   MatIndex l;
@@ -245,8 +246,8 @@ public:
       ++count;
     }
     // got them all?
-    eigen_assert(count == lambda.size());
-    eigen_assert(count == (std::size_t)_dmt.ndof());
+    tomographer_assert(count == lambda.size());
+    tomographer_assert(count == (std::size_t)_dmt.ndof());
   }
 
   /** \brief Generalized Gell-Mann matrices.
@@ -267,7 +268,7 @@ public:
    */
   inline const MatrixType & getLambda(std::size_t j) const
   {
-    eigen_assert(j < _dmt.ndof());
+    tomographer_assert(j < _dmt.ndof());
     return lambda[j];
   }
 
@@ -283,9 +284,9 @@ public:
   rhoToA(const Eigen::Ref<const MatrixType> & rho) const
   {
     VectorParamNdofType a(_dmt.initVectorParamNdofType());
-    eigen_assert((std::size_t)a.size() == _dmt.ndof());
-    eigen_assert((std::size_t)rho.rows() == _dmt.dim());
-    eigen_assert((std::size_t)rho.cols() == _dmt.dim());
+    tomographer_assert((std::size_t)a.size() == _dmt.ndof());
+    tomographer_assert((std::size_t)rho.rows() == _dmt.dim());
+    tomographer_assert((std::size_t)rho.cols() == _dmt.dim());
     for (std::size_t n = 0; n < lambda.size(); ++n) {
       a(n) = (rho * lambda[n].template selfadjointView<Eigen::Lower>())
 	.real().trace() * boost::math::constants::half_root_two<RealScalar>();
@@ -302,9 +303,9 @@ public:
   aToRho(const Eigen::Ref<const VectorParamNdofType> & a, RealScalar trace = 1.0) const
   {
     MatrixType rho(_dmt.initMatrixType());
-    eigen_assert((std::size_t)a.size() == _dmt.ndof());
-    eigen_assert((std::size_t)rho.rows() == _dmt.dim());
-    eigen_assert((std::size_t)rho.cols() == _dmt.dim());
+    tomographer_assert((std::size_t)a.size() == _dmt.ndof());
+    tomographer_assert((std::size_t)rho.rows() == _dmt.dim());
+    tomographer_assert((std::size_t)rho.cols() == _dmt.dim());
     rho = trace * MatrixType::Identity(rho.rows(), rho.cols()) / _dmt.dim();
     for (std::size_t n = 0; n < lambda.size(); ++n) {
       rho += a(n) * lambda[n].template selfadjointView<Eigen::Lower>()

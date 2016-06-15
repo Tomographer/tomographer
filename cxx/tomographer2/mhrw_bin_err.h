@@ -400,9 +400,9 @@ public:
       bin_sumsq(BinSumSqArray::Zero(num_track_values(), num_levels()+1)),
       logger(logger_)
   {
-    assert(Tools::is_positive(num_levels()));
-    assert(Tools::is_power_of_two(samples_size()));
-    assert( (1<<num_levels()) == samples_size() );
+    tomographer_assert(Tools::is_positive(num_levels()));
+    tomographer_assert(Tools::is_power_of_two(samples_size()));
+    tomographer_assert( (1<<num_levels()) == samples_size() );
 
     reset();
   }
@@ -438,8 +438,8 @@ public:
 
     ++n_samples;
 
-    eigen_assert(vals.rows() == num_track_values());
-    eigen_assert(vals.cols() == 1);
+    tomographer_assert(vals.rows() == num_track_values());
+    tomographer_assert(vals.cols() == 1);
 
     // store the new values in the bins  [also if ninbin == 0]
     samples.col(ninbin) = vals;
@@ -606,8 +606,8 @@ public:
   template<typename Derived>
   inline BinSumSqArray calc_error_levels(const Eigen::ArrayBase<Derived> & means) const
   {
-    eigen_assert(means.rows() == num_track_values());
-    eigen_assert(means.cols() == 1);
+    tomographer_assert(means.rows() == num_track_values());
+    tomographer_assert(means.cols() == 1);
     const int n_levels_plus_one = num_levels()+1;
     const int n_track_values = num_track_values();
 
@@ -650,8 +650,8 @@ public:
    */
   template<typename Derived>
   inline BinSumArray calc_error_lastlevel(const Eigen::ArrayBase<Derived> & means) const {
-    eigen_assert(means.rows() == num_track_values());
-    eigen_assert(means.cols() == 1);
+    tomographer_assert(means.rows() == num_track_values());
+    tomographer_assert(means.cols() == 1);
     return (
 	bin_sumsq.col(num_levels()) / ValueType(n_flushes) - means.cwiseProduct(means).template cast<ValueType>()
 	).cwiseMax(0).cwiseSqrt() / std::sqrt(ValueType(n_flushes-1));
@@ -708,8 +708,8 @@ public:
   {
     Eigen::ArrayXi converged_status(num_track_values()); // RVO will help
 
-    eigen_assert(error_levels.rows() == num_track_values());
-    eigen_assert(error_levels.cols() == num_levels() + 1);
+    tomographer_assert(error_levels.rows() == num_track_values());
+    tomographer_assert(error_levels.cols() == num_levels() + 1);
 
     logger.longdebug("BinningAnalysis::determine_error_convergence", [&](std::ostream & str) {
 	str << "error_levels = \n" << error_levels << "\n";

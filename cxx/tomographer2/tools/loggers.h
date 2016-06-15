@@ -27,7 +27,6 @@
 #ifndef TOMOGRAPHER_TOOLS_LOGGERS_H
 #define TOMOGRAPHER_TOOLS_LOGGERS_H
 
-#include <cassert>
 #include <cstdio>
 #include <cstdarg>
 
@@ -391,7 +390,7 @@ public:
   }
 
   inline void setLogLevel(int) {
-    assert(0 && "Call to LoggerRuntimeLevel::setLogLevel() for Logger which defines HasOwnGetLevel=1!");
+    tomographer_assert(0 && "Call to LoggerRuntimeLevel::setLogLevel() for Logger which defines HasOwnGetLevel=1!");
   }
 };
 }

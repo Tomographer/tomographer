@@ -28,13 +28,13 @@
 #define _TOMOGRAPHER_MHRW_H
 
 #include <cstddef>
-#include <cassert>
 
 #include <limits>
 #include <random>
 
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/tools/fmt.h>
+#include <tomographer2/tools/cxxutil.h>
 #include <tomographer2/mhrw_bin_err.h>
 
 
@@ -100,7 +100,7 @@ namespace tomo_internal {
     static inline FnValueType get_ptval(MHWalker & mhwalker, const PointType & curpt)
     {
       (void)mhwalker; (void)curpt;
-      assert(0 && "UNKNOWN UseFnSyntaxType: Not implemented");
+      tomographer_assert(0 && "UNKNOWN UseFnSyntaxType: Not implemented");
     }
     /** \internal
      * \brief calculate the MH function ratio between two points
@@ -118,7 +118,7 @@ namespace tomo_internal {
     static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, FnValueType /*newptval*/,
                                      const PointType & /*curpt*/, FnValueType /*curptval*/)
     {
-      assert(0 && "UNKNOWN UseFnSyntaxType: Not implemented");
+      tomographer_assert(0 && "UNKNOWN UseFnSyntaxType: Not implemented");
       return 0;
     }
   };

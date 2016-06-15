@@ -27,8 +27,12 @@
 #ifndef SPHCOORDS_H
 #define SPHCOORDS_H
 
-#include <Eigen/Eigen>
 #include <cmath>
+
+#include <Eigen/Eigen>
+
+#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
+
 
 /** \file sphcoords.h
  *
@@ -65,8 +69,8 @@ void cart_to_sph(Eigen::MatrixBase<Der2>& rtheta, const Eigen::MatrixBase<Der1>&
   { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(Der2); }
   typedef typename Eigen::MatrixBase<Der1>::Scalar Scalar;
 
-  eigen_assert(cart.cols() == 1 && rtheta.cols() == 1);
-  eigen_assert(cart.rows() == rtheta.rows());
+  tomographer_assert(cart.cols() == 1 && rtheta.cols() == 1);
+  tomographer_assert(cart.rows() == rtheta.rows());
 
   const size_t ds = cart.rows()-1; // dimension of the sphere
 
@@ -139,8 +143,8 @@ inline void sphsurf_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBa
 
   //  typedef typename Eigen::MatrixBase<Der1>::Scalar Scalar;
 
-  eigen_assert(cart.cols() == 1 && theta.cols() == 1);
-  eigen_assert(cart.rows() == theta.rows() + 1);
+  tomographer_assert(cart.cols() == 1 && theta.cols() == 1);
+  tomographer_assert(cart.rows() == theta.rows() + 1);
 
   const size_t ds = theta.rows(); // dimension of the sphere
 
@@ -175,8 +179,8 @@ void sph_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<Der1>& r
   { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(Der2); }
   //  typedef typename Eigen::MatrixBase<Der1>::Scalar Scalar;
 
-  eigen_assert(cart.cols() == 1 && rtheta.cols() == 1);
-  eigen_assert(cart.rows() == rtheta.rows());
+  tomographer_assert(cart.cols() == 1 && rtheta.cols() == 1);
+  tomographer_assert(cart.rows() == rtheta.rows());
 
   const size_t ds = rtheta.rows()-1; // dimension of the sphere
 
@@ -283,9 +287,9 @@ void sphsurf_diffjac(Eigen::ArrayBase<Der1> & dxdtheta, const Eigen::MatrixBase<
   const size_t ds = theta.rows();
   const size_t n = ds + 1;
 
-  eigen_assert(theta.cols() == 1);
-  eigen_assert(dxdtheta.rows() == (int)n);
-  eigen_assert(dxdtheta.cols() == (int)ds);
+  tomographer_assert(theta.cols() == 1);
+  tomographer_assert(dxdtheta.rows() == (int)n);
+  tomographer_assert(dxdtheta.cols() == (int)ds);
 
   Eigen::Array<Scalar, Der2::RowsAtCompileTime, 1> sintheta(theta.rows());
   sintheta = theta.array().sin();
@@ -367,9 +371,9 @@ void sphsurf_diffjac2(Eigen::ArrayBase<Der1> & ddxddtheta, const Eigen::MatrixBa
   const size_t ds = theta.rows();
   const size_t n = ds + 1;
 
-  eigen_assert(theta.cols() == 1);
-  eigen_assert(ddxddtheta.rows() == (int)n);
-  eigen_assert(ddxddtheta.cols() == (int)(ds*ds));
+  tomographer_assert(theta.cols() == 1);
+  tomographer_assert(ddxddtheta.rows() == (int)n);
+  tomographer_assert(ddxddtheta.cols() == (int)(ds*ds));
 
   Eigen::Array<Scalar, Der2::RowsAtCompileTime, 1> sintheta(theta.rows());
   sintheta = theta.array().sin();

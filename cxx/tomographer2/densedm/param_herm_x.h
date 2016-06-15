@@ -42,7 +42,7 @@
 
 #include <Eigen/Core>
 
-#include <tomographer2/tools/cxxutil.h> // static_or_dynamic
+#include <tomographer2/tools/cxxutil.h> // static_or_dynamic, tomographer_assert()
 
 
 // // heavily inspired by Eigen::Replicate [Eigen/src/Core/Replicate.h]
@@ -99,7 +99,7 @@
 //   {
 //     EIGEN_STATIC_ASSERT((internal::is_same<typename internal::remove_const<MatrixType>::type,OriginalMatrixType>::value),
 //                         THE_MATRIX_OR_EXPRESSION_THAT_YOU_PASSED_DOES_NOT_HAVE_THE_EXPECTED_TYPE) ;
-//     eigen_assert(H.rows() == H.cols())
+//     tomographer_assert(H.rows() == H.cols())
 //   }
   
 //   inline Index rows() const { return _H.rows()*_H.rows(); }
@@ -107,7 +107,7 @@
 
 //   inline RealScalar coeff(Index rowId, Index colId) const
 //   {
-//     eigen_assert(colId == 0);
+//     tomographer_assert(colId == 0);
 
 //     if (rowId < _H.rows()) {
 //       return _H.coeff(rowId, rowId).real();
@@ -185,7 +185,7 @@ public:
     VectorParamType x(_dmt.initVectorParamType());
     const IndexType dimtri = (_dmt.dim2() - _dmt.dim())/2;
 
-    eigen_assert((IndexType)_dmt.dim() == Herm.cols()); // assert Herm is (dim x dim)
+    tomographer_assert((IndexType)_dmt.dim() == Herm.cols()); // assert Herm is (dim x dim)
     
     x.block(0,0,_dmt.dim(),1) = Herm.real().diagonal();
 
@@ -214,7 +214,7 @@ public:
     MatrixType Herm(_dmt.initMatrixType());
     
     const IndexType dimtri = (_dmt.dim2()-_dmt.dim())/2;
-    eigen_assert(x.rows() == (IndexType)_dmt.dim2() && x.cols() == 1); // assert x is (dim*dim x 1)
+    tomographer_assert(x.rows() == (IndexType)_dmt.dim2() && x.cols() == 1); // assert x is (dim*dim x 1)
 
     Herm.diagonal().real() = x.block(0,0,_dmt.dim(),1);
     Herm.diagonal().imag().setZero();

@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -28,7 +28,6 @@
 #define TOMOGRAPHER_MHRWSTATSCOLLECTORS_H
 
 #include <cstddef>
-#include <cassert>
 
 #include <limits>
 #include <tuple>
@@ -37,7 +36,15 @@
 #include <typeinfo>
 
 
+#include <tomographer2/tools/cxxutil.h>
 #include <tomographer2/histogram.h>
+
+/** \file mhrwstatscollectors.h
+ *
+ * Definitions for stats collectors -- see \ref pageInterfaceMHRWStatsCollector, as well
+ * as for example \ref ValueHistogramMHRWStatsCollector etc.
+ *
+ */
 
 
 namespace Tomographer {
@@ -402,7 +409,7 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
 	error_levels(b.num_track_values(), b.num_levels()+1),
 	converged_status(Eigen::ArrayXi::Constant(b.num_track_values(), BinningAnalysisType::UNKNOWN_CONVERGENCE))
     {
-      eigen_assert(converged_status.rows() == b.num_track_values() && converged_status.cols() == 1);
+      tomographer_assert(converged_status.rows() == b.num_track_values() && converged_status.cols() == 1);
     }
 
     //! Histogram, already with error bars

@@ -40,47 +40,6 @@
 #include <tomographer2/tools/conststr.h>
 
 
-// -----------------------------------------------------------------------------
-// Define functions with printf-safe arguments, with compiler-generated warnings
-// -----------------------------------------------------------------------------
-
-
-// The PRINTFX_ARGS_SAFE macros are defined here, so that in the future we may support a
-// wider range of compilers which may not understand the __attribute__(format)
-// instruction.
-
-
-/** \brief attributes for a function accepting printf-like variadic arguments
- *
- * Put this macro in front of custom functions which accept printf-like formatted
- * arguments. The attributes which this macro expands to instructs the compiler to warn
- * the user against wrong printf formats.
- *
- * Use the macro PRINTF1_ARGS_SAFE if the format string is the first argument of the
- * function and the arguments immediately follow, i.e. if the function has signature
- * \code
- *   <return-type> function(const char * fmt, ...);
- * \endcode
- * If you have other arguments preceeding the format string, use the respective macros
- * \ref PRINTF2_ARGS_SAFE, \ref PRINTF3_ARGS_SAFE or \ref PRINTF4_ARGS_SAFE. Note that for
- * non-static class members there is always the implicit \c this parameter, so you should
- * count the arguments starting from 2, not 1.
- *
- * See also the `format' attribute at
- * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes .
- */
-#define PRINTF1_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 1, 2)))
-
-//! See \ref PRINTF1_ARGS_SAFE
-#define PRINTF2_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 2, 3)))
-
-//! See \ref PRINTF1_ARGS_SAFE
-#define PRINTF3_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 3, 4)))
-
-//! See \ref PRINTF1_ARGS_SAFE
-#define PRINTF4_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 4, 5)))
-
-
 
 // -----------------------------------------------------------------------------
 // Some C++ helpers
@@ -95,6 +54,41 @@
  */
 #define TOMO_STATIC_ASSERT_EXPR(...)				\
   static_assert(__VA_ARGS__, #__VA_ARGS__)
+
+
+#ifndef tomographer_assert
+#define tomographer_assert(...) eigen_assert(__VA_ARGS__ && "assert: " #__VA_ARGS__)
+#endif
+
+
+
+#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
+// WARNING!!! CHECK OUT  http://stackoverflow.com/q/29363532/1694896
+// FOR VERY SUBTLE BUGS....... :( :(   -- TEST WITH INTEL ICC!!
+#define TOMOGRAPHER_ENABLED_IF(...)					\
+  template<bool _dummy__enabledif = false,				\
+	   typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
+                                                        _dummy__enabledif2 = false>
+#define TOMOGRAPHER_ENABLED_IF_TMPL(...)				\
+  bool _dummy__enabledif = false,				\
+  typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
+                                                 _dummy__enabledif2 = true
+
+/** \brief Altenative to \ref TOMOGRAPHER_ENABLED_IF_TMPL()
+ *
+ * Use this alternative to \ref TOMOGRAPHER_ENABLED_IF_TMPL() in case you get compiler
+ * errors about "repeated default value for argument _dummy__enabledif" because of another
+ * similar declaration just before.
+ */
+#define TOMOGRAPHER_ENABLED_IF_TMPL_REPEAT(...)				\
+  bool _dummy__enabledif,						\
+  typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
+			  _dummy__enabledifAlt2 = true
+#endif
+
+
+
+// -----------------------------------------------
 
 
 
@@ -178,8 +172,8 @@ public:
    * assert failure.
    */
   inline explicit static_or_dynamic(T val) {
-    eigen_assert(val == StaticValue);
-    (void)val; // silence "unused parameter" warning if eigen_assert() gets optimized out
+    tomographer_assert(val == StaticValue);
+    (void)val; // silence "unused parameter" warning if tomographer_assert() gets optimized out
   }
 
   /** \brief Get the value stored.
@@ -385,7 +379,55 @@ inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type is_posit
 
 
 
+// -----------------------------------------------------------------------------
+// Define functions with printf-safe arguments, with compiler-generated warnings
+// -----------------------------------------------------------------------------
 
+
+// The PRINTFX_ARGS_SAFE macros are defined here, so that in the future we may support a
+// wider range of compilers which may not understand the __attribute__(format)
+// instruction.
+
+
+/** \brief attributes for a function accepting printf-like variadic arguments
+ *
+ * Put this macro in front of custom functions which accept printf-like formatted
+ * arguments. The attributes which this macro expands to instructs the compiler to warn
+ * the user against wrong printf formats.
+ *
+ * Use the macro PRINTF1_ARGS_SAFE if the format string is the first argument of the
+ * function and the arguments immediately follow, i.e. if the function has signature
+ * \code
+ *   <return-type> function(const char * fmt, ...);
+ * \endcode
+ * If you have other arguments preceeding the format string, use the respective macros
+ * \ref PRINTF2_ARGS_SAFE, \ref PRINTF3_ARGS_SAFE or \ref PRINTF4_ARGS_SAFE. Note that for
+ * non-static class members there is always the implicit \c this parameter, so you should
+ * count the arguments starting from 2, not 1.
+ *
+ * See also the `format' attribute at
+ * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes .
+ */
+#define PRINTF1_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 1, 2)))
+
+//! See \ref PRINTF1_ARGS_SAFE
+#define PRINTF2_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 2, 3)))
+
+//! See \ref PRINTF1_ARGS_SAFE
+#define PRINTF3_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 3, 4)))
+
+//! See \ref PRINTF1_ARGS_SAFE
+#define PRINTF4_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 4, 5)))
+
+
+
+
+
+
+
+
+// -----------------------------------------------------------------------------
+// Function Name-Related Stuff
 // -----------------------------------------------------------------------------
 
 
@@ -458,32 +500,6 @@ constexpr inline conststr extractFuncName(const conststr & funcname)
 
 
 
-
-// -----------------------------------------------------------------------------
-
-#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
-// WARNING!!! CHECK OUT  http://stackoverflow.com/q/29363532/1694896
-// FOR VERY SUBTLE BUGS....... :( :(   -- TEST WITH INTEL ICC!!
-#define TOMOGRAPHER_ENABLED_IF(...)					\
-  template<bool _dummy__enabledif = false,				\
-	   typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
-                                                        _dummy__enabledif2 = false>
-#define TOMOGRAPHER_ENABLED_IF_TMPL(...)				\
-  bool _dummy__enabledif = false,				\
-  typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
-                                                 _dummy__enabledif2 = true
-
-/** \brief Altenative to \ref TOMOGRAPHER_ENABLED_IF_TMPL()
- *
- * Use this alternative to \ref TOMOGRAPHER_ENABLED_IF_TMPL() in case you get compiler
- * errors about "repeated default value for argument _dummy__enabledif" because of another
- * similar declaration just before.
- */
-#define TOMOGRAPHER_ENABLED_IF_TMPL_REPEAT(...)				\
-  bool _dummy__enabledif,						\
-  typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
-			  _dummy__enabledifAlt2 = true
-#endif
 
 
 } // namespace Tools

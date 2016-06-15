@@ -28,7 +28,6 @@
 #define TOMOGRAPHER_DENSEDM_INDEPMEASLLH_H
 
 #include <cstddef>
-#include <cassert>
 #include <string>
 #include <iomanip> // std::setprecision, std::setw and friends.
 
@@ -210,7 +209,7 @@ public:
       return;
     }
 
-    eigen_assert(n > 0);
+    tomographer_assert(n > 0);
 
     if (check_validity) { // check validity of measurement data
       typename DMTypes::MatrixType E_m(dmt.initMatrixType());
@@ -219,21 +218,21 @@ public:
     }
 
     IndexType newi = _Exn.rows();
-    eigen_assert(newi == _Nx.rows());
+    tomographer_assert(newi == _Nx.rows());
 
     _Exn.conservativeResize(newi + 1, Eigen::NoChange);
     _Exn.row(newi) = E_x.transpose();
     _Nx.conservativeResize(newi + 1, Eigen::NoChange);
     _Nx(newi) = n;
 
-    eigen_assert(_Exn.rows() == _Nx.rows());
+    tomographer_assert(_Exn.rows() == _Nx.rows());
   }
 
   inline void addMeasEffect(typename DMTypes::MatrixTypeConstRef E_m, IntFreqType n,
 			    bool check_validity = true)
   {
-    eigen_assert(E_m.rows() == E_m.cols());
-    eigen_assert(E_m.rows() == (IndexType)dmt.dim());
+    tomographer_assert(E_m.rows() == E_m.cols());
+    tomographer_assert(E_m.rows() == (IndexType)dmt.dim());
 
     // skip if no frequency count
     if (n == 0) {
@@ -241,7 +240,7 @@ public:
     }
 
     if (check_validity) { // check validity of measurement data
-      eigen_assert(n > 0);
+      tomographer_assert(n > 0);
       _check_effect(E_m);
     }
 
@@ -250,9 +249,9 @@ public:
 
   inline void setMeas(VectorParamListTypeConstRef Exn_, FreqListTypeConstRef Nx_, bool check_validity = true)
   {
-    eigen_assert(Exn_.cols() == (IndexType)dmt.dim2());
-    eigen_assert(Exn_.rows() == Nx_.rows());
-    eigen_assert(Nx_.cols() == 1);
+    tomographer_assert(Exn_.cols() == (IndexType)dmt.dim2());
+    tomographer_assert(Exn_.rows() == Nx_.rows());
+    tomographer_assert(Nx_.cols() == 1);
 
     if ((Nx_ > 0).all()) {
       // all measurements are OK, so we can just copy the data.
@@ -274,13 +273,13 @@ public:
 
   inline void checkAllMeas() const
   {
-    eigen_assert(_Exn.cols() == (IndexType)dmt.dim2());
-    eigen_assert(_Exn.rows() == _Nx.rows());
-    eigen_assert(_Nx.cols() == 1);
+    tomographer_assert(_Exn.cols() == (IndexType)dmt.dim2());
+    tomographer_assert(_Exn.rows() == _Nx.rows());
+    tomographer_assert(_Nx.cols() == 1);
 
     for (IndexType i = 0; i < _Exn.rows(); ++i) {
 
-      eigen_assert(_Nx(i) > 0);
+      tomographer_assert(_Nx(i) > 0);
 
       typename DMTypes::MatrixType E_m(dmt.initMatrixType());
       E_m = ParamX<DMTypes>(dmt).XToHerm(_Exn.row(i).transpose());
@@ -289,11 +288,11 @@ public:
   }
   inline void checkEffect(IndexType i) const
   {
-    eigen_assert(_Exn.cols() == (IndexType)dmt.dim2());
-    eigen_assert(_Exn.rows() == _Nx.rows());
-    eigen_assert(_Nx.cols() == 1);
-    eigen_assert(i >= 0 && i < _Exn.rows());
-    eigen_assert(_Nx(i) > 0);
+    tomographer_assert(_Exn.cols() == (IndexType)dmt.dim2());
+    tomographer_assert(_Exn.rows() == _Nx.rows());
+    tomographer_assert(_Nx.cols() == 1);
+    tomographer_assert(i >= 0 && i < _Exn.rows());
+    tomographer_assert(_Nx(i) > 0);
 
     typename DMTypes::MatrixType E_m(dmt.initMatrixType());
     E_m = ParamX<DMTypes>(dmt).XToHerm(_Exn.row(i).transpose());

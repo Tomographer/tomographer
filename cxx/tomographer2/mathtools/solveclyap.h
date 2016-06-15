@@ -39,6 +39,8 @@
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 
+#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
+
 
 extern "C" void ztrsyl_(char *TRANA, char *TRANB, int *ISGN, int *M, int *N,
                         double *A, int *lda, double *B, int *ldb,
@@ -131,9 +133,9 @@ void solve(Eigen::Ref<Eigen::MatrixXcd> X, const Eigen::Ref<const Eigen::MatrixX
 
   const int d = A.rows(); // dimension of problem
 
-  eigen_assert(X.rows() == X.cols() && X.rows() == d);
-  eigen_assert(A.rows() == A.cols() && A.rows() == d);
-  eigen_assert(C.rows() == C.cols() && C.rows() == d);
+  tomographer_assert(X.rows() == X.cols() && X.rows() == d);
+  tomographer_assert(A.rows() == A.cols() && A.rows() == d);
+  tomographer_assert(C.rows() == C.cols() && C.rows() == d);
 
   typedef Eigen::MatrixXcd MatType;
 

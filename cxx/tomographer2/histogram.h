@@ -43,7 +43,7 @@
 
 #include <tomographer2/tools/fmt.h>
 #include <tomographer2/tools/eigenutil.h>
-#include <tomographer2/tools/cxxutil.h> // TOMOGRAPHER_ENABLED_IF
+#include <tomographer2/tools/cxxutil.h> // TOMOGRAPHER_ENABLED_IF, tomographer_assert()
 
 
 /** \file histogram.h
@@ -145,7 +145,7 @@ struct UniformBinsHistogram
      */
     inline Scalar bin_lower_value(std::size_t index) const
     {
-      eigen_assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
+      tomographer_assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
       return min + index * (max-min) / num_bins;
     }
     /** \brief Returns the value which a given bin index represents (center bin value)
@@ -157,7 +157,7 @@ struct UniformBinsHistogram
      */
     inline Scalar bin_center_value(std::size_t index) const
     {
-      eigen_assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
+      tomographer_assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
       return min + (index+boost::math::constants::half<Scalar>()) * (max-min) / num_bins;
     }
     /** \brief Returns the value which a given bin index represents (upper bin value
@@ -170,7 +170,7 @@ struct UniformBinsHistogram
      */
     inline Scalar bin_upper_value(std::size_t index) const
     {
-      eigen_assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
+      tomographer_assert(Tools::is_positive(index) && (std::size_t)index < num_bins);
       return min + (index+1) * (max-min) / num_bins;
     }
     /** \brief Returns the width of a bin
@@ -232,8 +232,8 @@ struct UniformBinsHistogram
   template<typename EigenType>
   inline void load(const Eigen::DenseBase<EigenType> & x, CountType off_chart_ = 0)
   {
-    eigen_assert(x.cols() == 1);
-    eigen_assert((std::size_t)x.rows() == params.num_bins);
+    tomographer_assert(x.cols() == 1);
+    tomographer_assert((std::size_t)x.rows() == params.num_bins);
     bins = x.derived().template cast<CountType>();
     off_chart = off_chart_;
   }
@@ -252,8 +252,8 @@ struct UniformBinsHistogram
     // the argument must be of ArrayBase type (as opposed to load() where we can
     // also accept MatrixBase types) because Eigen doesn't allow operator+=
     // between Arrays and Matrices, but has an operator= .
-    eigen_assert(x.cols() == 1);
-    eigen_assert((std::size_t)x.rows() == params.num_bins);
+    tomographer_assert(x.cols() == 1);
+    tomographer_assert((std::size_t)x.rows() == params.num_bins);
     bins += x.derived().template cast<CountType>();
     off_chart += off_chart_;
   }
@@ -269,10 +269,10 @@ struct UniformBinsHistogram
   template<typename OtherScalar, typename OtherCountType>
   inline void add(const UniformBinsHistogram<OtherScalar,OtherCountType> & x)
   {
-    eigen_assert(x.bins.cols() == 1);
-    eigen_assert((std::size_t)x.bins.rows() == params.num_bins);
-    eigen_assert(std::fabs(x.params.min - params.min) < 1e-8);
-    eigen_assert(std::fabs(x.params.max - params.max) < 1e-8);
+    tomographer_assert(x.bins.cols() == 1);
+    tomographer_assert((std::size_t)x.bins.rows() == params.num_bins);
+    tomographer_assert(std::fabs(x.params.min - params.min) < 1e-8);
+    tomographer_assert(std::fabs(x.params.max - params.max) < 1e-8);
     bins += x.bins.template cast<CountType>();
     off_chart += x.off_chart;
   }
@@ -582,7 +582,7 @@ struct AveragedHistogram
     // bins collects the sum of the histograms
     // delta for now collects the sum of squares. delta will be normalized in run_finished().
 
-    eigen_assert((typename HistogramType::CountType)histogram.num_bins() ==
+    tomographer_assert((typename HistogramType::CountType)histogram.num_bins() ==
                  (typename HistogramType::CountType)Base_::num_bins());
 
     for (std::size_t k = 0; k < histogram.num_bins(); ++k) {
@@ -618,7 +618,7 @@ struct AveragedHistogram
     // bins collects the sum of the histograms
     // delta for now collects the sum of squares. delta will be normalized in run_finished().
 
-    eigen_assert((typename HistogramType::CountType)histogram.num_bins() == Base_::num_bins());
+    tomographer_assert((typename HistogramType::CountType)histogram.num_bins() == Base_::num_bins());
 
     for (std::size_t k = 0; k < histogram.num_bins(); ++k) {
       RealAvgType binvalue = histogram.count(k);
@@ -868,10 +868,10 @@ struct histogram_pretty_printer
   {
     int vs = value_to_bar_length(valstart);
     int ve = value_to_bar_length(valend);
-    eigen_assert(vs >= 0);
-    eigen_assert(vs < (int)s.size());
-    eigen_assert(ve >= 0);
-    eigen_assert(ve < (int)s.size());
+    tomographer_assert(vs >= 0);
+    tomographer_assert(vs < (int)s.size());
+    tomographer_assert(ve >= 0);
+    tomographer_assert(ve < (int)s.size());
     for (int j = vs; j < ve; ++j) {
       s[j] = c;
     }
@@ -1033,7 +1033,7 @@ int maybe_default_col_width(int max_width = 0)
 template<typename HistogramType>
 inline void histogram_pretty_print(std::ostream & str, const HistogramType & histogram, int max_width = 0)
 {
-  eigen_assert(Tools::is_positive(histogram.params.num_bins));
+  tomographer_assert(Tools::is_positive(histogram.params.num_bins));
 
   if (histogram.params.num_bins == 0) {
     str << "<empty histogram: no bins>\n";
@@ -1081,7 +1081,7 @@ template<typename HistogramType>
 inline int histogram_short_bar(std::ostream & str, const HistogramType & histogram,
 			       bool log_scale = true, int max_width = 0)
 {
-  eigen_assert(Tools::is_positive(histogram.params.num_bins));
+  tomographer_assert(Tools::is_positive(histogram.params.num_bins));
 
   max_width = tomo_internal::maybe_default_col_width(max_width);
 
@@ -1108,7 +1108,7 @@ inline int histogram_short_bar(std::ostream & str, const HistogramType & histogr
 template<typename HistogramType>
 inline std::string histogram_short_bar(const HistogramType & histogram, bool log_scale = true, int max_width = 0)
 {
-  eigen_assert(Tools::is_positive(histogram.params.num_bins));
+  tomographer_assert(Tools::is_positive(histogram.params.num_bins));
 
   if (histogram.params.num_bins == 0) {
     return "<empty histogram: no bins>";

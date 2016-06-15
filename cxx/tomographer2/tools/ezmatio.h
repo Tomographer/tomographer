@@ -939,7 +939,7 @@ public:
    */
   inline const std::string & varName() const
   {
-    assert(p_vardata != NULL);
+    tomographer_assert(p_vardata != NULL);
     return p_vardata->p_varname;
   }
 
@@ -949,7 +949,7 @@ public:
    */
   inline int ndims() const
   {
-    assert(p_vardata != NULL);
+    tomographer_assert(p_vardata != NULL);
     return p_vardata->p_matvar->rank;
   }
   /** \brief Specific dimensions of this numeric array or tensor.
@@ -958,7 +958,7 @@ public:
    */
   inline DimList dims() const
   {
-    assert(p_vardata != NULL);
+    tomographer_assert(p_vardata != NULL);
     return DimList(&p_vardata->p_matvar->dims[0],
 		   &p_vardata->p_matvar->dims[p_vardata->p_matvar->rank]);
   }
@@ -968,7 +968,7 @@ public:
    */
   inline int numel() const
   {
-    assert(p_vardata != NULL);
+    tomographer_assert(p_vardata != NULL);
     return dims().numel();
   }
   /** \brief Whether this variable is complex or real.
@@ -981,7 +981,7 @@ public:
    */
   inline bool isComplex() const
   {
-    assert(p_vardata != NULL);
+    tomographer_assert(p_vardata != NULL);
     return p_vardata->p_matvar->isComplex;
   }
   /** \brief Whether this is a square matrix.
@@ -990,7 +990,7 @@ public:
    */
   inline bool isSquareMatrix() const
   {
-    assert(p_vardata != NULL);
+    tomographer_assert(p_vardata != NULL);
     return p_vardata->p_matvar->rank == 2 && p_vardata->p_matvar->dims[0] == p_vardata->p_matvar->dims[1];
   }
 
@@ -1001,7 +1001,7 @@ public:
    */
   inline bool hasData() const
   {
-    assert(p_vardata != NULL);
+    tomographer_assert(p_vardata != NULL);
     return (p_vardata->p_matvar->data != NULL);
   }
 
@@ -1071,7 +1071,7 @@ public:
    */
   const matvar_t * getMatvarPtr() const
   {
-    assert(p_vardata != NULL);
+    tomographer_assert(p_vardata != NULL);
     return p_vardata->p_matvar;
   }
 
@@ -1284,7 +1284,7 @@ struct VarValueDecoder<T,
                     return get_value<Type>(matvar_ptr, var.varName());
         );
     // should never reach here
-    assert(false);
+    tomographer_assert(false);
   }
 
 private:
@@ -1351,7 +1351,7 @@ public:
     : p_var(var)
   {
     const matvar_t * matvar_ptr = var.getMatvarPtr();
-    assert(matvar_ptr->data != NULL);
+    tomographer_assert(matvar_ptr->data != NULL);
     if (!matvar_ptr->isComplex) {
       // real type
       p_r_ptr = (const MatInnerT*) matvar_ptr->data;
@@ -1362,8 +1362,8 @@ public:
       p_r_ptr = NULL;
       p_cre_ptr = (const MatRealInnerT*) cdata->Re;
       p_cim_ptr = (const MatRealInnerT*) cdata->Im;
-      assert(p_cre_ptr != NULL);
-      assert(p_cim_ptr != NULL);
+      tomographer_assert(p_cre_ptr != NULL);
+      tomographer_assert(p_cim_ptr != NULL);
     }
   }
 
@@ -1375,7 +1375,7 @@ public:
                                        !Tools::is_complex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& index) const
   {
-    assert(p_r_ptr != NULL);
+    tomographer_assert(p_r_ptr != NULL);
 
     // real value.
     std::size_t lin = linear_index(std::forward<IndexListType>(index));
@@ -1397,7 +1397,7 @@ public:
                                        !Tools::is_complex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& index) const
   {
-    assert(p_r_ptr != NULL);
+    tomographer_assert(p_r_ptr != NULL);
 
     // real value.
     std::size_t lin = linear_index(std::forward<IndexListType>(index));
@@ -1410,8 +1410,8 @@ public:
                                        Tools::is_complex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& index) const
   {
-    assert(p_cre_ptr != NULL);
-    assert(p_cim_ptr != NULL);
+    tomographer_assert(p_cre_ptr != NULL);
+    tomographer_assert(p_cim_ptr != NULL);
 
     // complex value
     std::size_t lin = linear_index(std::forward<IndexListType>(index));
@@ -1545,7 +1545,7 @@ private:
   void _check_consistency()
   {
     if (is_square) {
-      assert(dims.size() == 0 || (dims.size() == 2 && (dims[0] == -1 || dims[1] == -1 || dims[0] == dims[1])));
+      tomographer_assert(dims.size() == 0 || (dims.size() == 2 && (dims[0] == -1 || dims[1] == -1 || dims[0] == dims[1])));
     }
   }
   
@@ -1679,7 +1679,7 @@ struct VarValueDecoder<GetStdVector<T, IsRowMajor> >
                     return val;
         );
     // should never reach here
-    assert(false);
+    tomographer_assert(false);
   }
 
 };
@@ -1699,7 +1699,7 @@ namespace tomo_internal {
 
 inline DimList dims_stackedcols(DimList vdims)
 {
-  assert(vdims.size() >= 1);
+  tomographer_assert(vdims.size() >= 1);
   DimList vdimsreshaped;
   if (vdims.size() == 1) {
     vdimsreshaped = vdims;
@@ -1709,7 +1709,7 @@ inline DimList dims_stackedcols(DimList vdims)
   } else if (vdims.size() > 2) {
     vdimsreshaped << get_numel(vdims.data(), vdims.data()+vdims.size()-1) << vdims[vdims.size()-1];
   }
-  assert(vdimsreshaped[0] != -1 && vdimsreshaped[1] != -1);
+  tomographer_assert(vdimsreshaped[0] != -1 && vdimsreshaped[1] != -1);
   return vdimsreshaped;
 }
 
@@ -1794,19 +1794,19 @@ struct VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
     } 
     Params(int rows) : dims{rows, 1}
     {
-      assert(Cols == 1);
-      assert(Rows == Eigen::Dynamic || Rows == rows);
+      tomographer_assert(Cols == 1);
+      tomographer_assert(Rows == Eigen::Dynamic || Rows == rows);
     }
     Params(int rows, int cols) : dims{rows, cols}
     {
-      assert(Rows == Eigen::Dynamic || Rows == rows);
-      assert(Cols == Eigen::Dynamic || Cols == cols);
+      tomographer_assert(Rows == Eigen::Dynamic || Rows == rows);
+      tomographer_assert(Cols == Eigen::Dynamic || Cols == cols);
     }
     Params(const DimList& dims_) : dims{dims_}
     {
-      assert(dims.size() == 2);
-      assert(Rows == Eigen::Dynamic || Rows == dims[0]);
-      assert(Cols == Eigen::Dynamic || Cols == dims[1]);
+      tomographer_assert(dims.size() == 2);
+      tomographer_assert(Rows == Eigen::Dynamic || Rows == dims[0]);
+      tomographer_assert(Cols == Eigen::Dynamic || Cols == dims[1]);
     }
 
     const DimList dims;
@@ -1928,7 +1928,7 @@ struct VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRow
   {
     DimList vardims{var.dims()};
 
-    assert(vardims.size() >= 1);
+    tomographer_assert(vardims.size() >= 1);
 
     DimList innerdims;
     std::size_t outerdim = 1;

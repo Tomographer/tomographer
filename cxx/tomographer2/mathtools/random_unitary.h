@@ -41,6 +41,7 @@
 
 #include <tomographer2/tools/eigenutil.h>
 #include <tomographer2/tools/loggers.h>
+#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
 
 
 namespace Tomographer {
@@ -61,7 +62,7 @@ inline void random_unitary(Eigen::MatrixBase<DerU> & U, Rng & rng, Log & logger)
 {
   { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(DerU); }
 
-  assert(U.rows() == U.cols());
+  tomographer_assert(U.rows() == U.cols());
   const int n = U.rows();
 
   logger.longdebug("random_unitary()", "n = %d", n);

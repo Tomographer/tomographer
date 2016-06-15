@@ -28,6 +28,7 @@
 #define TOMOGRAPHER_MHRW_VALUEHIST_TASKS_H
 
 #include <tomographer2/tools/loggers.h>
+#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
 #include <tomographer2/mhrwstatscollectors.h>
 #include <tomographer2/mhrwtasks.h>
 
@@ -128,23 +129,23 @@ struct ResultsCollectorSimple
   inline bool isFinalized() const { return _finalized; }
   
   inline FinalHistogramType finalHistogram() const {
-    assert(isFinalized() && "You may only call finalHistogram() after the runs have been finalized.");
+    tomographer_assert(isFinalized() && "You may only call finalHistogram() after the runs have been finalized.");
     return _finalhistogram;
   }
   
   inline std::size_t numTasks() const {
-    assert(isFinalized() && "You may only call numTasks() after the runs have been finalized.");
+    tomographer_assert(isFinalized() && "You may only call numTasks() after the runs have been finalized.");
     return _collected_runtaskresults.size();
   }
   
   inline const std::vector<RunTaskResult> & collectedRunTaskResults() const {
-    assert(isFinalized() && "You may only call collectedRunTaskResults() after the runs have been finalized.");
+    tomographer_assert(isFinalized() && "You may only call collectedRunTaskResults() after the runs have been finalized.");
     return _collected_runtaskresults;
   }
 
   inline RunTaskResult collectedRunTaskResult(std::size_t task_no) const {
-    assert(isFinalized() && "You may only call collectedRunTaskResult(std::size_t) after the runs have been finalized.");
-    assert(task_no < _collected_runtaskresults.size());
+    tomographer_assert(isFinalized() && "You may only call collectedRunTaskResult(std::size_t) after the runs have been finalized.");
+    tomographer_assert(task_no < _collected_runtaskresults.size());
     return _collected_runtaskresults[task_no];
   }
 
@@ -175,7 +176,7 @@ public:
   template<typename Cnt, typename CData>
   inline void init(Cnt num_total_runs, Cnt /*n_chunk*/, const CData * pcdata)
   {
-    assert(!isFinalized() && "init() called after results have been finalized!");
+    tomographer_assert(!isFinalized() && "init() called after results have been finalized!");
 
     _collected_runtaskresults.resize(num_total_runs);
     _finalhistogram.reset(pcdata->histogram_params);
@@ -183,7 +184,7 @@ public:
   template<typename Cnt, typename TaskResultType, typename CData>
   inline void collect_result(Cnt task_no, TaskResultType&& taskresult, const CData * /*pcdata*/)
   {
-    assert(!isFinalized() && "collect_result() called after results have been finalized!");
+    tomographer_assert(!isFinalized() && "collect_result() called after results have been finalized!");
 
     auto logger = _llogger.sublogger(TOMO_ORIGIN);
     logger.debug([&](std::ostream & str) {
@@ -202,7 +203,7 @@ public:
   template<typename Cnt, typename CData>
   inline void runs_finished(Cnt, const CData *)
   {
-    assert(!isFinalized() && "runs_finished() called after results have been finalized!");
+    tomographer_assert(!isFinalized() && "runs_finished() called after results have been finalized!");
 
     _finalized = true;
     _finalhistogram.finalize();
@@ -264,28 +265,28 @@ struct ResultsCollectorWithBinningAnalysis
   inline bool isFinalized() const { return _finalized; }
   
   inline FinalHistogramType finalHistogram() const {
-    assert(isFinalized() && "You may only call finalHistogram() after the runs have been finalized.");
+    tomographer_assert(isFinalized() && "You may only call finalHistogram() after the runs have been finalized.");
     return _finalhistogram;
   }
     
   inline SimpleFinalHistogramType simpleFinalHistogram() const {
-    assert(isFinalized() && "You may only call simpleFinalHistogram() after the runs have been finalized.");
+    tomographer_assert(isFinalized() && "You may only call simpleFinalHistogram() after the runs have been finalized.");
     return _simplefinalhistogram;
   }
   
   inline std::size_t numTasks() const {
-    assert(isFinalized() && "You may only call numTasks() after the runs have been finalized.");
+    tomographer_assert(isFinalized() && "You may only call numTasks() after the runs have been finalized.");
     return _collected_runtaskresults.size();
   }
 
   inline std::vector<RunTaskResult> collectedRunTaskResults() const {
-    assert(isFinalized() && "You may only call collectedRunTaskResults() after the runs have been finalized.");
+    tomographer_assert(isFinalized() && "You may only call collectedRunTaskResults() after the runs have been finalized.");
     return _collected_runtaskresults;
   }
 
   inline RunTaskResult collectedRunTaskResult(std::size_t task_no) const {
-    assert(isFinalized() && "You may only call collectedRunTaskResult(std::size_t) after the runs have been finalized.");
-    assert(task_no < _collected_runtaskresults.size());
+    tomographer_assert(isFinalized() && "You may only call collectedRunTaskResult(std::size_t) after the runs have been finalized.");
+    tomographer_assert(task_no < _collected_runtaskresults.size());
     return _collected_runtaskresults[task_no];
   }
 
@@ -317,7 +318,7 @@ public:
   template<typename Cnt, typename CData>
   inline void init(Cnt num_total_runs, Cnt /*n_chunk*/, const CData * pcdata)
   {
-    assert(!isFinalized() && "init() called after results have been finalized!");
+    tomographer_assert(!isFinalized() && "init() called after results have been finalized!");
 
     _collected_runtaskresults.resize(num_total_runs);
     _finalhistogram.reset(pcdata->histogram_params);
@@ -327,7 +328,7 @@ public:
   template<typename Cnt, typename TaskResultType2, typename CData>
   inline void collect_result(Cnt task_no, TaskResultType2 && taskresult, const CData *)
   {
-    assert(!isFinalized() && "collect_result() called after results have been finalized!");
+    tomographer_assert(!isFinalized() && "collect_result() called after results have been finalized!");
 
     auto logger = _llogger.sublogger(TOMO_ORIGIN);
     
@@ -384,7 +385,7 @@ public:
   template<typename Cnt, typename CData>
   inline void runs_finished(Cnt, const CData *)
   {
-    assert(!isFinalized() && "runs_finished() called after results have been finalized!");
+    tomographer_assert(!isFinalized() && "runs_finished() called after results have been finalized!");
 
     _finalized = true;
     _finalhistogram.finalize();

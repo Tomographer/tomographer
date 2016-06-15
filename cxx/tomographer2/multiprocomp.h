@@ -38,6 +38,7 @@ inline constexpr int omp_get_num_threads() { return 1; }
 
 
 #include <tomographer2/tools/loggers.h>
+#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
 
 
 /** \file multiprocomp.h
@@ -473,7 +474,8 @@ namespace OMP {
 	    logger->debug("OMP TaskDispatcher/taskmanageriface", "threadnum=%ld, tasks_reports.size()=%ld",
 			  (long)threadnum, (long)shared_data->status_report_full.tasks_reports.size());
 
-            assert(0 <= threadnum && (std::size_t)threadnum < shared_data->status_report_full.tasks_reports.size());
+            tomographer_assert(0 <= threadnum &&
+			       (std::size_t)threadnum < shared_data->status_report_full.tasks_reports.size());
 
             shared_data->status_report_full.tasks_running[threadnum] = true;
             shared_data->status_report_full.tasks_reports[threadnum] = statreport;

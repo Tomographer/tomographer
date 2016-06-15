@@ -37,6 +37,8 @@
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 
+#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
+
 
 namespace Tomographer {
 namespace MathTools {
@@ -70,7 +72,7 @@ inline void force_pos_vec_keepsum(Eigen::Ref<VectorType> vec,
     }
   }
 
-  eigen_assert(trace >= vec.size()*tolerance);
+  tomographer_assert(trace >= vec.size()*tolerance);
   
   RealScalar remove_from_each = new_excess_trace / num_pos;
   for (k = 0; k < vec.size(); ++k) {
