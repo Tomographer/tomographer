@@ -405,8 +405,8 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     ("log", value<std::string>(& flogname),
      "Redirect standard output (log) to the given file. Use '-' for stdout. If file exists, will append.")
     ("log-from-config-file-name", bool_switch(& flogname_from_config_file_name)->default_value(false),
-     "Same as --log=<config-file>.log, where <config-file> is the file name passed to the"
-     "option --config. This option can only be used in conjunction with --config and may not be used"
+     "Same as --log=<config-file>.log, where <config-file> is the file name passed to the "
+     "option --config. This option can only be used in conjunction with --config and may not be used "
      "with --log.")
     ("config", value<std::string>(),
      "Read options from the given file. Use lines with syntax \"key=value\".")
