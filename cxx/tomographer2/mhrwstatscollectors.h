@@ -37,7 +37,9 @@
 
 
 #include <tomographer2/tools/cxxutil.h>
+#include <tomographer2/tools/loggers.h>
 #include <tomographer2/histogram.h>
+#include <tomographer2/mhrw_bin_err.h>
 
 /** \file mhrwstatscollectors.h
  *

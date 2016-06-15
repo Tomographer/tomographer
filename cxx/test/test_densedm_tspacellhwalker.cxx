@@ -37,8 +37,11 @@
 
 #include <tomographer2/densedm/tspacellhwalker.h>
 
+#include <tomographer2/densedm/densellh.h>
 #include <tomographer2/densedm/indepmeasllh.h>
 #include <tomographer2/densedm/tspacefigofmerit.h>
+#include <tomographer2/mhrw.h>
+#include <tomographer2/mhrwstatscollectors.h>
 
 
 // -----------------------------------------------------------------------------

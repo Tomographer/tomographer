@@ -151,6 +151,8 @@ addTomographerTest(test_mathtools_solveclyap.cxx "LAPACK")
 #
 addTomographerTest(test_histogram.cxx  "")
 addTomographerTest(test_mhrw.cxx  "")
+addTomographerTest(test_mhrwstatscollectors.cxx  "")
+addTomographerTest(test_valuecalculator.cxx  "")
 addTomographerTest(test_mhrw_bin_err.cxx  "")
 addTomographerTest(test_mhrw_valuehist_tasks.cxx  "openmp")
 addTomographerTest(test_multiprocomp.cxx  "openmp")

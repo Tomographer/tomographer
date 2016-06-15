@@ -35,6 +35,7 @@
 #include "test_tomographer.h"
 
 #include <tomographer2/mhrw_bin_err.h>
+#include <tomographer2/mhrwstatscollectors.h>
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/mhrw.h>
 //#include <tomographer2/densedm/dmmhrw.h>

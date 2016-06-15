@@ -48,7 +48,7 @@
 // test suites
 
 
-BOOST_FIXTURE_TEST_SUITE(test_HEADER, HEADER_fixture)
+BOOST_AUTO_TEST_SUITE(test_mhrwstatscollectors)
 
 BOOST_AUTO_TEST_CASE(testcase1)
 {
