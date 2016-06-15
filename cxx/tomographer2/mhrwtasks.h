@@ -41,6 +41,7 @@
 
 #include <tomographer2/tools/fmt.h>
 #include <tomographer2/mhrw.h>
+#include <tomographer2/mhrwstatscollectors.h>
 #include <tomographer2/multiproc.h> // StatusReport Base
 
 

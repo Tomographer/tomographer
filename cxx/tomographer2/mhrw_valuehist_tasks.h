@@ -28,6 +28,7 @@
 #define TOMOGRAPHER_MHRW_VALUEHIST_TASKS_H
 
 #include <tomographer2/tools/loggers.h>
+#include <tomographer2/mhrwstatscollectors.h>
 #include <tomographer2/mhrwtasks.h>
 
 #include <boost/math/constants/constants.hpp>
