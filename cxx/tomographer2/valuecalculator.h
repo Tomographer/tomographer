@@ -33,7 +33,9 @@
 
 /** \file valuecalculator.h
  *
- * Some elementary definitions which relate to the \ref pageInterfaceValueCalculator.
+ * \brief Some elementary definitions which relate to the \ref
+ * pageInterfaceValueCalculator.
+ *
  */
 
 

@@ -163,8 +163,9 @@ public:
   //! Return the starting point given in the constructor, or a random start point
   inline const MatrixType & startpoint()
   {
+    // It's fine to hard-code "1e-3" because for any type, valid T-matrices have norm == 1
     if (_startpt.norm() > 1e-3) {
-      // nonzero matrix given: that's the starting point
+      // nonzero matrix given: that's the starting point.
       return _startpt;
     }
 

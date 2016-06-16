@@ -43,6 +43,8 @@
 
 /** \file mhrwstatscollectors.h
  *
+ * \brief Definitions for \ref pageInterfaceMHRWStatsCollector's
+ *
  * Definitions for stats collectors -- see \ref pageInterfaceMHRWStatsCollector, as well
  * as for example \ref ValueHistogramMHRWStatsCollector etc.
  *

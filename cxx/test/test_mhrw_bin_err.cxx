@@ -38,62 +38,8 @@
 #include <tomographer2/mhrwstatscollectors.h>
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/mhrw.h>
-//#include <tomographer2/densedm/dmmhrw.h>
 
 
-
-struct test_norm_value_calculator
-{
-  typedef double ValueType;
-
-  template<typename Derived>
-  inline ValueType getValue(const Eigen::MatrixBase<Derived> & pt)
-  {
-    return pt.norm();
-  }
-};
-
-template<typename RealScalar_, int Dim = 4>
-struct test_hypercube_mhwalker
-{
-  typedef RealScalar_ RealScalar;
-  typedef RealScalar_ StepRealType;
-  typedef Eigen::Matrix<RealScalar, Dim, 1> PointType;
-
-  typedef float FnValueType;
-
-  enum { UseFnSyntaxType = Tomographer::MHUseFnValue };
-
-  // random number generator, etc.
-  std::mt19937 rng;
-  std::uniform_real_distribution<double> dist;
-
-  // constructor
-  test_hypercube_mhwalker() : rng(0), dist(-1.0, 1.0) { }
-
-  inline void init() { }
-
-  auto startpoint() -> decltype(PointType::Zero()) { return PointType::Zero(); }
-
-  inline void thermalizing_done() { }
-  inline void done() { }
-  inline PointType jump_fn(const PointType & curpt, RealScalar step_size)
-  {
-    PointType newpt;
-    newpt = curpt + step_size*Tomographer::Tools::dense_random<PointType>(rng, dist);
-    // do the random walk on the torus, i.e. modulo 1.0
-    for (int i = 0; i < Dim; ++i) {
-      if (newpt(i) < 0) { newpt(i) += 1.0; }
-      if (newpt(i) > 1) { newpt(i) -= 1.0; }
-    }
-    return newpt;
-  }
-
-  inline FnValueType fnval(const PointType & /*curpt*/)
-  {
-    return 1.0;
-  }
-};
 
 
 BOOST_AUTO_TEST_SUITE(test_mhrw_bin_err)
@@ -256,71 +202,6 @@ BOOST_AUTO_TEST_CASE(no_bin_means)
 
 BOOST_AUTO_TEST_SUITE_END()
 
-
-// =============================================================================
-
-
-BOOST_AUTO_TEST_SUITE(valuehistogramwithbinning)
-
-BOOST_AUTO_TEST_CASE(simple1)
-{
-  //<<<<<<<<<<<
-  typedef Tomographer::Logger::BufferLogger LoggerType;
-  LoggerType buflog(Tomographer::Logger::DEBUG);
-  //-----------
-  // in this case, comment out BOOST_MESSAGE(... .get_contents()) below
-  //  typedef Tomographer::Logger::FileLogger LoggerType;
-  //  LoggerType buflog(stderr, Tomographer::Logger::LONGDEBUG) ;
-  //>>>>>>>>>>>
-
-
-  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<
-    Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<test_norm_value_calculator,
-                                                                   int,
-                                                                   float>,
-    LoggerType
-    > ValWBinningMHRWStatsCollectorType;
-
-  typedef ValWBinningMHRWStatsCollectorType::HistogramParams HistogramParams;
-  typedef test_hypercube_mhwalker<double, 3 /* Dim */> MHWalkerType;
-  typedef Tomographer::MHRandomWalk<std::mt19937, MHWalkerType, ValWBinningMHRWStatsCollectorType,
-				    LoggerType, int> MHRandomWalkType;
-
-  test_norm_value_calculator vcalc;
-
-  // N levels -> samples_size = 2^N,  2^10 == 1024
-  const int num_levels = 10;
-  //const int num_levels = 4;
-  ValWBinningMHRWStatsCollectorType vhist(HistogramParams(0.f, 2.0f, 20), vcalc, num_levels, buflog);
-
-  std::mt19937 rng(0); // seeded rng, deterministic results
-
-  MHWalkerType mhwalker;
-  MHRandomWalkType rwalk(5, 0.03, 50, 500000, mhwalker, vhist, rng, buflog);
-
-  rwalk.run();
-
-  BOOST_MESSAGE(buflog.get_contents());
-
-  const ValWBinningMHRWStatsCollectorType::Result & result = vhist.getResult();
-
-  // Todo: Fixme: Why are the error bar curves going like crazy?
-  // ----> ok if we have enough samples it seems.
-
-  // TODO: CHECK THAT THE VALUES ARE CORRECT, ALONG WITH THE ERRORS.
-
-  MY_BOOST_CHECK_EIGEN_EQUAL(result.converged_status,
-                             Eigen::ArrayXi::Constant(
-                                 vhist.get_binning_analysis().num_track_values(),
-                                 ValWBinningMHRWStatsCollectorType::BinningAnalysisType::CONVERGED
-                                 ),
-                             tol) ;
-
-}
-
-
-
-BOOST_AUTO_TEST_SUITE_END()
 
 // =============================================================================
 

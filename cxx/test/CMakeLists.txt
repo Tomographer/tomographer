@@ -156,7 +156,7 @@ addTomographerTest(test_valuecalculator.cxx  "")
 addTomographerTest(test_mhrw_bin_err.cxx  "")
 addTomographerTest(test_mhrw_valuehist_tasks.cxx  "openmp")
 addTomographerTest(test_multiprocomp.cxx  "openmp")
-
+addTomographerTest(test_zzzcombinations.cxx "openmp")
 
 
 # check "minimal tomorun" program compiles and runs
