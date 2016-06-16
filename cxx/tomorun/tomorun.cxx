@@ -192,7 +192,7 @@ int main(int argc, char **argv)
     // some special cases where we can avoid dynamic memory allocation for Eigen matrices
     // by using compile-time sizes
     
-#if defined(TOMORUN_CUSTOM_FIXED_DIM) && defined(TOMORUN_CUSTOM_MAX_POVM_EFFECTS)
+#if defined(TOMORUN_CUSTOM_FIXED_DIM) && defined(TOMORUN_CUSTOM_FIXED_MAX_DIM) && defined(TOMORUN_CUSTOM_MAX_POVM_EFFECTS)
     
     //
     // We want a single customized case, with a fixed dimension of
@@ -202,24 +202,33 @@ int main(int argc, char **argv)
     //
     // These macros can be defined in  "tomorun_config.h"
     //
-    logger.debug("Using custom fixed dim = %d and fixed max POVM effects = %d  (%d=dynamic)",
-		 TOMORUN_CUSTOM_FIXED_DIM, TOMORUN_CUSTOM_MAX_POVM_EFFECTS, Eigen::Dynamic);
-    tomorun_dispatch_eb<TOMORUN_CUSTOM_FIXED_DIM,TOMORUN_CUSTOM_MAX_POVM_EFFECTS>(dim, &opt, matf, mlog);
+    logger.debug("Using custom fixed dim = %d, custom fixed max dim = %d, "
+                 " and fixed max POVM effects = %d  (%d=dynamic)",
+		 TOMORUN_CUSTOM_FIXED_DIM, TOMORUN_CUSTOM_FIXED_MAX_DIM,
+                 TOMORUN_CUSTOM_MAX_POVM_EFFECTS, Eigen::Dynamic);
+    tomorun_dispatch_eb<TOMORUN_CUSTOM_FIXED_DIM,TOMORUN_CUSTOM_FIXED_MAX_DIM,TOMORUN_CUSTOM_MAX_POVM_EFFECTS>(dim, &opt, matf, mlog);
+
+    (void)n_povms; // silence unused variable warning
 
 #else
     
+    (void)n_povms; // silence unused variable warning
+
     //
     // Provide some standard fixed-size cases, in order to avoid dynamic memory allocation
     // for small matrices for common system sizes (e.g. a single qubit)
     //
-    if (dim == 2 && n_povms <= 6) { // qubit problems are really common
-      tomorun_dispatch_eb<2, 6>(dim, &opt, matf, mlog);
-    } else if (dim == 2) {
-      tomorun_dispatch_eb<2, Eigen::Dynamic>(dim, &opt, matf, mlog);
+//    if (dim == 2 && n_povms <= 6) { // qubit problems are really common
+//      tomorun_dispatch_eb<2, 2, 6>(dim, &opt, matf, mlog);
+//    } else
+    if (dim == 2) {
+      tomorun_dispatch_eb<2, 2, Eigen::Dynamic>(dim, &opt, matf, mlog);
     } else if (dim == 4) { // two-qubit systems are also common
-      tomorun_dispatch_eb<4, Eigen::Dynamic>(dim, &opt, matf, mlog);
+      tomorun_dispatch_eb<4, 4, Eigen::Dynamic>(dim, &opt, matf, mlog);
+    } else if (dim <= 8) { // anything less than dimension 8 should be stored statically
+      tomorun_dispatch_eb<Eigen::Dynamic, 8, Eigen::Dynamic>(dim, &opt, matf, mlog);
     } else {
-      tomorun_dispatch_eb<Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
+      tomorun_dispatch_eb<Eigen::Dynamic, Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
     }
 
 #endif

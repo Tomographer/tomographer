@@ -32,15 +32,21 @@
 
 
 
-/* DO_SLOW_POVM_CONSISTENCY_CHECKS
+/* TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS
+ *
+ * Value: true | false
  *
  * If defined, will make sure that all POVM effects read from the input file are positive
  * semidefinite and nonzero.
  */
-#define DO_SLOW_POVM_CONSISTENCY_CHECKS
+#ifndef TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS
+#define TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS true
+#endif
 
 
-/* TimerClock
+/* TOMORUN_TIMERCLOCK
+ *
+ * Value: C++ clock class name (std::chrono::...)
  *
  * The C++ timer class to use.  high_resolution_clock is better (has high resolution), but
  * for some reason (I think for g++ 4.6 compatibility) we shall stick to system_clock. The
@@ -48,14 +54,24 @@
  * is no effect on the actual output of the quantum error bars.
  */
 //typedef std::chrono::high_resolution_clock TimerClock;
+#ifdef TOMORUN_TIMERCLOCK
+typedef TOMORUN_TIMERCLOCK TimerClock;
+#else
 typedef std::chrono::system_clock TimerClock;
+#endif
 
 
 /* TomorunInt
  *
+ * Value: a integer type
+ *
  * The main integer type. Used to count a number of iterations, the sweep size, etc.
  */
+#ifdef TOMORUN_INT
+typedef TOMORUN_INT TomorunInt;
+#else
 typedef int TomorunInt;
+#endif
 
 
 /* TomorunReal
@@ -66,22 +82,45 @@ typedef int TomorunInt;
  * might still be some hard-coded values at some places (1e-8 epsilons etc.). Beware and
  * please report issues to me!
  */
+#ifdef TOMORUN_REAL
+typedef TOMORUN_REAL TomorunReal;
+#else
 typedef double TomorunReal;
+#endif
 
 
-/* TOMORUN_CUSTOM_FIXED_DIM, TOMORUN_CUSTOM_MAX_POVM_EFFECTS
+/* TOMORUN_CUSTOM_FIXED_DIM, TOMORUN_CUSTOM_FIXED_MAX_DIM, TOMORUN_CUSTOM_MAX_POVM_EFFECTS
  *
  * You may define these to fixed values to specialize the tomorun problem to a specific
  * fixed dimension and a specific maximum number of POVM effects.  Leave either to
  * "Eigen::Dynamic" to allow any value at run-time.
  *
+ * TOMORUN_CUSTOM_FIXED_DIM fixes the dimension of the system to a compile-time fixed
+ * value which cannot be changed at run-time.  Leave the default common cases or use
+ * Eigen::Dynamic if you want tomorun to work with different system sizes.
+ * TOMORUN_CUSTOM_FIXED_MAX_DIM specifies a maximum dimension for the dimension of the
+ * quantum system; the latter may at run-time take any value up to this limit.
+ *
  * If these are not defined (the default), then some common cases are provided with a
  * fallback to all-dynamic specified at runtime. (See bottom of tomorun.cxx)
  */
 //#define TOMORUN_CUSTOM_FIXED_DIM         Eigen::Dynamic
+//#define TOMORUN_CUSTOM_FIXED_MAX_DIM     Eigen::Dynamic
 //#define TOMORUN_CUSTOM_MAX_POVM_EFFECTS  Eigen::Dynamic
 
 
+/* TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
+ *
+ * Value: 1 | 0
+ *
+ * Use the class MultiplexorValueCalculator and dynamically choose the figure of merit to
+ * calculate, rather than using a fully templated tomorun<> function specialized to a
+ * single figure of merit and replicated for each figure of merit. I'm not sure which is
+ * faster, tests needed.
+ */
+#ifndef TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
+#define TOMORUN_USE_MULTIPLEXORVALUECALCULATOR true
+#endif
 
 
 

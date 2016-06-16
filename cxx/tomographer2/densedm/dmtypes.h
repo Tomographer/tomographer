@@ -94,8 +94,14 @@ namespace DenseDM {
  * To each of these type corresponds a const-reference type, which is useful to specify
  * function arguments.
  */
-template<int FixedDim_, typename RealScalar_ = double>
+template<int FixedDim_, typename RealScalar_ = double, int MaxFixedDim_ = FixedDim_>
 struct DMTypes {
+
+  // assert: either FixedDim_ is dynamic (in which case MaxFixedDim_ can be anything, or
+  // FixedDim_ is static, and has to be equal to MaxFixedDim_ (or less than is also ok but
+  // no idea why you'd do it).
+  TOMO_STATIC_ASSERT_EXPR((FixedDim_ == Eigen::Dynamic) ||
+                          (FixedDim_ <= MaxFixedDim_)) ;
 
   //! Whether the dimension is specified dynamically at run-time or statically at compile-time
   static constexpr bool IsDynamicDim = (FixedDim_ == Eigen::Dynamic);
@@ -107,7 +113,6 @@ struct DMTypes {
    *         Eigen::Dynamic
    */
   static constexpr int FixedNdof = ((FixedDim2!=Eigen::Dynamic) ? FixedDim2-1 : Eigen::Dynamic);
-
 
   //! Real scalar type, given in template parameter.  Usually \c double is fine
   typedef RealScalar_ RealScalar;
@@ -121,7 +126,9 @@ struct DMTypes {
   }
 
   //! Matrix type, to store the density operator as a dense matrix
-  typedef Eigen::Matrix<ComplexScalar, FixedDim, FixedDim>  MatrixType;
+  typedef Eigen::Matrix<ComplexScalar, FixedDim, FixedDim,
+                        Eigen::Matrix<ComplexScalar,FixedDim,FixedDim>::Options, // the default options
+                        MaxFixedDim_, MaxFixedDim_>  MatrixType;
   //! Shorthand for a const reference to a MatrixType-like Eigen object
   typedef const Eigen::Ref<const MatrixType> &  MatrixTypeConstRef;
 
