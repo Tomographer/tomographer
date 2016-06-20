@@ -134,7 +134,7 @@ static inline void produce_final_report(TomorunCDataType & cdata, ResultsCollect
   logger.debug("produce_final_report()", "about to produce final report.");
   // produce report on runs
   logger.info("produce_final_report()", [&](std::ostream & str) {
-      const std::vector<typename ResultsCollector::RunTaskResult> & collresults = res.collectedRunTaskResults();
+      const typename ResultsCollector::RunTaskResultList & collresults = res.collectedRunTaskResults();
       const typename ResultsCollector::FinalHistogramType finalhistogram = res.finalHistogram();
       str << "\n"
 	  << report_final_header
@@ -143,7 +143,7 @@ static inline void produce_final_report(TomorunCDataType & cdata, ResultsCollect
       cdata.printBasicCDataMHRWInfo(str);
       int dig_w = (int)std::ceil(std::log10(res.numTasks()));
       for (std::size_t j = 0; j < res.numTasks(); ++j) {
-	print_short_bar_and_accept_ratio(str, j, collresults[j].histogram, collresults[j].acceptance_ratio, dig_w);
+	print_short_bar_and_accept_ratio(str, j, collresults[j]->histogram, collresults[j]->acceptance_ratio, dig_w);
       }
       str << report_hline
 	  << "\n";
@@ -164,7 +164,7 @@ inline void produce_final_report(TomorunCDataType & cdata, ResultsCollector & re
   logger.debug("produce_final_report()", "about to produce final report.");
   // produce report on runs
   logger.info("produce_final_report()", [&](std::ostream & str) {
-      const std::vector<typename ResultsCollector::RunTaskResult> & collresults = res.collectedRunTaskResults();
+      const typename ResultsCollector::RunTaskResultList & collresults = res.collectedRunTaskResults();
       const typename ResultsCollector::FinalHistogramType finalhistogram = res.finalHistogram();
       str << "\n"
 	  << report_final_header
@@ -173,8 +173,8 @@ inline void produce_final_report(TomorunCDataType & cdata, ResultsCollector & re
       cdata.printBasicCDataMHRWInfo(str);
       int dig_w = (int)std::ceil(std::log10(res.numTasks()));
       for (std::size_t j = 0; j < res.numTasks(); ++j) {
-	const auto& stats_coll_result = collresults[j].stats_collector_result;
-	print_short_bar_and_accept_ratio(str, j, stats_coll_result.hist, collresults[j].acceptance_ratio, dig_w);
+	const auto& stats_coll_result = collresults[j]->stats_collector_result;
+	print_short_bar_and_accept_ratio(str, j, stats_coll_result.hist, collresults[j]->acceptance_ratio, dig_w);
 	// error bars stats:
 	const int nbins = stats_coll_result.converged_status.size();
 	const int n_conv = stats_coll_result.converged_status
@@ -346,7 +346,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   OurDMTypes dmt(dim);
   OurDenseLLH llh(dmt);
 
-  typename Tomographer::Tools::eigen_std_vector<typename OurDMTypes::MatrixType>::type Emn;
+  typename Tomographer::Tools::EigenStdVector<typename OurDMTypes::MatrixType>::type Emn;
   Emn = Tomographer::MAT::value<decltype(Emn)>(matf->var("Emn"));
   Eigen::VectorXi Nm;
   Nm = Tomographer::MAT::value<Eigen::VectorXi>(matf->var("Nm"));

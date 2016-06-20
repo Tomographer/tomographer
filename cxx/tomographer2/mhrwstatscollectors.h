@@ -224,6 +224,7 @@ template<typename ValueCalculator_,
 	 typename HistogramType_ = UniformBinsHistogram<typename ValueCalculator_::ValueType>
 	 >
 class ValueHistogramMHRWStatsCollector
+  : public virtual Tools::NeedOwnOperatorNew<ValueCalculator_, HistogramType_>::ProviderType
 {
 public:
   /** \brief The type which calculates the interesting value. Should be of type interface \ref
@@ -346,6 +347,17 @@ public:
 };
 
 
+// // specialize NeedOwnOperatorNew for this class
+// namespace Tools {
+// template<typename ValueCalculator_,
+// 	 typename LoggerType,
+// 	 typename HistogramType_>
+// 	 >
+// struct NeedOwnOperatorNew<ValueHistogramMHRWStatsCollector<ValueCalculator_,LoggerType_,HistogramType_> >
+//   : public NeedEigenAlignedOperatorNew { };
+// };
+
+
 
 /** \brief Traits-like class for ValueHistogramWithBinningMHRWStatsCollector.
  *
@@ -399,6 +411,10 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
    * levels, and information about the convergence of these error bars.
    */
   struct Result
+    : public virtual Tools::NeedOwnOperatorNew<
+        HistogramType,
+        typename BinningAnalysisParamsType::BinSumSqArray
+      >::ProviderType
   {
     //! Simple default constructor (e.g. to use as std::vector<Result>).
     explicit Result()
@@ -468,6 +484,14 @@ template<typename Params,
 	 typename LoggerType_ = Logger::VacuumLogger
          >
 class ValueHistogramWithBinningMHRWStatsCollector
+  : public virtual Tools::NeedOwnOperatorNew<ValueHistogramMHRWStatsCollector<
+                                               typename Params::ValueCalculator,
+                                               LoggerType_,
+                                               typename Params::BaseHistogramType
+                                               >,
+                                             BinningAnalysis<typename Params::BinningAnalysisParamsType, LoggerType_>,
+                                             typename Params::Result
+                                             >::ProviderType
 {
 public:
 

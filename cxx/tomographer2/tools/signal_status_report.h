@@ -134,8 +134,8 @@ makeSigHandlerTaskDispatcherStatusReporter(TaskDispatcher * tasks, LoggerT & log
 
 
 
-#ifndef SIG_STATUS_REPORT_REPEAT_EXIT_DELAY
-#define SIG_STATUS_REPORT_REPEAT_EXIT_DELAY 2
+#ifndef TOMOGRAPHER_SIG_STATUS_REPORT_REPEAT_EXIT_DELAY
+#define TOMOGRAPHER_SIG_STATUS_REPORT_REPEAT_EXIT_DELAY 2
 #endif
 
 namespace tomo_internal {
@@ -147,7 +147,7 @@ namespace tomo_internal {
     std::fprintf(stderr, "\n*** interrupt\n");
     std::time_t now;
     time(&now);
-    if ( (now - tomo_internal::last_sig_hit_time) < SIG_STATUS_REPORT_REPEAT_EXIT_DELAY ) {
+    if ( (now - tomo_internal::last_sig_hit_time) < TOMOGRAPHER_SIG_STATUS_REPORT_REPEAT_EXIT_DELAY ) {
       // two interrupts within two seconds --> exit
       std::fprintf(stderr, "\n*** Exit\n");
       ::exit(1);

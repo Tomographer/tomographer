@@ -40,6 +40,7 @@
 #include <sstream>
 
 #include <tomographer2/tools/fmt.h>
+#include <tomographer2/tools/needownoperatornew.h>
 #include <tomographer2/mhrw.h>
 #include <tomographer2/mhrwstatscollectors.h>
 #include <tomographer2/multiproc.h> // StatusReport Base
@@ -144,6 +145,7 @@ namespace MHRWTasks {
    */
 template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename StepRealType>
   struct MHRandomWalkTaskResult
+  : public virtual Tools::NeedOwnOperatorNew<MHRWStatsCollectorResultType_>::ProviderType
   {
     typedef MHRWStatsCollectorResultType_ MHRWStatsCollectorResultType;
     

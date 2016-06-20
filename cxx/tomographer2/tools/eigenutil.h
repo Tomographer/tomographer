@@ -61,13 +61,13 @@ namespace Tools {
  * std::vector of any Eigen type. Example:
  *
  * \code
- *   Tomographer::Tools::eigen_std_vector<Matrix4d>::type v(...);
+ *   Tomographer::Tools::EigenStdVector<Matrix4d>::type v(...);
  *   v[0].resize(...);
  *   // ... use as if std::vector<Matrix4d>
  * \endcode
  */
 template<typename EigenType>
-struct eigen_std_vector
+struct EigenStdVector
 {
   typedef std::vector<EigenType, Eigen::aligned_allocator<EigenType> > type;
 };

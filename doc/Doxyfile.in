@@ -2077,7 +2077,8 @@ PREDEFINED             = ENABLE_IF_Fn_CALLABLE_OSTREAM=void \
                          PRINTF4_ARGS_SAFE= \
                          TOMOGRAPHER_PARSED_BY_DOXYGEN=1 \
 			 TOMOGRAPHER_ENABLED_IF(x)=template<ENABLED_IF(x)> \
-			 TOMOGRAPHER_ENABLED_IF_TMPL(x)=ENABLED_IF(x)
+			 TOMOGRAPHER_ENABLED_IF_TMPL(x)=ENABLED_IF(x) \
+                         EIGEN_MAKE_ALIGNED_OPERATOR_NEW=
 
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then this

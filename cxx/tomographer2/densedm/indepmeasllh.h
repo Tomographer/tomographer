@@ -34,6 +34,7 @@
 #include <Eigen/Eigen>
 
 #include <tomographer2/tools/cxxutil.h> // static_or_dynamic, TOMOGRAPHER_ENABLED_IF
+#include <tomographer2/tools/needownoperatornew.h>
 #include <tomographer2/tools/fmt.h> // streamstr
 #include <tomographer2/densedm/dmtypes.h>
 #include <tomographer2/densedm/param_herm_x.h>
@@ -60,6 +61,7 @@ template<typename DMTypes_, typename LLHValueType_ = typename DMTypes_::RealScal
          typename IntFreqType_ = int, int FixedMaxParamList_ = Eigen::Dynamic,
 	 bool UseNMeasAmplifyFactor_ = false>
 class IndepMeasLLH
+  : public Tools::NeedEigenAlignedOperatorNew::ProviderType
 {
 public:
   //! The \ref DMTypes in use here

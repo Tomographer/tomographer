@@ -198,7 +198,7 @@ private:
   const DMTypes _dmt;
 
   //! Cached generators of \f$ su(d)\f$.
-  typename Tools::eigen_std_vector<MatrixType>::type lambda;
+  typename Tools::EigenStdVector<MatrixType>::type lambda;
 
 public:
   /** \brief Construct an object which can perform A parameterization transformations.

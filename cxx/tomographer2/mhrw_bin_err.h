@@ -31,6 +31,7 @@
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/tools/eigenutil.h> // replicated(), powers_of_two()
 #include <tomographer2/tools/cxxutil.h>
+#include <tomographer2/tools/needownoperatornew.h>
 
 #include <boost/math/constants/constants.hpp>
 
@@ -247,6 +248,10 @@ struct BinningAnalysisParams
  */
 template<typename Params, typename LoggerType_>
 class BinningAnalysis
+  // inheriting from this has some advantages over EIGEN_MAKE_ALIGNED_OPERATOR_NEW, such
+  // as not needing to explicitly declare the specialization
+  // NeedOwnOperatorNew<BinningAnalysis<...> >
+  : public Tools::EigenAlignedOperatorNewProvider
 {
 public:
   //! Type of the value(s) for which we are calculating error bars. See \ref BinningAnalysisParams::ValueType.
@@ -377,6 +382,7 @@ private:
 
   //! Just a boring logger...
   LoggerType & logger;
+
 
 public:
 
@@ -763,6 +769,13 @@ public:
   }
 };
 
+
+// // specialize NeedOwnOperatorNew for this class --- NOT NEEDED, SEE ABOVE
+// namespace Tools {
+// template<typename Params, typename LoggerType_>
+// struct NeedOwnOperatorNew<BinningAnalysis<Params, LoggerType_> >
+//   : public NeedEigenAlignedOperatorNew { };
+// };
 
 
 } // namespace Tomographer

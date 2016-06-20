@@ -91,7 +91,6 @@
 // -----------------------------------------------
 
 
-
 namespace Tomographer
 {
 namespace Tools
@@ -425,6 +424,22 @@ inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type is_posit
 
 
 
+// Internal hacks...
+// ---------------------------
+
+// these are useful when writing SFINAE C++/C++11 hacks
+namespace tomo_internal {
+template<typename Enabledtype = void> struct sfinae_no { typedef int no[1]; };
+template<typename EnabledType = void> struct sfinae_yes { typedef int yes[2]; };
+} // namespace tomo_internal
+
+
+
+
+
+
+
+
 
 // -----------------------------------------------------------------------------
 // Function Name-Related Stuff
@@ -496,6 +511,7 @@ constexpr inline conststr extractFuncName(const conststr & funcname)
 {
   return tomo_internal::extractFuncName_helper::extract(funcname);
 }
+
 
 
 

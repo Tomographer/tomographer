@@ -61,7 +61,7 @@ typedef std::chrono::system_clock TimerClock;
 #endif
 
 
-/* TomorunInt
+/* TOMORUN_INT
  *
  * Value: a integer type
  *
@@ -74,7 +74,7 @@ typedef int TomorunInt;
 #endif
 
 
-/* TomorunReal
+/* TOMORUN_REAL
  *
  * The main floating-point type. Used for everything, from the matrix elements of the
  * quantum state to the step size of the random walk.  You may try to go to 'long double'

@@ -36,6 +36,8 @@
 #include <tomographer2/tools/fmt.h>
 #include <tomographer2/tools/cxxutil.h>
 #include <tomographer2/mhrw_bin_err.h>
+#include <tomographer2/tools/needownoperatornew.h>
+
 
 
 /** \file mhrw.h
@@ -277,6 +279,7 @@ std::ostream & operator<<(std::ostream & str, const MHRWParams<CountIntType,Step
 template<typename Rng_, typename MHWalker_, typename MHRWStatsCollector_, typename LoggerType_,
          typename CountIntType_ = int>
 class MHRandomWalk
+  : public virtual Tools::NeedOwnOperatorNew<typename MHWalker_::PointType>::ProviderType
 {
 public:
   //! Random number generator type (see C++ std::random)

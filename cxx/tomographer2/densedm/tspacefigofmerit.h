@@ -29,6 +29,7 @@
 #define TOMOGRAPHER_DENSEDM_TSPACEFIGOFMERIT_H
 
 
+#include <tomographer2/tools/needownoperatornew.h>
 #include <tomographer2/densedm/dmtypes.h>
 #include <tomographer2/densedm/distmeasures.h>
 #include <tomographer2/densedm/param_herm_x.h>
@@ -54,6 +55,7 @@ namespace TSpace {
  */
 template<typename DMTypes_, typename ValueType_ = double>
 class FidelityToRefCalculator
+  : public virtual Tools::NeedOwnOperatorNew<typename DMTypes_::MatrixType>::ProviderType
 {
 public:
   typedef DMTypes_ DMTypes;
@@ -92,6 +94,7 @@ public:
  */
 template<typename DMTypes_, typename ValueType_ = double>
 class PurifDistToRefCalculator
+  : public virtual Tools::NeedOwnOperatorNew<typename DMTypes_::MatrixType>::ProviderType
 {
 public:
   typedef DMTypes_ DMTypes;
@@ -127,6 +130,7 @@ public:
  */
 template<typename DMTypes_, typename ValueType_ = double>
 class TrDistToRefCalculator
+  : public virtual Tools::NeedOwnOperatorNew<typename DMTypes_::MatrixType>::ProviderType
 {
 public:
   typedef DMTypes_ DMTypes;
@@ -160,6 +164,7 @@ public:
  */
 template<typename DMTypes_>
 class ObservableValueCalculator
+  : public virtual Tools::NeedOwnOperatorNew<typename DMTypes_::VectorParamType>::ProviderType
 {
 public:
   typedef DMTypes_ DMTypes;

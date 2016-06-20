@@ -39,6 +39,7 @@ inline constexpr int omp_get_num_threads() { return 1; }
 
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/tools/cxxutil.h> // tomographer_assert()
+#include <tomographer2/tools/needownoperatornew.h>
 
 
 /** \file multiprocomp.h
@@ -237,6 +238,8 @@ namespace MultiProc {
 namespace OMP {
     
   /** \brief A complete status report of currently running threads.
+   *
+   * Note: \a TaskStatusReportType must be copy-constructible.
    */
   template<typename TaskStatusReportType>
   struct FullStatusReport
@@ -268,7 +271,8 @@ namespace OMP {
      * thread. If the thread is not running a task, <em>tasks_reports[k]</em> is an
      * invalid, or default-constructed value.
      */
-    std::vector<TaskStatusReportType> tasks_reports;
+    std::vector<TaskStatusReportType,
+                typename Tools::NeedOwnOperatorNew<TaskStatusReportType>::AllocatorType> tasks_reports;
   };
 
 

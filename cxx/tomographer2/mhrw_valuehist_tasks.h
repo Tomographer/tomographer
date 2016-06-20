@@ -29,6 +29,7 @@
 
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/tools/cxxutil.h> // tomographer_assert()
+#include <tomographer2/tools/needownoperatornew.h>
 #include <tomographer2/mhrwstatscollectors.h>
 #include <tomographer2/mhrwtasks.h>
 
@@ -76,8 +77,6 @@ struct histogram_types<CDataBaseType, true> {// version WITH binning analysis:
 // ------------------------------------------------
 
 
-
-
 /** \brief Results collector, if no binning analysis is being used.
  *
  * You can directly get the right type by querying the type \a
@@ -85,6 +84,11 @@ struct histogram_types<CDataBaseType, true> {// version WITH binning analysis:
  */
 template<typename CDataBaseType_, typename LoggerType_>
 struct ResultsCollectorSimple
+  : public virtual Tools::NeedOwnOperatorNew<
+      AveragedHistogram<UniformBinsHistogram<typename CDataBaseType_::HistogramType::Scalar,
+                                             typename CDataBaseType_::CountRealType>,
+                        typename CDataBaseType_::CountRealType>
+    >::ProviderType
 {
   typedef CDataBaseType_ CDataBaseType;
   typedef typename CDataBaseType::ValueCalculator ValueCalculator;
@@ -96,11 +100,13 @@ struct ResultsCollectorSimple
   typedef typename CDataBaseType::HistogramType HistogramType;
   typedef typename CDataBaseType::HistogramParams HistogramParams;
   typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> NormalizedHistogramType;
-  typedef Tomographer::AveragedHistogram<NormalizedHistogramType, CountRealType> FinalHistogramType;
+  typedef AveragedHistogram<NormalizedHistogramType, CountRealType> FinalHistogramType;
 
   typedef HistogramType TaskResultType;
 
-  struct RunTaskResult : public MHRandomWalkTaskResult<TaskResultType,CountIntType,StepRealType>
+  struct RunTaskResult
+    : public MHRandomWalkTaskResult<TaskResultType,CountIntType,StepRealType>,
+      public virtual Tools::NeedOwnOperatorNew<NormalizedHistogramType>::ProviderType
   {
     typedef MHRandomWalkTaskResult<TaskResultType,CountIntType,StepRealType> Base;
 
@@ -118,6 +124,8 @@ struct ResultsCollectorSimple
     const NormalizedHistogramType histogram;
   };
 
+  typedef std::vector<RunTaskResult*> RunTaskResultList;
+
 
   ResultsCollectorSimple(LoggerType & logger_)
     : _finalized(false), _finalhistogram(HistogramParams()),
@@ -126,6 +134,15 @@ struct ResultsCollectorSimple
   {
   }
 
+  ~ResultsCollectorSimple()
+  {
+    for (std::size_t j = 0; j < _collected_runtaskresults.size(); ++j) {
+      if (_collected_runtaskresults[j] != NULL) {
+        delete _collected_runtaskresults[j];
+      }
+    }
+  }
+  
   inline bool isFinalized() const { return _finalized; }
   
   inline FinalHistogramType finalHistogram() const {
@@ -138,12 +155,12 @@ struct ResultsCollectorSimple
     return _collected_runtaskresults.size();
   }
   
-  inline const std::vector<RunTaskResult> & collectedRunTaskResults() const {
+  inline const RunTaskResultList & collectedRunTaskResults() const {
     tomographer_assert(isFinalized() && "You may only call collectedRunTaskResults() after the runs have been finalized.");
     return _collected_runtaskresults;
   }
 
-  inline RunTaskResult collectedRunTaskResult(std::size_t task_no) const {
+  inline const RunTaskResult * collectedRunTaskResult(std::size_t task_no) const {
     tomographer_assert(isFinalized() && "You may only call collectedRunTaskResult(std::size_t) after the runs have been finalized.");
     tomographer_assert(task_no < _collected_runtaskresults.size());
     return _collected_runtaskresults[task_no];
@@ -165,10 +182,10 @@ private:
   bool _finalized;
   FinalHistogramType _finalhistogram;
 
-  std::vector<RunTaskResult> _collected_runtaskresults;
+  RunTaskResultList _collected_runtaskresults;
 
   Logger::LocalLogger<LoggerType>  _llogger;
-    
+
 public:
 
   // these functions will be called by the task manager/dispatcher
@@ -178,7 +195,7 @@ public:
   {
     tomographer_assert(!isFinalized() && "init() called after results have been finalized!");
 
-    _collected_runtaskresults.resize(num_total_runs);
+    _collected_runtaskresults.resize(num_total_runs, NULL);
     _finalhistogram.reset(pcdata->histogram_params);
   }
   template<typename Cnt, typename TaskResultType, typename CData>
@@ -198,7 +215,8 @@ public:
     thishistogram.off_chart /= normalization;
 
     _finalhistogram.add_histogram(thishistogram);
-    new (&_collected_runtaskresults[task_no]) RunTaskResult(std::forward<TaskResultType>(taskresult), std::move(thishistogram));
+    _collected_runtaskresults[task_no]
+      = new RunTaskResult(std::forward<TaskResultType>(taskresult), std::move(thishistogram));
   }
   template<typename Cnt, typename CData>
   inline void runs_finished(Cnt, const CData *)
@@ -222,6 +240,10 @@ public:
  */
 template<typename CDataBaseType_, typename LoggerType_>
 struct ResultsCollectorWithBinningAnalysis
+  : public virtual Tools::NeedOwnOperatorNew<
+      UniformBinsHistogram<typename CDataBaseType_::HistogramType::Scalar,
+                           typename CDataBaseType_::CountRealType>
+    >::ProviderType
 {
   typedef CDataBaseType_ CDataBaseType;
   typedef typename CDataBaseType::ValueCalculator ValueCalculator;
@@ -241,7 +263,7 @@ struct ResultsCollectorWithBinningAnalysis
   typedef typename CDataBaseType::HistogramParams HistogramParams;
 
   //! The final histogram, properly averaged
-  typedef Tomographer::AveragedHistogram<HistogramType, CountRealType> FinalHistogramType;
+  typedef AveragedHistogram<HistogramType, CountRealType> FinalHistogramType;
 
   /** \brief The "simple" histogram, as if without binning analysis.
    *
@@ -249,10 +271,11 @@ struct ResultsCollectorWithBinningAnalysis
    * are normalized.
    */
   typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> SimpleNormalizedHistogramType;
-  typedef Tomographer::AveragedHistogram<SimpleNormalizedHistogramType, double> SimpleFinalHistogramType;
+  typedef AveragedHistogram<SimpleNormalizedHistogramType, double> SimpleFinalHistogramType;
 
 
   typedef MHRandomWalkTaskResult<TaskResultType,CountIntType,StepRealType> RunTaskResult;
+  typedef std::vector<RunTaskResult*> RunTaskResultList;
 
 
   ResultsCollectorWithBinningAnalysis(LoggerType & logger_)
@@ -260,6 +283,15 @@ struct ResultsCollectorWithBinningAnalysis
       _collected_runtaskresults(),
       _llogger("MHRWTasks::ValueHistogramTasks::ResultsCollectorWithBinningAnalysis", logger_)
   {
+  }
+
+  ~ResultsCollectorWithBinningAnalysis()
+  {
+    for (std::size_t j = 0; j < _collected_runtaskresults.size(); ++j) {
+      if (_collected_runtaskresults[j] != NULL) {
+        delete _collected_runtaskresults[j];
+      }
+    }
   }
 
   inline bool isFinalized() const { return _finalized; }
@@ -279,12 +311,12 @@ struct ResultsCollectorWithBinningAnalysis
     return _collected_runtaskresults.size();
   }
 
-  inline std::vector<RunTaskResult> collectedRunTaskResults() const {
+  inline const RunTaskResultList & collectedRunTaskResults() const {
     tomographer_assert(isFinalized() && "You may only call collectedRunTaskResults() after the runs have been finalized.");
     return _collected_runtaskresults;
   }
 
-  inline RunTaskResult collectedRunTaskResult(std::size_t task_no) const {
+  inline const RunTaskResult * collectedRunTaskResult(std::size_t task_no) const {
     tomographer_assert(isFinalized() && "You may only call collectedRunTaskResult(std::size_t) after the runs have been finalized.");
     tomographer_assert(task_no < _collected_runtaskresults.size());
     return _collected_runtaskresults[task_no];
@@ -309,10 +341,11 @@ private:
   FinalHistogramType _finalhistogram;
   SimpleFinalHistogramType _simplefinalhistogram;
 
-  std::vector<RunTaskResult> _collected_runtaskresults;
+  RunTaskResultList _collected_runtaskresults;
 
   Logger::LocalLogger<LoggerType>  _llogger;
-    
+
+  
 public:
     
   template<typename Cnt, typename CData>
@@ -320,7 +353,7 @@ public:
   {
     tomographer_assert(!isFinalized() && "init() called after results have been finalized!");
 
-    _collected_runtaskresults.resize(num_total_runs);
+    _collected_runtaskresults.resize(num_total_runs, NULL);
     _finalhistogram.reset(pcdata->histogram_params);
     _simplefinalhistogram.reset(pcdata->histogram_params);
   }
@@ -377,7 +410,7 @@ public:
       });
     _simplefinalhistogram.add_histogram(stats_coll_result.hist);
 
-    new (&_collected_runtaskresults[task_no]) RunTaskResult(std::move(taskresult));
+    _collected_runtaskresults[task_no] = new RunTaskResult(std::move(taskresult));
     
     logger.debug("done.");
   }
@@ -423,7 +456,9 @@ struct ResultsCollectorTypeHelper<CDataBaseType, LoggerType, true> {
 template<typename ValueCalculator_, bool UseBinningAnalysis_ = true,
 	 typename CountIntType_ = int, typename StepRealType_ = double,
 	 typename CountRealType_ = double>
-struct CDataBase : public MHRWTasks::CDataBase<CountIntType_, StepRealType_>
+struct CDataBase
+  : public MHRWTasks::CDataBase<CountIntType_, StepRealType_>,
+    public virtual Tools::NeedOwnOperatorNew<ValueCalculator_>::ProviderType
 {
   typedef MHRWTasks::CDataBase<CountIntType_, StepRealType_> Base; // base class
 
@@ -468,7 +503,7 @@ struct CDataBase : public MHRWTasks::CDataBase<CountIntType_, StepRealType_>
   inline ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>
   createStatsCollector(LoggerType & logger) const
   {
-    return Tomographer::ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>(
+    return ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>(
 	histogram_params,
 	valcalc,
 	logger
@@ -484,7 +519,7 @@ struct CDataBase : public MHRWTasks::CDataBase<CountIntType_, StepRealType_>
     typedef typename tomo_internal::histogram_types<CDataBase, true>::BinningMHRWStatsCollectorParams
       BinningMHRWStatsCollectorParams;
 
-    return Tomographer::ValueHistogramWithBinningMHRWStatsCollector<BinningMHRWStatsCollectorParams,LoggerType>(
+    return ValueHistogramWithBinningMHRWStatsCollector<BinningMHRWStatsCollectorParams,LoggerType>(
 	histogram_params,
 	valcalc,
         binning_num_levels.value,

@@ -186,12 +186,12 @@ BOOST_FIXTURE_TEST_CASE(simple_runtaskresults, run_test_simple_nofullrun)
   BOOST_CHECK_EQUAL(results.collectedRunTaskResults().size(), NumRepeats);
   auto taskresults = results.collectedRunTaskResults();
   for (std::size_t k = 0; k < (std::size_t)NumRepeats; ++k) {
-    OurResultsCollectorRunTaskResultType r = results.collectedRunTaskResult(k);
-    BOOST_CHECK_CLOSE(r.histogram.params.min, taskresults[k].histogram.params.min, tol_percent);
-    BOOST_CHECK_CLOSE(r.histogram.params.max, taskresults[k].histogram.params.max, tol_percent);
-    BOOST_CHECK_EQUAL(r.histogram.params.num_bins, taskresults[k].histogram.params.num_bins);
-    BOOST_CHECK_CLOSE(r.acceptance_ratio, taskresults[k].acceptance_ratio, tol_percent);
-    MY_BOOST_CHECK_EIGEN_EQUAL(r.histogram.bins, taskresults[k].histogram.bins, tol);
+    const OurResultsCollectorRunTaskResultType r =  * results.collectedRunTaskResult(k);
+    BOOST_CHECK_CLOSE(r.histogram.params.min, taskresults[k]->histogram.params.min, tol_percent);
+    BOOST_CHECK_CLOSE(r.histogram.params.max, taskresults[k]->histogram.params.max, tol_percent);
+    BOOST_CHECK_EQUAL(r.histogram.params.num_bins, taskresults[k]->histogram.params.num_bins);
+    BOOST_CHECK_CLOSE(r.acceptance_ratio, taskresults[k]->acceptance_ratio, tol_percent);
+    MY_BOOST_CHECK_EIGEN_EQUAL(r.histogram.bins, taskresults[k]->histogram.bins, tol);
   }
   OurResultsCollector::FinalHistogramType finalhistogram = results.finalHistogram();
   BOOST_MESSAGE(Tomographer::histogram_pretty_print(finalhistogram));
@@ -209,9 +209,9 @@ BOOST_FIXTURE_TEST_CASE(binning_runtaskresults, run_test_binning_nofullrun)
   BOOST_CHECK_EQUAL(results.collectedRunTaskResults().size(), NumRepeats);
   auto taskresults = results.collectedRunTaskResults();
   for (std::size_t k = 0; k < (std::size_t)NumRepeats; ++k) {
-    OurResultsCollectorRunTaskResultType r = results.collectedRunTaskResult(k);
+    const OurResultsCollectorRunTaskResultType r =  * results.collectedRunTaskResult(k);
     auto stats_coll_result_hist = r.stats_collector_result.hist;
-    MY_BOOST_CHECK_EIGEN_EQUAL(stats_coll_result_hist.bins, taskresults[k].stats_collector_result.hist.bins, tol);
+    MY_BOOST_CHECK_EIGEN_EQUAL(stats_coll_result_hist.bins, taskresults[k]->stats_collector_result.hist.bins, tol);
   }
   OurResultsCollector::FinalHistogramType finalhistogram = results.finalHistogram();
   BOOST_MESSAGE(Tomographer::histogram_pretty_print(finalhistogram));

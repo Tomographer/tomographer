@@ -35,6 +35,7 @@
 #include <boost/math/constants/constants.hpp>
 
 #include <tomographer2/tools/loggers.h>
+#include <tomographer2/tools/needownoperatornew.h>
 #include <tomographer2/densedm/densellh.h>
 #include <tomographer2/densedm/dmtypes.h>
 #include <tomographer2/densedm/param_herm_x.h>
@@ -66,10 +67,13 @@ namespace TSpace {
  *
  * \tparam LoggerType a logger type (see \ref pageLoggers)
  */
-template<typename DenseLLH, typename Rng, typename LoggerType>
+template<typename DenseLLH_, typename Rng, typename LoggerType>
 class LLHMHWalker
+  : public Tools::NeedOwnOperatorNew<typename DenseLLH_::DMTypes::MatrixType>::ProviderType
 {
 public:
+  //! The DenseLLH interface object type
+  typedef DenseLLH_ DenseLLH;
   //! The data types of our problem
   typedef typename DenseLLH::DMTypes DMTypes;
   //! The loglikelihood function value type (see \ref pageInterfaceDenseLLH e.g. \ref IndepMeasLLH)

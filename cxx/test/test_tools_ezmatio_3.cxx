@@ -42,7 +42,7 @@ BOOST_AUTO_TEST_SUITE(stdvec_of_eigen);
 BOOST_AUTO_TEST_CASE(mu32_3x3)
 {
   Tomographer::MAT::Var var = f.var("mu32_3x3");
-  typedef Tomographer::Tools::eigen_std_vector<Eigen::Matrix<uint32_t,3,3> >::type MyType;
+  typedef Tomographer::Tools::EigenStdVector<Eigen::Matrix<uint32_t,3,3> >::type MyType;
   MyType m = var.value<MyType>();
   BOOST_CHECK_EQUAL(m.size(), 1);
   Eigen::Matrix<uint32_t,3,3> ok;
@@ -53,7 +53,7 @@ BOOST_AUTO_TEST_CASE(mcd_2x2x3)
 {
   Tomographer::MAT::Var var = f.var("mcd_2x2x3");
   typedef std::complex<double> Cd;
-  typedef Tomographer::Tools::eigen_std_vector<Eigen::Matrix<Cd,2,2> >::type MyType;
+  typedef Tomographer::Tools::EigenStdVector<Eigen::Matrix<Cd,2,2> >::type MyType;
   MyType m = var.value<MyType>();
   BOOST_CHECK_EQUAL(m.size(),3);
   Eigen::Matrix<Cd,2,2> ok1;
@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(mcd_2x2x3_rowmaj)
 {
   Tomographer::MAT::Var var = f.var("mcd_2x2x3");
   typedef std::complex<double> Cd;
-  typedef Tomographer::Tools::eigen_std_vector<Eigen::Matrix<Cd,2,2,Eigen::RowMajor> >::type MyType;
+  typedef Tomographer::Tools::EigenStdVector<Eigen::Matrix<Cd,2,2,Eigen::RowMajor> >::type MyType;
   MyType m = var.value<MyType>();
   BOOST_CHECK_EQUAL(m.size(),3);
   Eigen::Matrix<Cd,2,2> ok1;
@@ -99,7 +99,7 @@ BOOST_AUTO_TEST_CASE(mcf_2x2x3)
 {
   Tomographer::MAT::Var var = f.var("mcf_2x2x3");
   typedef std::complex<float> Cf;
-  typedef Tomographer::Tools::eigen_std_vector<Eigen::Matrix<Cf,2,2,Eigen::RowMajor> >::type MyType;
+  typedef Tomographer::Tools::EigenStdVector<Eigen::Matrix<Cf,2,2,Eigen::RowMajor> >::type MyType;
   MyType m = var.value<MyType>();
   BOOST_CHECK_EQUAL(m.size(),3);
   Eigen::Matrix<Cf,2,2> ok1;
@@ -122,7 +122,7 @@ BOOST_AUTO_TEST_CASE(mf_2x3x2)
 {
   Tomographer::MAT::Var var = f.var("mf_2x3x2");
   typedef std::complex<float> Cf;
-  typedef Tomographer::Tools::eigen_std_vector<Eigen::Matrix<Cf,2,3> >::type MyType;
+  typedef Tomographer::Tools::EigenStdVector<Eigen::Matrix<Cf,2,3> >::type MyType;
   MyType m = var.value<MyType>();
   BOOST_CHECK_EQUAL(m.size(), 2);
   Eigen::Matrix<Cf,2,3> ok0;
@@ -140,7 +140,7 @@ BOOST_AUTO_TEST_CASE(mcd_2x3x2x2)
 {
   Tomographer::MAT::Var var = f.var("mcd_2x3x2x2");
   typedef std::complex<double> Cd;
-  typedef Tomographer::Tools::eigen_std_vector<Eigen::Matrix<Cd,2,3> >::type MyType;
+  typedef Tomographer::Tools::EigenStdVector<Eigen::Matrix<Cd,2,3> >::type MyType;
   MyType m = var.value<MyType>();
   BOOST_CHECK_EQUAL(m.size(),4);
   Eigen::Matrix<Cd,2,3> ok0;
@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(mcd_2x3x2x2_rowmaj)
 {
   Tomographer::MAT::Var var = f.var("mcd_2x3x2x2");
   typedef std::complex<double> Cd;
-  typedef Tomographer::Tools::eigen_std_vector<Eigen::Matrix<Cd,2,3,Eigen::RowMajor> >::type MyType;
+  typedef Tomographer::Tools::EigenStdVector<Eigen::Matrix<Cd,2,3,Eigen::RowMajor> >::type MyType;
   MyType m = var.value<MyType>();
   BOOST_CHECK_EQUAL(m.size(),4);
   Eigen::Matrix<Cd,2,3> ok0;

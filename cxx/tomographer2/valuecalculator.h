@@ -29,6 +29,7 @@
 
 
 #include <tomographer2/tools/cxxutil.h>
+#include <tomographer2/tools/needownoperatornew.h>
 
 
 /** \file valuecalculator.h
@@ -180,6 +181,7 @@ struct MplxVC_getval_helper<6, ValueType, ValueCalculators...>
  */
 template<typename ValueType_, typename... ValueCalculators>
 class MultiplexorValueCalculator
+  : public virtual Tools::NeedOwnOperatorNew<ValueCalculators...>::ProviderType
 {
 public:
   typedef ValueType_ ValueType;

@@ -44,6 +44,7 @@
 #include <tomographer2/tools/fmt.h>
 #include <tomographer2/tools/eigenutil.h>
 #include <tomographer2/tools/cxxutil.h> // TOMOGRAPHER_ENABLED_IF, tomographer_assert()
+#include <tomographer2/tools/needownoperatornew.h>
 
 
 /** \file histogram.h
@@ -65,6 +66,10 @@ namespace Tomographer {
  */
 template<typename Scalar_, typename CountType_ = unsigned int>
 struct UniformBinsHistogram
+  // inheriting from this has some advantages over EIGEN_MAKE_ALIGNED_OPERATOR_NEW, such
+  // as not needing to explicitly declare the specialization
+  // NeedOwnOperatorNew<UniformBinsHistogram>:
+  : public Tools::EigenAlignedOperatorNewProvider
 {
   //! The scalar type of the "X"-axis of the histogram (usually \c double)
   typedef Scalar_ Scalar;
@@ -378,13 +383,17 @@ struct UniformBinsHistogram
 
 
 
+
 /** \brief Stores a histogram along with error bars
  *
  * Builds on top of \ref UniformBinsHistogram<Scalar,CountType> to store error bars
  * corresponding to each bin.
  */
 template<typename Scalar_, typename CountType_ = double>
-struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, CountType_>
+struct UniformBinsHistogramWithErrorBars
+  : public UniformBinsHistogram<Scalar_, CountType_>
+    // ### UniformBinsHistogram already inherits EigenAlignedOperatorNewProvider:
+    // public Tools::EigenAlignedOperatorNewProvider
 {
   //! The Scalar (X-axis) Type. See \ref UniformBinsHistogram<Scalar_,CountType_>::Scalar.
   typedef Scalar_ Scalar;
@@ -464,7 +473,9 @@ struct UniformBinsHistogramWithErrorBars : public UniformBinsHistogram<Scalar_, 
   }
   
 };
-
+// static members:
+template<typename Scalar_, typename CountType_>
+constexpr bool UniformBinsHistogramWithErrorBars<Scalar_,CountType_>::HasErrorBars;
 
 
 
@@ -644,6 +655,42 @@ struct AveragedHistogram
 };
 
 
+
+
+// NOT NEEDED, SINCE WE DERIVE FROM  EigenAlignedOperatorNewProvider :
+//
+//
+// // provide overrides to NeedOwnOperatorNew<HistogramType> so that whenever a
+// // HistogramType is used within another struct as a member, we make sure that that struct
+// // is also aligned. (That struct should of course inherit
+// // NeedOwnOperatorNew<HistogramType>::ProviderType)
+//
+//
+// namespace Tools {
+// template<typename Scalar_, typename CountType_>
+// struct NeedOwnOperatorNew<UniformBinsHistogram<Scalar_,CountIntType_> >
+//   : public NeedEigenAlignedOperatorNew { };
+//
+// template<typename Scalar_, typename CountType_>
+// struct NeedOwnOperatorNew<UniformBinsHistogramWithErrorBars<Scalar_,CountType_>
+//   : public NeedEigenAlignedOperatorNew { };
+//
+// template<typename HistogramType_, typename RealAvgType>
+// struct NeedOwnOperatorNew<AveragedHistogram<HistogramType_,RealAvgType>
+//   : public NeedEigenAlignedOperatorNew { };
+//
+//} // namespace Tools
+
+
+
+
+
+
+
+
+// -----------------------------------------------------------------------------
+// Pretty Print Histogram Utilities
+// -----------------------------------------------------------------------------
 
 
 
@@ -1117,7 +1164,6 @@ inline std::string histogram_short_bar(const HistogramType & histogram, bool log
   max_width = tomo_internal::maybe_default_col_width(max_width);
   return tomo_internal::histogram_short_bar_fmt<HistogramType>(histogram, log_scale, max_width);
 }
-
 
 
 

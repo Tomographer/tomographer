@@ -164,12 +164,11 @@ inline std::string fmts(const char * fmt, ...)
 
 namespace tomo_internal {
 // see http://stackoverflow.com/a/9154394/1694896
-struct sfinae_no { typedef int no[1]; };
-template<typename EnabledType = void> struct sfinae_yes { typedef int yes[2]; };
+// see sfinae_yes and sfinae_no in cxxutil.h
 template<typename T> static auto test_has_stream_op(int)
   -> typename sfinae_yes<decltype(*((std::ostream*)(NULL)) << *((T*)(NULL)))>::yes&;
 template<typename T> static auto test_has_stream_op(long)
-  -> typename sfinae_no::no&;
+  -> typename sfinae_no<>::no&;
 // template<typename T, int dummy_value,
 // 	 typename EnabledIfType = decltype(std::declval<std::ostream&>() << std::declval<T>())>
 // struct test_has_stream_op { static constexpr bool value = true; };

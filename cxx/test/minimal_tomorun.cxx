@@ -218,7 +218,9 @@ int main()
     0,      0,    0,     0,
     0.5,    0,    0,   0.5;
 
-  // our main ValueCalculator instance, which is in fact an alias for the  ObservableValueCalculator class
+  // our main ValueCalculator instance, which is in fact an alias for the
+  // ObservableValueCalculator class. [If we wanted to choose which figure of merit to
+  // compute at run-time, then we should use a MultiplexorValueCalculator.]
   ValueCalculator valcalc(dmt, phiplus);
 
   // parameters of the histogram of the figure of merit: cover the range [0.75, 1.0] by
@@ -312,13 +314,13 @@ int main()
       double accept_ratio = 0.0;
       for (std::size_t j = 0; j < results.numTasks(); ++j) {
         auto collectedresult = results.collectedRunTaskResult(j);
-        num_converged += collectedresult.stats_collector_result.converged_status
+        num_converged += collectedresult->stats_collector_result.converged_status
           .cwiseEqual(OurResultsCollector::BinningAnalysisParamsType::CONVERGED).count();
-        num_unknown += collectedresult.stats_collector_result.converged_status
+        num_unknown += collectedresult->stats_collector_result.converged_status
           .cwiseEqual(OurResultsCollector::BinningAnalysisParamsType::UNKNOWN_CONVERGENCE).count();
-        num_notconverged += collectedresult.stats_collector_result.converged_status
+        num_notconverged += collectedresult->stats_collector_result.converged_status
           .cwiseEqual(OurResultsCollector::BinningAnalysisParamsType::NOT_CONVERGED).count();
-        accept_ratio += collectedresult.acceptance_ratio;
+        accept_ratio += collectedresult->acceptance_ratio;
       }
       stream << "Average Acceptance Ratio: "
              << std::setprecision(2) << accept_ratio / results.numTasks() << "\n\n";
