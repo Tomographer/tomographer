@@ -158,7 +158,7 @@ if(TOMOGRAPHER_ENABLE_TESTS)
   message(STATUS "Will build tomographer tests")
   enable_testing()
 else(TOMOGRAPHER_ENABLE_TESTS)
-  message(STATUS "Will not build tests. Set TOMOGRAPHER_ENABLE_TESTS=on for that.")
+  message(STATUS "Will not build tests (meant for developers). Set TOMOGRAPHER_ENABLE_TESTS=on if you wanted them.")
 endif(TOMOGRAPHER_ENABLE_TESTS)
 
 

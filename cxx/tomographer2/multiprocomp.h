@@ -456,9 +456,14 @@ namespace OMP {
               shared_data->status_report_full.tasks_reports.clear();
               shared_data->status_report_full.tasks_running.resize(num_threads, false);
               shared_data->status_report_full.tasks_reports.resize(num_threads);
-              logger->debug("OMP TaskDispatcher/taskmanageriface", "vectors resized to %lu & %lu, resp.",
-                           shared_data->status_report_full.tasks_running.size(),
-                           shared_data->status_report_full.tasks_reports.size());
+              logger->debug("OMP TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
+                  stream << "vectors resized to tasks_running.size()="
+                         << shared_data->status_report_full.tasks_running.size()
+                         << " and tasks_reports.size()="
+                         << shared_data->status_report_full.tasks_reports.size()
+                         << ".";
+                });
+              
               shared_data->status_report_numreportsrecieved = 0;
             }
 
@@ -545,6 +550,7 @@ namespace OMP {
           privdat.kiter = k;
           privdat.logger = &threadsafelogger;
 
+          // not sure an std::ostream would be safe here threadwise...?
           threadsafelogger.debug("run_omp_tasks()", "Running task #%lu ...", (unsigned long)k);
 
           // construct a new task instance
