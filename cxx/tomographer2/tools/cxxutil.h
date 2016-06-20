@@ -57,7 +57,7 @@
 
 
 #ifndef tomographer_assert
-#define tomographer_assert(...) eigen_assert(__VA_ARGS__ && "assert: " #__VA_ARGS__)
+#define tomographer_assert(...) eigen_assert((__VA_ARGS__) && "assert: " #__VA_ARGS__)
 #endif
 
 

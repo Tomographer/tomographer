@@ -105,6 +105,7 @@ int main(int argc, char **argv)
 
   if (opt.nice_level != 0) {
     // nice up our process.
+#ifndef TOMORUN_NOT_HAVE_NICE
     errno = 0; // not std::errno, errno is a macro
     int niceret = nice(opt.nice_level);
     if (niceret == -1 && errno != 0) {
@@ -115,6 +116,9 @@ int main(int argc, char **argv)
     } else {
       logger.debug("nice()'ed our process to priority %d", niceret);
     }
+#else
+    logger.warning("nice() is not supported on this system, and option --nice-level was ignored.");
+#endif
   }
 
   logger.debug([](std::ostream & str) {

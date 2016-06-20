@@ -30,7 +30,11 @@
 # ==============================================================================
 
 # Activate C++0x/C++11 support
-if(COMPILER_SUPPORTS_CXX11)
+if(COMPILER_SUPPORTS_GNUXX11)
+  # on MinGW, we should use gnu++11, otherwise we get weird errors about some missing
+  # functions... (_hypot in math.h etc.)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
+elseif(COMPILER_SUPPORTS_CXX11)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 elseif(COMPILER_SUPPORTS_CXX0X)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")

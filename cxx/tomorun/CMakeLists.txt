@@ -37,6 +37,16 @@ include_directories("${CMAKE_BINARY_DIR}/cxx")
 # http://eigen.tuxfamily.org/dox/TopicMultiThreading.html)
 add_definitions(-DEIGEN_DONT_PARALLELIZE)
 
+include(CheckCXXSourceCompiles)
+
+CHECK_CXX_SOURCE_COMPILES(
+  "#include <unistd.h>
+  int main() { nice(1); }"
+  tomorun_HAVE_NICE)
+if(NOT tomorun_HAVE_NICE)
+  add_definitions(-DTOMORUN_NOT_HAVE_NICE)
+endif()
+
 add_executable(tomorun tomorun.cxx)
 add_dependencies(tomorun tomographer) # in particular tomographer_version.h
 

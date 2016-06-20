@@ -48,6 +48,7 @@ message(STATUS "CMake Build Type: ${CMAKE_BUILD_TYPE}")
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+CHECK_CXX_COMPILER_FLAG("-std=gnu++11" COMPILER_SUPPORTS_GNUXX11)
 
 #
 # Using "if(NOT mypackage_FOUND)" for the find_package() directives below allows the user
@@ -77,13 +78,11 @@ endif(NOT ZLIB_FOUND)
 
 # Find boost::program_options and boost::math
 if(NOT BOOST_FOUND)
-  find_package(Boost 1.40 COMPONENTS program_options unit_test_framework REQUIRED)
+  find_package(Boost 1.40 COMPONENTS program_options REQUIRED)
 endif(NOT BOOST_FOUND)
 
-# LAPACK is only required if you want to run all the tests (but not for tomorun)
-if(NOT LAPACK_FOUND)
-  find_package(LAPACK)
-endif(NOT LAPACK_FOUND)
+
+# more find_package stuff below for stuff we only need in tests....
 
 
 # activate warning flags on debug builds
@@ -144,12 +143,24 @@ install(FILES README.md README.txt LICENSE.txt
 # ==============================================================================
 
 option(TOMOGRAPHER_ENABLE_TESTS "Build Tomographer/Tomorun tests" off)
+
 if(TOMOGRAPHER_ENABLE_TESTS)
+
+  if(NOT Boost_UNIT_TEST_FRAMEWORK_LIBRARY)
+    find_package(Boost 1.40 COMPONENTS unit_test_framework REQUIRED)
+  endif()
+  
+  # LAPACK is only required if you want to run all the tests (but not for tomorun)
+  if(NOT LAPACK_FOUND)
+    find_package(LAPACK REQUIRED)
+  endif(NOT LAPACK_FOUND)
+
   message(STATUS "Will build tomographer tests")
   enable_testing()
 else(TOMOGRAPHER_ENABLE_TESTS)
   message(STATUS "Will not build tests. Set TOMOGRAPHER_ENABLE_TESTS=on for that.")
 endif(TOMOGRAPHER_ENABLE_TESTS)
+
 
 # ==============================================================================
 # Include our subdirectories

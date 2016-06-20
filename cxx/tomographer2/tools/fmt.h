@@ -86,11 +86,15 @@ inline std::string vfmts(const char* fmt, va_list vl)
   //    http://stackoverflow.com/a/10150393/1694896
   //    http://stackoverflow.com/a/26197300/1694896
   
+  // on MinGW, can't find std::vsnprintf() because for some reason it's declared in the
+  // global scope... so just import std namespace here and use generic vsnprintf() call.
+  using namespace std;
+
   int size = 10;
   char * buffer = new char[size];
   va_list ap1;
   va_copy(ap1, vl);
-  int nsize = std::vsnprintf(buffer, size, fmt, ap1);
+  int nsize = vsnprintf(buffer, size, fmt, ap1);
   if (nsize < 0) {
     // failure: bad format probably
     throw bad_fmts_format("vsnprintf("+std::string(fmt)+") failure: code="+std::to_string(nsize));
@@ -100,7 +104,7 @@ inline std::string vfmts(const char* fmt, va_list vl)
     delete[] buffer;
     size = nsize+1; // +1 for "\0"
     buffer = new char[size];
-    nsize = std::vsnprintf(buffer, size, fmt, vl);
+    nsize = vsnprintf(buffer, size, fmt, vl);
   }
   std::string ret(buffer);
   delete[] buffer;
