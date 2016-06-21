@@ -67,6 +67,7 @@ struct MplxVC_getval_helper
   static inline ValueType getValue(const int, const std::tuple<ValueCalculators...> & , PointType&& )
   {
     tomographer_assert(false && "Invalid i: i>=NumValueCalculators or i<0");
+    return ValueType();// silence ICC "missing return statement" warning
   }
 };
 // a few specializations, for optimizing a chain of if's to a faster switch statement
