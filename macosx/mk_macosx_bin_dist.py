@@ -35,14 +35,17 @@ import subprocess
 import shutil
 
 
+import sanitize_macosx_binary
+
+
 # where to find stuff on my system
-C_COMPILER = '/usr/bin/gcc'
-CXX_COMPILER = '/usr/bin/g++'
-EIGEN3_INCLUDE = '/scratch/pfaist/soft/local/include/eigen3'
-MATIO_INCLUDE = '/home/pfaist/.local/include'
-MATIO_LIB = '/home/pfaist/.local/lib/libmatio.a'
-ZLIB_LIB = '/usr/lib/x86_64-linux-gnu/libz.a'
-Boost_PROGRAM_OPTIONS_LIB = '/usr/lib/x86_64-linux-gnu/libboost_program_options.a'
+C_COMPILER = '/opt/gcc4.9/bin/gcc'
+CXX_COMPILER = '/opt/gcc4.9/bin/g++'
+EIGEN3_INCLUDE = '/usr/local/Cellar/eigen/3.2.5/include/eigen3'
+MATIO_INCLUDE = '/opt/my-local/include/'
+MATIO_LIB = '/opt/my-local/lib/libmatio.a'
+ZLIB_LIB = '-lz'
+Boost_PROGRAM_OPTIONS_LIB = '/usr/local/Cellar/boost/1.57.0/lib/libboost_program_options.a'
 
 
 
@@ -145,22 +148,13 @@ do_run([e.cmake, '..',
 do_run([e.make, 'VERBOSE=1'],
        cwd=fullbuildpath)
 
-do_run([CXX_COMPILER,
-        "-O3",
-        "-static", "-static-libgcc", "-static-libstdc++",
-        "-fopenmp",
-        "CMakeFiles/tomorun.dir/tomorun.cxx.o",
-        "-o", "tomorun",
-        MATIO_LIB,
-        ZLIB_LIB,
-        Boost_PROGRAM_OPTIONS_LIB],
-       cwd=os.path.join(fullbuildpath, 'cxx', 'tomorun')
-       );
-
 
 # install/strip
 do_run([e.make, 'install/strip'],
        cwd=fullbuildpath)
+
+# import necessary libraries along with the executable
+sanitize_macosx_binary.fix_exe_object_lib_refs(os.path.join(fullinstallpath, 'bin', 'tomorun'))
 
 # package
 do_run([e.tar, "cvfz", os.path.join(fullcwd, tomo_name_w_ver_a['tar.gz']), install_name],
