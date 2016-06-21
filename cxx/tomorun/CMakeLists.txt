@@ -35,9 +35,7 @@ include_directories("${CMAKE_BINARY_DIR}/cxx")
 
 
 set(TOMORUN_SUFFIX "" CACHE STRING
-  "Optional suffix to append to 'tomorun' executable name, to indicate special \
-configuration in case you override settings in tomorun_config.h with -D... \
-compiler flags (such as -DTOMORUN_CUSTOM_FIXED_DIM=... etc.)")
+  "Optional suffix to append to 'tomorun' executable name, to indicate special configuration in case you override settings in tomorun_config.h with -D... compiler flags (such as -DTOMORUN_CUSTOM_FIXED_DIM=... etc.)")
 
 
 # already parallelized application, so disable Eigen's own parallelization (see
