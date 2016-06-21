@@ -77,14 +77,16 @@ def do_copy_file(src, dst):
 
 
 # rename tomorun-INSTALL to the correct version
-os.rename(os.path.join(tomo_name, 'build', 'tomographer-INSTALL'),
-          os.path.join(tomo_name, 'build', install_name))
+do_run(["mv",
+        'tomographer-INSTALL',
+        install_name],
+       cwd=os.path.join(tomo_name, 'build'))
 
 # copy in it all relevant libraries
 for libfn in os.listdir('libs'):
-    do_copy_file(os.path.join('libs', libfn), os.path.join(tomo_name, 'build', install_name))
+    do_copy_file(os.path.join('libs', libfn), os.path.join(tomo_name, 'build', install_name, 'bin'))
 
-do_run([e.zip, "-r", tomo_name_w_ver_a['zip'], install_name],
+do_run([e.zip, "-r", os.path.join('..', '..', tomo_name_w_ver_a['zip']), install_name],
        cwd=os.path.join(tomo_name, 'build'))
 
 #do_rmtree(tomo_name) # -- leave commented for now, for debugging

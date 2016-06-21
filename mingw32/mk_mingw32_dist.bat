@@ -1,6 +1,8 @@
 
 rem We need to have a fresh clone of tomographer available, with a VERSION file ready.
 
+set "PATH=C:\WINDOWS\system32;C:\WINDOWS;C:\WINDOWS\System32\Wbem;C:\Program Files\CMake 2.8\bin;Z:\MinGW\bin"
+
 cd tomographer
 mkdir build
 cd build
@@ -9,7 +11,7 @@ cmake .. -G"MinGW Makefiles" ^
   -DCMAKE_C_COMPILER=Z:/MinGW/bin/gcc.exe ^
   -DCMAKE_CXX_COMPILER=Z:/MinGW/bin/g++.exe ^
   -DCMAKE_BUILD_TYPE=Release ^
-  -DCMAKE_INSTALL_PREFIX=Z:/tomographer/build/tomographer-INSTALL ^
+  -DCMAKE_INSTALL_PREFIX=Z:/tomographer-dist-admin/mingw32/tomographer/build/tomographer-INSTALL ^
   -DEIGEN3_INCLUDE_DIR=Z:/Eigen/eigen-eigen-07105f7124f9 ^
   -DMATIO_INCLUDE_DIR=Z:/MatIO/matio-1.5.6/src ^
   -DMATIO_LIBRARY=Z:/MatIO/matio-1.5.6/src/libmatio.a ^
