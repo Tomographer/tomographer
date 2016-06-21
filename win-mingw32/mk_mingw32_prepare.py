@@ -42,7 +42,7 @@ if (len(sys.argv) != 2):
 gitversion = sys.argv[1]
 tomo_name = "tomographer"
 tomo_name_w_ver = tomo_name+"-"+gitversion
-install_name = tomo_name_w_ver+'-mingw32'
+install_name = tomo_name_w_ver+'-win-mingw32'
 tomo_name_w_ver_a = {
     'zip': install_name + ".zip"
     }

@@ -49,7 +49,7 @@ with open(os.path.join(tomo_name, "VERSION"), 'r') as f:
 assert(len(gitversion) > 0)
 
 tomo_name_w_ver = tomo_name+"-"+gitversion
-install_name = tomo_name_w_ver+'-mingw32'
+install_name = tomo_name_w_ver+'-win-mingw32'
 tomo_name_w_ver_a = {
     'zip': install_name + ".zip"
     }
