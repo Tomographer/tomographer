@@ -272,7 +272,7 @@ int main()
   // set up signal handling -- really easy we we'll do this.  Hit CTRL+C to get an instant
   // status report.
   auto srep = Tomographer::Tools::makeSigHandlerTaskDispatcherStatusReporter(&tasks, logger.baselogger());
-  Tomographer::Tools::installSignalStatusReportHandler(SIGINT, &srep);
+  Tomographer::Tools::installSignalHandler(SIGINT, &srep);
 
   //
   // Finally, run our tomo process
