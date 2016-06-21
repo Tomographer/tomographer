@@ -3,7 +3,7 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -25,8 +25,8 @@
  */
 
 
-#ifndef SIGNAL_STATUS_REPORT
-#define SIGNAL_STATUS_REPORT
+#ifndef TOMOGRAPHER_TOOLS_SIGNAL_STATUS_REPORT
+#define TOMOGRAPHER_TOOLS_SIGNAL_STATUS_REPORT
 
 
 /** \file signal_status_report.h
@@ -36,12 +36,7 @@
  *
  */
 
-#include <signal.h>
-
-#include <cstdio>
-#include <ctime>
-
-#include <chrono>
+#include <tomographer2/tools/signal_handler.h>
 
 
 namespace Tomographer
@@ -49,21 +44,15 @@ namespace Tomographer
 namespace Tools
 {
 
-/** \brief An abstract signal handler, in class form
- */
-struct SignalHandler
-{
-  SignalHandler() { }
-  virtual ~SignalHandler() { }
-  
-  virtual void handle_signal(int) = 0;
-};
-  
-
 /** \brief A generic handler which requests a status report from an OMPTaskDispatcher
+ *
+ * Note: The time displayed in the report is counted from the moment this signal handler
+ * is instantiated.
  */
-template<typename TaskDispatcher, typename Logger, typename TimerClock = std::chrono::system_clock>
-struct SigHandlerTaskDispatcherStatusReporter : public SignalHandler
+template<typename TaskDispatcher, typename Logger,
+         typename TimerClock = std::chrono::system_clock>
+struct SigHandlerTaskDispatcherStatusReporter
+  : public SignalHandler
 {
   SigHandlerTaskDispatcherStatusReporter(TaskDispatcher * tasks_, Logger & logger_)
     : tasks(tasks_), logger(logger_), time_start()
@@ -127,57 +116,7 @@ template<typename TaskDispatcher, typename LoggerT>
 SigHandlerTaskDispatcherStatusReporter<TaskDispatcher, LoggerT>
 makeSigHandlerTaskDispatcherStatusReporter(TaskDispatcher * tasks, LoggerT & logger)
 {
-  // yes, RVO better kick in
   return SigHandlerTaskDispatcherStatusReporter<TaskDispatcher, LoggerT>(tasks, logger);
-}
-
-
-
-
-#ifndef TOMOGRAPHER_SIG_STATUS_REPORT_REPEAT_EXIT_DELAY
-#define TOMOGRAPHER_SIG_STATUS_REPORT_REPEAT_EXIT_DELAY 2
-#endif
-
-namespace tomo_internal {
-  static std::time_t last_sig_hit_time = 0;
-  static SignalHandler * signal_handler = NULL;
-
-  void signal_dispatch_fn(int signal)
-  {
-    std::fprintf(stderr, "\n*** interrupt\n");
-    std::time_t now;
-    time(&now);
-    if ( (now - tomo_internal::last_sig_hit_time) < TOMOGRAPHER_SIG_STATUS_REPORT_REPEAT_EXIT_DELAY ) {
-      // two interrupts within two seconds --> exit
-      std::fprintf(stderr, "\n*** Exit\n");
-      ::exit(1);
-      return;
-    }
-    tomo_internal::last_sig_hit_time = now;
-    
-    if (signal_handler != NULL) {
-      signal_handler->handle_signal(signal);
-    } else {
-      fprintf(stderr, "Warning: sig_handle: no signal handler set (got signal %d)\n", signal);
-    }
-  }
-}
-
-
-/** \brief Installs the given signal handler to catch the signal \a signum
- *
- * \warning This will replace any previous signal handlers set, including for other
- * signals!
- *
- * \todo Don't replace the signal handlers for other signals. (Well ok, we only catch
- *       SIGINT anyway so this isn't a problem now.)
- *
- */
-template<typename SigHandler>
-void installSignalStatusReportHandler(int signum, SigHandler * sobj)
-{
-  tomo_internal::signal_handler = sobj;
-  signal(signum, tomo_internal::signal_dispatch_fn);
 }
 
 

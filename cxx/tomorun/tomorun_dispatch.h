@@ -253,7 +253,7 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
 
   // set up signal handling
   auto srep = Tomographer::Tools::makeSigHandlerTaskDispatcherStatusReporter(&tasks, logger.baselogger());
-  Tomographer::Tools::installSignalStatusReportHandler(SIGINT, &srep);
+  Tomographer::Tools::installSignalHandler(SIGINT, &srep);
 
   // and run our tomo process
 

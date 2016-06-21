@@ -48,7 +48,10 @@ message(STATUS "CMake Build Type: ${CMAKE_BUILD_TYPE}")
 include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-CHECK_CXX_COMPILER_FLAG("-std=gnu++11" COMPILER_SUPPORTS_GNUXX11)
+if(MINGW)
+  # On MinGW, we need to specify gnu++11 instead of c++11 standard to work around a bug
+  CHECK_CXX_COMPILER_FLAG("-std=gnu++11" COMPILER_SUPPORTS_GNUXX11)
+endif()
 
 #
 # Using "if(NOT mypackage_FOUND)" for the find_package() directives below allows the user
@@ -85,14 +88,26 @@ endif(NOT BOOST_FOUND)
 # more find_package stuff below for stuff we only need in tests....
 
 
-# activate warning flags on debug builds
+# activate warning flags on DEBUG and RELWITHDEBINFO builds
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wall -Wextra")
 
+# .### This is no longer needed as I have now included a function call with the GCC
+# .### attribute __attribute__((force_align_arg_pointer,noinline)), which gives the code
+# .### the necessary chance to realign the stack.
+# 
+# if(MINGW) MinGW: avoid misalignment errors with Eigen objects in OpenMP blocks. For
+# this, force realignment of all stacks. Ugly, but works.  There doesn't even seem to be a
+# large overhead---see http://stackoverflow.com/a/6718067/1694896
+# set(TOMOGRAPHER_MINGW_STACK_REALIGN_FLAG "-mstackrealign" CACHE STRING "The flag(s) to
+# pass to the MinGW C++ compiler to fix alignment issues with OpenMP")
+# mark_as_advanced(TOMOGRAPHER_MINGW_STACK_REALIGN_FLAG) set(CMAKE_CXX_FLAGS
+# "${CMAKE_CXX_FLAGS} ${TOMOGRAPHER_MINGW_STACK_REALIGN_FLAG}") endif()
+
 
 # optimization flags for computer architecture.
-# -> set TARGET_ARCHITECTURE=none to not pass "-m..." options to compiler at all
-# -> set TARGET_ARCHITECTURE=generic to disable optimizations
+# -> use -DTARGET_ARCHITECTURE=none to not pass "-m..." options to compiler at all
+# -> use -DTARGET_ARCHITECTURE=generic to disable simd instruction sets
 include(OptimizeForArchitecture)
 OptimizeForArchitecture()
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Vc_ARCHITECTURE_FLAGS}")

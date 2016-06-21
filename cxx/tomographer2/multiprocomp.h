@@ -516,11 +516,12 @@ namespace OMP {
     {
     }
 
-    inline void run()
+    void run()
+      TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
     {
       shared_data.results->init(shared_data.num_total_runs, shared_data.n_chunk, shared_data.pcdata);
       
-      shared_data.logger.debug("run_omp_tasks()", "About to start parallel section.");
+      shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "preparing for parallel runs");
 
       // declaring these as "const" causes a weird compiler error
       // "`n_chunk' is predetermined `shared' for `shared'"
@@ -533,6 +534,8 @@ namespace OMP {
       thread_shared_data *shdat = &shared_data;
       thread_private_data privdat;
 
+      shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "About to start parallel section");
+
 #pragma omp parallel default(none) private(k, privdat) shared(shdat, num_total_runs, n_chunk)
       {
         privdat.shared_data = shdat;
@@ -541,45 +544,62 @@ namespace OMP {
 #pragma omp for schedule(dynamic,n_chunk) nowait
         for (k = 0; k < num_total_runs; ++k) {
 
-#pragma omp critical
-          {
-            ++ shdat->num_active_working_threads;
-            privdat.local_status_report_counter = shdat->status_report_counter;
-          }
+          // make separate function call, so that we can tell GCC to realign the stack on
+          // platforms which don't do that automatically (yes, MinGW, it's you I'm looking
+          // at)
+          _run_task(privdat, shdat, k);
 
-          // construct a thread-safe logger we can use
-          TaskLogger threadsafelogger(shdat->logger, shdat->pcdata, k);
-
-          // set up our thread-private data
-          privdat.kiter = k;
-          privdat.logger = &threadsafelogger;
-
-          // not sure an std::ostream would be safe here threadwise...?
-          threadsafelogger.debug("run_omp_tasks()", "Running task #%lu ...", (unsigned long)k);
-
-          // construct a new task instance
-          Task t(Task::get_input(k, shdat->pcdata), shdat->pcdata, threadsafelogger);
-
-          // and run it
-          t.run(shdat->pcdata, threadsafelogger, &privdat);
-
-#pragma omp critical
-          {
-            shdat->results->collect_result(k, t.getResult(), shdat->pcdata);
-
-            if ((int)privdat.local_status_report_counter != (int)shdat->status_report_counter) {
-              // status report request missed by task... do as if we had provided a
-              // report, but don't provide report.
-              ++ shdat->status_report_numreportsrecieved;
-            }
-
-            ++ shdat->num_completed;
-            -- shdat->num_active_working_threads;
-          }
         }
       }
     
       shared_data.results->runs_finished(num_total_runs, shared_data.pcdata);
+    }
+
+    void _run_task(thread_private_data & privdat, thread_shared_data * shdat, CountIntType k)
+      TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
+    {
+#pragma omp critical
+      {
+        ++ shdat->num_active_working_threads;
+        privdat.local_status_report_counter = shdat->status_report_counter;
+      }
+      
+      // construct a thread-safe logger we can use
+      TaskLogger threadsafelogger(shdat->logger, shdat->pcdata, k);
+      
+      threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
+                                 "Run #%lu: thread-safe logger set up", (unsigned long)k);
+      
+      // set up our thread-private data
+      privdat.kiter = k;
+      privdat.logger = &threadsafelogger;
+      
+      // not sure an std::ostream would be safe here threadwise...?
+      threadsafelogger.debug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
+                             "Running task #%lu ...", (unsigned long)k);
+      
+      // construct a new task instance
+      Task t(Task::get_input(k, shdat->pcdata), shdat->pcdata, threadsafelogger);
+      
+      threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
+                                 "Task %lu set up.", (unsigned long)k);
+      
+      // and run it
+      t.run(shdat->pcdata, threadsafelogger, &privdat);
+      
+#pragma omp critical
+      {
+        shdat->results->collect_result(k, t.getResult(), shdat->pcdata);
+        
+        if ((int)privdat.local_status_report_counter != (int)shdat->status_report_counter) {
+          // status report request missed by task... do as if we had provided a
+          // report, but don't provide report.
+          ++ shdat->status_report_numreportsrecieved;
+        }
+        
+        ++ shdat->num_completed;
+        -- shdat->num_active_working_threads;
+      }
     }
 
 

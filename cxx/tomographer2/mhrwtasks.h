@@ -288,6 +288,10 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
      * This should be considered as the input of the k-th task. Each task must of course
      * have a different seed, otherwise we will just repeat the same "random" walks!
      *
+     *
+     * \note This will probably be changed in the near future. It's not the task's job to
+     *       get its own input, it's the "shared data" object ("CData") which should
+     *       provide the input......
      */
     static inline int get_input(int k, const MHRandomWalkTaskCData * pcdata)
     {
@@ -329,9 +333,13 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
     {
       Rng rng(_seed); // seeded random number generator
 
+      logger.longdebug("Tomographer::MHRWTasks::run()", "about to construct stats collector.");
+
       // the user's stats collector
       auto stats = pcdata->createStatsCollector(logger);
       typedef decltype(stats) MHRWStatsCollectorType;
+
+      logger.longdebug("Tomographer::MHRWTasks::run()", "stats collector constructed.");
 
       // our own "stats collector" which checks if we need to send a status report back
       typedef StatusReportCheck<TaskManagerIface, MHRWStatsCollectorType> OurStatusReportCheck;
@@ -341,8 +349,12 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
 	OurStatsCollectors;
       OurStatsCollectors ourstatscollectors(stats, statreportcheck);
 
+      logger.longdebug("Tomographer::MHRWTasks::run()", "about to create MH walker object.");
+
       auto mhwalker = pcdata->createMHWalker(rng, logger);
       typedef decltype(pcdata->createMHWalker(rng, logger)) MHWalkerType;
+
+      logger.longdebug("Tomographer::MHRWTasks::run()", "MHWalker object created.");
 
       MHRandomWalk<Rng, MHWalkerType, OurStatsCollectors, LoggerType, CountIntType> rwalk(
 	  // MH random walk parameters
@@ -357,7 +369,11 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
 	  logger
 	  );
       
+      logger.longdebug("Tomographer::MHRWTasks::run()", "MHRandomWalk object created, running...");
+
       rwalk.run();
+
+      logger.longdebug("Tomographer::MHRWTasks::run()", "MHRandomWalk run finished.");
 
       result = new Result(stats.getResult(), rwalk);
     }

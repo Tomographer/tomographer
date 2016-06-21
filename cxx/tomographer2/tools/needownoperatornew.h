@@ -138,6 +138,15 @@ public:
   template<typename T> struct OperatorNewAllocatorType {
     typedef Eigen::aligned_allocator<T> Type;
   };
+
+#ifdef TOMOGRAPHER_TEST_TOOLS_NEEDOWNOPERATORNEW_DEBUG_MEMBERS
+  // DEBUG: provide something we can test that it is indeed eigen-aligned 
+  inline EigenAlignedOperatorNewProvider()
+    : EigenAlignedOperatorNewIsActive(true)
+  {
+  }
+  const bool EigenAlignedOperatorNewIsActive;
+#endif
 };
 
 

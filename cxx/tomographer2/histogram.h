@@ -69,7 +69,7 @@ struct UniformBinsHistogram
   // inheriting from this has some advantages over EIGEN_MAKE_ALIGNED_OPERATOR_NEW, such
   // as not needing to explicitly declare the specialization
   // NeedOwnOperatorNew<UniformBinsHistogram>:
-  : public Tools::EigenAlignedOperatorNewProvider
+  : public virtual Tools::EigenAlignedOperatorNewProvider
 {
   //! The scalar type of the "X"-axis of the histogram (usually \c double)
   typedef Scalar_ Scalar;
@@ -391,9 +391,8 @@ struct UniformBinsHistogram
  */
 template<typename Scalar_, typename CountType_ = double>
 struct UniformBinsHistogramWithErrorBars
-  : public UniformBinsHistogram<Scalar_, CountType_>
-    // ### UniformBinsHistogram already inherits EigenAlignedOperatorNewProvider:
-    // public Tools::EigenAlignedOperatorNewProvider
+  : public UniformBinsHistogram<Scalar_, CountType_>,
+    public virtual Tools::EigenAlignedOperatorNewProvider
 {
   //! The Scalar (X-axis) Type. See \ref UniformBinsHistogram<Scalar_,CountType_>::Scalar.
   typedef Scalar_ Scalar;

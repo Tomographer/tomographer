@@ -224,7 +224,8 @@ template<typename ValueCalculator_,
 	 typename HistogramType_ = UniformBinsHistogram<typename ValueCalculator_::ValueType>
 	 >
 class ValueHistogramMHRWStatsCollector
-  : public virtual Tools::NeedOwnOperatorNew<ValueCalculator_, HistogramType_>::ProviderType
+  : public virtual Tools::NeedOwnOperatorNew<ValueCalculator_, HistogramType_>::ProviderType,
+    public virtual Tools::EigenAlignedOperatorNewProvider // DEBUG:: REDUNDANT???
 {
 public:
   /** \brief The type which calculates the interesting value. Should be of type interface \ref

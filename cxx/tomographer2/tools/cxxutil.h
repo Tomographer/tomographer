@@ -388,6 +388,8 @@ inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type is_posit
 // instruction.
 
 
+// g++ or clang++ (or doxygen :-) )
+#if defined(__GNUC__) || defined(__clang__) || defined(TOMOGRAPHER_PARSED_BY_DOXGEN)
 /** \brief attributes for a function accepting printf-like variadic arguments
  *
  * Put this macro in front of custom functions which accept printf-like formatted
@@ -407,20 +409,30 @@ inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type is_posit
  * See also the `format' attribute at
  * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#Common-Function-Attributes .
  */
-#define PRINTF1_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 1, 2)))
-
+#  define PRINTF1_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 1, 2)))
 //! See \ref PRINTF1_ARGS_SAFE
-#define PRINTF2_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 2, 3)))
-
+#  define PRINTF2_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 2, 3)))
 //! See \ref PRINTF1_ARGS_SAFE
-#define PRINTF3_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 3, 4)))
-
+#  define PRINTF3_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 3, 4)))
 //! See \ref PRINTF1_ARGS_SAFE
-#define PRINTF4_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 4, 5)))
+#  define PRINTF4_ARGS_SAFE  __attribute__ ((__format__ (__printf__, 4, 5)))
+#else
+#  define PRINTF1_ARGS_SAFE
+#  define PRINTF2_ARGS_SAFE
+#  define PRINTF3_ARGS_SAFE
+#  define PRINTF4_ARGS_SAFE
+#endif
 
 
 
 
+#if defined(__MINGW32__) || defined(__MINGW64__)
+// force stack realign for some functions on windows, where the stacks are not aligned by
+// default
+#  define TOMOGRAPHER_CXX_STACK_FORCE_REALIGN __attribute__((force_align_arg_pointer,noinline))
+#else
+#  define TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
+#endif
 
 
 
