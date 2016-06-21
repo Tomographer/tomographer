@@ -57,7 +57,7 @@ endif()
 #
 # Using "if(NOT mypackage_FOUND)" for the find_package() directives below allows the user
 # to specify custom values to configurations (such as explicitly turning off OpenMP) and
-# not being interefered with by a call to find_package().
+# not being interfered with by a call to find_package().
 #
 
 # Find Eigen3 package
