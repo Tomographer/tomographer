@@ -43,7 +43,7 @@
 
 #include <tomographer2/tools/fmt.h>
 #include <tomographer2/tools/eigenutil.h>
-#include <tomographer2/tools/cxxutil.h> // TOMOGRAPHER_ENABLED_IF, tomographer_assert()
+#include <tomographer2/tools/cxxutil.h> // TOMOGRAPHER_ENABLED_IF, tomographer_assert(), getWidthForTerminalOutput
 #include <tomographer2/tools/needownoperatornew.h>
 
 
@@ -1039,32 +1039,6 @@ inline std::string histogram_short_bar_fmt(const HistogramType & histogram, cons
   return s;
 }
 
-/** \internal
- *
- * If max_width > 0, return as is.
- *
- * If max_width <= 0, return the width of the screen (or default width), minus the absolute
- * value of the given number. [E.g. if the screen width is 100, then if maxwidth=-4, then
- * return 96.]
- */
-int maybe_default_col_width(int max_width = 0)
-{
-  if (max_width <= 0) {
-    const int offset = max_width;
-    // decide of a maximum width to display
-    max_width = 100; // default maximum width
-    // If the user provided a value for the terminal width, use it. Note that $COLUMNS is
-    // not in the environment usually, so you have to set it manually with e.g.
-    //    shell> export COLUMNS=$COLUMNS
-    const char * cols_s = std::getenv("COLUMNS");
-    if (cols_s != NULL) {
-      max_width = std::atoi(cols_s);
-    }
-    max_width += offset; // if we had given, e.g. maxwidth=-4
-  }
-  return max_width;
-}
-
 } // namespace tomo_internal
 
 
@@ -1086,7 +1060,7 @@ inline void histogram_pretty_print(std::ostream & str, const HistogramType & his
     return;
   }
 
-  max_width = tomo_internal::maybe_default_col_width(max_width);
+  max_width = Tools::getWidthForTerminalOutput(max_width);
   tomo_internal::histogram_pretty_printer<HistogramType>(histogram, max_width).pretty_print(str);
 }
 
@@ -1129,7 +1103,7 @@ inline int histogram_short_bar(std::ostream & str, const HistogramType & histogr
 {
   tomographer_assert(Tools::is_positive(histogram.params.num_bins));
 
-  max_width = tomo_internal::maybe_default_col_width(max_width);
+  max_width = Tools::getWidthForTerminalOutput(max_width);
 
   std::string s;
   if (histogram.params.num_bins == 0) {
@@ -1160,7 +1134,7 @@ inline std::string histogram_short_bar(const HistogramType & histogram, bool log
     return "<empty histogram: no bins>";
   }
 
-  max_width = tomo_internal::maybe_default_col_width(max_width);
+  max_width = Tools::getWidthForTerminalOutput(max_width);
   return tomo_internal::histogram_short_bar_fmt<HistogramType>(histogram, log_scale, max_width);
 }
 

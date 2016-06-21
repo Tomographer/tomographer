@@ -154,7 +154,7 @@ BOOST_AUTO_TEST_CASE(simple1)
   std::mt19937 rng(0); // seeded rng, deterministic results
 
   MHWalkerType mhwalker;
-  MHRandomWalkType rwalk(5, 0.03, 50, 500000, mhwalker, vhist, rng, buflog);
+  MHRandomWalkType rwalk(0.03, 5, 50, 500000, mhwalker, vhist, rng, buflog);
 
   rwalk.run();
 
@@ -246,7 +246,7 @@ BOOST_AUTO_TEST_CASE(basic1)
 
   //  std::cout << "About to create the randomwalk object ...\n";
   Tomographer::MHRandomWalk<std::mt19937,MyMHWalker,OurMultiMHRWStatsCollector,LoggerType,long>
-    rwalk(20, 0.05, 300, 5000, mhwalker, multistats, rng, flog);
+    rwalk(0.05, 20, 300, 5000, mhwalker, multistats, rng, flog);
 
   //  std::cout << "About to run the randomwalk object ...\n";
 
@@ -330,7 +330,7 @@ BOOST_AUTO_TEST_CASE(with_binning_analysis)
 
   //  std::cout << "About to create the randomwalk object ...\n";
   Tomographer::MHRandomWalk<std::mt19937,MHWalkerType,ValWBinningMHRWStatsCollectorType,LoggerType,unsigned long>
-    rwalk(20, 0.05, 300, 8192, mhwalker, vhist, rng, buflog);
+    rwalk(0.05, 20, 300, 8192, mhwalker, vhist, rng, buflog);
 
   rwalk.run();
 

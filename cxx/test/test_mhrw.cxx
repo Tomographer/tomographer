@@ -180,7 +180,7 @@ BOOST_FIXTURE_TEST_CASE(mhrandomwalk, test_mhrandomwalk_fixture)
 
   TestMHWalker mhwalker(nsweep, ntherm, nrun, rng2);
   TestMHRWStatsCollector stats(nsweep, ntherm, nrun);
-  MHRandomWalkType rw(nsweep, 2, ntherm, nrun, mhwalker, stats, rng, logger);
+  MHRandomWalkType rw(2, nsweep, ntherm, nrun, mhwalker, stats, rng, logger);
 
   BOOST_CHECK_EQUAL(rw.nSweep(), nsweep);
   BOOST_CHECK_EQUAL(rw.nTherm(), ntherm);
@@ -213,7 +213,7 @@ BOOST_FIXTURE_TEST_CASE(mhrandomwalksetup, test_mhrandomwalk_fixture)
 
   TestMHWalker mhwalker(nsweep, ntherm, nrun, rng2);
   TestMHRWStatsCollector stats(nsweep, ntherm, nrun);
-  MHRandomWalkType rw(Tomographer::MHRWParams<int,double>(nsweep, 2, ntherm, nrun), mhwalker, stats, rng, logger);
+  MHRandomWalkType rw(Tomographer::MHRWParams<int,double>(2, nsweep, ntherm, nrun), mhwalker, stats, rng, logger);
 
   BOOST_CHECK_EQUAL(rw.nSweep(), nsweep);
   BOOST_CHECK_EQUAL(rw.nTherm(), ntherm);

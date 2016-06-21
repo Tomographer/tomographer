@@ -270,7 +270,7 @@ BOOST_AUTO_TEST_CASE(dmmhrwtask)
   // parameters of the random walk
   MyCData taskcdat(llh, ref_T,
 		   OurHistogramType::Params(0.98, 1.0, 50),  // parameters for the fidelity histogram
-		   MyCData::MHRWParamsType(20, 0.05, 100, 1000),
+		   MyCData::MHRWParamsType(0.05, 20, 100, 1000),
 		   base_seed);
 
   MyResultsCollector results;

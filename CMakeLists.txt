@@ -35,7 +35,8 @@ include(Util)
 
 # default to release build with debugging info
 if(NOT CMAKE_BUILD_TYPE)
-  set(CMAKE_BUILD_TYPE "RelWithDebInfo")
+  set(CMAKE_BUILD_TYPE "RelWithDebInfo" CACHE STRING
+    "Release Type -- defaults to RelWithDebInfo" FORCE)
 endif()
 message(STATUS "CMake Build Type: ${CMAKE_BUILD_TYPE}")
 

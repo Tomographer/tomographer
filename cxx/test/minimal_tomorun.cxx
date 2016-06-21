@@ -238,8 +238,8 @@ int main()
 
   // parameters of the random walk
   const OurCData::MHRWParamsType mhrw_params(
-      25, // sweep size (should be chosen such that  sweep_size*step_size ~ 1)
       0.04, // step size (choose such that acceptance ratio ~ 0.25)
+      25, // sweep size (should be chosen such that  sweep_size*step_size ~ 1)
       500, // # of thermalization sweeps
       32768 // # of live sweeps in which samples are collected
       );

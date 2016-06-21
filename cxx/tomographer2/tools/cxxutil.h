@@ -33,6 +33,10 @@
  *
  */
 
+#include <cassert>
+#include <cstddef>
+#include <cstdlib>
+
 #include <type_traits>
 
 #include <Eigen/Core> // NumTraits
@@ -447,6 +451,39 @@ template<typename EnabledType = void> struct sfinae_yes { typedef int yes[2]; };
 
 
 
+
+
+/** \brief Return a suitable width for displaying stuff on the standard output
+ *
+ * If max_width > 0, return that value as is.
+ *
+ * If max_width <= 0, return the width of the screen (or default width) as given by the
+ * environment variable \c COLUMNS, minus the absolute value of the given number. [E.g. if
+ * the screen width is 100, then if maxwidth=-4, then return 96.]
+ */
+inline int getWidthForTerminalOutput(int max_width = 0)
+{
+  if (max_width > 0) {
+    return max_width;
+  }
+  // max_width <= 0:
+  const int offset = max_width;
+  // decide of a maximum width to display
+#if defined(__MINGW32__) || defined(__MINGW64__)
+  max_width = 80; // Windows terminals are usually 80 chars wide
+#else
+  max_width = 100; // default maximum width
+#endif
+  // Note that $COLUMNS is not in the environment usually, so you have to set it manually
+  // with e.g.
+  //     shell> export COLUMNS=$COLUMNS
+  const char * cols_s = std::getenv("COLUMNS");
+  if (cols_s != NULL) {
+    max_width = std::atoi(cols_s);
+  }
+  max_width += offset; // if we had given, e.g. maxwidth=-4
+  return max_width;
+}
 
 
 

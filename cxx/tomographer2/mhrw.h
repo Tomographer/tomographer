@@ -200,21 +200,21 @@ struct MHRWParams
   typedef StepRealType_ StepRealType;
 
   explicit MHRWParams()
-    : n_sweep(0), step_size(0), n_therm(0), n_run(0)
+    : step_size(0), n_sweep(0), n_therm(0), n_run(0)
   {
   }
-  MHRWParams(CountIntType n_sweep_, StepRealType step_size_, CountIntType n_therm_, CountIntType n_run_)
-    : n_sweep(n_sweep_), step_size(step_size_), n_therm(n_therm_), n_run(n_run_)
+  MHRWParams(StepRealType step_size_, CountIntType n_sweep_, CountIntType n_therm_, CountIntType n_run_)
+    : step_size(step_size_), n_sweep(n_sweep_), n_therm(n_therm_), n_run(n_run_)
   {
   }
-
-  /** \brief The number of individual updates to collect together in a "sweep"
-   */
-  CountIntType n_sweep;
 
   /** \brief The step size of the random walk
    */
   StepRealType step_size;
+
+  /** \brief The number of individual updates to collect together in a "sweep"
+   */
+  CountIntType n_sweep;
 
   /** \brief Number of thermalization sweeps
    */
@@ -230,7 +230,7 @@ struct MHRWParams
 template<typename CountIntType, typename StepRealType>
 std::ostream & operator<<(std::ostream & str, const MHRWParams<CountIntType,StepRealType> & p)
 {
-  str << "MHRWParams(n_sweep=" << p.n_sweep << ",step_size=" << p.step_size
+  str << "MHRWParams(step_size=" << p.step_size << ",n_sweep=" << p.n_sweep
       << ",n_therm=" << p.n_therm << ",n_run=" << p.n_run << ")";
   return str;
 }
@@ -343,10 +343,10 @@ private:
 public:
 
   //! Simple constructor, initializes the given fields
-  MHRandomWalk(CountIntType n_sweep, StepRealType step_size, CountIntType n_therm, CountIntType n_run,
+  MHRandomWalk(StepRealType step_size, CountIntType n_sweep, CountIntType n_therm, CountIntType n_run,
 	       MHWalker & mhwalker, MHRWStatsCollector & stats,
                Rng & rng, LoggerType & logger_)
-    : _n(n_sweep, step_size, n_therm, n_run),
+    : _n(step_size, n_sweep, n_therm, n_run),
       _rng(rng),
       _mhwalker(mhwalker),
       _stats(stats),
@@ -385,15 +385,15 @@ public:
   //! The parameters of the random walk.
   inline MHRWParamsType mhrwParams() const { return _n; }
 
+  //! Get the step size of the random walk.
+  inline StepRealType stepSize() const { return _n.step_size; }
+
   //! Number of iterations in a sweep.
   inline CountIntType nSweep() const { return _n.n_sweep; }
   //! Number of thermalizing sweeps.
   inline CountIntType nTherm() const { return _n.n_therm; }
   //! Number of live run sweeps.
   inline CountIntType nRun() const { return _n.n_run; }
-
-  //! Get the step size of the random walk.
-  inline StepRealType stepSize() const { return _n.step_size; }
 
 
 

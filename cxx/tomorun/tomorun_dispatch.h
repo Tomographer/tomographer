@@ -63,7 +63,7 @@ struct TomorunCData : public CDataBaseType_
   TomorunCData(const DenseLLH & llh_, ValueCalculator valcalc, const ProgOptions * opt, std::size_t base_seed)
     : Base(valcalc,
 	   typename Base::HistogramParams(opt->val_min, opt->val_max, opt->val_nbins),
-	   typename Base::MHRWParamsType(opt->Nsweep, opt->step_size, opt->Ntherm, opt->Nrun),
+	   typename Base::MHRWParamsType(opt->step_size, opt->Nsweep, opt->Ntherm, opt->Nrun),
 	   base_seed),
       llh(llh_)
   {
@@ -74,7 +74,7 @@ struct TomorunCData : public CDataBaseType_
     : Base(valcalc,
 	   typename Base::HistogramParams(opt->val_min, opt->val_max, opt->val_nbins),
 	   opt->binning_analysis_num_levels,
-	   typename Base::MHRWParamsType(opt->Nsweep, opt->step_size, opt->Ntherm, opt->Nrun),
+	   typename Base::MHRWParamsType(opt->step_size, opt->Nsweep, opt->Ntherm, opt->Nrun),
 	   base_seed),
       llh(llh_)
   {
@@ -101,30 +101,56 @@ struct TomorunCData : public CDataBaseType_
 // ------------------------------------------------------------------------------
 
 
+struct console_headers
+{
+  // remember that std::string(10, '-') constructs 10 copies of '-', that is : "----------".
+  
+  console_headers()
+    : columns(_get_columns()),
+      hline(std::string(columns, '-')+std::string("\n")),
+      final_header(_center_line("Final Report of Runs", columns)+std::string("\n")),
+      final_histogram(_center_line("Final Histogram", columns)+std::string("\n"))
+  {
+  }
+  
+  const int columns;
+  const std::string hline;
+  const std::string final_header;
+  const std::string final_histogram;
+  
+private:
+  static int _get_columns() {
+    const int c = Tomographer::Tools::getWidthForTerminalOutput();
+    return c;
+  }
+  static std::string _center_line(std::string x, int w)
+  {
+    if ((int)x.size() > w) {
+      w = x.size();
+      return std::move(x);
+    }
+    const int r = w - x.size();
+    const int rleft = r/2;
+    const int rright = r - rleft; // may differ from r/2 if r is odd
+    return std::string(rleft, ' ') + std::move(x) + std::string(rright, ' ');
+  }
+};
+
 template<typename HistType>
 inline void print_short_bar_and_accept_ratio(std::ostream & str, int j, HistType&& hist,
-					     double acceptance_ratio, int dig_width)
+					     double acceptance_ratio, int dig_width, int full_max_width)
 {
   std::string accept_ratio_appendstr =
     " [accept ratio = " + Tomographer::Tools::fmts("%.2f", acceptance_ratio) + "]";
 
   str << "#" << std::setw(dig_width) << j << ": ";
   int w = histogram_short_bar(str, std::forward<HistType>(hist), false,
-			      -3 - dig_width - accept_ratio_appendstr.size());
+			      full_max_width - 3 - dig_width - accept_ratio_appendstr.size());
   str << std::setw(w + accept_ratio_appendstr.size()) << std::right << accept_ratio_appendstr << "\n";
   if (acceptance_ratio > 0.35 || acceptance_ratio < 0.2) {
     str << "    *** Accept ratio out of recommended bounds [0.20, 0.35] ! Adapt step size ***\n";
   }
 }
-
-
-static const std::string report_hline =
-  "----------------------------------------------------------------------------------------------------\n";
-static const std::string report_final_header =
-  "                                        Final Report of Runs                                        \n";
-static const std::string report_final_histogram =
-  "                                          Final Histogram                                           \n";
-
 
 template<typename TomorunCDataType, typename ResultsCollector, typename LoggerType,
 	 TOMOGRAPHER_ENABLED_IF_TMPL(!TomorunCDataType::BinningAnalysisEnabled)>
@@ -132,26 +158,30 @@ static inline void produce_final_report(TomorunCDataType & cdata, ResultsCollect
 					LoggerType & logger)
 {
   logger.debug("produce_final_report()", "about to produce final report.");
+
+  console_headers h; // detect terminal width etc.
+  
   // produce report on runs
   logger.info("produce_final_report()", [&](std::ostream & str) {
       const typename ResultsCollector::RunTaskResultList & collresults = res.collectedRunTaskResults();
       const typename ResultsCollector::FinalHistogramType finalhistogram = res.finalHistogram();
       str << "\n"
-	  << report_final_header
-	  << report_hline
+	  << h.final_header
+	  << h.hline
 	;
       cdata.printBasicCDataMHRWInfo(str);
       int dig_w = (int)std::ceil(std::log10(res.numTasks()));
       for (std::size_t j = 0; j < res.numTasks(); ++j) {
-	print_short_bar_and_accept_ratio(str, j, collresults[j]->histogram, collresults[j]->acceptance_ratio, dig_w);
+	print_short_bar_and_accept_ratio(str, j, collresults[j]->histogram, collresults[j]->acceptance_ratio,
+                                         dig_w, h.columns);
       }
-      str << report_hline
+      str << h.hline
 	  << "\n";
       // and the final histogram
-      str << report_final_histogram
-	  << report_hline;
-      histogram_pretty_print(str, finalhistogram);
-      str << report_hline
+      str << h.final_histogram
+	  << h.hline;
+      histogram_pretty_print(str, finalhistogram, h.columns);
+      str << h.hline
 	  << "\n";
     });
 }
@@ -162,19 +192,23 @@ inline void produce_final_report(TomorunCDataType & cdata, ResultsCollector & re
 				 LoggerType & logger)
 {
   logger.debug("produce_final_report()", "about to produce final report.");
+
+  console_headers h; // detect terminal width etc.
+  
   // produce report on runs
   logger.info("produce_final_report()", [&](std::ostream & str) {
       const typename ResultsCollector::RunTaskResultList & collresults = res.collectedRunTaskResults();
       const typename ResultsCollector::FinalHistogramType finalhistogram = res.finalHistogram();
       str << "\n"
-	  << report_final_header
-	  << report_hline
+	  << h.final_header
+	  << h.hline
 	;
       cdata.printBasicCDataMHRWInfo(str);
       int dig_w = (int)std::ceil(std::log10(res.numTasks()));
       for (std::size_t j = 0; j < res.numTasks(); ++j) {
 	const auto& stats_coll_result = collresults[j]->stats_collector_result;
-	print_short_bar_and_accept_ratio(str, j, stats_coll_result.hist, collresults[j]->acceptance_ratio, dig_w);
+	print_short_bar_and_accept_ratio(str, j, stats_coll_result.hist, collresults[j]->acceptance_ratio,
+                                         dig_w, h.columns);
 	// error bars stats:
 	const int nbins = stats_coll_result.converged_status.size();
 	const int n_conv = stats_coll_result.converged_status
@@ -193,13 +227,13 @@ inline void produce_final_report(TomorunCDataType & cdata, ResultsCollector & re
 	    << n_unknown << " maybe (" << n_unknown_isolated << " isolated) / "
 	    << n_notconv << " not converged\n";
       }
-      str << report_hline
+      str << h.hline
 	  << "\n";
       // and the final histogram
-      str << report_final_histogram
-	  << report_hline;
-      histogram_pretty_print(str, finalhistogram);
-      str << report_hline
+      str << h.final_histogram
+	  << h.hline;
+      histogram_pretty_print(str, finalhistogram, h.columns);
+      str << h.hline
               << "\n";
     });
 }

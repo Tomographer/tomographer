@@ -33,6 +33,13 @@
 # dir tree, and is not yet installed.
 include_directories("${CMAKE_BINARY_DIR}/cxx")
 
+
+set(TOMORUN_SUFFIX "" CACHE STRING
+  "Optional suffix to append to 'tomorun' executable name, to indicate special \
+configuration in case you override settings in tomorun_config.h with -D... \
+compiler flags (such as -DTOMORUN_CUSTOM_FIXED_DIM=... etc.)")
+
+
 # already parallelized application, so disable Eigen's own parallelization (see
 # http://eigen.tuxfamily.org/dox/TopicMultiThreading.html)
 add_definitions(-DEIGEN_DONT_PARALLELIZE)
@@ -49,6 +56,15 @@ endif()
 
 add_executable(tomorun tomorun.cxx)
 add_dependencies(tomorun tomographer) # in particular tomographer_version.h
+
+if(TOMORUN_SUFFIX)
+  if(CMAKE_BUILD_TYPE)
+    string(TOUPPER "${CMAKE_BUILD_TYPE}" tmp_buildtype)
+    set_target_properties(tomorun PROPERTIES ${tmp_buildtype}_OUTPUT_NAME "tomorun${TOMORUN_SUFFIX}")
+  else(CMAKE_BUILD_TYPE)
+    set_target_properties(tomorun PROPERTIES OUTPUT_NAME "tomorun${TOMORUN_SUFFIX}")
+  endif(CMAKE_BUILD_TYPE)
+endif(TOMORUN_SUFFIX)
 
 SetOpenMPTarget(tomorun)
 

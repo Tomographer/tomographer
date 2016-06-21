@@ -115,8 +115,8 @@ namespace MHRWTasks {
      */
     inline void printBasicCDataMHRWInfo(std::ostream & str) const
     {
-      str << "\t# iter. / sweep = " << mhrw_params.n_sweep << "\n"
-	  << "\tstep size       = " << std::setprecision(4) << mhrw_params.step_size << "\n"
+      str << "\tstep size       = " << std::setprecision(4) << mhrw_params.step_size << "\n"
+          << "\t# iter. / sweep = " << mhrw_params.n_sweep << "\n"
 	  << "\t# therm. sweeps = " << mhrw_params.n_therm << "\n"
 	  << "\t# run sweeps    = " << mhrw_params.n_run << "\n";
     }

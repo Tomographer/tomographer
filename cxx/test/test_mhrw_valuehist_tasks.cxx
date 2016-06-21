@@ -122,8 +122,8 @@ struct run_test {
   run_test()
     : logger(Tomographer::Logger::DEBUG),
       taskcdat(NormValueCalculator<double>(), HistogramParams(0, 500, 50),
-	       MHRWParamsType(FullRun?500:1, // n_sweep
-			      2, // step_size
+	       MHRWParamsType(2, // step_size
+                              FullRun?500:1, // n_sweep
 			      FullRun?500:1, // n_therm
 			      FullRun?4096:32 // n_run
 		   ), 29329),
@@ -141,8 +141,8 @@ struct run_test {
   run_test()
     : logger(Tomographer::Logger::DEBUG),
       taskcdat(NormValueCalculator<double>(), HistogramParams(0, 500, 50), 5,
-	       MHRWParamsType(FullRun?500:1, // n_sweep
-			      2, // step_size
+	       MHRWParamsType(2, // step_size
+                              FullRun?500:1, // n_sweep
 			      FullRun?500:1, // n_therm
 			      FullRun?4096:32 // n_run
 		   ), 29329),
