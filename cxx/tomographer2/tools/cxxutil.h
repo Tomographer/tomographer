@@ -430,11 +430,29 @@ inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type is_posit
 
 
 
-#if defined(__MINGW32__) || defined(__MINGW64__)
-// force stack realign for some functions on windows, where the stacks are not aligned by
-// default
-#  define TOMOGRAPHER_CXX_STACK_FORCE_REALIGN __attribute__((force_align_arg_pointer,noinline))
+#if TOMOGRAPHER_PARSED_BY_DOXYGEN
+/**  Force stack realign for some functions, where the stacks may not aligned by default
+ * (e.g. when using threads for Windows---set this attribute to any external entry points
+ * as http://stackoverflow.com/a/6718067/1694896 as well as
+ * http://www.peterstock.co.uk/games/mingw_sse/)
+ *
+ * \todo Look up the exact conditions (compilers, platforms, stack sizes etc.) to make
+ *       sure this macro has a correct value in all cases.
+ */
+#  define TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
+#endif
+//
+#if defined(__GNUC__) || defined(__clang__)
+#  if defined(__MINGW32__) || defined(__MINGW64__)
+#    define TOMOGRAPHER_CXX_STACK_FORCE_REALIGN __attribute__((force_align_arg_pointer,noinline))
+#  else
+#    define TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
+#  endif
+#elif defined(__ICC)
+// but ICC is fine
+#  define TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
 #else
+#  warning "You are using an unknown compiler. You may run into memory alignment problems... Good luck!"
 #  define TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
 #endif
 
