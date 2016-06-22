@@ -45,11 +45,11 @@ BOOST_AUTO_TEST_CASE(finally)
 }
 
 BOOST_AUTO_TEST_SUITE(static_or_dynamic)
-TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::static_or_dynamic<long, false, 0x0102030405060708L>) < sizeof(long)) ;
+TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::static_or_dynamic<long, false, 0x05060708L>) < sizeof(long)) ;
 TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::static_or_dynamic<long, true>) >= sizeof(long)) ;
-TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::static_or_dynamic<long, true, 0x0102030405060708L>) >= sizeof(long)) ;
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::static_or_dynamic<long, false, 0x0102030405060708L>::IsDynamic == false) ;
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::static_or_dynamic<long, false, 0x0102030405060708L>::StaticValue == 0x0102030405060708L) ;
+TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::static_or_dynamic<long, true, 0x05060708L>) >= sizeof(long)) ;
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::static_or_dynamic<long, false, 0x05060708L>::IsDynamic == false) ;
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::static_or_dynamic<long, false, 0x05060708L>::StaticValue == 0x05060708L) ;
 TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::static_or_dynamic<long, true>::IsDynamic == true) ;
 BOOST_AUTO_TEST_CASE(static_1)
 {
@@ -105,7 +105,7 @@ TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::store_if_enabled<TestBigObject, fal
 TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::store_if_enabled<TestBigObject, true>::IsEnabled);
 BOOST_AUTO_TEST_CASE(disabled_1)
 {
-  Tomographer::Tools::store_if_enabled<TestBigObject, false> x('c', 'a', 'c'); // should ignore its arguments
+  Tomographer::Tools::store_if_enabled<TestBigObject, false> x('c', 'a', 'c', 1, 1.f); // should ignore its arguments
   typedef Tomographer::Tools::store_if_enabled<TestBigObject, false> TheType;
   BOOST_CHECK(!TheType::IsEnabled);
 }
@@ -115,19 +115,19 @@ BOOST_AUTO_TEST_CASE(enabled_1)
   typedef Tomographer::Tools::store_if_enabled<long, true> TheType;
   BOOST_CHECK(TheType::IsEnabled);
   BOOST_CHECK_EQUAL(x.value, 0x1234L);
-  x.value = 0x0102030405060708L;
-  BOOST_CHECK_EQUAL(x.value, 0x0102030405060708L);
+  x.value = 0x05060708L;
+  BOOST_CHECK_EQUAL(x.value, 0x05060708L);
 }
 BOOST_AUTO_TEST_CASE(ostream_disabled)
 {
-  Tomographer::Tools::store_if_enabled<TestBigObject, false> x('c', 'a', 'z'); // should ignore its arguments
+  Tomographer::Tools::store_if_enabled<TestBigObject, false> x('c', 'a', 'z', 1, 2.f); // should ignore its arguments
   std::stringstream s;
   s << x;
   BOOST_CHECK_EQUAL(s.str(), std::string("[-]"));
 }
 BOOST_AUTO_TEST_CASE(ostream_enabled)
 {
-  Tomographer::Tools::store_if_enabled<TestBigObject, true> x('c', 'a', 'z'); // should ignore its arguments
+  Tomographer::Tools::store_if_enabled<TestBigObject, true> x('c', 'a', 'z');
   std::stringstream s;
   s << x;
   BOOST_CHECK_EQUAL(s.str(), std::string("*caz*"));
