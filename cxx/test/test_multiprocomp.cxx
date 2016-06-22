@@ -219,6 +219,14 @@ BOOST_AUTO_TEST_SUITE_END()
 // -----------------------------------------------------------------------------
 
 
+BOOST_AUTO_TEST_CASE(REWRITE_ME)
+{
+  BOOST_CHECK( false && "These test cases rely too much on \"the whole thing must work\": "
+               "so TODO: extract useful use cases." ) ;
+}
+
+
+
 BOOST_AUTO_TEST_CASE(dmmhrwtask)
 {
   // use a strict logging mechanism (statically discard messages below WARNING). Change

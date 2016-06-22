@@ -30,6 +30,8 @@
 
 #include <stdexcept>
 
+#include <boost/version.hpp>
+
 #include <tomographer2/tomographer_version.h>
 #include <tomographer2/tools/ezmatio.h>
 
@@ -66,6 +68,9 @@ static std::string prog_version_info_features()
       "-OpenMP [Tomorun was compiled without OpenMP support.]\n"
 #endif
       ;
+
+    // Boost
+    features_str += std::string("Boost headers ") + std::string(BOOST_LIB_VERSION) + std::string("\n");
 
     // Eigen
     features_str += Tomographer::Tools::fmts("Eigen %d.%d.%d (SIMD: %s)\n", EIGEN_WORLD_VERSION,

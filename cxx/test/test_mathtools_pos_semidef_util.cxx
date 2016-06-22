@@ -45,13 +45,6 @@
 // fixture(s)
 
 
-struct HEADER_fixture {
-  HEADER_fixture() { }
-  ~HEADER_fixture() { }
-  void method() { }
-};
-
-
 // -----------------------------------------------------------------------------
 // test suites
 

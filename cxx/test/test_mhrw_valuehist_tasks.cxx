@@ -174,6 +174,12 @@ typedef run_test<true, false> run_test_binning_nofullrun;
 
 BOOST_AUTO_TEST_SUITE(test_mhrw_valuehist_tasks)
 
+BOOST_AUTO_TEST_CASE(REWRITE_ME)
+{
+  BOOST_CHECK( false && "These test cases rely too much on \"the whole thing must work\": "
+               "so TODO: extract useful use cases." ) ;
+}
+
 BOOST_FIXTURE_TEST_CASE(simple_runtaskresults, run_test_simple_nofullrun)
 {
   BOOST_CHECK(!results.isFinalized());
