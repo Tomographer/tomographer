@@ -50,11 +50,16 @@
  * Task objects: it is the \ref pageInterfaceTaskManagerIface. This interface may be used
  * for example in order to submit intermediate status reports.
  *
- * Documented type interfaces:
+ * Type interfaces which are used by the task dispatcher:
  *
  *  - \subpage pageInterfaceTask
  *  - \subpage pageInterfaceResultsCollector
  *  - \subpage pageInterfaceTaskManagerIface
+ *
+ * The type interface which the task dispatcher itself obeys:
+ *
+ *  - \subpage pageInterfaceTaskDispatcher
+ *
  */
 
 
@@ -79,9 +84,9 @@
  *          Provide input to a new task. \c k is the task iteration number
  *          and \c pcdata is a pointer to the shared const data.
  *
- *          \todo It doesn't make sense to have this method here. It will be moved in the
- *          near future.  (This won't cause any change to the higher-level API in
- *          Tomographer::MHRWTasks and Tomographer::MHRWTasks::ValueHistogramTasks)
+ *          \todo API CHANGE: It doesn't make sense to have this method here. It will be
+ *          moved in the near future.  (This won't cause any change to the higher-level
+ *          API in Tomographer::MHRWTasks and Tomographer::MHRWTasks::ValueHistogramTasks)
  *
  * \par
  *          The return value may be any type. It will be passed directly to the first
@@ -144,6 +149,8 @@
  *         finalize collected values, such as multiplying by parameter space volume,
  *         dividing by the number of samples to get the average, etc.
  *
+ *
+ * \todo API CHANGE: change names -> camel case
  */
 
 
@@ -167,4 +174,20 @@
  *          true. Call this function ONCE only per task, and only if a status report was
  *          requested. The behavior of this function otherwise is undefined.
  *
+ *
+ * \todo API CHANGE: change names -> camel case
+ */
+
+
+
+
+
+// ---------- the dispatcher itself ----------
+
+/** \page pageInterfaceTaskDispatcher TaskDispatcher Interface
+ *
+ *
+ * \todo WRITE ME ............
+ *
+ * \todo API CHANGE: change names -> camel case
  */

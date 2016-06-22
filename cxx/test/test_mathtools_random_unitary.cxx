@@ -70,9 +70,12 @@ BOOST_AUTO_TEST_CASE(basic)
   }
 }
 
-// TODO: check that the unitary is indeed Haar-distributed. For example, if we average
-// many unitaries, we should get the identity
-BOOST_AUTO_TEST_CASE(distr)
+//
+// Test that if we average rho over many random unitaries from random_unitary, we get the
+// maximally mixed state; this then shows/indicates(?) that random_unitary is indeed
+// distributed according to the Haar measures.
+//
+BOOST_AUTO_TEST_CASE(twirl_rho_gives_identity)
 {
   Eigen::Matrix3cd rho;
   rho << 0.2, 0, 0,
@@ -97,7 +100,6 @@ BOOST_AUTO_TEST_CASE(distr)
   BOOST_MESSAGE("rho averaged over random unitaries is  rhoTwirled = \n" << rhoTwirled);
 
   MY_BOOST_CHECK_EIGEN_EQUAL(rhoTwirled, Eigen::Matrix3cd::Identity()/3.0, 0.5/std::sqrt((double)n_points));
-
 }
 
 

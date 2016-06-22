@@ -77,6 +77,15 @@ BOOST_AUTO_TEST_CASE(teststreamstr)
                     "here is a row vector:   1   2 3.4") ;
 }
 
+BOOST_AUTO_TEST_CASE(hasostreamop)
+{
+  BOOST_CHECK( false && "WRITE THIS TEST" );
+}
+BOOST_AUTO_TEST_CASE(streamifpossiblewrapper)
+{
+  BOOST_CHECK( false && "WRITE THIS TEST" );
+}
+
 BOOST_AUTO_TEST_CASE(streamifpossible)
 {
   Eigen::Matrix2d m(Eigen::Matrix2d::Identity());

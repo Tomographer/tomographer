@@ -63,6 +63,12 @@ TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_complex<std::complex<double> >::v
 
 BOOST_AUTO_TEST_SUITE(test_mathtools_eigenutil)
 
+BOOST_AUTO_TEST_CASE(MODIFY_API)
+{
+  BOOST_CHECK( false && "TODO: CHANGE API WITH CAMEL-CASED NAMES SUCH THAT "
+               "dense_random() -> denseRandom(), etc." ) ;
+}
+
 BOOST_AUTO_TEST_CASE(dense_random)
 {
   std::mt19937 rng;

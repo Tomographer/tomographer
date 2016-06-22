@@ -37,6 +37,9 @@
 
 #include <tomographer2/densedm/tspacellhwalker.h>
 
+#include <unsupported/Eigen/MatrixFunctions>
+
+#include <tomographer2/densedm/param_herm_x.h>
 #include <tomographer2/densedm/densellh.h>
 #include <tomographer2/densedm/indepmeasllh.h>
 
@@ -81,16 +84,19 @@ BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
   typedef Tomographer::Logger::BufferLogger LoggerType;
   LoggerType buflog(Tomographer::Logger::DEBUG);
 
-  std::mt19937 rng(0); // seeded rng, deterministic results
+  std::mt19937 rng(46570); // seeded rng, deterministic results
   
   Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH, std::mt19937, LoggerType>
     dmmhrw(DMTypes::MatrixType::Zero(), llh, rng, buflog);
 
+  DMTypes::MatrixType rho(dmt.initMatrixType());
+  rho << 0.8, dmt.cplx(0,0.1),
+    dmt.cplx(0,-0.1), 0.2;
+
   DMTypes::VectorParamType x(dmt.initVectorParamType());
-  x << 0.5, 0.5, 0, 0; // maximally mixed state.
+  x = Tomographer::DenseDM::ParamX<DMTypes>(dmt).HermToX(rho);
   DMTypes::MatrixType T(dmt.initMatrixType());
-  T << boost::math::constants::half_root_two<double>(), 0,
-       0, boost::math::constants::half_root_two<double>() ; // maximally mixed state.
+  T = rho.sqrt();
 
   dmmhrw.init();
   dmmhrw.thermalizing_done();
@@ -98,11 +104,22 @@ BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
   const DMTypes::MatrixType Tconst(T); // make sure that fnlogval() accepts const argument
   BOOST_CHECK_CLOSE(dmmhrw.fnlogval(Tconst), llh.logLikelihoodX(x), tol_percent);
 
-  DMTypes::MatrixType newT = dmmhrw.jump_fn(T, 0.2);
-  BOOST_CHECK_CLOSE(newT.norm(), 1.0, tol_percent);
-
-  // not sure how to check that the jump distribution is symmetric ???
-  // ..........
+  {
+    // Check that the jump distribution is symmetric.  Idea: draw many samples, and
+    // average them in linear space (in which T is a hypersphere): normalize that, and you
+    // should get T again.
+    DMTypes::MatrixType sumT(dmt.initMatrixType());
+    const int N_SAMPLES = 10000;
+    int num_samples;
+    for (num_samples = 0; num_samples < N_SAMPLES; ++num_samples) {
+      DMTypes::MatrixType newT = dmmhrw.jump_fn(T, 0.2);
+      BOOST_CHECK_CLOSE(newT.norm(), 1.0, tol_percent);
+      sumT += newT;
+    }
+    //sumT /= num_samples; // ### unnecessary, already included in next step:
+    sumT /= sumT.norm();
+    MY_BOOST_CHECK_EIGEN_EQUAL(sumT, T, 1.0/std::sqrt((double)num_samples));
+  }
 
   dmmhrw.done();
   BOOST_MESSAGE(buflog.get_contents());
