@@ -55,10 +55,13 @@ static std::string prog_version_info_features()
   if (features_str.size() == 0) {
     // detect the program features. 
 
-    // MatIO
-    int major, minor, release;
-    Mat_GetLibraryVersion(&major,&minor,&release);
-    features_str += Tomographer::Tools::fmts("MatIO %d.%d.%d\n", major, minor, release);
+    // Eigen
+    features_str += Tomographer::Tools::fmts("Eigen %d.%d.%d (SIMD: %s)\n", EIGEN_WORLD_VERSION,
+					     EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
+					     Eigen::SimdInstructionSetsInUse());
+
+    // Boost
+    features_str += std::string("Boost headers ") + std::string(BOOST_LIB_VERSION) + std::string("\n");
 
     // OpenMP
     features_str +=
@@ -69,13 +72,10 @@ static std::string prog_version_info_features()
 #endif
       ;
 
-    // Boost
-    features_str += std::string("Boost headers ") + std::string(BOOST_LIB_VERSION) + std::string("\n");
-
-    // Eigen
-    features_str += Tomographer::Tools::fmts("Eigen %d.%d.%d (SIMD: %s)\n", EIGEN_WORLD_VERSION,
-					     EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
-					     Eigen::SimdInstructionSetsInUse());
+    // MatIO
+    int major, minor, release;
+    Mat_GetLibraryVersion(&major,&minor,&release);
+    features_str += Tomographer::Tools::fmts("MatIO %d.%d.%d\n", major, minor, release);
   }
 
   return features_str;

@@ -113,6 +113,8 @@
  *     is a reference to the random walk object instance.
  * 
  *
+ *
+ * \todo API CHANGE: change names -> camel case (?)
  */
 
 
@@ -214,80 +216,17 @@
  *  - MHUseFnRelativeValue --> use MHWalker::fnrelval(newpt, curpt)
  *
  *
- * .........................
+ * \todo WRITE DOC .........................
  *
+ *
+ * \todo API CHANGE: change names -> camel case (?)
  */
 
 
 
-
 // =============================================================================
-// RandomWalk
+// ValueCalculator Interface
 // =============================================================================
-
-// REMOVED -- NO LONGER THERE -- [ too abstract and useless ]
-
-/* \page pageInterfaceRandomWalk RandomWalk Interface
- *
- * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
- * for more info on what that is.</em>
- *
- * The \a RandomWalk type is responsible for actually implementing the random walk. It
- * should keep the current state of the random walk in memory and update it when the \c
- * move() function is called.
- *
- * \a RandomWalk types are used in particular by:
- *   - \ref Tomographer::RandomWalkBase.
- *
- * The \a RandomWalk type should provide the following typedef member:
- *
- * \par typedef ... CountIntType
- *          This (usually an <code>unsigned int</code> or <code>unsigned long</code>)
- *          should specify which type to use to count the iterations. This is also the
- *          return type of \c n_sweep() etc.
- *
- * \a RandomWalk needs to provide the following members, which are called at the
- * appropriate times:
- *
- * \par CountIntType RandomWalk::n_sweep()
- *          Number of iterations that compose a "sweep".
- *
- * \par CountIntType RandomWalk::n_therm()
- *          Number of thermalizing sweeps to perform.
- *
- * \par CountIntType RandomWalk::n_run()
- *          Number of live sweeps to perform.
- *
- * \par void RandomWalk::move(CountIntType k, bool is_thermalizing, bool is_live_iter)
- *          Is called to perform a new random walk iteration. The random walk object is
- *          responsible for keeping the current state of the random walk in memory,
- *          and for processing a jump function. This method should update the internal
- *          state of the random walk. This function does not return anything. \c k is the
- *          raw iteration count, starting at zero (and which is reset to zero after the
- *          thermalizing sweeps). \c is_thermalizing is \c true during the thermalizing
- *          runs, \c false otherwise. \c is_live_iter is \c true when a live sample is
- *          taken, only once every sweep after the thermalization runs.
- *
- * \par void RandomWalk::process_sample(CountIntType k)
- *          Is called for each "live" point for which a sample should be taken. The point
- *          in question is the current state of the random walk. This only happens after
- *          thermalization, and at the last iteration of a sweep.
- *
- * \par void RandomWalk::init()
- *          Is called before starting the random walk. The RandomWalk may perform custom
- *          last-minute initializations if required.
- *
- * \par void RandomWalk::thermalizing_done()
- *          Is called after the thermalizing runs and before starting the live runs.
- *
- * \par void RandomWalk::done()
- *          Is called after the random walk is finished. This happens after the given
- *          number of iterations were reached.
- *
- */
-
-// --- END REMOVED ---
-
 
 /** \page pageInterfaceValueCalculator ValueCalculator Interface
  *
@@ -314,6 +253,10 @@
  *
  */
 
+
+// =============================================================================
+// MHRandomWalkTaskCData
+// =============================================================================
 
 /** \page pageInterfaceMHRandomWalkTaskCData MHRandomWalkTaskCData Interface
  *
@@ -349,6 +292,10 @@
  */
 
 
+// =============================================================================
+// Histogram
+// =============================================================================
+
 /** \page pageInterfaceHistogram Histogram Interface
  *
  * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
@@ -379,4 +326,6 @@
  *      <em>(Only if <code>HasErrorBars = true</code>)</em> Error bar (standard deviation)
  *      associated to the bin number i.
  * 
+ *
+ * \todo API CHANGE: change name \c num_bins() -> camel case
  */

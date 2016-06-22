@@ -83,27 +83,18 @@ struct SigHandlerTaskDispatcherStatusReporter
     fprintf(stderr,
             "\n"
             "=========================== Intermediate Progress Report ============================\n"
-            "                                              (hit Ctrl+C quickly again to interrupt)\n"
+            "                                             (hit Ctrl+C within %2d sec. to interrupt)\n"
             "  Total Completed Runs: %d/%d: %5.2f%%\n"
             "  %s total elapsed\n"
             "Current Run(s) information (threads working/spawned %d/%d):\n",
+            TOMOGRAPHER_SIG_HANDLER_REPEAT_EXIT_DELAY,
             report.num_completed, report.num_total_runs,
             (double)report.num_completed/report.num_total_runs*100.0,
             elapsed.c_str(), report.num_active_working_threads,
             report.num_threads
             );
-    // calculate padding needed to align results
-    //    typedef typename OMPTaskDispatcher::TaskStatusReportType TaskStatusReportType;
-    //    auto elem = std::max_element(report.tasks_reports.begin(), report.tasks_reports.end(),
-    //                                 [](const TaskStatusReportType& a, const TaskStatusReportType& b) -> bool {
-    //                                   return a.msg.size() < b.msg.size();
-    //                                 });
-    //    std::size_t maxmsgwid = (*elem).msg.size();
     for (int k = 0; k < report.num_threads; ++k) {
       std::string msg = report.tasks_running[k] ? report.tasks_reports[k].msg : std::string("<idle>");
-      //      if (msg.size() < maxmsgwid) {
-      //        msg.insert(0, maxmsgwid - msg.size(), ' ');
-      //      }
       fprintf(stderr, "=== Thread #%2d: %s\n", k, msg.c_str());
     }
     fprintf(stderr,
