@@ -399,8 +399,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     ("verbose", value<Tomographer::Logger::LogLevel>(& opt->loglevel)->default_value(opt->loglevel)
      ->implicit_value(Tomographer::Logger::DEBUG),
      "print verbose information. Not very readable unless n-repeats=1. You may also specify "
-     "as argument 'longdebug', 'debug', 'info', 'warning' or 'error', or a numerical verbosity "
-     "level 0-4.")
+     "as argument 'longdebug', 'debug', 'info', 'warning' or 'error'.")
     ("verbose-log-info", bool_switch(& opt->verbose_log_info)->default_value(opt->verbose_log_info),
      "[For Developers.] If specified, log messages are more verbose; they display e.g. at which point "
      "in the code they were emitted.")
