@@ -2,5 +2,5 @@
 Tomographer Distribution Admin Tools
 ====================================
 
-This branch provides a script to create source distributions of the tomographer
-project. That's its sole purpose.
+This branch stores the scripts I use to create source and binary distributions
+of the tomographer project.
