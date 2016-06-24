@@ -145,6 +145,10 @@ private:
 #include <boost/test/floating_point_comparison.hpp>
 #include <boost/test/output_test_stream.hpp>
 
+#if BOOST_VERSION > 105300
+#  define BOOST_MESSAGE(msg) BOOST_TEST_MESSAGE(msg)
+#  define BOOST_CHECKPOINT(msg) BOOST_TEST_CHECKPOINT(msg)
+#endif
 
 template<typename Derived1, typename Derived2>
 boost::test_tools::predicate_result

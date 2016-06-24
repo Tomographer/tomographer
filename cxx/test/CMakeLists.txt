@@ -165,6 +165,7 @@ add_executable(minimal_tomorun
   minimal_tomorun.cxx
   )
 SetOpenMPTarget(minimal_tomorun)
+AppendTargetProperty(minimal_tomorun COMPILE_FLAGS "-I${Boost_INCLUDE_DIR}")
 
 add_test(NAME minimal_tomorun
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
