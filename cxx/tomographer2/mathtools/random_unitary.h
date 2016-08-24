@@ -58,14 +58,14 @@ namespace MathTools {
  *        doing.
  */
 template<typename DerU, typename Rng, typename Log>
-inline void random_unitary(Eigen::MatrixBase<DerU> & U, Rng & rng, Log & logger)
+inline void randomUnitary(Eigen::MatrixBase<DerU> & U, Rng & rng, Log & logger)
 {
   { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(DerU); }
 
   tomographer_assert(U.rows() == U.cols());
   const int n = U.rows();
 
-  logger.longdebug("random_unitary()", "n = %d", n);
+  logger.longdebug("randomUnitary()", "n = %d", n);
   
   typedef typename DerU::Scalar Scalar;
   typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
@@ -75,9 +75,9 @@ inline void random_unitary(Eigen::MatrixBase<DerU> & U, Rng & rng, Log & logger)
   MatrixType A(n,n);
 
   std::normal_distribution<> normdist(0.0, 1.0);
-  A = Tomographer::Tools::dense_random<MatrixType>(rng, normdist, n, n);
+  A = Tomographer::Tools::denseRandom<MatrixType>(rng, normdist, n, n);
 
-  //  logger.longdebug("random_unitary()", [&](std::ostream& str) {
+  //  logger.longdebug("randomUnitary()", [&](std::ostream& str) {
   //      str << "got A = \n" << A;
   //    });
 
@@ -96,25 +96,25 @@ inline void random_unitary(Eigen::MatrixBase<DerU> & U, Rng & rng, Log & logger)
 
     U.col(j) = v / v.norm();
 
-    //    logger.longdebug("random_unitary()", [&](std::ostream & str) {
+    //    logger.longdebug("randomUnitary()", [&](std::ostream & str) {
     //	str << "dealt with column " << j << " = " << v.transpose() << "\n"
     //	    << "\t--> " << U.col(j).transpose() << "\n"
     //	    << "\tnorm = " << U.col(j).squaredNorm() << " == " << U.col(j).adjoint() * U.col(j);
     //      });
   }
 
-  logger.longdebug("random_unitary()", [&](std::ostream& str) {
-      str << "random_unitary: got U = \n" << U << "\n"
+  logger.longdebug("randomUnitary()", [&](std::ostream& str) {
+      str << "randomUnitary: got U = \n" << U << "\n"
   	  << "Check: U*U.adjoint() ==\n" << U*U.adjoint() << "\n"
   	  << "Check: U.adjoint()*U ==\n" << U.adjoint()*U;
     });
 }
 
-//! Overload of random_unitary(U, rng, logger) which discards all logging messages.
+//! Overload of randomUnitary(U, rng, logger) which discards all logging messages.
 template<typename Der1, typename Rng>
-inline void random_unitary(Eigen::MatrixBase<Der1> & U, Rng & rng)
+inline void randomUnitary(Eigen::MatrixBase<Der1> & U, Rng & rng)
 {
-  random_unitary<Der1, Rng>(U, rng, Logger::vacuum_logger);
+  randomUnitary<Der1, Rng>(U, rng, Logger::vacuum_logger);
 }
 
 

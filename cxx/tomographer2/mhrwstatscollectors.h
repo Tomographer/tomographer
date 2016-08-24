@@ -105,7 +105,7 @@ public:
 
   // method to get a particular stats collector
   template<int I>
-  inline const typename std::tuple_element<I, MHRWStatsCollectorsTupleType>::type & getStatsCollector()
+  inline const typename std::tuple_element<I, MHRWStatsCollectorsTupleType>::type & getStatsCollector() const
   {
     return std::get<I>(statscollectors);
   }
@@ -275,8 +275,14 @@ public:
     return _histogram;
   }
 
-  /** \brief Get the histogram data collected so far. This method is needed for \ref
+  /** \brief Get the histogram data collected. This method is needed for \ref
    * pageInterfaceResultable compliance.
+   *
+   * \warning It is strongly advised to only call this function \em after having finalized
+   *          the random walk (as is necessary for \ref
+   *          ValueHistogramWithBinningMHRWStatsCollector::getResult), even though in this
+   *          implementation the return value would be valid when called at any point
+   *          after initialization.
    */
   inline const Result & getResult() const
   {
@@ -566,7 +572,7 @@ public:
     return value_histogram.histogram();
   }
 
-  inline const BinningAnalysisType & get_binning_analysis() const
+  inline const BinningAnalysisType & getBinningAnalysis() const
   {
     return binning_analysis;
   }
@@ -639,7 +645,10 @@ public:
   {
     std::size_t histindex = value_histogram.process_sample(k, n, curpt, curptval, mh);
     binning_analysis.process_new_values(
-	Tools::can_basis_vec<Eigen::Array<ValueType,Eigen::Dynamic,1> >(histindex, value_histogram.histogram().num_bins())
+	Tools::canonicalBasisVec<Eigen::Array<ValueType,Eigen::Dynamic,1> >(
+            histindex,
+            value_histogram.histogram().num_bins()
+            )
 	);
   }
 
@@ -697,7 +706,7 @@ struct MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >
       ThisStatsCollector;
     return
       (MHRWStatsCollectorStatus<ThisStatsCollector>::CanProvideStatus
-       ? (MHRWStatsCollectorStatus<ThisStatsCollector>::getStatus(stats->template getStatsCollector<I>())
+       ? (MHRWStatsCollectorStatus<ThisStatsCollector>::getStatus(& stats->template getStatsCollector<I>())
 	  + ((I < (NumStatColl-1)) ? std::string("\n") : std::string()))
        : std::string())
       + getStatus<I+1>(stats);
@@ -773,7 +782,7 @@ struct MHRWStatsCollectorStatus<ValueHistogramWithBinningMHRWStatsCollector<Para
     typedef typename MHRWStatsCollector::BinningAnalysisType BinningAnalysisType;
     //typedef typename MHRWStatsCollector::CountRealAvgType CountRealAvgType;
     typedef typename BinningAnalysisType::ValueType ValueType;
-    const auto& binning_analysis = stats->get_binning_analysis();
+    const auto& binning_analysis = stats->getBinningAnalysis();
     Eigen::Array<ValueType, Eigen::Dynamic, 1> binmeans(histogram.num_bins());
     binmeans = histogram.bins.template cast<ValueType>() /
       (ValueType)(histogram.bins.sum() + histogram.off_chart);

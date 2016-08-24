@@ -49,7 +49,7 @@
 // test suites
 
 
-BOOST_AUTO_TEST_SUITE(test_mathtools_random_unitary)
+BOOST_AUTO_TEST_SUITE(test_mathtools_randomUnitary)
 
 
 BOOST_AUTO_TEST_CASE(basic)
@@ -61,9 +61,9 @@ BOOST_AUTO_TEST_CASE(basic)
   // check that the given U is unitary, for a couple tries
   
   for (int k = 0; k < 1000; ++k) {
-    BOOST_MESSAGE("Running random_unitary() for the "<<k<<"-th time") ;
+    BOOST_MESSAGE("Running randomUnitary() for the "<<k<<"-th time") ;
 
-    Tomographer::MathTools::random_unitary(U, rng);
+    Tomographer::MathTools::randomUnitary(U, rng);
     
     MY_BOOST_CHECK_FLOATS_EQUAL((U * U.adjoint() - Eigen::MatrixXcd::Identity(7,7)).norm(), 0, 1e-12);
     MY_BOOST_CHECK_FLOATS_EQUAL((U.adjoint() * U - Eigen::MatrixXcd::Identity(7,7)).norm(), 0, 1e-12);
@@ -71,8 +71,8 @@ BOOST_AUTO_TEST_CASE(basic)
 }
 
 //
-// Test that if we average rho over many random unitaries from random_unitary, we get the
-// maximally mixed state; this then shows/indicates(?) that random_unitary is indeed
+// Test that if we average rho over many random unitaries from randomUnitary, we get the
+// maximally mixed state; this then shows/indicates(?) that randomUnitary is indeed
 // distributed according to the Haar measures.
 //
 BOOST_AUTO_TEST_CASE(twirl_rho_gives_identity)
@@ -90,7 +90,7 @@ BOOST_AUTO_TEST_CASE(twirl_rho_gives_identity)
 
   const int n_points = 10000;
   for (int k = 0; k < n_points; ++k) {
-    Tomographer::MathTools::random_unitary(U, rng);
+    Tomographer::MathTools::randomUnitary(U, rng);
 
     rhoTwirled.noalias() += U*rho*U.adjoint();
   }

@@ -63,13 +63,7 @@ TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_complex<std::complex<double> >::v
 
 BOOST_AUTO_TEST_SUITE(test_mathtools_eigenutil)
 
-BOOST_AUTO_TEST_CASE(MODIFY_API)
-{
-  BOOST_CHECK( false && "TODO: CHANGE API WITH CAMEL-CASED NAMES SUCH THAT "
-               "dense_random() -> denseRandom(), etc." ) ;
-}
-
-BOOST_AUTO_TEST_CASE(dense_random)
+BOOST_AUTO_TEST_CASE(denseRandom)
 {
   std::mt19937 rng;
   std::uniform_real_distribution<double> dist(0.0, 1.0);
@@ -77,46 +71,46 @@ BOOST_AUTO_TEST_CASE(dense_random)
 
   constexpr int N = 10000;
 
-  Eigen::VectorXd v(Tomographer::Tools::dense_random<Eigen::VectorXd>(rng, dist, N));
+  Eigen::VectorXd v(Tomographer::Tools::denseRandom<Eigen::VectorXd>(rng, dist, N));
   MY_BOOST_CHECK_FLOATS_EQUAL(v.sum(), 0.5*N, 2.0/std::sqrt(N)) ;
 
-  Eigen::VectorXd v2(Tomographer::Tools::dense_random<Eigen::Matrix<double,N,1> >(rng, dist, N));
+  Eigen::VectorXd v2(Tomographer::Tools::denseRandom<Eigen::Matrix<double,N,1> >(rng, dist, N));
   MY_BOOST_CHECK_FLOATS_EQUAL(v2.sum(), 0.5*N, 2.0/std::sqrt(N)) ;
 
-  Eigen::Matrix<float,N,1> v3(Tomographer::Tools::dense_random<Eigen::Matrix<float,Eigen::Dynamic,1> >(rng, distf, N));
+  Eigen::Matrix<float,N,1> v3(Tomographer::Tools::denseRandom<Eigen::Matrix<float,Eigen::Dynamic,1> >(rng, distf, N));
   MY_BOOST_CHECK_FLOATS_EQUAL(v3.sum(), 0.5*N, 2.f/std::sqrt((float)N)) ;
 }
 
-BOOST_AUTO_TEST_CASE(can_basis_vec_1)
+BOOST_AUTO_TEST_CASE(canonicalBasisVec_1)
 {
-  auto v1 = Tomographer::Tools::can_basis_vec<Eigen::VectorXd>(3, 10);
+  auto v1 = Tomographer::Tools::canonicalBasisVec<Eigen::VectorXd>(3, 10);
   Eigen::VectorXd v2(10); v2 << 0,0,0,1,0,0,0,0,0,0;
   MY_BOOST_CHECK_EIGEN_EQUAL(v1, v2, tol);
 }
-BOOST_AUTO_TEST_CASE(can_basis_vec_2)
+BOOST_AUTO_TEST_CASE(canonicalBasisVec_2)
 {
-  auto v1 = Tomographer::Tools::can_basis_vec<Eigen::Matrix<double,10,1> >(3, 10);
+  auto v1 = Tomographer::Tools::canonicalBasisVec<Eigen::Matrix<double,10,1> >(3, 10);
   Eigen::VectorXd v2(10); v2 << 0,0,0,1,0,0,0,0,0,0;
   MY_BOOST_CHECK_EIGEN_EQUAL(v1, v2, tol);
 }
-BOOST_AUTO_TEST_CASE(can_basis_vec_mat)
+BOOST_AUTO_TEST_CASE(canonicalBasisVec_mat)
 {
-  auto m1 = Tomographer::Tools::can_basis_vec<Eigen::Matrix<double,3,3> >(1,2, 3,3);
+  auto m1 = Tomographer::Tools::canonicalBasisVec<Eigen::Matrix<double,3,3> >(1,2, 3,3);
   Eigen::Matrix3d m2; m2 << 0,0,0, 0,0,1, 0,0,0 ;
   MY_BOOST_CHECK_EIGEN_EQUAL(m1, m2, tol);
 }
 
-BOOST_AUTO_TEST_SUITE(powers_of_two)
+BOOST_AUTO_TEST_SUITE(powersOfTwo)
 
 BOOST_AUTO_TEST_CASE(basic)
 {
-  Eigen::VectorXd v1 = Tomographer::Tools::powers_of_two<Eigen::VectorXd>(10);
+  Eigen::VectorXd v1 = Tomographer::Tools::powersOfTwo<Eigen::VectorXd>(10);
   Eigen::VectorXd v2(10); v2 << 1, 2, 4, 8, 16, 32, 64, 128, 256, 512;
   MY_BOOST_CHECK_EIGEN_EQUAL(v1, v2, tol);
 }
 BOOST_AUTO_TEST_CASE(mat)
 {
-  Eigen::Matrix3d m1 = Tomographer::Tools::powers_of_two<Eigen::Matrix3d>();
+  Eigen::Matrix3d m1 = Tomographer::Tools::powersOfTwo<Eigen::Matrix3d>();
   Eigen::Matrix3d m2;
   m2 << 1,  8, 64,
         2, 16, 128, 
@@ -125,7 +119,7 @@ BOOST_AUTO_TEST_CASE(mat)
 }
 BOOST_AUTO_TEST_CASE(fixed)
 {
-  Eigen::Array<double,1,9> twopows = Tomographer::Tools::powers_of_two<Eigen::Array<double,1,9> >().transpose();
+  Eigen::Array<double,1,9> twopows = Tomographer::Tools::powersOfTwo<Eigen::Array<double,1,9> >().transpose();
   Eigen::Array<double,1,9> correct_twopows;
   correct_twopows << 1, 2, 4, 8, 16, 32, 64, 128, 256;
 
@@ -135,7 +129,7 @@ BOOST_AUTO_TEST_CASE(fixed)
 BOOST_AUTO_TEST_CASE(dyn_vector)
 {
   Eigen::VectorXd twopows(6);
-  twopows = Tomographer::Tools::powers_of_two<Eigen::VectorXd>(6);
+  twopows = Tomographer::Tools::powersOfTwo<Eigen::VectorXd>(6);
   BOOST_MESSAGE("twopows = " << twopows);
   Eigen::VectorXd correct_twopows(6);
   (correct_twopows << 1, 2, 4, 8, 16, 32).finished();

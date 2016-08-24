@@ -149,7 +149,7 @@ namespace Tools {
  *   the sizes of the dense object to return.
  */
 template<typename Der, typename Rng, typename RndDist, typename... IndexTypes>
-inline auto dense_random(Rng & rng, RndDist &rnddist, IndexTypes... sizes)
+inline auto denseRandom(Rng & rng, RndDist &rnddist, IndexTypes... sizes)
   -> const Eigen::CwiseNullaryOp<
     tomo_internal::random_generator<Rng, RndDist, typename Eigen::internal::traits<Der>::Scalar>,
     Der
@@ -209,7 +209,7 @@ namespace Tools {
  *
  */
 template<typename Der, typename IndexType>
-inline auto can_basis_vec(IndexType k, IndexType size)
+inline auto canonicalBasisVec(IndexType k, IndexType size)
   -> const Eigen::CwiseNullaryOp<
     tomo_internal::can_basis_vec_generator<typename Eigen::internal::traits<Der>::Scalar, IndexType>,
     Der
@@ -227,7 +227,7 @@ inline auto can_basis_vec(IndexType k, IndexType size)
  * This is a matrix of zeros except for the entry (k,j) which is one.
  */
 template<typename Der, typename IndexType>
-inline auto can_basis_vec(IndexType k, IndexType j, IndexType rows, IndexType cols)
+inline auto canonicalBasisVec(IndexType k, IndexType j, IndexType rows, IndexType cols)
   -> const Eigen::CwiseNullaryOp<
     tomo_internal::can_basis_vec_generator<typename Eigen::internal::traits<Der>::Scalar, IndexType>,
     Der
@@ -263,7 +263,8 @@ namespace tomo_internal {
 
     template<typename IndexType>
     inline const result_type operator() (IndexType a, IndexType b) const {
-      eigen_assert(b == 0 && "powers_of_two_generator may only be used with 1-D objects!"); (void)b;
+      eigen_assert(b == 0 && "powers_of_two_generator may only be used with 1-D objects or with linear access!");
+      (void)b; // silence unused variable warning if eigen_assert is optimized out
       return std::ldexp(result_type(1), a);
     }
 
@@ -301,7 +302,7 @@ namespace Tools {
  * default column-wise).
  */
 template<typename Der, typename... IndexTypes>
-inline auto powers_of_two(IndexTypes... sizes)
+inline auto powersOfTwo(IndexTypes... sizes)
   -> const Eigen::CwiseNullaryOp<
     tomo_internal::powers_of_two_generator<typename Eigen::internal::traits<Der>::Scalar>,
     Der

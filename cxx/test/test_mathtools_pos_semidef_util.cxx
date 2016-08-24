@@ -84,7 +84,7 @@ BOOST_AUTO_TEST_CASE(force_pos_semidef)
   // get some nontrivial unitary (fixed by deterministic seeded rng)
   Eigen::Matrix4cd Unitary;
   std::mt19937 rng(1); // seeded, deterministic random number generator
-  Tomographer::MathTools::random_unitary(Unitary, rng);
+  Tomographer::MathTools::randomUnitary(Unitary, rng);
 
   BOOST_MESSAGE("Chose Unitary = \n" << Unitary) ;
 
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(safe_ops2)
 {
   Eigen::Matrix3cd U;
   std::mt19937 rng(3982);
-  Tomographer::MathTools::random_unitary(U, rng);
+  Tomographer::MathTools::randomUnitary(U, rng);
 
   Eigen::Matrix3cd A;
   A <<

@@ -63,7 +63,7 @@ struct check_derivatives_fixture
   {
     std::mt19937 rng(seed);
     std::uniform_real_distribution<XScalar> dist(0.1, 2.0);
-    return Tomographer::Tools::dense_random<EigenPointType>(rng, dist, xdims);
+    return Tomographer::Tools::denseRandom<EigenPointType>(rng, dist, xdims);
   }
 
   //

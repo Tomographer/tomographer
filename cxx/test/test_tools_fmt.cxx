@@ -47,6 +47,12 @@
 
 struct NotStreamableObject { int a, b, c;  };
 
+struct SomeStreamableObject { int a, b, c; std::string d; };
+std::ostream & operator<<(std::ostream & stream, const SomeStreamableObject & obj) {
+  stream << obj.a << obj.b << obj.c << obj.d;
+  return stream;
+}
+
 // -----------------------------------------------------------------------------
 // test suites
 
@@ -79,11 +85,11 @@ BOOST_AUTO_TEST_CASE(teststreamstr)
 
 BOOST_AUTO_TEST_CASE(hasostreamop)
 {
-  BOOST_CHECK( false && "WRITE THIS TEST" );
-}
-BOOST_AUTO_TEST_CASE(streamifpossiblewrapper)
-{
-  BOOST_CHECK( false && "WRITE THIS TEST" );
+  TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::hasOStreamOp<std::string>::value) ;
+  TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::hasOStreamOp<Eigen::Matrix3d>::value) ;
+  TOMO_STATIC_ASSERT_EXPR(! Tomographer::Tools::hasOStreamOp<NotStreamableObject>::value) ;
+  TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::hasOStreamOp<SomeStreamableObject>::value) ;
+  BOOST_CHECK( true );
 }
 
 BOOST_AUTO_TEST_CASE(streamifpossible)
@@ -100,20 +106,29 @@ BOOST_AUTO_TEST_CASE(streamifpossible)
 		    "0 1\n"
 		    "And the value of x is = <"+std::string(typeid(NotStreamableObject).name())+">\n");
 }
+
 BOOST_AUTO_TEST_CASE(streamifpossible2)
 {
   Eigen::Matrix2d m(Eigen::Matrix2d::Identity());
   NotStreamableObject x;
   std::ostringstream s;
   s << Tomographer::Tools::streamIfPossible(m, "The identity matrix is = \n")
-    << " -- and -- "
+    << "\n -- and -- \n"
+    << Tomographer::Tools::streamIfPossible(m, "x =\n", ".", "Sorry, x is not streamable.")
+    << "\n -- and -- \n"
     << Tomographer::Tools::streamIfPossible(x, "x = ", ".", "Sorry, x is not streamable.")
     << "\n";
   BOOST_MESSAGE(s.str());
   BOOST_CHECK_EQUAL("\n"+s.str(), std::string("\n")+
 		    "The identity matrix is = \n"
 		    "1 0\n"
-		    "0 1 -- and -- Sorry, x is not streamable.\n");
+		    "0 1\n"
+                    " -- and -- \n"
+		    "x =\n"
+		    "1 0\n"
+		    "0 1.\n"
+                    " -- and -- \n"
+                    "Sorry, x is not streamable.\n");
 }
 
 BOOST_AUTO_TEST_CASE(fmt_duration)

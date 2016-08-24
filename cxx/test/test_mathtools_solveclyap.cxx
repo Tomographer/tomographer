@@ -37,7 +37,7 @@
 #include "test_tomographer.h"
 
 #include <tomographer2/mathtools/solveclyap.h>
-#include <tomographer2/tools/eigenutil.h> // dense_random
+#include <tomographer2/tools/eigenutil.h> // denseRandom
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/mathtools/random_unitary.h>
 
@@ -76,9 +76,9 @@
 //   {
 //     std::uniform_real_distribution<RealScalar> dist(0, max_eigenval);
 
-//     Tomographer::MathTools::random_unitary<MatrixType>(_U, _rng);
+//     Tomographer::MathTools::randomUnitary<MatrixType>(_U, _rng);
     
-//     _diag = Tomographer::Tools::dense_random<Eigen::VectorXd>(_rng, dist, _dim);
+//     _diag = Tomographer::Tools::denseRandom<Eigen::VectorXd>(_rng, dist, _dim);
 
 //     for (int i = max_rank; i < _dim; ++i) {
 //       _diag(i) = 0;
@@ -106,10 +106,10 @@ struct test_solveclyap_fixture
     std::uniform_real_distribution<double> dist(0.0, 1.0);
 
     MatType U(d,d);
-    Tomographer::MathTools::random_unitary<MatType>(U, rng);
+    Tomographer::MathTools::randomUnitary<MatType>(U, rng);
     MatType W(U.block(0,0,d,A_rank));
 
-    Eigen::VectorXd eigvals(Tomographer::Tools::dense_random<Eigen::VectorXd>(rng, dist, A_rank));
+    Eigen::VectorXd eigvals(Tomographer::Tools::denseRandom<Eigen::VectorXd>(rng, dist, A_rank));
     // this is positive semidefinite.
     MatType A(W * eigvals.asDiagonal() * W.adjoint());
 
@@ -117,7 +117,7 @@ struct test_solveclyap_fixture
 
     // create a random X in the support of A
     // MatType X(W * RandomPosSemiDef<MatType, std::mt19937>(rng, A_rank).withUnifEig(1.0, A_rank) * W.adjoint());
-    MatType X(W * Tomographer::Tools::dense_random<MatType>(rng, dist, A_rank, A_rank) * W.adjoint());
+    MatType X(W * Tomographer::Tools::denseRandom<MatType>(rng, dist, A_rank, A_rank) * W.adjoint());
 
     BOOST_MESSAGE("X = " << X) ;
 

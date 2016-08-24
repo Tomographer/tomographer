@@ -91,7 +91,7 @@ struct test_hypercube_mhwalker
   inline PointType jump_fn(const PointType & curpt, RealScalar step_size)
   {
     PointType newpt;
-    newpt = curpt + step_size*Tomographer::Tools::dense_random<PointType>(rng, dist);
+    newpt = curpt + step_size*Tomographer::Tools::denseRandom<PointType>(rng, dist);
     // do the random walk on the torus, i.e. modulo 1.0
     for (int i = 0; i < Dim; ++i) {
       if (newpt(i) < 0) { newpt(i) += 1.0; }
@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(simple1)
 
   MY_BOOST_CHECK_EIGEN_EQUAL(result.converged_status,
                              Eigen::ArrayXi::Constant(
-                                 vhist.get_binning_analysis().num_track_values(),
+                                 vhist.getBinningAnalysis().num_track_values(),
                                  ValWBinningMHRWStatsCollectorType::BinningAnalysisType::CONVERGED
                                  ),
                              tol) ;

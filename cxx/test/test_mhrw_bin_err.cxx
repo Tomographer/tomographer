@@ -126,11 +126,11 @@ BOOST_AUTO_TEST_CASE(basic)
     });
 
   logger.debug("test_mhrw_bin_err::binning_analysis::basic", [&](std::ostream & str) {
-      str << "Debug: binning analysis uses powers_of_two matrix for normalization: \n"
+      str << "Debug: binning analysis uses powersOfTwo matrix for normalization: \n"
 	  << Tomographer::Tools::replicated<OurBinningAnalysis::NumTrackValuesCTime,1>(
-	      Tomographer::Tools::powers_of_two<Eigen::Array<OurBinningAnalysis::ValueType,
-							     OurBinningAnalysis::NumLevelsPlusOneCTime,
-							     1> >(bina.num_levels()+1)
+	      Tomographer::Tools::powersOfTwo<Eigen::Array<OurBinningAnalysis::ValueType,
+                                                           OurBinningAnalysis::NumLevelsPlusOneCTime,
+							   1> >(bina.num_levels()+1)
 	      .transpose().reverse(),
 	      // replicated by:
 	      bina.num_track_values(), 1

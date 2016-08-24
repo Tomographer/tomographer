@@ -93,7 +93,7 @@ struct TestSphJacFixture
     
     for (std::size_t k = 0; k < npoints; ++k) {
       // get a random point in theta-space; weigh with jacobian to estimate volume of n-ball
-      rtheta = Tomographer::Tools::dense_random<Eigen::VectorXd>(rng, dist, CART_DIM);
+      rtheta = Tomographer::Tools::denseRandom<Eigen::VectorXd>(rng, dist, CART_DIM);
       // so translate them to the correct ranges.
       rtheta(0) *= R; // rtheta(0) in [0, R]
       rtheta.block(1,0,ds-1,1) = rtheta.block(1,0,ds-1,1) * pi; // theta_i in [0, pi] for 1 <= i < ds
@@ -127,7 +127,7 @@ struct TestSphJacFixture
 
     for (std::size_t k = 0; k < npoints; ++k) {
       // get a random point in theta-space; add weighted with Jacobian to estimate surface of n-sphere
-      theta = Tomographer::Tools::dense_random<Eigen::VectorXd>(rng, dist, SPH_DIM);
+      theta = Tomographer::Tools::denseRandom<Eigen::VectorXd>(rng, dist, SPH_DIM);
       // so translate them to the correct ranges.
       theta.block(0,0,ds-1,1) = theta.block(0,0,ds-1,1) * pi; // theta_i in [0, pi] for 0 <= i < ds-1
       theta(ds-1) = theta(ds-1) * 2 * pi; // theta_{ds-1} in [0, 2*pi]

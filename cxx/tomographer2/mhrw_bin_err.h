@@ -29,7 +29,7 @@
 
 
 #include <tomographer2/tools/loggers.h>
-#include <tomographer2/tools/eigenutil.h> // replicated(), powers_of_two()
+#include <tomographer2/tools/eigenutil.h> // replicated(), powersOfTwo()
 #include <tomographer2/tools/cxxutil.h>
 #include <tomographer2/tools/needownoperatornew.h>
 
@@ -173,9 +173,10 @@ struct BinningAnalysisParams
   typedef Eigen::Array<ValueType, NumTrackValuesCTime, 1> BinSumArray;
   /** \brief Type used to store the sum of squares of values at each binning level.
    *
-   * This is a matrix of fixed size \ref NumTrackValues x \ref NumLevelsPlusOneCTime (or
-   * \ref Eigen::Dynamic). This is used to store a list of values (one for each binning
-   * level, including the 0-th) for each tracked value, e.g. the sum of all the samples.
+   * This is a matrix of fixed size \ref NumTrackValuesCTime x \ref NumLevelsPlusOneCTime
+   * (or \ref Eigen::Dynamic). This is used to store a list of values (one for each
+   * binning level, including the 0-th) for each tracked value, e.g. the sum of all the
+   * samples.
    */
   typedef Eigen::Array<ValueType, NumTrackValuesCTime, NumLevelsPlusOneCTime> BinSumSqArray;
 
@@ -564,7 +565,7 @@ public:
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
     -> decltype(
 	bin_sumsq.cwiseQuotient(n_flushes * Tools::replicated<NumTrackValuesCTime,1>(
-				    Tools::powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
+				    Tools::powersOfTwo<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
 				    .transpose().reverse(),
 				    // replicated by:
 				    num_track_values(), 1
@@ -573,7 +574,7 @@ public:
 #endif
   {
     return bin_sumsq.cwiseQuotient(n_flushes * Tools::replicated<NumTrackValuesCTime,1>(
-                                  Tools::powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
+                                  Tools::powersOfTwo<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
                                   .transpose().reverse(),
                                   // replicated by:
                                   num_track_values(), 1
@@ -618,7 +619,7 @@ public:
     const int n_track_values = num_track_values();
 
     /** \todo this should be optimizable, using directly bin_sumsq and not effectively
-     *        repeating the powers_of_two constants...
+     *        repeating the powersOfTwo constants...
      */
 
     return (
@@ -630,7 +631,7 @@ public:
 	).cwiseMax(0).cwiseQuotient(
 	    // divide by the number of samples from which these bin-means were obtained, minus one.
 	    Tools::replicated<NumTrackValuesCTime,1>(
-		Tools::powers_of_two<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(n_levels_plus_one)
+		Tools::powersOfTwo<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(n_levels_plus_one)
 		.transpose().reverse(),
 		// replicated by:
 		n_track_values, 1

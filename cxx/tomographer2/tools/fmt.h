@@ -189,7 +189,7 @@ template<typename T> static auto test_has_stream_op(long)
  *    hasOStream<T>::value
  * \endcode
  * to test whether a type \a T can be streamed into a std::ostream.  This value is a
- * compile-time boolean and can be used in template parametres.
+ * compile-time boolean and can be used in template parameters.
  */
 template<typename T>
 struct hasOStreamOp {
