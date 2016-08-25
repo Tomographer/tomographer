@@ -61,13 +61,13 @@ namespace Tools {
  * This exception is raised when \ref fmts() or \ref vfmts() are called with a bad format
  * argument, causing \c vsnprintf() to return a negative number.
  */
-class bad_fmts_format : public std::exception
+class BadFmtsFormat : public std::exception
 {
   std::string msg;
 public:
   //! Construct an exception for bad printf formatting. Provide an error message here.
-  bad_fmts_format(const std::string& msg_) : msg(msg_) { }
-  ~bad_fmts_format() throw() { }
+  BadFmtsFormat(const std::string& msg_) : msg(msg_) { }
+  ~BadFmtsFormat() throw() { }
 
   const char * what() const throw() {
     return msg.c_str();
@@ -97,7 +97,7 @@ inline std::string vfmts(const char* fmt, va_list vl)
   int nsize = vsnprintf(buffer, size, fmt, ap1);
   if (nsize < 0) {
     // failure: bad format probably
-    throw bad_fmts_format("vsnprintf("+std::string(fmt)+") failure: code="+std::to_string(nsize));
+    throw BadFmtsFormat("vsnprintf("+std::string(fmt)+") failure: code="+std::to_string(nsize));
   }
   if(size <= nsize) {
     // buffer too small: delete buffer and try again
@@ -363,7 +363,7 @@ inline _Unspecified streamIfPossible(const T& obj,
  *
  * \param seconds the duration in seconds
  */
-inline std::string fmt_duration(double seconds)
+inline std::string fmtDuration(double seconds)
 {
   // split `seconds' into integral part and fractional part
   double dt_i_d;
@@ -380,17 +380,17 @@ inline std::string fmt_duration(double seconds)
  *
  * \param dt the duration, a \a std::chrono::duration 
  *
- * See also \ref fmt_duration(double)
+ * See also \ref fmtDuration(double)
  */
 template<typename Rep, typename Period>
-inline std::string fmt_duration(std::chrono::duration<Rep, Period> dt)
+inline std::string fmtDuration(std::chrono::duration<Rep, Period> dt)
 {
   typedef std::chrono::duration<Rep, Period> Duration;
 
   // delta-time, in seconds and fraction of seconds
   double seconds = (double)dt.count() * Duration::period::num / Duration::period::den ;
 
-  return fmt_duration(seconds);
+  return fmtDuration(seconds);
 };
 
 

@@ -60,7 +60,7 @@ struct SigHandlerTaskDispatcherStatusReporter
     tasks->setStatusReportHandler(
         [this](const typename TaskDispatcher::FullStatusReportType& report) {
           logger.debug("SigHandlerStatusReporter/lambda", "intermediate progress report lambda called");
-          this->intermediate_progress_report(report);
+          this->intermediateProgressReport(report);
         });
   }
   
@@ -69,17 +69,17 @@ struct SigHandlerTaskDispatcherStatusReporter
 
   typename TimerClock::time_point time_start;
 
-  virtual void handle_signal(int /*sig*/)
+  virtual void handleSignal(int /*sig*/)
   {
-    tasks->request_status_report();
+    tasks->requestStatusReport();
   }
 
   /** \brief Format a nice intermediate progress report.
    *
    */
-  void intermediate_progress_report(const typename TaskDispatcher::FullStatusReportType& report)
+  void intermediateProgressReport(const typename TaskDispatcher::FullStatusReportType& report)
   {
-    std::string elapsed = fmt_duration(TimerClock::now() - time_start);
+    std::string elapsed = fmtDuration(TimerClock::now() - time_start);
     fprintf(stderr,
             "\n"
             "=========================== Intermediate Progress Report ============================\n"

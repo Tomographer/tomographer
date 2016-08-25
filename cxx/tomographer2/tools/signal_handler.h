@@ -58,7 +58,7 @@ struct SignalHandler
   SignalHandler() { }
   virtual ~SignalHandler() { }
   
-  virtual void handle_signal(int) = 0;
+  virtual void handleSignal(int) = 0;
 };
   
 
@@ -95,7 +95,7 @@ namespace tomo_internal {
     tomo_internal::last_sig_hit_time[signum] = now;
     
     if (signal_handler[signum] != NULL) {
-      signal_handler[signum]->handle_signal(signum);
+      signal_handler[signum]->handleSignal(signum);
     } else {
       std::fprintf(stderr, "Warning: sig_handle: no signal handler set (got signal %d)\n", signum);
     }

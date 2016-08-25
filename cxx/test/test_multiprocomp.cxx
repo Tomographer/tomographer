@@ -166,6 +166,7 @@ BOOST_AUTO_TEST_CASE(write_me)
 }
 
 struct TestTask {
+  
 };
 struct TestStatsCollector {
   

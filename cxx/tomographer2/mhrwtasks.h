@@ -324,8 +324,8 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
      * data, and runs it.
      *
      * This also takes care to call the task manager interface's
-     * <code>status_report_requested()</code> and submits a status report if required. See
-     * e.g. \ref OMPTaskDispatcher::request_status_report().
+     * <code>statusReportRequested()</code> and submits a status report if required. See
+     * e.g. \ref OMPTaskDispatcher::requestStatusReport().
      */
     template<typename LoggerType, typename TaskManagerIface>
     inline void run(const MHRandomWalkTaskCData * pcdata, LoggerType & logger,
@@ -401,18 +401,18 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
       TaskManagerIface *tmgriface;
 
       inline void init() { }
-      inline void thermalizing_done() { }
+      inline void thermalizingDone() { }
       inline void done() { }
 
       template<typename PointType, typename FnValueType, typename MHRandomWalk>
-      inline void raw_move(
+      inline void rawMove(
           CountIntType k, bool is_thermalizing, bool, bool, double, const PointType &, FnValueType,
           const PointType &, FnValueType, MHRandomWalk & rw
           )
       {
         // see if we should provide a status report
-        //        fprintf(stderr, "StatusReportCheck::raw_move(): testing for status report requested!\n");
-        if (tmgriface->status_report_requested()) {
+        //        fprintf(stderr, "StatusReportCheck::rawMove(): testing for status report requested!\n");
+        if (tmgriface->statusReportRequested()) {
           // prepare & provide status report
           CountIntType totiters = rw.nSweep()*(rw.nTherm()+rw.nRun());
           double fdone = (double)k/totiters;
@@ -447,13 +447,13 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
 	      }
 	    }
           }
-          tmgriface->submit_status_report(StatusReport(fdone, msg, k, rw.mhrwParams(), accept_ratio));
+          tmgriface->submitStatusReport(StatusReport(fdone, msg, k, rw.mhrwParams(), accept_ratio));
         }
-        //        fprintf(stderr, "StatusReportCheck::raw_move(): done\n");
+        //        fprintf(stderr, "StatusReportCheck::rawMove(): done\n");
       }
 
       template<typename PointType, typename FnValueType, typename MHRandomWalk>
-      inline void process_sample(CountIntType, CountIntType, const PointType &, FnValueType, MHRandomWalk &)
+      inline void processSample(CountIntType, CountIntType, const PointType &, FnValueType, MHRandomWalk &)
       {
       }
     };

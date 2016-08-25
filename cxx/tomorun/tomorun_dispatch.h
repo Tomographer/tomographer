@@ -302,7 +302,7 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
   logger.debug("Random walks done.");
 
   // delta-time, in seconds and fraction of seconds
-  std::string elapsed_s = Tomographer::Tools::fmt_duration(time_end - time_start);
+  std::string elapsed_s = Tomographer::Tools::fmtDuration(time_end - time_start);
 
   produce_final_report(taskcdat, results, logger.baselogger());
 
