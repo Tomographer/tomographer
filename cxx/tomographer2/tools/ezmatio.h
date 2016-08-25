@@ -683,7 +683,7 @@ public:
 
   bool valid() const
   {
-    return Tools::is_positive<IntType>(p_linearIndex) && p_linearIndex < p_numel;
+    return Tools::isPositive<IntType>(p_linearIndex) && p_linearIndex < p_numel;
   }
 
 
@@ -1259,14 +1259,14 @@ template<>  struct MatType<MAT_T_UINT8> { typedef uint8_t Type; };
 template<typename T>
 struct VarValueDecoder<T,
                        typename std::enable_if<(std::numeric_limits<T>::is_specialized ||
-                                                Tools::is_complex<T>::value)>::type
+                                                Tools::isComplex<T>::value)>::type
                        >
 {
   typedef T RetType;
 
   static inline void checkShape(const Var & var)
   {
-    if (var.isComplex() && !Tools::is_complex<T>::value) {
+    if (var.isComplex() && !Tools::isComplex<T>::value) {
       throw VarTypeError(var.varName(),
                          streamstr("Can't store complex matrix in type " << typeid(T).name()));
     }
@@ -1289,16 +1289,16 @@ struct VarValueDecoder<T,
 
 private:
   template<typename MATType,
-           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::is_complex<RetType>::value &&
-                                       !Tools::is_complex<MATType>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::isComplex<RetType>::value &&
+                                       !Tools::isComplex<MATType>::value)>
   static inline RetType get_value(const matvar_t * matvar_ptr, const std::string & )
   {
     return (RetType) ((const MATType *) matvar_ptr->data)[0];
   }
   
   template<typename MATType,
-           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::is_complex<RetType>::value &&
-                                       !Tools::is_complex<MATType>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::isComplex<RetType>::value &&
+                                       !Tools::isComplex<MATType>::value)>
   static inline RetType get_value(const matvar_t * matvar_ptr, const std::string & )
   {
     return RetType( ((const MATType *) matvar_ptr->data)[0],
@@ -1306,19 +1306,19 @@ private:
   }
   
   template<typename MATType,
-           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::is_complex<RetType>::value &&
-                                       Tools::is_complex<MATType>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::isComplex<RetType>::value &&
+                                       Tools::isComplex<MATType>::value)>
   static inline RetType get_value(const matvar_t * /*matvar_ptr*/, const std::string & varname)
   {
     throw VarTypeError(varname, "Expected real scalar, got complex type");
   }
   
   template<typename MATType,
-           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::is_complex<RetType>::value &&
-                                       Tools::is_complex<MATType>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::isComplex<RetType>::value &&
+                                       Tools::isComplex<MATType>::value)>
   static inline RetType get_value(const matvar_t * matvar_ptr, const std::string & )
   {
-    typedef typename Tools::complex_real_scalar<MATType>::type MATRealType;
+    typedef typename Tools::ComplexRealScalar<MATType>::type MATRealType;
     const mat_complex_split_t * cdata = (mat_complex_split_t*) matvar_ptr->data;
 
     return RetType( ((const MATRealType *) cdata->Re)[0],
@@ -1340,7 +1340,7 @@ class VarMatDataAccessor
 {
   const Var & p_var;
 
-  typedef typename Tools::complex_real_scalar<MatInnerT>::type MatRealInnerT;
+  typedef typename Tools::ComplexRealScalar<MatInnerT>::type MatRealInnerT;
 
   const MatInnerT * p_r_ptr;
   const MatRealInnerT * p_cre_ptr;
@@ -1371,8 +1371,8 @@ public:
 
   template<typename IndexListType,
 	   typename OutType__ = OutType, typename MatInnerT__ = MatInnerT,
-           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::is_complex<OutType__>::value &&
-                                       !Tools::is_complex<MatInnerT__>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::isComplex<OutType__>::value &&
+                                       !Tools::isComplex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& index) const
   {
     tomographer_assert(p_r_ptr != NULL);
@@ -1384,8 +1384,8 @@ public:
   
   template<typename IndexListType,
 	   typename OutType__ = OutType, typename MatInnerT__ = MatInnerT,
-           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::is_complex<OutType__>::value &&
-                                       Tools::is_complex<MatInnerT__>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::isComplex<OutType__>::value &&
+                                       Tools::isComplex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& ) const
   {
     throw VarTypeError(p_var.varName(), "Expected real type, got complex");
@@ -1393,8 +1393,8 @@ public:
 
   template<typename IndexListType,
 	   typename OutType__ = OutType, typename MatInnerT__ = MatInnerT,
-           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::is_complex<OutType__>::value &&
-                                       !Tools::is_complex<MatInnerT__>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::isComplex<OutType__>::value &&
+                                       !Tools::isComplex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& index) const
   {
     tomographer_assert(p_r_ptr != NULL);
@@ -1406,8 +1406,8 @@ public:
 
   template<typename IndexListType,
 	   typename OutType__ = OutType, typename MatInnerT__ = MatInnerT,
-           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::is_complex<OutType__>::value &&
-                                       Tools::is_complex<MatInnerT__>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::isComplex<OutType__>::value &&
+                                       Tools::isComplex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& index) const
   {
     tomographer_assert(p_cre_ptr != NULL);
@@ -1655,7 +1655,7 @@ struct VarValueDecoder<GetStdVector<T, IsRowMajor> >
 
   static inline void checkShape(const Var & var)
   {
-    if (var.isComplex() && !Tools::is_complex<T>::value) {
+    if (var.isComplex() && !Tools::isComplex<T>::value) {
       throw VarTypeError(var.varName(),
                          std::string("can't store complex matrix in type ")
                          + typeid(T).name());

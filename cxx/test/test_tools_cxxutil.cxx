@@ -44,18 +44,18 @@ BOOST_AUTO_TEST_CASE(finally)
   BOOST_CHECK(flag);
 }
 
-BOOST_AUTO_TEST_SUITE(static_or_dynamic)
-TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::static_or_dynamic<long, false, 0x05060708L>) < sizeof(long)) ;
-TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::static_or_dynamic<long, true>) >= sizeof(long)) ;
-TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::static_or_dynamic<long, true, 0x05060708L>) >= sizeof(long)) ;
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::static_or_dynamic<long, false, 0x05060708L>::IsDynamic == false) ;
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::static_or_dynamic<long, false, 0x05060708L>::StaticValue == 0x05060708L) ;
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::static_or_dynamic<long, true>::IsDynamic == true) ;
+BOOST_AUTO_TEST_SUITE(StaticOrDynamic)
+TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::StaticOrDynamic<long, false, 0x05060708L>) < sizeof(long)) ;
+TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::StaticOrDynamic<long, true>) >= sizeof(long)) ;
+TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::StaticOrDynamic<long, true, 0x05060708L>) >= sizeof(long)) ;
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::StaticOrDynamic<long, false, 0x05060708L>::IsDynamic == false) ;
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::StaticOrDynamic<long, false, 0x05060708L>::StaticValue == 0x05060708L) ;
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::StaticOrDynamic<long, true>::IsDynamic == true) ;
 BOOST_AUTO_TEST_CASE(static_1)
 {
-  Tomographer::Tools::static_or_dynamic<long, false, 0x1234L> x;
+  Tomographer::Tools::StaticOrDynamic<long, false, 0x1234L> x;
 
-  typedef Tomographer::Tools::static_or_dynamic<long, false, 0x1234L> TheType;
+  typedef Tomographer::Tools::StaticOrDynamic<long, false, 0x1234L> TheType;
   BOOST_CHECK(!TheType::IsDynamic);
   BOOST_CHECK_EQUAL(TheType::StaticValue, 0x1234L);
   BOOST_CHECK_EQUAL(x(), 0x1234L);
@@ -63,8 +63,8 @@ BOOST_AUTO_TEST_CASE(static_1)
 }
 BOOST_AUTO_TEST_CASE(static_2)
 {
-  Tomographer::Tools::static_or_dynamic<long, false, 0x1234L> x(0x1234L);
-  typedef Tomographer::Tools::static_or_dynamic<long, false, 0x1234L> TheType;
+  Tomographer::Tools::StaticOrDynamic<long, false, 0x1234L> x(0x1234L);
+  typedef Tomographer::Tools::StaticOrDynamic<long, false, 0x1234L> TheType;
   BOOST_CHECK(!TheType::IsDynamic);
   BOOST_CHECK_EQUAL(x(), 0x1234L);
   BOOST_CHECK_EQUAL(x.value(), 0x1234L);
@@ -73,15 +73,15 @@ BOOST_AUTO_TEST_CASE(static_3)
 {
   EigenAssertTest::setting_scope settingvariable(true);
   auto test = []() {
-    Tomographer::Tools::static_or_dynamic<long, false, 0x1234L> x(0x5678L); // wrong dynamic argument
+    Tomographer::Tools::StaticOrDynamic<long, false, 0x1234L> x(0x5678L); // wrong dynamic argument
     BOOST_MESSAGE("[!!!!!!This point should never be reached!!!!] Value of x = " << x()) ;
   };
   BOOST_CHECK_THROW(test(), Tomographer::Tools::eigen_assert_exception) ;
 }
 BOOST_AUTO_TEST_CASE(dyn)
 {
-  Tomographer::Tools::static_or_dynamic<long, true> x(0x1234L);
-  typedef Tomographer::Tools::static_or_dynamic<long, true> TheType;
+  Tomographer::Tools::StaticOrDynamic<long, true> x(0x1234L);
+  typedef Tomographer::Tools::StaticOrDynamic<long, true> TheType;
   BOOST_CHECK(TheType::IsDynamic);
   BOOST_CHECK_EQUAL(x(), 0x1234L);
   BOOST_CHECK_EQUAL(x.value(), 0x1234L);
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(dyn)
 BOOST_AUTO_TEST_SUITE_END()
 
 
-BOOST_AUTO_TEST_SUITE(store_if_enabled)
+BOOST_AUTO_TEST_SUITE(StoreIfEnabled)
 struct TestBigObject {
   char d[1024];
   TestBigObject(char a, char b, char c) : d{a, b, c, 0} { }
@@ -99,20 +99,20 @@ std::ostream & operator<<(std::ostream& str, const TestBigObject x) {
   str << "*" << x.d << "*";
   return str;
 }
-TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::store_if_enabled<TestBigObject, false>) < sizeof(TestBigObject));
-TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::store_if_enabled<TestBigObject, true>) >= sizeof(TestBigObject));
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::store_if_enabled<TestBigObject, false>::IsEnabled);
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::store_if_enabled<TestBigObject, true>::IsEnabled);
+TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::StoreIfEnabled<TestBigObject, false>) < sizeof(TestBigObject));
+TOMO_STATIC_ASSERT_EXPR(sizeof(Tomographer::Tools::StoreIfEnabled<TestBigObject, true>) >= sizeof(TestBigObject));
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::StoreIfEnabled<TestBigObject, false>::IsEnabled);
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::StoreIfEnabled<TestBigObject, true>::IsEnabled);
 BOOST_AUTO_TEST_CASE(disabled_1)
 {
-  Tomographer::Tools::store_if_enabled<TestBigObject, false> x('c', 'a', 'c', 1, 1.f); // should ignore its arguments
-  typedef Tomographer::Tools::store_if_enabled<TestBigObject, false> TheType;
+  Tomographer::Tools::StoreIfEnabled<TestBigObject, false> x('c', 'a', 'c', 1, 1.f); // should ignore its arguments
+  typedef Tomographer::Tools::StoreIfEnabled<TestBigObject, false> TheType;
   BOOST_CHECK(!TheType::IsEnabled);
 }
 BOOST_AUTO_TEST_CASE(enabled_1)
 {
-  Tomographer::Tools::store_if_enabled<long, true> x(0x1234L);
-  typedef Tomographer::Tools::store_if_enabled<long, true> TheType;
+  Tomographer::Tools::StoreIfEnabled<long, true> x(0x1234L);
+  typedef Tomographer::Tools::StoreIfEnabled<long, true> TheType;
   BOOST_CHECK(TheType::IsEnabled);
   BOOST_CHECK_EQUAL(x.value, 0x1234L);
   x.value = 0x05060708L;
@@ -120,14 +120,14 @@ BOOST_AUTO_TEST_CASE(enabled_1)
 }
 BOOST_AUTO_TEST_CASE(ostream_disabled)
 {
-  Tomographer::Tools::store_if_enabled<TestBigObject, false> x('c', 'a', 'z', 1, 2.f); // should ignore its arguments
+  Tomographer::Tools::StoreIfEnabled<TestBigObject, false> x('c', 'a', 'z', 1, 2.f); // should ignore its arguments
   std::stringstream s;
   s << x;
   BOOST_CHECK_EQUAL(s.str(), std::string("[-]"));
 }
 BOOST_AUTO_TEST_CASE(ostream_enabled)
 {
-  Tomographer::Tools::store_if_enabled<TestBigObject, true> x('c', 'a', 'z');
+  Tomographer::Tools::StoreIfEnabled<TestBigObject, true> x('c', 'a', 'z');
   std::stringstream s;
   s << x;
   BOOST_CHECK_EQUAL(s.str(), std::string("*caz*"));
@@ -135,38 +135,38 @@ BOOST_AUTO_TEST_CASE(ostream_enabled)
 BOOST_AUTO_TEST_SUITE_END()
 
 
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_power_of_two(1));
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_power_of_two(2));
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_power_of_two(4));
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_power_of_two(8));
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_power_of_two(16));
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_power_of_two(32));
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_power_of_two(64));
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_power_of_two(128));
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_power_of_two(1024));
-TOMO_STATIC_ASSERT_EXPR( Tomographer::Tools::is_power_of_two(0x0001000000000000UL));
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_power_of_two(0));
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_power_of_two(3));
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_power_of_two(5));
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_power_of_two(6));
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_power_of_two(7));
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_power_of_two(9));
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_power_of_two(30));
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_power_of_two(31));
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_power_of_two(33));
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_power_of_two(34));
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_power_of_two(0x0001000100000000UL));
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_power_of_two(0x0000ffff00000000UL));
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isPowerOfTwo(1));
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isPowerOfTwo(2));
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isPowerOfTwo(4));
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isPowerOfTwo(8));
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isPowerOfTwo(16));
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isPowerOfTwo(32));
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isPowerOfTwo(64));
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isPowerOfTwo(128));
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isPowerOfTwo(1024));
+TOMO_STATIC_ASSERT_EXPR( Tomographer::Tools::isPowerOfTwo(0x0001000000000000UL));
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(0));
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(3));
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(5));
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(6));
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(7));
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(9));
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(30));
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(31));
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(33));
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(34));
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(0x0001000100000000UL));
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(0x0000ffff00000000UL));
 
 
-BOOST_AUTO_TEST_CASE(is_complex)
+BOOST_AUTO_TEST_CASE(isComplex)
 {
-  BOOST_CHECK( ! Tomographer::Tools::is_complex<double>::value ) ;
-  BOOST_CHECK( ! Tomographer::Tools::is_complex<float>::value ) ;
-  BOOST_CHECK( ! Tomographer::Tools::is_complex<int>::value ) ;
-  BOOST_CHECK( Tomographer::Tools::is_complex<std::complex<double> >::value ) ;
-  BOOST_CHECK( Tomographer::Tools::is_complex<std::complex<float> >::value ) ;
-  BOOST_CHECK( Tomographer::Tools::is_complex<std::complex<long double> >::value ) ;
+  BOOST_CHECK( ! Tomographer::Tools::isComplex<double>::value ) ;
+  BOOST_CHECK( ! Tomographer::Tools::isComplex<float>::value ) ;
+  BOOST_CHECK( ! Tomographer::Tools::isComplex<int>::value ) ;
+  BOOST_CHECK( Tomographer::Tools::isComplex<std::complex<double> >::value ) ;
+  BOOST_CHECK( Tomographer::Tools::isComplex<std::complex<float> >::value ) ;
+  BOOST_CHECK( Tomographer::Tools::isComplex<std::complex<long double> >::value ) ;
 }
 
 struct ABCZ {
@@ -175,33 +175,33 @@ struct ABCZ {
   bool test() const { return true; }
 };
 
-BOOST_AUTO_TEST_CASE(complex_real_scalar)
+BOOST_AUTO_TEST_CASE(ComplexRealScalar)
 {
-  Tomographer::Tools::complex_real_scalar<std::complex<int> >::type x(100);
-  Tomographer::Tools::complex_real_scalar<std::complex<double> >::type y(1.4);
-  Tomographer::Tools::complex_real_scalar<std::complex<float> >::type z(1.4f);
-  Tomographer::Tools::complex_real_scalar<std::complex<ABCZ> >::type w(1, 'c', 5L, "hello");
+  Tomographer::Tools::ComplexRealScalar<std::complex<int> >::type x(100);
+  Tomographer::Tools::ComplexRealScalar<std::complex<double> >::type y(1.4);
+  Tomographer::Tools::ComplexRealScalar<std::complex<float> >::type z(1.4f);
+  Tomographer::Tools::ComplexRealScalar<std::complex<ABCZ> >::type w(1, 'c', 5L, "hello");
   BOOST_CHECK_EQUAL(x, 100);
   BOOST_CHECK_CLOSE(y, 1.4, tol_percent);
   BOOST_CHECK_CLOSE(z, 1.4f, tol_percent);
   BOOST_CHECK(w.test());
 }
 
-BOOST_AUTO_TEST_CASE(is_positive)
+BOOST_AUTO_TEST_CASE(isPositive)
 {
-  BOOST_CHECK( Tomographer::Tools::is_positive(1.0) ) ;
-  BOOST_CHECK( Tomographer::Tools::is_positive(1.e-12) ) ;
-  BOOST_CHECK( Tomographer::Tools::is_positive(0.0) ) ;
-  BOOST_CHECK( ! Tomographer::Tools::is_positive(-1.e-12) ) ;
-  BOOST_CHECK( ! Tomographer::Tools::is_positive(-1) ) ;
-  BOOST_CHECK( Tomographer::Tools::is_positive(0) ) ;
-  BOOST_CHECK( Tomographer::Tools::is_positive<unsigned int>(0xffffffffu) ) ;
-  BOOST_CHECK(Tomographer::Tools::is_positive(1u)) ;
-  BOOST_CHECK(Tomographer::Tools::is_positive(1)) ;
-  BOOST_CHECK(Tomographer::Tools::is_positive(1.f)) ;
-  BOOST_CHECK(Tomographer::Tools::is_positive(1.0)) ;
-  BOOST_CHECK(!Tomographer::Tools::is_positive(-1)) ;
-  BOOST_CHECK(!Tomographer::Tools::is_positive(-1.0)) ;
+  BOOST_CHECK( Tomographer::Tools::isPositive(1.0) ) ;
+  BOOST_CHECK( Tomographer::Tools::isPositive(1.e-12) ) ;
+  BOOST_CHECK( Tomographer::Tools::isPositive(0.0) ) ;
+  BOOST_CHECK( ! Tomographer::Tools::isPositive(-1.e-12) ) ;
+  BOOST_CHECK( ! Tomographer::Tools::isPositive(-1) ) ;
+  BOOST_CHECK( Tomographer::Tools::isPositive(0) ) ;
+  BOOST_CHECK( Tomographer::Tools::isPositive<unsigned int>(0xffffffffu) ) ;
+  BOOST_CHECK(Tomographer::Tools::isPositive(1u)) ;
+  BOOST_CHECK(Tomographer::Tools::isPositive(1)) ;
+  BOOST_CHECK(Tomographer::Tools::isPositive(1.f)) ;
+  BOOST_CHECK(Tomographer::Tools::isPositive(1.0)) ;
+  BOOST_CHECK(!Tomographer::Tools::isPositive(-1)) ;
+  BOOST_CHECK(!Tomographer::Tools::isPositive(-1.0)) ;
 }
 
 

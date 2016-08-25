@@ -167,12 +167,12 @@ struct ResultsCollectorSimple
   }
 
   template<typename RealType = double>
-  inline void print_histogram_csv(std::ostream & stream, std::string sep = "\t", std::string linesep = "\n", int precision = 10)
+  inline void printHistogramCsv(std::ostream & stream, std::string sep = "\t", std::string linesep = "\n", int precision = 10)
   {
     stream << "Value" << sep << "Counts" << sep << "Error" << linesep
 	   << std::scientific << std::setprecision(precision);
     for (int kk = 0; kk < _finalhistogram.bins.size(); ++kk) {
-      stream << RealType(_finalhistogram.params.bin_lower_value(kk)) << sep
+      stream << RealType(_finalhistogram.params.binLowerValue(kk)) << sep
 	     << RealType(_finalhistogram.bins(kk)) << sep
 	     << RealType(_finalhistogram.delta(kk)) << linesep;
     }
@@ -199,13 +199,13 @@ public:
     _finalhistogram.reset(pcdata->histogram_params);
   }
   template<typename Cnt, typename TaskResultType, typename CData>
-  inline void collect_result(Cnt task_no, TaskResultType&& taskresult, const CData * /*pcdata*/)
+  inline void collectResult(Cnt task_no, TaskResultType&& taskresult, const CData * /*pcdata*/)
   {
-    tomographer_assert(!isFinalized() && "collect_result() called after results have been finalized!");
+    tomographer_assert(!isFinalized() && "collectResult() called after results have been finalized!");
 
     auto logger = _llogger.sublogger(TOMO_ORIGIN);
     logger.debug([&](std::ostream & str) {
-	str << "Got task result. Histogram is:\n" << taskresult.stats_collector_result.pretty_print();
+	str << "Got task result. Histogram is:\n" << taskresult.stats_collector_result.prettyPrint();
       });
 
     NormalizedHistogramType thishistogram = taskresult.stats_collector_result;
@@ -214,14 +214,14 @@ public:
     thishistogram.bins /= normalization;
     thishistogram.off_chart /= normalization;
 
-    _finalhistogram.add_histogram(thishistogram);
+    _finalhistogram.addHistogram(thishistogram);
     _collected_runtaskresults[task_no]
       = new RunTaskResult(std::forward<TaskResultType>(taskresult), std::move(thishistogram));
   }
   template<typename Cnt, typename CData>
-  inline void runs_finished(Cnt, const CData *)
+  inline void runsFinished(Cnt, const CData *)
   {
-    tomographer_assert(!isFinalized() && "runs_finished() called after results have been finalized!");
+    tomographer_assert(!isFinalized() && "runsFinished() called after results have been finalized!");
 
     _finalized = true;
     _finalhistogram.finalize();
@@ -324,12 +324,12 @@ struct ResultsCollectorWithBinningAnalysis
 
 
   template<typename RealType = double>
-  inline void print_histogram_csv(std::ostream & stream, std::string sep = "\t", std::string linesep = "\n", int precision = 10)
+  inline void printHistogramCsv(std::ostream & stream, std::string sep = "\t", std::string linesep = "\n", int precision = 10)
   {
     stream << "Value" << sep << "Counts" << sep << "Error" << sep << "SimpleError" << linesep
            << std::scientific << std::setprecision(precision);
     for (int kk = 0; kk < _finalhistogram.bins.size(); ++kk) {
-      stream << RealType(_finalhistogram.params.bin_lower_value(kk)) << sep
+      stream << RealType(_finalhistogram.params.binLowerValue(kk)) << sep
              << RealType(_finalhistogram.bins(kk)) << sep
 	     << RealType(_finalhistogram.delta(kk)) << sep
 	     << RealType(_simplefinalhistogram.delta(kk)) << linesep;
@@ -359,9 +359,9 @@ public:
   }
 
   template<typename Cnt, typename TaskResultType2, typename CData>
-  inline void collect_result(Cnt task_no, TaskResultType2 && taskresult, const CData *)
+  inline void collectResult(Cnt task_no, TaskResultType2 && taskresult, const CData *)
   {
-    tomographer_assert(!isFinalized() && "collect_result() called after results have been finalized!");
+    tomographer_assert(!isFinalized() && "collectResult() called after results have been finalized!");
 
     auto logger = _llogger.sublogger(TOMO_ORIGIN);
     
@@ -369,16 +369,16 @@ public:
 
     logger.debug([&](std::ostream & str) {
 	str << "(). Got task result. Histogram (w/ error bars from binning analysis):\n"
-	    << stats_coll_result.hist.pretty_print();
+	    << stats_coll_result.hist.prettyPrint();
       });
     
     if ((stats_coll_result.converged_status !=
-	 Eigen::ArrayXi::Constant(stats_coll_result.hist.num_bins(), BinningAnalysisParamsType::CONVERGED)).any()) {
+	 Eigen::ArrayXi::Constant(stats_coll_result.hist.numBins(), BinningAnalysisParamsType::CONVERGED)).any()) {
       logger.debug([&,this](std::ostream & str) {
 	  str << "Error bars have not converged! The error bars at different binning levels are:\n"
 	      << stats_coll_result.error_levels << "\n"
 	      << "\t-> convergence analysis: \n";
-	  for (std::size_t k = 0; k < stats_coll_result.hist.num_bins(); ++k) {
+	  for (std::size_t k = 0; k < stats_coll_result.hist.numBins(); ++k) {
 	    str << "\t    val[" << std::setw(3) << k << "] = "
 		<< std::setw(12) << stats_coll_result.hist.bins(k)
 		<< " +- " << std::setw(12) << stats_coll_result.hist.delta(k);
@@ -398,7 +398,7 @@ public:
     
     // because stats_coll_result is a histogram WITH error bars, add_histogram will do the
     // right thing and take them into account.
-    _finalhistogram.add_histogram(stats_coll_result.hist);
+    _finalhistogram.addHistogram(stats_coll_result.hist);
     
     logger.debug("added histogram.");
     
@@ -406,9 +406,9 @@ public:
     // UniformBinsHistogram), so it will just ignore the error bars.
     logger.debug([&](std::ostream & str) {
 	str << "Simple histogram is:\n";
-	histogram_pretty_print<SimpleNormalizedHistogramType>(str, stats_coll_result.hist);
+	histogramPrettyPrint<SimpleNormalizedHistogramType>(str, stats_coll_result.hist);
       });
-    _simplefinalhistogram.add_histogram(stats_coll_result.hist);
+    _simplefinalhistogram.addHistogram(stats_coll_result.hist);
 
     _collected_runtaskresults[task_no] = new RunTaskResult(std::move(taskresult));
     
@@ -416,7 +416,7 @@ public:
   }
 
   template<typename Cnt, typename CData>
-  inline void runs_finished(Cnt, const CData *)
+  inline void runsFinished(Cnt, const CData *)
   {
     tomographer_assert(!isFinalized() && "runs_finished() called after results have been finalized!");
 
@@ -482,7 +482,7 @@ struct CDataBase
   CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_,
 	    MHRWParamsType p, int base_seed = 0)
     : Base(std::move(p), base_seed), valcalc(valcalc_), histogram_params(histogram_params_),
-      binning_num_levels()
+      binningNumLevels()
   {
   }
 
@@ -490,13 +490,13 @@ struct CDataBase
   CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_, int binning_num_levels_,
 	    MHRWParamsType p, int base_seed = 0)
     : Base(std::move(p), base_seed), valcalc(valcalc_), histogram_params(histogram_params_),
-      binning_num_levels(binning_num_levels_)
+      binningNumLevels(binning_num_levels_)
   {
   }
 
   const ValueCalculator valcalc;
   const HistogramParams histogram_params;
-  const Tools::store_if_enabled<int, UseBinningAnalysis> binning_num_levels;
+  const Tools::StoreIfEnabled<int, UseBinningAnalysis> binningNumLevels;
 
 
   template<typename LoggerType, TOMOGRAPHER_ENABLED_IF_TMPL(!UseBinningAnalysis)>
@@ -522,7 +522,7 @@ struct CDataBase
     return ValueHistogramWithBinningMHRWStatsCollector<BinningMHRWStatsCollectorParams,LoggerType>(
 	histogram_params,
 	valcalc,
-        binning_num_levels.value,
+        binningNumLevels.value,
 	logger
 	);
   }

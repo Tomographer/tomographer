@@ -32,7 +32,7 @@
 
 #include <Eigen/Eigen>
 
-#include <tomographer2/tools/cxxutil.h> // static_or_dynamic, TOMOGRAPHER_ENABLED_IF
+#include <tomographer2/tools/cxxutil.h> // StaticOrDynamic, TOMOGRAPHER_ENABLED_IF
 
 /** \file dmtypes.h
  * \brief C++ types for describing dense density matrices in various parameterizations
@@ -261,7 +261,7 @@ struct DMTypes {
 
 
 private:
-  const Tools::static_or_dynamic<std::size_t, IsDynamicDim, (std::size_t)FixedDim> _dim;
+  const Tools::StaticOrDynamic<std::size_t, IsDynamicDim, (std::size_t)FixedDim> _dim;
 };
 
 

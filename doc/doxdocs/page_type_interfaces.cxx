@@ -79,13 +79,13 @@
  * \par void init()
  * is called before starting the random walk
  *
- * \par void thermalizing_done()
+ * \par void thermalizingDone()
  * is called after the thermalizing runs, before starting the "live" runs.
  * 
  * \par void done()
  * is called after the random walk is finished.
  *
- * \par void process_sample(CountIntType k, CountIntType n, const PointType & pt, FnValueType fnval, MHRandomWalk & rw)
+ * \par void processSample(CountIntType k, CountIntType n, const PointType & pt, FnValueType fnval, MHRandomWalk & rw)
  *     is called at the end of each sweep, after the thermalization sweeps have finished.
  *     This function is meant to actually take live samples. \a k is the raw iteration
  *     number, \a n is the sample number (= number of live samples already taken), \a pt
@@ -94,7 +94,7 @@
  *     depending on the random walk's MHWalker::UseFnSyntaxType, see \ref
  *     pageInterfaceMHWalker).
  *
- * \par void raw_move(CountIntType k, bool is_thermalizing, bool is_live_iter, bool accepted, double a, const PointType & newpt, FnValueType newptval, const PointType & curpt, FnValueType curptval, MHRandomWalk & rw)
+ * \par void rawMove(CountIntType k, bool is_thermalizing, bool is_live_iter, bool accepted, double a, const PointType & newpt, FnValueType newptval, const PointType & curpt, FnValueType curptval, MHRandomWalk & rw)
  *     is called after each move during the random walk. Note that if you want to take
  *     real samples, use \c process_sample() instead.
  *
@@ -112,9 +112,6 @@
  *     \c curpt and \c curptval are the current point and function value. The object \c rw
  *     is a reference to the random walk object instance.
  * 
- *
- *
- * \todo API CHANGE: change names -> camel case (?)
  */
 
 
@@ -192,34 +189,32 @@
  *
  * \par void init()
  *
- * \par PointType startpoint()
+ * \par PointType startPoint()
  *
- * \par void thermalizing_done()
+ * \par void thermalizingDone()
  *
  * \par void done()
  *
- * \par PointType jump_fn(const PointType & curpt, StepRealType step_size)
+ * \par PointType jumpFn(const PointType & curpt, StepRealType step_size)
  *
- * \par FnValueType fnval(const PointType & curpt) &mdash; required only if UseFnSyntaxType == MHUseFnValue
+ * \par FnValueType fnVal(const PointType & curpt) &mdash; required only if UseFnSyntaxType == MHUseFnValue
  *
- * \par FnValueType fnlogval(const PointType & curpt) &mdash; required only if UseFnSyntaxType == MHUseFnLogValue
+ * \par FnValueType fnLogVal(const PointType & curpt) &mdash; required only if UseFnSyntaxType == MHUseFnLogValue
  *
- * \par double fnrelval(const PointType & newpt, const PointType & curpt) &mdash; required only if UseFnSyntaxType == MHUseFnRelativeValue
+ * \par double fnRelVal(const PointType & newpt, const PointType & curpt) &mdash; required only if UseFnSyntaxType == MHUseFnRelativeValue
  *
  * <br><br>
  * 
  * \anchor labelMHWalkerUseFnSyntaxType
  * \par Role of \c UseFnSyntaxType:
  *
- *  - MHUseFnValue --> use MHWalker::fnval(newpt)
- *  - MHUseFnLogValue --> use MHWalker::fnlogval(newpt)
- *  - MHUseFnRelativeValue --> use MHWalker::fnrelval(newpt, curpt)
+ *  - MHUseFnValue --> use MHWalker::fnVal(newpt)
+ *  - MHUseFnLogValue --> use MHWalker::fnLogVal(newpt)
+ *  - MHUseFnRelativeValue --> use MHWalker::fnRelVal(newpt, curpt)
  *
  *
  * \todo WRITE DOC .........................
  *
- *
- * \todo API CHANGE: change names -> camel case (?)
  */
 
 
@@ -289,6 +284,8 @@
  *     MHRWTasks::MHRandomWalkTask template parameter, use a template argument for this
  *     function in case. Use a template parameter for \a LoggerType.
  *
+ *
+ * \todo Here, add a method <code>TaskInput getTaskInput(int k)</code> ???
  */
 
 
@@ -316,16 +313,14 @@
  * dense object (that's the type which can hold the size of the largest possible object
  * which can be stored in memory).
  *
- * \par std::size_t num_bins() const
+ * \par std::size_t numBins() const
  *      The number of bins in this histogram.
  *
  * \par CountType count(std::size_t i) const
  *      Number of counts in the bin number i
  *
- * \par CountType errorbar(std::size_t i) const
+ * \par CountType errorBar(std::size_t i) const
  *      <em>(Only if <code>HasErrorBars = true</code>)</em> Error bar (standard deviation)
  *      associated to the bin number i.
  * 
- *
- * \todo API CHANGE: change name \c num_bins() -> camel case
  */

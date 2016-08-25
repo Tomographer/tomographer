@@ -284,9 +284,9 @@ struct DumpHistogramTest
     str << std::setprecision(precision) << std::scientific << std::right << std::setfill('0');
     str << "\n";
     str << "PARAMS = ["	<< histogram.params.min << ", " << histogram.params.max
-	<< "] (" << histogram.num_bins() << " bins)\n"
+	<< "] (" << histogram.numBins() << " bins)\n"
 	<< "\n";
-    for (std::size_t k = 0; k < (std::size_t)histogram.num_bins(); ++k) {
+    for (std::size_t k = 0; k < (std::size_t)histogram.numBins(); ++k) {
       _count_str(str, histogram, k);
     }
     str << "\n";
@@ -302,7 +302,7 @@ private:
   template<bool dummy = true, typename std::enable_if<dummy && HistogramType::HasErrorBars, bool>::type dummy2 = true>
   static inline void _count_str(std::ostream & str, const HistogramType & histogram, std::size_t k)
   {
-    str << histogram.count(k) << " +- " << histogram.errorbar(k) << "\n";
+    str << histogram.count(k) << " +- " << histogram.errorBar(k) << "\n";
   }
 };
 

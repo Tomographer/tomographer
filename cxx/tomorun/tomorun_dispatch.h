@@ -144,8 +144,8 @@ inline void print_short_bar_and_accept_ratio(std::ostream & str, int j, HistType
     " [accept ratio = " + Tomographer::Tools::fmts("%.2f", acceptance_ratio) + "]";
 
   str << "#" << std::setw(dig_width) << j << ": ";
-  int w = histogram_short_bar(str, std::forward<HistType>(hist), false,
-			      full_max_width - 3 - dig_width - accept_ratio_appendstr.size());
+  int w = histogramShortBar(str, std::forward<HistType>(hist), false,
+                            full_max_width - 3 - dig_width - accept_ratio_appendstr.size());
   str << std::setw(w + accept_ratio_appendstr.size()) << std::right << accept_ratio_appendstr << "\n";
   if (acceptance_ratio > 0.35 || acceptance_ratio < 0.2) {
     str << "    *** Accept ratio out of recommended bounds [0.20, 0.35] ! Adapt step size ***\n";
@@ -180,7 +180,7 @@ static inline void produce_final_report(TomorunCDataType & cdata, ResultsCollect
       // and the final histogram
       str << h.final_histogram
 	  << h.hline;
-      histogram_pretty_print(str, finalhistogram, h.columns);
+      histogramPrettyPrint(str, finalhistogram, h.columns);
       str << h.hline
 	  << "\n";
     });
@@ -232,7 +232,7 @@ inline void produce_final_report(TomorunCDataType & cdata, ResultsCollector & re
       // and the final histogram
       str << h.final_histogram
 	  << h.hline;
-      histogram_pretty_print(str, finalhistogram, h.columns);
+      histogramPrettyPrint(str, finalhistogram, h.columns);
       str << h.hline
               << "\n";
     });
@@ -311,7 +311,7 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
     std::string csvfname = opt->write_histogram + "-histogram.csv";
     std::ofstream outf;
     outf.open(csvfname);
-    results.print_histogram_csv(outf);
+    results.printHistogramCsv(outf);
     logger.info([&](std::ostream & str) { str << "Wrote histogram to CSV file " << csvfname << "."; });
   }
 

@@ -209,18 +209,18 @@ struct BinningAnalysisParams
  * here; however if the number of values will be determined dynamically at run-time, the
  * \c NumTrackValues template parameter should be set to \ref Eigen::Dynamic.
  *
- * Raw samples are added to the analysis by calling \ref process_new_values() with a list
+ * Raw samples are added to the analysis by calling \ref processNewValues() with a list
  * of values, one new value per independent function integration that we are tracking. You
  * should call this function repeatedly, once per sample. This class then takes care of
  * adding those raw samples to an internal samples buffer and flushing this buffer
  * whenever is needed.
  *
  * The final results of the binning analysis can be obtained by calling \ref
- * calc_error_levels() to get the error bars at each binning level. Note that the analysis
+ * calcErrorLevels() to get the error bars at each binning level. Note that the analysis
  * will only include all the flushed samples, i.e. all samples up to a multiple of \ref
- * samples_size(). If additional samples were given which didn't fill the samples buffer,
- * they are ignored for the error analysis but they are included in \ref get_bin_means()
- * and \ref get_bin_sum().
+ * samplesSize(). If additional samples were given which didn't fill the samples buffer,
+ * they are ignored for the error analysis but they are included in \ref getBinMeans()
+ * and \ref getBinSum().
  *
  * To calculate the error levels, this class also needs to keep track of the sum of all
  * samples to calculate their mean. However, this is often done independently, e.g. with a
@@ -228,11 +228,11 @@ struct BinningAnalysisParams
  * tell this BinningAnalysis class NOT to worry about calculating the means of the samples
  * and that you will provide the sample means yourself. This is specified using the \a
  * StoreBinSums template parameter to \ref BinningAnalysisParams. In this case, you'll
- * need to use the variants of \ref calc_error_levels() and \ref calc_error_lastlevel()
+ * need to use the variants of \ref calcErrorLevels() and \ref calcErrorLastLevel()
  * with one argument, where you specify the bin means yourself.
  *
  * You may also access some other information such as the sum of the squares of the
- * samples at different binning levels (see \ref get_bin_sqmeans()).
+ * samples at different binning levels (see \ref getBinSqmeans()).
  *
  * \tparam Params is a \ref BinningAnalysisParams with template parameters. This type
  *         specifies such types and values as the type of the values we're integrating,
@@ -297,29 +297,33 @@ public:
   /** \brief The number of functions being tracked/analyzed.
    *
    * The number may be obtained by calling
-   * <code>binning_analysis.num_track_values()</code>. This will either return the
+   * <code>binning_analysis.numTrackValues()</code>. This will either return the
    * compile-time fixed value \a NumTrackValuesCTime, or the value which was set
    * dynamically at runtime.
    *
-   * \ref Eigen::Dynamic is never returned. See \ref Tools::static_or_dynamic.
+   * \ref Eigen::Dynamic is never returned. See \ref Tools::StaticOrDynamic.
    */
-  const Tools::static_or_dynamic<int, (NumTrackValuesCTime==Eigen::Dynamic), NumTrackValuesCTime> num_track_values;
+  const Tools::StaticOrDynamic<int, (NumTrackValuesCTime==Eigen::Dynamic), NumTrackValuesCTime> numTrackValues;
   /** \brief The number of levels in the binning analysis.
    *
    * The number may be obtained by calling
-   * <code>binning_analysis.num_levels()</code>. This will either return the
+   * <code>binning_analysis.numLevels()</code>. This will either return the
    * compile-time fixed value \a NumTrackValuesCTime, or the value which was set
    * dynamically at runtime.
    *
-   * \ref Eigen::Dynamic is never returned. See \ref Tools::static_or_dynamic.
+   * \ref Eigen::Dynamic is never returned. See \ref Tools::StaticOrDynamic.
    */
-  const Tools::static_or_dynamic<int, (NumLevelsCTime==Eigen::Dynamic), NumLevelsCTime> num_levels;
+  const Tools::StaticOrDynamic<int, (NumLevelsCTime==Eigen::Dynamic), NumLevelsCTime> numLevels;
   /** \brief The size of our samples buffer. (avoid using, might change in the future) 
    *
-   * See \ref BinningAnalysisParams::SamplesSizeCTime. Avoid using this, this might change
-   * in the future.
+   * See \ref BinningAnalysisParams::SamplesSizeCTime.
+   *
+   * \warning Avoid using this property, this might change in the future. [I may decide to
+   *          change the algorithm, not flushing all after the last-level bin is full but
+   *          half-flushing as we go, to save memory space and hopefully gain in terms of
+   *          memory cache]
    */
-  const Tools::static_or_dynamic<CountIntType, (SamplesSizeCTime==Eigen::Dynamic), SamplesSizeCTime> samples_size;
+  const Tools::StaticOrDynamic<CountIntType, (SamplesSizeCTime==Eigen::Dynamic), SamplesSizeCTime> samplesSize;
 
   //! Constants for error bar convergence analysis.  
   enum {
@@ -338,11 +342,11 @@ private:
 
   /** \brief The array in which we store samples that arrive from the simulation.
    *
-   * This array has size \a samples_size() (for each tracking value). Once this array is
+   * This array has size \a samplesSize() (for each tracking value). Once this array is
    * filled, it is <em>flushed</em>, i.e. the values are processed and stored as
    * appropriate in \ref bin_sum and \ref bin_sumsq.
    *
-   * This array has \a num_tracking_values() rows and \a samples_size() columns.
+   * This array has \a numTrackingValues() rows and \a samplesSize() columns.
    */
   SamplesArray samples;
 
@@ -350,32 +354,32 @@ private:
   
   /** \brief Number of samples seen.
    *
-   * This is equal to the number of times \ref process_new_values() was called.
+   * This is equal to the number of times \ref processNewValues() was called.
    */
   CountIntType n_samples;
   /** \brief Number of flushes.
    *
    * A flush corresponds to having filled all the samples in the sample vector (of size \a
-   * samples_size()), and pushing new values into \ref bin_sum and \ref bin_sumsq.
+   * samplesSize()), and pushing new values into \ref bin_sum and \ref bin_sumsq.
    */
   CountIntType n_flushes;
   /** \brief Sum of all values seen.
    *
-   * This is a column vector of \a num_tracking_values() entries.
+   * This is a column vector of \a numTrackingValues() entries.
    *
    * \note This member is only available if the template parameter \a StoreBinSums is set
    * to \c true.
    *
    * \note values are added to this array as soon as they are seen, not when the samples
    * array is flushed. In particular, if the total number of values is not a multiple of
-   * \a samples_size(), then there will be samples counted into \a bin_sum but not into \a
+   * \a samplesSize(), then there will be samples counted into \a bin_sum but not into \a
    * bin_sumsq.
    */
-  Tools::store_if_enabled<BinSumArray, StoreBinSums> bin_sum;
+  Tools::StoreIfEnabled<BinSumArray, StoreBinSums> bin_sum;
   /** \brief Sum of the squares of all flushed & processed values, at different binning
    * levels.
    *
-   * This is a matrix of \a num_tracking_values() rows and <em>num_levels()+1</em>
+   * This is a matrix of \a numTrackingValues() rows and <em>numLevels()+1</em>
    * columns.
    *
    */
@@ -390,7 +394,7 @@ public:
   /** \brief Constructor.
    *
    * You must specify also the number of values that we will be tracking independently (\a
-   * num_track_values) and the number of binning levels (\a num_levels). If compile-time
+   * numTrackValues) and the number of binning levels (\a numLevels). If compile-time
    * values have been provided as template parameters not equal to \ref Eigen::Dynamic,
    * these values MUST be equal to their compile-time given counterpart values.
    *
@@ -398,18 +402,18 @@ public:
    *
    */
   BinningAnalysis(int num_track_values_, int num_levels_, LoggerType & logger_)
-    : num_track_values(num_track_values_),
-      num_levels(num_levels_),
-      samples_size(1 << num_levels()),
-      samples(num_track_values(), samples_size()),
+    : numTrackValues(num_track_values_),
+      numLevels(num_levels_),
+      samplesSize(1 << numLevels()),
+      samples(numTrackValues(), samplesSize()),
       n_flushes(0),
-      bin_sum(BinSumArray::Zero(num_track_values())),
-      bin_sumsq(BinSumSqArray::Zero(num_track_values(), num_levels()+1)),
+      bin_sum(BinSumArray::Zero(numTrackValues())),
+      bin_sumsq(BinSumSqArray::Zero(numTrackValues(), numLevels()+1)),
       logger(logger_)
   {
-    tomographer_assert(Tools::is_positive(num_levels()));
-    tomographer_assert(Tools::is_power_of_two(samples_size()));
-    tomographer_assert( (1<<num_levels()) == samples_size() );
+    tomographer_assert(Tools::isPositive(numLevels()));
+    tomographer_assert(Tools::isPowerOfTwo(samplesSize()));
+    tomographer_assert( (1<<numLevels()) == samplesSize() );
 
     reset();
   }
@@ -424,7 +428,7 @@ public:
     n_flushes = 0;
     n_samples = 0;
     helper_reset_bin_sum();
-    bin_sumsq = BinSumSqArray::Zero(num_track_values(), num_levels()+1);
+    bin_sumsq = BinSumSqArray::Zero(numTrackValues(), numLevels()+1);
     logger.longdebug("BinningAnalysis::reset()", "ready to go.");
   }
   
@@ -433,19 +437,19 @@ public:
    * Call this function whenever you have a new sample with corresponding values. The
    * argument should evaluate to a column vector; each element of the vector corresponds
    * to the value of a function we're tracking. The length of the vector must equal \ref
-   * num_track_values().
+   * numTrackValues().
    *
    * This will add the samples to the internal raw sample buffer, and flush the buffer as
    * required.
    */
   template<typename Derived>
-  inline void process_new_values(const Eigen::DenseBase<Derived> & vals)
+  inline void processNewValues(const Eigen::DenseBase<Derived> & vals)
   {
-    const int ninbin = n_samples % samples_size();
+    const int ninbin = n_samples % samplesSize();
 
     ++n_samples;
 
-    tomographer_assert(vals.rows() == num_track_values());
+    tomographer_assert(vals.rows() == numTrackValues());
     tomographer_assert(vals.cols() == 1);
 
     // store the new values in the bins  [also if ninbin == 0]
@@ -455,25 +459,25 @@ public:
     helper_update_bin_sum(samples.col(ninbin));
 
     // see if we have to flush the bins (equivalent to `ninbin == samples_size()-1`)
-    if ( ninbin == samples_size() - 1 ) {
+    if ( ninbin == samplesSize() - 1 ) {
       
       // we have filled all bins. Flush them. Re-use the beginning of the samples[] array
       // to store the reduced bins while flushing them.
-      logger.longdebug("BinningAnalysis::process_new_values()", [&](std::ostream & str) {
-	  str << "n_samples is now " << n_samples << "; flushing bins. samples_size() = " << samples_size();
+      logger.longdebug("BinningAnalysis::processNewValues()", [&](std::ostream & str) {
+	  str << "n_samples is now " << n_samples << "; flushing bins. samplesSize() = " << samplesSize();
 	});
 
-      // the size of the samples at the current level of binning. Starts at samples_size,
+      // the size of the samples at the current level of binning. Starts at samplesSize,
       // and decreases by half at each higher level.
 
-      for (int level = 0; level <= num_levels(); ++level) {
+      for (int level = 0; level <= numLevels(); ++level) {
 
-	const int binnedsize = 1 << (num_levels()-level);
+	const int binnedsize = 1 << (numLevels()-level);
 
-	logger.longdebug("BinningAnalysis::process_new_values()", [&](std::ostream & str) {
+	logger.longdebug("BinningAnalysis::processNewValues()", [&](std::ostream & str) {
 	    str << "Processing binning level = " << level << ": binnedsize="<<binnedsize
                 << "; n_flushes=" << n_flushes << "\n";
-	    str << "\tbinned samples = \n" << samples.block(0,0,num_track_values(),binnedsize);
+	    str << "\tbinned samples = \n" << samples.block(0,0,numTrackValues(),binnedsize);
 	  });
 
 	for (int ksample = 0; ksample < binnedsize; ++ksample) {
@@ -486,7 +490,7 @@ public:
 
       }
 
-      logger.longdebug("BinningAnalysis::process_new_values()", [&](std::ostream & str) {
+      logger.longdebug("BinningAnalysis::processNewValues()", [&](std::ostream & str) {
 	  str << "Flushing #" << n_flushes << " done. bin_sum is = \n" << bin_sum << "\n"
 	      << "\tbin_sumsq is = \n" << bin_sumsq << "\n";
 	});
@@ -499,14 +503,14 @@ public:
   /** \brief Process a new value (if we're tracking a single function only)
    *
    * Use this variant of the function if we're tracking a single function only, so that
-   * you don't have to specify a 1-element "array" to \ref process_new_values().
+   * you don't have to specify a 1-element "array" to \ref processNewValues().
    */
   template<typename CalcValType, TOMOGRAPHER_ENABLED_IF_TMPL(NumTrackValuesCTime == 1)>
-  inline void process_new_value(const CalcValType val)
+  inline void processNewValue(const CalcValType val)
   {
     // for a single value
-    //process_new_values(Eigen::Map<const Eigen::Array<CalcValType,1,1> >(&val));
-    process_new_values(Eigen::Array<CalcValType,1,1>::Constant(val));
+    //processNewValues(Eigen::Map<const Eigen::Array<CalcValType,1,1> >(&val));
+    processNewValues(Eigen::Array<CalcValType,1,1>::Constant(val));
   }
 
 
@@ -516,7 +520,7 @@ private:
   TOMOGRAPHER_ENABLED_IF(StoreBinSums)
   inline void helper_reset_bin_sum()
   {
-    bin_sum.value = BinSumArray::Zero(num_track_values());
+    bin_sum.value = BinSumArray::Zero(numTrackValues());
   }
   TOMOGRAPHER_ENABLED_IF(!StoreBinSums)
   inline void helper_reset_bin_sum() { }
@@ -541,13 +545,13 @@ public:
    * This corresponds to the number of values of which the most coarse-grained binned
    * averaging consists of.
    */
-  inline CountIntType get_n_flushes() const { return n_flushes; }
+  inline CountIntType getNumFlushes() const { return n_flushes; }
 
   /** \brief Get the average of each tracked value observed.
    *
    */
   TOMOGRAPHER_ENABLED_IF(StoreBinSums)
-  inline auto get_bin_means() const
+  inline auto getBinMeans() const
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
     -> decltype(BinSumArray() / ValueType(n_samples))
 #endif
@@ -561,23 +565,23 @@ public:
    * raw values observed, <em>bin_sqmeans.col(1)</em> the raw average of the squares of
    * the values averaged 2 by 2 (i.e. at the first binning level), and so on.
    */
-  inline auto get_bin_sqmeans() const
+  inline auto getBinSqmeans() const
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
     -> decltype(
 	bin_sumsq.cwiseQuotient(n_flushes * Tools::replicated<NumTrackValuesCTime,1>(
-				    Tools::powersOfTwo<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
+				    Tools::powersOfTwo<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(numLevels()+1)
 				    .transpose().reverse(),
 				    // replicated by:
-				    num_track_values(), 1
+				    numTrackValues(), 1
 				    ))
 	)
 #endif
   {
     return bin_sumsq.cwiseQuotient(n_flushes * Tools::replicated<NumTrackValuesCTime,1>(
-                                  Tools::powersOfTwo<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(num_levels()+1)
+                                  Tools::powersOfTwo<Eigen::Array<ValueType, NumLevelsPlusOneCTime, 1> >(numLevels()+1)
                                   .transpose().reverse(),
                                   // replicated by:
-                                  num_track_values(), 1
+                                  numTrackValues(), 1
                                   ));
   }
 
@@ -587,7 +591,7 @@ public:
    * This is only available if the \a StoreBinSums template parameter was set to \c true.
    */
   TOMOGRAPHER_ENABLED_IF(StoreBinSums)
-  inline const BinSumArray & get_bin_sum() const { return bin_sum.value; }
+  inline const BinSumArray & getBinSum() const { return bin_sum.value; }
 
   /** \brief Get the raw sums of the squared values observed, at each binning level.
    *
@@ -595,14 +599,14 @@ public:
    * raw values observed, <em>bin_sumsq.col(1)</em> the raw sum of the squares of
    * the values averaged 2 by 2 (i.e. at the first binning level), and so on.
    */
-  inline const BinSumSqArray & get_bin_sumsq() const {
+  inline const BinSumSqArray & getBinSumsq() const {
     return bin_sumsq;
   }
 
 
   /** \brief Calculate the error bars of samples at different binning levels.
    *
-   * Return an array of shape <em>(num_track_values, num_levels)</em> where element
+   * Return an array of shape <em>(numTrackValues, numLevels)</em> where element
    * <em>(i,k)</em> corresponds to the error of the \a i -th value at binning level \a
    * k. Binning level \a k=0 corresponds to the naive error bar from of the samples (no
    * binning).
@@ -611,19 +615,19 @@ public:
    * you need to provide the value of the means explicitly to the parameter \a means.
    */
   template<typename Derived>
-  inline BinSumSqArray calc_error_levels(const Eigen::ArrayBase<Derived> & means) const
+  inline BinSumSqArray calcErrorLevels(const Eigen::ArrayBase<Derived> & means) const
   {
-    tomographer_assert(means.rows() == num_track_values());
+    tomographer_assert(means.rows() == numTrackValues());
     tomographer_assert(means.cols() == 1);
-    const int n_levels_plus_one = num_levels()+1;
-    const int n_track_values = num_track_values();
+    const int n_levels_plus_one = numLevels()+1;
+    const int n_track_values = numTrackValues();
 
     /** \todo this should be optimizable, using directly bin_sumsq and not effectively
      *        repeating the powersOfTwo constants...
      */
 
     return (
-	get_bin_sqmeans() - Tools::replicated<1,NumLevelsPlusOneCTime>(
+	getBinSqmeans() - Tools::replicated<1,NumLevelsPlusOneCTime>(
             means.cwiseProduct(means).template cast<ValueType>(),
             // replicated by:
             1, n_levels_plus_one
@@ -637,7 +641,7 @@ public:
 		n_track_values, 1
 		) * n_flushes
 	    - Eigen::Array<ValueType, NumTrackValuesCTime, NumLevelsPlusOneCTime>::Constant(
-		num_track_values(), num_levels()+1,
+		numTrackValues(), n_levels_plus_one,
 		1 // the constant...
 		)
 	    ).cwiseSqrt();
@@ -646,79 +650,79 @@ public:
 
   /** \brief Calculate the error bar of samples (from the last binning level).
    *
-   * Return a vector of \a num_track_values elements, where the \a i -th item corresponds
-   * to the error bar of the \a i -th value determined from binning level \a num_levels.
+   * Return a vector of \a numTrackValues elements, where the \a i -th item corresponds
+   * to the error bar of the \a i -th value determined from binning level \a numLevels.
    *
-   * If the error bars converged (see \ref determine_error_convergence()), this should be
+   * If the error bars converged (see \ref determineErrorConvergence()), this should be
    * a good estimate of the error bars on the corresponding values.
    *
    * Use this variant of the function if this class doesn't store the bin means. If so,
    * you need to provide the value of the means explicitly to the parameter \a means.
    */
   template<typename Derived>
-  inline BinSumArray calc_error_lastlevel(const Eigen::ArrayBase<Derived> & means) const {
-    tomographer_assert(means.rows() == num_track_values());
+  inline BinSumArray calcErrorLastLevel(const Eigen::ArrayBase<Derived> & means) const {
+    tomographer_assert(means.rows() == numTrackValues());
     tomographer_assert(means.cols() == 1);
     return (
-	bin_sumsq.col(num_levels()) / ValueType(n_flushes) - means.cwiseProduct(means).template cast<ValueType>()
+	bin_sumsq.col(numLevels()) / ValueType(n_flushes) - means.cwiseProduct(means).template cast<ValueType>()
 	).cwiseMax(0).cwiseSqrt() / std::sqrt(ValueType(n_flushes-1));
   }
   
   /** \brief Calculate the error bars of samples at different binning levels.
    *
-   * Return an array of shape <em>(num_track_values, num_levels)</em> where element
+   * Return an array of shape <em>(numTrackValues, numLevels)</em> where element
    * <em>(i,k)</em> corresponds to the error of the \a i -th value at binning level \a
    * k. Binning level \a k=0 corresponds to the naive error bar from of the samples (no
    * binning).
    *
    * Use this variant of the function if this class stores the bin means. If this is not
-   * the case, you will need to call the variant \ref calc_error_levels(const
+   * the case, you will need to call the variant \ref calcErrorLevels(const
    * Eigen::ArrayBase<Derived> & means) with the values of the means.
    */
   TOMOGRAPHER_ENABLED_IF(StoreBinSums)
-  inline BinSumSqArray calc_error_levels() const {
-    BinSumArray means = get_bin_means();
-    return calc_error_levels(means);
+  inline BinSumSqArray calcErrorLevels() const {
+    BinSumArray means = getBinMeans();
+    return calcErrorLevels(means);
   }
 
   /** \brief Calculate the error bar of samples (from the last binning level).
    *
-   * Return a vector of \a num_track_values elements, where the \a i -th item corresponds
-   * to the error bar of the \a i -th value determined from binning level \a num_levels.
+   * Return a vector of \a numTrackValues elements, where the \a i -th item corresponds
+   * to the error bar of the \a i -th value determined from binning level \a numLevels.
    *
-   * If the error bars converged (see \ref determine_error_convergence()), this should be
+   * If the error bars converged (see \ref determineErrorConvergence()), this should be
    * a good estimate of the error bars on the corresponding values.
    *
    * Use this variant of the function if this class stores the bin means. If this is not
-   * the case, you will need to call the variant \ref calc_error_lastlevel(const
+   * the case, you will need to call the variant \ref calcErrorLastLevel(const
    * Eigen::ArrayBase<Derived> & means) with the values of the means.
    */
   TOMOGRAPHER_ENABLED_IF(StoreBinSums)
-  inline BinSumArray calc_error_lastlevel() const {
-    BinSumArray means = get_bin_means();
-    return calc_error_lastlevel(means);
+  inline BinSumArray calcErrorLastLevel() const {
+    BinSumArray means = getBinMeans();
+    return calcErrorLastLevel(means);
   }
   
   /** \brief Attempt to determine if the error bars have converged.
    *
    * Call this method after calculating the error bars for each level with \ref
-   * calc_error_levels(). Use the return value of that function to feed in the input
+   * calcErrorLevels(). Use the return value of that function to feed in the input
    * here.
    *
-   * \returns an array of integers, of length \a num_track_values, each set to one of \ref
+   * \returns an array of integers, of length \a numTrackValues, each set to one of \ref
    * CONVERGED, \ref NOT_CONVERGED or \ref CONVERGENCE_UNKNOWN.
    *
    * Contains code inspired by ALPS project, see
    * <a href="https://alps.comp-phys.org/svn/alps1/trunk/alps/src/alps/alea/simplebinning.h">https://alps.comp-phys.org/svn/alps1/trunk/alps/src/alps/alea/simplebinning.h</a>.
    */
-  inline Eigen::ArrayXi determine_error_convergence(const Eigen::Ref<const BinSumSqArray> & error_levels) const
+  inline Eigen::ArrayXi determineErrorConvergence(const Eigen::Ref<const BinSumSqArray> & error_levels) const
   {
-    Eigen::ArrayXi converged_status(num_track_values()); // RVO will help
+    Eigen::ArrayXi converged_status(numTrackValues()); // RVO will help
 
-    tomographer_assert(error_levels.rows() == num_track_values());
-    tomographer_assert(error_levels.cols() == num_levels() + 1);
+    tomographer_assert(error_levels.rows() == numTrackValues());
+    tomographer_assert(error_levels.cols() == numLevels() + 1);
 
-    logger.longdebug("BinningAnalysis::determine_error_convergence", [&](std::ostream & str) {
+    logger.longdebug("BinningAnalysis::determineErrorConvergence", [&](std::ostream & str) {
 	str << "error_levels = \n" << error_levels << "\n";
       });
 
@@ -726,26 +730,26 @@ public:
     // https://alps.comp-phys.org/svn/alps1/trunk/alps/src/alps/alea/simplebinning.h
 
     const int range = 4;
-    if (num_levels() < range-1) {
+    if (numLevels() < range-1) {
 
-      converged_status = Eigen::ArrayXi::Constant(num_track_values(), UNKNOWN_CONVERGENCE);
+      converged_status = Eigen::ArrayXi::Constant(numTrackValues(), UNKNOWN_CONVERGENCE);
 
     } else {
 
-      converged_status = Eigen::ArrayXi::Constant(num_track_values(), CONVERGED);
+      converged_status = Eigen::ArrayXi::Constant(numTrackValues(), CONVERGED);
 
-      const auto & errors = error_levels.col(num_levels());
+      const auto & errors = error_levels.col(numLevels());
 
-      for (int level = num_levels()+1 - range; level < num_levels(); ++level) {
+      for (int level = numLevels()+1 - range; level < numLevels(); ++level) {
 
 	const auto & errors_thislevel = error_levels.col(level);
 
-	logger.longdebug("BinningAnalysis::determine_error_convergence", [&](std::ostream & str) {
+	logger.longdebug("BinningAnalysis::determineErrorConvergence", [&](std::ostream & str) {
 	    str << "About to study level " << level << ": at this point, converged_status = \n"
 		<< converged_status << "\nand errors_thislevel = \n" << errors_thislevel;
 	  });
 
-	for (int val_it = 0; val_it < num_track_values(); ++val_it) {
+	for (int val_it = 0; val_it < numTrackValues(); ++val_it) {
 	  if (errors_thislevel(val_it) >= errors(val_it) &&
 	      converged_status(val_it) != NOT_CONVERGED) {
 	    converged_status(val_it) = CONVERGED;
@@ -761,7 +765,7 @@ public:
 
     }
 
-    logger.longdebug("BinningAnalysis::determine_error_convergence", [&](std::ostream & str) {
+    logger.longdebug("BinningAnalysis::determineErrorConvergence", [&](std::ostream & str) {
 	str << "Done. converged_status [0=UNNOWN,1=CONVERGED,2=NOT CONVERGED] = \n"
 	    << converged_status;
       });
@@ -770,13 +774,6 @@ public:
   }
 };
 
-
-// // specialize NeedOwnOperatorNew for this class --- NOT NEEDED, SEE ABOVE
-// namespace Tools {
-// template<typename Params, typename LoggerType_>
-// struct NeedOwnOperatorNew<BinningAnalysis<Params, LoggerType_> >
-//   : public NeedEigenAlignedOperatorNew { };
-// };
 
 
 } // namespace Tomographer

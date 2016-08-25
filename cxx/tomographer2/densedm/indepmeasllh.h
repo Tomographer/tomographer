@@ -33,7 +33,7 @@
 
 #include <Eigen/Eigen>
 
-#include <tomographer2/tools/cxxutil.h> // static_or_dynamic, TOMOGRAPHER_ENABLED_IF
+#include <tomographer2/tools/cxxutil.h> // StaticOrDynamic, TOMOGRAPHER_ENABLED_IF
 #include <tomographer2/tools/needownoperatornew.h>
 #include <tomographer2/tools/fmt.h> // streamstr
 #include <tomographer2/densedm/dmtypes.h>
@@ -378,7 +378,7 @@ private:
   FreqListType _Nx;
 
   //! Number by which to artificially amplify the frequency vector (for tests)
-  Tomographer::Tools::store_if_enabled<LLHValueType, UseNMeasAmplifyFactor> _NMeasAmplifyFactor;
+  Tomographer::Tools::StoreIfEnabled<LLHValueType, UseNMeasAmplifyFactor> _NMeasAmplifyFactor;
 };
 // define static members:
 template<typename DMTypes_, typename LLHValueType_,

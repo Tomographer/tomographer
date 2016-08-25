@@ -393,13 +393,13 @@ namespace OMP {
       CountIntType kiter;
       CountIntType local_status_report_counter;
 
-      inline bool status_report_requested()
+      inline bool statusReportRequested()
       {
-        //fprintf(stderr, "status_report_requested(), shared_data=%p\n", shared_data);
+        //fprintf(stderr, "statusReportRequested(), shared_data=%p\n", shared_data);
         return (int)local_status_report_counter != (int)shared_data->status_report_counter;
       }
 
-      inline void submit_status_report(const TaskStatusReportType &statreport)
+      inline void submitStatusReport(const TaskStatusReportType &statreport)
       {
         if ((int)local_status_report_counter == (int)shared_data->status_report_counter) {
           // error: task submitted unsollicited report
@@ -436,7 +436,7 @@ namespace OMP {
               // no user handler set
               logger->warning("OMP TaskDispatcher/taskmanageriface",
                               "no user status report handler set!"
-                              " call set_status_report_handler() first.");
+                              " call setStatusReportHandler() first.");
               ok = false;
             }
 
@@ -552,7 +552,7 @@ namespace OMP {
         }
       }
     
-      shared_data.results->runs_finished(num_total_runs, shared_data.pcdata);
+      shared_data.results->runsFinished(num_total_runs, shared_data.pcdata);
     }
 
     void _run_task(thread_private_data & privdat, thread_shared_data * shdat, CountIntType k)
@@ -589,7 +589,7 @@ namespace OMP {
       
 #pragma omp critical
       {
-        shdat->results->collect_result(k, t.getResult(), shdat->pcdata);
+        shdat->results->collectResult(k, t.getResult(), shdat->pcdata);
         
         if ((int)privdat.local_status_report_counter != (int)shdat->status_report_counter) {
           // status report request missed by task... do as if we had provided a
@@ -606,7 +606,7 @@ namespace OMP {
     /** \brief assign a callable to be called whenever a status report is requested
      *
      * This function remembers the given \a fnstatus callable, so that each time that \ref
-     * request_status_report() is called at any later point, then this callback will be
+     * requestStatusReport() is called at any later point, then this callback will be
      * invoked.
      *
      * The callback, when invoked, will be called with a single parameter of type \ref
@@ -615,13 +615,13 @@ namespace OMP {
      * \par How Tasks should handle status reports.
      * Task's must regularly check whether a status report has been requested as they run. 
      * This is done by regularly calling the function
-     * <code>tmgriface->status_report_requested()</code> on the \c tmgriface object
+     * <code>tmgriface->statusReportRequested()</code> on the \c tmgriface object
      * provided to <code>Task::run()</code>. This function call does not require a \c
      * critical section and is fast, so this check can be done often. The function
-     * <code>tmgriface->status_report_requested()</code> returns a \c bool indicating
+     * <code>tmgriface->statusReportRequested()</code> returns a \c bool indicating
      * whether such a report was requested or not. If such a report was requested, then
      * the thread should prepare its status report object (of type \c
-     * TaskStatusReportType), and call <code>tmgriface->submit_status_report(const
+     * TaskStatusReportType), and call <code>tmgriface->submitStatusReport(const
      * TaskStatusReportType & obj)</code>.
      *
      * \par
@@ -631,7 +631,7 @@ namespace OMP {
      *
      */
     template<typename Fn>
-    inline void set_status_report_handler(Fn fnstatus)
+    inline void setStatusReportHandler(Fn fnstatus)
     {
 #pragma omp critical
       {
@@ -639,7 +639,7 @@ namespace OMP {
       }
     }
 
-    inline void request_status_report()
+    inline void requestStatusReport()
     {
       //
       // This function can be called from a signal handler. We essentially can't do

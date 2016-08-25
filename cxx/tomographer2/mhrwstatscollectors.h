@@ -123,16 +123,16 @@ public:
   {
   }
 
-  // thermalizing_done() callback
+  // thermalizingDone() callback
 
   template<int I = 0>
-  inline typename std::enable_if<I < NumStatColl, void>::type thermalizing_done()
+  inline typename std::enable_if<I < NumStatColl, void>::type thermalizingDone()
   {
-    std::get<I>(statscollectors).thermalizing_done();
-    thermalizing_done<I+1>();
+    std::get<I>(statscollectors).thermalizingDone();
+    thermalizingDone<I+1>();
   }
   template<int I = 0>
-  inline typename std::enable_if<I == NumStatColl, void>::type thermalizing_done()
+  inline typename std::enable_if<I == NumStatColl, void>::type thermalizingDone()
   {
   }
 
@@ -150,27 +150,27 @@ public:
   }
 
 
-  // raw_move() callback
+  // rawMove() callback
 
   template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
-  inline typename std::enable_if<I < NumStatColl, void>::type raw_move(
+  inline typename std::enable_if<I < NumStatColl, void>::type rawMove(
       CountIntType k, bool is_thermalizing, bool is_live_iter, bool accepted,
       double a, const PointType & newpt, FnValueType newptval,
       const PointType & curpt, FnValueType curptval,
       MHRandomWalk & rw
       )
   {
-    std::get<I>(statscollectors).raw_move(
+    std::get<I>(statscollectors).rawMove(
         k, is_thermalizing, is_live_iter, accepted, a,
         newpt, newptval, curpt, curptval, rw
         );
-    raw_move<CountIntType, PointType, FnValueType, MHRandomWalk, I+1>(
+    rawMove<CountIntType, PointType, FnValueType, MHRandomWalk, I+1>(
         k, is_thermalizing, is_live_iter, accepted, a,
         newpt, newptval, curpt, curptval, rw
         );
   }
   template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
-  inline typename std::enable_if<I == NumStatColl, void>::type raw_move(
+  inline typename std::enable_if<I == NumStatColl, void>::type rawMove(
       CountIntType, bool, bool, bool, double, const PointType &, FnValueType,
       const PointType &, FnValueType, MHRandomWalk &
       )
@@ -178,19 +178,19 @@ public:
   }
 
 
-  // process_sample() callback
+  // processSample() callback
 
   template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
-  inline typename std::enable_if<I < NumStatColl, void>::type process_sample(
+  inline typename std::enable_if<I < NumStatColl, void>::type processSample(
       CountIntType k, CountIntType n, const PointType & curpt, FnValueType curptval, MHRandomWalk & rw
       )
   {
-    std::get<I>(statscollectors).process_sample(k, n, curpt, curptval, rw);
-    process_sample<CountIntType, PointType, FnValueType, MHRandomWalk, I+1>(k, n, curpt, curptval, rw);
+    std::get<I>(statscollectors).processSample(k, n, curpt, curptval, rw);
+    processSample<CountIntType, PointType, FnValueType, MHRandomWalk, I+1>(k, n, curpt, curptval, rw);
   }
 
   template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk, int I = 0>
-  inline typename std::enable_if<I == NumStatColl, void>::type process_sample(
+  inline typename std::enable_if<I == NumStatColl, void>::type processSample(
       CountIntType, CountIntType, const PointType &, FnValueType, MHRandomWalk &
       )
   {
@@ -298,7 +298,7 @@ public:
     _histogram.reset();
   }
   //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
-  inline void thermalizing_done()
+  inline void thermalizingDone()
   {
   }
   /** \brief Part of the \ref pageInterfaceMHRWStatsCollector.
@@ -316,38 +316,38 @@ public:
 	// _logger.longdebug("ValueHistogramMHRWStatsCollector", "done()");
 	_logger.longdebug("ValueHistogramMHRWStatsCollector",
 		       "Done walking & collecting stats. Here's the histogram:\n"
-		       + _histogram.pretty_print());
+		       + _histogram.prettyPrint());
       }
     }
   }
 
   //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
   template<typename CountIntType, typename PointType, typename LLHValueType, typename MHRandomWalk>
-  void raw_move(CountIntType k, bool /*is_thermalizing*/, bool /*is_live_iter*/, bool /*accepted*/,
+  void rawMove(CountIntType k, bool /*is_thermalizing*/, bool /*is_live_iter*/, bool /*accepted*/,
                 double /*a*/, const PointType & /*newpt*/, LLHValueType /*newptval*/,
                 const PointType & /*curpt*/, LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
     _logger.longdebug("ValueHistogramMHRWStatsCollector", [&](std::ostream & stream) {
-	stream << "raw_move(): k=" << k;
+	stream << "rawMove(): k=" << k;
       });
   }
 
   //! Part of the \ref pageInterfaceMHRWStatsCollector. Records the sample in the histogram.
   template<typename CountIntType, typename PointType, typename LLHValueType, typename MHRandomWalk>
-  std::size_t process_sample(CountIntType k, CountIntType n, const PointType & curpt,
+  std::size_t processSample(CountIntType k, CountIntType n, const PointType & curpt,
                              LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
     ValueType val = _vcalc.getValue(curpt);
 
     _logger.longdebug("ValueHistogramMHRWStatsCollector", [&](std::ostream & stream) {
-	stream << "in process_sample(): "
+	stream << "in processSample(): "
 	       << "k=" << k << ", n=" << n << ", val=" << val
 	       << " [with ValueType=" << typeid(ValueType).name() << "]" ;
       });
 
     return _histogram.record(val);
 
-    //_logger.longdebug("ValueHistogramMHRWStatsCollector", "process_sample() finished");
+    //_logger.longdebug("ValueHistogramMHRWStatsCollector", "processSample() finished");
   }
  
 
@@ -433,10 +433,10 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
     template<typename BinningAnalysisType>
     Result(HistogramParams p, const BinningAnalysisType & b)
       : hist(p),
-	error_levels(b.num_track_values(), b.num_levels()+1),
-	converged_status(Eigen::ArrayXi::Constant(b.num_track_values(), BinningAnalysisType::UNKNOWN_CONVERGENCE))
+	error_levels(b.numTrackValues(), b.numLevels()+1),
+	converged_status(Eigen::ArrayXi::Constant(b.numTrackValues(), BinningAnalysisType::UNKNOWN_CONVERGENCE))
     {
-      tomographer_assert(converged_status.rows() == b.num_track_values() && converged_status.cols() == 1);
+      tomographer_assert(converged_status.rows() == b.numTrackValues() && converged_status.cols() == 1);
     }
 
     //! Histogram, already with error bars
@@ -449,7 +449,7 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
     Eigen::ArrayXi converged_status;
 
     //! Dump values, error bars and convergence status in human-readable form into ostream
-    inline void dump_convergence_analysis(std::ostream & str) const
+    inline void dumpConvergenceAnalysis(std::ostream & str) const
     {
       for (int k = 0; k < converged_status.size(); ++k) {
 	str << "\tval[" << std::setw(3) << k << "] = "
@@ -469,10 +469,10 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
     }
 
     //! Dump values, error bars and convergence status in human-readable form as string
-    inline std::string dump_convergence_analysis() const
+    inline std::string dumpConvergenceAnalysis() const
     {
       std::stringstream ss;
-      dump_convergence_analysis(ss);
+      dumpConvergenceAnalysis(ss);
       return ss.str();
     }
 
@@ -596,9 +596,9 @@ public:
     value_histogram.init();
   }
   //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
-  inline void thermalizing_done()
+  inline void thermalizingDone()
   {
-    value_histogram.thermalizing_done();
+    value_histogram.thermalizingDone();
   }
   //! Finalize the data collection. Part of the \ref pageInterfaceMHRWStatsCollector.
   inline void done()
@@ -612,42 +612,42 @@ public:
     CountRealAvgType normalization = h.bins.sum() + h.off_chart; // need ALL samples, because that's
 								 // what the binning analysis sees
     result.hist.bins = h.bins.template cast<CountRealAvgType>() / normalization;
-    result.error_levels = binning_analysis.calc_error_levels(result.hist.bins);
-    result.hist.delta = result.error_levels.col(binning_analysis.num_levels()).template cast<CountRealAvgType>();
+    result.error_levels = binning_analysis.calcErrorLevels(result.hist.bins);
+    result.hist.delta = result.error_levels.col(binning_analysis.numLevels()).template cast<CountRealAvgType>();
     result.hist.off_chart = h.off_chart / normalization;
 
-    result.converged_status = binning_analysis.determine_error_convergence(result.error_levels);
+    result.converged_status = binning_analysis.determineErrorConvergence(result.error_levels);
 
     logger.debug("ValueHistogramWithBinningMHRWStatsCollector", [&,this](std::ostream & str) {
         str << "Binning analysis: bin sqmeans at different binning levels are:\n"
-            << binning_analysis.get_bin_sqmeans() << "\n"
+            << binning_analysis.getBinSqmeans() << "\n"
 	    << "\t-> so the error bars at different binning levels are:\n"
 	    << result.error_levels << "\n"
 	    << "\t-> convergence analysis: \n";
-	result.dump_convergence_analysis(str);
-	str << "\t... and just for you, here is the final histogram:\n" << result.hist.pretty_print() << "\n";
+	result.dumpConvergenceAnalysis(str);
+	str << "\t... and just for you, here is the final histogram:\n" << result.hist.prettyPrint() << "\n";
       });
   }
 
   //! Part of the \ref pageInterfaceMHRWStatsCollector. No-op.
   template<typename CountIntType2, typename PointType, typename LLHValueType, typename MHRandomWalk>
-  inline void raw_move(CountIntType2 k, bool is_thermalizing, bool is_live_iter, bool accepted,
-		       double a, const PointType & newpt, LLHValueType newptval,
-		       const PointType & curpt, LLHValueType curptval, MHRandomWalk & mh)
+  inline void rawMove(CountIntType2 k, bool is_thermalizing, bool is_live_iter, bool accepted,
+                      double a, const PointType & newpt, LLHValueType newptval,
+                      const PointType & curpt, LLHValueType curptval, MHRandomWalk & mh)
   {
-    value_histogram.raw_move(k, is_thermalizing, is_live_iter, accepted, a, newpt, newptval, curpt, curptval, mh);
+    value_histogram.rawMove(k, is_thermalizing, is_live_iter, accepted, a, newpt, newptval, curpt, curptval, mh);
   }
 
   //! Part of the \ref pageInterfaceMHRWStatsCollector. Records the sample in the histogram.
   template<typename CountIntType2, typename PointType, typename LLHValueType, typename MHRandomWalk>
-  inline void process_sample(CountIntType2 k, CountIntType2 n, const PointType & curpt,
-			     LLHValueType curptval, MHRandomWalk & mh)
+  inline void processSample(CountIntType2 k, CountIntType2 n, const PointType & curpt,
+                            LLHValueType curptval, MHRandomWalk & mh)
   {
-    std::size_t histindex = value_histogram.process_sample(k, n, curpt, curptval, mh);
-    binning_analysis.process_new_values(
+    std::size_t histindex = value_histogram.processSample(k, n, curpt, curptval, mh);
+    binning_analysis.processNewValues(
 	Tools::canonicalBasisVec<Eigen::Array<ValueType,Eigen::Dynamic,1> >(
             histindex,
-            value_histogram.histogram().num_bins()
+            value_histogram.histogram().numBins()
             )
 	);
   }
@@ -747,7 +747,7 @@ struct MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator
 
     typedef typename MHRWStatsCollector::HistogramType HistogramType;
 
-    return "Histogram: " + histogram_short_bar<HistogramType>(stats->histogram(), true, maxbarwidth);
+    return "Histogram: " + histogramShortBar<HistogramType>(stats->histogram(), true, maxbarwidth);
   }
 };
 // static members:
@@ -783,17 +783,17 @@ struct MHRWStatsCollectorStatus<ValueHistogramWithBinningMHRWStatsCollector<Para
     //typedef typename MHRWStatsCollector::CountRealAvgType CountRealAvgType;
     typedef typename BinningAnalysisType::ValueType ValueType;
     const auto& binning_analysis = stats->getBinningAnalysis();
-    Eigen::Array<ValueType, Eigen::Dynamic, 1> binmeans(histogram.num_bins());
+    Eigen::Array<ValueType, Eigen::Dynamic, 1> binmeans(histogram.numBins());
     binmeans = histogram.bins.template cast<ValueType>() /
       (ValueType)(histogram.bins.sum() + histogram.off_chart);
 
-    auto error_levels = binning_analysis.calc_error_levels(binmeans);
-    auto conv_status = binning_analysis.determine_error_convergence(error_levels);
+    auto error_levels = binning_analysis.calcErrorLevels(binmeans);
+    auto conv_status = binning_analysis.determineErrorConvergence(error_levels);
 
     int n_cnvg = 0;
     int n_unknown = 0;
     int n_not_cnvg = 0;
-    for (std::size_t k = 0; k < (std::size_t)histogram.num_bins(); ++k) {
+    for (std::size_t k = 0; k < (std::size_t)histogram.numBins(); ++k) {
       if (conv_status(k) == BinningAnalysisType::CONVERGED) {
 	++n_cnvg;
       } else if (conv_status(k) == BinningAnalysisType::NOT_CONVERGED) {

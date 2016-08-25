@@ -67,17 +67,17 @@ struct TestLatticeMHRWBase
 
   inline void init() { }
 
-  inline PointType startpoint()
+  inline PointType startPoint()
   {
     return PointType::Zero(latticeDims.size());
   }
 
-  inline void thermalizing_done() { }
+  inline void thermalizingDone() { }
 
   inline void done() { }
 
   template<typename RealType>
-  inline PointType jump_fn(const PointType & curpt, const RealType step_size)
+  inline PointType jumpFn(const PointType & curpt, const RealType step_size)
   {
     auto rnddist = _get_step_rnddist(step_size);
 
@@ -171,7 +171,7 @@ struct TestLatticeMHRWGaussPeak
   typedef double FnValueType; // use 'double' otherwise it's impossible to make MHRW steps "smooth"
   enum { UseFnSyntaxType = Tomographer::MHUseFnLogValue } ;
 
-  inline FnValueType fnlogval(const PointType & pt)
+  inline FnValueType fnLogVal(const PointType & pt)
   {
     FnValueType vval = - FnValueType((pt - Offset).transpose() * Sigma * (pt - Offset)) / SigmaInvScale;
     Base::_logger.sublogger(TOMO_ORIGIN).longdebug([&](std::ostream & stream) {
@@ -184,6 +184,69 @@ struct TestLatticeMHRWGaussPeak
   }
 
 };
+
+
+
+struct TestMHRWStatsCollector
+{
+  int count_rawmoves;
+  int count_samples;
+    
+  int Nthermchk;
+  int Nrunchk;
+  int Nsweepchk;
+    
+  TestMHRWStatsCollector(int sweep_size, int check_n_therm, int check_n_run)
+    : count_rawmoves(0),
+      count_samples(0),
+      Nthermchk(check_n_therm),
+      Nrunchk(check_n_run),
+      Nsweepchk(sweep_size)
+  {
+  }
+  void init()
+  {
+    BOOST_CHECK_EQUAL(count_rawmoves, 0);
+    BOOST_CHECK_EQUAL(count_samples, 0);
+  }
+  void thermalizingDone()
+  {
+    BOOST_CHECK_EQUAL(count_rawmoves, Nthermchk*Nsweepchk);
+    BOOST_CHECK_EQUAL(count_samples, 0);
+  }
+  void done()
+  {
+    BOOST_CHECK_EQUAL(count_rawmoves, Nthermchk*Nsweepchk+Nrunchk*Nsweepchk);
+    BOOST_CHECK_EQUAL(count_samples, Nrunchk);
+  }
+  template<typename... Args>
+  void processSample(Args&&... /*a*/)
+  //CountIntType k, CountIntType n, const PointType & pt, FnValueType fnval, MHRandomWalk & rw)
+  {
+    ++count_samples;
+  }
+  template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk>
+  void rawMove(CountIntType k, bool is_thermalizing, bool is_live_iter, bool accepted, double a,
+                const PointType & /*newpt*/, FnValueType /*newptval*/, const PointType & /*curpt*/,
+                FnValueType /*curptval*/, MHRandomWalk & /*rw*/)
+  {
+    if (count_rawmoves < Nthermchk*Nsweepchk) {
+      BOOST_CHECK_EQUAL(k, count_rawmoves);
+    } else {
+      BOOST_CHECK_EQUAL(k, count_rawmoves-Nthermchk*Nsweepchk);
+    }
+    BOOST_CHECK_EQUAL((count_rawmoves < Nthermchk*Nsweepchk), is_thermalizing);
+    BOOST_CHECK_EQUAL(is_live_iter, !is_thermalizing && ((k+1)%Nsweepchk == 0));
+
+    BOOST_MESSAGE("a = " << a);
+    if (a + std::numeric_limits<double>::epsilon() >= 1.0) {
+      BOOST_CHECK(accepted);
+    }
+
+    ++count_rawmoves;
+  }
+};
+
 
 
 #endif

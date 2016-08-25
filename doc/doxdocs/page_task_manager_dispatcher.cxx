@@ -106,9 +106,9 @@
  *          and TaskManagerIface.
  *
  * \par
- *          The code in \c run() should poll <code>tmgriface->status_report_requested()</code>
+ *          The code in \c run() should poll <code>tmgriface->statusReportRequested()</code>
  *          and provide a status report if requested to do so via
- *          <code>tmgriface->status_report(const TaskStatusReportType &)</code>. See documentation
+ *          <code>tmgriface->statusReport(const TaskStatusReportType &)</code>. See documentation
  *          for \ref pageInterfaceTaskManagerIface.
  *
  * \par ResultType getResult()
@@ -132,7 +132,7 @@
  *         \a init() will be called before the tasks are run (e.g. before starting the
  *         parallel section), and may be used to initialize data.
  *
- * \par collect_result(CountType task_no, const ResultType& taskresult, const ConstantDataType * pcdata)
+ * \par collectResult(CountType task_no, const ResultType& taskresult, const ConstantDataType * pcdata)
  *         Called each time a task has finished, with the corresponding task result, along
  *         with information about which task it was and as always the shared constant
  *         data. This method does not need to worry about concurrence, for example writing
@@ -144,13 +144,11 @@
  *         this is called within a \c critical OMP section, so it may safely access and
  *         write shared data.
  *
- * \par void runs_finished(CountType num_total_runs, const ConstantDataType * pcdata)
+ * \par void runsFinished(CountType num_total_runs, const ConstantDataType * pcdata)
  *         Called after all the tasks have finished. This is the good time to, e.g.,
  *         finalize collected values, such as multiplying by parameter space volume,
  *         dividing by the number of samples to get the average, etc.
  *
- *
- * \todo API CHANGE: change names -> camel case
  */
 
 
@@ -160,22 +158,20 @@
  * manager/dispatcher. Currently, the only use is to check whether the user has requested
  * a status report, and submit a report if this was the case.
  *
- * Tasks should poll \a status_report_requested() often (e.g. at each iteration), and
+ * Tasks should poll \a statusReportRequested() often (e.g. at each iteration), and
  * submit a status report if that function returns \c true.
  *
- * \par bool status_report_requested()
+ * \par bool statusReportRequested()
  *          Return \c true if a status report was recently requested. If so, you should
- *          submit your report using the \a status_report() method.  This function should
+ *          submit your report using the \a statusReport() method.  This function should
  *          be implemented such that it can be called often without performance problems
  *          (e.g. check shared variable value).
  *
- * \par void status_report(const TaskStatusReportType &)
- *          Submit the status report if \a status_report_requested() returned \c
+ * \par void statusReport(const TaskStatusReportType &)
+ *          Submit the status report if \a statusReportRequested() returned \c
  *          true. Call this function ONCE only per task, and only if a status report was
  *          requested. The behavior of this function otherwise is undefined.
  *
- *
- * \todo API CHANGE: change names -> camel case
  */
 
 

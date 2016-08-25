@@ -66,7 +66,7 @@ BOOST_AUTO_TEST_CASE(basic)
   hist.record(0.52);
   hist.record(1.2);
 
-  BOOST_CHECK_EQUAL(hist.num_bins(), 10);
+  BOOST_CHECK_EQUAL(hist.numBins(), 10);
   BOOST_CHECK_SMALL(hist.params.min, tol_f);
   BOOST_CHECK_CLOSE(hist.params.max, 1.0, tol_percent_f);
 
@@ -95,45 +95,45 @@ BOOST_AUTO_TEST_CASE(boundaries)
 {
   Tomographer::UniformBinsHistogram<float, int> hist(0.0f, 1.f, 10);
 
-  BOOST_CHECK(hist.is_within_bounds(0.43f));
-  BOOST_CHECK(!hist.is_within_bounds(-0.01f));
-  BOOST_CHECK(!hist.is_within_bounds(1.2f));
-  BOOST_CHECK(!hist.is_within_bounds(std::numeric_limits<float>::quiet_NaN()));
-  BOOST_CHECK(!hist.is_within_bounds(std::numeric_limits<float>::infinity()));
-  BOOST_CHECK(!hist.is_within_bounds(-std::numeric_limits<float>::infinity()));
+  BOOST_CHECK(hist.isWithinBounds(0.43f));
+  BOOST_CHECK(!hist.isWithinBounds(-0.01f));
+  BOOST_CHECK(!hist.isWithinBounds(1.2f));
+  BOOST_CHECK(!hist.isWithinBounds(std::numeric_limits<float>::quiet_NaN()));
+  BOOST_CHECK(!hist.isWithinBounds(std::numeric_limits<float>::infinity()));
+  BOOST_CHECK(!hist.isWithinBounds(-std::numeric_limits<float>::infinity()));
 
-  BOOST_CHECK_EQUAL(hist.bin_index(0.13f), 1);
-  BOOST_CHECK_EQUAL(hist.bin_index(0.99f), 9);
-  BOOST_CHECK_EQUAL(hist.bin_index(0.34f), 3);
+  BOOST_CHECK_EQUAL(hist.binIndex(0.13f), 1);
+  BOOST_CHECK_EQUAL(hist.binIndex(0.99f), 9);
+  BOOST_CHECK_EQUAL(hist.binIndex(0.34f), 3);
 
-  BOOST_CHECK_SMALL(hist.bin_lower_value(0), tol_f);
-  BOOST_CHECK_CLOSE(hist.bin_lower_value(1), 0.1f, tol_percent_f);
-  BOOST_CHECK_CLOSE(hist.bin_lower_value(6), 0.6f, tol_percent_f);
+  BOOST_CHECK_SMALL(hist.binLowerValue(0), tol_f);
+  BOOST_CHECK_CLOSE(hist.binLowerValue(1), 0.1f, tol_percent_f);
+  BOOST_CHECK_CLOSE(hist.binLowerValue(6), 0.6f, tol_percent_f);
 
-  BOOST_CHECK_CLOSE(hist.bin_upper_value(0), 0.1f, tol_percent_f);
-  BOOST_CHECK_CLOSE(hist.bin_upper_value(5), 0.6f, tol_percent_f);
-  BOOST_CHECK_CLOSE(hist.bin_upper_value(9), 1.0f, tol_percent_f);
+  BOOST_CHECK_CLOSE(hist.binUpperValue(0), 0.1f, tol_percent_f);
+  BOOST_CHECK_CLOSE(hist.binUpperValue(5), 0.6f, tol_percent_f);
+  BOOST_CHECK_CLOSE(hist.binUpperValue(9), 1.0f, tol_percent_f);
 
-  BOOST_CHECK_CLOSE(hist.bin_center_value(1), 0.15f, tol_percent_f);
+  BOOST_CHECK_CLOSE(hist.binCenterValue(1), 0.15f, tol_percent_f);
   
-  BOOST_CHECK_CLOSE(hist.bin_resolution(), 0.1f, tol_percent_f);
+  BOOST_CHECK_CLOSE(hist.binResolution(), 0.1f, tol_percent_f);
 
   {
     EigenAssertTest::setting_scope settingvariable(true); // eigen_assert() should throw an exception.
     BOOST_CHECK_THROW(
-        hist.bin_lower_value(-1),
+        hist.binLowerValue(-1),
         ::Tomographer::Tools::eigen_assert_exception
         );
     BOOST_CHECK_THROW(
-        hist.bin_lower_value(11),
+        hist.binLowerValue(11),
         ::Tomographer::Tools::eigen_assert_exception
         );
     BOOST_CHECK_THROW(
-        hist.bin_center_value(-1),
+        hist.binCenterValue(-1),
         ::Tomographer::Tools::eigen_assert_exception
         );
     BOOST_CHECK_THROW(
-        hist.bin_upper_value(-1),
+        hist.binUpperValue(-1),
         ::Tomographer::Tools::eigen_assert_exception
         );
   }
@@ -206,7 +206,7 @@ BOOST_AUTO_TEST_CASE(floatcounttype)
   //   0.0  0.1  0.2  0.3  0.4   0.5  0.6    0.7  0.8  0.9
   a <<   0,   0, 1.0,   0,   0, 3.01, 1.2, 381.4,   0,   0;
 
-  BOOST_MESSAGE(hist.pretty_print(100));
+  BOOST_MESSAGE(hist.prettyPrint(100));
 
   MY_BOOST_CHECK_EIGEN_EQUAL(hist.bins, a, tol);
   BOOST_CHECK_CLOSE(hist.off_chart, 120.399, tol_percent);
@@ -235,7 +235,7 @@ BOOST_AUTO_TEST_CASE(basic)
   int k;
 
   for (k = 0; k < 4; ++k) {
-    BOOST_CHECK_CLOSE(hist.errorbar(k), hist.delta(k), tol_percent);
+    BOOST_CHECK_CLOSE(hist.errorBar(k), hist.delta(k), tol_percent);
   }
 
   hist.reset();
@@ -269,30 +269,30 @@ BOOST_AUTO_TEST_CASE(no_underlying_error_bars)
 
   BOOST_CHECK_SMALL(avghist.params.min, tol);
   BOOST_CHECK_CLOSE(avghist.params.max, 1.0, tol_percent);
-  BOOST_CHECK_EQUAL(avghist.num_bins(), 4);
+  BOOST_CHECK_EQUAL(avghist.numBins(), 4);
 
   { SimpleHistogramType hist(p);
     hist.load( inline_vector_4<double>(15, 45, 42, 12) , 36 ); // sum=150
-    avghist.add_histogram(hist);
+    avghist.addHistogram(hist);
   }
   { SimpleHistogramType hist(p);
     hist.load( inline_vector_4<double>(17, 43, 40, 18) , 32 );
-    avghist.add_histogram(hist);
+    avghist.addHistogram(hist);
   }
   { SimpleHistogramType hist(p);
     hist.load( inline_vector_4<double>(20, 38, 47, 10) , 35 );
-    avghist.add_histogram(hist);
+    avghist.addHistogram(hist);
   }
   { SimpleHistogramType hist(p);
     hist.load( inline_vector_4<double>(18, 44, 43, 13) , 32 );
-    avghist.add_histogram(hist);
+    avghist.addHistogram(hist);
   }
 
   avghist.finalize();
 
   BOOST_CHECK_EQUAL(avghist.num_histograms, 4);
 
-  BOOST_MESSAGE(avghist.pretty_print());
+  BOOST_MESSAGE(avghist.prettyPrint());
 
   BOOST_CHECK_CLOSE(avghist.bins.sum() + avghist.off_chart, 150.0, tol_percent);
 }
@@ -311,34 +311,34 @@ BOOST_AUTO_TEST_CASE(with_underlying_error_bars)
 
   BOOST_CHECK_SMALL(avghist.params.min, tol);
   BOOST_CHECK_CLOSE(avghist.params.max, 1.0, tol_percent);
-  BOOST_CHECK_EQUAL(avghist.num_bins(), 4);
+  BOOST_CHECK_EQUAL(avghist.numBins(), 4);
 
   { BaseHistogramType hist(p);
     hist.load( inline_vector_4<double>(15, 45, 42, 12) , 36 ); // sum=150
     (hist.delta << 1, 1, 1, 1).finished();
-    avghist.add_histogram(hist);
+    avghist.addHistogram(hist);
   }
   { BaseHistogramType hist(p);
     hist.load( inline_vector_4<double>(17, 43, 40, 18) , 32 );
     (hist.delta << 2, 2, 5, 2).finished();
-    avghist.add_histogram(hist);
+    avghist.addHistogram(hist);
   }
   { BaseHistogramType hist(p);
     hist.load( inline_vector_4<double>(20, 38, 47, 10) , 35 );
     (hist.delta << 1, 2, 13, 4).finished();
-    avghist.add_histogram(hist);
+    avghist.addHistogram(hist);
   }
   { BaseHistogramType hist(p);
     hist.load( inline_vector_4<double>(18, 44, 43, 13) , 32 );
     (hist.delta << 2, 1, 24, 3).finished();
-    avghist.add_histogram(hist);
+    avghist.addHistogram(hist);
   }
 
   avghist.finalize();
 
   BOOST_CHECK_EQUAL(avghist.num_histograms, 4);
 
-  BOOST_MESSAGE(avghist.pretty_print());
+  BOOST_MESSAGE(avghist.prettyPrint());
 
   BOOST_CHECK_CLOSE(avghist.bins.sum() + avghist.off_chart, 150.f, tol_percent_f);
   auto vecbins = inline_vector_4<float>(70/4.f,170/4.f,172/4.f,53/4.f);
@@ -376,13 +376,13 @@ BOOST_AUTO_TEST_CASE(basic)
     "0.9000 |**********************                                                 2\n"
     ;
 
-  const std::string s = Tomographer::histogram_pretty_print(hist, max_width);
+  const std::string s = Tomographer::histogramPrettyPrint(hist, max_width);
   BOOST_CHECK_EQUAL(s, correct_str) ;
-  const std::string s2 = hist.pretty_print(max_width);
+  const std::string s2 = hist.prettyPrint(max_width);
   BOOST_CHECK_EQUAL(s2, correct_str) ;
 
   std::ostringstream ss;
-  Tomographer::histogram_pretty_print(ss, hist, max_width);
+  Tomographer::histogramPrettyPrint(ss, hist, max_width);
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
 BOOST_AUTO_TEST_CASE(errbars)
@@ -403,13 +403,13 @@ BOOST_AUTO_TEST_CASE(errbars)
     "0.9000 |****************|--|                                    0.0220 +- 0.0015\n"
     ;
 
-  const std::string s = Tomographer::histogram_pretty_print(hist, max_width);
+  const std::string s = Tomographer::histogramPrettyPrint(hist, max_width);
   BOOST_CHECK_EQUAL(s, correct_str) ;
-  const std::string s2 = hist.pretty_print(max_width);
+  const std::string s2 = hist.prettyPrint(max_width);
   BOOST_CHECK_EQUAL(s2, correct_str) ;
 
   std::ostringstream ss;
-  Tomographer::histogram_pretty_print(ss, hist, max_width);
+  Tomographer::histogramPrettyPrint(ss, hist, max_width);
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
 
@@ -430,14 +430,14 @@ BOOST_AUTO_TEST_CASE(toolargeerrbar)
     " 1.000 |*****************|--------------------------------|         4.00 +- 2.00\n"
     ;
 
-  const std::string s = Tomographer::histogram_pretty_print(hist, max_width);
+  const std::string s = Tomographer::histogramPrettyPrint(hist, max_width);
   BOOST_CHECK_EQUAL(s, correct_str) ;
 
-  const std::string s2 = hist.pretty_print(max_width);
+  const std::string s2 = hist.prettyPrint(max_width);
   BOOST_CHECK_EQUAL(s2, correct_str) ;
 
   std::ostringstream ss;
-  Tomographer::histogram_pretty_print(ss, hist, max_width);
+  Tomographer::histogramPrettyPrint(ss, hist, max_width);
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
 BOOST_AUTO_TEST_CASE(withinf)
@@ -455,12 +455,12 @@ BOOST_AUTO_TEST_CASE(withinf)
     " 1.000 ||                                                            inf +- 1.00\n"
     ;
 
-  const std::string s = Tomographer::histogram_pretty_print(hist, max_width);
+  const std::string s = Tomographer::histogramPrettyPrint(hist, max_width);
   BOOST_CHECK_EQUAL(s, correct_str) ;
-  const std::string s2 = hist.pretty_print(max_width);
+  const std::string s2 = hist.prettyPrint(max_width);
   BOOST_CHECK_EQUAL(s2, correct_str) ;
   std::ostringstream ss;
-  Tomographer::histogram_pretty_print(ss, hist, max_width);
+  Tomographer::histogramPrettyPrint(ss, hist, max_width);
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
 BOOST_AUTO_TEST_CASE(withinf2)
@@ -478,12 +478,12 @@ BOOST_AUTO_TEST_CASE(withinf2)
     " 1.000 ||                                                           2.00 +-  inf\n"
     ;
 
-  const std::string s = Tomographer::histogram_pretty_print(hist, max_width);
+  const std::string s = Tomographer::histogramPrettyPrint(hist, max_width);
   BOOST_CHECK_EQUAL("\n"+s, "\n"+correct_str) ;
-  const std::string s2 = hist.pretty_print(max_width);
+  const std::string s2 = hist.prettyPrint(max_width);
   BOOST_CHECK_EQUAL(s2, correct_str) ;
   std::ostringstream ss;
-  Tomographer::histogram_pretty_print(ss, hist, max_width);
+  Tomographer::histogramPrettyPrint(ss, hist, max_width);
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
 BOOST_AUTO_TEST_CASE(withnan)
@@ -501,12 +501,12 @@ BOOST_AUTO_TEST_CASE(withnan)
     " 1.000 ||                                                            nan +- 1.00\n"
     ;
 
-  const std::string s = Tomographer::histogram_pretty_print(hist, max_width);
+  const std::string s = Tomographer::histogramPrettyPrint(hist, max_width);
   BOOST_CHECK_EQUAL("\n"+s, "\n"+correct_str) ;
-  const std::string s2 = hist.pretty_print(max_width);
+  const std::string s2 = hist.prettyPrint(max_width);
   BOOST_CHECK_EQUAL(s2, correct_str) ;
   std::ostringstream ss;
-  Tomographer::histogram_pretty_print(ss, hist, max_width);
+  Tomographer::histogramPrettyPrint(ss, hist, max_width);
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
 BOOST_AUTO_TEST_CASE(withnan2)
@@ -524,12 +524,12 @@ BOOST_AUTO_TEST_CASE(withnan2)
     " 1.000 ||                                                           2.00 +-  nan\n"
     ;
 
-  const std::string s = Tomographer::histogram_pretty_print(hist, max_width);
+  const std::string s = Tomographer::histogramPrettyPrint(hist, max_width);
   BOOST_CHECK_EQUAL("\n"+s, "\n"+correct_str) ;
-  const std::string s2 = hist.pretty_print(max_width);
+  const std::string s2 = hist.prettyPrint(max_width);
   BOOST_CHECK_EQUAL(s2, correct_str) ;
   std::ostringstream ss;
-  Tomographer::histogram_pretty_print(ss, hist, max_width);
+  Tomographer::histogramPrettyPrint(ss, hist, max_width);
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
 
@@ -550,11 +550,11 @@ BOOST_AUTO_TEST_CASE(histogram_short_bar)
 
   const std::string correct_str = "0| -x#+|1";
 
-  const std::string s = Tomographer::histogram_short_bar(hist, false, max_width);
+  const std::string s = Tomographer::histogramShortBar(hist, false, max_width);
   BOOST_CHECK_EQUAL(s, correct_str) ;
 
   std::ostringstream ss;
-  Tomographer::histogram_short_bar(ss, hist, false, max_width);
+  Tomographer::histogramShortBar(ss, hist, false, max_width);
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
 
@@ -568,11 +568,11 @@ BOOST_AUTO_TEST_CASE(histogram_short_bar_log)
 
   const std::string correct_str = "0| .++-|1";
   
-  const std::string s = Tomographer::histogram_short_bar(hist, true, max_width);
+  const std::string s = Tomographer::histogramShortBar(hist, true, max_width);
   BOOST_CHECK_EQUAL(s, correct_str) ;
 
   std::ostringstream ss;
-  Tomographer::histogram_short_bar(ss, hist, true, max_width);
+  Tomographer::histogramShortBar(ss, hist, true, max_width);
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
 

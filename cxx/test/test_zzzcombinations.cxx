@@ -84,11 +84,11 @@ struct test_hypercube_mhwalker
 
   inline void init() { }
 
-  auto startpoint() -> decltype(PointType::Zero()) { return PointType::Zero(); }
+  auto startPoint() -> decltype(PointType::Zero()) { return PointType::Zero(); }
 
-  inline void thermalizing_done() { }
+  inline void thermalizingDone() { }
   inline void done() { }
-  inline PointType jump_fn(const PointType & curpt, RealScalar step_size)
+  inline PointType jumpFn(const PointType & curpt, RealScalar step_size)
   {
     PointType newpt;
     newpt = curpt + step_size*Tomographer::Tools::denseRandom<PointType>(rng, dist);
@@ -100,7 +100,7 @@ struct test_hypercube_mhwalker
     return newpt;
   }
 
-  inline FnValueType fnval(const PointType & )
+  inline FnValueType fnVal(const PointType & )
   {
     return 1.0;
   }
@@ -167,7 +167,7 @@ BOOST_AUTO_TEST_CASE(simple1)
 
   MY_BOOST_CHECK_EIGEN_EQUAL(result.converged_status,
                              Eigen::ArrayXi::Constant(
-                                 vhist.getBinningAnalysis().num_track_values(),
+                                 vhist.getBinningAnalysis().numTrackValues(),
                                  ValWBinningMHRWStatsCollectorType::BinningAnalysisType::CONVERGED
                                  ),
                              tol) ;
@@ -258,7 +258,7 @@ BOOST_AUTO_TEST_CASE(basic1)
   // exact same histograms.
 
   const auto & hist1 = fidstats.histogram();
-  BOOST_MESSAGE("FINAL HISTOGRAM(1):\n" << hist1.pretty_print(100));
+  BOOST_MESSAGE("FINAL HISTOGRAM(1):\n" << hist1.prettyPrint(100));
 
   boost::test_tools::output_test_stream output1(
       TOMOGRAPHER_TEST_PATTERNS_DIR "test_densedm_tspacellhwalker/hist1.txt",
@@ -268,7 +268,7 @@ BOOST_AUTO_TEST_CASE(basic1)
   BOOST_CHECK(output1.match_pattern());
 
   const auto & hist2 = fidstats2.histogram();
-  BOOST_MESSAGE("FINAL HISTOGRAM(2):\n" << hist2.pretty_print(100));
+  BOOST_MESSAGE("FINAL HISTOGRAM(2):\n" << hist2.prettyPrint(100));
 
   boost::test_tools::output_test_stream output2(
       TOMOGRAPHER_TEST_PATTERNS_DIR "test_densedm_tspacellhwalker/hist2.txt",
@@ -341,12 +341,12 @@ BOOST_AUTO_TEST_CASE(with_binning_analysis)
   // all error bars should have converged with these settings
   MY_BOOST_CHECK_EIGEN_EQUAL(
       result.converged_status,
-      Eigen::ArrayXi::Constant(result.hist.num_bins(),
+      Eigen::ArrayXi::Constant(result.hist.numBins(),
 			       ValWBinningMHRWStatsCollectorType::BinningAnalysisParamsType::CONVERGED),
       tol_f
       );
 
-  std::string conv_analysis = result.dump_convergence_analysis();
+  std::string conv_analysis = result.dumpConvergenceAnalysis();
   BOOST_MESSAGE("Convergence Analysis:\n" << conv_analysis);
 
   boost::test_tools::output_test_stream output_conv_analysis(

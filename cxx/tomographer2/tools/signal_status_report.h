@@ -57,7 +57,7 @@ struct SigHandlerTaskDispatcherStatusReporter
   SigHandlerTaskDispatcherStatusReporter(TaskDispatcher * tasks_, Logger & logger_)
     : tasks(tasks_), logger(logger_), time_start()
   {
-    tasks->set_status_report_handler(
+    tasks->setStatusReportHandler(
         [this](const typename TaskDispatcher::FullStatusReportType& report) {
           logger.debug("SigHandlerStatusReporter/lambda", "intermediate progress report lambda called");
           this->intermediate_progress_report(report);

@@ -165,7 +165,7 @@ public:
   }
 
   //! Return the starting point given in the constructor, or a random start point
-  inline const MatrixType & startpoint()
+  inline const MatrixType & startPoint()
   {
     // It's fine to hard-code "1e-3" because for any type, valid T-matrices have norm == 1
     if (_startpt.norm() > 1e-3) {
@@ -189,7 +189,7 @@ public:
   }
 
   //! Callback for after thermalizing is done. No-op.
-  inline void thermalizing_done()
+  inline void thermalizingDone()
   {
   }
 
@@ -206,7 +206,7 @@ public:
    * function (see \ref pageInterfaceDenseLLH)
    */
   TOMOGRAPHER_ENABLED_IF(DenseLLH::LLHCalcType == LLHCalcTypeX)
-  inline LLHValueType fnlogval(const MatrixType & T) const
+  inline LLHValueType fnLogVal(const MatrixType & T) const
   {
     MatrixType rho(T*T.adjoint());
     VectorParamType x = _px.HermToX(rho);
@@ -223,7 +223,7 @@ public:
    * function (see \ref pageInterfaceDenseLLH)
    */
   TOMOGRAPHER_ENABLED_IF(DenseLLH::LLHCalcType == LLHCalcTypeRho)
-  inline LLHValueType fnlogval(const MatrixType & T) const
+  inline LLHValueType fnLogVal(const MatrixType & T) const
   {
     LLHValueType llhval =  _llh.logLikelihoodRho(T*T.adjoint());
     // _log.longdebug("fnlogval( %s ) = %g\n", streamcstr(T*T.adjoint()), llhval);
@@ -232,7 +232,7 @@ public:
 
 
   //! Decides of a new point to jump to for the random walk
-  inline MatrixType jump_fn(const MatrixType& cur_T, RealScalar step_size)
+  inline MatrixType jumpFn(const MatrixType& cur_T, RealScalar step_size)
   {
     MatrixType DeltaT(Tools::denseRandom<MatrixType>(
                           _rng, _normal_distr_rnd, _llh.dmt.dim(), _llh.dmt.dim()

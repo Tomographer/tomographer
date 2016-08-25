@@ -153,7 +153,7 @@ inline tomo_internal::FinalAction<F> finally(F f)
  *
  */
 template<typename T_, bool IsDynamic_, T_ StaticValue_ = T_()>
-class static_or_dynamic
+class StaticOrDynamic
 {
 
 public:
@@ -168,13 +168,13 @@ public:
   static constexpr T StaticValue = StaticValue_;
 
   //! Default Constructor. Only if the value is stored at compile-time.
-  inline static_or_dynamic() { }
+  inline StaticOrDynamic() { }
   /** \brief Constructor with an explicit value.
    *
    * The value \a val must equal the compile-time fixed value, if any, or you'll get an
    * assert failure.
    */
-  inline explicit static_or_dynamic(T val) {
+  inline explicit StaticOrDynamic(T val) {
     tomographer_assert(val == StaticValue);
     (void)val; // silence "unused parameter" warning if tomographer_assert() gets optimized out
   }
@@ -193,38 +193,38 @@ public:
 };
 // static properties
 template<typename T_, bool IsDynamic_, T_ StaticValue_>
-constexpr bool static_or_dynamic<T_, IsDynamic_, StaticValue_>::IsDynamic;
+constexpr bool StaticOrDynamic<T_, IsDynamic_, StaticValue_>::IsDynamic;
 template<typename T_, bool IsDynamic_, T_ StaticValue_>
-constexpr typename static_or_dynamic<T_, IsDynamic_, StaticValue_>::T static_or_dynamic<T_, IsDynamic_, StaticValue_>::StaticValue;
+constexpr typename StaticOrDynamic<T_, IsDynamic_, StaticValue_>::T StaticOrDynamic<T_, IsDynamic_, StaticValue_>::StaticValue;
 
-/** \brief Template Specialization -- see \ref static_or_dynamic<T_,IsDynamic_,StaticValue_>
+/** \brief Template Specialization -- see \ref StaticOrDynamic<T_,IsDynamic_,StaticValue_>
  *
  * Specialization for the case if the value is known only at runtime.
  */
 template<typename T_, T_ StaticValue_>
-class static_or_dynamic<T_, true, StaticValue_>
+class StaticOrDynamic<T_, true, StaticValue_>
 {
 public:
 
-  //! Type of the value we are storing. See \ref static_or_dynamic<T_,IsDynamic_,StaticValue_>::T
+  //! Type of the value we are storing. See \ref StaticOrDynamic<T_,IsDynamic_,StaticValue_>::T
   typedef T_ T;
   //! Whether this value is flexible at run-time (dynamic), or fixed at compile-time (static).
   static constexpr bool IsDynamic = true;
 
   
   //! No default constructor.
-  static_or_dynamic() = delete;
+  StaticOrDynamic() = delete;
   /** \brief Constructor which initializes the value to \a val.
    *
    * The stored value may not be subsequently changed.
    */
-  inline explicit static_or_dynamic(T val) : _dyn_value(val) { }
+  inline explicit StaticOrDynamic(T val) : _dyn_value(val) { }
 
 
-  //! See \ref static_or_dynamic<T_,IsDynamic_,StaticValue_>::value()
+  //! See \ref StaticOrDynamic<T_,IsDynamic_,StaticValue_>::value()
   inline T value() const { return _dyn_value; }
 
-  //! See \ref static_or_dynamic<T_,IsDynamic_,StaticValue_>::operator()()
+  //! See \ref StaticOrDynamic<T_,IsDynamic_,StaticValue_>::operator()()
   inline T operator()() const { return value(); }
 
 private:
@@ -234,7 +234,7 @@ private:
 };
 // static properties
 template<typename T_, T_ StaticValue_>
-constexpr bool static_or_dynamic<T_, true, StaticValue_>::IsDynamic;
+constexpr bool StaticOrDynamic<T_, true, StaticValue_>::IsDynamic;
 
 
 // -----------------------------------------------------------------------------
@@ -250,7 +250,7 @@ constexpr bool static_or_dynamic<T_, true, StaticValue_>::IsDynamic;
  *
  */
 template<typename T_, bool enabled>
-struct store_if_enabled
+struct StoreIfEnabled
 {
   //! The type we're storing
   typedef T_ T;
@@ -259,17 +259,17 @@ struct store_if_enabled
 
   //! Constructor
   template<typename... Args>
-  explicit store_if_enabled(Args...) { }
+  explicit StoreIfEnabled(Args...) { }
 };
 // static properties
 template<typename T_, bool enabled>
-constexpr bool store_if_enabled<T_, enabled>::IsEnabled;
-/** \brief Specialization of \ref store_if_enabled<T_,enabled> for if we're storing a
+constexpr bool StoreIfEnabled<T_, enabled>::IsEnabled;
+/** \brief Specialization of \ref StoreIfEnabled<T_,enabled> for if we're storing a
  *         value
  *
  */
 template<typename T_>
-struct store_if_enabled<T_, true>
+struct StoreIfEnabled<T_, true>
 {
   //! The type we're storing
   typedef T_ T;
@@ -281,28 +281,28 @@ struct store_if_enabled<T_, true>
 
   //! Constructor. Any arguments are passed to the value's constructor.
   template<typename... ArgTypes>
-  explicit store_if_enabled(const ArgTypes& ...  args) : value(args...) { }
+  explicit StoreIfEnabled(const ArgTypes& ...  args) : value(args...) { }
 };
 // static properties:
 template<typename T_>
-constexpr bool store_if_enabled<T_, true>::IsEnabled;
+constexpr bool StoreIfEnabled<T_, true>::IsEnabled;
 
-/** \brief C++ Stream operators for \ref store_if_enabled<T,enabled>
+/** \brief C++ Stream operators for \ref StoreIfEnabled<T,enabled>
  *
  * Produces human-readable output.
  */
 template<typename T>
-inline std::ostream & operator<<(std::ostream & str, const store_if_enabled<T, false>& /*val*/)
+inline std::ostream & operator<<(std::ostream & str, const StoreIfEnabled<T, false>& /*val*/)
 {
   str << "[-]";
   return str;
 }
-/** \brief C++ Stream operators for \ref store_if_enabled<T,enabled>
+/** \brief C++ Stream operators for \ref StoreIfEnabled<T,enabled>
  *
  * Produces human-readable output.
  */
 template<typename T>
-inline std::ostream & operator<<(std::ostream & str, const store_if_enabled<T, true>& val)
+inline std::ostream & operator<<(std::ostream & str, const StoreIfEnabled<T, true>& val)
 {
   str << val.value;
   return str;
@@ -316,7 +316,7 @@ inline std::ostream & operator<<(std::ostream & str, const store_if_enabled<T, t
 /** \brief Return true if the argument is a power of two, false otherwise.
  */
 template<typename IntType = int>
-inline constexpr bool is_power_of_two(IntType N)
+inline constexpr bool isPowerOfTwo(IntType N)
 {
   // taken from http://stackoverflow.com/q/10585450/1694896
   return N && !(N & (N - 1));
@@ -332,7 +332,7 @@ inline constexpr bool is_power_of_two(IntType N)
  * the type \a Scalar is of type \a std::complex<>, or else set to \c 0.
  */
 template<typename Scalar>
-struct is_complex {
+struct isComplex {
   // use Eigen's existing implementation
   enum { value = Eigen::NumTraits<Scalar>::IsComplex };
 };
@@ -347,13 +347,13 @@ struct is_complex {
  * just an alias of \a Scalar.
  */
 template<typename Scalar>
-struct complex_real_scalar {
+struct ComplexRealScalar {
   typedef Scalar type;
 };
 
-//! Implementation of \ref complex_real_scalar for complex types.
+//! Implementation of \ref ComplexRealScalar for complex types.
 template<typename RealScalar>
-struct complex_real_scalar<std::complex<RealScalar> >
+struct ComplexRealScalar<std::complex<RealScalar> >
 {
   typedef RealScalar type;
 };
@@ -367,13 +367,13 @@ struct complex_real_scalar<std::complex<RealScalar> >
  * >= 0 is always true'.
  */
 template<typename X>
-inline typename std::enable_if<std::is_unsigned<X>::value, bool>::type is_positive(const X /* val */)
+inline typename std::enable_if<std::is_unsigned<X>::value, bool>::type isPositive(const X /* val */)
 {
   return true;
 }
-//! See \ref is_positive()
+//! See \ref isPositive()
 template<typename X>
-inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type is_positive(const X val)
+inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type isPositive(const X val)
 {
   return val >= 0;
 }

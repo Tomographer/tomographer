@@ -136,7 +136,7 @@ namespace tomo_internal {
 
     static inline FnValueType get_ptval(MHWalker & mhwalker, const PointType & curpt)
     {
-      return mhwalker.fnval(curpt);
+      return mhwalker.fnVal(curpt);
     }
     static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, double newptval,
                                      const PointType & /*curpt*/, double curptval)
@@ -156,7 +156,7 @@ namespace tomo_internal {
 
     static inline FnValueType get_ptval(MHWalker & mhwalker, const PointType & curpt)
     {
-      return mhwalker.fnlogval(curpt);
+      return mhwalker.fnLogVal(curpt);
     }
     static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, FnValueType newptval,
                                      const PointType & /*curpt*/, FnValueType curptval)
@@ -181,7 +181,7 @@ namespace tomo_internal {
     static inline double get_a_value(MHWalker & mhwalker, const PointType & newpt, FnValueType /*newptval*/,
                                      const PointType & curpt, FnValueType /*curptval*/)
     {
-      return mhwalker.fnrelval(newpt, curpt);
+      return mhwalker.fnRelVal(newpt, curpt);
     }
   };
 };
@@ -459,7 +459,7 @@ private:
     num_live_points = 0;
 
     // starting point
-    curpt = _mhwalker.startpoint();
+    curpt = _mhwalker.startPoint();
     curptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, curpt);
 
     _mhwalker.init();
@@ -470,8 +470,8 @@ private:
    */
   inline void _thermalizing_done()
   {
-    _mhwalker.thermalizing_done();
-    _stats.thermalizing_done();
+    _mhwalker.thermalizingDone();
+    _stats.thermalizingDone();
     _logger.longdebug("_thermalizing_done() done.");
   }
   /** \brief Relays to the MHWalker and the MHRWStatsCollector.
@@ -497,7 +497,7 @@ private:
     // handle the step size, is that we might in the future want to dynamically adapt the
     // step size according to the acceptance ratio. That would have to be done in this
     // class.
-    PointType newpt = _mhwalker.jump_fn(curpt, _n.step_size);
+    PointType newpt = _mhwalker.jumpFn(curpt, _n.step_size);
 
     FnValueType newptval;
 
@@ -519,7 +519,7 @@ private:
       ++num_live_points;
     }
 
-    _stats.raw_move(k, is_thermalizing, is_live_iter, accept, a, newpt, newptval, curpt, curptval, *this);
+    _stats.rawMove(k, is_thermalizing, is_live_iter, accept, a, newpt, newptval, curpt, curptval, *this);
 
     _logger.longdebug([&](std::ostream & stream) {
 	stream << (is_thermalizing?"T":"#") << std::setw(3) << k << ": " << (accept?"AC":"RJ") << " "
@@ -544,7 +544,7 @@ private:
    */
   inline void _process_sample(CountIntType k, CountIntType n)
   {
-    _stats.process_sample(k, n, curpt, curptval, *this);
+    _stats.processSample(k, n, curpt, curptval, *this);
     _logger.longdebug("_process_sample() done.");
   }
 

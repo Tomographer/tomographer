@@ -39,7 +39,7 @@
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/mhrw.h>
 
-
+#include "boost_test_logger.h"
 
 
 BOOST_AUTO_TEST_SUITE(test_mhrw_bin_err)
@@ -57,25 +57,25 @@ Eigen::Array<double,4,1> inline_vector(double a1, double a2, double a3, double a
 
 BOOST_AUTO_TEST_CASE(basic)
 {
-  Tomographer::Logger::BufferLogger logger(Tomographer::Logger::LONGDEBUG);
+  BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
   typedef Tomographer::BinningAnalysis<Tomographer::BinningAnalysisParams<double>,
-                                       Tomographer::Logger::BufferLogger> OurBinningAnalysis;
+                                       BoostTestLogger> OurBinningAnalysis;
   OurBinningAnalysis bina(4, 2, logger);
 
   logger.debug("basic()", "Starting to feed samples to the binning analysis object");
 
-  bina.process_new_values(inline_vector(0.0, 0.0,   1.0, 1.0));
-  bina.process_new_values(inline_vector(0.0, 0.0,   0.0, 2.0));
-  bina.process_new_values(inline_vector(0.0, 0.0,   1.0, 3.0));
-  bina.process_new_values(inline_vector(0.0, 0.0,   0.0, 4.0));
-  bina.process_new_values(inline_vector(0.0, 100.0, 0.0, 5.0));
-  bina.process_new_values(inline_vector(0.0, 100.0, 1.0, 6.0));
-  bina.process_new_values(inline_vector(0.0, 100.0, 2.0, 7.0));
-  bina.process_new_values(inline_vector(1.0, 100.0, 0.5, 8.0));
+  bina.processNewValues(inline_vector(0.0, 0.0,   1.0, 1.0));
+  bina.processNewValues(inline_vector(0.0, 0.0,   0.0, 2.0));
+  bina.processNewValues(inline_vector(0.0, 0.0,   1.0, 3.0));
+  bina.processNewValues(inline_vector(0.0, 0.0,   0.0, 4.0));
+  bina.processNewValues(inline_vector(0.0, 100.0, 0.0, 5.0));
+  bina.processNewValues(inline_vector(0.0, 100.0, 1.0, 6.0));
+  bina.processNewValues(inline_vector(0.0, 100.0, 2.0, 7.0));
+  bina.processNewValues(inline_vector(1.0, 100.0, 0.5, 8.0));
   // these will only partially fill the next bin. This will contribute to the *sum*, but
   // not the *sumsq* which is calculated during the flush:
-  bina.process_new_values(inline_vector(.125, 0.0,   0.6875, 0.0));
-  bina.process_new_values(inline_vector(.125, 100.0, 0.6875, 9.0));
+  bina.processNewValues(inline_vector(.125, 0.0,   0.6875, 0.0));
+  bina.processNewValues(inline_vector(.125, 100.0, 0.6875, 9.0));
 
   Eigen::Array<double,4,1> bin_sum;
   bin_sum = inline_vector(1.25, // (...)/10 == .125
@@ -130,51 +130,49 @@ BOOST_AUTO_TEST_CASE(basic)
 	  << Tomographer::Tools::replicated<OurBinningAnalysis::NumTrackValuesCTime,1>(
 	      Tomographer::Tools::powersOfTwo<Eigen::Array<OurBinningAnalysis::ValueType,
                                                            OurBinningAnalysis::NumLevelsPlusOneCTime,
-							   1> >(bina.num_levels()+1)
+							   1> >(bina.numLevels()+1)
 	      .transpose().reverse(),
 	      // replicated by:
-	      bina.num_track_values(), 1
+	      bina.numTrackValues(), 1
 	      ) << "\n";
     });
 
-  BOOST_MESSAGE(logger.get_contents());
-  BOOST_CHECK_EQUAL(bina.get_n_flushes(), 2);
-  MY_BOOST_CHECK_EIGEN_EQUAL(bina.get_bin_sum(), bin_sum, tol);
-  MY_BOOST_CHECK_EIGEN_EQUAL(bina.get_bin_sumsq(), bin_sumsq, tol);
-  MY_BOOST_CHECK_EIGEN_EQUAL(bina.get_bin_means(), bin_means, tol);
-  MY_BOOST_CHECK_EIGEN_EQUAL(bina.get_bin_sqmeans(), bin_sqmeans, tol);
+  BOOST_CHECK_EQUAL(bina.getNumFlushes(), 2);
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.getBinSum(), bin_sum, tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.getBinSumsq(), bin_sumsq, tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.getBinMeans(), bin_means, tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.getBinSqmeans(), bin_sqmeans, tol);
 
-  BOOST_CHECK_EQUAL(bina.num_track_values(), 4);
-  BOOST_CHECK_EQUAL(bina.num_levels(), 2);
+  BOOST_CHECK_EQUAL(bina.numTrackValues(), 4);
+  BOOST_CHECK_EQUAL(bina.numLevels(), 2);
 
   Tomographer::BinningAnalysis<Tomographer::BinningAnalysisParams<double>,
-                               Tomographer::Logger::BufferLogger>::BinSumSqArray
+                               BoostTestLogger>::BinSumSqArray
     error_levels_calc(4,3);
-  error_levels_calc = bina.calc_error_levels();
+  error_levels_calc = bina.calcErrorLevels();
 
   BOOST_MESSAGE("reported error_levels = \n" << error_levels_calc);
 
   BOOST_CHECK(OurBinningAnalysis::StoreBinSums) ;
   MY_BOOST_CHECK_EIGEN_EQUAL(error_levels_calc, error_levels, tol);
-  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_error_lastlevel(), error_levels.col(2), tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calcErrorLastLevel(), error_levels.col(2), tol);
 }
 
 
 BOOST_AUTO_TEST_CASE(no_bin_means)
 {
-  Tomographer::Logger::BufferLogger logger(Tomographer::Logger::LONGDEBUG);
+  BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
   typedef Tomographer::BinningAnalysis<Tomographer::BinningAnalysisParams<double, 4, 1, false /*StoreBinSums_*/>,
-                                       Tomographer::Logger::BufferLogger>
+                                       BoostTestLogger>
     OurBinningAnalysis;
   OurBinningAnalysis bina(4, 1, logger);
 
-  bina.process_new_values(inline_vector(0.0, 0.0, 1.0, 0.0));
-  bina.process_new_values(inline_vector(0.0, 0.0, 1.0, 1.0));
-  bina.process_new_values(inline_vector(0.0, 1.0, 1.0, 2.0));
-  bina.process_new_values(inline_vector(0.0, 0.0, 1.0, 3.0));
+  bina.processNewValues(inline_vector(0.0, 0.0, 1.0, 0.0));
+  bina.processNewValues(inline_vector(0.0, 0.0, 1.0, 1.0));
+  bina.processNewValues(inline_vector(0.0, 1.0, 1.0, 2.0));
+  bina.processNewValues(inline_vector(0.0, 0.0, 1.0, 3.0));
 
-  BOOST_MESSAGE(logger.get_contents());
-  BOOST_CHECK_EQUAL(bina.get_n_flushes(), 2);
+  BOOST_CHECK_EQUAL(bina.getNumFlushes(), 2);
 
   Eigen::Matrix<double, 4, 2> bin_sqmeans;
   bin_sqmeans <<
@@ -184,7 +182,7 @@ BOOST_AUTO_TEST_CASE(no_bin_means)
     (1*1+2*2+3*3)/4.0, (0.5*0.5 + 2.5*2.5)/2.0
     ;
 
-  MY_BOOST_CHECK_EIGEN_EQUAL(bina.get_bin_sqmeans(), bin_sqmeans, tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.getBinSqmeans(), bin_sqmeans, tol);
 
   Eigen::Array<double,4,1> means;
   means << 0, 0.25, 1, (3*4/2)/4.0;
@@ -192,12 +190,12 @@ BOOST_AUTO_TEST_CASE(no_bin_means)
   Eigen::Array<double,4,2> error_levels;
   error_levels = (bin_sqmeans.array() - (means.cwiseProduct(means)).replicate<1,2>()).cwiseSqrt();
   // divide by sqrt(num-samples)
-  error_levels.col(0) /= std::sqrt( bina.get_n_flushes() * 2.0 - 1);
-  error_levels.col(1) /= std::sqrt( bina.get_n_flushes() * 1.0 - 1);
+  error_levels.col(0) /= std::sqrt( bina.getNumFlushes() * 2.0 - 1);
+  error_levels.col(1) /= std::sqrt( bina.getNumFlushes() * 1.0 - 1);
 
   BOOST_CHECK(! OurBinningAnalysis::StoreBinSums) ;
-  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_error_levels(means), error_levels, tol);
-  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calc_error_lastlevel(means), error_levels.col(1), tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calcErrorLevels(means), error_levels, tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(bina.calcErrorLastLevel(means), error_levels.col(1), tol);
 }
 
 BOOST_AUTO_TEST_SUITE_END()
