@@ -122,19 +122,19 @@ BOOST_AUTO_TEST_CASE(boundaries)
     EigenAssertTest::setting_scope settingvariable(true); // eigen_assert() should throw an exception.
     BOOST_CHECK_THROW(
         hist.binLowerValue(-1),
-        ::Tomographer::Tools::eigen_assert_exception
+        ::Tomographer::Tools::EigenAssertException
         );
     BOOST_CHECK_THROW(
         hist.binLowerValue(11),
-        ::Tomographer::Tools::eigen_assert_exception
+        ::Tomographer::Tools::EigenAssertException
         );
     BOOST_CHECK_THROW(
         hist.binCenterValue(-1),
-        ::Tomographer::Tools::eigen_assert_exception
+        ::Tomographer::Tools::EigenAssertException
         );
     BOOST_CHECK_THROW(
         hist.binUpperValue(-1),
-        ::Tomographer::Tools::eigen_assert_exception
+        ::Tomographer::Tools::EigenAssertException
         );
   }
 }

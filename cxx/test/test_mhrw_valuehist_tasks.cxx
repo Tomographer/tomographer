@@ -200,7 +200,7 @@ BOOST_FIXTURE_TEST_CASE(simple_runtaskresults, run_test_simple_nofullrun)
     MY_BOOST_CHECK_EIGEN_EQUAL(r.histogram.bins, taskresults[k]->histogram.bins, tol);
   }
   OurResultsCollector::FinalHistogramType finalhistogram = results.finalHistogram();
-  BOOST_MESSAGE(Tomographer::histogram_pretty_print(finalhistogram));
+  BOOST_MESSAGE(Tomographer::histogramPrettyPrint(finalhistogram));
 }
 
 BOOST_FIXTURE_TEST_CASE(binning_runtaskresults, run_test_binning_nofullrun)
@@ -220,7 +220,7 @@ BOOST_FIXTURE_TEST_CASE(binning_runtaskresults, run_test_binning_nofullrun)
     MY_BOOST_CHECK_EIGEN_EQUAL(stats_coll_result_hist.bins, taskresults[k]->stats_collector_result.hist.bins, tol);
   }
   OurResultsCollector::FinalHistogramType finalhistogram = results.finalHistogram();
-  BOOST_MESSAGE(Tomographer::histogram_pretty_print(finalhistogram));
+  BOOST_MESSAGE(Tomographer::histogramPrettyPrint(finalhistogram));
 }
 
 
@@ -230,10 +230,10 @@ BOOST_FIXTURE_TEST_CASE(simple_check_pattern, run_test<false>)
   tasks.run();
   
   std::string msg;
-  { std::ostringstream ss; results.print_histogram_csv(ss, ","); msg = ss.str(); }
+  { std::ostringstream ss; results.printHistogramCsv(ss, ","); msg = ss.str(); }
   BOOST_MESSAGE( msg ) ;
 
-  const std::string hist = results.finalHistogram().pretty_print(100);
+  const std::string hist = results.finalHistogram().prettyPrint(100);
   BOOST_MESSAGE("FINAL HISTOGRAM:\n" << hist);
 
   boost::test_tools::output_test_stream output(
@@ -251,10 +251,10 @@ BOOST_FIXTURE_TEST_CASE(binning_check_pattern, run_test<true>)
   tasks.run();
   
   std::string msg;
-  { std::ostringstream ss; results.print_histogram_csv(ss, ","); msg = ss.str(); }
+  { std::ostringstream ss; results.printHistogramCsv(ss, ","); msg = ss.str(); }
   BOOST_MESSAGE( msg ) ;
 
-  const std::string hist = results.finalHistogram().pretty_print(100);
+  const std::string hist = results.finalHistogram().prettyPrint(100);
   BOOST_MESSAGE("FINAL HISTOGRAM:\n" << hist);
 
   boost::test_tools::output_test_stream output(

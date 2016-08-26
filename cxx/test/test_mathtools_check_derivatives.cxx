@@ -207,7 +207,7 @@ BOOST_FIXTURE_TEST_CASE(checks_for_nan, Fixture1val)
     EigenAssertTest::setting_scope mysettingvar(true);// eigen_assert() should throw an exception.
     std::stringstream stream;
     auto call_test = [&]() { Tomographer::MathTools::check_derivatives(der, x, fn, valdims, 1e-6, 1e-4, stream); };
-    BOOST_CHECK_THROW(call_test(), Tomographer::Tools::eigen_assert_exception);
+    BOOST_CHECK_THROW(call_test(), Tomographer::Tools::EigenAssertException);
     BOOST_MESSAGE(stream.str()) ;
   }
 }

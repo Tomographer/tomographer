@@ -50,14 +50,14 @@
 
 struct ABC { int a; };
 
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_complex<int>::value);
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_complex<double>::value);
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_complex<float>::value);
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_complex<std::string>::value);
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::is_complex<ABC>::value);
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_complex<std::complex<int> >::value);
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_complex<std::complex<float> >::value);
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::is_complex<std::complex<double> >::value);
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isComplex<int>::value);
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isComplex<double>::value);
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isComplex<float>::value);
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isComplex<std::string>::value);
+TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isComplex<ABC>::value);
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isComplex<std::complex<int> >::value);
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isComplex<std::complex<float> >::value);
+TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isComplex<std::complex<double> >::value);
 
 
 

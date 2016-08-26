@@ -51,15 +51,15 @@ namespace Tools {
  *
  * This is useful, e.g. for the test suites.
  */
-class eigen_assert_exception : public std::exception
+class EigenAssertException : public std::exception
 {
   std::string _msg;
 public:
-  eigen_assert_exception(const std::string& msg, const std::string& file, const std::size_t line)
+  EigenAssertException(const std::string& msg, const std::string& file, const std::size_t line)
     : _msg("eigen_assert() failed: `" + msg + "' at " + file + ", line " + std::to_string(line))
   {
   }
-  virtual ~eigen_assert_exception() noexcept {}
+  virtual ~EigenAssertException() noexcept {}
 
   virtual const char * what() const noexcept { return _msg.c_str(); }
 };
@@ -76,7 +76,7 @@ public:
  * Tomographer::Tools::eigen_assert_exception is thrown.
  */
 #define eigen_assert_throw_exception(x)         \
-  if (!(x)) { throw (::Tomographer::Tools::eigen_assert_exception(#x, __FILE__, __LINE__)); }
+  if (!(x)) { throw (::Tomographer::Tools::EigenAssertException(#x, __FILE__, __LINE__)); }
   
 
 #ifdef TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION

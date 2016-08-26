@@ -38,12 +38,12 @@
  * dispatcher, \ref Tomographer::MultiProc::OMP::TaskDispatcher.
  *
  * In the future, I hope we can also write an MPI implementation using the same
- * interfaces. (Hopefully everything works fine if \a ResultType and \a ConstantDataType
+ * interfaces. (Hopefully everything works fine if \a ResultType and \a TaskCData
  * is serializable)
  *
  * A task is implemented by a \ref pageInterfaceTask. It may refer to some global,
  * constant data (the parameters of the problem) stored in a struct (referred to as \a
- * ConstantDataType in the following docs). Each \a Task generates a result, which is sent
+ * TaskCData in the following docs). Each \a Task generates a result, which is sent
  * to and collected by a type responsible for aggregating the data in a usable form (e.g.,
  * calculating an average and std. deviation), which compiles with the \ref
  * pageInterfaceResultsCollector. The task manager exposes an API to interact with the \a
@@ -52,6 +52,7 @@
  *
  * Type interfaces which are used by the task dispatcher:
  *
+ *  - \subpage pageInterfaceTaskCData
  *  - \subpage pageInterfaceTask
  *  - \subpage pageInterfaceResultsCollector
  *  - \subpage pageInterfaceTaskManagerIface
@@ -63,7 +64,29 @@
  */
 
 
-
+/** \page pageInterfaceTaskCData TaskCData Interface
+ *
+ * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
+ *
+ * This type is meant to store all constant, shared data which may be accessed by the
+ * tasks while they run.  It also provides the inputs to the tasks.
+ *
+ * Note that the \a TaskCData type interface is only used if you use the
+ * &lsquo;low-level&rsquo; task interface and implement the tasks yourself.  If you use
+ * the higher-level Tomographer::MHRWTasks or Tomographer::MHRWTasks::ValueHistogramTasks, your
+ * CData-type class should inherit the respective CData classes for those.
+ *
+ * \par InputType getTaskInput(unsigned int k) const
+ *          Provide input to a new task. \c k is the task iteration number
+ *          and \c pcdata is a pointer to the shared const data.
+ *
+ * \par
+ *          The return value may be any type. It will be passed directly to the first
+ *          argument of the constructor.
+ *
+ *
+ */
 
 
 /** \page pageInterfaceTask Task Interface
@@ -73,43 +96,47 @@
  * \c Task should represent an instance of the task to complete (e.g. a
  * Metropolis-Hastings random walk). It should provide the following methods.
  *
- * In the following, \a ConstantDataType is some type that was specified to the task
- * dispatcher.
- *
  * \par typedef .. ResultType
  *          An alias for the type of, e.g. a structure, which contains the result of
  *          the given task. See <code>Task::getResult()</code>.
  *
- * \par static InputType get_input(unsigned int k, const ConstantDataType * pcdata)
- *          Provide input to a new task. \c k is the task iteration number
- *          and \c pcdata is a pointer to the shared const data.
+ * \par typedef .. StatusReportType
+ *          The type storing information for a status report (task progress, message,
+ *          additional info such as acceptance ratio etc.).  This class must inherit from
+ *          Tomographer::MultiProc::StatusReport, such that at least \a fraction_done and
+ *          \a msg are provided.  (So that generic status reporter helpers such as \ref
+ *          Tomographer::Tools::SigHandlerTaskDispatcherStatusReporter can at least rely
+ *          on this information.)
  *
- *          \todo API CHANGE: It doesn't make sense to have this method here. It will be
- *          moved in the near future.  (This won't cause any change to the higher-level
- *          API in Tomographer::MHRWTasks and Tomographer::MHRWTasks::ValueHistogramTasks)
- *
- * \par
- *          The return value may be any type. It will be passed directly to the first
- *          argument of the constructor.
- *
- * \par Task(InputType input, const ConstantDataType * pcdata)
+ * \par Task(InputType input, const TaskCData * pcdata, LoggerType & logger)
  *          Task constructor: construct a Task instance which will solve the task for the
  *          given input. The \a input parameter is whatever \c
- *          Task::get_input() returned.
- *
- * \par void run(const ConstantDataType * pcdata, LoggerType & logger, TaskManagerIface * tmgriface)
- *          Actually runs the task. It can log to the given \c logger (see \ref
+ *          TaskCData::getTaskInput() returned.
+ * \par 
+ *          This method can log to the given \c logger (see \ref
  *          Tomographer::Logger::LoggerBase). Note that the \a logger need NOT be the
  *          logger that may have been specified, e.g., to the task dispatcher: it could
  *          be, for example, an internal thread-safe wrapper to your original logger. To
  *          be sure, you should make this a template method with parameters \a LoggerType
- *          and TaskManagerIface.
+ *          and \a TaskManagerIface.
+ *
+ * \par void run(const TaskCData * pcdata, LoggerType & logger, TaskManagerIface * tmgriface)
+ *          This method actually runs the task.
+ *
+ * \par 
+ *          This method can log to the given \c logger (see \ref
+ *          Tomographer::Logger::LoggerBase). Note that the \a logger need NOT be the
+ *          logger that may have been specified, e.g., to the task dispatcher: it could
+ *          be, for example, an internal thread-safe wrapper to your original logger. To
+ *          be sure, you should make this a template method with parameters \a LoggerType
+ *          and \a TaskManagerIface.
  *
  * \par
  *          The code in \c run() should poll <code>tmgriface->statusReportRequested()</code>
  *          and provide a status report if requested to do so via
  *          <code>tmgriface->statusReport(const TaskStatusReportType &)</code>. See documentation
  *          for \ref pageInterfaceTaskManagerIface.
+ *
  *
  * \par ResultType getResult()
  *          Return a custom type which holds the result for the given task. This will be
@@ -122,17 +149,17 @@
  *
  * \a ResultsCollector takes care of collecting the results from each task run.
  *
- * In the following, \a ConstantDataType is some type that was specified to the task
+ * In the following, \a TaskCData is some type that was specified to the task
  * dispatcher. The type \a CountType designates the type used to count tasks (usually an
  * integral type of course). Also the type \a ResultType is the type declared for a result
  * by the task (\ref pageInterfaceTask). You may make the methods here take template
  * parameters so you don't have to worry about the exact types of these parameters.
  *
- * \par void init(CountType num_total_runs, CountType n_chunk, const ConstantDataType * pcdata)
+ * \par void init(CountType num_total_runs, CountType n_chunk, const TaskCData * pcdata)
  *         \a init() will be called before the tasks are run (e.g. before starting the
  *         parallel section), and may be used to initialize data.
  *
- * \par collectResult(CountType task_no, const ResultType& taskresult, const ConstantDataType * pcdata)
+ * \par void collectResult(CountType task_no, const ResultType& taskresult, const TaskCData * pcdata)
  *         Called each time a task has finished, with the corresponding task result, along
  *         with information about which task it was and as always the shared constant
  *         data. This method does not need to worry about concurrence, for example writing
@@ -144,7 +171,7 @@
  *         this is called within a \c critical OMP section, so it may safely access and
  *         write shared data.
  *
- * \par void runsFinished(CountType num_total_runs, const ConstantDataType * pcdata)
+ * \par void runsFinished(CountType num_total_runs, const TaskCData * pcdata)
  *         Called after all the tasks have finished. This is the good time to, e.g.,
  *         finalize collected values, such as multiplying by parameter space volume,
  *         dividing by the number of samples to get the average, etc.

@@ -99,10 +99,10 @@ BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
   T = rho.sqrt();
 
   dmmhrw.init();
-  dmmhrw.thermalizing_done();
+  dmmhrw.thermalizingDone();
 
   const DMTypes::MatrixType Tconst(T); // make sure that fnlogval() accepts const argument
-  BOOST_CHECK_CLOSE(dmmhrw.fnlogval(Tconst), llh.logLikelihoodX(x), tol_percent);
+  BOOST_CHECK_CLOSE(dmmhrw.fnLogVal(Tconst), llh.logLikelihoodX(x), tol_percent);
 
   {
     // Check that the jump distribution is symmetric.  Idea: draw many samples, and
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
     const int N_SAMPLES = 10000;
     int num_samples;
     for (num_samples = 0; num_samples < N_SAMPLES; ++num_samples) {
-      DMTypes::MatrixType newT = dmmhrw.jump_fn(T, 0.2);
+      DMTypes::MatrixType newT = dmmhrw.jumpFn(T, 0.2);
       BOOST_CHECK_CLOSE(newT.norm(), 1.0, tol_percent);
       sumT += newT;
     }

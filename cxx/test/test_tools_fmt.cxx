@@ -133,11 +133,11 @@ BOOST_AUTO_TEST_CASE(streamifpossible2)
 
 BOOST_AUTO_TEST_CASE(fmt_duration)
 {
-  BOOST_CHECK_EQUAL(Tomographer::Tools::fmt_duration(10.24), "0:00:10.240") ;
-  BOOST_CHECK_EQUAL(Tomographer::Tools::fmt_duration(15*3600+43*60+10.24), "15:43:10.240") ;
-  BOOST_CHECK_EQUAL(Tomographer::Tools::fmt_duration(125*3600+43*60+10.24), "125:43:10.240") ;
+  BOOST_CHECK_EQUAL(Tomographer::Tools::fmtDuration(10.24), "0:00:10.240") ;
+  BOOST_CHECK_EQUAL(Tomographer::Tools::fmtDuration(15*3600+43*60+10.24), "15:43:10.240") ;
+  BOOST_CHECK_EQUAL(Tomographer::Tools::fmtDuration(125*3600+43*60+10.24), "125:43:10.240") ;
 
-  BOOST_CHECK_EQUAL(Tomographer::Tools::fmt_duration(std::chrono::duration<int, std::kilo>(3)), // 3000 seconds
+  BOOST_CHECK_EQUAL(Tomographer::Tools::fmtDuration(std::chrono::duration<int, std::kilo>(3)), // 3000 seconds
                     "0:50:00.000") ;
 }
 

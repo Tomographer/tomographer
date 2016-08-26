@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(base)
         eigen_assert( false );
 	pt2 = true;
 	,
-        Tomographer::Tools::eigen_assert_exception
+        Tomographer::Tools::EigenAssertException
         );
     BOOST_CHECK(pt1 && !pt2);
     //    fprintf(stderr, "leaving block.\n");

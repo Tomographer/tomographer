@@ -131,7 +131,7 @@ private:
     if (::EigenAssertTest::setting_scope_ptr && ::EigenAssertTest::setting_scope_ptr->throws_exception) { \
       /*std::fprintf(stderr, "an eigen_assert() failure will cause an exception!\n");*/ \
       if (!(x)) {                                                       \
-        throw (::Tomographer::Tools::eigen_assert_exception(#x, __FILE__, __LINE__)); \
+        throw (::Tomographer::Tools::EigenAssertException(#x, __FILE__, __LINE__)); \
       }                                                                 \
     } else {                                                            \
       assert((x) && "eigen_assert(" #x ") failure");                    \

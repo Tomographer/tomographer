@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(static_3)
     Tomographer::Tools::StaticOrDynamic<long, false, 0x1234L> x(0x5678L); // wrong dynamic argument
     BOOST_MESSAGE("[!!!!!!This point should never be reached!!!!] Value of x = " << x()) ;
   };
-  BOOST_CHECK_THROW(test(), Tomographer::Tools::eigen_assert_exception) ;
+  BOOST_CHECK_THROW(test(), Tomographer::Tools::EigenAssertException) ;
 }
 BOOST_AUTO_TEST_CASE(dyn)
 {

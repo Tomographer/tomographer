@@ -97,7 +97,7 @@ struct CheckMHRWStatsCollector
   {
     init_called = true;
   }
-  void thermalizing_done()
+  void thermalizingDone()
   {
     thermalizing_done_called = true;
   }
@@ -106,7 +106,7 @@ struct CheckMHRWStatsCollector
     done_called = true;
   }
   template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk>
-  void process_sample(CountIntType k, CountIntType n, const PointType & , FnValueType fnval, MHRandomWalk & )
+  void processSample(CountIntType k, CountIntType n, const PointType & , FnValueType fnval, MHRandomWalk & )
   {
     process_sample_called = true;
     process_sample_call_data.k = k;
@@ -114,9 +114,9 @@ struct CheckMHRWStatsCollector
     process_sample_call_data.fnval = fnval;
   }
   template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk>
-  void raw_move(CountIntType k, bool is_thermalizing, bool is_live_iter, bool accepted, double a,
-                const PointType & /*newpt*/, FnValueType newptval, const PointType & /*curpt*/,
-                FnValueType curptval, MHRandomWalk & /*rw*/)
+  void rawMove(CountIntType k, bool is_thermalizing, bool is_live_iter, bool accepted, double a,
+               const PointType & /*newpt*/, FnValueType newptval, const PointType & /*curpt*/,
+               FnValueType curptval, MHRandomWalk & /*rw*/)
   {
     raw_move_called = true;
     raw_move_call_data.k = k;
@@ -195,7 +195,7 @@ BOOST_AUTO_TEST_CASE(init)
 }
 BOOST_AUTO_TEST_CASE(thermalizing_done)
 {
-  mult.thermalizing_done();
+  mult.thermalizingDone();
   BOOST_CHECK(a.thermalizing_done_called);
   BOOST_CHECK(b.thermalizing_done_called);
   BOOST_CHECK(c.thermalizing_done_called);
@@ -216,7 +216,7 @@ BOOST_AUTO_TEST_CASE(process_sample)
 {
   struct PointType { std::string dummy; PointType() : dummy("hello") { } };
   struct DummyMHRW { int x; }; DummyMHRW mhrw;
-  mult.process_sample(3243, 1245, PointType(), 1.45, mhrw);
+  mult.processSample(3243, 1245, PointType(), 1.45, mhrw);
   BOOST_CHECK(a.process_sample_called);
   BOOST_CHECK(b.process_sample_called);
   BOOST_CHECK(c.process_sample_called);
@@ -236,7 +236,7 @@ BOOST_AUTO_TEST_CASE(raw_move)
 {
   struct PointType { std::string dummy; PointType() : dummy("hello") { } };
   struct DummyMHRW { int x; }; DummyMHRW mhrw;
-  mult.raw_move(3243, true, false, true, 0.95, PointType(), 1.45, PointType(), 1.33, mhrw);
+  mult.rawMove(3243, true, false, true, 0.95, PointType(), 1.45, PointType(), 1.33, mhrw);
   BOOST_CHECK(a.raw_move_called);
   BOOST_CHECK(b.raw_move_called);
   BOOST_CHECK(c.raw_move_called);
@@ -285,21 +285,21 @@ struct TestStatsCollectorFixture
   void run_dummy_rw(StatsColl & statcoll) {
   
     statcoll.init();
-    statcoll.raw_move(0, true, false, true, 0.95,
-                      PointType(1), 123.4, PointType(0), 123.4, mhrw);
-    statcoll.raw_move(1, true, false, true, 1.0,
-                      PointType(2), 123.4, PointType(1), 123.4, mhrw);
-    statcoll.raw_move(2, true, false, true, 1.0,
-                      PointType(0), 123.4, PointType(2), 123.4, mhrw);
+    statcoll.rawMove(0, true, false, true, 0.95,
+                     PointType(1), 123.4, PointType(0), 123.4, mhrw);
+    statcoll.rawMove(1, true, false, true, 1.0,
+                     PointType(2), 123.4, PointType(1), 123.4, mhrw);
+    statcoll.rawMove(2, true, false, true, 1.0,
+                     PointType(0), 123.4, PointType(2), 123.4, mhrw);
 
-    statcoll.thermalizing_done();
+    statcoll.thermalizingDone();
 
     int last_pt = 0;
     for (int k = 0; k < pt_seq.size(); ++k) {
-      statcoll.raw_move(k, false, (k%2==0), true, 1.0,
-                        pt_seq(k), 123.4, last_pt, 123.4, mhrw);
+      statcoll.rawMove(k, false, (k%2==0), true, 1.0,
+                       pt_seq(k), 123.4, last_pt, 123.4, mhrw);
       if (k%2==0) {
-        statcoll.process_sample(k, k/2-1, pt_seq(k), 123.4, mhrw); // takes sample here
+        statcoll.processSample(k, k/2-1, pt_seq(k), 123.4, mhrw); // takes sample here
       }
       last_pt = pt_seq(k);
     }
@@ -311,7 +311,7 @@ struct TestStatsCollectorFixture
 struct MyMinimalistValueCalculator {
   typedef double ValueType;
   MyMinimalistValueCalculator() { }
-  double getValue(int pt) {
+  double getValue(int pt) const {
     return std::sqrt(double(pt));
   };
 };
@@ -335,7 +335,7 @@ BOOST_FIXTURE_TEST_CASE(simple, TestStatsCollectorFixture)
   // for ValueHistogramMHRWStatsCollector, the ResultType is the histogram itself, simply
   BOOST_CHECK( (statcoll.histogram().bins == statcoll.getResult().bins).all() ) ;
   // check the histogram
-  BOOST_MESSAGE("The collected histogram is:\n" << statcoll.histogram().pretty_print()) ;
+  BOOST_MESSAGE("The collected histogram is:\n" << statcoll.histogram().prettyPrint()) ;
   BOOST_CHECK_EQUAL( (int)statcoll.histogram().bins.sum(), (int)num_samples) ;
   BOOST_CHECK_EQUAL( statcoll.histogram().bins(0) ,  1) ; // [0,1[
   BOOST_CHECK_EQUAL( statcoll.histogram().bins(1) ,  5) ; // [1,2[
@@ -369,7 +369,7 @@ BOOST_FIXTURE_TEST_CASE(simple, TestStatsCollectorFixture)
   run_dummy_rw(statcoll);
 
   // check the base histogram
-  BOOST_MESSAGE("The collected histogram is:\n" << statcoll.histogram().pretty_print()) ;
+  BOOST_MESSAGE("The collected histogram is:\n" << statcoll.histogram().prettyPrint()) ;
   BOOST_CHECK_EQUAL( (int)statcoll.histogram().bins.sum(), (int)num_samples) ;
   BOOST_CHECK_EQUAL( statcoll.histogram().bins(0) ,  1) ; // [0,1[
   BOOST_CHECK_EQUAL( statcoll.histogram().bins(1) ,  5) ; // [1,2[
@@ -377,7 +377,7 @@ BOOST_FIXTURE_TEST_CASE(simple, TestStatsCollectorFixture)
   BOOST_CHECK_EQUAL( statcoll.histogram().bins(3) ,  0) ; // [3,4[
   // check the histogram with error bars
   const auto & fhist = statcoll.getResult().hist;
-  BOOST_MESSAGE("The full histogram is:\n" << fhist.pretty_print()) ;
+  BOOST_MESSAGE("The full histogram is:\n" << fhist.prettyPrint()) ;
   MY_BOOST_CHECK_FLOATS_EQUAL( fhist.bins(0) ,  1 / 16.0 , tol );
   MY_BOOST_CHECK_FLOATS_EQUAL( fhist.bins(1) ,  5 / 16.0 , tol );
   MY_BOOST_CHECK_FLOATS_EQUAL( fhist.bins(2) ,  10 / 16.0 , tol );

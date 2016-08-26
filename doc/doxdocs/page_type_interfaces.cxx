@@ -284,8 +284,6 @@
  *     MHRWTasks::MHRandomWalkTask template parameter, use a template argument for this
  *     function in case. Use a template parameter for \a LoggerType.
  *
- *
- * \todo Here, add a method <code>TaskInput getTaskInput(int k)</code> ???
  */
 
 

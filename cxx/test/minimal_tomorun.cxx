@@ -291,7 +291,7 @@ int main()
   logger.debug("Random walks done.");
 
   // delta-time, formatted in hours, minutes, seconds and fraction of seconds
-  std::string elapsed_s = Tomographer::Tools::fmt_duration(time_end - time_start);
+  std::string elapsed_s = Tomographer::Tools::fmtDuration(time_end - time_start);
 
   //
   // The 'results' object contains all the interesting results.  It is a
@@ -305,7 +305,7 @@ int main()
 
   logger.info([&](std::ostream & stream) {
       stream << "FINAL HISTOGRAM OF THE FIGURE OF MERIT:\n"
-	     << histogram.pretty_print()
+	     << histogram.prettyPrint()
 	     << "\n\n";
       // We should report if the error bars from the binning anlaysis have
       // converged nicely. This is a bit quick-and-dirty, see the

@@ -288,12 +288,12 @@ namespace OMP {
    * <ul>
    * <li> \a Task must be a \ref pageInterfaceTask compliant type 
    *
-   * <li> \a ConstantDataType may be any struct which contains all the information
-   *     which needs to be accessed by the task. It should be read-only, i.e. the task
-   *     should not need to write to this information. (This typically encodes the data
-   *     of the problem, ie. experimental measurement results.)
+   * <li> \a TaskCData should conform to the \ref pageInterfaceTaskCData.
    *
-   *     There is no particular structure imposed on \c ConstantDataType.
+   *      \a TaskCData may be any struct which contains all the information which
+   *      needs to be accessed by the task. It should be read-only, i.e. the task should
+   *      not need to write to this information. (This typically encodes the data of the
+   *      problem, ie. experimental measurement results.)
    *
    * <li> \a ResultsCollector must be a \ref pageInterfaceResultsCollector compliant type 
    *
@@ -313,7 +313,7 @@ namespace OMP {
    *      For each task, a new \a TaskLogger will be created. The constructor is expected
    *      to accept the following arguments:
    *      \code
-   *         TaskLogger(Logger & baselogger, const ConstantDataType * pcdata, CountIntType k)
+   *         TaskLogger(Logger & baselogger, const TaskCData * pcdata, CountIntType k)
    *      \endcode
    *      where \a baselogger is the logger given to the \a TaskDispatcher constructor,
    *      \a pcdata is the constant shared data pointer also given to the constructor, and
@@ -329,7 +329,7 @@ namespace OMP {
    * </ul>
    *
    */
-  template<typename Task_, typename ConstantDataType_, typename ResultsCollector_,
+  template<typename Task_, typename TaskCData_, typename ResultsCollector_,
            typename Logger_, typename CountIntType_ = int,
            typename TaskLogger_ = ThreadSanitizerLogger<Logger_> >
   class TaskDispatcher
@@ -337,7 +337,7 @@ namespace OMP {
   public:
     typedef Task_ Task;
     typedef typename Task::StatusReportType TaskStatusReportType;
-    typedef ConstantDataType_ ConstantDataType;
+    typedef TaskCData_ TaskCData;
     typedef ResultsCollector_ ResultsCollector;
     typedef Logger_ Logger;
     typedef CountIntType_ CountIntType;
@@ -350,7 +350,7 @@ namespace OMP {
 
     //! thread-shared variables
     struct thread_shared_data {
-      thread_shared_data(const ConstantDataType *pcdata_, ResultsCollector * results_, Logger & logger_,
+      thread_shared_data(const TaskCData * pcdata_, ResultsCollector * results_, Logger & logger_,
                          CountIntType num_total_runs_, CountIntType n_chunk_)
         : pcdata(pcdata_),
           results(results_),
@@ -365,7 +365,7 @@ namespace OMP {
           num_active_working_threads(0)
       { }
 
-      const ConstantDataType * pcdata;
+      const TaskCData * pcdata;
       ResultsCollector * results;
       Logger & logger;
 
@@ -510,7 +510,7 @@ namespace OMP {
     thread_shared_data shared_data;
 
   public:
-    TaskDispatcher(ConstantDataType * pcdata_, ResultsCollector * results_, Logger & logger_,
+    TaskDispatcher(TaskCData * pcdata_, ResultsCollector * results_, Logger & logger_,
                       CountIntType num_total_runs_, CountIntType n_chunk_)
       : shared_data(pcdata_, results_, logger_, num_total_runs_, n_chunk_)
     {
@@ -558,15 +558,17 @@ namespace OMP {
     void _run_task(thread_private_data & privdat, thread_shared_data * shdat, CountIntType k)
       TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
     {
+
 #pragma omp critical
       {
         ++ shdat->num_active_working_threads;
         privdat.local_status_report_counter = shdat->status_report_counter;
       }
-      
+
       // construct a thread-safe logger we can use
       TaskLogger threadsafelogger(shdat->logger, shdat->pcdata, k);
       
+      // not sure an std::ostream would be safe here threadwise...?
       threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
                                  "Run #%lu: thread-safe logger set up", (unsigned long)k);
       
@@ -575,14 +577,21 @@ namespace OMP {
       privdat.logger = &threadsafelogger;
       
       // not sure an std::ostream would be safe here threadwise...?
+      threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
+                                 "Run #%lu: querying CData for task input", (unsigned long)k);
+
+      auto input = shdat->pcdata->getTaskInput(k);
+      
+      // not sure an std::ostream would be safe here threadwise...?
       threadsafelogger.debug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
                              "Running task #%lu ...", (unsigned long)k);
       
       // construct a new task instance
-      Task t(Task::get_input(k, shdat->pcdata), shdat->pcdata, threadsafelogger);
+      Task t(input, shdat->pcdata, threadsafelogger);
       
+      // not sure an std::ostream would be safe here threadwise...?
       threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
-                                 "Task %lu set up.", (unsigned long)k);
+                                 "Task #%lu set up.", (unsigned long)k);
       
       // and run it
       t.run(shdat->pcdata, threadsafelogger, &privdat);
@@ -660,15 +669,15 @@ namespace OMP {
    *         deduction mechanism.
    *
    */
-  template<typename Task_, typename ConstantDataType_, typename ResultsCollector_,
+  template<typename Task_, typename TaskCData_, typename ResultsCollector_,
            typename Logger_, typename CountIntType_ = unsigned int>
-  inline TaskDispatcher<Task_, ConstantDataType_, ResultsCollector_,
+  inline TaskDispatcher<Task_, TaskCData_, ResultsCollector_,
                         Logger_, CountIntType_>
-  makeTaskDispatcher(ConstantDataType_ * pcdata_, ResultsCollector_ * results_, Logger_ & logger_,
+  makeTaskDispatcher(TaskCData_ * pcdata_, ResultsCollector_ * results_, Logger_ & logger_,
                         CountIntType_ num_total_runs_, CountIntType_ n_chunk_)
   {
     // RVO should be rather obvious to the compiler
-    return TaskDispatcher<Task_, ConstantDataType_, ResultsCollector_,
+    return TaskDispatcher<Task_, TaskCData_, ResultsCollector_,
                              Logger_, CountIntType_>(
         pcdata_, results_, logger_, num_total_runs_, n_chunk_
         );

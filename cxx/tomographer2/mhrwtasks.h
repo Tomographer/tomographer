@@ -111,6 +111,21 @@ namespace MHRWTasks {
      */
     const int base_seed;
 
+    /** \brief Returns a random seed to seed the random number generator with for run
+     * number \a k
+     *
+     * This simply returns \code pcdata->base_seed + k \endcode
+     *
+     * This should be considered as the input of the k-th task. Each task must of course
+     * have a different seed, otherwise we will just repeat the same "random" walks!
+     *
+     */
+    inline int getTaskInput(int k) const
+    {
+      return base_seed + k;
+    }
+    
+
     /** \brief Get some human-readable info about the random walk as a string.
      */
     inline void printBasicCDataMHRWInfo(std::ostream & str) const
@@ -279,24 +294,6 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
     Result * result;
 
   public:
-
-    /** \brief Returns a random seed to seed the random number generator with for run
-     * number \a k
-     *
-     * This simply returns \code pcdata->base_seed + k \endcode
-     *
-     * This should be considered as the input of the k-th task. Each task must of course
-     * have a different seed, otherwise we will just repeat the same "random" walks!
-     *
-     *
-     * \note This will probably be changed in the near future. It's not the task's job to
-     *       get its own input, it's the "shared data" object ("CData") which should
-     *       provide the input......
-     */
-    static inline int get_input(int k, const MHRandomWalkTaskCData * pcdata)
-    {
-      return pcdata->base_seed + k;
-    }
 
     /** \brief Constructs the MHRandomWalkTask
      *

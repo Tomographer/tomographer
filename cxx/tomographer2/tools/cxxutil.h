@@ -440,7 +440,7 @@ inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type isPositi
  *       sure this macro has a correct value in all cases.
  */
 #  define TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
-#endif
+#else // TOMOGRAPHER_PARSED_BY_DOXYGEN
 //
 #if defined(__GNUC__) || defined(__clang__)
 #  if defined(__MINGW32__) || defined(__MINGW64__)
@@ -455,7 +455,8 @@ inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type isPositi
 #  warning "You are using an unknown compiler. You may run into memory alignment problems... Good luck!"
 #  define TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
 #endif
-
+//
+#endif // TOMOGRAPHER_PARSED_BY_DOXYGEN
 
 
 // Internal hacks...

@@ -74,7 +74,7 @@ struct test_dmtypes_fixture {
       //      fprintf(stderr, "initialized setting variable\n");
       BOOST_CHECK_THROW(
      	  DMTypes baddmt(dim+1),
-     	  ::Tomographer::Tools::eigen_assert_exception
+     	  ::Tomographer::Tools::EigenAssertException
      	  );
       //      fprintf(stderr, "exiting block of interest\n");
     }

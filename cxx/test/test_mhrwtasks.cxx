@@ -134,6 +134,11 @@ BOOST_AUTO_TEST_CASE(instanciation)
 
   llh.setMeas(Exn, Nx);
 
+  DMTypes::MatrixType ref_T(dmt.initMatrixType());
+  ref_T <<
+    1, 0,
+    0, 0;
+
   // Now, create the task object.
 
   // seed for random number generator
@@ -150,8 +155,9 @@ BOOST_AUTO_TEST_CASE(instanciation)
 
   OurMHRWTask thetask(134, &taskcdat, logger);
 
-  thetask.run()
+  //  thetask.run();
   
+  BOOST_CHECK( false && "WRITE ME" ) ;
 }
 
 BOOST_AUTO_TEST_CASE(base)
