@@ -209,14 +209,27 @@
 
 /** \page pageInterfaceTaskDispatcher TaskDispatcher Interface
  *
- * 
+ * The task manager/dispatcher takes care of running tasks.  It should handle tasks
+ * provided by a \ref pageInterfaceTask compliant template parameter, should allow these
+ * tasks to share data via a \ref pageInterfaceTaskCData compliant type also specified as
+ * template parameter, and should allow the results to be collected by a \ref
+ * pageInterfaceResultsCollector.
+ *
+ * The exact APIs of how these tasks are specified, managed and run is not clearly
+ * specified, but it is strongly advised to follow a model such as the simplistic \ref
+ * Tomographer::MultiProc::Sequential::TaskDispatcher or the OpenMP-based \ref
+ * Tomographer::MultiProc::OMP::TaskDispatcher.
+ *
+ * The task manager/dispatcher must, however, provide the following methods:
+ *
  * \par void setStatusReportHandler(Fn fn)
  *   The argument should be a callable (e.g. lambda function) which accepts a single
  *   paramter of const reference to a <code>FullStatusReportType</code>
  *
- * \par .........
+ * \par void requestStatusReport()
+ *   Initiate a status report query.  The call will typically return immediately, and
+ *   sometime later the callback set by \a setStatusReportHandler() will be called with
+ *   the relevant status report information.
  *
- * \todo WRITE ME ............
  *
- * \todo API CHANGE: change names -> camel case
  */
