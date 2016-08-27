@@ -53,7 +53,7 @@ namespace MathTools {
  * The original vector \a vec is modified.
  */
 template<typename VectorType>
-inline void force_pos_vec_keepsum(Eigen::Ref<VectorType> vec,
+inline void forcePosVecKeepSum(Eigen::Ref<VectorType> vec,
                                   const typename Eigen::NumTraits<typename VectorType::Scalar>::Real tolerance = 1e-8)
 {
   typedef typename Eigen::NumTraits<typename VectorType::Scalar>::Real RealScalar;
@@ -92,7 +92,7 @@ inline void force_pos_vec_keepsum(Eigen::Ref<VectorType> vec,
  * The original object \a rho is untouched, and the fixed version is returned.
  */
 template<typename MatrixType, typename Der>
-inline MatrixType force_pos_semidef(const Eigen::MatrixBase<Der> & rho,
+inline MatrixType forcePosSemiDef(const Eigen::MatrixBase<Der> & rho,
 				    const typename Eigen::NumTraits<typename MatrixType::Scalar>::Real tolerance = 1e-8)
 {
   typedef typename Eigen::SelfAdjointEigenSolver<MatrixType>::RealVectorType RealVectorType;
@@ -103,7 +103,7 @@ inline MatrixType force_pos_semidef(const Eigen::MatrixBase<Der> & rho,
   auto U = eig_rho_ref.eigenvectors();
   RealVectorType d = eig_rho_ref.eigenvalues();
 
-  force_pos_vec_keepsum<RealVectorType>(d, tolerance);
+  forcePosVecKeepSum<RealVectorType>(d, tolerance);
 
   return U * d.asDiagonal() * U.adjoint();
 }
@@ -112,12 +112,12 @@ inline MatrixType force_pos_semidef(const Eigen::MatrixBase<Der> & rho,
 /** \brief Safe version of operator square root for positive semidefinite matrices
  *
  * This function first makes sure that the object \a A is positive semidefinite (&agrave;
- * la \ref force_pos_semidef()), before taking the operator square root.
+ * la \ref forcePosSemiDef()), before taking the operator square root.
  *
  * \a A must be hermitian.
  */
 template<typename MatrixType>
-inline MatrixType safe_operator_sqrt(const Eigen::Ref<const MatrixType> & A,
+inline MatrixType safeOperatorSqrt(const Eigen::Ref<const MatrixType> & A,
                                      const typename Eigen::NumTraits<typename MatrixType::Scalar>::Real
                                      tolerance = 1e-8)
 {
@@ -127,7 +127,7 @@ inline MatrixType safe_operator_sqrt(const Eigen::Ref<const MatrixType> & A,
 
   typedef typename Eigen::SelfAdjointEigenSolver<MatrixType>::RealVectorType RealVectorType;
 
-  force_pos_vec_keepsum<RealVectorType>(d, tolerance);
+  forcePosVecKeepSum<RealVectorType>(d, tolerance);
 
   return U * d.cwiseSqrt().asDiagonal() * U.adjoint();
 }
@@ -135,15 +135,15 @@ inline MatrixType safe_operator_sqrt(const Eigen::Ref<const MatrixType> & A,
 /** \brief Safe version of operator inverse square root for positive semidefinite matrices
  *
  * This function first makes sure that the object \a A is positive semidefinite (&agrave;
- * la \ref force_pos_semidef()), before taking the operator inverse
+ * la \ref forcePosSemiDef()), before taking the operator inverse
  * square root.
  *
  * \a A must be hermitian.
  */
 template<typename MatrixType>
-inline MatrixType safe_operator_inv_sqrt(const Eigen::Ref<const MatrixType> & A,
-                                     const typename Eigen::NumTraits<typename MatrixType::Scalar>::Real
-                                     tolerance = 1e-8)
+inline MatrixType safeOperatorInvSqrt(const Eigen::Ref<const MatrixType> & A,
+                                      const typename Eigen::NumTraits<typename MatrixType::Scalar>::Real
+                                      tolerance = 1e-8)
 {
   Eigen::SelfAdjointEigenSolver<MatrixType> eig_A_ref( A );
   auto U = eig_A_ref.eigenvectors();
@@ -151,7 +151,7 @@ inline MatrixType safe_operator_inv_sqrt(const Eigen::Ref<const MatrixType> & A,
 
   typedef typename Eigen::SelfAdjointEigenSolver<MatrixType>::RealVectorType RealVectorType;
 
-  force_pos_vec_keepsum<RealVectorType>(d, tolerance);
+  forcePosVecKeepSum<RealVectorType>(d, tolerance);
 
   for (typename MatrixType::Index k = 0; k < d.size(); ++k) {
     if (d(k) > tolerance) {

@@ -64,7 +64,7 @@ BOOST_AUTO_TEST_CASE(force_pos_semidef)
 
   Eigen::Matrix4cd rhopos;
 
-  rhopos = Tomographer::MathTools::force_pos_semidef<Eigen::Matrix4cd>(rho, 0.1); // high tolerance, check our algo
+  rhopos = Tomographer::MathTools::forcePosSemiDef<Eigen::Matrix4cd>(rho, 0.1); // high tolerance, check our algo
 
   BOOST_CHECK_CLOSE(rhopos.trace().real(), 1.0, tol_percent);
 
@@ -89,7 +89,7 @@ BOOST_AUTO_TEST_CASE(force_pos_semidef)
   BOOST_MESSAGE("Chose Unitary = \n" << Unitary) ;
 
   Eigen::Matrix4cd rhoposU;
-  rhoposU = Tomographer::MathTools::force_pos_semidef<Eigen::Matrix4cd>(Unitary*rho*Unitary.adjoint(), 0.1);
+  rhoposU = Tomographer::MathTools::forcePosSemiDef<Eigen::Matrix4cd>(Unitary*rho*Unitary.adjoint(), 0.1);
 
   BOOST_CHECK_CLOSE(rhoposU.trace().real(), 1.0, tol_percent);
   MY_BOOST_CHECK_EIGEN_EQUAL(rhoposU, Unitary*rhopos_ref_withtol*Unitary.adjoint(), tol);
@@ -104,8 +104,8 @@ BOOST_AUTO_TEST_CASE(safe_ops1)
     0, 0, 0,
     0, 0, 1;
 
-  MY_BOOST_CHECK_EIGEN_EQUAL(Tomographer::MathTools::safe_operator_sqrt<Eigen::Matrix3cd>(A, 1e-18), A, 2e-9);
-  MY_BOOST_CHECK_EIGEN_EQUAL(Tomographer::MathTools::safe_operator_inv_sqrt<Eigen::Matrix3cd>(A, 1e-12), A, 2e-6);
+  MY_BOOST_CHECK_EIGEN_EQUAL(Tomographer::MathTools::safeOperatorSqrt<Eigen::Matrix3cd>(A, 1e-18), A, 2e-9);
+  MY_BOOST_CHECK_EIGEN_EQUAL(Tomographer::MathTools::safeOperatorInvSqrt<Eigen::Matrix3cd>(A, 1e-12), A, 2e-6);
 }
 
 BOOST_AUTO_TEST_CASE(safe_ops2)
@@ -120,9 +120,9 @@ BOOST_AUTO_TEST_CASE(safe_ops2)
     0, 0, 0,
     0, 0, 1;
 
-  MY_BOOST_CHECK_EIGEN_EQUAL(Tomographer::MathTools::safe_operator_sqrt<Eigen::Matrix3cd>(2*U*A*U.adjoint(), 1e-18),
+  MY_BOOST_CHECK_EIGEN_EQUAL(Tomographer::MathTools::safeOperatorSqrt<Eigen::Matrix3cd>(2*U*A*U.adjoint(), 1e-18),
                              U*A*U.adjoint()*boost::math::constants::root_two<double>(), 1e-7);
-  MY_BOOST_CHECK_EIGEN_EQUAL(Tomographer::MathTools::safe_operator_inv_sqrt<Eigen::Matrix3cd>(2*U*A*U.adjoint(), 1e-12),
+  MY_BOOST_CHECK_EIGEN_EQUAL(Tomographer::MathTools::safeOperatorInvSqrt<Eigen::Matrix3cd>(2*U*A*U.adjoint(), 1e-12),
                              U*A*U.adjoint()*boost::math::constants::half_root_two<double>(), 1e-5);
 }
 

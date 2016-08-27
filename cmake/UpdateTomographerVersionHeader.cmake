@@ -50,6 +50,18 @@ endif(VersionFile)
 #message(STATUS "Tomographer Version is ${TOMOGRAPHER_VERSION}")
 
 #
+# Parse version MAJ/MIN/SUFFIX
+#
+if (TOMOGRAPHER_VERSION MATCHES "v?([0-9]+)[.]([0-9]+)([^0-9]|$)")
+  set(TOMOGRAPHER_VERSION_MAJ ${CMAKE_MATCH_1})
+  set(TOMOGRAPHER_VERSION_MIN ${CMAKE_MATCH_2})
+else()
+  set(TOMOGRAPHER_VERSION_MAJ -1)
+  set(TOMOGRAPHER_VERSION_MIN -1)
+endif()
+
+
+#
 # TOMOGRAPHER_VERSION is set.
 #
 CONFIGURE_FILE(

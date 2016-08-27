@@ -61,52 +61,64 @@
  *
  * You should do this in a new header file, that's the easiest.
  *
- * For our example, we can get inspired by the code for, e.g.,
- * \ref Tomographer::TrDistToRefCalculator defined in \ref dmmhrw.h . For example, let's create a
- * file called \c "hs_dist.h" inside the \c "cxx/tomorun/" directory of the
- * tomographer project:
+ * For our example, we can get inspired by the code for, e.g., \ref
+ * Tomographer::DenseDM::TSpace::TrDistToRefCalculator defined in \ref tspacefigofmerit.h.
+ * For example, let's create a file called \c "hs_dist.h" inside the \c "cxx/tomorun/"
+ * directory of the tomographer project:
  * \code
  *   #ifndef HS_DIST_H
  *   #define HS_DIST_H
  *
  *   #include <Eigen/Eigen>
- *   #include <tomographer/mhrw.h>
+ *   #include <tomographer2/tools/needownoperatornew.h>
+ *   #include <tomographer2/densedm/dmtypes.h>
  *
- *   template<typename TomoProblem_, typename DistValueType_ = double>
- *   class HSDistToRefCalculator {
+ *   template<typename DMTypes_, typename DistValueType_ = double>
+ *   class HSDistToRefCalculator
+ *     : public virtual Tomographer::Tools::NeedOwnOperatorNew<typename DMTypes_::MatrixType>::ProviderType
+ *   {
  *   public:
- *     typedef TomoProblem_ TomoProblem;
- *     typedef typename TomoProblem::MatrQ MatrQ;
- *     typedef typename MatrQ::MatrixType MatrixType;
+ *     typedef DMTypes_ DMTypes;
+ *     // this is the type to use to store a dense (dim x dim) matrix:
+ *     typedef typename DMTypes::MatrixType MatrixType;
+ *     typedef typename DMTypes::MatrixTypeConstRef MatrixTypeConstRef;
  *   
- *     // For ValueCalculator interface : value type
+ *     // For the ValueCalculator interface: the value type
  *     typedef DistValueType_ ValueType;
  *
  *   private:
- *     MatrixType rho_ref;
+ *     const MatrixType rho_ref;
  *
  *   public:
  *     // Constructor, the reference state is 'rho_ref'
- *     TrDistToRefCalculator(const TomoProblem & tomo, const MatrixType& rho_ref_)
- *       : rho_ref(tomo.matq.initMatrixType())
+ *     TrDistToRefCalculator(MatrixTypeConstRef rho_ref_)
+ *       : rho_ref(rho_ref_)
  *     {
- *       rho_ref = rho_ref_;
  *     }
  *
  *     // This method actually calculates the given value.  The argument "T" is
  *     // the T-parameterization of the density matrix rho, which is simply a
  *     // square root of rho. (This is indeed the representation used during the
  *     // random walk.)
- *     inline ValueType getValue(const MatrixType & T) const
+ *     inline ValueType getValue(MatrixTypeConstRef T) const
  *     {
- *       // rho is obtained with T*T.adjoint()
- *       // With Eigen, the HS-norm (Frobenius) of a matrix is given by A.norm()
+ *       // rho is obtained with T*T.adjoint().  With Eigen, the HS-norm (Frobenius) of a
+ *       // matrix is given by A.norm().
  *       return (T*T.adjoint() - rho_ref).norm();
  *     }
  *   };
  *
  *   #endif // HS_DIST_H
  * \endcode
+ *
+ * The part about \ref needownoperatornew.h and \ref
+ * Tomographer::Tools::NeedOwnOperatorNew is to make sure that the object, when created,
+ * is aligned in memory.  This is needed because the object has a Eigen member (\a
+ * rho_ref) which must be aligned in memory for vectorized operations (see Eigen's docs
+ * for alignment issues, there's a lot on that).  In the Tomographer project, the \ref
+ * Tomographer::Tools::NeedOwnOperatorNew virtual base makes sure that the necessary
+ * <code>operator new()</code> is defined so that objects are aligned in memory when
+ * allocated.
  *
  *
  * <h2>2. Declare the new figure of merit as command line option value</h2>
@@ -200,12 +212,20 @@
  *     tomorun<BinningAnalysisErrorBars>(
  *         tomodat,            // the TomoProblem instance
  *         opt,                // the program options
- *         // and a callable which creates and returns a ValueCalculator instance:
- *         MyCustomFigureOfMeritValueCalculatorInstance<...>(...),
+ *         // and our ValueCalculator instance:
+ *         MyCustomFigureOfMeritValueCalculator<...>(...),
  *         logger); // and finally the logger instance
  *     return;
  *   }
  * \endcode
+ *
+ * Starting in Tomographer version 2, the set up is slightly more complicated, because
+ * there are two different ways \c tomorun can be compiled.  It can either be compiled by
+ * using a \ref Tomographer::MultiplexorValueCalculator, or with static checks and
+ * different static code for each figure of merit (as before).  The former approach seems
+ * more efficient, and is now the default (this can be changed with CMake options when
+ * compiling tomorun). The logic is not that compicated, so you're best off by seeing what
+ * the code does for the built-in figures of merit and mimicking that.
  *
  * You're probably best off copying from the built-in examples inside that same function,
  * or the example for the Hilbert-Schmidt distance presented here. Here are some
@@ -220,7 +240,7 @@
  *     \ref Tomographer::MAT::File instance.
  *
  *   - You may of course use any tool provided by Eigen and the Tomographer API, for
- *     example \ref Tomographer::Tools::force_pos_semidef() to ensure a matrix is positive
+ *     example \ref Tomographer::Tools::forcePosSemiDef() to ensure a matrix is positive
  *     semidefinite.
  *
  * In our example for the Hilbert-Schmidt distance, the reference state is read from the
@@ -229,7 +249,7 @@
  * be given which is to be read from the MATLAB data file (if \c
  * "--value-type=HS-dist:my_ref_state_dm", where \c "my_ref_state_dm" is the name of the
  * variable inside the MATLAB data file containing the density matrix of the reference
- * state). Here's the code:
+ * state). Here's the code for the non-multiplexed version of the value-calculator:
  * \code
  *  if (opt->valtype.valtype == val_type_spec::HS_DIST) {
  *    
@@ -246,7 +266,7 @@
  *    rho_ref = Tomographer::MAT::value<MatrixType>(matf->var(refname));
  *
  *    // make sure that all eigenvalues of rho_ref are positive.
- *    rho_ref = Tomographer::Tools::force_pos_semidef(rho_ref, 1e-12);
+ *    rho_ref = Tomographer::Tools::forcePosSemiDef(rho_ref, 1e-12);
  *
  *    // emit debug message; this is displayed in verbose mode
  *    logger.debug("tomorun_dispatch()", [&](std::ostream & str) {
@@ -261,9 +281,7 @@
  *      // second argument: the command-line options
  *      opt,
  *      // thrid argument: an instance of the figure of merit calculator
- *      [&rho_ref](const OurTomoProblem & tomo) {
- *        return Tomographer::HsDistToRefCalculator<OurTomoProblem>(tomo, rho_ref);
- *      },
+ *      HsDistToRefCalculator<DMTypes>(rho_ref),
  *      // fourth argument: the logger object to emit log messages
  *      logger);
  *  }

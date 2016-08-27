@@ -341,7 +341,7 @@ inline void read_ref_state(MatrixType & rho_ref, MatrixType & T_ref,
   auto U = eig_rho_ref.eigenvectors();
   auto d = eig_rho_ref.eigenvalues();
   
-  Tomographer::MathTools::force_pos_vec_keepsum<RealVectorType>(d, 1e-12);
+  Tomographer::MathTools::forcePosVecKeepSum<RealVectorType>(d, 1e-12);
   
   rho_ref = U * d.asDiagonal() * U.adjoint();
   T_ref = U * d.cwiseSqrt().asDiagonal() * U.adjoint();
@@ -370,17 +370,17 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   // Typedefs for tomography data types
   //
 
-  typedef Tomographer::DenseDM::DMTypes<FixedDim, TomorunReal, FixedMaxDim> OurDMTypes;
-  typedef Tomographer::DenseDM::IndepMeasLLH<OurDMTypes, TomorunReal, TomorunInt, FixedMaxPOVMEffects, true> OurDenseLLH;
+  typedef Tomographer::DenseDM::DMTypes<FixedDim, TomorunReal, FixedMaxDim> DMTypes;
+  typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes, TomorunReal, TomorunInt, FixedMaxPOVMEffects, true> OurDenseLLH;
 
   //
   // Read data from file
   //
 
-  OurDMTypes dmt(dim);
+  DMTypes dmt(dim);
   OurDenseLLH llh(dmt);
 
-  typename Tomographer::Tools::EigenStdVector<typename OurDMTypes::MatrixType>::type Emn;
+  typename Tomographer::Tools::EigenStdVector<typename DMTypes::MatrixType>::type Emn;
   Emn = Tomographer::MAT::value<decltype(Emn)>(matf->var("Emn"));
   Eigen::VectorXi Nm;
   Nm = Tomographer::MAT::value<Eigen::VectorXi>(matf->var("Nm"));
@@ -404,7 +404,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 
   llh.setNMeasAmplifyFactor(opt->NMeasAmplifyFactor);
 
-  typedef typename OurDMTypes::MatrixType MatrixType;
+  typedef typename DMTypes::MatrixType MatrixType;
   
   //
   // Data has now been successfully read. Now, dispatch to the correct template function
@@ -463,10 +463,10 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 
   Tomographer::MultiplexorValueCalculator<
     TomorunReal,
-    Tomographer::DenseDM::TSpace::FidelityToRefCalculator<OurDMTypes, TomorunReal>,
-    Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<OurDMTypes, TomorunReal>,
-    Tomographer::DenseDM::TSpace::TrDistToRefCalculator<OurDMTypes, TomorunReal>,
-    Tomographer::DenseDM::TSpace::ObservableValueCalculator<OurDMTypes>
+    Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, TomorunReal>,
+    Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, TomorunReal>,
+    Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, TomorunReal>,
+    Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>
     //...// INSERT CUSTOM FIGURE OF MERIT HERE: add your ValueCalculator instance here.
     >  multiplexor_value_calculator(
         // index of the valuecalculator to actually use:
@@ -478,10 +478,10 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
             throw invalid_input(streamstr("Invalid valtype: " << opt->valtype.valtype))
                )))),
         // the valuecalculator instances which are available:
-        Tomographer::DenseDM::TSpace::FidelityToRefCalculator<OurDMTypes, TomorunReal>(T_ref),
-        Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<OurDMTypes, TomorunReal>(T_ref),
-        Tomographer::DenseDM::TSpace::TrDistToRefCalculator<OurDMTypes, TomorunReal>(rho_ref),
-        Tomographer::DenseDM::TSpace::ObservableValueCalculator<OurDMTypes>(dmt, A)
+        Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, TomorunReal>(T_ref),
+        Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, TomorunReal>(T_ref),
+        Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, TomorunReal>(rho_ref),
+        Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>(dmt, A)
         // INSERT CUSTOM FIGURE OF MERIT HERE: add your valuecalculator instance, with
         // valid constructor arguments.
         );
@@ -523,19 +523,19 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
       tomorun<UseBinningAnalysisErrorBars>(
           llh,
           opt,
-	  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<OurDMTypes, TomorunReal>(T_ref),
+	  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, TomorunReal>(T_ref),
           logger);
     } else if (opt->valtype.valtype == val_type_spec::PURIF_DIST) {
       tomorun<UseBinningAnalysisErrorBars>(
           llh,
           opt,
-	  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<OurDMTypes, TomorunReal>(T_ref),
+	  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, TomorunReal>(T_ref),
           logger);
     } else if (opt->valtype.valtype == val_type_spec::TR_DIST) {
       tomorun<UseBinningAnalysisErrorBars>(
           llh,
           opt,
-	  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<OurDMTypes, TomorunReal>(rho_ref),
+	  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, TomorunReal>(rho_ref),
           logger);
     } else {
       throw std::logic_error("WTF?? You shouldn't be here!");
@@ -566,7 +566,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
     tomorun<UseBinningAnalysisErrorBars>(
         llh,
         opt,
-	Tomographer::DenseDM::TSpace::ObservableValueCalculator<OurDMTypes>(dmt, A),
+	Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>(dmt, A),
         logger);
 
     return;
@@ -574,7 +574,13 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
   // --------------------------------------------------
   //
   // INSERT CUSTOM FIGURE OF MERIT HERE:
-  // See instructions in API documentation, page 'Adding a new figure of merit to the tomorun program'
+  //
+  // Add a new "if (opt->valtype.valtype == val_type_spec::MY_NEW_CUSTOM_FIGURE_OF_MERIT)
+  // { ... }" IF branch, read any possible reference state and do any other necessary
+  // set-up, and then relay the call to "tomorun<UseBinningAnalysisErrorBars>( ... )".
+  //
+  // See also the instructions in API documentation, page 'Adding a new figure of merit to
+  // the tomorun program'
   //
   // --------------------------------------------------
 
