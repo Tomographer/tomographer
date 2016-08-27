@@ -101,14 +101,24 @@ struct ResultsCollectorSimple
   typedef typename CDataBaseType::HistogramParams HistogramParams;
   typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> NormalizedHistogramType;
   typedef AveragedHistogram<NormalizedHistogramType, CountRealType> FinalHistogramType;
-
-  typedef HistogramType TaskResultType;
-
+  
+  typedef HistogramType MHRWStatsCollectorResultType;
+  
+  TOMO_STATIC_ASSERT_EXPR( CDataBaseType::UseBinningAnalysis == false ) ;
+  
+  /** \brief Stores information about the result of a task run.
+   *
+   * This structure is not the type that the task itself returns; rather, it is a way for
+   * us to store all the relevant information together in the result collector object (see
+   * \ref ResultsCollectorSimple::RunTaskResultList and \ref
+   * ResultsCollectorSimple::collectedRunTaskResults())
+   *
+   */
   struct RunTaskResult
-    : public MHRandomWalkTaskResult<TaskResultType,CountIntType,StepRealType>,
+    : public MHRandomWalkTaskResult<MHRWStatsCollectorResultType,CountIntType,StepRealType>,
       public virtual Tools::NeedOwnOperatorNew<NormalizedHistogramType>::ProviderType
   {
-    typedef MHRandomWalkTaskResult<TaskResultType,CountIntType,StepRealType> Base;
+    typedef MHRandomWalkTaskResult<MHRWStatsCollectorResultType,CountIntType,StepRealType> Base;
 
     RunTaskResult()
       : Base(), histogram()
@@ -123,9 +133,9 @@ struct ResultsCollectorSimple
 
     const NormalizedHistogramType histogram;
   };
-
+  
   typedef std::vector<RunTaskResult*> RunTaskResultList;
-
+  
 
   ResultsCollectorSimple(LoggerType & logger_)
     : _finalized(false), _finalhistogram(HistogramParams()),
@@ -257,7 +267,7 @@ struct ResultsCollectorWithBinningAnalysis
 
   typedef typename BinningMHRWStatsCollectorParams::BinningAnalysisParamsType BinningAnalysisParamsType;
 
-  typedef typename BinningMHRWStatsCollectorParams::Result TaskResultType;
+  typedef typename BinningMHRWStatsCollectorParams::Result MHRWStatsCollectorResultType;
 
   typedef typename CDataBaseType::HistogramType HistogramType;
   typedef typename CDataBaseType::HistogramParams HistogramParams;
@@ -274,8 +284,10 @@ struct ResultsCollectorWithBinningAnalysis
   typedef AveragedHistogram<SimpleNormalizedHistogramType, double> SimpleFinalHistogramType;
 
 
-  typedef MHRandomWalkTaskResult<TaskResultType,CountIntType,StepRealType> RunTaskResult;
+  typedef MHRandomWalkTaskResult<MHRWStatsCollectorResultType,CountIntType,StepRealType> RunTaskResult;
   typedef std::vector<RunTaskResult*> RunTaskResultList;
+
+  TOMO_STATIC_ASSERT_EXPR( CDataBaseType::UseBinningAnalysis ) ;
 
 
   ResultsCollectorWithBinningAnalysis(LoggerType & logger_)
@@ -358,8 +370,8 @@ public:
     _simplefinalhistogram.reset(pcdata->histogram_params);
   }
 
-  template<typename Cnt, typename TaskResultType2, typename CData>
-  inline void collectResult(Cnt task_no, TaskResultType2 && taskresult, const CData *)
+  template<typename Cnt, typename TaskResultType, typename CData>
+  inline void collectResult(Cnt task_no, TaskResultType && taskresult, const CData *)
   {
     tomographer_assert(!isFinalized() && "collectResult() called after results have been finalized!");
 

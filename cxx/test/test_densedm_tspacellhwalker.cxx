@@ -67,14 +67,16 @@ BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
   typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> DenseLLH;
   DenseLLH llh(dmt);
 
+  const double SQRT22 = boost::math::constants::half_root_two<double>();
+
   DenseLLH::VectorParamListType Exn(6, dmt.dim2());
   Exn <<
-    0.5, 0.5,  0.707107,  0,
-    0.5, 0.5, -0.707107,  0,
-    0.5, 0.5,  0,         0.707107,
-    0.5, 0.5,  0,        -0.707107,
-    1,   0,    0,         0,
-    0,   1,    0,         0
+    0.5, 0.5,  SQRT22,  0,
+    0.5, 0.5, -SQRT22,  0,
+    0.5, 0.5,  0,       SQRT22,
+    0.5, 0.5,  0,      -SQRT22,
+    1,   0,    0,       0,
+    0,   1,    0,       0
     ;
   DenseLLH::FreqListType Nx(6);
   Nx << 1500, 800, 300, 300, 10, 30;
