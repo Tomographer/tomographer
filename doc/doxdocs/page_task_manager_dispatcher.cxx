@@ -209,6 +209,12 @@
 
 /** \page pageInterfaceTaskDispatcher TaskDispatcher Interface
  *
+ * 
+ * \par void setStatusReportHandler(Fn fn)
+ *   The argument should be a callable (e.g. lambda function) which accepts a single
+ *   paramter of const reference to a <code>FullStatusReportType</code>
+ *
+ * \par .........
  *
  * \todo WRITE ME ............
  *

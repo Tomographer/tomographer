@@ -40,6 +40,7 @@ inline constexpr int omp_get_num_threads() { return 1; }
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/tools/cxxutil.h> // tomographer_assert()
 #include <tomographer2/tools/needownoperatornew.h>
+#include <tomographer2/multiproc.h>
 
 
 /** \file multiprocomp.h
@@ -168,7 +169,14 @@ namespace OMP {
     BaseLogger & _baselogger;
   public:
 
-    // ### why "MoreArgs" ??
+    /** \brief Constructor
+     *
+     * This constructor accepts arbitrary more arguments and ignores them.  The reason is
+     * because the OMP task dispatcher does not know for sure which type the task-logger
+     * is (you can specify your custom type), and will always invoke the constructor with
+     * additional parameters such as a pointer to the \a TaskCData.  Here we don't need
+     * those so we can just ignore any additional args.
+     */
     template<typename... MoreArgs>
     ThreadSanitizerLogger(BaseLogger & logger, MoreArgs&&...)
       // NOTE: pass the baselogger's level on here. The ThreadSanitizerLogger's level is
@@ -237,45 +245,6 @@ namespace Logger {
 namespace MultiProc {
 namespace OMP {
     
-  /** \brief A complete status report of currently running threads.
-   *
-   * Note: \a TaskStatusReportType must be copy-constructible.
-   */
-  template<typename TaskStatusReportType>
-  struct FullStatusReport
-  {
-    FullStatusReport() : tasks_running(), tasks_reports() { }
-
-    //! Number of completed tasks
-    int num_completed;
-    //! Total number of tasks to perform
-    int num_total_runs;
-    //! Number of currently active threads (which are actively solving a task)
-    int num_active_working_threads;
-    //! Number of spawned threads (some may be idle)
-    int num_threads;
-    
-    /** \brief List of length \a num_threads, specifying for each spawned thread whether
-     * it is active or not
-     *
-     * If <em>tasks_running[k]</em> is \c true, then thread number \a k is currently
-     * running a task. Otherwise, it is waiting (because of chunking of tasks, for
-     * example, or because there are are no new tasks to start)
-     */
-    std::vector<bool> tasks_running;
-    /** \brief List of length \a num_threads with the raw report submitted from each
-     * individual thread.
-     *
-     * If thread number \a k is active and currently running a task, then
-     * <em>tasks_reports[k]</em> is the raw status report that was submitted by that
-     * thread. If the thread is not running a task, <em>tasks_reports[k]</em> is an
-     * invalid, or default-constructed value.
-     */
-    std::vector<TaskStatusReportType,
-                typename Tools::NeedOwnOperatorNew<TaskStatusReportType>::AllocatorType> tasks_reports;
-  };
-
-
 
   /** \brief Dispatches tasks to parallel threads using OpenMP
    *
@@ -329,14 +298,14 @@ namespace OMP {
    * </ul>
    *
    */
-  template<typename Task_, typename TaskCData_, typename ResultsCollector_,
+  template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
            typename Logger_, typename CountIntType_ = int,
            typename TaskLogger_ = ThreadSanitizerLogger<Logger_> >
   class TaskDispatcher
   {
   public:
-    typedef Task_ Task;
-    typedef typename Task::StatusReportType TaskStatusReportType;
+    typedef TaskType_ TaskType;
+    typedef typename TaskType::StatusReportType TaskStatusReportType;
     typedef TaskCData_ TaskCData;
     typedef ResultsCollector_ ResultsCollector;
     typedef Logger_ Logger;
@@ -374,7 +343,7 @@ namespace OMP {
       volatile std::sig_atomic_t status_report_counter;
       CountIntType status_report_numreportsrecieved;
 
-      FullStatusReport<TaskStatusReportType> status_report_full;
+      FullStatusReportType status_report_full;
       FullStatusReportCallbackType status_report_user_fn;
 
       CountIntType num_total_runs;
@@ -447,24 +416,24 @@ namespace OMP {
               shared_data->status_report_initialized = true;
               
               // initialize status report object & overall data
-              shared_data->status_report_full = FullStatusReport<TaskStatusReportType>();
+              shared_data->status_report_full = FullStatusReportType();
               shared_data->status_report_full.num_completed = shared_data->num_completed;
               shared_data->status_report_full.num_total_runs = shared_data->num_total_runs;
-              shared_data->status_report_full.num_active_working_threads = shared_data->num_active_working_threads;
+              // shared_data->status_report_full.num_active_working_threads = shared_data->num_active_working_threads;
               int num_threads = omp_get_num_threads();
-              shared_data->status_report_full.num_threads = num_threads;
+              // shared_data->status_report_full.num_threads = num_threads;
               
               // initialize task-specific reports
               // fill our lists with default-constructed values & set all running to false.
-              shared_data->status_report_full.tasks_running.clear();
-              shared_data->status_report_full.tasks_reports.clear();
-              shared_data->status_report_full.tasks_running.resize(num_threads, false);
-              shared_data->status_report_full.tasks_reports.resize(num_threads);
+              shared_data->status_report_full.workers_running.clear();
+              shared_data->status_report_full.workers_reports.clear();
+              shared_data->status_report_full.workers_running.resize(num_threads, false);
+              shared_data->status_report_full.workers_reports.resize(num_threads);
               logger->debug("OMP TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
-                  stream << "vectors resized to tasks_running.size()="
-                         << shared_data->status_report_full.tasks_running.size()
-                         << " and tasks_reports.size()="
-                         << shared_data->status_report_full.tasks_reports.size()
+                  stream << "vectors resized to workers_running.size()="
+                         << shared_data->status_report_full.workers_running.size()
+                         << " and workers_reports.size()="
+                         << shared_data->status_report_full.workers_reports.size()
                          << ".";
                 });
               
@@ -480,14 +449,14 @@ namespace OMP {
             //
             // Report the data corresponding to this thread.
             //
-	    logger->debug("OMP TaskDispatcher/taskmanageriface", "threadnum=%ld, tasks_reports.size()=%ld",
-			  (long)threadnum, (long)shared_data->status_report_full.tasks_reports.size());
+	    logger->debug("OMP TaskDispatcher/taskmanageriface", "threadnum=%ld, workers_reports.size()=%ld",
+			  (long)threadnum, (long)shared_data->status_report_full.workers_reports.size());
 
             tomographer_assert(0 <= threadnum &&
-			       (std::size_t)threadnum < shared_data->status_report_full.tasks_reports.size());
+			       (std::size_t)threadnum < shared_data->status_report_full.workers_reports.size());
 
-            shared_data->status_report_full.tasks_running[threadnum] = true;
-            shared_data->status_report_full.tasks_reports[threadnum] = statreport;
+            shared_data->status_report_full.workers_running[threadnum] = true;
+            shared_data->status_report_full.workers_reports[threadnum] = statreport;
 
             ++ shared_data->status_report_numreportsrecieved;
 
@@ -498,8 +467,8 @@ namespace OMP {
               shared_data->status_report_numreportsrecieved = 0;
               shared_data->status_report_underway = false;
               shared_data->status_report_initialized = false;
-              shared_data->status_report_full.tasks_running.clear();
-              shared_data->status_report_full.tasks_reports.clear();
+              shared_data->status_report_full.workers_running.clear();
+              shared_data->status_report_full.workers_reports.clear();
             }
           } // if ok
         } // omp critical
@@ -587,7 +556,7 @@ namespace OMP {
                              "Running task #%lu ...", (unsigned long)k);
       
       // construct a new task instance
-      Task t(input, shdat->pcdata, threadsafelogger);
+      TaskType t(input, shdat->pcdata, threadsafelogger);
       
       // not sure an std::ostream would be safe here threadwise...?
       threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
@@ -625,7 +594,7 @@ namespace OMP {
      * Task's must regularly check whether a status report has been requested as they run. 
      * This is done by regularly calling the function
      * <code>tmgriface->statusReportRequested()</code> on the \c tmgriface object
-     * provided to <code>Task::run()</code>. This function call does not require a \c
+     * provided to <code>TaskType::run()</code>. This function call does not require a \c
      * critical section and is fast, so this check can be done often. The function
      * <code>tmgriface->statusReportRequested()</code> returns a \c bool indicating
      * whether such a report was requested or not. If such a report was requested, then
@@ -639,8 +608,7 @@ namespace OMP {
      * type of its status reports.
      *
      */
-    template<typename Fn>
-    inline void setStatusReportHandler(Fn fnstatus)
+    inline void setStatusReportHandler(FullStatusReportCallbackType fnstatus)
     {
 #pragma omp critical
       {
@@ -669,15 +637,15 @@ namespace OMP {
    *         deduction mechanism.
    *
    */
-  template<typename Task_, typename TaskCData_, typename ResultsCollector_,
+  template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
            typename Logger_, typename CountIntType_ = unsigned int>
-  inline TaskDispatcher<Task_, TaskCData_, ResultsCollector_,
+  inline TaskDispatcher<TaskType_, TaskCData_, ResultsCollector_,
                         Logger_, CountIntType_>
   makeTaskDispatcher(TaskCData_ * pcdata_, ResultsCollector_ * results_, Logger_ & logger_,
                         CountIntType_ num_total_runs_, CountIntType_ n_chunk_)
   {
     // RVO should be rather obvious to the compiler
-    return TaskDispatcher<Task_, TaskCData_, ResultsCollector_,
+    return TaskDispatcher<TaskType_, TaskCData_, ResultsCollector_,
                              Logger_, CountIntType_>(
         pcdata_, results_, logger_, num_total_runs_, n_chunk_
         );

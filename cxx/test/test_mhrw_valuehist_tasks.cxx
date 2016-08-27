@@ -37,7 +37,7 @@
 #include "test_tomographer.h"
 
 #include <tomographer2/mhrw_valuehist_tasks.h>
-#include <tomographer2/multiprocomp.h>
+#include <tomographer2/multiproc.h>
 
 #include "boost_test_logger.h"
 #include "test_mh_random_walk_common.h" // our test-case random walk
@@ -426,7 +426,20 @@ BOOST_AUTO_TEST_CASE(createstatscoll_binning)
                                        BoostTestLogger>).name()));
 }
 
-BOOST_AUTO_TEST_SUITE_END()
+BOOST_AUTO_TEST_SUITE_END() ;
+
+// -----------------------------------------------
+
+BOOST_AUTO_TEST_SUITE(interfaces_ok)
+
+BOOST_AUTO_TEST_CASE(write_me)
+{
+  // check with sequential task manager, do a basic minimal run to see that the interfaces
+  // of these class plug well into a task manager/dispatcher
+  BOOST_CHECK( false ) ;
+}
+
+BOOST_AUTO_TEST_SUITE_END() ;
 
 // =============================================================================
 BOOST_AUTO_TEST_SUITE_END()

@@ -37,6 +37,7 @@
  */
 
 #include <tomographer2/tools/signal_handler.h>
+#include <tomographer2/multiproc.h>
 
 
 namespace Tomographer
@@ -54,11 +55,14 @@ template<typename TaskDispatcher, typename Logger,
 struct SigHandlerTaskDispatcherStatusReporter
   : public SignalHandler
 {
+  typedef Tomographer::MultiProc::FullStatusReport<typename TaskDispatcher::TaskType::StatusReportType>
+    FullStatusReportType;
+
   SigHandlerTaskDispatcherStatusReporter(TaskDispatcher * tasks_, Logger & logger_)
     : tasks(tasks_), logger(logger_), time_start()
   {
     tasks->setStatusReportHandler(
-        [this](const typename TaskDispatcher::FullStatusReportType& report) {
+        [this](const FullStatusReportType& report) {
           logger.debug("SigHandlerStatusReporter/lambda", "intermediate progress report lambda called");
           this->intermediateProgressReport(report);
         });
@@ -77,7 +81,7 @@ struct SigHandlerTaskDispatcherStatusReporter
   /** \brief Format a nice intermediate progress report.
    *
    */
-  void intermediateProgressReport(const typename TaskDispatcher::FullStatusReportType& report)
+  void intermediateProgressReport(const FullStatusReportType& report)
   {
     std::string elapsed = fmtDuration(TimerClock::now() - time_start);
     fprintf(stderr,
@@ -85,17 +89,27 @@ struct SigHandlerTaskDispatcherStatusReporter
             "=========================== Intermediate Progress Report ============================\n"
             "                                             (hit Ctrl+C within %2d sec. to interrupt)\n"
             "  Total Completed Runs: %d/%d: %5.2f%%\n"
-            "  %s total elapsed\n"
-            "Current Run(s) information (threads working/spawned %d/%d):\n",
+            "  %s total elapsed\n",
             TOMOGRAPHER_SIG_HANDLER_REPEAT_EXIT_DELAY,
             report.num_completed, report.num_total_runs,
             (double)report.num_completed/report.num_total_runs*100.0,
-            elapsed.c_str(), report.num_active_working_threads,
-            report.num_threads
-            );
-    for (int k = 0; k < report.num_threads; ++k) {
-      std::string msg = report.tasks_running[k] ? report.tasks_reports[k].msg : std::string("<idle>");
-      fprintf(stderr, "=== Thread #%2d: %s\n", k, msg.c_str());
+            elapsed.c_str());
+    if (report.workers_running.size() == 1) {
+      if (report.workers_running[0]) {
+        fprintf(stderr, "%s\n", report.workers_reports[0].msg.c_str());
+      }
+    } else if (report.workers_running.size() > 1) {
+      fprintf(stderr,
+              "Current Run(s) information (workers working/spawned %d/%d):\n",
+              (int)std::count(report.workers_running.begin(), report.workers_running.end(), true),
+              (int)report.workers_running.size()
+          );
+      for (unsigned int k = 0; k < report.workers_running.size(); ++k) {
+        std::string msg = report.workers_running[k] ? report.workers_reports[k].msg : std::string("<idle>");
+        fprintf(stderr, "=== #%2u: %s\n", k, msg.c_str());
+      }
+    } else {
+      // no info. (workers_running.size() == 0)
     }
     fprintf(stderr,
             "=====================================================================================\n\n");

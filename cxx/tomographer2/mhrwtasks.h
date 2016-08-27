@@ -226,7 +226,7 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
      * See \ref MHRandomWalkTaskResult.
      */    
     typedef MHRandomWalkTaskResult<typename MHRandomWalkTaskCData::MHRWStatsCollectorResultType,
-				   CountIntType, StepRealType> Result;
+				   CountIntType, StepRealType> ResultType;
 
     /** \brief Status Report for a \ref MHRandomWalkTask
      *
@@ -235,13 +235,13 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
      *
      * This is for use with, for example, \ref OMPTaskDispatcher::request_status_report().
      */
-    struct StatusReport : public MultiProc::StatusReport
+    struct StatusReport : public MultiProc::TaskStatusReport
     {
       /** \brief Constructor which initializes all fields */
       StatusReport(double fdone = 0.0, const std::string & msg = std::string(),
                    CountIntType kstep_ = 0, MHRWParamsType mhrw_params_ = MHRWParamsType(),
                    double acceptance_ratio_ = 0.0)
-        : MultiProc::StatusReport(fdone, msg),
+        : MultiProc::TaskStatusReport(fdone, msg),
           kstep(kstep_),
 	  mhrw_params(mhrw_params_),
           acceptance_ratio(acceptance_ratio_),
@@ -291,7 +291,7 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
      * We use a pointer here because we don't want to rely on it having to be
      * default-constructible. We create the object only when requested.
      */
-    Result * result;
+    ResultType * result;
 
   public:
 
@@ -372,10 +372,10 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
 
       logger.longdebug("Tomographer::MHRWTasks::run()", "MHRandomWalk run finished.");
 
-      result = new Result(stats.getResult(), rwalk);
+      result = new ResultType(stats.getResult(), rwalk);
     }
 
-    inline const Result & getResult() const
+    inline const ResultType & getResult() const
     {
       return *result;
     }
