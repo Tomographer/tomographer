@@ -158,7 +158,7 @@ BOOST_AUTO_TEST_CASE(simple1)
 
   rwalk.run();
 
-  const ValWBinningMHRWStatsCollectorType::Result & result = vhist.getResult();
+  const ValWBinningMHRWStatsCollectorType::ResultType & result = vhist.getResult();
 
   // Todo: Fixme: Why are the error bar curves going like crazy?
   // ----> ok if we have enough samples it seems.
@@ -336,7 +336,7 @@ BOOST_AUTO_TEST_CASE(with_binning_analysis)
 
   BOOST_MESSAGE(buflog.get_contents());
 
-  const ValWBinningMHRWStatsCollectorType::Result & result = vhist.getResult();
+  const ValWBinningMHRWStatsCollectorType::ResultType & result = vhist.getResult();
 
   // all error bars should have converged with these settings
   MY_BOOST_CHECK_EIGEN_EQUAL(

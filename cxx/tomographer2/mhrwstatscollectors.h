@@ -201,6 +201,18 @@ public:
 
 
 
+
+/** \brief Trivial, NO-OP stats collector
+ *
+ * The minimal interface to a \ref pageInterfaceMHRWStatsCollector which does absolutely
+ * nothing.
+ *
+ */
+typedef MultipleMHRWStatsCollectors<> TrivialMHRWStatsCollector;
+
+
+
+
 // -----------------
 
 
@@ -240,7 +252,7 @@ public:
   typedef HistogramType_ HistogramType;
 
   //! Required for compliance with \ref pageInterfaceResultable type
-  typedef HistogramType_ Result;
+  typedef HistogramType_ ResultType;
 
   //! Structure which holds the parameters of the histogram we're recording
   typedef typename HistogramType::Params HistogramParams;
@@ -284,7 +296,7 @@ public:
    *          implementation the return value would be valid when called at any point
    *          after initialization.
    */
-  inline const Result & getResult() const
+  inline const ResultType & getResult() const
   {
     return _histogram;
   }
@@ -371,7 +383,7 @@ public:
  * Collects the template parameters for use with \ref
  * ValueHistogramWithBinningMHRWStatsCollector.
  *
- * Provides also some trait properties, such as the corresponding result type \ref Result.
+ * Provides also some trait properties, such as the corresponding result type \ref ResultType.
  */
 template<typename ValueCalculator_,
          typename CountIntType_ = int,
@@ -531,7 +543,7 @@ public:
   static constexpr int NumLevelsCTime = Params::NumLevels;
 
   //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::Result .
-  typedef typename Params::Result Result;
+  typedef typename Params::Result ResultType;
 
   /** \brief This is the natural ValueHistogramMHRWStatsCollector type on which we're
    *         adding error bars.
@@ -550,7 +562,7 @@ private:
 
   LoggerType & logger;
 
-  Result result;
+  ResultType result;
 
 public:
     
@@ -583,7 +595,7 @@ public:
    * This will only yield a valid value AFTER the all the data has been collected and \ref
    * done() was called.
    */
-  inline const Result & getResult() const
+  inline const ResultType & getResult() const
   {
     return result;
   }

@@ -39,67 +39,39 @@
 BOOST_AUTO_TEST_SUITE(test_mhrw)
 // -----------------------------------------------------------------------------
 
-struct test_mhrandomwalk_fixture
+
+BOOST_AUTO_TEST_CASE(mhrandomwalksetup)
 {
-  struct TestMHWalker : public TestLatticeMHRWGaussPeak<int> {
-    typedef TestLatticeMHRWGaussPeak<int> Base;
+  typedef Tomographer::Logger::VacuumLogger LoggerType;
+  LoggerType logger;
 
-    int count_jump;
-    
-    int Nthermchk;
-    int Nrunchk;
-    int Nsweepchk;
+  typedef std::mt19937 Rng;
+  Rng rng(3040); // fixed seed
 
-    TestMHWalker(int sweep_size, int check_n_therm, int check_n_run, std::mt19937 & rng)
-      : TestLatticeMHRWGaussPeak(
-	  Eigen::Vector2i::Constant(100),
-	  (Eigen::Matrix2i() << 10, -5, 5, 10).finished(), 1,
-	  (Eigen::Vector2i() << 40, 50).finished(),
-	  rng
-	  ),
-	count_jump(0),
-	Nthermchk(check_n_therm),
-	Nrunchk(check_n_run),
-	Nsweepchk(sweep_size)
-    {
-    }
-    TestMHWalker(TestMHWalker&& other) = default;
-    
-    inline void init()
-    {
-      Base::init();
-      BOOST_CHECK_EQUAL(count_jump, 0);
-      count_jump = 0;
-    }
-    
-    inline PointType startpoint()
-    {
-      BOOST_CHECK_EQUAL(count_jump, 0);
-      return PointType::Zero(latticeDims.size());
-    }
-    
-    inline void thermalizing_done()
-    {
-      BOOST_CHECK_EQUAL(count_jump, Nthermchk*Nsweepchk);
-    }
-    
-    inline void done()
-    {
-      BOOST_CHECK_EQUAL(count_jump, Nthermchk*Nsweepchk + Nrunchk*Nsweepchk);
-    }
-    
-    template<typename PT>
-    inline PointType jumpFn(PT&& curpt, const StepRealType step_size)
-    {
-      ++count_jump;
-      return Base::jumpFn(std::forward<PointType>(curpt), step_size);
-    }
-  };
+  typedef Tomographer::MHRandomWalk<Rng, TestMHWalker, TestMHRWStatsCollector, LoggerType, int>
+    MHRandomWalkType;
 
-};
+  const int ntherm = 50;
+  const int nrun = 100;
+  const int nsweep = 10;
+
+  // rng for the mhwalker
+  Rng rng2(414367); // seed, fixed -> deterministic
+
+  TestMHWalker mhwalker(nsweep, ntherm, nrun, rng2);
+  TestMHRWStatsCollector stats(nsweep, ntherm, nrun);
+  MHRandomWalkType rw(Tomographer::MHRWParams<int,double>(2, nsweep, ntherm, nrun), mhwalker, stats, rng, logger);
+
+  BOOST_CHECK_EQUAL(rw.nSweep(), nsweep);
+  BOOST_CHECK_EQUAL(rw.nTherm(), ntherm);
+  BOOST_CHECK_EQUAL(rw.nRun(), nrun);
+
+  BOOST_CHECK(!rw.hasAcceptanceRatio());
+}
 
 
-BOOST_FIXTURE_TEST_CASE(mhrandomwalk, test_mhrandomwalk_fixture)
+
+BOOST_AUTO_TEST_CASE(mhrandomwalk)
 {
   typedef Tomographer::Logger::VacuumLogger LoggerType;
   LoggerType logger;
@@ -130,38 +102,9 @@ BOOST_FIXTURE_TEST_CASE(mhrandomwalk, test_mhrandomwalk_fixture)
 
   rw.run();
 
+  BOOST_CHECK(rw.hasAcceptanceRatio());
+  BOOST_MESSAGE("Accept ratio = " << rw.acceptanceRatio());
 }
-
-
-BOOST_FIXTURE_TEST_CASE(mhrandomwalksetup, test_mhrandomwalk_fixture)
-{
-  typedef Tomographer::Logger::VacuumLogger LoggerType;
-  LoggerType logger;
-
-  typedef std::mt19937 Rng;
-  Rng rng(3040); // fixed seed
-
-  typedef Tomographer::MHRandomWalk<Rng, TestMHWalker, TestMHRWStatsCollector, LoggerType, int>
-    MHRandomWalkType;
-
-  const int ntherm = 50;
-  const int nrun = 100;
-  const int nsweep = 10;
-
-  // rng for the mhwalker
-  Rng rng2(414367); // seed, fixed -> deterministic
-
-  TestMHWalker mhwalker(nsweep, ntherm, nrun, rng2);
-  TestMHRWStatsCollector stats(nsweep, ntherm, nrun);
-  MHRandomWalkType rw(Tomographer::MHRWParams<int,double>(2, nsweep, ntherm, nrun), mhwalker, stats, rng, logger);
-
-  BOOST_CHECK_EQUAL(rw.nSweep(), nsweep);
-  BOOST_CHECK_EQUAL(rw.nTherm(), ntherm);
-  BOOST_CHECK_EQUAL(rw.nRun(), nrun);
-
-  BOOST_CHECK(!rw.hasAcceptanceRatio());
-}
-
 
 // -----------------------------------------------------------------------------
 BOOST_AUTO_TEST_SUITE_END()

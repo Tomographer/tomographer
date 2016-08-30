@@ -128,12 +128,12 @@
  * be for example some forms of \ref pageInterfaceMHRWStatsCollector 's such as \ref
  * Tomographer::ValueHistogramMHRWStatsCollector which results in a histogram.
  *
- * \par typedef .. Result
+ * \par typedef .. ResultType
  *    The type that the result has
  *
- * \par Result getResult()
+ * \par ResultType getResult()
  *    Obtain the said result. The return type must be anything that may be assigned to a
- *    \a Result type, or a value that the \a Result accepts in a constructor.
+ *    \a ResultType type, or a value that the \a ResultType accepts in a constructor.
  */
 
 
@@ -272,11 +272,15 @@
  *
  * \par typedef .. MHRWStatsCollectorResultType
  *
- * \par MHRWStatsCollectorType createStatsCollector() const
+ * \par MHRWStatsCollectorType createStatsCollector(LoggerType & logger) const
  *     Create an \a MHRWStatsCollector -type instance to use. This must be a type which
  *     compiles both with the \ref pageInterfaceMHRWStatsCollector and the \ref
- *     pageInterfaceResultable. It must have as its \a Result the type given as \a
- *     MHRWStatsColelctorResultType.
+ *     pageInterfaceResultable. It must have as its \a ResultType the type given as \a
+ *     MHRWStatsColelctorResultType. 
+ *
+ * \par
+ *     The logger may be used to log messages, and may be passed on to the stats collector
+ *     for the same purpose.  Use a template parameter for \a LoggerType.
  *
  * \par MHWalker createMHWalker(Rng & rng, LoggerType & logger) const
  *     Create an \a MHWalker -type instance. This may be any \ref pageInterfaceMHWalker

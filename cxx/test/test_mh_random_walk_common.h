@@ -186,6 +186,65 @@ struct TestLatticeMHRWGaussPeak
 };
 
 
+struct TestMHWalker : public TestLatticeMHRWGaussPeak<int> {
+  typedef TestLatticeMHRWGaussPeak<int> Base;
+
+  int count_jump;
+    
+  int Nthermchk;
+  int Nrunchk;
+  int Nsweepchk;
+
+  TestMHWalker(int sweep_size, int check_n_therm, int check_n_run, std::mt19937 & rng)
+    : TestLatticeMHRWGaussPeak(
+        Eigen::Vector2i::Constant(100),
+        (Eigen::Matrix2i() << 10, -5, 5, 10).finished(), 1,
+        (Eigen::Vector2i() << 40, 50).finished(),
+        rng
+        ),
+      count_jump(0),
+      Nthermchk(check_n_therm),
+      Nrunchk(check_n_run),
+      Nsweepchk(sweep_size)
+  {
+  }
+  TestMHWalker(TestMHWalker&& other) = default;
+    
+  inline void init()
+  {
+    Base::init();
+    BOOST_CHECK_EQUAL(count_jump, 0);
+    count_jump = 0;
+  }
+    
+  inline PointType startpoint()
+  {
+    BOOST_CHECK_EQUAL(count_jump, 0);
+    return PointType::Zero(latticeDims.size());
+  }
+    
+  inline void thermalizing_done()
+  {
+    BOOST_CHECK_EQUAL(count_jump, Nthermchk*Nsweepchk);
+  }
+    
+  inline void done()
+  {
+    BOOST_CHECK_EQUAL(count_jump, Nthermchk*Nsweepchk + Nrunchk*Nsweepchk);
+  }
+    
+  template<typename PT>
+  inline PointType jumpFn(PT&& curpt, const StepRealType step_size)
+  {
+    ++count_jump;
+    return Base::jumpFn(std::forward<PointType>(curpt), step_size);
+  }
+};
+
+
+
+
+
 
 struct TestMHRWStatsCollector
 {
@@ -244,6 +303,31 @@ struct TestMHRWStatsCollector
     }
 
     ++count_rawmoves;
+  }
+};
+
+struct TestMHRWStatsCollectorWithResult
+  : public TestMHRWStatsCollector
+{
+  typedef bool ResultType;
+  
+  // set to \a true once "done()" is called
+  ResultType _result;
+
+  TestMHRWStatsCollectorWithResult(int sweep_size, int check_n_therm, int check_n_run)
+    : TestMHRWStatsCollector(sweep_size, check_n_therm, check_n_run), _result(false)
+  {
+  }
+
+  void done()
+  {
+    TestMHRWStatsCollector::done();
+    _result = true;
+  }
+
+  ResultType getResult() const
+  {
+    return _result;
   }
 };
 

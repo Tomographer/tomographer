@@ -56,65 +56,65 @@ namespace Tomographer {
 namespace MultiProc {
 namespace OMP {
 
-  namespace tomo_internal {
+namespace tomo_internal {
 
-  /** \brief Internal. Helper for \ref ThreadSanitizerLogger
-   *
-   * Emits the log to \c baselogger. This template is specialized for
-   * <code>baseLoggerIsThreadSafe=true</code>, in which case the call to baselogger's
-   * emit_log is not wrapped into a critical section.
-   *
-   * This helper is meant to be called as
-   * \code
-   *      ThreadSanitizerLoggerHelper<BaseLogger, Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
-   *        ::emit_log(
-   *            baselogger, level, origin, msg
-   *          );
-   * \endcode
-   */
-  template<typename BaseLogger, bool baseLoggerIsThreadSafe>
-  struct ThreadSanitizerLoggerHelper
+/** \brief Internal. Helper for \ref ThreadSanitizerLogger
+ *
+ * Emits the log to \c baselogger. This template is specialized for
+ * <code>baseLoggerIsThreadSafe=true</code>, in which case the call to baselogger's
+ * emit_log is not wrapped into a critical section.
+ *
+ * This helper is meant to be called as
+ * \code
+ *      ThreadSanitizerLoggerHelper<BaseLogger, Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
+ *        ::emit_log(
+ *            baselogger, level, origin, msg
+ *          );
+ * \endcode
+ */
+template<typename BaseLogger, bool baseLoggerIsThreadSafe>
+struct ThreadSanitizerLoggerHelper
+{
+  static inline void emit_log(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
   {
-    static inline void emit_log(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
-    {
 #pragma omp critical
-      {
-        //printf("ThreadSanitizerLoggerHelper::emit_log(%d, %s, %s) -- OMP CRITICAL\n", level, origin, msg.c_str());
-        baselogger.emit_log(level, origin, msg);
-      }
-    }
-    static inline bool filter_by_origin(BaseLogger & baselogger, int level, const char * origin)
     {
-      bool ok = true;
-#pragma omp critical
-      {
-        //printf("ThreadSanitizerLoggerHelper::filter_by_origin(%d, %s) -- OMP CRITICAL\n", level, origin);
-        ok = baselogger.filter_by_origin(level, origin);
-      }
-      return ok;
-    }
-  };
-
-  //
-  // specialize the helper for when logging to a thread-safe base logger. No critical
-  // section needed because the logger is already thread-safe.
-  //
-  template<typename BaseLogger>
-  struct ThreadSanitizerLoggerHelper<BaseLogger, true>
-  {
-    static inline void emit_log(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
-    {
-      //printf("ThreadSanitizerLoggerHelper::emit_log(%d, %s, %s) -- NORMAL\n", level, origin, msg.c_str());
+      //printf("ThreadSanitizerLoggerHelper::emit_log(%d, %s, %s) -- OMP CRITICAL\n", level, origin, msg.c_str());
       baselogger.emit_log(level, origin, msg);
     }
-    static inline bool filter_by_origin(BaseLogger & baselogger, int level, const char * origin)
+  }
+  static inline bool filter_by_origin(BaseLogger & baselogger, int level, const char * origin)
+  {
+    bool ok = true;
+#pragma omp critical
     {
-      //printf("ThreadSanitizerLoggerHelper::filter_by_origin(%d, %s) -- NORMAL\n", level, origin);
-      return baselogger.filter_by_origin(level, origin);
+      //printf("ThreadSanitizerLoggerHelper::filter_by_origin(%d, %s) -- OMP CRITICAL\n", level, origin);
+      ok = baselogger.filter_by_origin(level, origin);
     }
-  };
+    return ok;
+  }
+};
 
-  } // namespace tomo_internal
+//
+// specialize the helper for when logging to a thread-safe base logger. No critical
+// section needed because the logger is already thread-safe.
+//
+template<typename BaseLogger>
+struct ThreadSanitizerLoggerHelper<BaseLogger, true>
+{
+  static inline void emit_log(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
+  {
+    //printf("ThreadSanitizerLoggerHelper::emit_log(%d, %s, %s) -- NORMAL\n", level, origin, msg.c_str());
+    baselogger.emit_log(level, origin, msg);
+  }
+  static inline bool filter_by_origin(BaseLogger & baselogger, int level, const char * origin)
+  {
+    //printf("ThreadSanitizerLoggerHelper::filter_by_origin(%d, %s) -- NORMAL\n", level, origin);
+    return baselogger.filter_by_origin(level, origin);
+  }
+};
+
+} // namespace tomo_internal
   
 
   /** \brief Wrapper logger to call non-thread-safe loggers from a multithreaded environment.
@@ -163,82 +163,82 @@ namespace OMP {
    * \endcode
    * 
    */
-  template<typename BaseLogger>
-  class ThreadSanitizerLogger : public Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >
+template<typename BaseLogger>
+class ThreadSanitizerLogger : public Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >
+{
+  BaseLogger & _baselogger;
+public:
+
+  /** \brief Constructor
+   *
+   * This constructor accepts arbitrary more arguments and ignores them.  The reason is
+   * because the OMP task dispatcher does not know for sure which type the task-logger
+   * is (you can specify your custom type), and will always invoke the constructor with
+   * additional parameters such as a pointer to the \a TaskCData.  Here we don't need
+   * those so we can just ignore any additional args.
+   */
+  template<typename... MoreArgs>
+  ThreadSanitizerLogger(BaseLogger & logger, MoreArgs&&...)
+    // NOTE: pass the baselogger's level on here. The ThreadSanitizerLogger's level is
+    // this one, and is fixed and cannot be changed while running.
+    : Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >(logger.level()),
+    _baselogger(logger)
   {
-    BaseLogger & _baselogger;
-  public:
-
-    /** \brief Constructor
-     *
-     * This constructor accepts arbitrary more arguments and ignores them.  The reason is
-     * because the OMP task dispatcher does not know for sure which type the task-logger
-     * is (you can specify your custom type), and will always invoke the constructor with
-     * additional parameters such as a pointer to the \a TaskCData.  Here we don't need
-     * those so we can just ignore any additional args.
-     */
-    template<typename... MoreArgs>
-    ThreadSanitizerLogger(BaseLogger & logger, MoreArgs&&...)
-      // NOTE: pass the baselogger's level on here. The ThreadSanitizerLogger's level is
-      // this one, and is fixed and cannot be changed while running.
-      : Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >(logger.level()),
-        _baselogger(logger)
-    {
-      // when you have to debug the log mechanism.... lol
-      //printf("ThreadSanitizerLogger(): object created\n");
-      //_baselogger.debug("ThreadSanitizerLogger()", "log from constructor.");
-      //emit_log(Logger::DEBUG, "ThreadSanitizerLogger!", "emit_log from constructor");
-      //LoggerBase<ThreadSanitizerLogger<BaseLogger> >::debug("ThreadSanitizerLogger", "debug from constructor");
-    }
+    // when you have to debug the log mechanism.... lol
+    //printf("ThreadSanitizerLogger(): object created\n");
+    //_baselogger.debug("ThreadSanitizerLogger()", "log from constructor.");
+    //emit_log(Logger::DEBUG, "ThreadSanitizerLogger!", "emit_log from constructor");
+    //LoggerBase<ThreadSanitizerLogger<BaseLogger> >::debug("ThreadSanitizerLogger", "debug from constructor");
+  }
     
-    ~ThreadSanitizerLogger()
-    {
-    }
+  ~ThreadSanitizerLogger()
+  {
+  }
 
     
     
-    inline void emit_log(int level, const char * origin, const std::string& msg)
-    {
-      //printf("ThreadSanitizerLogger::emit_log(%d, %s, %s)\n", level, origin, msg.c_str());
-      tomo_internal::ThreadSanitizerLoggerHelper<BaseLogger,
-						 Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
-        ::emit_log(
-            _baselogger, level, origin, msg
-	    );
-    }
+  inline void emit_log(int level, const char * origin, const std::string& msg)
+  {
+    //printf("ThreadSanitizerLogger::emit_log(%d, %s, %s)\n", level, origin, msg.c_str());
+    tomo_internal::ThreadSanitizerLoggerHelper<BaseLogger,
+                                               Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
+      ::emit_log(
+          _baselogger, level, origin, msg
+          );
+  }
 
-    template<bool dummy = true>
-    inline typename std::enable_if<dummy && Logger::LoggerTraits<BaseLogger>::HasFilterByOrigin, bool>::type
-      filter_by_origin(int level, const char * origin) const
-    {
-      return tomo_internal::ThreadSanitizerLoggerHelper<BaseLogger,
-							Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
-        ::filter_by_origin(
-            _baselogger, level, origin
-	    );
-    }
-  };
+  template<bool dummy = true>
+  inline typename std::enable_if<dummy && Logger::LoggerTraits<BaseLogger>::HasFilterByOrigin, bool>::type
+    filter_by_origin(int level, const char * origin) const
+  {
+    return tomo_internal::ThreadSanitizerLoggerHelper<BaseLogger,
+                                                      Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
+      ::filter_by_origin(
+          _baselogger, level, origin
+          );
+  }
+};
 
 } // namespace OMP
 } // namespace MultiProc
 
 namespace Logger {
-  /** \brief Specialized Traits for \ref
-   *         Tomographer::MultiProc::OMP::ThreadSanitizerLogger<typename BaseLogger> --
-   *         see \ref Tomographer::Logger::LoggerTraits<typename LoggerType>
-   *
-   * Logger traits for \ref MultiProc::OMP::ThreadSanitizerLogger.
-   */
-  template<typename BaseLogger>
-  struct LoggerTraits<MultiProc::OMP::ThreadSanitizerLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
-  {
-    enum {
-      // explicitly require our logger instance to store its level. The level cannot be
-      // changed.
-      HasOwnGetLevel = 0,
-      IsThreadSafe = 1
-    };
+/** \brief Specialized Traits for \ref
+ *         Tomographer::MultiProc::OMP::ThreadSanitizerLogger<typename BaseLogger> --
+ *         see \ref Tomographer::Logger::LoggerTraits<typename LoggerType>
+ *
+ * Logger traits for \ref MultiProc::OMP::ThreadSanitizerLogger.
+ */
+template<typename BaseLogger>
+struct LoggerTraits<MultiProc::OMP::ThreadSanitizerLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
+{
+  enum {
+    // explicitly require our logger instance to store its level. The level cannot be
+    // changed.
+    HasOwnGetLevel = 0,
+    IsThreadSafe = 1
   };
+};
 } // namespace Logger
 
 
@@ -246,410 +246,428 @@ namespace MultiProc {
 namespace OMP {
     
 
-  /** \brief Dispatches tasks to parallel threads using OpenMP
-   *
-   * Uses <a href="http://openmp.org/">OpenMP</a> to parallelize the repetition of a same
-   * task with different inputs.
-   *
-   * Check out <a href="https://computing.llnl.gov/tutorials/openMP/">this good tutorial
-   * for OpenMP</a>.
-   *
-   * <ul>
-   * <li> \a Task must be a \ref pageInterfaceTask compliant type 
-   *
-   * <li> \a TaskCData should conform to the \ref pageInterfaceTaskCData.
-   *
-   *      \a TaskCData may be any struct which contains all the information which
-   *      needs to be accessed by the task. It should be read-only, i.e. the task should
-   *      not need to write to this information. (This typically encodes the data of the
-   *      problem, ie. experimental measurement results.)
-   *
-   * <li> \a ResultsCollector must be a \ref pageInterfaceResultsCollector compliant type 
-   *
-   * <li> \a %Logger is a logger type derived from \ref LoggerBase, for example \ref
-   *      FileLogger. This is the type of a logger defined in the caller's scope (and
-   *      given as constructor argument here) to which messages should be logged to.
-   *
-   * <li> \a TaskLogger is the type of the logger which will be provided to tasks inside
-   *      the parallel section. Such logger should ensure that the logging is
-   *      thread-safe. By default \a TaskLogger is nothing else than an appropriate \ref
-   *      ThreadSanitizerLogger.
-   *
-   *      (Note that if the originally given \c logger is thread-safe (see
-   *      \ref LoggerTraits), then \ref ThreadSanitizerLogger directly relays calls
-   *      without wrapping them into OMP critical sections.)
-   *
-   *      For each task, a new \a TaskLogger will be created. The constructor is expected
-   *      to accept the following arguments:
-   *      \code
-   *         TaskLogger(Logger & baselogger, const TaskCData * pcdata, CountIntType k)
-   *      \endcode
-   *      where \a baselogger is the logger given to the \a TaskDispatcher constructor,
-   *      \a pcdata is the constant shared data pointer also given to the constructor, and
-   *      \a k is the task number (which may range from 0 to the total number of tasks -
-   *      1). The task logger is NOT constructed in a thread-safe code region, so use \c
-   *      "#pragma omp critical" if necessary. You may use \a omp_get_thread_num() and \a
-   *      omp_get_num_threads() to get the current thread number and the total number of
-   *      threads, respectively.
-   *
-   * <li> \a CountIntType should be a type to use to count the number of tasks. Usually
-   *      there's no reason not to use an \c int.
-   *
-   * </ul>
-   *
-   */
-  template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
-           typename Logger_, typename CountIntType_ = int,
-           typename TaskLogger_ = ThreadSanitizerLogger<Logger_> >
-  class TaskDispatcher
+/** \brief Dispatches tasks to parallel threads using OpenMP
+ *
+ * Uses <a href="http://openmp.org/">OpenMP</a> to parallelize the repetition of a same
+ * task with different inputs.
+ *
+ * Check out <a href="https://computing.llnl.gov/tutorials/openMP/">this good tutorial
+ * for OpenMP</a>.
+ *
+ * <ul>
+ * <li> \a Task must be a \ref pageInterfaceTask compliant type 
+ *
+ * <li> \a TaskCData should conform to the \ref pageInterfaceTaskCData.
+ *
+ *      \a TaskCData may be any struct which contains all the information which
+ *      needs to be accessed by the task. It should be read-only, i.e. the task should
+ *      not need to write to this information. (This typically encodes the data of the
+ *      problem, ie. experimental measurement results.)
+ *
+ * <li> \a ResultsCollector must be a \ref pageInterfaceResultsCollector compliant type 
+ *
+ * <li> \a %Logger is a logger type derived from \ref LoggerBase, for example \ref
+ *      FileLogger. This is the type of a logger defined in the caller's scope (and
+ *      given as constructor argument here) to which messages should be logged to.
+ *
+ * <li> \a TaskLogger is the type of the logger which will be provided to tasks inside
+ *      the parallel section. Such logger should ensure that the logging is
+ *      thread-safe. By default \a TaskLogger is nothing else than an appropriate \ref
+ *      ThreadSanitizerLogger.
+ *
+ *      (Note that if the originally given \c logger is thread-safe (see
+ *      \ref LoggerTraits), then \ref ThreadSanitizerLogger directly relays calls
+ *      without wrapping them into OMP critical sections.)
+ *
+ *      For each task, a new \a TaskLogger will be created. The constructor is expected
+ *      to accept the following arguments:
+ *      \code
+ *         TaskLogger(Logger & baselogger, const TaskCData * pcdata, CountIntType k)
+ *      \endcode
+ *      where \a baselogger is the logger given to the \a TaskDispatcher constructor,
+ *      \a pcdata is the constant shared data pointer also given to the constructor, and
+ *      \a k is the task number (which may range from 0 to the total number of tasks -
+ *      1). The task logger is NOT constructed in a thread-safe code region, so use \c
+ *      "#pragma omp critical" if necessary. You may use \a omp_get_thread_num() and \a
+ *      omp_get_num_threads() to get the current thread number and the total number of
+ *      threads, respectively.
+ *
+ * <li> \a CountIntType should be a type to use to count the number of tasks. Usually
+ *      there's no reason not to use an \c int.
+ *
+ * </ul>
+ *
+ */
+template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
+         typename Logger_, typename CountIntType_ = int,
+         typename TaskLogger_ = ThreadSanitizerLogger<Logger_> >
+class TaskDispatcher
+{
+public:
+  typedef TaskType_ TaskType;
+  typedef typename TaskType::StatusReportType TaskStatusReportType;
+  typedef TaskCData_ TaskCData;
+  typedef ResultsCollector_ ResultsCollector;
+  typedef Logger_ Logger;
+  typedef CountIntType_ CountIntType;
+  typedef TaskLogger_ TaskLogger;
+  typedef FullStatusReport<TaskStatusReportType> FullStatusReportType;
+
+  typedef std::function<void(const FullStatusReportType&)> FullStatusReportCallbackType;
+
+private:
+
+  //! thread-shared variables
+  struct thread_shared_data {
+    thread_shared_data(const TaskCData * pcdata_, ResultsCollector * results_, Logger & logger_,
+                       CountIntType num_total_runs_, CountIntType n_chunk_)
+      : pcdata(pcdata_),
+        results(results_),
+        logger(logger_),
+        status_report_underway(false),
+        status_report_initialized(false),
+        status_report_counter(0),
+        status_report_numreportsrecieved(0),
+        status_report_full(),
+        status_report_user_fn(),
+        num_total_runs(num_total_runs_), n_chunk(n_chunk_), num_completed(0),
+        num_active_working_threads(0)
+    { }
+
+    const TaskCData * pcdata;
+    ResultsCollector * results;
+    Logger & logger;
+
+    bool status_report_underway;
+    bool status_report_initialized;
+    volatile std::sig_atomic_t status_report_counter;
+    CountIntType status_report_numreportsrecieved;
+
+    FullStatusReportType status_report_full;
+    FullStatusReportCallbackType status_report_user_fn;
+
+    CountIntType num_total_runs;
+    CountIntType n_chunk;
+    CountIntType num_completed;
+
+    CountIntType num_active_working_threads;
+  };
+  //! thread-local variables and stuff &mdash; also serves as TaskManagerIface
+  struct thread_private_data
   {
-  public:
-    typedef TaskType_ TaskType;
-    typedef typename TaskType::StatusReportType TaskStatusReportType;
-    typedef TaskCData_ TaskCData;
-    typedef ResultsCollector_ ResultsCollector;
-    typedef Logger_ Logger;
-    typedef CountIntType_ CountIntType;
-    typedef TaskLogger_ TaskLogger;
-    typedef FullStatusReport<TaskStatusReportType> FullStatusReportType;
+    thread_shared_data * shared_data;
 
-    typedef std::function<void(const FullStatusReportType&)> FullStatusReportCallbackType;
+    TaskLogger * logger;
 
-  private:
+    CountIntType kiter;
+    CountIntType local_status_report_counter;
 
-    //! thread-shared variables
-    struct thread_shared_data {
-      thread_shared_data(const TaskCData * pcdata_, ResultsCollector * results_, Logger & logger_,
-                         CountIntType num_total_runs_, CountIntType n_chunk_)
-        : pcdata(pcdata_),
-          results(results_),
-          logger(logger_),
-          status_report_underway(false),
-	  status_report_initialized(false),
-          status_report_counter(0),
-          status_report_numreportsrecieved(0),
-          status_report_full(),
-          status_report_user_fn(),
-          num_total_runs(num_total_runs_), n_chunk(n_chunk_), num_completed(0),
-          num_active_working_threads(0)
-      { }
-
-      const TaskCData * pcdata;
-      ResultsCollector * results;
-      Logger & logger;
-
-      bool status_report_underway;
-      bool status_report_initialized;
-      volatile std::sig_atomic_t status_report_counter;
-      CountIntType status_report_numreportsrecieved;
-
-      FullStatusReportType status_report_full;
-      FullStatusReportCallbackType status_report_user_fn;
-
-      CountIntType num_total_runs;
-      CountIntType n_chunk;
-      CountIntType num_completed;
-
-      CountIntType num_active_working_threads;
-    };
-    //! thread-local variables and stuff &mdash; also serves as TaskManagerIface
-    struct thread_private_data
+    inline bool statusReportRequested()
     {
-      thread_shared_data * shared_data;
+      //fprintf(stderr, "statusReportRequested(), shared_data=%p\n", shared_data);
+      return (int)local_status_report_counter != (int)shared_data->status_report_counter;
+    }
 
-      TaskLogger * logger;
-
-      CountIntType kiter;
-      CountIntType local_status_report_counter;
-
-      inline bool statusReportRequested()
-      {
-        //fprintf(stderr, "statusReportRequested(), shared_data=%p\n", shared_data);
-        return (int)local_status_report_counter != (int)shared_data->status_report_counter;
+    inline void submitStatusReport(const TaskStatusReportType &statreport)
+    {
+      if ((int)local_status_report_counter == (int)shared_data->status_report_counter) {
+        // error: task submitted unsollicited report
+        logger->warning("OMP TaskDispatcher/taskmanageriface", "Task submitted unsollicited status report");
+        return;
       }
 
-      inline void submitStatusReport(const TaskStatusReportType &statreport)
-      {
-        if ((int)local_status_report_counter == (int)shared_data->status_report_counter) {
-          // error: task submitted unsollicited report
-          logger->warning("OMP TaskDispatcher/taskmanageriface", "Task submitted unsollicited status report");
-          return;
-        }
-
 #pragma omp critical
-        {
-          bool ok = true; // whether to proceed or not
+      {
+        bool ok = true; // whether to proceed or not
 
-          // we've reacted to the given "signal"
-          local_status_report_counter = shared_data->status_report_counter;
+        // we've reacted to the given "signal"
+        local_status_report_counter = shared_data->status_report_counter;
           
-          // add our status report to being-prepared status report in the  shared data
-          int threadnum = omp_get_thread_num();
+        // add our status report to being-prepared status report in the  shared data
+        int threadnum = omp_get_thread_num();
+
+        // Important: access the original logger, not the thread-safe-wrapped logger!!
+        // Otherwise this could lead to deadlocks because of nested critical blocks.
+        shared_data->logger.longdebug("OMP TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
+            stream << "status report received for thread #" << threadnum << ", treating it ...";
+          });
+
+        //
+        // If we're the first reporting thread, we need to initiate the status reporing
+        // procedure and initialize the general data
+        //
+        if (!shared_data->status_report_initialized) {
 
           //
-          // If we're the first reporting thread, we need to initiate the status reporing
-          // procedure and initialize the general data
+          // Check that we indeed have to submit a status report.
           //
-          if (!shared_data->status_report_initialized) {
+          if (shared_data->status_report_underway) {
+            // status report already underway!
+            // Important: access the original logger, not the thread-safe-wrapped logger!!
+            // Otherwise this could lead to deadlocks because of nested critical blocks.
+            shared_data->logger.warning("OMP TaskDispatcher/taskmanageriface",
+                                        "status report already underway!");
+            ok = false;
+          }
+          if (!shared_data->status_report_user_fn) {
+            // no user handler set
+            // Important: access the original logger, not the thread-safe-wrapped logger!!
+            // Otherwise this could lead to deadlocks because of nested critical blocks.
+            shared_data->logger.warning("OMP TaskDispatcher/taskmanageriface",
+                                        "no user status report handler set!"
+                                        " call setStatusReportHandler() first.");
+            ok = false;
+          }
 
-            //
-            // Check that we indeed have to submit a status report.
-            //
-            if (shared_data->status_report_underway) {
-              // status report already underway!
-              logger->warning("OMP TaskDispatcher/taskmanageriface",
-                              "status report already underway!");
-              ok = false;
-            }
-            if (!shared_data->status_report_user_fn) {
-              // no user handler set
-              logger->warning("OMP TaskDispatcher/taskmanageriface",
-                              "no user status report handler set!"
-                              " call setStatusReportHandler() first.");
-              ok = false;
-            }
+          // since we can't return out of a critical section(?), we use an if block.
+          if (ok) {
 
-            // since we can't return out of a critical section(?), we use an if block.
-            if (ok) {
-
-              shared_data->status_report_underway = true;
-              shared_data->status_report_initialized = true;
+            shared_data->status_report_underway = true;
+            shared_data->status_report_initialized = true;
               
-              // initialize status report object & overall data
-              shared_data->status_report_full = FullStatusReportType();
-              shared_data->status_report_full.num_completed = shared_data->num_completed;
-              shared_data->status_report_full.num_total_runs = shared_data->num_total_runs;
-              // shared_data->status_report_full.num_active_working_threads = shared_data->num_active_working_threads;
-              int num_threads = omp_get_num_threads();
-              // shared_data->status_report_full.num_threads = num_threads;
+            // initialize status report object & overall data
+            shared_data->status_report_full = FullStatusReportType();
+            shared_data->status_report_full.num_completed = shared_data->num_completed;
+            shared_data->status_report_full.num_total_runs = shared_data->num_total_runs;
+            // shared_data->status_report_full.num_active_working_threads = shared_data->num_active_working_threads;
+            int num_threads = omp_get_num_threads();
+            // shared_data->status_report_full.num_threads = num_threads;
               
-              // initialize task-specific reports
-              // fill our lists with default-constructed values & set all running to false.
-              shared_data->status_report_full.workers_running.clear();
-              shared_data->status_report_full.workers_reports.clear();
-              shared_data->status_report_full.workers_running.resize(num_threads, false);
-              shared_data->status_report_full.workers_reports.resize(num_threads);
-              logger->debug("OMP TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
-                  stream << "vectors resized to workers_running.size()="
-                         << shared_data->status_report_full.workers_running.size()
-                         << " and workers_reports.size()="
-                         << shared_data->status_report_full.workers_reports.size()
-                         << ".";
-                });
-              
-              shared_data->status_report_numreportsrecieved = 0;
-            }
+            // initialize task-specific reports
+            // fill our lists with default-constructed values & set all running to false.
+            shared_data->status_report_full.workers_running.clear();
+            shared_data->status_report_full.workers_reports.clear();
+            shared_data->status_report_full.workers_running.resize(num_threads, false);
+            shared_data->status_report_full.workers_reports.resize(num_threads);
 
-          } // status_report_initialized
+            // Important: access the original logger, not the thread-safe-wrapped logger!!
+            // Otherwise this could lead to deadlocks because of nested critical blocks.
+            shared_data->logger.debug("OMP TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
+                stream << "vectors resized to workers_running.size()="
+                       << shared_data->status_report_full.workers_running.size()
+                       << " and workers_reports.size()="
+                       << shared_data->status_report_full.workers_reports.size()
+                       << ".";
+              });
+              
+            shared_data->status_report_numreportsrecieved = 0;
+          }
+
+        } // status_report_initialized
 
           // if we're the first reporting thread, then maybe ok was set to false above, so
           // check again.
-          if (ok) {
+        if (ok) {
 
-            //
-            // Report the data corresponding to this thread.
-            //
-	    logger->debug("OMP TaskDispatcher/taskmanageriface", "threadnum=%ld, workers_reports.size()=%ld",
-			  (long)threadnum, (long)shared_data->status_report_full.workers_reports.size());
+          //
+          // Report the data corresponding to this thread.
+          //
+          // Important: access the original logger, not the thread-safe-wrapped logger!!
+          // Otherwise this could lead to deadlocks because of nested critical blocks.
+          shared_data->logger.debug("OMP TaskDispatcher/taskmanageriface", "threadnum=%ld, workers_reports.size()=%ld",
+                                    (long)threadnum, (long)shared_data->status_report_full.workers_reports.size());
 
-            tomographer_assert(0 <= threadnum &&
-			       (std::size_t)threadnum < shared_data->status_report_full.workers_reports.size());
+          tomographer_assert(0 <= threadnum &&
+                             (std::size_t)threadnum < shared_data->status_report_full.workers_reports.size());
 
-            shared_data->status_report_full.workers_running[threadnum] = true;
-            shared_data->status_report_full.workers_reports[threadnum] = statreport;
+          shared_data->status_report_full.workers_running[threadnum] = true;
+          shared_data->status_report_full.workers_reports[threadnum] = statreport;
 
-            ++ shared_data->status_report_numreportsrecieved;
+          ++ shared_data->status_report_numreportsrecieved;
 
-            if (shared_data->status_report_numreportsrecieved == shared_data->num_active_working_threads) {
-              // the report is ready to be transmitted to the user: go!
-              shared_data->status_report_user_fn(shared_data->status_report_full);
-              // all reports recieved: done --> reset our status_report_* flags
-              shared_data->status_report_numreportsrecieved = 0;
-              shared_data->status_report_underway = false;
-              shared_data->status_report_initialized = false;
-              shared_data->status_report_full.workers_running.clear();
-              shared_data->status_report_full.workers_reports.clear();
-            }
-          } // if ok
-        } // omp critical
-
-      }
-    };
-
-    thread_shared_data shared_data;
-
-  public:
-    TaskDispatcher(TaskCData * pcdata_, ResultsCollector * results_, Logger & logger_,
-                      CountIntType num_total_runs_, CountIntType n_chunk_)
-      : shared_data(pcdata_, results_, logger_, num_total_runs_, n_chunk_)
-    {
-    }
-
-    void run()
-      TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
-    {
-      shared_data.results->init(shared_data.num_total_runs, shared_data.n_chunk, shared_data.pcdata);
-      
-      shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "preparing for parallel runs");
-
-      // declaring these as "const" causes a weird compiler error
-      // "`n_chunk' is predetermined `shared' for `shared'"
-      CountIntType num_total_runs = shared_data.num_total_runs;
-      CountIntType n_chunk = shared_data.n_chunk;
-      (void)n_chunk; // silence "unused variable" warning when compiling without OMP support
-
-      CountIntType k = 0;
-
-      thread_shared_data *shdat = &shared_data;
-      thread_private_data privdat;
-
-      shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "About to start parallel section");
-
-#pragma omp parallel default(none) private(k, privdat) shared(shdat, num_total_runs, n_chunk)
-      {
-        privdat.shared_data = shdat;
-        privdat.kiter = 0;
-
-#pragma omp for schedule(dynamic,n_chunk) nowait
-        for (k = 0; k < num_total_runs; ++k) {
-
-          // make separate function call, so that we can tell GCC to realign the stack on
-          // platforms which don't do that automatically (yes, MinGW, it's you I'm looking
-          // at)
-          _run_task(privdat, shdat, k);
-
-        }
-      }
-    
-      shared_data.results->runsFinished(num_total_runs, shared_data.pcdata);
-    }
-
-    void _run_task(thread_private_data & privdat, thread_shared_data * shdat, CountIntType k)
-      TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
-    {
-
-#pragma omp critical
-      {
-        ++ shdat->num_active_working_threads;
-        privdat.local_status_report_counter = shdat->status_report_counter;
-      }
-
-      // construct a thread-safe logger we can use
-      TaskLogger threadsafelogger(shdat->logger, shdat->pcdata, k);
-      
-      // not sure an std::ostream would be safe here threadwise...?
-      threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
-                                 "Run #%lu: thread-safe logger set up", (unsigned long)k);
-      
-      // set up our thread-private data
-      privdat.kiter = k;
-      privdat.logger = &threadsafelogger;
-      
-      // not sure an std::ostream would be safe here threadwise...?
-      threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
-                                 "Run #%lu: querying CData for task input", (unsigned long)k);
-
-      auto input = shdat->pcdata->getTaskInput(k);
-      
-      // not sure an std::ostream would be safe here threadwise...?
-      threadsafelogger.debug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
-                             "Running task #%lu ...", (unsigned long)k);
-      
-      // construct a new task instance
-      TaskType t(input, shdat->pcdata, threadsafelogger);
-      
-      // not sure an std::ostream would be safe here threadwise...?
-      threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
-                                 "Task #%lu set up.", (unsigned long)k);
-      
-      // and run it
-      t.run(shdat->pcdata, threadsafelogger, &privdat);
-      
-#pragma omp critical
-      {
-        shdat->results->collectResult(k, t.getResult(), shdat->pcdata);
-        
-        if ((int)privdat.local_status_report_counter != (int)shdat->status_report_counter) {
-          // status report request missed by task... do as if we had provided a
-          // report, but don't provide report.
-          ++ shdat->status_report_numreportsrecieved;
-        }
-        
-        ++ shdat->num_completed;
-        -- shdat->num_active_working_threads;
-      }
-    }
-
-
-    /** \brief assign a callable to be called whenever a status report is requested
-     *
-     * This function remembers the given \a fnstatus callable, so that each time that \ref
-     * requestStatusReport() is called at any later point, then this callback will be
-     * invoked.
-     *
-     * The callback, when invoked, will be called with a single parameter of type \ref
-     * FullStatusReport<TaskStatusReportType>.
-     *
-     * \par How Tasks should handle status reports.
-     * Task's must regularly check whether a status report has been requested as they run. 
-     * This is done by regularly calling the function
-     * <code>tmgriface->statusReportRequested()</code> on the \c tmgriface object
-     * provided to <code>TaskType::run()</code>. This function call does not require a \c
-     * critical section and is fast, so this check can be done often. The function
-     * <code>tmgriface->statusReportRequested()</code> returns a \c bool indicating
-     * whether such a report was requested or not. If such a report was requested, then
-     * the thread should prepare its status report object (of type \c
-     * TaskStatusReportType), and call <code>tmgriface->submitStatusReport(const
-     * TaskStatusReportType & obj)</code>.
-     *
-     * \par
-     * Note that the task should provide a member type named \c StatusReportType, which can be
-     * for example a simple typedef to \ref MultiProc::StatusReport, which specifies the
-     * type of its status reports.
-     *
-     */
-    inline void setStatusReportHandler(FullStatusReportCallbackType fnstatus)
-    {
-#pragma omp critical
-      {
-        shared_data.status_report_user_fn = fnstatus;
-      }
-    }
-
-    inline void requestStatusReport()
-    {
-      //
-      // This function can be called from a signal handler. We essentially can't do
-      // anything here because the state of the program can be pretty much anything,
-      // including inside a malloc() or gomp lock. So can't call any function which needs
-      // malloc or a #pragma omp critical.
-      //
-      // So just increment an atomic int.
-      //
-
-      shared_data.status_report_counter = (shared_data.status_report_counter + 1) & 0x7f;
+          if (shared_data->status_report_numreportsrecieved == shared_data->num_active_working_threads) {
+            // the report is ready to be transmitted to the user: go!
+            shared_data->status_report_user_fn(shared_data->status_report_full);
+            // all reports recieved: done --> reset our status_report_* flags
+            shared_data->status_report_numreportsrecieved = 0;
+            shared_data->status_report_underway = false;
+            shared_data->status_report_initialized = false;
+            shared_data->status_report_full.workers_running.clear();
+            shared_data->status_report_full.workers_reports.clear();
+          }
+        } // if ok
+      } // omp critical
 
     }
-
   };
 
-  /** \brief Create an OMP task dispatcher. Useful if you want C++'s template parameter
-   *         deduction mechanism.
+  thread_shared_data shared_data;
+
+public:
+  TaskDispatcher(TaskCData * pcdata_, ResultsCollector * results_, Logger & logger_,
+                 CountIntType num_total_runs_, CountIntType n_chunk_)
+    : shared_data(pcdata_, results_, logger_, num_total_runs_, n_chunk_)
+  {
+  }
+
+  void run()
+    TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
+  {
+    shared_data.results->init(shared_data.num_total_runs, shared_data.n_chunk, shared_data.pcdata);
+      
+    shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "preparing for parallel runs");
+
+    // declaring these as "const" causes a weird compiler error
+    // "`n_chunk' is predetermined `shared' for `shared'"
+    CountIntType num_total_runs = shared_data.num_total_runs;
+    CountIntType n_chunk = shared_data.n_chunk;
+    (void)n_chunk; // silence "unused variable" warning when compiling without OMP support
+
+    CountIntType k = 0;
+
+    thread_shared_data *shdat = &shared_data;
+    thread_private_data privdat;
+
+    shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "About to start parallel section");
+
+#pragma omp parallel default(none) private(k, privdat) shared(shdat, num_total_runs, n_chunk)
+    {
+      privdat.shared_data = shdat;
+      privdat.kiter = 0;
+
+#pragma omp for schedule(dynamic,n_chunk) nowait
+      for (k = 0; k < num_total_runs; ++k) {
+
+        // make separate function call, so that we can tell GCC to realign the stack on
+        // platforms which don't do that automatically (yes, MinGW, it's you I'm looking
+        // at)
+        _run_task(privdat, shdat, k);
+
+      }
+    }
+    
+    shared_data.results->runsFinished(num_total_runs, shared_data.pcdata);
+  }
+
+  void _run_task(thread_private_data & privdat, thread_shared_data * shdat, CountIntType k)
+    TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
+  {
+
+#pragma omp critical
+    {
+      ++ shdat->num_active_working_threads;
+      privdat.local_status_report_counter = shdat->status_report_counter;
+    }
+
+    // construct a thread-safe logger we can use
+    TaskLogger threadsafelogger(shdat->logger, shdat->pcdata, k);
+      
+    // not sure an std::ostream would be safe here threadwise...?
+    threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
+                               "Run #%lu: thread-safe logger set up", (unsigned long)k);
+      
+    // set up our thread-private data
+    privdat.kiter = k;
+    privdat.logger = &threadsafelogger;
+      
+    // not sure an std::ostream would be safe here threadwise...?
+    threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
+                               "Run #%lu: querying CData for task input", (unsigned long)k);
+
+    auto input = shdat->pcdata->getTaskInput(k);
+      
+    // not sure an std::ostream would be safe here threadwise...?
+    threadsafelogger.debug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
+                           "Running task #%lu ...", (unsigned long)k);
+      
+    // construct a new task instance
+    TaskType t(input, shdat->pcdata, threadsafelogger);
+      
+    // not sure an std::ostream would be safe here threadwise...?
+    threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
+                               "Task #%lu set up.", (unsigned long)k);
+      
+    // and run it
+    t.run(shdat->pcdata, threadsafelogger, &privdat);
+      
+#pragma omp critical
+    {
+      shdat->results->collectResult(k, t.getResult(), shdat->pcdata);
+        
+      if ((int)privdat.local_status_report_counter != (int)shdat->status_report_counter) {
+        // status report request missed by task... do as if we had provided a
+        // report, but don't provide report.
+        ++ shdat->status_report_numreportsrecieved;
+      }
+        
+      ++ shdat->num_completed;
+      -- shdat->num_active_working_threads;
+    }
+  }
+
+
+  /** \brief assign a callable to be called whenever a status report is requested
+   *
+   * This function remembers the given \a fnstatus callable, so that each time that \ref
+   * requestStatusReport() is called at any later point, then this callback will be
+   * invoked.
+   *
+   * The callback, when invoked, will be called with a single parameter of type \ref
+   * FullStatusReport<TaskStatusReportType>.
+   *
+   * \par How Tasks should handle status reports.
+   * Task's must regularly check whether a status report has been requested as they run. 
+   * This is done by regularly calling the function
+   * <code>tmgriface->statusReportRequested()</code> on the \c tmgriface object
+   * provided to <code>TaskType::run()</code>. This function call does not require a \c
+   * critical section and is fast, so this check can be done often. The function
+   * <code>tmgriface->statusReportRequested()</code> returns a \c bool indicating
+   * whether such a report was requested or not. If such a report was requested, then
+   * the thread should prepare its status report object (of type \c
+   * TaskStatusReportType), and call <code>tmgriface->submitStatusReport(const
+   * TaskStatusReportType & obj)</code>.
+   *
+   * \par
+   * Note that the task should provide a member type named \c StatusReportType, which can be
+   * for example a simple typedef to \ref MultiProc::StatusReport, which specifies the
+   * type of its status reports.
    *
    */
-  template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
-           typename Logger_, typename CountIntType_ = unsigned int>
-  inline TaskDispatcher<TaskType_, TaskCData_, ResultsCollector_,
-                        Logger_, CountIntType_>
-  makeTaskDispatcher(TaskCData_ * pcdata_, ResultsCollector_ * results_, Logger_ & logger_,
-                        CountIntType_ num_total_runs_, CountIntType_ n_chunk_)
+  inline void setStatusReportHandler(FullStatusReportCallbackType fnstatus)
   {
-    // RVO should be rather obvious to the compiler
-    return TaskDispatcher<TaskType_, TaskCData_, ResultsCollector_,
-                             Logger_, CountIntType_>(
-        pcdata_, results_, logger_, num_total_runs_, n_chunk_
-        );
+#pragma omp critical
+    {
+      shared_data.status_report_user_fn = fnstatus;
+    }
   }
+
+  inline void requestStatusReport()
+  {
+    //
+    // This function can be called from a signal handler. We essentially can't do
+    // anything here because the state of the program can be pretty much anything,
+    // including inside a malloc() or gomp lock. So can't call any function which needs
+    // malloc or a #pragma omp critical.
+    //
+    // So just increment an atomic int.
+    //
+
+    shared_data.status_report_counter = (shared_data.status_report_counter + 1) & 0x7f;
+
+  }
+
+}; // class TaskDispatcher
+
+
+/** \brief Create an OMP task dispatcher. Useful if you want C++'s template parameter
+ *         deduction mechanism.
+ *
+ */
+template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
+         typename Logger_, typename CountIntType_ = unsigned int>
+inline TaskDispatcher<TaskType_, TaskCData_, ResultsCollector_,
+                      Logger_, CountIntType_>
+makeTaskDispatcher(TaskCData_ * pcdata_, ResultsCollector_ * results_, Logger_ & logger_,
+                   CountIntType_ num_total_runs_, CountIntType_ n_chunk_)
+{
+  // RVO should be rather obvious to the compiler
+  return TaskDispatcher<TaskType_, TaskCData_, ResultsCollector_,
+                        Logger_, CountIntType_>(
+                            pcdata_, results_, logger_, num_total_runs_, n_chunk_
+                            );
+}
+
+
 
 } // namespace OMP
 } // namespace MultiProc

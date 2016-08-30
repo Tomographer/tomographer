@@ -26,12 +26,17 @@
 
 #include <cstdio>
 #include <cstring>
+#include <ctime>
+
+#include <unistd.h>
+#include <signal.h>
 
 #include <random>
 #include <map>
 #include <chrono>
 #include <algorithm>
 #include <string>
+#include <functional>
 
 #include <boost/math/constants/constants.hpp>
 
@@ -51,9 +56,21 @@
 #include "test_multi_tasks_common.h"
 
 
+
 // -----------------------------------------------------------------------------
 // fixtures:
 
+
+
+std::function<void()> sigalarm_act;
+
+void sigalarm_act_cfn(int signum)
+{
+  printf("[SIGALRM]\n");
+  if (signum == SIGALRM) {
+    sigalarm_act();
+  }
+}
 
 
 // -----------------------------------------------------------------------------
@@ -152,11 +169,6 @@ BOOST_AUTO_TEST_SUITE_END();
 
 BOOST_AUTO_TEST_SUITE(t__MultiProc__OMP__TaskDispatcher);
 
-BOOST_AUTO_TEST_CASE(write_me)
-{
-  BOOST_CHECK(false) ;
-}
-
 
 BOOST_FIXTURE_TEST_CASE(tasks_run, test_task_dispatcher_fixture)
 {
@@ -190,15 +202,180 @@ BOOST_FIXTURE_TEST_CASE(make_task_dispatcher, test_task_dispatcher_fixture)
                     std::string(typeid(TaskDispatcherType).name()));
 }
 
-BOOST_AUTO_TEST_CASE(inner_code_stack_aligned)
+struct TestTaskCheckAlignedStack : public TestTask {
+  template<typename... Args>
+  TestTaskCheckAlignedStack(Args&&... x)
+    : TestTask(std::forward<Args>(x)...)
+  { }
+
+  template<typename LoggerType, typename TaskManagerIface>
+  void run(const TestBasicCData * pcdata, LoggerType & logger, TaskManagerIface * iface)
+  {
+    char blah_data[4] = {0}; // some random stuff -- not really needed, it's just here to clutter the code and memory
+    
+    // make sure that the stack is aligned
+    Eigen::Matrix4d m;
+    BOOST_MESSAGE( "m.data() == " << (uintptr_t)m.data() );
+    BOOST_CHECK( (((uintptr_t)m.data()) & 0xf) == 0 ); // pointer to matrix data is aligned to multiple of 16 bytes
+
+    // and run the parent task
+    TestTask::run(pcdata, logger, iface);
+
+    (void)blah_data;
+  }
+};
+
+BOOST_FIXTURE_TEST_CASE(inner_code_stack_aligned, test_task_dispatcher_fixture)
 {
-  BOOST_CHECK(false);
+  BoostTestLogger logger(Tomographer::Logger::DEBUG);
+  Tomographer::MultiProc::OMP::TaskDispatcher<TestTaskCheckAlignedStack, TestBasicCData,
+                                              TestResultsCollector,
+                                              BoostTestLogger, long>
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+
+  char blah_data[4] = {0}; // some random stuff -- not really needed, it's just here to clutter the code and memory
+  char blah_data2[7] = {0}; // some random stuff -- not really needed, it's just here to clutter the code and memory
+
+  task_dispatcher.run();
+
+  (void)blah_data;
+  (void)blah_data2;
 }
+
+
+struct StatusRepTestBasicCData {
+  StatusRepTestBasicCData() { }
+
+  bool getTaskInput(int k) const {
+    return (k == 0);
+  }
+
+  //  void do_request_status_report() const
+  //  {
+  //    fn();
+  //  }
+  //
+  //  std::function<void()> fn;
+};
+struct StatusRepTestTask {
+  typedef bool Input;
+
+  typedef Tomographer::MultiProc::TaskStatusReport StatusReportType;
+  
+  typedef bool ResultType;
+
+  template<typename LoggerType>
+  StatusRepTestTask(Input input, const StatusRepTestBasicCData * , LoggerType & )
+    : _input(input)
+  {
+  }
+
+  template<typename LoggerType, typename TaskManagerIface>
+  void run(const StatusRepTestBasicCData * , LoggerType & logger, TaskManagerIface * iface)
+  {
+    _result = false;
+    // "slaves" : check for status reports, and generate one once requested.  Continue
+    // adding to our internal counter until we submit a status report; after that just
+    // stop.
+    unsigned long count = 0;
+    std::time_t time_start;
+    std::time(&time_start);
+    std::time_t now = time_start;
+    int elapsed = 0;
+    do {
+      std::time(&now);
+      elapsed = now - time_start;
+      if (iface->statusReportRequested()) {
+        logger.longdebug("StatusRepTestTask::run", "Status report requested");
+        StatusReportType s(elapsed / 5.0,
+                           Tomographer::Tools::fmts("elapsed = %d [%.2f%%]; count = %lu = %#lx",
+                                                    elapsed, 100*elapsed/5.0, count, count));
+        logger.longdebug("StatusRepTestTask::run", "s.msg = %s", s.msg.c_str());
+        iface->submitStatusReport(s);
+        logger.longdebug("StatusRepTestTask::run", "report submitted.");
+        _result = true;
+      }
+      ++count;
+      if ((count & 0xffff) == 0) {
+        logger.longdebug("StatusRepTestTask::run", "count = %lu", count);
+      }
+    } while (now - time_start < 5);
+  }
+
+  ResultType getResult() const { return _result; }
+
+private:
+  Input _input;
+  ResultType _result;
+};
+struct StatusRepTestResultsCollector {
+  StatusRepTestResultsCollector()
+  {
+  }
+  void init(int, int, const StatusRepTestBasicCData * )
+  {
+  }
+  template<typename ResultType>
+  void collectResult(int, const ResultType& taskresult, const StatusRepTestBasicCData *)
+  {
+    BOOST_CHECK_EQUAL(taskresult, true);
+  }
+  void runsFinished(int, const StatusRepTestBasicCData * )
+  {
+  }
+};
+
 
 BOOST_AUTO_TEST_CASE(status_report)
 {
-  // test also FullStatusReport.
-  BOOST_CHECK(false);
+  StatusRepTestBasicCData cData;
+  const int num_runs = 10;
+  StatusRepTestResultsCollector resultsCollector;
+  
+  BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
+
+  Tomographer::MultiProc::OMP::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
+                                              StatusRepTestResultsCollector,
+                                              BoostTestLogger, long>
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+
+  // cData.fn = [&task_dispatcher]() {
+  //   task_dispatcher.requestStatusReport();
+  // };
+
+  task_dispatcher.setStatusReportHandler(
+      [&logger](const Tomographer::MultiProc::FullStatusReport<StatusRepTestTask::StatusReportType>& r) {
+        logger.info("status_report test case", [&](std::ostream & stream) {
+            stream << "Full status report recieved. num_completed = " << r.num_completed
+                   << ", num_total_runs = " << r.num_total_runs << "\n";
+            for (std::size_t k = 0; k < r.workers_running.size(); ++k) {
+              if (!r.workers_running[k]) {
+                stream << "Worker #" << k << " idle\n";
+              } else {
+                stream << "Worker #" << k << ":  " << r.workers_reports[k].fraction_done * 100 << "%, "
+                       << r.workers_reports[k].msg << "\n";
+              }
+            }
+          });
+      });
+
+  {
+    auto finally = Tomographer::Tools::finally([](){
+        alarm(0);
+        signal(SIGALRM, SIG_DFL);
+      });
+    
+    sigalarm_act = [&task_dispatcher]() {
+      task_dispatcher.requestStatusReport();
+      alarm(2);
+      signal(SIGALRM, sigalarm_act_cfn);
+    };
+    
+    alarm(1);
+    signal(SIGALRM, sigalarm_act_cfn);
+    
+    task_dispatcher.run();
+  }
 }
 
 BOOST_AUTO_TEST_SUITE_END();

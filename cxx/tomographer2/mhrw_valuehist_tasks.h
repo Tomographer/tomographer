@@ -53,7 +53,7 @@ namespace tomo_internal {
 template<typename CDataBaseType, bool UseBinningAnalysis>
 struct histogram_types {// version WITHOUT binning analysis:
   typedef UniformBinsHistogram<typename CDataBaseType::ValueCalculator::ValueType> HistogramType;
-  /// we know that ValueHistogramMHRWStatsCollector<ValueCalculator,...,HistogramType>::Result is HistogramType
+  /// we know that ValueHistogramMHRWStatsCollector<ValueCalculator,...,HistogramType>::ResultType is HistogramType
   typedef HistogramType MHRWStatsCollectorResultType;
   typedef typename HistogramType::Params HistogramParams;
 };
