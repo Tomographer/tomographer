@@ -326,7 +326,8 @@ struct StatusRepTestResultsCollector {
 };
 
 
-BOOST_AUTO_TEST_CASE(status_report)
+#ifdef _OPENMP
+BOOST_AUTO_TEST_CASE(status_report_withthread)
 {
   StatusRepTestBasicCData cData;
   const int num_runs = 10;
@@ -342,6 +343,62 @@ BOOST_AUTO_TEST_CASE(status_report)
   // cData.fn = [&task_dispatcher]() {
   //   task_dispatcher.requestStatusReport();
   // };
+
+  task_dispatcher.setStatusReportHandler(
+      [&logger](const Tomographer::MultiProc::FullStatusReport<StatusRepTestTask::StatusReportType>& r) {
+        logger.info("status_report test case", [&](std::ostream & stream) {
+            stream << "Full status report recieved. num_completed = " << r.num_completed
+                   << ", num_total_runs = " << r.num_total_runs << "\n";
+            for (std::size_t k = 0; k < r.workers_running.size(); ++k) {
+              if (!r.workers_running[k]) {
+                stream << "Worker #" << k << " idle\n";
+              } else {
+                stream << "Worker #" << k << ":  " << r.workers_reports[k].fraction_done * 100 << "%, "
+                       << r.workers_reports[k].msg << "\n";
+              }
+            }
+          });
+      });
+
+   omp_set_nested(1);
+
+   std::sig_atomic_t finished = 0;
+
+#pragma omp parallel num_threads(2)
+   {
+     if (omp_get_thread_num() == 0) {
+       // take care of sending status report requests
+
+       while (!finished) {
+         sleep(1);
+         task_dispatcher.requestStatusReport();
+       }
+     } else if (omp_get_thread_num() == 1) {
+       task_dispatcher.run();
+       finished = 1;
+     } else {
+       assert( false ) ;
+     }
+   }
+
+   logger.debug("test case:status_report", "Test case done.");
+}
+#endif
+
+#ifndef __MINGW32__
+// MinGW32 does not have SIGALRM / alarm()
+BOOST_AUTO_TEST_CASE(status_report_withsigalrm)
+{
+  StatusRepTestBasicCData cData;
+  const int num_runs = 10;
+  StatusRepTestResultsCollector resultsCollector;
+  
+  BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
+
+  Tomographer::MultiProc::OMP::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
+                                              StatusRepTestResultsCollector,
+                                              BoostTestLogger, long>
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
 
   task_dispatcher.setStatusReportHandler(
       [&logger](const Tomographer::MultiProc::FullStatusReport<StatusRepTestTask::StatusReportType>& r) {
@@ -377,6 +434,15 @@ BOOST_AUTO_TEST_CASE(status_report)
     task_dispatcher.run();
   }
 }
+#endif
+
+#if !defined(_OPENMP) && defined(__MINGW__)
+BOOST_AUTO_TEST_CASE(status_report_not_implemented)
+{
+  BOOST_CHECK(false && "Status report check NOT IMPLEMENTED on your platform, sorry");
+}
+#endif
+
 
 BOOST_AUTO_TEST_SUITE_END();
 
