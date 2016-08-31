@@ -208,7 +208,7 @@ struct TestMHWalker : public TestLatticeMHRWGaussPeak<int> {
       Nsweepchk(sweep_size)
   {
   }
-  TestMHWalker(TestMHWalker&& other) = default;
+  TestMHWalker(TestMHWalker&& ) = default;
     
   inline void init()
   {
@@ -217,13 +217,13 @@ struct TestMHWalker : public TestLatticeMHRWGaussPeak<int> {
     count_jump = 0;
   }
     
-  inline PointType startpoint()
+  inline PointType startPoint()
   {
     BOOST_CHECK_EQUAL(count_jump, 0);
     return PointType::Zero(latticeDims.size());
   }
     
-  inline void thermalizing_done()
+  inline void thermalizingDone()
   {
     BOOST_CHECK_EQUAL(count_jump, Nthermchk*Nsweepchk);
   }

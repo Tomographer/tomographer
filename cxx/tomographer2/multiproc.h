@@ -230,7 +230,7 @@ public:
   
   void run()
   {
-    results->init(num_total_runs, 1, pcdata);
+    results->init(num_total_runs, CountIntType(1), pcdata);
     
     logger.debug("MultiProc::Sequential::TaskDispatcher::run()", "preparing for sequential runs");
     

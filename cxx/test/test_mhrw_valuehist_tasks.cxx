@@ -432,14 +432,141 @@ BOOST_AUTO_TEST_SUITE_END() ;
 
 BOOST_AUTO_TEST_SUITE(interfaces_ok)
 
-BOOST_AUTO_TEST_CASE(write_me)
+struct NormValueCalculator
 {
-  // check with sequential task manager, do a basic minimal run to see that the interfaces
-  // of these class plug well into a task manager/dispatcher
-  BOOST_CHECK( false ) ;
+  typedef double ValueType;
+
+  NormValueCalculator() { }
+
+  template<typename PointType>
+  inline ValueType getValue(PointType && x) const { return x.norm(); }
+};
+
+template<typename BaseCData>
+struct MyCDataX : public BaseCData
+{
+  typename BaseCData::MHRWParamsType mhrw_params;
+
+  TOMOGRAPHER_ENABLED_IF(!BaseCData::UseBinningAnalysis)
+  MyCDataX(typename BaseCData::MHRWParamsType && p)
+    : BaseCData(NormValueCalculator(),
+                typename BaseCData::HistogramParams(0, 100, 100),
+                p, -134567),
+      mhrw_params(p)
+  {
+  }
+
+  TOMOGRAPHER_ENABLED_IF(BaseCData::UseBinningAnalysis)
+  MyCDataX(typename BaseCData::MHRWParamsType && p)
+    : BaseCData(NormValueCalculator(),
+                typename BaseCData::HistogramParams(0, 100, 100),
+                5, // number of binning levels
+                p, -134567),
+      mhrw_params(p)
+  {
+  }
+  
+  template<typename Rng, typename LoggerType>
+  TestMHWalker createMHWalker(Rng & rng, LoggerType & logger) const
+  {
+    logger.debug("MyCDataX::createMHWalker", "()");
+    return TestMHWalker(mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run, rng) ;
+  }
+
+};
+
+typedef Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<NormValueCalculator, false> BaseCData_simple;
+typedef Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<NormValueCalculator, true>  BaseCData_binning;
+
+
+BOOST_AUTO_TEST_CASE(interfaces_simple)
+{
+  BoostTestLogger logger;
+
+  const int step_size = 2;
+  const int nsweep = 10;
+  const int ntherm = 50;
+  const int nrun = 1024;
+
+  typedef MyCDataX<BaseCData_simple> MyCData;
+
+  MyCData cdata(Tomographer::MHRWParams<int,double>(step_size, nsweep, ntherm, nrun));
+
+  typedef typename MyCData::ResultsCollectorType<BoostTestLogger>::Type OurResultsCollector;
+
+  OurResultsCollector results(logger);
+
+  Tomographer::MultiProc::Sequential::TaskDispatcher<
+    Tomographer::MHRWTasks::MHRandomWalkTask<MyCData, std::mt19937>,
+    MyCData,
+    OurResultsCollector,
+    BoostTestLogger,
+    long
+    > dispatcher(&cdata, &results, logger, 5);
+  
+  // tests are all in here
+  dispatcher.run();
+
+  // check the results more or less, though if everything compiled and ran smoothly, there
+  // shouldn't be any reason for panic
+  auto fhist = results.finalHistogram();
+
+  double hist_avg = 0;
+  double all_count = 0;
+  for (std::size_t k = 0; k < fhist.numBins(); ++k) {
+    all_count += fhist.count(k);
+    hist_avg += fhist.count(k) * fhist.binCenterValue(k);
+  }
+  hist_avg /= all_count;
+
+  MY_BOOST_CHECK_FLOATS_EQUAL( hist_avg , 50.0 , 30.0 );// yes, tolerance = 30
+}
+
+BOOST_AUTO_TEST_CASE(interfaces_binning)
+{
+  BoostTestLogger logger;
+
+  const int step_size = 2;
+  const int nsweep = 10;
+  const int ntherm = 50;
+  const int nrun = 1024;
+
+  typedef MyCDataX<BaseCData_binning> MyCData;
+
+  MyCData cdata(Tomographer::MHRWParams<int,double>(step_size, nsweep, ntherm, nrun));
+
+  typedef typename MyCData::ResultsCollectorType<BoostTestLogger>::Type OurResultsCollector;
+
+  OurResultsCollector results(logger);
+
+  Tomographer::MultiProc::Sequential::TaskDispatcher<
+    Tomographer::MHRWTasks::MHRandomWalkTask<MyCData, std::mt19937>,
+    MyCData,
+    OurResultsCollector,
+    BoostTestLogger,
+    long
+    > dispatcher(&cdata, &results, logger, 5);
+  
+  // tests are all in here
+  dispatcher.run();
+
+  // check the results more or less, though if everything compiled and ran smoothly, there
+  // shouldn't be any reason for panic
+  auto fhist = results.finalHistogram();
+
+  double hist_avg = 0;
+  double all_count = 0;
+  for (std::size_t k = 0; k < fhist.numBins(); ++k) {
+    all_count += fhist.count(k);
+    hist_avg += fhist.count(k) * fhist.binCenterValue(k);
+  }
+  hist_avg /= all_count;
+
+  MY_BOOST_CHECK_FLOATS_EQUAL( hist_avg , 50.0 , 30.0 );// yes, tolerance = 30
 }
 
 BOOST_AUTO_TEST_SUITE_END() ;
+
 
 // =============================================================================
 BOOST_AUTO_TEST_SUITE_END()
