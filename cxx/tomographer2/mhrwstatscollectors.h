@@ -46,7 +46,7 @@
  * \brief Definitions for \ref pageInterfaceMHRWStatsCollector's
  *
  * Definitions for stats collectors -- see \ref pageInterfaceMHRWStatsCollector, as well
- * as for example \ref ValueHistogramMHRWStatsCollector etc.
+ * as for example \ref Tomographer::ValueHistogramMHRWStatsCollector etc.
  *
  */
 
@@ -383,7 +383,7 @@ public:
  * Collects the template parameters for use with \ref
  * ValueHistogramWithBinningMHRWStatsCollector.
  *
- * Provides also some trait properties, such as the corresponding result type \ref ResultType.
+ * Provides also some trait properties, such as the corresponding result type \ref Result.
  */
 template<typename ValueCalculator_,
          typename CountIntType_ = int,
@@ -422,6 +422,9 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
    *
    */
   typedef UniformBinsHistogramWithErrorBars<typename ValueCalculator::ValueType, CountRealAvgType> HistogramType;
+  /** \brief The corresponding histogram params type
+   *
+   */
   typedef typename HistogramType::Params HistogramParams;
 
   /** \brief Result type of the corresponding ValueHistogramWithBinningMHRWStatsCollector
@@ -534,7 +537,7 @@ public:
   
   //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::BinningAnalysisParamsType .
   typedef typename Params::BinningAnalysisParamsType BinningAnalysisParamsType;
-  //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::BinningAnalysisType .
+  //! The corresponding \ref BinningAnalysis type for this value histogram stats collector
   typedef BinningAnalysis<BinningAnalysisParamsType, LoggerType> BinningAnalysisType;
     
   //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::NumTrackValues .
@@ -545,7 +548,7 @@ public:
   //! See \ref ValueHistogramWithBinningMHRWStatsCollectorParams::Result .
   typedef typename Params::Result ResultType;
 
-  /** \brief This is the natural ValueHistogramMHRWStatsCollector type on which we're
+  /** \brief This is the natural \ref ValueHistogramMHRWStatsCollector type on which we're
    *         adding error bars.
    */
   typedef ValueHistogramMHRWStatsCollector<

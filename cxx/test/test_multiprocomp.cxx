@@ -93,7 +93,7 @@ BOOST_AUTO_TEST_CASE(relays_logs)
   testtasklogger.error("origin", "error level");
   
   BOOST_CHECK_EQUAL(
-      buflog.get_contents(),
+      buflog.getContents(),
       "[origin] debug level\n"
       "[origin] info level\n"
       "[origin] warning level\n"
@@ -113,7 +113,7 @@ BOOST_AUTO_TEST_CASE(fixes_level)
 
   testtasklogger.longdebug("origin", "test message");
   
-  BOOST_CHECK_EQUAL(buflog.get_contents(), "[origin] test message\n");
+  BOOST_CHECK_EQUAL(buflog.getContents(), "[origin] test message\n");
 }
 
 BOOST_AUTO_TEST_CASE(parallel)
@@ -133,7 +133,7 @@ BOOST_AUTO_TEST_CASE(parallel)
 			     omp_get_thread_num(), omp_get_num_threads());
   }
 
-  std::string buflog_str = buflog.get_contents();
+  std::string buflog_str = buflog.getContents();
 
   BOOST_MESSAGE("buflog contents: \n" << buflog_str);
   BOOST_CHECK(buflog_str.size());

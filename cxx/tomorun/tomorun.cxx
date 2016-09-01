@@ -81,7 +81,7 @@ int main(int argc, char **argv)
   Tomographer::Logger::LocalLogger<decltype(rootlogger)> logger("main()", rootlogger);
 
   try {
-    parse_options(&opt, argc, argv, logger.baselogger());
+    parse_options(&opt, argc, argv, logger.parentLogger());
   } catch (const bad_options& e) {
     fprintf(stderr, "%s\n", e.what());
     return 127;
@@ -97,7 +97,7 @@ int main(int argc, char **argv)
 	;
     });
 
-  display_parameters(&opt, logger.baselogger());
+  display_parameters(&opt, logger.parentLogger());
 
   //
   // Renice the program, if requested
@@ -190,7 +190,7 @@ int main(int argc, char **argv)
   // Maybe use statically instantiated size for some predefined sizes.
 
   //  Logger::MinimumSeverityLogger<Logger::FileLogger, Logger::INFO> mlog(logger);
-  auto & mlog = logger.baselogger();
+  auto & mlog = logger.parentLogger();
 
   try {
     // some special cases where we can avoid dynamic memory allocation for Eigen matrices

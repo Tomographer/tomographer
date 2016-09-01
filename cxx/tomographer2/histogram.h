@@ -62,7 +62,7 @@ namespace Tomographer {
  * Splits the range of values \f$[\text{min},\text{max}]\f$ into \c num_bins number of
  * bins, and keeps counts of how many samples fell in which bin.
  * 
- * Does not store any form of error bars. Compiles with the \ref pageInterfaceHistogram.
+ * Does not store any form of error bars. Complies with the \ref pageInterfaceHistogram.
  */
 template<typename Scalar_, typename CountType_ = unsigned int>
 struct UniformBinsHistogram
@@ -85,7 +85,7 @@ struct UniformBinsHistogram
    * This is the \f$[\text{min},\text{max}]\f$ range and the number of bins.
    */
   struct Params {
-    //! obvious constructor
+    //! The obvious constructor
     Params(Scalar min_ = 0.0, Scalar max_ = 1.0, std::size_t num_bins_ = 50)
       : min(min_), max(max_), num_bins(num_bins_)
     {
@@ -131,10 +131,10 @@ struct UniformBinsHistogram
     /** \brief Returns which bin this value should be counted in.
      *
      * This function blindly assumes its argument is within bounds, i.e. it must satisfy
-     * <code>is_within_bounds(value)</code>.
+     * <code>isWithinBounds(value)</code>.
      *
      * Use this function only if you're sure the value is within bounds, otherwise call
-     * \ref bin_index().
+     * \ref binIndex().
      */
     inline std::size_t binIndexUnsafe(Scalar value) const
     {
@@ -294,33 +294,33 @@ struct UniformBinsHistogram
     return bins(i);
   }
 
-  //! Shorthand for \ref Params::isWithinBounds()
+  //! Shorthand for Params::isWithinBounds()
   inline bool isWithinBounds(Scalar value) const
   {
     return params.isWithinBounds(value);
   }
-  //! Shorthand for \ref Params::binIndex()
+  //! Shorthand for Params::binIndex()
   inline std::size_t binIndex(Scalar value) const
   {
     return params.binIndex(value);
   }
-  //! Shorthand for \ref Params::binLowerValue()
+  //! Shorthand for Params::binLowerValue()
   inline Scalar binLowerValue(int index) const
   {
     return params.binLowerValue(index);
   }
-  //! Shorthand for \ref Params::binCenterValue()
+  //! Shorthand for Params::binCenterValue()
   inline Scalar binCenterValue(std::size_t index) const
   {
     return params.binCenterValue(index);
   }
-  //! Shorthand for \ref Params::binUpperValue()
+  //! Shorthand for Params::binUpperValue()
   inline Scalar binUpperValue(std::size_t index) const
   {
     return params.binUpperValue(index);
   }
 
-  //! Shorthand for \ref Params::binResolution()
+  //! Shorthand for Params::binResolution()
   inline Scalar binResolution() const
   {
     return params.binResolution();
@@ -394,15 +394,16 @@ struct UniformBinsHistogramWithErrorBars
   : public UniformBinsHistogram<Scalar_, CountType_>,
     public virtual Tools::EigenAlignedOperatorNewProvider
 {
-  //! The Scalar (X-axis) Type. See \ref UniformBinsHistogram<Scalar_,CountType_>::Scalar.
+  //! The Scalar (X-axis) Type. See UniformBinsHistogram::Scalar.
   typedef Scalar_ Scalar;
-  //! The Type used to keep track of counts. See \ref UniformBinsHistogram<Scalar_,CountType_>::CountType.
+  //! The Type used to keep track of counts. See UniformBinsHistogram::CountType.
   typedef CountType_ CountType;
 
   //! Shortcut for our base class type.
   typedef UniformBinsHistogram<Scalar_, CountType_> Base_;
   /** \brief Shortcut for our base class' histogram parameters. See
-   *         \ref UniformBinsHistogram<Scalar_,CountType_>::Params. */
+   *         UniformBinsHistogram::Params.
+   */
   typedef typename Base_::Params Params;
   
   //! For the \ref pageInterfaceHistogram. This type of histogram does provide error bars
@@ -489,8 +490,8 @@ constexpr bool UniformBinsHistogramWithErrorBars<Scalar_,CountType_>::HasErrorBa
  * type. It may, or may not, come with its own error bars. If this is the case, then the
  * error bars are properly combined.
  *
- * You should add histograms to average with repeated calls to \ref addHistogram(). Then,
- * you should call \ref finalize(). Then this object, which inherits \ref
+ * You should add histograms to average with repeated calls to \ref addHistogram().  Then,
+ * you should call \ref finalize().  Then this object, which inherits \ref
  * UniformBinsHistogramWithErrorBars, will be properly initialized with average counts and
  * error bars.
  *
@@ -539,7 +540,7 @@ struct AveragedHistogram
 
   /** \brief The number of histograms averaged.
    *
-   * This member records how many histograms have been added using \ref add_histogram()
+   * This member records how many histograms have been added using \ref addHistogram()
    * since the object was created or was last \ref reset().
    */
   int num_histograms;
@@ -585,15 +586,28 @@ struct AveragedHistogram
   // Implementation in case the added histograms don't have their own error bars
   // ---------------------------------------------------------------------------
 
-  template<bool dummy = true,
-           typename std::enable_if<dummy && (!HistogramType::HasErrorBars), bool>::type dummy2 = true>
+  /** \brief Add a new histogram in the data series
+   *
+   * Add a new histogram to include into the final averaged histogram.  Call this function
+   * repeatedly with different histograms you want to average together.  When you're
+   * finished adding histograms, you must call \ref finalize() in order to finalize the
+   * averaging; until then the members \ref bins and \ref delta (as well as \ref count(),
+   * \ref errorBar() etc.) yield undefined values.
+   *
+   * \note \a histogram must have the same range and number of bins as the params
+   *       specified to the constructor of this class.
+   *
+   * This implementation deals with the case where the individual histograms (such as \a
+   * histogram) don't have themselves error bars.
+   */
+  TOMOGRAPHER_ENABLED_IF(!HistogramType::HasErrorBars)
   inline void addHistogram(const HistogramType& histogram)
   {
     // bins collects the sum of the histograms
-    // delta for now collects the sum of squares. delta will be normalized in run_finished().
+    // delta for now collects the sum of squares. delta will be normalized in finalize().
 
     tomographer_assert((typename HistogramType::CountType)histogram.numBins() ==
-                 (typename HistogramType::CountType)Base_::numBins());
+                       (typename HistogramType::CountType)Base_::numBins());
 
     for (std::size_t k = 0; k < histogram.numBins(); ++k) {
       RealAvgType binvalue = histogram.count(k);
@@ -604,8 +618,21 @@ struct AveragedHistogram
     Base_::off_chart += histogram.off_chart;
     ++num_histograms;
   }
-  template<bool dummy = true,
-           typename std::enable_if<dummy && (!HistogramType::HasErrorBars), bool>::type dummy2 = true>
+  /** \brief Finalize the averaging procedure
+   *
+   * Call this function once you have called \ref addHistogram() for all the histograms
+   * you wanted to average together.
+   *
+   * Only after this function was called may you access the averaged histogram data (in
+   * \ref bins, \ref delta, \ref count() etc.).  Before calling finalize(), those methods
+   * return undefined results.
+   *
+   * Calling \ref addHistogram() after finalize() will yield undefined results.
+   *
+   * This implementation deals with the case where the individual histograms (such as \a
+   * histogram) don't have themselves error bars.
+   */
+  TOMOGRAPHER_ENABLED_IF(!HistogramType::HasErrorBars)
   inline void finalize()
   {
     Base_::bins /= num_histograms;
@@ -621,12 +648,25 @@ struct AveragedHistogram
   // Implementation in case the added histograms do have their own error bars
   // ---------------------------------------------------------------------------
 
-  template<bool dummy = true,
-           typename std::enable_if<dummy && (HistogramType::HasErrorBars), bool>::type dummy2 = true>
+  /** \brief Add a new histogram in the data series
+   *
+   * Add a new histogram to include into the final averaged histogram.  Call this function
+   * repeatedly with different histograms you want to average together.  When you're
+   * finished adding histograms, you must call \ref finalize() in order to finalize the
+   * averaging; until then the members \ref bins and \ref delta (as well as \ref count(),
+   * \ref errorBar() etc.) yield undefined values.
+   *
+   * \note \a histogram must have the same range and number of bins as the params
+   *       specified to the constructor of this class.
+   *
+   * This implementation deals with the case where the individual histograms (such as \a
+   * histogram) do have themselves error bars.
+   */
+  TOMOGRAPHER_ENABLED_IF(HistogramType::HasErrorBars)
   inline void addHistogram(const HistogramType& histogram)
   {
     // bins collects the sum of the histograms
-    // delta for now collects the sum of squares. delta will be normalized in run_finished().
+    // delta for now collects the sum of squares. delta will be normalized in finished().
 
     tomographer_assert((typename HistogramType::CountType)histogram.numBins() == Base_::numBins());
 
@@ -640,8 +680,21 @@ struct AveragedHistogram
     Base_::off_chart += histogram.off_chart;
     ++num_histograms;
   }
-  template<bool dummy = true,
-           typename std::enable_if<dummy && (HistogramType::HasErrorBars), bool>::type dummy2 = true>
+  /** \brief Finalize the averaging procedure
+   *
+   * Call this function once you have called \ref addHistogram() for all the histograms
+   * you wanted to average together.
+   *
+   * Only after this function was called may you access the averaged histogram data (in
+   * \ref bins, \ref delta, \ref count() etc.).  Before calling finalize(), those methods
+   * return undefined results.
+   *
+   * Calling \ref addHistogram() after finalize() will yield undefined results.
+   *
+   * This implementation deals with the case where the individual histograms (such as \a
+   * histogram) do have themselves error bars.
+   */
+  TOMOGRAPHER_ENABLED_IF(HistogramType::HasErrorBars)
   inline void finalize()
   {
     Base_::bins /= num_histograms;

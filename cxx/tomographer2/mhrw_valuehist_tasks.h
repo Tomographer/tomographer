@@ -81,6 +81,8 @@ struct histogram_types<CDataBaseType, true> {// version WITH binning analysis:
  *
  * You can directly get the right type by querying the type \a
  * "CDataBase::ResultsCollectorType<..>::Type".
+ *
+ * \todo DOC !!!!
  */
 template<typename CDataBaseType_, typename LoggerType_>
 struct ResultsCollectorSimple
@@ -213,7 +215,7 @@ public:
   {
     tomographer_assert(!isFinalized() && "collectResult() called after results have been finalized!");
 
-    auto logger = _llogger.sublogger(TOMO_ORIGIN);
+    auto logger = _llogger.subLogger(TOMO_ORIGIN);
     logger.debug([&](std::ostream & str) {
 	str << "Got task result. Histogram is:\n" << taskresult.stats_collector_result.prettyPrint();
       });
@@ -247,6 +249,8 @@ public:
  *
  * You can directly get the right type by querying the type \a
  * "CDataBase::ResultsCollectorType<..>::type".
+ *
+ * \todo DOC !!!!
  */
 template<typename CDataBaseType_, typename LoggerType_>
 struct ResultsCollectorWithBinningAnalysis
@@ -375,7 +379,7 @@ public:
   {
     tomographer_assert(!isFinalized() && "collectResult() called after results have been finalized!");
 
-    auto logger = _llogger.sublogger(TOMO_ORIGIN);
+    auto logger = _llogger.subLogger(TOMO_ORIGIN);
     
     auto stats_coll_result = taskresult.stats_collector_result;
 
@@ -464,6 +468,8 @@ struct ResultsCollectorTypeHelper<CDataBaseType, LoggerType, true> {
 
 /** \brief constant data for our MH random walk tasks with value histogram stats collector
  *
+ *
+ * \todo DOC !!!!
  */
 template<typename ValueCalculator_, bool UseBinningAnalysis_ = true,
 	 typename CountIntType_ = int, typename StepRealType_ = double,

@@ -162,7 +162,7 @@
  * \endcode
  *
  * You can extend this mechanism easily to essentially any C++ type. Just specialize the
- * \ref VarValueDecoder<T> template for your C++ type.
+ * \ref VarValueDecoder template for your C++ type.
  *
  * \note Currently, only numeric types are supported. Neither structures nor cell arrays
  *       nor function handles can be read.

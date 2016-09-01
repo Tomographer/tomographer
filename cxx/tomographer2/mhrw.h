@@ -269,7 +269,7 @@ std::ostream & operator<<(std::ostream & str, const MHRWParams<CountIntType,Step
  *         \ref pageInterfaceMHRWStatsCollector.
  *
  * \tparam LoggerType is a logger type to which log messages can be generated (see \ref
- *         Tomographer::Loggers)
+ *         pageLoggers)
  *
  * \tparam CountIntType is an integer type used to count the number of iterations.  You'll
  *         want to use \a int here, unless you really want to pursue exceptionally long
@@ -553,8 +553,9 @@ public:
 
   /** \brief Run the random walk. (pun intended)
    *
-   * This will repeatedly call \ref move(), first a number of times for the thermalizing
-   * runs, then a number of times for the "live" runs.
+   * This will take care of the full random walk.  The specified number of thermalizing
+   * sweeps will be run, followed by a number of "live" sweeps where one sample is taken
+   * per sweep.
    */
   void run()
   {

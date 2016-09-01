@@ -78,14 +78,14 @@ struct helper_samples_size<NumLevels,true> {
  *
  * \tparam NumTrackValues_ This class may be used to calculate error bars for different
  *         independent values. This is the number of independent values for which we are
- *         calculating error bars. May be \ref Eigen::Dynamic if this value is not known
- *         at compile-time and will be provided at run-time to the constructor of \ref
- *         BinningAnalysis.
+ *         calculating error bars. May be \ref TutorialMatrixClass "Eigen::Dynamic" if
+ *         this value is not known at compile-time and will be provided at run-time to the
+ *         constructor of \ref BinningAnalysis.
  *
  * \tparam NumLevels_ The number of binning levels we should perform in our analysis. Use
- *         the special value \ref Eigen::Dynamic to specify that this value is not known
- *         at compile-time but will be specified at runtime to the constructor of \ref
- *         BinningAnalysis.
+ *         the special value \ref TutorialMatrixClass "Eigen::Dynamic" to specify that
+ *         this value is not known at compile-time but will be specified at runtime to the
+ *         constructor of \ref BinningAnalysis.
  *
  *         Note that this is the number of coarse-grainings. If you include the 0-th level
  *         which is the raw samples, we obtain <code>(NumLevels+1)</code> data sets. For
@@ -96,7 +96,7 @@ struct helper_samples_size<NumLevels,true> {
  *         determine the mean values, is already calculated independently (e.g. using a
  *         \ref ValueHistogramMHRWStatsCollector). In this case, we don't need to compute
  *         it separately. Set this template parameter to \a false if you can provide the
- *         bin means directly to \ref BinningAnalysis::calc_error_levels(), in which case
+ *         bin means directly to \ref BinningAnalysis::calcErrorLevels(), in which case
  *         \ref BinningAnalysis won't itself keep track of the means of the samples.
  *
  * \tparam CountIntType_ The integer type used to count the number of samples. Usually you
@@ -115,11 +115,17 @@ struct BinningAnalysisParams
    *         you are really taking a LOT of samples. */
   typedef CountIntType_ CountIntType;
 
-  //! Number of values we are tracking/analyzing, if known at compile-time or \ref Eigen::Dynamic.
+  /** \brief Number of values we are tracking/analyzing, if known at compile-time or
+   *         \ref TutorialMatrixClass "Eigen::Dynamic".
+   */
   static constexpr int NumTrackValuesCTime = NumTrackValues_;
-  //! Number of binning levels in our binning analysis, if known at compile-time or \ref Eigen::Dynamic.
+  /** \brief Number of binning levels in our binning analysis, if known at compile-time or
+   *         \ref TutorialMatrixClass "Eigen::Dynamic".
+   */
   static constexpr int NumLevelsCTime = NumLevels_;
-  //! Number of binning levels in our binning analysis plus one, if known at compile-time or \ref Eigen::Dynamic.
+  /** \brief Number of binning levels in our binning analysis plus one, if known at
+   *         compile-time or \ref TutorialMatrixClass "Eigen::Dynamic".
+   */
   static constexpr int NumLevelsPlusOneCTime = (NumLevelsCTime == Eigen::Dynamic
 						? Eigen::Dynamic
 						: (NumLevelsCTime + 1));
@@ -143,7 +149,7 @@ struct BinningAnalysisParams
    *
    * This property contains the size of the buffer if it is of fixed size, i.e. if the
    * binning level is known at compile-time and is not too large. Otherwise, it is set to
-   * \ref Eigen::Dynamic.
+   * \ref TutorialMatrixClass "Eigen::Dynamic".
    */
   static constexpr int SamplesSizeCTime =
     tomo_internal::helper_samples_size<NumLevelsCTime, (NumLevelsCTime > 0 && NumLevelsCTime < 7)>::value;
@@ -166,17 +172,17 @@ struct BinningAnalysisParams
 
   /** \brief Type used to store the sum of values.
    *
-   * This is a linear array of fixed size \ref NumTrackValues (or \ref
-   * Eigen::Dynamic). This is used to store one value for each tracked value, e.g. the sum
-   * of all the samples.
+   * This is a linear array of fixed size \ref NumTrackValuesCTime (or \ref
+   * TutorialMatrixClass "Eigen::Dynamic"). This is used to store one value for each
+   * tracked value, e.g. the sum of all the samples.
    */
   typedef Eigen::Array<ValueType, NumTrackValuesCTime, 1> BinSumArray;
   /** \brief Type used to store the sum of squares of values at each binning level.
    *
    * This is a matrix of fixed size \ref NumTrackValuesCTime x \ref NumLevelsPlusOneCTime
-   * (or \ref Eigen::Dynamic). This is used to store a list of values (one for each
-   * binning level, including the 0-th) for each tracked value, e.g. the sum of all the
-   * samples.
+   * (or \ref TutorialMatrixClass "Eigen::Dynamic"). This is used to store a list of
+   * values (one for each binning level, including the 0-th) for each tracked value,
+   * e.g. the sum of all the samples.
    */
   typedef Eigen::Array<ValueType, NumTrackValuesCTime, NumLevelsPlusOneCTime> BinSumSqArray;
 
@@ -203,11 +209,12 @@ struct BinningAnalysisParams
  * \ref ValueHistogramWithBinningMHRWStatsCollector).
  *
  * Several values here may be either specified at compile-time or at run-time, inspired by
- * Eigen's mechanism using \ref Eigen::Dynamic. For example, the number of independent
- * values to track may be fixed at compile-time in the \c NumTrackValues template
- * parameter of \ref BinningAnalysisParams which you specify as the \a Params parameter
- * here; however if the number of values will be determined dynamically at run-time, the
- * \c NumTrackValues template parameter should be set to \ref Eigen::Dynamic.
+ * Eigen's mechanism using \ref TutorialMatrixClass "Eigen::Dynamic". For example, the
+ * number of independent values to track may be fixed at compile-time in the \c
+ * NumTrackValues template parameter of \ref BinningAnalysisParams which you specify as
+ * the \a Params parameter here; however if the number of values will be determined
+ * dynamically at run-time, the \c NumTrackValues template parameter should be set to \ref
+ * TutorialMatrixClass "Eigen::Dynamic".
  *
  * Raw samples are added to the analysis by calling \ref processNewValues() with a list
  * of values, one new value per independent function integration that we are tracking. You
@@ -301,7 +308,8 @@ public:
    * compile-time fixed value \a NumTrackValuesCTime, or the value which was set
    * dynamically at runtime.
    *
-   * \ref Eigen::Dynamic is never returned. See \ref Tools::StaticOrDynamic.
+   * \ref TutorialMatrixClass "Eigen::Dynamic" is never returned. See \ref
+   * Tools::StaticOrDynamic.
    */
   const Tools::StaticOrDynamic<int, (NumTrackValuesCTime==Eigen::Dynamic), NumTrackValuesCTime> numTrackValues;
   /** \brief The number of levels in the binning analysis.
@@ -311,7 +319,8 @@ public:
    * compile-time fixed value \a NumTrackValuesCTime, or the value which was set
    * dynamically at runtime.
    *
-   * \ref Eigen::Dynamic is never returned. See \ref Tools::StaticOrDynamic.
+   * \ref TutorialMatrixClass "Eigen::Dynamic" is never returned. See \ref
+   * Tools::StaticOrDynamic.
    */
   const Tools::StaticOrDynamic<int, (NumLevelsCTime==Eigen::Dynamic), NumLevelsCTime> numLevels;
   /** \brief The size of our samples buffer. (avoid using, might change in the future) 
@@ -395,8 +404,9 @@ public:
    *
    * You must specify also the number of values that we will be tracking independently (\a
    * numTrackValues) and the number of binning levels (\a numLevels). If compile-time
-   * values have been provided as template parameters not equal to \ref Eigen::Dynamic,
-   * these values MUST be equal to their compile-time given counterpart values.
+   * values have been provided as template parameters not equal to \ref
+   * TutorialMatrixClass "Eigen::Dynamic", these values MUST be equal to their
+   * compile-time given counterpart values.
    *
    * Specify also a reference to a logger for logging messages. See \ref pageLoggers. 
    *
@@ -710,7 +720,7 @@ public:
    * here.
    *
    * \returns an array of integers, of length \a numTrackValues, each set to one of \ref
-   * CONVERGED, \ref NOT_CONVERGED or \ref CONVERGENCE_UNKNOWN.
+   * CONVERGED, \ref NOT_CONVERGED or \ref UNKNOWN_CONVERGENCE.
    *
    * Contains code inspired by ALPS project, see
    * <a href="https://alps.comp-phys.org/svn/alps1/trunk/alps/src/alps/alea/simplebinning.h">https://alps.comp-phys.org/svn/alps1/trunk/alps/src/alps/alea/simplebinning.h</a>.

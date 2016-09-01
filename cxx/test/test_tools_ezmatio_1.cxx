@@ -58,6 +58,14 @@ BOOST_AUTO_TEST_CASE(basic)
   BOOST_CHECK(dims.matchesWanted(DimList{{3, 4, -1}}));
   BOOST_CHECK(!dims.matchesWanted(DimList{{3, -1, 3}}));
 }
+
+BOOST_AUTO_TEST_CASE(list_initialization)
+{
+  typedef Tomographer::MAT::DimList DimList;
+  DimList dims{3, 4, 5};
+  DimList dims2{{3, 4, 5}};
+  BOOST_CHECK_EQUAL(dims, dims2);
+}
 BOOST_AUTO_TEST_SUITE_END(); // DimList
 
 BOOST_AUTO_TEST_SUITE(IndexList)

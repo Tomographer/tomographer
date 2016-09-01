@@ -60,7 +60,7 @@
  * \f}
  *
  * Routines that allow to compute the coordinate transforamtions, as well as corresponding
- * jacobian and "differential" jacobian, are defined in \ref tomographer/tools/sphcoords.h.
+ * jacobian and "differential" jacobian, are defined in \ref tomographer2/mathtools/sphcoords.h.
  *
  * The transformation to cartesian coordinates is given by:
  * \f{align*}{
@@ -141,10 +141,10 @@
  *
  * Throughout the project, if we refer to a &lsquo;\a T parameterization,&rsquo; we do not
  * imply any particular gauge.  For example, the class \ref
- * Tomographer::DenseDM::TSpace::MHRWLLHWalker does not fix the gauge and performs the
+ * Tomographer::DenseDM::TSpace::LLHMHWalker does not fix the gauge and performs the
  * random walk on all valid T matrices.
  *
- * See, for example, \ref Tomographer::DenseDM::fidelity_T().
+ * See, for example, \ref Tomographer::DenseDM::fidelityT().
  */
 
 

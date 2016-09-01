@@ -254,7 +254,7 @@ int main()
   OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params, base_seed);
 
   // the object which will collect & store the results at the end of the day
-  OurResultsCollector results(logger.baselogger());
+  OurResultsCollector results(logger.parentLogger());
 
   // repeat the whole random walk this number of times.  These random walks will run in
   // parallel depending on the number of CPUs available.
@@ -264,14 +264,14 @@ int main()
   auto tasks = Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
       &taskcdat, // constant data
       &results, // results collector
-      logger.baselogger(), // the main logger object
+      logger.parentLogger(), // the main logger object
       num_repeats, // num_runs
       1 // n_chunk
       );
 
   // set up signal handling -- really easy we we'll do this.  Hit CTRL+C to get an instant
   // status report.
-  auto srep = Tomographer::Tools::makeSigHandlerTaskDispatcherStatusReporter(&tasks, logger.baselogger());
+  auto srep = Tomographer::Tools::makeSigHandlerTaskDispatcherStatusReporter(&tasks, logger.parentLogger());
   Tomographer::Tools::installSignalHandler(SIGINT, &srep);
 
   //

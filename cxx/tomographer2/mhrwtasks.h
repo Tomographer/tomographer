@@ -161,17 +161,24 @@ template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename
 struct MHRandomWalkTaskResult
   : public virtual Tools::NeedOwnOperatorNew<MHRWStatsCollectorResultType_>::ProviderType
 {
+  /** \brief The specified result type of the MHRWStatsCollector the task will be looking at
+   */
   typedef MHRWStatsCollectorResultType_ MHRWStatsCollectorResultType;
     
+  /** \brief The type to use to store the parameters of the random walk
+   */
   typedef MHRWParams<CountIntType, StepRealType> MHRWParamsType;
     
+  /** \brief Construct an empty task result
+   *
+   */
   MHRandomWalkTaskResult()
     : stats_collector_result(), mhrw_params(),
       acceptance_ratio(std::numeric_limits<double>::quiet_NaN())
   {
   }
 
-  /** \brief Constructor
+  /** \brief Constructor, initializes fields to the given values
    *
    * The first parameter is meant to be a \ref MHRWStatsCollectorResultType const
    * reference or temporary; it may be however any type accepted by a one-argument
@@ -221,10 +228,9 @@ struct MHRandomWalkTaskResult
  * This class can be used with \ref MultiProc::OMP::TaskDispatcher, for example.
  *
  * \tparam MHRandomWalkTaskCData must comply with the \ref
- *         pageInterfaceMHRandomWalkTaskCData and inherit from \ref
- *         CDataBase<CountIntType,StepRealType> with appropriate types as required.  The
- *         parameters to the random walk, as well as types to use, stats collector
- *         etc. are specified using this class.
+ *         pageInterfaceMHRandomWalkTaskCData and inherit from \ref CDataBase with
+ *         appropriate types as required.  The parameters to the random walk, as well as
+ *         types to use, stats collector etc. are specified using this class.
  */
 template<typename MHRandomWalkTaskCData,
          typename Rng = std::mt19937>
@@ -247,7 +253,8 @@ struct MHRandomWalkTask
    * This struct can store information about the current status of a \ref
    * MHRandomWalkTask while it is running.
    *
-   * This is for use with, for example, \ref OMPTaskDispatcher::request_status_report().
+   * This is for use with, for example, \ref
+   * MultiProc::OMP::TaskDispatcher::requestStatusReport().
    */
   struct StatusReport : public MultiProc::TaskStatusReport
   {
@@ -312,7 +319,7 @@ public:
   /** \brief Constructs the MHRandomWalkTask
    *
    * You should never need to call this directly, except if you're writing a task
-   * manager/dispatcher (e.g. \ref OMPTaskDispatcher)
+   * manager/dispatcher (e.g. \ref MultiProc::OMP::TaskDispatcher)
    */
   template<typename LoggerType>
   MHRandomWalkTask(int inputseed, const MHRandomWalkTaskCData * /*pcdata*/, LoggerType & logger)
@@ -336,7 +343,7 @@ public:
    *
    * This also takes care to call the task manager interface's
    * <code>statusReportRequested()</code> and submits a status report if required. See
-   * e.g. \ref OMPTaskDispatcher::requestStatusReport().
+   * e.g. \ref MultiProc::OMP::TaskDispatcher::requestStatusReport().
    */
   template<typename LoggerType, typename TaskManagerIface>
   inline void run(const MHRandomWalkTaskCData * pcdata, LoggerType & logger,

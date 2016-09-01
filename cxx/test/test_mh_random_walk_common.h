@@ -174,7 +174,7 @@ struct TestLatticeMHRWGaussPeak
   inline FnValueType fnLogVal(const PointType & pt)
   {
     FnValueType vval = - FnValueType((pt - Offset).transpose() * Sigma * (pt - Offset)) / SigmaInvScale;
-    Base::_logger.sublogger(TOMO_ORIGIN).longdebug([&](std::ostream & stream) {
+    Base::_logger.subLogger(TOMO_ORIGIN).longdebug([&](std::ostream & stream) {
 	stream << "pt = " << pt.transpose() << "; Offset = " << Offset.transpose()
 	       << "; SigmaInvScale = " << SigmaInvScale << "; Sigma =\n"
 	       << Sigma << " --> value is = "

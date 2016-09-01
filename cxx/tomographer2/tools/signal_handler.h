@@ -50,15 +50,19 @@ namespace Tools
 
 /** \brief An abstract signal handler (C++ interface)
  *
- * Just override \ref handle_signal() to define the handler.  A \ref SignalHandler
+ * Just override \ref handleSignal() to define the handler.  A \ref SignalHandler
  * instance can then be provided to \ref installSignalHandler().
  */
 struct SignalHandler
 {
   SignalHandler() { }
   virtual ~SignalHandler() { }
-  
-  virtual void handleSignal(int) = 0;
+
+  /** \brief Perform some action in reaction to a signal
+   *
+   * Override this method to specify what to do when the signal \a sig_num is caught.
+   */
+  virtual void handleSignal(int sig_num) = 0;
 };
   
 

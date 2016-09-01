@@ -119,10 +119,13 @@ public:
 
   /** \brief Constructor which just initializes the given fields
    *
-   * \param startpt A starting point for the random walk (matrix in \ref pageParamT).  If
-   *     you provide a zero \a startpt here, then a random starting point will be chosen
-   *     using the \a rng random number generator to generate a random point on the
-   *     sphere.
+   * The \a llh object is responsible for calculating the log-likelihood function of the
+   * tomography experiment (see class documentation).
+   * 
+   * The \a startpt argument specifies the starting point for the random walk (matrix in
+   * \ref pageParamsT).  If you provide a zero \a startpt here, then a random starting
+   * point will be chosen using the \a rng random number generator to generate a random
+   * point on the sphere.
    */
   LLHMHWalker(const MatrixType & startpt, const DenseLLH & llh, Rng & rng,
 	      LoggerType & log_)

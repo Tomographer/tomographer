@@ -36,8 +36,6 @@
 // <Eigen/...> or <tomographer2/...> header
 #include "test_tomographer.h"
 
-#include "boost_test_logger.h"
-
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/mhrw.h>
 #include <tomographer2/mhrw_bin_err.h>
@@ -46,6 +44,8 @@
 #include <tomographer2/densedm/indepmeasllh.h>
 #include <tomographer2/densedm/tspacefigofmerit.h>
 #include <tomographer2/densedm/tspacellhwalker.h>
+
+#include "boost_test_logger.h"
 
 
 
@@ -207,8 +207,8 @@ BOOST_AUTO_TEST_CASE(basic1)
   // now, prepare the integrator.
   std::mt19937 rng(0); // seeded random number generator
 
-  typedef Tomographer::Logger::BufferLogger LoggerType;
-  LoggerType flog(Tomographer::Logger::DEBUG);
+  typedef BoostTestLogger LoggerType;
+  LoggerType logger(Tomographer::Logger::DEBUG);
 
   DMTypes::MatrixType start_T(dmt.initMatrixType());
   start_T << 1.0/sqrt(2.0), 0,
@@ -234,25 +234,23 @@ BOOST_AUTO_TEST_CASE(basic1)
     0, 0;
 
   OurValueCalculator fidcalc(ref_T);
-  OurValMHRWStatsCollector fidstats(OurHistogramType::Params(0.98, 1.0, 50), fidcalc, flog);
-  OurValMHRWStatsCollector fidstats2(OurHistogramType::Params(0.96, 0.98, 10), fidcalc, flog);
+  OurValMHRWStatsCollector fidstats(OurHistogramType::Params(0.98, 1.0, 50), fidcalc, logger);
+  OurValMHRWStatsCollector fidstats2(OurHistogramType::Params(0.96, 0.98, 10), fidcalc, logger);
 
   OurMultiMHRWStatsCollector multistats(fidstats, fidstats2);
 
   typedef Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,std::mt19937,LoggerType>
     MyMHWalker;
 
-  MyMHWalker mhwalker(start_T, llh, rng, flog);
+  MyMHWalker mhwalker(start_T, llh, rng, logger);
 
   //  std::cout << "About to create the randomwalk object ...\n";
   Tomographer::MHRandomWalk<std::mt19937,MyMHWalker,OurMultiMHRWStatsCollector,LoggerType,long>
-    rwalk(0.05, 20, 300, 5000, mhwalker, multistats, rng, flog);
+    rwalk(0.05, 20, 300, 5000, mhwalker, multistats, rng, logger);
 
   //  std::cout << "About to run the randomwalk object ...\n";
 
   rwalk.run();
-
-  BOOST_MESSAGE(flog.get_contents()) ;
 
   // because we used a seeded RNG, we should get exactly reproducible results, i.e. the
   // exact same histograms.
@@ -298,8 +296,8 @@ BOOST_AUTO_TEST_CASE(with_binning_analysis)
 
   // --------
 
-  typedef Tomographer::Logger::BufferLogger LoggerType;
-  LoggerType buflog(Tomographer::Logger::DEBUG);
+  typedef BoostTestLogger LoggerType;
+  LoggerType logger(Tomographer::Logger::DEBUG);
 
   typedef Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes> OurValueCalculator;
   typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<
@@ -319,22 +317,20 @@ BOOST_AUTO_TEST_CASE(with_binning_analysis)
   // N levels -> samples_size = 2^N
   const int num_levels = 5;
 
-  ValWBinningMHRWStatsCollectorType vhist(HistogramParams(0.98f, 1.0f, 20), fidcalc, num_levels, buflog);
+  ValWBinningMHRWStatsCollectorType vhist(HistogramParams(0.98f, 1.0f, 20), fidcalc, num_levels, logger);
 
   std::mt19937 rng(0); // seeded rng, deterministic results
 
   DMTypes::MatrixType start_T = dmt.initMatrixType();
   start_T << 1.0/sqrt(2.0), 0, 0, 1.0/sqrt(2.0);
 
-  MHWalkerType mhwalker(start_T, llh, rng, buflog);
+  MHWalkerType mhwalker(start_T, llh, rng, logger);
 
   //  std::cout << "About to create the randomwalk object ...\n";
   Tomographer::MHRandomWalk<std::mt19937,MHWalkerType,ValWBinningMHRWStatsCollectorType,LoggerType,unsigned long>
-    rwalk(0.05, 20, 300, 8192, mhwalker, vhist, rng, buflog);
+    rwalk(0.05, 20, 300, 8192, mhwalker, vhist, rng, logger);
 
   rwalk.run();
-
-  BOOST_MESSAGE(buflog.get_contents());
 
   const ValWBinningMHRWStatsCollectorType::ResultType & result = vhist.getResult();
 

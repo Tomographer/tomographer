@@ -390,6 +390,7 @@ div.summary {
 
 .paramname {
    color: #98611b;
+   vertical-align: top;
 }
 h2 {
    border-bottom: 1px solid #d5eeee;

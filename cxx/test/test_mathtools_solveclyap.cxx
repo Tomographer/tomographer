@@ -41,6 +41,8 @@
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/mathtools/random_unitary.h>
 
+#include "boost_test_logger.h"
+
 
 // -----------------------------------------------------------------------------
 // fixture(s)
@@ -127,12 +129,9 @@ struct test_solveclyap_fixture
 
     MatType X2(d,d);
 
-    Tomographer::Logger::BufferLogger logger(Tomographer::Logger::DEBUG);
+    BoostTestLogger logger(Tomographer::Logger::DEBUG);
 
     Tomographer::MathTools::SolveCLyap::solve<true>(X2, A, C, logger, 1e-8);
-
-    std::string msg = logger.get_contents();
-    BOOST_MESSAGE(msg);
 
     MY_BOOST_CHECK_EIGEN_EQUAL(X, X2, 1e-8);
   }

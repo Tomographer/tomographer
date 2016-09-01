@@ -70,7 +70,7 @@ public:
   typedef LLHValueType_ LLHValueType;
   //! Type used to store integer measurement counts
   typedef IntFreqType_ IntFreqType;
-  //! Maximum number of POVM effects, fixed at compile-time or \ref Eigen::Dynamic
+  //! Maximum number of POVM effects, fixed at compile-time or \ref TutorialMatrixClass "Eigen::Dynamic"
   static constexpr int FixedMaxParamList = FixedMaxParamList_;
   //! Whether the dimension is specified dynamically at run-time or statically at compile-time
   static constexpr bool IsDynamicMaxParamList = (FixedMaxParamList_ == Eigen::Dynamic);
@@ -107,8 +107,10 @@ public:
   typedef const Eigen::Ref<const FreqListType> & FreqListTypeConstRef;
 
   
-  /** \brief Constructor [only for statically-fixed dim]
+  /** \brief Simple constructor
    *
+   * The measurement data is initialially empty.  You may call \ref addMeasEffect() or
+   * \ref setMeas() to specify the measurement data.
    */
   inline IndepMeasLLH(DMTypes dmt_)
     : dmt(dmt_), _Exn(VectorParamListType::Zero(0, dmt.dim2())), _Nx(FreqListType::Zero(0)),
@@ -116,8 +118,9 @@ public:
   {
   }
 
-  /** \brief Constructor [only for statically-fixed dim]
+  /** \brief Constructor with full measurement data
    *
+   * The measurement data is set to \a Exn_ and \a Nx_ via a call to \ref setMeas().
    */
   inline IndepMeasLLH(DMTypes dmt_, VectorParamListTypeConstRef Exn_, FreqListTypeConstRef Nx_)
     : dmt(dmt_), _Exn(VectorParamListType::Zero(0, dmt.dim2())), _Nx(FreqListType::Zero(0)), _NMeasAmplifyFactor(1)
@@ -128,7 +131,12 @@ public:
   //! The \ref DMTypes object, storing e.g. the dimension of the problem.
   const DMTypes dmt;
 
-
+  /** \brief The number of POVM effects in the list
+   *
+   * Returns the size of the list of POVM effects.  They are not guaranteed to be
+   * different (although this is usually the case); that depends on what the user
+   * specified to \ref setMeas().
+   */
   inline const IndexType numEffects() const { return _Exn.rows(); }
 
   /** \brief  The stored individual POVM effects, in \ref pageParamsX
@@ -139,7 +147,7 @@ public:
    * The number of rows of \ref Exn must be equal to the number of rows of \ref Nx.  Use
    * \ref setMeas() or \ref addMeasEffect() to populate measurements.
    *
-   * See also \ref Exn(IndexType)
+   * See also \ref Exn(IndexType i) const
    */
   inline const VectorParamListType & Exn() const { return _Exn; }
 
@@ -162,9 +170,9 @@ public:
    * Exn) was observed in the experiment.
    *
    * The number of rows of \ref Exn must be equal to the number of rows of \ref Nx.  Use
-   * \ref initMeasVector() to jointly initialize the lengts of both objects.
+   * \ref setMeas() or \ref addMeasEffect to specify the measurement data.
    *
-   * See also \ref Nx(IndexType)
+   * See also \ref Nx(IndexType i) const
    */
   inline const FreqListType & Nx() const { return _Nx; }
 
@@ -179,8 +187,8 @@ public:
 
   /** \brief Reset the measurement vectors and frequency counts
    *
-   * Resets the return values of \ref Exn() and \ref Nx() to empty vectors.
-   *
+   * Resets the measurement data to an empty list.  Consequently the return values of \ref
+   * Exn() and \ref Nx() are subsequently empty vectors.
    */
   inline void resetMeas()
   {
@@ -188,7 +196,7 @@ public:
     _Nx.resize(0);
   }
 
-  /** \brief store a measurement POVM effect along with a frequency count
+  /** \brief Store a measurement POVM effect along with a frequency count
    *
    * \param E_x the X-parameterization of the POVM effect corresponding to the observed
    *            measurement outcome
@@ -230,6 +238,15 @@ public:
     tomographer_assert(_Exn.rows() == _Nx.rows());
   }
 
+  /** \brief Store a POVM measurement effect with frequency count
+   *
+   * This overload accepts the POVM effect specified as a dense matrix instead of a \ref
+   * pageParamsX.
+   *
+   * See \ref addMeasEffect(typename DMTypes::VectorParamTypeConstRef E_x, IntFreqType n,
+   * bool check_validity = true).
+   *
+   */
   inline void addMeasEffect(typename DMTypes::MatrixTypeConstRef E_m, IntFreqType n,
 			    bool check_validity = true)
   {
@@ -249,6 +266,10 @@ public:
     addMeasEffect(Tomographer::DenseDM::ParamX<DMTypes>(dmt).HermToX(E_m), n, false);
   }
 
+  /** \brief Specify the full measurement data at once
+   *
+   *
+   */
   inline void setMeas(VectorParamListTypeConstRef Exn_, FreqListTypeConstRef Nx_, bool check_validity = true)
   {
     tomographer_assert(Exn_.cols() == (IndexType)dmt.dim2());

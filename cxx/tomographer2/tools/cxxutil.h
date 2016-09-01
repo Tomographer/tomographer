@@ -287,9 +287,12 @@ struct StoreIfEnabled<T_, true>
 template<typename T_>
 constexpr bool StoreIfEnabled<T_, true>::IsEnabled;
 
-/** \brief C++ Stream operators for \ref StoreIfEnabled<T,enabled>
+/** \brief C++ Stream operators for \ref StoreIfEnabled
  *
  * Produces human-readable output.
+ *
+ * This implementation kicks in if the value is not streamable, and simply outputs the
+ * fixed string \c "[-]".
  */
 template<typename T>
 inline std::ostream & operator<<(std::ostream & str, const StoreIfEnabled<T, false>& /*val*/)
@@ -297,9 +300,12 @@ inline std::ostream & operator<<(std::ostream & str, const StoreIfEnabled<T, fal
   str << "[-]";
   return str;
 }
-/** \brief C++ Stream operators for \ref StoreIfEnabled<T,enabled>
+/** \brief C++ Stream operators for \ref StoreIfEnabled
  *
  * Produces human-readable output.
+ *
+ * This implementation kicks in if the value is indeed streamable, and outputs the given
+ * value into the stream.
  */
 template<typename T>
 inline std::ostream & operator<<(std::ostream & str, const StoreIfEnabled<T, true>& val)
@@ -517,7 +523,7 @@ inline int getWidthForTerminalOutput(int max_width = 0)
 
 /** \brief Expands to the current function name or signature
  *
- * For \ref Logger::LocalLogger, use \ref TOMO_ORIGIN.
+ * For \ref Tomographer::Logger::LocalLogger, use \ref TOMO_ORIGIN.
  */
 #define TOMO_FUNCTION __PRETTY_FUNCTION__
 

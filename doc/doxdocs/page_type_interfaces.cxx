@@ -326,3 +326,29 @@
  *      associated to the bin number i.
  * 
  */
+
+
+// =============================================================================
+// OperatorNewProviderType
+// =============================================================================
+
+// ----need to clarify all this: TODO DOC --------
+/* * \page pageInterfaceOperatorNewProviderType OperatorNewProviderType Interface
+ *
+ * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
+ *
+ * \par operator new( ... )
+ *   Define any required or desired implementations of <em>operator new</em>, as may be
+ *   required for particular types (see \ref Tomographer::Tools::NeedOwnOperatorNew)
+ *
+ * \par typedef <own type> OperatorNewProviderType;
+ *   A member type, typedef-ing the provider type itself as \a OperatorNewProviderType .
+ *
+ * \par template<typename T> struct OperatorNewAllocatorType { typedef .. Type; }
+ *   A template struct member, capable of specifying which allocator type to use for
+ *   std::vector's and other STL types of contained value \a T.
+ *
+ * For an example, see \ref Tomographer::Tools::EigenAlignedOperatorNewProvider.
+ *
+ */

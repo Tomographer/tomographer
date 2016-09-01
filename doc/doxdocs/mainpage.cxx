@@ -60,7 +60,7 @@
  *   what the state space is, the jump function, starting point, step size, etc. in the
  *   form of a type implementing the \ref pageInterfaceMHWalker.
  *
- * - The \ref Tomographer::DMStateSpaceLLHMHWalker is a type implementing the \ref
+ * - The \ref Tomographer::DenseDM::TSpace::LLHMHWalker is a type implementing the \ref
  *   pageInterfaceMHWalker, which is capable of running a random walk on the space of
  *   quantum states represented by dense C++ Eigen matrices, and using the distribution
  *   proportional to the loglikelihood function on the Hilbert-Schmidt measure.
@@ -152,9 +152,9 @@
  * components detailed above.  Most of the work is already done by the classes in \ref
  * Tomographer::MHRWTasks::ValueHistogramTasks.
  *
- * To get started, you might like to have a look at the test example \a
- * minimal_tomorun.cxx, which provides a very minimal implementation of tomorun for a
- * specific example.
+ * To get started, you might like to have a look at the test example \c
+ * "cxx/test/minimal_tomorun.cxx", which provides a very minimal implementation of tomorun
+ * for a specific example.
  *
  * Topics:
  *

@@ -174,7 +174,7 @@ public:
 
   /** \brief Get the X-parameterization corresponding to a given hermitian matrix
    *
-   * See also \ref pageParamsX and \ref param_x_to_herm().
+   * See also \ref pageParamsX and \ref XToHerm().
    * 
    * \note This function only accesses lower triangular part of \c Herm.
    *

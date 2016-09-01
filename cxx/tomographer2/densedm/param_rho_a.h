@@ -203,7 +203,7 @@ private:
 public:
   /** \brief Construct an object which can perform A parameterization transformations.
    *
-   * Specify the runtime \a DMTypes object to use (see \ref pageInterfaceDMTypes).
+   * Specify the runtime \ref DMTypes object to use.
    *
    * Once constructed, this object has precalculated and cached the generalized Gell-Mann
    * matrices (see \ref pageParamsA), and these can be obtained with \ref getLambda().

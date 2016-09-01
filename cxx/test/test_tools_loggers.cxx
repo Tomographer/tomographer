@@ -175,6 +175,14 @@ struct fixture_originfilteredlogger {
 // -----------------------------------------------------------------------------
 
 
+template<typename LoggerType>
+void a_method_which_accepts_a_dumb_logger(LoggerType & logger)
+{
+  logger.info("a_method_which_accepts_a_dumb_logger", "Here is an info message.");
+}
+
+
+
 class test_local_logger
 {
   Tomographer::Logger::LocalLogger<Tomographer::Logger::BufferLogger> _logger;
@@ -194,9 +202,9 @@ public:
   ~test_local_logger()
   {
     _logger.debug("destructor.");
-    auto l = _logger.sublogger("[destructor]", "-");
+    auto l = _logger.subLogger("[destructor]", "-");
     l.info("destructor.");
-    auto l2 = l.sublogger("yo!");
+    auto l2 = l.subLogger("yo!");
     l2.info("depth two!");
   }
 
@@ -213,11 +221,26 @@ public:
   template<int I = 1342, char c = 'Z', typename T = std::string>
   void tmpl(const T & value = T("fdsk"))
   {
-    auto l = _logger.sublogger(TOMO_ORIGIN);
+    auto l = _logger.subLogger(TOMO_ORIGIN);
     l.info("info message. Value = %s", value.c_str());
 
-    auto l2 = l.sublogger("inner logger");
+    auto l2 = l.subLogger("inner logger");
     l2.debug("I = %d, c=%c", I, c);
+  }
+
+  void test_parent_logger()
+  {
+    // _logger is the first-level LocalLogger, so base == parent
+    BOOST_CHECK( & _logger.baseLogger() == & _logger.parentLogger() );
+    a_method_which_accepts_a_dumb_logger(_logger.baseLogger());
+    a_method_which_accepts_a_dumb_logger(_logger.parentLogger());
+
+    auto logger = _logger.subLogger(TOMO_ORIGIN);
+    // logger is NOT a first-level LocalLogger, so base != parent , even types are different
+    BOOST_CHECK( (void*) & logger.baseLogger() != (void *) & logger.parentLogger() );
+    BOOST_CHECK( std::string(typeid(logger.baseLogger()).name()) !=
+                 std::string(typeid(logger.parentLogger()).name()) );
+    a_method_which_accepts_a_dumb_logger(logger.parentLogger());
   }
 };
 
@@ -229,7 +252,7 @@ void test_locallogger_function(int value, BaseLoggerType & b)
   logger.debug("value is %d", value);
   
   auto some_callback = [&](std::string some_other_value) {
-    auto innerlogger = logger.sublogger("some_callback[lambda]");
+    auto innerlogger = logger.subLogger("some_callback[lambda]");
     innerlogger.debug([&](std::ostream& str) {
 	str << "Inside callback: " << some_other_value;
       });
@@ -256,7 +279,7 @@ BOOST_AUTO_TEST_CASE(basiclogging)
   logger.warning("origin4", "warning message");
   logger.error("origin5", "error message");
 
-  std::string contents = logger.get_contents();
+  std::string contents = logger.getContents();
   BOOST_CHECK_EQUAL(contents, std::string("[origin2] debug message\n"
                                           "[origin3] info message\n"
                                           "[origin4] warning message\n"
@@ -269,7 +292,7 @@ BOOST_AUTO_TEST_CASE(formats)
   std::string str2 = "another test string";
   logger.debug("origin", "int: %d, uint: %u, double: %5.2f, strings: \"%s\", \"%s\"",
                1, 2, 3.141592653589, pstr1, str2.c_str());
-  std::string contents1 = logger.get_contents();
+  std::string contents1 = logger.getContents();
   BOOST_CHECK_EQUAL(contents1, std::string(
                         "[origin] int: 1, uint: 2, double:  3.14, "
                         "strings: \"test string\", \"another test string\"\n"
@@ -280,7 +303,7 @@ BOOST_AUTO_TEST_CASE(formats)
 
   std::string preformatted_str = "->\tget the contents of the internal buffer. More...";
   logger.debug("origin", preformatted_str);
-  std::string contents2 = logger.get_contents();
+  std::string contents2 = logger.getContents();
   BOOST_CHECK_EQUAL(contents2, std::string(
                         "[origin] "+preformatted_str+"\n"
                         ));
@@ -294,7 +317,7 @@ BOOST_AUTO_TEST_CASE(formats)
   logger.debug("origin", [&](std::ostream & str) {
       str << "C++ stream output: value = " << value << ". The 2x2 identity matrix is =\n" << mat;
     });
-  std::string contents3 = logger.get_contents();
+  std::string contents3 = logger.getContents();
   BOOST_CHECK_EQUAL(contents3, std::string(
                         "[origin] C++ stream output: value = 42. The 2x2 identity matrix is =\n"
                         "1 0\n0 1\n"
@@ -343,7 +366,7 @@ BOOST_AUTO_TEST_CASE(optimized_formatting)
     });
 
   BOOST_CHECK_EQUAL(lambda_called, false);
-  BOOST_CHECK_EQUAL(logger2.get_contents(), std::string(""));
+  BOOST_CHECK_EQUAL(logger2.getContents(), std::string(""));
 }
 
 
@@ -594,7 +617,7 @@ BOOST_AUTO_TEST_CASE(origin1)
 {
   produce_logs_with_origin("my_origin_class");
   BOOST_CHECK_EQUAL(
-      buflog.get_contents(),
+      buflog.getContents(),
       "[my_origin_class] debug level\n"
       "[my_origin_class] info level\n"
       "[my_origin_class] warning level\n"
@@ -606,7 +629,7 @@ BOOST_AUTO_TEST_CASE(origin2)
 {
   produce_logs_with_origin("my_origin_class::mymethod()");
   BOOST_CHECK_EQUAL(
-      buflog.get_contents(),
+      buflog.getContents(),
       "[my_origin_class::mymethod()] longdebug level\n"
       "[my_origin_class::mymethod()] debug level\n"
       "[my_origin_class::mymethod()] info level\n"
@@ -619,7 +642,7 @@ BOOST_AUTO_TEST_CASE(origin3)
 {
   produce_logs_with_origin("my_origin_class::mymethod2()");
   BOOST_CHECK_EQUAL(
-      buflog.get_contents(),
+      buflog.getContents(),
       "[my_origin_class::mymethod2()] warning level\n"
       "[my_origin_class::mymethod2()] error level\n"
       );
@@ -629,7 +652,7 @@ BOOST_AUTO_TEST_CASE(origin4)
 {
   produce_logs_with_origin("my_other_origin_class::nested_class");
   BOOST_CHECK_EQUAL(
-      buflog.get_contents(),
+      buflog.getContents(),
       "[my_other_origin_class::nested_class] error level\n"
       );
 }
@@ -638,7 +661,7 @@ BOOST_AUTO_TEST_CASE(origin_norule)
 {
   produce_logs_with_origin("origin::with::no::rule::set()");
   BOOST_CHECK_EQUAL(
-      buflog.get_contents(),
+      buflog.getContents(),
       "[origin::with::no::rule::set()] info level\n"
       "[origin::with::no::rule::set()] warning level\n"
       "[origin::with::no::rule::set()] error level\n"
@@ -663,12 +686,16 @@ BOOST_AUTO_TEST_CASE(basic)
     test_local_logger tst(b);
     tst.some_method();
     tst.tmpl();
+    tst.test_parent_logger();
   }
   {
     test_locallogger_function(10, b);
   }
-  
-  BOOST_CHECK_EQUAL(b.get_contents(),
+
+  std::string contents = b.getContents();
+
+  BOOST_MESSAGE(contents);
+  BOOST_CHECK_EQUAL(contents,
                     "[test_local_logger] constructor!\n"
                     "[test_local_logger] constructor!\n"
                     "[test_local_logger] constructor!\n"
@@ -687,6 +714,9 @@ BOOST_AUTO_TEST_CASE(basic)
                     "[test_local_logger::some_method()] Number = 9\n"
                     "[test_local_logger::tmpl()] info message. Value = fdsk\n"
                     "[test_local_logger::tmpl()/inner logger] I = 1342, c=Z\n"
+                    "[a_method_which_accepts_a_dumb_logger] Here is an info message.\n"
+                    "[a_method_which_accepts_a_dumb_logger] Here is an info message.\n"
+                    "[a_method_which_accepts_a_dumb_logger] Here is an info message.\n"
                     "[test_local_logger] destructor.\n"
                     "[test_local_logger::[destructor]] destructor.\n"
                     "[test_local_logger::[destructor]-yo!] depth two!\n"

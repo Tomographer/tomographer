@@ -51,7 +51,7 @@ namespace TSpace {
  *
  * This calculates the "root" fidelity as per Nielsen & Chuang.
  *
- * \see fidelity_T(rho,sigma)
+ * \see fidelityT(rho,sigma)
  */
 template<typename DMTypes_, typename ValueType_ = double>
 class FidelityToRefCalculator
@@ -78,7 +78,7 @@ public:
   //! Calculate the fidelity of the state represented by T to the reference state
   inline ValueType getValue(MatrixTypeConstRef T) const
   {
-    return fidelity_T<ValueType>(T, _ref_T);
+    return fidelityT<ValueType>(T, _ref_T);
   }
 };
 
@@ -117,7 +117,7 @@ public:
   //! Calculate the purified distance of the state represented by T to the reference state
   inline ValueType getValue(MatrixTypeConstRef T) const
   {
-    ValueType F = fidelity_T<ValueType>(T, _ref_T);
+    ValueType F = fidelityT<ValueType>(T, _ref_T);
     if (F >= ValueType(1)) {
       return 0;
     }
@@ -153,7 +153,7 @@ public:
   //! Calculate the trace distance of the state represented by T to the reference state
   inline ValueType getValue(MatrixTypeConstRef T) const
   {
-    return trace_dist<ValueType>(T*T.adjoint(), _ref_rho);
+    return traceDistance<ValueType>(T*T.adjoint(), _ref_rho);
   }
 };
 

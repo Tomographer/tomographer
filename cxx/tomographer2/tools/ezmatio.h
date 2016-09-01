@@ -161,16 +161,6 @@ private:
   static std::string heading(std::string fname) { return "File `"+fname+"`: "; }
 };
 
-/*
-class InvalidOperationError : public Exception {
-public:
-  InvalidOperationError(const std::string& msg)
-    : Exception("Invalid operation", msg)
-  {
-  }
-  virtual ~InvalidOperationError() noexcept { }
-  };
-*/
 
 //! Invalid index or index list provided to a routine
 class InvalidIndexError : public Exception {
@@ -288,7 +278,7 @@ private:
  * sequence of elements. For an empty sequence (<em>begin==end</em>), the result is \c 1.
  */
 template<typename It, typename ValueType = typename std::iterator_traits<It>::value_type>
-ValueType get_numel(It begin, It end)
+ValueType getNumEl(It begin, It end)
 {
   ValueType n = 1;
   for (It it = begin; it != end; ++it) {
@@ -305,26 +295,49 @@ ValueType get_numel(It begin, It end)
  * functions such as \ref numel(), \ref matchesWanted() and \ref
  * operator<<(std::ostream&,const DimList&) "operator<<".
  *
- * You may also use \ref operator<<(int) and \ref operator<<(const DimList&) to
- * append dimensions to the list.
+ * You may also use \ref DimList::operator<<(int dim) and
+ * \ref DimList::operator<<(const std::vector<int>& moredims) to append dimensions
+ * to the list.
  *
  *
  */
 class DimList : public std::vector<int>
 {
 public:
+  //! Initializes an empty dimension list
   DimList() : std::vector<int>() { }
   
+  /** \brief Initialize a dimension list with another list of dimensions
+   *
+   * The \a dims may be another vector, or another DimList instance.  This also works with
+   * move semantics.
+   */
   template<typename VectorType>
   DimList(VectorType&& dims)
     : std::vector<int>(std::forward<VectorType>(dims))
   {
   }
+  /** \brief Initialize the dimension list with an explicit initializer
+   *
+   * Enables construction and initialization with the syntax
+   * \code
+   *   DimList dims{2, 3, 6}; // 3 dimensions initialized to [2, 3, 6]
+   *   DimList dims{{2, 3, 6}}; // 3 dimensions initialized to [2, 3, 6], alternative syntax
+   * \endcode
+   *
+   * \todo Note to self: both syntaxes work, but I'm not sure which constructor exactly
+   *       the second line calls ...?
+   */
   template<typename T, TOMOGRAPHER_ENABLED_IF_TMPL(std::is_convertible<T,int>::value)>
   DimList(std::initializer_list<T> init)
     : std::vector<int>(init)
   {
   }
+  /** \brief Initialize the dimension list with an iterator range
+   *
+   * The dimension list is initialized with begin and end iterators \a b and \a e.  See
+   * \ref std::vector(It b, It e).
+   */
   template<class It>
   DimList(It b, It e) : std::vector<int>(b, e)
   {
@@ -332,9 +345,9 @@ public:
 
   /** \brief Get the total number of elements in an array of these dimensions
    *
-   * This is simply the product of all elements in the array. See \ref get_numel().
+   * This is simply the product of all elements in the array. See \ref getNumEl().
    */
-  inline int numel() const { return get_numel(begin(), end()); }
+  inline int numel() const { return getNumEl(begin(), end()); }
 
   /** \brief Get the number of dimensions in this array.
    *
@@ -359,10 +372,20 @@ public:
     return true;
   }
 
+  /** \brief Add (append) a dimension to the dimension list
+   *
+   * Pushes the dimension \a dim at the end of the dimension list, increasing the number
+   * of dimensions by one.
+   */
   DimList& operator<<(int dim) {
     push_back(dim);
     return *this;
   }
+  /** \brief Add (append) dimensions to the dimension list
+   *
+   * Pushes the dimension list \a moredims at the end of the current dimension list,
+   * increasing the number of dimensions by <em>moredims.size()</em>.
+   */
   DimList& operator<<(const std::vector<int>& moredims) {
     insert(end(), moredims.begin(), moredims.end());
     return *this;
@@ -428,7 +451,7 @@ public:
   IndexList(const std::vector<int>& dims = std::vector<int>(), int linearindex = -1)
     : std::vector<int>(dims.size()), p_dims(dims)
   {
-    if (get_numel(dims.begin(), dims.end()) <= 0) {
+    if (getNumEl(dims.begin(), dims.end()) <= 0) {
       throw InvalidIndexError("zero-sized array given by dimension list");
     }
     if (linearindex >= 0) {
@@ -448,7 +471,7 @@ public:
   IndexList(const std::vector<int>& dims, VectorIntInitializer&& index)
     : std::vector<int>(std::forward<VectorIntInitializer>(index)), p_dims(dims)
   {
-    if (get_numel(dims.begin(), dims.end()) <= 0) {
+    if (getNumEl(dims.begin(), dims.end()) <= 0) {
       throw InvalidIndexError("zero-sized array given by dimension list");
     }
   }
@@ -578,7 +601,7 @@ private:
 };
 
 
-//! C++ output stream operator for \ref IndexList<bool IsRowMajor> .
+//! C++ output stream operator for \ref IndexList
 template<bool IsRowMajor>
 inline std::ostream& operator<<(std::ostream& str, const IndexList<IsRowMajor> & indexlist)
 {
@@ -616,7 +639,7 @@ private:
 public:
   IndexListIterator(const std::vector<IntType>& dims)
     : p_dims(dims),
-      p_numel(get_numel(dims.begin(), dims.end())),
+      p_numel(getNumEl(dims.begin(), dims.end())),
       p_index(dims.size(), 0),
       p_linearIndex(0)
   {
@@ -705,7 +728,7 @@ public:
 };
 
 
-//! C++ output stream operator for \ref IndexListIterator<bool IsRowMajor, typename IntType> .
+//! C++ output stream operator for \ref IndexListIterator
 template<bool IsRowMajor, typename IntType>
 inline std::ostream& operator<<(std::ostream& str, const IndexListIterator<IsRowMajor, IntType> & indexlistit)
 {
@@ -754,6 +777,15 @@ inline std::ostream& operator<<(std::ostream& str, const IndexListIterator<IsRow
  * The \a Enabled template parameter is provided for convenience, if you wish to employ
  * SFINAE to conditionally enable specializations. See the VarValueDecoder<T> for simple
  * numeric values for an example.
+ *
+ * In addition, this class may have an additional typedef (or nested struct/class) member
+ * named \a Params (no example available yet).  In that case, it is possible to pass a
+ * second argument to the \ref Var::value() method (same for \ref value()), precisely of
+ * the type \a Params.  This argument is passed as second argument to both \ref
+ * checkShape() and \ref decodeValue(); these methods may use this additional argument
+ * however they like.  For example, the \a Params may be flags or options specifying how
+ * to encode the value into the type \a T, or may be the requested shape of the return
+ * type, or whatever other additional info the decoding procedure may like to have.
  */
 template<typename T, typename Enabled = void>
 struct VarValueDecoder
@@ -813,6 +845,11 @@ namespace tomo_internal {
 
 class Var;
 
+/** \brief Access the value of the given variable, as a C++ type
+ *
+ * This is an alternative syntax for <em>var.value<T>()</em>.  See documentation for \ref
+ * Var::value().
+ */
 template<typename T>
 inline typename VarValueDecoder<T>::RetType value(const Var& var)
 {
@@ -820,6 +857,14 @@ inline typename VarValueDecoder<T>::RetType value(const Var& var)
   return VarValueDecoder<T>::decodeValue(var);
 }
 
+/** \brief Access the value of the given variable, as a C++ type
+ *
+ * This is an alternative syntax for <em>var.value<T>()</em>.  See documentation for \ref
+ * Var::value().
+ *
+ * This overload allows to decode the value of the variable with some parameters
+ * specifying what exactly is requested.  See documentation for \ref VarValueDecoder.
+ */
 template<typename T, TOMOGRAPHER_ENABLED_IF_TMPL( tomo_internal::has_params_member<VarValueDecoder<T> >::value )>
 inline typename VarValueDecoder<T>::RetType value(const Var& var,
                                                   const typename VarValueDecoder<T>::Params & params)
@@ -843,9 +888,8 @@ inline typename VarValueDecoder<T>::RetType value(const Var& var,
  * currently no way to load the data subsequently for the same Var object, just
  * re-construct a new Var object.
  *
- * To read the data, you should use the template method \ref value<T>(). The type you can
- * request is any type for which a corresponding \ref VarValueDecoder<T> has been defined.
- *
+ * To read the data, you should use the template method \ref value(). The type you can
+ * request is any type for which a corresponding \ref VarValueDecoder has been defined.
  */
 class Var
 {
@@ -1009,7 +1053,7 @@ public:
    *
    * This function returns the data stored by the variable in a C++ object of type \a T.
    *
-   * The type \a T may be any type for which a specialization of \ref VarValueDecoder<T>
+   * The type \a T may be any type for which a specialization of \ref VarValueDecoder
    * has been defined.
    *
    * Examples:
@@ -1036,7 +1080,8 @@ public:
    *       = cmatrix_var.value<GetStdVector<std::complex<double>,true> >();
    * \endcode
    *
-   * You may also equivalently call \ref Tomographer::MAT::value<T>:
+   * You may also equivalently call \ref Tomographer::MAT::value()
+   * "Tomographer::MAT::value<T>":
    * \code
    *   Eigen::MatrixXd matrix = var.value<Eigen::MatrixXd>();
    *   // is equivalent to:
@@ -1147,25 +1192,25 @@ inline typename VarValueDecoder<T,Enabled>::RetType VarValueDecoder<T,Enabled>::
  * \endcode
  */
 template<int MatTypeId = -1>  struct MatType { };
-//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_DOUBLE
+//! Specialization of \ref MatType for \a MAT_T_DOUBLE
 template<>  struct MatType<MAT_T_DOUBLE> { typedef double Type; };
-//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_DOUBLE
+//! Specialization of \ref MatType for \a MAT_T_DOUBLE
 template<>  struct MatType<MAT_T_SINGLE> { typedef float Type; };
-//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_INT64
+//! Specialization of \ref MatType for \a MAT_T_INT64
 template<>  struct MatType<MAT_T_INT64> { typedef int64_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_INT32
+//! Specialization of \ref MatType for \a MAT_T_INT32
 template<>  struct MatType<MAT_T_INT32> { typedef int32_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_INT16
+//! Specialization of \ref MatType for \a MAT_T_INT16
 template<>  struct MatType<MAT_T_INT16> { typedef int16_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_INT8
+//! Specialization of \ref MatType for \a MAT_T_INT8
 template<>  struct MatType<MAT_T_INT8> { typedef int8_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_UINT64
+//! Specialization of \ref MatType for \a MAT_T_UINT64
 template<>  struct MatType<MAT_T_UINT64> { typedef uint64_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_UINT32
+//! Specialization of \ref MatType for \a MAT_T_UINT32
 template<>  struct MatType<MAT_T_UINT32> { typedef uint32_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_UINT16
+//! Specialization of \ref MatType for \a MAT_T_UINT16
 template<>  struct MatType<MAT_T_UINT16> { typedef uint16_t Type; };
-//! Specialization of \ref MatType<int MatTypeId> for \a MAT_T_UINT8
+//! Specialization of \ref MatType for \a MAT_T_UINT8
 template<>  struct MatType<MAT_T_UINT8> { typedef uint8_t Type; };
 
 
@@ -1255,15 +1300,23 @@ template<>  struct MatType<MAT_T_UINT8> { typedef uint8_t Type; };
 
 
 
-//! Interface to read out a single value.
+/** \brief Interface to read out a single numeric value
+ *
+ */
 template<typename T>
 struct VarValueDecoder<T,
+#ifdef TOMOGRAPHER_PARSED_BY_DOXYGEN
+                       _IS_NUMERIC_TYPE
+#else
                        typename std::enable_if<(std::numeric_limits<T>::is_specialized ||
                                                 Tools::isComplex<T>::value)>::type
+#endif
                        >
 {
+  //! See \ref VarValueDecoder::RetType
   typedef T RetType;
 
+  //! See \ref VarValueDecoder::checkShape()
   static inline void checkShape(const Var & var)
   {
     if (var.isComplex() && !Tools::isComplex<T>::value) {
@@ -1276,6 +1329,7 @@ struct VarValueDecoder<T,
     }
   }
                              
+  //! See \ref VarValueDecoder::decodeValue()
   static inline RetType decodeValue(const Var & var)
   {
     const matvar_t * matvar_ptr = var.getMatvarPtr();
@@ -1647,7 +1701,7 @@ struct GetStdVector {
   static constexpr bool IsRowMajor = IsRowMajor_;
 };
 
-//! Specialization of \ref VarValueDecoder<T> to obtain an std::vector<> with the matrix data. See \ref GetStdVector.
+//! Specialization of \ref VarValueDecoder to obtain an \ref std::vector with the matrix data. See \ref GetStdVector.
 template<typename T, bool IsRowMajor>
 struct VarValueDecoder<GetStdVector<T, IsRowMajor> >
 {
@@ -1707,7 +1761,7 @@ inline DimList dims_stackedcols(DimList vdims)
   } else if (vdims.size() == 2) {
     vdimsreshaped = vdims;
   } else if (vdims.size() > 2) {
-    vdimsreshaped << get_numel(vdims.data(), vdims.data()+vdims.size()-1) << vdims[vdims.size()-1];
+    vdimsreshaped << getNumEl(vdims.data(), vdims.data()+vdims.size()-1) << vdims[vdims.size()-1];
   }
   tomographer_assert(vdimsreshaped[0] != -1 && vdimsreshaped[1] != -1);
   return vdimsreshaped;
@@ -1825,7 +1879,7 @@ struct VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
 
     DimList vdims = var.dims();
     if (vdims.size() > 2) {
-      vdims = (DimList() << get_numel(vdims.data(), vdims.data()+vdims.size()-1) << vdims[vdims.size()-1]);
+      vdims = (DimList() << getNumEl(vdims.data(), vdims.data()+vdims.size()-1) << vdims[vdims.size()-1]);
     }
     try {
       shape.checkShape(VarShape(var.isComplex(), vdims, (vdims[0] != -1 && vdims[0] == vdims[1])));
@@ -1853,7 +1907,7 @@ struct VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
 
     const int cols = vdims[vdims.size()-1];
     // rest of dimensions.
-    const int rows = get_numel(vdims.data(), vdims.data()+vdims.size()-1);
+    const int rows = getNumEl(vdims.data(), vdims.data()+vdims.size()-1);
 
     MatrixType matrix(rows, cols);
 
@@ -1910,7 +1964,7 @@ struct VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRow
     } else if (vdims.size() == 2) {
       vdims << 1;
     } else { //if (vdims.size() > 2) {
-      vdims = (DimList() << vdims[0] << vdims[1] << get_numel(vdims.data()+2, vdims.data()+vdims.size()));
+      vdims = (DimList() << vdims[0] << vdims[1] << getNumEl(vdims.data()+2, vdims.data()+vdims.size()));
     }
 
     // check shape now:
@@ -1939,7 +1993,7 @@ struct VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRow
     } else {
       // more dimensions
       innerdims << vardims[0] << vardims[1];
-      outerdim = get_numel(vardims.data()+2, vardims.data()+vardims.size());
+      outerdim = getNumEl(vardims.data()+2, vardims.data()+vardims.size());
     }
 
     RetType value(outerdim);

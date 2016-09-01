@@ -275,18 +275,18 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
 
   OurCData taskcdat(llh, valcalc, opt, base_seed);
 
-  OurResultsCollector results(logger.baselogger());
+  OurResultsCollector results(logger.parentLogger());
 
   auto tasks = Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
       &taskcdat, // constant data
       &results, // results collector
-      logger.baselogger(), // the main logger object
+      logger.parentLogger(), // the main logger object
       opt->Nrepeats, // num_runs
       opt->Nchunk // n_chunk
       );
 
   // set up signal handling
-  auto srep = Tomographer::Tools::makeSigHandlerTaskDispatcherStatusReporter(&tasks, logger.baselogger());
+  auto srep = Tomographer::Tools::makeSigHandlerTaskDispatcherStatusReporter(&tasks, logger.parentLogger());
   Tomographer::Tools::installSignalHandler(SIGINT, &srep);
 
   // and run our tomo process
@@ -304,7 +304,7 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
   // delta-time, in seconds and fraction of seconds
   std::string elapsed_s = Tomographer::Tools::fmtDuration(time_end - time_start);
 
-  produce_final_report(taskcdat, results, logger.baselogger());
+  produce_final_report(taskcdat, results, logger.parentLogger());
 
   // save the histogram to a CSV file if the user required it
   if (opt->write_histogram.size()) {

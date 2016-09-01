@@ -27,6 +27,8 @@
 #ifndef MULTIPROC_H
 #define MULTIPROC_H
 
+#include <csignal>
+
 #include <string>
 
 #include <tomographer2/tools/needownoperatornew.h>
@@ -53,8 +55,8 @@ namespace MultiProc {
  *
  * See also:
  *  - \ref pageTaskManagerDispatcher;
- *  - \ref OMPTaskDispatcher's status report mechanism;
- *  - \ref DMIntegratorTasks::MHRandomWalkTask::StatusReport for an example usage.
+ *  - \ref OMP::TaskDispatcher's status report mechanism;
+ *  - \ref MHRWTasks::MHRandomWalkTask::StatusReport for an example usage.
  *
  */
 struct TaskStatusReport
@@ -133,7 +135,7 @@ namespace Sequential {
  *
  * <li> \a ResultsCollector must be a \ref pageInterfaceResultsCollector compliant type 
  *
- * <li> \a LoggerType is the type used for logging messages (derived from \ref LoggerBase)
+ * <li> \a LoggerType is the type used for logging messages (derived from \ref Logger::LoggerBase)
  *
  * <li> \a CountIntType should be a type to use to count the number of tasks. Usually
  *      there's no reason not to use an \c int.
@@ -183,10 +185,10 @@ private:
 
     TaskDispatcher * dispatcher;
 
-    bool status_report_requested;
+    volatile std::sig_atomic_t status_report_requested;
     FullStatusReportCallbackType status_report_user_fn;
   
-    inline void _request_status_report() { status_report_requested = true; }
+    inline void _request_status_report() { status_report_requested = 1; }
 
     inline bool statusReportRequested() const
     {
@@ -262,24 +264,7 @@ public:
    * invoked.
    *
    * The callback, when invoked, will be called with a single parameter of type \ref
-   * FullStatusReport<TaskStatusReportType>.
-   *
-   * \par How Tasks should handle status reports.
-   * Task's must regularly check whether a status report has been requested as they run. 
-   * This is done by regularly calling the function
-   * <code>tmgriface->statusReportRequested()</code> on the \c tmgriface object
-   * provided to <code>TaskType::run()</code>. This function call does not require a \c
-   * critical section and is fast, so this check can be done often. The function
-   * <code>tmgriface->statusReportRequested()</code> returns a \c bool indicating
-   * whether such a report was requested or not. If such a report was requested, then
-   * the thread should prepare its status report object (of type \c
-   * TaskStatusReportType), and call <code>tmgriface->submitStatusReport(const
-   * TaskStatusReportType & obj)</code>.
-   *
-   * \par
-   * Note that the task should provide a member type named \c StatusReportType, which can be
-   * for example a simple typedef to \ref MultiProc::StatusReport, which specifies the
-   * type of its status reports.
+   * FullStatusReport "FullStatusReport<TaskStatusReportType>".
    *
    */
   template<typename Fn>
@@ -288,6 +273,17 @@ public:
     mgriface.status_report_user_fn = fnstatus;
   }
   
+  /** \brief Request a status report
+   *
+   * This function makes a note that a status report has been requested.  Subsequently,
+   * the currently running task should notice it (provided it regularly queries for status
+   * report requests as described on the page \ref pageInterfaceTask), and provides a
+   * status report.  This status report, along with some additional information such as
+   * overall progress in number of task forms the full status report which is passed on to
+   * the callback set with \ref setStatusReportHandler().
+   *
+   * \note This function is safe to be called from within a signal handler.
+   */
   inline void requestStatusReport()
   {
     mgriface._request_status_report();

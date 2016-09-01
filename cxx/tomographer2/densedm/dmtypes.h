@@ -58,8 +58,9 @@ namespace DenseDM {
  *
  *
  * \tparam FixedDim The dimension of the Hilbert space, if known at compile-time, or \ref
- *         Eigen::Dynamic.  If \ref Eigen::Dynamic is specified here, the dimension can be
- *         specified at run-time to the class's constructor.
+ *         TutorialMatrixClass "Eigen::Dynamic".  If \ref TutorialMatrixClass
+ *         "Eigen::Dynamic" is specified here, the dimension can be specified at run-time
+ *         to the class's constructor.
  *
  * \tparam RealScalar The type to use as real scalar.  The default, \c double, should be
  *         sufficient in most (if not all) cases, but you could try to speed up
@@ -105,12 +106,12 @@ struct DMTypes {
 
   //! Whether the dimension is specified dynamically at run-time or statically at compile-time
   static constexpr bool IsDynamicDim = (FixedDim_ == Eigen::Dynamic);
-  //! The fixed dimension of the quantum system, or \ref Eigen::Dynamic
+  //! The fixed dimension of the quantum system, or \ref TutorialMatrixClass "Eigen::Dynamic"
   static constexpr int FixedDim = FixedDim_;
-  //! The square of the dimension of the quantum system, or \ref Eigen::Dynamic
+  //! The square of the dimension of the quantum system, or \ref TutorialMatrixClass "Eigen::Dynamic"
   static constexpr int FixedDim2 = ((FixedDim!=Eigen::Dynamic) ? FixedDim*FixedDim : Eigen::Dynamic);
   /** \brief The square of the dimension of the quantum system minus one, or \ref
-   *         Eigen::Dynamic
+   *         TutorialMatrixClass "Eigen::Dynamic"
    */
   static constexpr int FixedNdof = ((FixedDim2!=Eigen::Dynamic) ? FixedDim2-1 : Eigen::Dynamic);
 

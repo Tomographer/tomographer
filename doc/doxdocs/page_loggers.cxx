@@ -82,10 +82,10 @@
  * resource-consuming. Imagine you wish to pretty-print a histogram for debugging:
  * \code
  *   logger.debug("origin_fn()", [&histogram](std::ostream& stream) {
- *                  stream << "Histogram: \n" << histogram.pretty_print();
+ *                  stream << "Histogram: \n" << histogram.prettyPrint();
  *                });
  * \endcode
- * The call to the lambda, and thus to <code>histogram.pretty_print()</code>, will only be
+ * The call to the lambda, and thus to <code>histogram.prettyPrint()</code>, will only be
  * performed if the logger will indeed eventually print the message.
  *
  * \warning When using printf-style logging methods in templated classes, remember to
@@ -120,7 +120,7 @@
  *     logger.debug("value is %d", value);
  *  
  *     auto some_callback = [&](std::string some_other_value) {
- *       auto innerlogger = logger.sublogger("some_callback[lambda]");
+ *       auto innerlogger = logger.subLogger("some_callback[lambda]");
  *       innerlogger.debug([&](std::ostream& str) {
  *           str << "Inside callback: " << some_other_value;
  *         });
@@ -128,6 +128,9 @@
  *     some_callback("42");
  *   }
  * \endcode
+ *
+ * A more complete example is provided on the documentation page for \ref
+ * Tomographer::Logger::LocalLogger.
  *
  *
  * <h2>Querying/Setting the Logger Level</h2>

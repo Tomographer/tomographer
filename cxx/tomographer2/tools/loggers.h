@@ -125,14 +125,16 @@ enum LogLevelCode
   /** \brief Highest severity possible.
    *
    * Don't use as a level. Use, rather, as value e.g. for \ref
-   * LoggerTraits<LoggerType>::StaticMinimumSeverityLevel.
+   * DefaultLoggerTraits::StaticMinimumSeverityLevel
+   * "LoggerTraits::StaticMinimumSeverityLevel".
    */
   HIGHEST_SEVERITY_LEVEL = 0,
 
   /** \brief Lowest severity possible.
    *
    * Don't use as a level. Use, rather, as value e.g. for \ref
-   * LoggerTraits<LoggerType>::StaticMinimumSeverityLevel.
+   * DefaultLoggerTraits::StaticMinimumSeverityLevel
+   * "LoggerTraits::StaticMinimumSeverityLevel".
    */
   LOWEST_SEVERITY_LEVEL = 0x7fffffff
 };
@@ -419,6 +421,8 @@ public:
  * calling the protected \ref setLogLevel(int). You may of course then also expose a
  * public function such as \c setLevel() which calls setLogLevel(), if you want (see, for
  * example, \ref FileLogger).
+ *
+ * \todo convert names to camel case ................
  */
 template<typename Derived>
 class LoggerBase
@@ -1163,7 +1167,7 @@ LoggerBase<Derived>::log(const char * origin, Fn f)
 
 
 class FileLogger;
-/** \brief Specialized Traits for \ref FileLogger -- see \ref LoggerTraits<LoggerType>
+/** \brief Specialized Traits for \ref FileLogger -- see \ref LoggerTraits
  *
  * fprintf is actually thread-safe, that's good :)
  */
@@ -1293,7 +1297,7 @@ static VacuumLogger vacuum_logger;
 
 
 class BufferLogger;
-/** \brief Specialized Traits for BufferLogger -- see \ref LoggerTraits<LoggerType>
+/** \brief Specialized Traits for BufferLogger -- see \ref LoggerTraits
  *
  * BufferLogger is not thread-safe.
  */
@@ -1309,7 +1313,7 @@ struct LoggerTraits<BufferLogger> : public DefaultLoggerTraits
 /** \brief Log messages into an internal memory buffer
  *
  * Logs messages into an internal string buffer. The contents of the buffer may be
- * retrieved with \ref get_contents().
+ * retrieved with \ref getContents().
  */
 class BufferLogger : public LoggerBase<BufferLogger>
 {
@@ -1337,7 +1341,7 @@ public:
 
   /** \brief Clears the internal memory buffer.
    *
-   * Clears all messages logged so far. A future call to \ref get_contents() will only
+   * Clears all messages logged so far. A future call to \ref getContents() will only
    * return the messages logged after calling this function.
    */
   inline void clear()
@@ -1350,7 +1354,7 @@ public:
    *
    * This returns a string containing all the messages that have been logged so far.
    */
-  inline std::string get_contents() const
+  inline std::string getContents() const
   {
     return buffer.str();
   }
@@ -1360,8 +1364,7 @@ public:
 
 
 template<typename, int> class MinimumSeverityLogger;
-/** \brief Specialized Traits for \ref MinimumSeverityLogger<BaseLogger,Level> -- see \ref
- *         LoggerTraits<BaseLogger>
+/** \brief Specialized Traits for \ref MinimumSeverityLogger -- see \ref LoggerTraits
  */
 template<typename BaseLogger, int Level>
 struct LoggerTraits<MinimumSeverityLogger<BaseLogger,Level> > : public LoggerTraits<BaseLogger>
@@ -1446,7 +1449,7 @@ inline int matched_length(const std::string & s, const std::string & pattern)
 
 template<typename BaseLogger> class OriginFilteredLogger;
 /** \brief Specialized Logger Traits for \ref OriginFilteredLogger -- see \ref
- *         LoggerTraits<LoggerType>.
+ *         LoggerTraits
  */
 template<typename BaseLogger>
 struct LoggerTraits<OriginFilteredLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
@@ -1556,7 +1559,7 @@ public:
    * This function returns \c true if the message should be emitted, given the set of
    * rules set by previous calls to \ref setDomainLevel().
    *
-   * See also \ref LoggerTraits<BaseLogger>::HasFilterByOrigin.
+   * See also \ref DefaultLoggerTraits::HasFilterByOrigin "LoggerTraits::HasFilterByOrigin".
    */
   inline bool filter_by_origin(int level, const char * origin) const
   {
@@ -1660,6 +1663,28 @@ constexpr const LocalLoggerOriginSpec extractTomoOrigin(const Tools::conststr fn
 
 template<typename BaseLoggerType_>  class LocalLogger;
 
+
+namespace tomo_internal {
+//! Utility to check if a logger is in fact a LocalLogger
+template<typename BaseLoggerType>
+struct is_local_logger {
+  enum { value = 0 };
+};
+template<typename BaseLoggerType>
+struct is_local_logger<LocalLogger<BaseLoggerType> > {
+  enum { value = 1 };
+};
+//! Utility to get parent logger type
+template<typename BaseLoggerType>
+struct local_logger_parent {
+  typedef BaseLoggerType ParentType;
+};
+template<typename BaseLoggerType>
+struct local_logger_parent<LocalLogger<BaseLoggerType> > {
+  typedef typename local_logger_parent<BaseLoggerType>::ParentType ParentType;
+};
+} // namespace tomo_internal
+
 //! Specialized Traits for \ref LocalLogger. See \ref LoggerTraits<BaseLoggerType_>
 template<typename BaseLoggerType_>
 struct LoggerTraits<LocalLogger<BaseLoggerType_> > : public LoggerTraits<BaseLoggerType_>
@@ -1675,10 +1700,23 @@ struct LoggerTraits<LocalLogger<BaseLoggerType_> > : public LoggerTraits<BaseLog
  *
  * This type of logger accepts origin information in its constructor. Then, you may call
  * the \ref longdebug(), \ref debug(), \ref info(), \ref warning() and \ref error()
- * methods without any \a origin information.  You may also nest these loggers. See method
- * \ref sublogger(const std::string&).
+ * methods without having to specify the \a origin information, which is known from the
+ * constructor.
  *
- * This logger relays log messages to a base logger of type \a BaseLoggerType.
+ * This logger is to be used with another logger instance, which is actually responsible
+ * for producing the log messages.  This logger then relays log messages that base logger
+ * instance, of type \a BaseLoggerType (for example, \ref FileLogger, \ref BufferLogger
+ * etc.).
+ *
+ * You may also nest these loggers, yielding an automatic nested origin string following
+ * C++ names.  See method \ref subLogger(const std::string&) for more info.  In case of
+ * nesting, what happens is that the \a BaseLoggerType is a LocalLogger itself.
+ *
+ * A very handy shorthand is \ref makeLocalLogger(), which allows to spare some typing
+ * (see documentation for \ref makeLocalLogger()).
+ *
+ * The macro \ref TOMO_ORIGIN is particularly useful for this class, as you can specify it
+ * in the \a origin parameter to automatically yield the name of the current method.
  *
  * Example usage:
  * \code
@@ -1700,14 +1738,14 @@ struct LoggerTraits<LocalLogger<BaseLoggerType_> > : public LoggerTraits<BaseLog
  *       _logger.debug("method() was called. k=%d", k);
  *
  *       // if you need to pass a logger to any external procedure, pass on the
- *       // baselogger() as the other routine expects to be able to specify its
+ *       // parentLogger() as the other routine expects to be able to specify its
  *       // own origin string:
- *       some_external_routine(k, .., _logger.baselogger());
+ *       some_external_routine(k, .., _logger.parentLogger());
  *     }
  *
  *     void longmethod(int N)
  *     {
- *       auto logger = _logger.sublogger(TOMO_ORIGIN);
+ *       auto logger = _logger.subLogger(TOMO_ORIGIN);
  *       for (int k = 0; k < N; ++k) {
  *         // this message's origin will be "XYZ::longmethod()"
  *         logger.debug("inner loop: k=%d out of %d", k, N);
@@ -1720,25 +1758,49 @@ template<typename BaseLoggerType_>
 class LocalLogger : public Tomographer::Logger::LoggerBase<LocalLogger<BaseLoggerType_> >
 {
 public:
+  //! The base logger type (see class documentation)
   typedef BaseLoggerType_ BaseLoggerType;
 
 private:
   typedef Tomographer::Logger::LoggerBase<LocalLogger> Base_;
 
+  /** See \ref originPrefix() */
   const std::string _origin_prefix;
+  /** See \ref glue() */
   const std::string _glue;
 
   BaseLoggerType & _baselogger;
 
 public:
+  /** \brief Construct a local logger
+   *
+   * \param origin_fn_name is the origin you want to associate with log messages generated
+   *        by this logger.  You may also use the macro \ref TOMO_ORIGIN for this argument
+   *        to automatically set the origin to the current function or method name.
+   *
+   * \param logger_ is a logger instance of type \ref BaseLoggerType, which is responsible
+   *        for actually emitting the messages in some useful way (e.g. it may be a \ref
+   *        FileLogger, \ref BufferLogger, etc.)
+   */
   LocalLogger(const std::string & origin_fn_name, BaseLoggerType & logger_)
     : _origin_prefix(origin_fn_name), _glue("::"), _baselogger(logger_)
   {
   }
+  /** \brief Construct a local logger
+   *
+   * See \ref LocalLogger(const std::string&, BaseLoggerType&).  This overload allows you
+   * to also specify the glue to use when concatenating origins for sub-loggers, see \ref
+   * glue() and \ref subLogger().
+   */
   LocalLogger(const std::string & origin_prefix, const std::string & glue, BaseLoggerType & logger_)
     : _origin_prefix(origin_prefix), _glue(glue), _baselogger(logger_)
   {
   }
+  /** \brief Construct a local logger
+   *
+   * See \ref LocalLogger(const std::string&, BaseLoggerType&).  This overload is the one
+   * which is called if you use the macro \ref TOMO_ORIGIN for the first argument.
+   */
   LocalLogger(const LocalLoggerOriginSpec & spec, BaseLoggerType & logger_)
     : _origin_prefix(spec.origin_prefix.to_string()+spec.origin_prefix_add.to_string()),
       _glue(spec.glue.to_string()), _baselogger(logger_)
@@ -1753,50 +1815,161 @@ public:
       _baselogger(movecopy._baselogger)
   {
   }
-  //! Not copyable.
+  //! These objects are not copyable
   LocalLogger(const LocalLogger & other) = delete;
 
-  inline std::string origin_prefix() const { return _origin_prefix; }
+  /** \brief The fixed origin specified at the constructor
+   *
+   * This will be used as origin if you call one of the logging functions \ref
+   * longdebug(), \ref debug(), \ref info(), \ref warning(), \ref error() or \ref log()
+   * "log<LEVEL>()".
+   *
+   * This string will also be used as a "prefix" for sub-loggers.
+   */
+  inline std::string originPrefix() const { return _origin_prefix; }
+
+  /** \brief The "glue" string to use to concatenate origins from sub-loggers
+   */
   inline std::string glue() const { return _glue; }
 
-  inline BaseLoggerType & baselogger() { return _baselogger; };
+  /** \brief The base logger type specified to the constructor
+   *
+   * If we are a sub-logger of another local logger, then \a BaseLoggerType is itself also
+   * a LocalLogger.
+   */
+  inline BaseLoggerType & baseLogger() { return _baselogger; }
 
-  inline LocalLogger<LocalLogger<BaseLoggerType> > sublogger(const std::string & new_prefix)
+#ifdef TOMOGRAPHER_PARSED_BY_DOXYGEN
+  /** \brief Type of the parent logger type, ultimately responsible for actually emitting
+   *         the messages in some useful way
+   *
+   * See \ref parentLogger().
+   */
+  typedef _PARENT_LOGGER_TYPE  ParentLoggerType;
+
+  /** \brief The parent logger responsible for actually emitting the messages in some
+   *         useful way
+   *
+   * This function returns \ref baseLogger() if the \a BaseLoggerType is not a
+   * LocalLogger.  Otherwise, it follows the base loggers of the LocalLoggers until a
+   * non-LocalLogger parent is found; the latter is returned.
+   */
+  ParentLoggerType & parentLogger() { }
+#else
+
+  typedef typename tomo_internal::local_logger_parent<BaseLoggerType>::ParentType  ParentLoggerType;
+
+  TOMOGRAPHER_ENABLED_IF(!tomo_internal::is_local_logger<BaseLoggerType>::value)
+  inline ParentLoggerType & parentLogger()
+  {
+    return baseLogger();
+  }
+  TOMOGRAPHER_ENABLED_IF(tomo_internal::is_local_logger<BaseLoggerType>::value)
+  inline ParentLoggerType & parentLogger() {
+    return baseLogger().parentLogger();
+  }
+#endif
+
+  /** \brief Create a sub-logger
+   *
+   * The origin of the messages generated by this new sub-logger will be the concatenation
+   * of the parent (this) logger's origin, with the \a new_prefix, using the parent (this)
+   * object's \ref glue() string.
+   *
+   * You may use the macro \ref TOMO_ORIGIN as argument here to automatically set the
+   * origin to the current function or method name.
+   */
+  inline LocalLogger<LocalLogger<BaseLoggerType> > subLogger(const std::string & new_prefix)
   {
     return LocalLogger<LocalLogger<BaseLoggerType> >(new_prefix, *this);
   }
-  inline LocalLogger<LocalLogger<BaseLoggerType> > sublogger(const std::string & new_prefix,
-								   const std::string & new_glue)
+  /** \brief Create a sub-logger
+   *
+   * See \ref subLogger(const std::string &).  This overload allows to specify the new
+   * object's glue string, which will be used in case the sub-logger itself becomes parent
+   * to a (sub-)sub-logger.
+   */
+  inline LocalLogger<LocalLogger<BaseLoggerType> > subLogger(const std::string & new_prefix,
+                                                             const std::string & new_glue)
   {
     return LocalLogger<LocalLogger<BaseLoggerType> >(new_prefix, new_glue, *this);
   }
-  inline LocalLogger<LocalLogger<BaseLoggerType> > sublogger(const LocalLoggerOriginSpec & spec)
+  /** \brief Create a sub-logger
+   *
+   * See \ref subLogger(const std::string &).  This overload is called when the macro \ref
+   * TOMO_ORIGIN is specified.
+   */
+  inline LocalLogger<LocalLogger<BaseLoggerType> > subLogger(const LocalLoggerOriginSpec & spec)
   {
     return LocalLogger<LocalLogger<BaseLoggerType> >(spec, *this);
   }
 
+  /** \brief Generate a log message with level \ref Logger::LONGDEBUG (printf-like syntax)
+   *
+   * The origin parameter is automatically set, and is not specified here.
+   */
   PRINTF2_ARGS_SAFE inline void longdebug(const char * fmt, ...)
   { va_list ap; va_start(ap, fmt);  log<LONGDEBUG>(fmt, ap); va_end(ap); }
+  /** \brief Generate a log message with level \ref Logger::DEBUG (printf-like syntax)
+   *
+   * The origin parameter is automatically set, and is not specified here.
+   */
   PRINTF2_ARGS_SAFE inline void debug(const char * fmt, ...)
   { va_list ap; va_start(ap, fmt);  log<DEBUG>(fmt, ap); va_end(ap); }
+  /** \brief Generate a log message with level \ref Logger::INFO (printf-like syntax)
+   *
+   * The origin parameter is automatically set, and is not specified here.
+   */
   PRINTF2_ARGS_SAFE inline void info(const char * fmt, ...)
   { va_list ap; va_start(ap, fmt);  log<INFO>(fmt, ap); va_end(ap); }
+  /** \brief Generate a log message with level \ref Logger::WARNING (printf-like syntax)
+   *
+   * The origin parameter is automatically set, and is not specified here.
+   */
   PRINTF2_ARGS_SAFE inline void warning(const char * fmt, ...)
   { va_list ap; va_start(ap, fmt);  log<WARNING>(fmt, ap); va_end(ap); }
+  /** \brief Generate a log message with level \ref Logger::ERROR (printf-like syntax)
+   *
+   * The origin parameter is automatically set, and is not specified here.
+   */
   PRINTF2_ARGS_SAFE inline void error(const char * fmt, ...)
   { va_list ap; va_start(ap, fmt);  log<ERROR>(fmt, ap); va_end(ap); }
 
+  /** \brief Generate a log message with level \ref Logger::LONGDEBUG
+   *
+   * The origin parameter is automatically set, and is not specified here.
+   */
   template<typename... Args>
   inline void longdebug(Args &&... a) { log<Tomographer::Logger::LONGDEBUG>(std::forward<Args>(a)...); }
+  /** \brief Generate a log message with level \ref Logger::DEBUG
+   *
+   * The origin parameter is automatically set, and is not specified here.
+   */
   template<typename... Args>
   inline void debug(Args &&... a) { log<Tomographer::Logger::DEBUG>(std::forward<Args>(a)...); }
+  /** \brief Generate a log message with level \ref Logger::INFO
+   *
+   * The origin parameter is automatically set, and is not specified here.
+   */
   template<typename... Args>
   inline void info(Args &&... a) { log<Tomographer::Logger::INFO>(std::forward<Args>(a)...); }
+  /** \brief Generate a log message with level \ref Logger::WARNING
+   *
+   * The origin parameter is automatically set, and is not specified here.
+   */
   template<typename... Args>
   inline void warning(Args &&... a) { log<Tomographer::Logger::WARNING>(std::forward<Args>(a)...); }
+  /** \brief Generate a log message with level \ref Logger::ERROR
+   *
+   * The origin parameter is automatically set, and is not specified here.
+   */
   template<typename... Args>
   inline void error(Args &&... a) { log<Tomographer::Logger::ERROR>(std::forward<Args>(a)...); }
 
+  /** \brief Generate a log message with level \a Level
+   *
+   * The origin parameter is automatically set, and is not specified here.
+   */
   template<int Level, typename... Args>
   inline void log(Args... args)
   {
@@ -1806,7 +1979,15 @@ public:
 
   // relay calls to base logger
 
-  inline std::string get_origin(const char * origin) const
+  /** \brief The full origin string to use for a sub-logger
+   *
+   * This simply returns the concatenation of \ref originPrefix() with \a origin using the
+   * \ref glue().
+   *
+   * It is the full origin parameter which is used when creating sub-loggers of this
+   * logger (see \ref subLogger()).
+   */
+  inline std::string getSubOrigin(const char * origin) const
   {
     return ( origin == NULL || origin[0] == 0
 	     ? _origin_prefix
@@ -1818,7 +1999,7 @@ public:
   {
     // this might also be called if we have a sublogger. In that case, if we have a
     // sublogger, then use their prefix.
-    _baselogger.emit_log(level, get_origin(origin).c_str(), msg);
+    _baselogger.emit_log(level, getSubOrigin(origin).c_str(), msg);
   }
 
   //! Get the base logger's set level.
@@ -1831,7 +2012,7 @@ public:
   TOMOGRAPHER_ENABLED_IF(Tomographer::Logger::LoggerTraits<BaseLoggerType>::HasFilterByOrigin)
   inline bool filter_by_origin(int level, const char * origin)
   {
-    return _baselogger.filter_by_origin(level, get_origin(origin).c_str());
+    return _baselogger.filter_by_origin(level, getSubOrigin(origin).c_str());
   }
 };
 

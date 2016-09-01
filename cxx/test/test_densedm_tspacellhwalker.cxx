@@ -43,6 +43,8 @@
 #include <tomographer2/densedm/densellh.h>
 #include <tomographer2/densedm/indepmeasllh.h>
 
+#include "boost_test_logger.h"
+
 
 // -----------------------------------------------------------------------------
 // fixture(s)
@@ -83,13 +85,13 @@ BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
 
   llh.setMeas(Exn, Nx, false);
 
-  typedef Tomographer::Logger::BufferLogger LoggerType;
-  LoggerType buflog(Tomographer::Logger::DEBUG);
+  typedef BoostTestLogger LoggerType;
+  LoggerType logger(Tomographer::Logger::DEBUG);
 
   std::mt19937 rng(46570); // seeded rng, deterministic results
   
   Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH, std::mt19937, LoggerType>
-    dmmhrw(DMTypes::MatrixType::Zero(), llh, rng, buflog);
+    dmmhrw(DMTypes::MatrixType::Zero(), llh, rng, logger);
 
   DMTypes::MatrixType rho(dmt.initMatrixType());
   rho << 0.8, dmt.cplx(0,0.1),
@@ -124,7 +126,6 @@ BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
   }
 
   dmmhrw.done();
-  BOOST_MESSAGE(buflog.get_contents());
 }
 
 

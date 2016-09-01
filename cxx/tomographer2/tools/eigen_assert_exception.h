@@ -73,7 +73,7 @@ public:
  *
  * You can use this macro in a definition of \c "eigen_assert()". If the assertion
  * condition fails, then an exception of type \ref
- * Tomographer::Tools::eigen_assert_exception is thrown.
+ * Tomographer::Tools::EigenAssertException is thrown.
  */
 #define eigen_assert_throw_exception(x)         \
   if (!(x)) { throw (::Tomographer::Tools::EigenAssertException(#x, __FILE__, __LINE__)); }

@@ -103,10 +103,10 @@
  * \par typedef .. StatusReportType
  *          The type storing information for a status report (task progress, message,
  *          additional info such as acceptance ratio etc.).  This class must inherit from
- *          Tomographer::MultiProc::StatusReport, such that at least \a fraction_done and
- *          \a msg are provided.  (So that generic status reporter helpers such as \ref
- *          Tomographer::Tools::SigHandlerTaskDispatcherStatusReporter can at least rely
- *          on this information.)
+ *          Tomographer::MultiProc::TaskStatusReport, such that at least \a fraction_done
+ *          and \a msg are provided.  (So that generic status reporter helpers such as
+ *          \ref Tomographer::Tools::SigHandlerTaskDispatcherStatusReporter can at least
+ *          rely on this information.)
  *
  * \par Task(InputType input, const TaskCData * pcdata, LoggerType & logger)
  *          Task constructor: construct a Task instance which will solve the task for the
@@ -132,15 +132,34 @@
  *          and \a TaskManagerIface.
  *
  * \par
- *          The code in \c run() should poll <code>tmgriface->statusReportRequested()</code>
- *          and provide a status report if requested to do so via
- *          <code>tmgriface->statusReport(const TaskStatusReportType &)</code>. See documentation
- *          for \ref pageInterfaceTaskManagerIface.
+ *          The code in \c run() should poll
+ *          <code>tmgriface->statusReportRequested()</code> and provide a status report if
+ *          requested to do so via <code>tmgriface->statusReport(const
+ *          TaskStatusReportType &)</code>. \a tmgriface is an object which complies to
+ *          the \ref pageInterfaceTaskManagerIface.
  *
  *
  * \par ResultType getResult()
  *          Return a custom type which holds the result for the given task. This will be
  *          given to the result collector (see \ref pageInterfaceResultsCollector).
+ *
+ * \par Note on Status Reports: 
+
+ *   Tasks must regularly check whether a status report has been requested as they run.
+ *   This is done by regularly calling the function
+ *   <code>tmgriface->statusReportRequested()</code> on the \c tmgriface object provided
+ *   to <code>TaskType::run()</code>. This function call is meant to be very efficient
+ *   (for example, it does not require a \c critical section in the OpenMP
+ *   implementation), so this check can be done often. The function
+ *   <code>tmgriface->statusReportRequested()</code> returns a \c bool indicating whether
+ *   such a report was requested or not. If such a report was requested, then the thread
+ *   should prepare its status report object (of type \c TaskStatusReportType), and call
+ *   <code>tmgriface->submitStatusReport(const TaskStatusReportType & obj)</code>.
+ *
+ * \par
+ *   The task should provide a member type named \c StatusReportType, which
+ *   can be for example a simple typedef to \ref Tomographer::MultiProc::TaskStatusReport,
+ *   which specifies the type of its status reports.
  */
 
 
@@ -198,6 +217,8 @@
  *          Submit the status report if \a statusReportRequested() returned \c
  *          true. Call this function ONCE only per task, and only if a status report was
  *          requested. The behavior of this function otherwise is undefined.
+ *
+ * See also the documentation for the \ref pageInterfaceTask.
  *
  */
 

@@ -52,7 +52,7 @@ namespace DenseDM {
  *
  */
 template<typename ValueType, typename Derived1, typename Derived2>
-inline ValueType trace_dist(const Eigen::MatrixBase<Derived1> & rho1, const Eigen::MatrixBase<Derived2> & rho2)
+inline ValueType traceDistance(const Eigen::MatrixBase<Derived1> & rho1, const Eigen::MatrixBase<Derived2> & rho2)
 {
   return boost::math::constants::half<ValueType>() *
     (rho1 - rho2).template selfadjointView<Eigen::Lower>()
@@ -94,7 +94,7 @@ inline ValueType fidelity(const Eigen::MatrixBase<Derived>& rho, const Eigen::Ma
  * \note This is the Nielsen & Chuang fidelity, sometimes also called "root fidelity."
  */
 template<typename ValueType, typename Der1, typename Der2>
-inline ValueType fidelity_T(const Eigen::MatrixBase<Der1>& T1, const Eigen::MatrixBase<Der2>& T2)
+inline ValueType fidelityT(const Eigen::MatrixBase<Der1>& T1, const Eigen::MatrixBase<Der2>& T2)
 {
   // Calculate ||sigma^{1/2} rho^{1/2}||_1 == || T1^\dagger * T2 ||_1
   // and Schatten one-norm is the sum of the singular values.
