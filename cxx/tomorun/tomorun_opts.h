@@ -549,7 +549,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
         // in the option value.
         //
 	"\n"
-	"REFERENCES:\n"
+	"FOOTNOTES AND REFERENCES:\n"
 	" [1] Christandl and Renner, Phys. Rev. Lett. 12:120403 (2012), arXiv:1108.5329\n"
 	" [2] Ambegaokar and Troyer, Am. J. Phys., 78(2):150 (2010), arXiv:0906.0943\n"
 	" [3] The root fidelity is defined as F(rho,sigma)=|| rho^{1/2} sigma^{1/2} ||_1,\n"
@@ -562,8 +562,9 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"If you use this program in your research, we warmly encourage you to cite the\n"
 	"following works:\n"
 	"\n"
-	"  1. Philippe Faist and Renato Renner. Practical, Reliable Error Bars in Quantum\n"
-	"     Tomography (2015). arXiv:1509.06763\n"
+	"  1. Philippe Faist and Renato Renner. Practical and Reliable Error Bars in\n"
+        "     Quantum Tomography. Physical Review Letters 117:1, 010404 (2016).\n"
+        "     arXiv:1509.06763.\n"
 	"\n"
 	"  2. Philippe Faist. The Tomographer Project. Available at\n"
 	"     https://github.com/Tomographer/tomographer/.\n"

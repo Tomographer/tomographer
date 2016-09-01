@@ -17,8 +17,9 @@ This project comprises two parts:
 
 The `tomorun` executable produces a histogram of a figure of merit under the
 distribution relevant for a reliable error analysis as described in [Faist &
-Renner, Practical Reliable Error Bars in Quantum
-Tomography](http://arxiv.org/abs/1509.06763).  The measurement data are
+Renner, Practical and Reliable Error Bars in Quantum Tomography, Phys. Rev.
+Lett. 117, 010404 (2016)](http://dx.doi.org/10.1103/PhysRevLett.117.010404)
+([arXiv:1509.06763](http://arxiv.org/abs/1509.06763)).  The measurement data are
 specified as independent POVM outcomes.
 
 The C++ framework is a set of abstract and generic classes which you can combine
@@ -258,8 +259,9 @@ How to Cite
 If you use this software in your research, please consider citing the following
 works:
 
-1. Philippe Faist and Renato Renner. Practical, Reliable Error Bars in Quantum
-   Tomography (2015). arXiv:1509.06763
+1. Philippe Faist and Renato Renner. Practical and Reliable Error Bars in
+   Quantum Tomography. Physical Review Letters 117:1, 010404 (2016).
+   arXiv:1509.06763
 
 2. Philippe Faist. The Tomographer Project. Available at
    https://github.com/Tomographer/tomographer/.
