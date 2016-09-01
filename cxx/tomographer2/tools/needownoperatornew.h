@@ -88,9 +88,8 @@ struct need_own_op_new_prov_helper<true, T> {
  * Some types require a specific implementation of <code>operator new()</code>, such as
  * Eigen (see <a
  * href="https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html"
- * target="_blank">https://eigen.tuxfamily.org/dox/group__TopicStructHavingEigenMembers.html</a>).
- * Hence, if a class has an Eigen member, it needs to make sure to have the appropriate
- * implementations of <code>operator new()</code>.
+ * target="_blank">this page</a>).  Hence, if a class has an Eigen member, it needs to
+ * make sure to have the appropriate implementations of <code>operator new()</code>.
  *
  * Because in our generic classes, we may be requried to store types (as members), such as
  * a \a PointType in a random walk, and we can't assume it will be an Eigen object.  The

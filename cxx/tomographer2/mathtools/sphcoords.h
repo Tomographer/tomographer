@@ -193,7 +193,8 @@ void sph_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<Der1>& r
 
 /** \brief Volume element of the hypersphere
  *
- * Calculates the <a href="http://en.wikipedia.org/wiki/N-sphere#Spherical_volume_element"
+ * Calculates the <a
+ * href="http://en.wikipedia.org/wiki/N-sphere\#Spherical_volume_element"
  * target="_blank">volume element</a>, or Jacobian, of the conversion from cartesian
  * coordinates to spherical coordinates. More precisely, this function computes
  * \f[
@@ -223,7 +224,8 @@ typename Eigen::MatrixBase<Der1>::Scalar cart_to_sph_jacobian(const Eigen::Matri
 
 /** \brief Surface element of the hypersphere
  *
- * Calculates the <a href="http://en.wikipedia.org/wiki/N-sphere#Spherical_volume_element"
+ * Calculates the <a
+ * href="http://en.wikipedia.org/wiki/N-sphere\#Spherical_volume_element"
  * target="_blank">volume element</a>, or Jacobian, of the conversion from cartesian
  * coordinates to spherical coordinates <em>on the surface of the hypersphere of fixed
  * radius R=1</em>. More precisely, this function computes

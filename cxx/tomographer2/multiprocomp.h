@@ -119,7 +119,10 @@ struct ThreadSanitizerLoggerHelper<BaseLogger, true>
 
 /** \brief Wrapper logger to call non-thread-safe loggers from a multithreaded environment.
  *
- * Wraps calls to emit log messages into a OpenMP \code #pragma omp critical \endcode
+ * Wraps calls to emit log messages into a OpenMP
+ * \code
+ * #pragma omp critical
+ * \endcode
  * sections, which ensure thread-safety of the logging. Of course don't log too often,
  * as this will drastically slow down the execution of your program!!
  *
@@ -254,9 +257,8 @@ namespace OMP {
  * Uses <a href="http://openmp.org/">OpenMP</a> to parallelize the repetition of a same
  * task with different inputs.
  *
- * Check out <a
- * href="https://computing.llnl.gov/tutorials/openMP/">https://computing.llnl.gov/tutorials/openMP/</a>
- * for a good tutorial on OpenMP.
+ * Check out <a href="https://computing.llnl.gov/tutorials/openMP/">this good tutorial on
+ * OpenMP</a>.
  *
  * <ul>
  *
@@ -296,7 +298,7 @@ namespace OMP {
  *      \a pcdata is the constant shared data pointer also given to the constructor, and
  *      \a k is the task number (which may range from 0 to the total number of tasks -
  *      1). The task logger is NOT constructed in a thread-safe code region, so use \c
- *      "#pragma omp critical" if necessary. You may use \a omp_get_thread_num() and \a
+ *      "\#pragma omp critical" if necessary. You may use \a omp_get_thread_num() and \a
  *      omp_get_num_threads() to get the current thread number and the total number of
  *      threads, respectively.
  *
@@ -533,7 +535,7 @@ public:
    *                 to OpenMP's chunk argument in the instruction
    *                 <em>schedule(dynamic,chunk)</em> in a <em>\#pragma omp for</em>
    *                 instruction (see <a
-   *                 href="https://computing.llnl.gov/tutorials/openMP/#DO"
+   *                 href="https://computing.llnl.gov/tutorials/openMP/\#DO"
    *                 target="_blank">this page</a>).
    */
   TaskDispatcher(TaskCData * pcdata_, ResultsCollector * results_, LoggerType & logger_,

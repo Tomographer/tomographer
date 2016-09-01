@@ -30,8 +30,8 @@
  *
  * The <a href="https://github.com/Tomographer/tomographer" target="_blank">%Tomographer
  * C++ Framework</a> groups a set of classes and functions which allow to reliably analyze
- * data from quantum experiments. These serve in particular as components for the tomorun
- * executable program.
+ * data from quantum experiments. These serve in particular as components for the \c
+ * tomorun executable program.
  *
  * <h2>%Tomographer's Components</h2>
  *
@@ -152,9 +152,12 @@
  * components detailed above.  Most of the work is already done by the classes in \ref
  * Tomographer::MHRWTasks::ValueHistogramTasks.
  *
- * To get started, you might like to have a look at the test example \c
- * "cxx/test/minimal_tomorun.cxx", which provides a very minimal implementation of tomorun
- * for a specific example.
+ * The \c tomorun code is not included in this API documentation.  The code is located
+ * under \c "cxx/tomorun/".  If you wish to change functionality in \c tomorun, or if you
+ * wish to implement a very particular calculation, you might like to have a look at the
+ * test example \c "cxx/test/minimal_tomorun.cxx", which provides a very minimal
+ * implementation of tomorun for a specific example&mdash;it may be more convenient for
+ * you to modify that program.
  *
  * Topics:
  *

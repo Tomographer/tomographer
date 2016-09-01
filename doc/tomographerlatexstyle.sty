@@ -33,6 +33,7 @@
 \RequirePackage{amsmath}
 \RequirePackage{amsfonts}
 \RequirePackage{amssymb}
+\RequirePackage{etoolbox}
 
 %\RequirePackage{mathptmx}
 %\renewcommand{\familydefault}{\rmdefault}
@@ -53,3 +54,45 @@
 %  \let\href\tomographer@href%
 %}
 \let\tt\relax
+
+
+
+% Used for member lists -- patch this up to allow empty lists without any "\item" (not
+% sure why they are generated? for example "Namespaces list" under namespace "std")
+\renewenvironment{DoxyCompactItemize}{%
+  \begin{itemize}%
+    \setlength{\itemsep}{-3pt}%
+    \setlength{\parsep}{0pt}%
+    \setlength{\topsep}{0pt}%
+    \setlength{\partopsep}{0pt}%
+    \@ifnextchar\end\item\relax%
+}{%
+  \end{itemize}%
+}
+
+
+
+
+% \DeclareSymbolFont{mytemplatechars}{T1}{phv}{sb}{n}
+% \DeclareMathSymbol{\mytemplatecharleft}{\mathrel}{mytemplatechars}{`<}
+% \DeclareMathSymbol{\mytemplatecharright}{\mathrel}{mytemplatechars}{`>}
+%
+% \begingroup%
+% \lccode`\~=`\<%
+% \lowercase{\endgroup\def~}{\mytemplatecharleft}%
+% \begingroup%
+% \lccode`\~=`\>%
+% \lowercase{\endgroup\def~}{\mytemplatecharright}%
+%
+% \let\mymathswitch$
+% % $
+% \catcode`\$=\active
+%
+% \def${%
+%   \begingroup%
+%   \def${\mymathswitch\endgroup}%
+%   \mathcode`\<="8000\relax%
+%   \mathcode`\>="8000\relax%
+%   \mymathswitch}
+% \robustify$
+% %$
