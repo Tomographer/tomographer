@@ -324,7 +324,7 @@ public:
   inline void done()
   {
     if (PrintHistogram) {
-      if (_logger.enabled_for(Logger::LONGDEBUG)) {
+      if (_logger.enabledFor(Logger::LONGDEBUG)) {
 	// _logger.longdebug("ValueHistogramMHRWStatsCollector", "done()");
 	_logger.longdebug("ValueHistogramMHRWStatsCollector",
 		       "Done walking & collecting stats. Here's the histogram:\n"

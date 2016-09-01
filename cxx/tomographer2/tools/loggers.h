@@ -160,11 +160,11 @@ class LogLevel
   int _level;
 public:
   //! Construct a level using an integer level code. See \ref LogLevelCode.
-  LogLevel(int level_ = INFO) { setlevel(level_); }
+  LogLevel(int level_ = INFO) { setLevel(level_); }
   //! Construct a level using a string level name
-  LogLevel(const char * s) { setlevel(s); }
+  LogLevel(const char * s) { setLevel(s); }
   //! Construct a level using a string level name
-  LogLevel(const std::string& s) { setlevel(s); }
+  LogLevel(const std::string& s) { setLevel(s); }
 
   //! Get the stored level code. See \ref LogLevelCode.
   inline int level() const { return _level; }
@@ -173,7 +173,7 @@ public:
   inline operator int() const { return _level; }
 
   //! Get the stored level name.
-  inline std::string levelname() const
+  inline std::string levelName() const
   {
     switch (_level) {
     case LONGDEBUG: return std::string("LONGDEBUG");
@@ -186,7 +186,7 @@ public:
   }
 
   //! Set the level to the given level code. See class doc and \ref LogLevelCode.
-  inline void setlevel(int level)
+  inline void setLevel(int level)
   {
     if (level != LONGDEBUG &&
         level != DEBUG &&
@@ -199,7 +199,7 @@ public:
   }
 
   //! Set the level to the given level name. See class doc. 
-  inline void setlevel(std::string s)
+  inline void setLevel(std::string s)
   {
     // NOT const string `s`! we need our copy for to_upper():
     boost::to_upper(s);
@@ -224,13 +224,13 @@ inline std::istream & operator>>(std::istream & str, LogLevel &l)
 {
   std::string s;
   str >> s;
-  l.setlevel(s);
+  l.setLevel(s);
   return str;
 }
 //! C++ output stream operator for \ref LogLevel
 inline std::ostream & operator<<(std::ostream & str, const LogLevel &l)
 {
-  return str << l.levelname();
+  return str << l.levelName();
 }
 
 
@@ -245,7 +245,7 @@ inline std::ostream & operator<<(std::ostream & str, const LogLevel &l)
  * always use this helper function to see whether a level is at least of a given
  * severity.
  */
-inline bool is_at_least_of_severity(int level, int baselevel)
+inline bool isAtLeastOfSeverity(int level, int baselevel)
 {
   return (level <= baselevel);
 }
@@ -255,10 +255,10 @@ inline bool is_at_least_of_severity(int level, int baselevel)
  * The member \a value is statically defined to \c 1 if \a Level is at least as severe
  * as \a BaseLevel, otherwise it is defined to \c 0.
  *
- * See also is_at_least_of_severity().
+ * See also \ref isAtLeastOfSeverity().
  */
 template<int Level, int BaseLevel>
-struct static_is_at_least_of_severity {
+struct StaticIsAtLeastOfSeverity {
   enum {
     value = (Level <= BaseLevel)
   };
@@ -328,7 +328,7 @@ struct DefaultLoggerTraits
      * (filtering).
      *
      * If filtering is activated, then before formatting and emitting messages the logging
-     * engine will test the logger object's <code>filter_by_origin(int level, const char *
+     * engine will test the logger object's <code>filterByOrigin(int level, const char *
      * origin)</code>. The message will only be emitted if this function returns \c
      * true. Note that messages may have already been discarded if their severity was less
      * important than the runtime level of the logger: those messages don't even reach
@@ -422,7 +422,6 @@ public:
  * public function such as \c setLevel() which calls setLogLevel(), if you want (see, for
  * example, \ref FileLogger).
  *
- * \todo convert names to camel case ................
  */
 template<typename Derived>
 class LoggerBase
@@ -727,20 +726,20 @@ public:
    * If \c true was returned, this does not yet mean that a log message at the given level
    * will necessarily be produced; in this case, rather, the message is not expliclty
    * discarded and the logger's level set at run-time will be tested (see \ref
-   * enabled_for()).
+   * enabledFor()).
    */
-  static inline bool statically_enabled_for(int level)
+  static inline bool staticallyEnabledFor(int level)
   {
-    return ( is_at_least_of_severity(level, StaticMinimumSeverityLevel) );
+    return ( isAtLeastOfSeverity(level, StaticMinimumSeverityLevel) );
   }
 
-  /** \brief Static version of statically_enabled_for()
+  /** \brief Static version of staticallyEnabledFor()
    *
    */
   template<int Level>
-  static inline bool statically_enabled_for()
+  static inline bool staticallyEnabledFor()
   {
-    return ( static_is_at_least_of_severity<
+    return ( StaticIsAtLeastOfSeverity<
 	          Level,
 	          StaticMinimumSeverityLevel
 	          >::value ) ;
@@ -756,10 +755,10 @@ public:
    * message's log level be at least as important as the current level set for this logger
    * (see \ref level()).
    */
-  inline bool enabled_for(int level_) const
+  inline bool enabledFor(int level_) const
   {
-    return derived()->statically_enabled_for(level_) &&
-      is_at_least_of_severity(level_, getLevel());
+    return derived()->staticallyEnabledFor(level_) &&
+      isAtLeastOfSeverity(level_, getLevel());
   };
 
 #ifdef TOMOGRAPHER_PARSED_BY_DOXYGEN
@@ -856,7 +855,7 @@ namespace tomo_internal {
     static inline bool test_logger_filter(LoggerBase<Derived> * loggerbase, int level,
 					  const char * origin)
     {
-      return static_cast<const Derived*>(loggerbase)->filter_by_origin(level, origin);
+      return static_cast<const Derived*>(loggerbase)->filterByOrigin(level, origin);
     }
   };
   /**
@@ -871,7 +870,7 @@ namespace tomo_internal {
     {
       try {
         //printf("Calling emit_log(%d,\"%s\",\"%s\") on object %p\n", level, origin, msg.c_str(), loggerbase);
-        static_cast<Derived*>(loggerbase)->emit_log(level, origin, msg);
+        static_cast<Derived*>(loggerbase)->emitLog(level, origin, msg);
       } catch (const std::exception & e) {
         std::fprintf(stderr,
 		     "Warning in LoggerBaseHelperDynamic::call_emit_log(%d, \"%s\", msg):"
@@ -881,7 +880,7 @@ namespace tomo_internal {
     }
     static inline bool test_should_emit(LoggerBase<Derived> * loggerbase, int level, const char * origin)
     {
-      if ( ! static_cast<const Derived*>(loggerbase)->enabled_for(level) ) {
+      if ( ! static_cast<const Derived*>(loggerbase)->enabledFor(level) ) {
 	return false;
       }
       if ( ! LoggerBaseHelperFilterByOrigin<Derived, LoggerTraits<Derived>::HasFilterByOrigin>
@@ -979,7 +978,7 @@ namespace tomo_internal {
       //        (int)Level, (int)(LoggerTraits<Derived>::StaticMinimumSeverityLevel));
       LoggerBaseHelperStatic2<
 	Derived, Level,
-	! static_is_at_least_of_severity<Level, LoggerTraits<Derived>::StaticMinimumSeverityLevel>::value
+	! StaticIsAtLeastOfSeverity<Level, LoggerTraits<Derived>::StaticMinimumSeverityLevel>::value
 	>::test_and_call_emit_log(
 	    loggerbase, origin, args...
 	    );
@@ -1222,7 +1221,7 @@ public:
     display_origin = display_origin_;
   }
 
-  inline void emit_log(int level, const char * origin, const std::string & msg)
+  inline void emitLog(int level, const char * origin, const std::string & msg)
   {
     static const std::string level_prefixes[] = {
       std::string("\n\n*** ERROR -- "),
@@ -1239,7 +1238,7 @@ public:
     // display the log message
     std::fprintf(fp, "%s\n", finalmsg.c_str());
 
-    if (is_at_least_of_severity(level, WARNING)) {
+    if (isAtLeastOfSeverity(level, WARNING)) {
       // force output also on stderr for warnings and errors if we are being redirected to a
       // file, or at least flush the buffer.
       std::fflush(fp);
@@ -1280,7 +1279,7 @@ struct LoggerTraits<VacuumLogger> : public DefaultLoggerTraits
 class VacuumLogger : public LoggerBase<VacuumLogger>
 {
 public:
-  inline void emit_log(int /*level*/, const char * /*origin*/, const std::string & /*msg*/)
+  inline void emitLog(int /*level*/, const char * /*origin*/, const std::string & /*msg*/)
   {
   }
 
@@ -1324,7 +1323,7 @@ public:
   {
   }
 
-  inline void emit_log(int /*level*/, const char * origin, const std::string& msg)
+  inline void emitLog(int /*level*/, const char * origin, const std::string& msg)
   {
     buffer << (origin&&origin[0] ? "["+std::string(origin)+"] " : std::string())
            << msg.c_str() << "\n";
@@ -1408,9 +1407,9 @@ public:
   }
 
   //! Emit a log by relaying to the base logger
-  inline void emit_log(int level, const char * origin, const std::string& msg)
+  inline void emitLog(int level, const char * origin, const std::string& msg)
   {
-    baselogger.emit_log(level, origin, msg);
+    baselogger.emitLog(level, origin, msg);
   }
 
   //! Get the base logger's set level.
@@ -1422,9 +1421,9 @@ public:
   //! If relevant for the base logger, filter the messages by origin from the base logger.
   template<bool dummy = true>
   inline std::enable_if<dummy && LoggerTraits<BaseLogger>::HasFilterByOrigin, bool>
-  filter_by_origin(int level, const char * origin)
+  filterByOrigin(int level, const char * origin)
   {
-    return baselogger.filter_by_origin(level, origin);
+    return baselogger.filterByOrigin(level, origin);
   }
 };
 
@@ -1493,7 +1492,7 @@ public:
 
   /** \brief Constructor based on a base logger reference.
    *
-   * Pass a reference to the base logger here. Calls to \ref emit_log(), etc., will be
+   * Pass a reference to the base logger here. Calls to \ref emitLog(), etc., will be
    * relayed to this base logger.
    */
   OriginFilteredLogger(BaseLogger & baselogger_)
@@ -1536,9 +1535,9 @@ public:
    * engine.
    *
    * This level() is used to pre-filter all the log messages, before our \a
-   * filter_by_origin() gets called. So we return \ref LOWEST_SEVERITY_LEVEL here to
+   * filterByOrigin() gets called. So we return \ref LOWEST_SEVERITY_LEVEL here to
    * "trick" the logging engine, and use the base logger's level() only in \ref
-   * filter_by_origin().
+   * filterByOrigin().
    */
   inline int level() const
   {
@@ -1547,11 +1546,11 @@ public:
 
   /** \brief Emit a log message (relay to base logger).
    *
-   * Simply relay the call to the base logger instance's \a emit_log().
+   * Simply relay the call to the base logger instance's \a emitLog().
    */
-  inline void emit_log(int level, const char * origin, const std::string& msg)
+  inline void emitLog(int level, const char * origin, const std::string& msg)
   {
-    baselogger.emit_log(level, origin, msg);
+    baselogger.emitLog(level, origin, msg);
   }
 
   /** \brief Message filtering by origin implementation.
@@ -1561,7 +1560,7 @@ public:
    *
    * See also \ref DefaultLoggerTraits::HasFilterByOrigin "LoggerTraits::HasFilterByOrigin".
    */
-  inline bool filter_by_origin(int level, const char * origin) const
+  inline bool filterByOrigin(int level, const char * origin) const
   {
     typedef std::map<std::string, int>::const_iterator ConstIterator;
 
@@ -1580,7 +1579,7 @@ public:
       // default logger level
       loglevel = baselogger.level();
     }
-    return is_at_least_of_severity(level, loglevel);
+    return isAtLeastOfSeverity(level, loglevel);
   }
 
 };
@@ -1995,11 +1994,11 @@ public:
   }
 
   //! Emit a log by relaying to the base logger
-  inline void emit_log(int level, const char * origin, const std::string& msg)
+  inline void emitLog(int level, const char * origin, const std::string& msg)
   {
     // this might also be called if we have a sublogger. In that case, if we have a
     // sublogger, then use their prefix.
-    _baselogger.emit_log(level, getSubOrigin(origin).c_str(), msg);
+    _baselogger.emitLog(level, getSubOrigin(origin).c_str(), msg);
   }
 
   //! Get the base logger's set level.
@@ -2010,9 +2009,9 @@ public:
 
   //! If relevant for the base logger, filter the messages by origin from the base logger.
   TOMOGRAPHER_ENABLED_IF(Tomographer::Logger::LoggerTraits<BaseLoggerType>::HasFilterByOrigin)
-  inline bool filter_by_origin(int level, const char * origin)
+  inline bool filterByOrigin(int level, const char * origin)
   {
-    return _baselogger.filter_by_origin(level, getSubOrigin(origin).c_str());
+    return _baselogger.filterByOrigin(level, getSubOrigin(origin).c_str());
   }
 };
 

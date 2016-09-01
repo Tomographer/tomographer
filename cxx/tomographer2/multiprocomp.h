@@ -62,7 +62,7 @@ namespace tomo_internal {
  *
  * Emits the log to \c baselogger. This template is specialized for
  * <code>baseLoggerIsThreadSafe=true</code>, in which case the call to baselogger's
- * emit_log is not wrapped into a critical section.
+ * \ref emitLog() is not wrapped into a critical section.
  *
  * This helper is meant to be called as
  * \code
@@ -75,21 +75,21 @@ namespace tomo_internal {
 template<typename BaseLogger, bool baseLoggerIsThreadSafe>
 struct ThreadSanitizerLoggerHelper
 {
-  static inline void emit_log(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
+  static inline void emitLog(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
   {
 #pragma omp critical
     {
-      //printf("ThreadSanitizerLoggerHelper::emit_log(%d, %s, %s) -- OMP CRITICAL\n", level, origin, msg.c_str());
-      baselogger.emit_log(level, origin, msg);
+      //printf("ThreadSanitizerLoggerHelper::emitLog(%d, %s, %s) -- OMP CRITICAL\n", level, origin, msg.c_str());
+      baselogger.emitLog(level, origin, msg);
     }
   }
-  static inline bool filter_by_origin(BaseLogger & baselogger, int level, const char * origin)
+  static inline bool filterByOrigin(BaseLogger & baselogger, int level, const char * origin)
   {
     bool ok = true;
 #pragma omp critical
     {
-      //printf("ThreadSanitizerLoggerHelper::filter_by_origin(%d, %s) -- OMP CRITICAL\n", level, origin);
-      ok = baselogger.filter_by_origin(level, origin);
+      //printf("ThreadSanitizerLoggerHelper::filterByOrigin(%d, %s) -- OMP CRITICAL\n", level, origin);
+      ok = baselogger.filterByOrigin(level, origin);
     }
     return ok;
   }
@@ -102,15 +102,15 @@ struct ThreadSanitizerLoggerHelper
 template<typename BaseLogger>
 struct ThreadSanitizerLoggerHelper<BaseLogger, true>
 {
-  static inline void emit_log(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
+  static inline void emitLog(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
   {
-    //printf("ThreadSanitizerLoggerHelper::emit_log(%d, %s, %s) -- NORMAL\n", level, origin, msg.c_str());
-    baselogger.emit_log(level, origin, msg);
+    //printf("ThreadSanitizerLoggerHelper::emitLog(%d, %s, %s) -- NORMAL\n", level, origin, msg.c_str());
+    baselogger.emitLog(level, origin, msg);
   }
-  static inline bool filter_by_origin(BaseLogger & baselogger, int level, const char * origin)
+  static inline bool filterByOrigin(BaseLogger & baselogger, int level, const char * origin)
   {
-    //printf("ThreadSanitizerLoggerHelper::filter_by_origin(%d, %s) -- NORMAL\n", level, origin);
-    return baselogger.filter_by_origin(level, origin);
+    //printf("ThreadSanitizerLoggerHelper::filterByOrigin(%d, %s) -- NORMAL\n", level, origin);
+    return baselogger.filterByOrigin(level, origin);
   }
 };
 
@@ -134,7 +134,7 @@ struct ThreadSanitizerLoggerHelper<BaseLogger, true>
  * the moment of instanciation. Any changes to the level of the base logger afterwards
  * will not be reflected here. This is for thread-safety/consistency reasons.
  *
- * \warning If your base logger has a \a filter_by_origin() mechanism and is not
+ * \warning If your base logger has a \a filterByOrigin() mechanism and is not
  * thread-safe, this might be very slow because a OMP critical section is opened on each
  * log message which needs to be tested for its origin.
  *
@@ -187,7 +187,7 @@ public:
     // when you have to debug the log mechanism.... lol
     //printf("ThreadSanitizerLogger(): object created\n");
     //_baselogger.debug("ThreadSanitizerLogger()", "log from constructor.");
-    //emit_log(Logger::DEBUG, "ThreadSanitizerLogger!", "emit_log from constructor");
+    //emitLog(Logger::DEBUG, "ThreadSanitizerLogger!", "emitLog from constructor");
     //LoggerBase<ThreadSanitizerLogger<BaseLogger> >::debug("ThreadSanitizerLogger", "debug from constructor");
   }
     
@@ -196,25 +196,25 @@ public:
   }
 
     
-  //! Implementation of Logger::LoggerBase::emit_log()
-  inline void emit_log(int level, const char * origin, const std::string& msg)
+  //! Implementation of Logger::LoggerBase::emitLog()
+  inline void emitLog(int level, const char * origin, const std::string& msg)
   {
-    //printf("ThreadSanitizerLogger::emit_log(%d, %s, %s)\n", level, origin, msg.c_str());
+    //printf("ThreadSanitizerLogger::emitLog(%d, %s, %s)\n", level, origin, msg.c_str());
     tomo_internal::ThreadSanitizerLoggerHelper<BaseLogger,
                                                Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
-      ::emit_log(
+      ::emitLog(
           _baselogger, level, origin, msg
           );
   }
 
-  //! Implementation of Logger::LoggerBase::filter_by_origin()
+  //! Implementation of Logger::LoggerBase::filterByOrigin()
   template<bool dummy = true>
   inline typename std::enable_if<dummy && Logger::LoggerTraits<BaseLogger>::HasFilterByOrigin, bool>::type
-    filter_by_origin(int level, const char * origin) const
+    filterByOrigin(int level, const char * origin) const
   {
     return tomo_internal::ThreadSanitizerLoggerHelper<BaseLogger,
                                                       Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
-      ::filter_by_origin(
+      ::filterByOrigin(
           _baselogger, level, origin
           );
   }

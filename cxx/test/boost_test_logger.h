@@ -56,8 +56,8 @@ public:
     // call the protected LoggerBase<StderrLogger>::setLogLevel()
     setLogLevel(level);
   }
-  inline void emit_log(int level, const char * origin,
-                       const std::string & msg)
+  inline void emitLog(int level, const char * origin,
+                      const std::string & msg)
   {
     BOOST_MESSAGE("(" << Tomographer::Logger::LogLevel(level) << ")" << "[" << origin << "] " << msg) ;
   }

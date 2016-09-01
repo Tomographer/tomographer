@@ -158,7 +158,7 @@
  * Tomographer::Logger::LoggerBase<Derived>::level() method. But <b>don't abuse</b> of
  * this, usually there is no need to query the level of a logger, and it is much
  * preferable to see if the logger is enabled for a particular level with \ref
- * Tomographer::Logger::LoggerBase<Derived>::enabled_for().
+ * Tomographer::Logger::LoggerBase<Derived>::enabledFor().
  *
  * Also, by default there is no public \c setLevel() method, in case your logger's level
  * is statically fixed or otherwise can't be changed, or if you need a thread-safe logger.
