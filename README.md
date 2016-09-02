@@ -46,8 +46,7 @@ standard library are used. Also, make sure it supports OpenMP or you won't
 benefit from parallelization. A recent Clang++ will compile as well (tested
 with clang++ >= 3.3), but I haven't managed to get OpenMP working.
 
-Tested on Linux/Ubuntu and Mac OS X. Should theoretically (*big flashing red
-warning light*) also work on Windows.
+Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
 
 
 Download
@@ -232,6 +231,10 @@ The test suite uses [CTest][ctest].  You can also run the test programs
 individually.  Most test executables use the [Boost Unit Test
 Framework][boost_test] and as such accept [various options][boost_test_options]
 to tune verbosity, which tests to run, etc.
+
+Note that the test suite does not compile entirely under Windows/mingw32/g++
+because g++ can't allocate enough memory. I'm not sure how to fix this at the
+moment.
 
 [ctest]: http://www.cmake.org/Wiki/CMake/Testing_With_CTest
 [boost_test]: http://www.boost.org/doc/libs/1_59_0/libs/test/doc/html/index.html
