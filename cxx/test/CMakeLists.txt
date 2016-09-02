@@ -159,7 +159,9 @@ addTomographerTest(test_mhrw_bin_err.cxx  "")
 addTomographerTest(test_mhrw_valuehist_tasks.cxx  "")
 addTomographerTest(test_multiproc.cxx  "")
 addTomographerTest(test_multiprocomp.cxx  "openmp")
-addTomographerTest(test_zzzcombinations.cxx "openmp")
+# only works with g++ because we do exact comparison of the output histogram data, and
+# other compilers may have small differences:
+#addTomographerTest(test_zzzcombinations.cxx "openmp")
 
 
 # check "minimal tomorun" program compiles and runs

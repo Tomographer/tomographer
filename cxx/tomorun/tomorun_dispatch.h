@@ -127,7 +127,7 @@ private:
   {
     if ((int)x.size() > w) {
       w = x.size();
-      return std::move(x);
+      return x; // std::move(x); // std::move is unnecessary, see warning with Clang++
     }
     const int r = w - x.size();
     const int rleft = r/2;

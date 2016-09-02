@@ -78,7 +78,7 @@ struct MplxVC_getval_helper<1, ValueType, ValueCalculators...>
   template<typename PointType>
   static inline ValueType getValue(const int _i, const std::tuple<ValueCalculators...> & _valcalcs, PointType&& x)
   {
-    tomographer_assert(_i == 0 && "i != 0 but NumValueCalculators == 1");
+    tomographer_assert(_i == 0 && "i != 0 but NumValueCalculators == 1");(void)_i;
     return std::get<0>(_valcalcs).getValue(std::forward<PointType>(x));
   }
 };
