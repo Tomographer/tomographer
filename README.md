@@ -19,8 +19,7 @@ The `tomorun` executable produces a histogram of a figure of merit under the
 distribution relevant for a reliable error analysis as described in [Faist &
 Renner, Practical and Reliable Error Bars in Quantum Tomography, Phys. Rev.
 Lett. 117, 010404 (2016)](http://dx.doi.org/10.1103/PhysRevLett.117.010404)
-([arXiv:1509.06763](http://arxiv.org/abs/1509.06763)).  The measurement data are
-specified as independent POVM outcomes.
+([arXiv:1509.06763](http://arxiv.org/abs/1509.06763)).
 
 The C++ framework is a set of abstract and generic classes which you can combine
 in your preferred way to implement this random walk for even more general
