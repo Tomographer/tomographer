@@ -29,6 +29,7 @@ Install
 The installation of the binary is normally straightforward.
 
 ### Linux and Mac OS X
+
 Unpack the archive anywhere on your system (say, somewhere in your home directory, or
 system-wide like in `/opt/tomographer/`). You may then run the `tomorun` executable in the
 Terminal by executing directly the binary inside the archive, inside the `bin/`
@@ -47,6 +48,15 @@ location. For a system-wide install, simply symlink the `tomorun` executable to,
 
     > cd /usr/local/bin
     > sudo ln -s /path/to/extracted/tomographer-{{ site.tomographer_latest_version }}-linux/bin/tomorun .
+
+### Windows
+
+Unpack the archive anywhere on your system, such as inside `C:\Program Files`. It will
+create a single folder named `tomographer-<VERSION>-<SYS>`.
+
+You can then access the `tomorun` executable, using the command-line DOS prompt, as
+
+    >C:\Program Files\tomographer-<VERSION>-<SYS>\bin\tomorun.exe [options]
 
 
 Downloading & Installing From Source
@@ -68,9 +78,7 @@ standard library are used. Also, make sure it supports OpenMP or you won't
 benefit from parallelization. A recent Clang++ will compile as well (tested
 with clang++ >= 3.3), but I haven't managed to get OpenMP working.
 
-Tested on Linux/Ubuntu and Mac OS X. Should theoretically (*big flashing red
-warning light*) also work on Windows.
-
+Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
 
 
 Download

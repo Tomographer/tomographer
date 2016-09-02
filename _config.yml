@@ -22,18 +22,24 @@ markdown: kramdown
 # Tomographer available downloads & versions
 # ------------------------------------------
 
-tomographer_latest_version: v1.1
-tomographer_apidoc_version: v1.1
+tomographer_latest_version: v2.0
+tomographer_apidoc_version: v2.0
 tomographer_binaries:
-  - version: 'v1.1'
+  - version: 'v2.0'
     system: 'macosx'
     ext: '.tar.gz'
     title: 'Mac OS X Binaries (64-bit, TAR.GZ archive), OS X >= 10.6'
-  - version: 'v1.1'
+  - version: 'v2.0'
     system: 'linux'
     ext: '.tar.gz'
-    title: "Linux Binaries (64-bit, TAR.GZ archive), wherever they're compatible"
+    title: "Linux Binaries (64-bit, TAR.GZ archive), statically linked"
+  - version: 'v2.0'
+    system: 'win-mingw32'
+    ext: '.zip'
+    title: "Windows Binaries (32-bit, ZIP archive)"
 
 github_blob_baseurl: 'https://github.com/Tomographer/tomographer/blob/'
-paper_url: 'http://arxiv.org/abs/1509.06763'
-paper_ref: 'arxiv:1509.06763'
+paper_url: 'http://dx.doi.org/10.1103/PhysRevLett.117.010404'
+paper_ref: 'Ph. Faist and R. Renner, Phys. Rev. Lett. 117, 010404 (2016)'
+paper_arxiv_url: 'http://arxiv.org/abs/1509.06763'
+paper_arxiv_ref: 'arxiv:1509.06763'

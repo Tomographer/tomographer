@@ -9,8 +9,9 @@ I've got experimental data to analyze.
 
 The Tomographer project provides the `tomorun` program which analyses data from a quantum
 tomography experiment. The theory is described in
-[{{site.paper_ref}}]({{site.paper_url}}){:target="_blank"}. Here are the steps to follow in order to get
-started:
+[{{site.paper_ref}}]({{site.paper_url}}){:target="_blank"}
+([{{site.paper_arxiv_ref}}]({{site.paper_arxiv_url}}){:target="_blank"}). Here are the
+steps to follow in order to get started:
 
 1. [Download and install]({{ site.baseurl }}/download) Tomographer.
 
@@ -74,7 +75,8 @@ started:
    `--write-histogram-from-config-file-name`.
 
 6. Analyse the output.  (Read [{{site.paper_ref}}]({{site.paper_url}}){:target="_blank"}
-   to understand the theory behind this method.)
+   ([{{site.paper_arxiv_ref}}]({{site.paper_arxiv_url}}){:target="_blank"}) to understand
+   the theory behind this method.)
 
    Depending on what your figure of merit is, and what you indend to do, fit the numerical
    estimate of the distribution of the figure of merit with the appropriate model. A
@@ -85,8 +87,9 @@ started:
 
 7. Publish paper. Please don't forget to cite us :)
 
-   > 1. Philippe Faist and Renato Renner. Practical, Reliable Error Bars in Quantum
-   >    Tomography. arXiv:1509.06763
+   > 1. Philippe Faist and Renato Renner. Practical and Reliable Error Bars in
+   >    Quantum Tomography. Phys. Rev. Lett. 117:1, 010404 (2016).
+   >    arXiv:1509.06763
    > 
    > 2. Philippe Faist. The Tomographer Project. Available at:
    >    https://github.com/Tomographer/tomographer/
