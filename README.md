@@ -2,6 +2,8 @@
 THE TOMOGRAPHER PROJECT
 =======================
 
+[![DOI](https://zenodo.org/badge/24211/Tomographer/tomographer.svg)](https://zenodo.org/badge/latestdoi/24211/Tomographer/tomographer)
+
 A toolbox for error analysis in quantum tomography.
 
 
