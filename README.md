@@ -83,11 +83,11 @@ The configuration, compilation and installation process is done using CMake.
 (You'll need CMake >= 2.8.5.)  Download an official release of Tomographer,
 unpack it, and enter the unpacked directory.  Then, issue the commands:
 
-    tomographer-X.Y> mkdir build
-    tomographer-X.Y> cd build
-    tomographer-X.Y/build> cmake ..
-    tomographer-X.Y/build> make
-    tomographer-X.Y/build> make install/strip
+    tomographer-X.X> mkdir build
+    tomographer-X.X> cd build
+    tomographer-X.X/build> cmake ..
+    tomographer-X.X/build> make
+    tomographer-X.X/build> make install/strip
 
 And you'll have the `tomorun` installed on your system.
 
@@ -190,7 +190,7 @@ API Documentation
 You can build the API documentation using [Doxygen >= 1.8][doxygen]. You'll also
 need `dot` (from the `graphviz` suite). To build the documentation, simply run
 
-    tomographer-X.Y/build> make doc
+    tomographer-X.X/build> make doc
 
 This will create API documentation in both HTML and LaTeX format. The HTML
 output is located in `build/html` and the latex files are in `build/latex`.
@@ -214,16 +214,16 @@ being changed and maintained.
 To compile and run the test suite, you need to specify to cmake that you want to
 build it:
 
-    tomographer-X.Y/build> cmake .. -DTOMOGRAPHER_ENABLE_TESTS=on
+    tomographer-X.X/build> cmake .. -DTOMOGRAPHER_ENABLE_TESTS=on
 
 The test suite will then be compiled normally when you run `make`. Use the `-j`
 option with the number of CPU cores on your system to speed up the compilation:
 
-    tomographer-X.Y/build> make -j4
+    tomographer-X.X/build> make -j4
 
 Run the test suite with the command
 
-    tomographer-X.Y/build> make test
+    tomographer-X.X/build> make test
 
 The test suite uses [CTest][ctest].  You can also run the test programs
 individually.  Most test executables use the [Boost Unit Test
