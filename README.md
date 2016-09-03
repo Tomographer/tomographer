@@ -26,6 +26,27 @@ in your preferred way to implement this random walk for even more general
 settings.
 
 
+Download
+--------
+
+Tomographer can be downloaded from our releases page:
+
+  https://github.com/Tomographer/tomographer/releases
+
+There are precompiled binary releases for Mac OS X, Linux, and Windows.  If a
+binary isn't available for your platform or if it doesn't run, you may have to
+compile from source. Don't worry, that's not complicated.  If you haven't
+already done so, install all the usual development tools
+(`gcc`/`g++`/`make`/etc.) and follow the *Installation* instructions below.
+
+If you compile from source, make sure you download the offical source package
+from our releases page (or clone the git repo). If you use github's automatic
+`Download ZIP' links from the source code, you'll end up with missing files.
+
+If you wish to contribute to development, don't hesitate to fork the repo on
+github and send me pull requests, or to contact me if you have questions.
+
+
 Prerequisites
 -------------
 
@@ -48,36 +69,11 @@ with clang++ >= 3.3), but I haven't managed to get OpenMP working.
 Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
 
 
-Download
---------
-
-Follow the instructions on:
-
-  http://tomographer.github.io/tomographer/download
-
-Tomographer can be downloaded from our github releases page:
-
-  https://github.com/Tomographer/tomographer/releases
-
-There are precompiled binary releases for Mac OS X and Linux.  For other
-platforms, you'll have to compile from source.  Don't worry, that's not
-complicated.  If you haven't already done so, install all the usual development
-tools (`gcc`/`g++`/`make`/etc.) and follow the *Installation* instructions
-below.
-
-If you compile from source, make sure you download the offical source package
-from our releases page. If you use github's automatic `Download ZIP' links from
-the source code, you might end up with missing files.
-
-If you wish to contribute to development, don't hesitate to fork the repo on
-github and send me pull requests. Contact me if you have questions.
-
-
 Installation
 ------------
 
-If you found a binary release for your system, simply unpack it. It is then
-ready for use.
+If you found a binary release for your system, simply unpack it wherever you like.
+It is then ready for use.
 
 The rest of this section concerns compiling Tomographer/Tomorun from source.
 
@@ -121,6 +117,7 @@ complete depending on your hardware, and might be pretty greedy on RAM.
 Running Tomorun
 ---------------
 
+In the binary distributions, `tomorun` is located in the `bin/` subdirectory.
 Detailed information about how to use & run `tomorun` is obtained by querying
 its help text:
 
@@ -231,9 +228,9 @@ individually.  Most test executables use the [Boost Unit Test
 Framework][boost_test] and as such accept [various options][boost_test_options]
 to tune verbosity, which tests to run, etc.
 
-Note that the test suite does not compile entirely under Windows/mingw32/g++
+Currently, the test suite does not compile entirely under Windows/mingw32/g++
 because g++ can't allocate enough memory. I'm not sure how to fix this at the
-moment.
+moment (might need to use 64-bit compiler).
 
 [ctest]: http://www.cmake.org/Wiki/CMake/Testing_With_CTest
 [boost_test]: http://www.boost.org/doc/libs/1_59_0/libs/test/doc/html/index.html
@@ -252,7 +249,7 @@ Contributing
 ------------
 
 Contributions are welcome.  The preferred way to submit enhancements is to fork the
-repo and send me a pull request. Also, don't hesitate to contact me for questions.
+repo and send me a pull request.  Also, don't hesitate to contact me for questions.
 
 
 How to Cite
@@ -272,8 +269,8 @@ works:
 Authors, Copyright, License
 ---------------------------
 
-Author: Philippe Faist
+Author: Philippe Faist, pfaist@phys.ethz.ch.
 
-Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
 
 Released under the terms of the MIT License (see file LICENSE.txt)
