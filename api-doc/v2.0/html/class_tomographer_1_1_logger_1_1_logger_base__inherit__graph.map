@@ -1,0 +1,18 @@
+<map id="Tomographer::Logger::LoggerBase&lt; Derived &gt;" name="Tomographer::Logger::LoggerBase&lt; Derived &gt;">
+<area shape="rect" id="node2" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; ThreadSanitizer\lLogger\&lt; BaseLogger \&gt; \&gt;" alt="" coords="421,14,627,66"/>
+<area shape="rect" id="node4" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; LocalLogger\l\&lt; BaseLoggerType_ \&gt; \&gt;" alt="" coords="431,90,616,142"/>
+<area shape="rect" id="node7" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; LocalLogger\l\&lt; LoggerType \&gt; \&gt;" alt="" coords="655,153,840,205"/>
+<area shape="rect" id="node8" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; MinimumSeverity\lLogger\&lt; BaseLogger, Level \&gt; \&gt;" alt="" coords="416,218,631,270"/>
+<area shape="rect" id="node10" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; VacuumLogger \&gt;" alt="" coords="417,294,630,333"/>
+<area shape="rect" id="node12" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; BufferLogger \&gt;" alt="" coords="423,357,624,395"/>
+<area shape="rect" id="node14" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; OriginFiltered\lLogger\&lt; BaseLogger \&gt; \&gt;" alt="" coords="428,419,620,471"/>
+<area shape="rect" id="node16" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; FileLogger \&gt;" alt="" coords="430,495,617,534"/>
+<area shape="rect" id="node3" href="$class_tomographer_1_1_multi_proc_1_1_o_m_p_1_1_thread_sanitizer_logger.html" title="Wrapper logger to call non&#45;thread&#45;safe loggers from a multithreaded environment. " alt="" coords="880,14,1082,66"/>
+<area shape="rect" id="node5" href="$class_tomographer_1_1_logger_1_1_local_logger.html" title="Local logger: avoid having to repeat origin at each emitted message. " alt="" coords="864,101,1098,139"/>
+<area shape="rect" id="node6" href="$class_tomographer_1_1_logger_1_1_local_logger.html" title="Tomographer::Logger\l::LocalLogger\&lt; LoggerType \&gt;" alt="" coords="1243,133,1438,171"/>
+<area shape="rect" id="node9" href="$class_tomographer_1_1_logger_1_1_minimum_severity_logger.html" title="Logger which statically discards any messages less important than a fixed severity. " alt="" coords="895,218,1067,270"/>
+<area shape="rect" id="node11" href="$class_tomographer_1_1_logger_1_1_vacuum_logger.html" title="Logger that discards all messages. " alt="" coords="907,294,1055,333"/>
+<area shape="rect" id="node13" href="$class_tomographer_1_1_logger_1_1_buffer_logger.html" title="Log messages into an internal memory buffer. " alt="" coords="907,357,1055,395"/>
+<area shape="rect" id="node15" href="$class_tomographer_1_1_logger_1_1_origin_filtered_logger.html" title="A logger which filters entries according to where they originated from. " alt="" coords="906,419,1056,471"/>
+<area shape="rect" id="node17" href="$class_tomographer_1_1_logger_1_1_file_logger.html" title="Simple logger class which logs everything into a given FILE pointer. " alt="" coords="907,495,1055,534"/>
+</map>

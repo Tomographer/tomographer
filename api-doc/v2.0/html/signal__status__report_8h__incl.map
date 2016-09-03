@@ -1,0 +1,7 @@
+<map id="tomographer2/tools/signal_status_report.h" name="tomographer2/tools/signal_status_report.h">
+<area shape="rect" id="node2" href="$signal__handler_8h.html" title="Basic common code for intercepting a signal and basic interfacing to C++. " alt="" coords="135,92,271,131"/>
+<area shape="rect" id="node7" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="324,99,498,124"/>
+<area shape="rect" id="node10" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="492,179,655,217"/>
+<area shape="rect" id="node13" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="659,265,795,304"/>
+<area shape="rect" id="node18" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="955,352,1091,391"/>
+</map>

@@ -1,0 +1,6 @@
+<map id="tomographer2/densedm/dmtypes.h" name="tomographer2/densedm/dmtypes.h">
+<area shape="rect" id="node2" href="$indepmeasllh_8h.html" title="C++ types and functions for calculating the log&#45;likelihood for independent measurements. " alt="" coords="5,92,168,131"/>
+<area shape="rect" id="node3" href="$param__rho__a_8h.html" title="Tools for parameterizing density matrices with the A Parameterization. " alt="" coords="192,92,355,131"/>
+<area shape="rect" id="node4" href="$tspacefigofmerit_8h.html" title="Implement some standard figures of merit for when integrating in T space densely represented density ..." alt="" coords="379,92,542,131"/>
+<area shape="rect" id="node5" href="$tspacellhwalker_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="565,92,728,131"/>
+</map>

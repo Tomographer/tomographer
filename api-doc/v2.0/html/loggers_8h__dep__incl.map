@@ -1,0 +1,11 @@
+<map id="tomographer2/tools/loggers.h" name="tomographer2/tools/loggers.h">
+<area shape="rect" id="node2" href="$tspacellhwalker_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="337,252,500,291"/>
+<area shape="rect" id="node3" href="$random__unitary_8h.html" title="Produce a random unitary according to the Haar measure. " alt="" coords="25,92,191,131"/>
+<area shape="rect" id="node4" href="$simple__find__zero_8h.html" title="A very simplistic tool for finding a relatively straightforward zero with few iterations. " alt="" coords="214,92,380,131"/>
+<area shape="rect" id="node5" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="455,179,606,204"/>
+<area shape="rect" id="node7" href="$mhrw__valuehist__tasks_8h.html" title="Tasks for collecting a histogram of values during a Metropolis&#45;Hastings random walk. " alt="" coords="517,339,717,377"/>
+<area shape="rect" id="node8" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="505,92,671,131"/>
+<area shape="rect" id="node9" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="630,179,866,204"/>
+<area shape="rect" id="node10" href="$multiprocomp_8h.html" title="Multiprocessing with OpenMP parallel multithreading. " alt="" coords="745,99,945,124"/>
+<area shape="rect" id="node6" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Task Manager/Dispatcher Interfaces) for parallel Metropolis&#45;Hast..." alt="" coords="526,259,708,284"/>
+</map>

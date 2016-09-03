@@ -1,0 +1,6 @@
+<map id="tomographer/qit/matrq.h" name="tomographer/qit/matrq.h">
+<area shape="rect" id="node2" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="111,85,254,111"/>
+<area shape="rect" id="node5" href="$param__rho__a_8h.html" title="Tools for parameterizing density matrices with the A Parameterization. " alt="" coords="278,79,434,117"/>
+<area shape="rect" id="node3" href="$dmmhrw_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="5,165,167,191"/>
+<area shape="rect" id="node4" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Task Manager/Dispatcher Interfaces) for parallel Metropolis&#45;Hast..." alt="" coords="192,165,367,191"/>
+</map>

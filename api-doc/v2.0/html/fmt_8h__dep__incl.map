@@ -1,0 +1,15 @@
+<map id="tomographer2/tools/fmt.h" name="tomographer2/tools/fmt.h">
+<area shape="rect" id="node2" href="$indepmeasllh_8h.html" title="C++ types and functions for calculating the log&#45;likelihood for independent measurements. " alt="" coords="5,92,168,131"/>
+<area shape="rect" id="node3" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="319,99,497,124"/>
+<area shape="rect" id="node6" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Task Manager/Dispatcher Interfaces) for parallel Metropolis&#45;Hast..." alt="" coords="399,345,582,371"/>
+<area shape="rect" id="node7" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="503,265,654,291"/>
+<area shape="rect" id="node9" href="$ezmatio_8h.html" title="Utilities for reading MATLAB &quot;*.mat&quot; data files. See Tomographer::MAT. " alt="" coords="1288,92,1424,131"/>
+<area shape="rect" id="node10" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="599,92,735,131"/>
+<area shape="rect" id="node4" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="243,265,480,291"/>
+<area shape="rect" id="node5" href="$mhrw__valuehist__tasks_8h.html" title="Tasks for collecting a histogram of values during a Metropolis&#45;Hastings random walk. " alt="" coords="390,425,591,464"/>
+<area shape="rect" id="node8" href="$tspacellhwalker_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="853,339,1016,377"/>
+<area shape="rect" id="node11" href="$random__unitary_8h.html" title="Produce a random unitary according to the Haar measure. " alt="" coords="584,179,750,217"/>
+<area shape="rect" id="node12" href="$simple__find__zero_8h.html" title="A very simplistic tool for finding a relatively straightforward zero with few iterations. " alt="" coords="773,179,939,217"/>
+<area shape="rect" id="node13" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="344,179,510,217"/>
+<area shape="rect" id="node14" href="$multiprocomp_8h.html" title="Multiprocessing with OpenMP parallel multithreading. " alt="" coords="963,185,1162,211"/>
+</map>

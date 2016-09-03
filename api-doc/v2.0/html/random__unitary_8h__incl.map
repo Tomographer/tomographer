@@ -1,0 +1,7 @@
+<map id="tomographer2/mathtools/random_unitary.h" name="tomographer2/mathtools/random_unitary.h">
+<area shape="rect" id="node5" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="1086,92,1222,131"/>
+<area shape="rect" id="node10" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="288,92,424,131"/>
+<area shape="rect" id="node22" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="834,265,970,304"/>
+<area shape="rect" id="node19" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="586,179,722,217"/>
+<area shape="rect" id="node26" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="228,352,364,391"/>
+</map>

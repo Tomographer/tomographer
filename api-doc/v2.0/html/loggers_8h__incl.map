@@ -1,0 +1,5 @@
+<map id="tomographer2/tools/loggers.h" name="tomographer2/tools/loggers.h">
+<area shape="rect" id="node11" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="260,92,396,131"/>
+<area shape="rect" id="node19" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="193,265,330,304"/>
+<area shape="rect" id="node14" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="329,179,466,217"/>
+</map>

@@ -1,0 +1,9 @@
+<map id="Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase&lt; ValueCalculator_, UseBinningAnalysis_, CountIntType_, StepRealType_, CountRealType_ &gt;" name="Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase&lt; ValueCalculator_, UseBinningAnalysis_, CountIntType_, StepRealType_, CountRealType_ &gt;">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_m_h_r_w_tasks_1_1_c_data_base.html" title="Data needed to be accessible to the working code. " alt="" coords="1111,37,1298,89"/>
+<area shape="rect" id="node3" href="$struct_tomographer_1_1_m_h_r_w_params.html" title="Tomographer::MHRWParams\l\&lt; CountIntType, StepRealType \&gt;" alt="" coords="660,43,875,82"/>
+<area shape="rect" id="node4" href="$struct_tomographer_1_1_m_h_r_w_params.html" title="Specify the parameters of a Metropolis&#45;Hastings random walk. " alt="" coords="226,43,456,82"/>
+<area shape="rect" id="node8" href="$struct_tomographer_1_1_tools_1_1_store_if_enabled.html" title="Tomographer::Tools\l::StoreIfEnabled\&lt; int,\l UseBinningAnalysis \&gt;" alt="" coords="1127,175,1282,227"/>
+<area shape="rect" id="node9" href="$struct_tomographer_1_1_tools_1_1_store_if_enabled.html" title="Utility that stores a data type if a compile&#45;time flag is enabled. " alt="" coords="698,175,837,227"/>
+<area shape="rect" id="node10" href="$struct_tomographer_1_1_uniform_bins_histogram_1_1_params.html" title="The parameters of a UniformBinsHistogram. " alt="" coords="1099,251,1310,303"/>
+<area shape="rect" id="node11" href="/Users/philippe/Documents/ETH/PhD/projects/qtomo/tomographer/doc/cppreference-doxygen-web.tag.xml$cpp/types/size_t.html" title="std::size_t" alt="" coords="727,265,808,290"/>
+</map>

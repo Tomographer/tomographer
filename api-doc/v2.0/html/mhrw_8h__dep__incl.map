@@ -1,0 +1,5 @@
+<map id="tomographer2/mhrw.h" name="tomographer2/mhrw.h">
+<area shape="rect" id="node2" href="$tspacellhwalker_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="5,79,168,117"/>
+<area shape="rect" id="node3" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Task Manager/Dispatcher Interfaces) for parallel Metropolis&#45;Hast..." alt="" coords="193,85,376,111"/>
+<area shape="rect" id="node4" href="$mhrw__valuehist__tasks_8h.html" title="Tasks for collecting a histogram of values during a Metropolis&#45;Hastings random walk. " alt="" coords="184,165,384,204"/>
+</map>

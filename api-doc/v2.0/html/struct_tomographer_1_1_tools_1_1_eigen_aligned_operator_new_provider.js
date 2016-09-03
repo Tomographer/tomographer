@@ -1,0 +1,5 @@
+var struct_tomographer_1_1_tools_1_1_eigen_aligned_operator_new_provider =
+[
+    [ "OperatorNewAllocatorType", "struct_tomographer_1_1_tools_1_1_eigen_aligned_operator_new_provider_1_1_operator_new_allocator_type.html", "struct_tomographer_1_1_tools_1_1_eigen_aligned_operator_new_provider_1_1_operator_new_allocator_type" ],
+    [ "OperatorNewProviderType", "struct_tomographer_1_1_tools_1_1_eigen_aligned_operator_new_provider.html#a41181baf2f99378de39d1c771e7831c7", null ]
+];

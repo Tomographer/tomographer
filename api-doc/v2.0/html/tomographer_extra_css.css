@@ -1,0 +1,542 @@
+/* This file is part of the Tomographer project, which is distributed under the
+ * terms of the MIT license.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
+/* ------------------------------ FONTS ------------------------------ */
+
+/* DejaVu Sans */
+@font-face {
+   font-family: myDejaVuSans;
+   font-weight: normal;
+   font-style: normal;
+   src: url(DejaVuSans.ttf);
+}
+@font-face {
+   font-family: myDejaVuSans;
+   font-weight: bold;
+   font-style: normal;
+   src: url(DejaVuSans-Bold.ttf);
+}
+@font-face {
+   font-family: myDejaVuSans;
+   font-weight: normal;
+   font-style: italic;
+   src: url(DejaVuSans-Oblique.ttf);
+}
+@font-face {
+   font-family: myDejaVuSans;
+   font-weight: bold;
+   font-style: italic;
+   src: url(DejaVuSans-BoldOblique.ttf);
+}
+@font-face {
+   font-family: myDejaVuSans;
+   font-weight: 100;
+   font-style: normal;
+   src: url(DejaVuSans-ExtraLight.ttf);
+}
+/* DejaVu Sans Condensed */
+@font-face {
+   font-family: myDejaVuSansCondensed;
+   font-weight: normal;
+   font-style: normal;
+   src: url(DejaVuSansCondensed.ttf);
+}
+/*@font-face {
+   font-family: myDejaVuSansCondensed;
+   font-weight: bold;
+   font-style: normal;
+   src: url(DejaVuSansCondensed-Bold.ttf);
+}
+@font-face {
+   font-family: myDejaVuSansCondensed;
+   font-weight: normal;
+   font-style: italic;
+   src: url(DejaVuSansCondensed-Oblique.ttf);
+}
+@font-face {
+   font-family: myDejaVuSansCondensed;
+   font-weight: bold;
+   font-style: italic;
+   src: url(DejaVuSansCondensed-BoldOblique.ttf);
+}*/
+/* DejaVu Sans Mono */
+@font-face {
+   font-family: myDejaVuSansMono;
+   src: url(DejaVuSansMono.ttf);
+}
+@font-face {
+   font-family: myDejaVuSansMono;
+   font-weight: bold;
+   src: url(DejaVuSansMono-Bold.ttf);
+}
+/*@font-face {
+   font-family: myDejaVuSansMono;
+   font-style: italic;
+   src: url(DejaVuSansMono-Oblique.ttf);
+}
+@font-face {
+   font-family: myDejaVuSansMono;
+   font-weight: bold;
+   font-style: italic;
+   src: url(DejaVuSansMono-BoldOblique.ttf);
+}*/
+
+
+body, html {
+   font-size: 100.01%;
+}
+
+body, table, div, p, dl,
+   .tabs, .tabs2, .tabs3,
+   .title,
+   table.directory,
+   .navpath li.navelem a,
+    #projectname, #projectbrief, #projectnumber,
+    div.toc li,
+    div.toc h3,
+    #powerTip div,
+    #nav-tree .label
+{
+   font-family: myDejaVuSans, "DejaVu Sans", sans-serif;
+   font-weight: normal;
+}
+
+.tabs, .tabs2, .tabs3 {
+   /*letter-spacing: -.05ex;*/
+}
+
+#doc-content table, #doc-content div, #doc-content p, #doc-content dl {
+   font-size: inherit;
+   /*line-height: inherit;*/
+}
+#doc-content {
+   font-size: 0.85em;
+   /*line-height: 1.3em;*/
+   /*font-weight: 100;*/
+   font-style: normal;
+}
+
+#doc-content div.title {
+   font-size: 2.2em;
+   line-height: 1.3em;
+   font-weight: 100;
+   margin: 0.6em 0px 0.6em;
+   word-wrap: break-word;
+   /* doens't seem to work:
+-webkit-hyphens: auto;
+   -moz-hyphens: auto;
+    -ms-hyphens: auto;
+        hyphens: auto;
+    */
+}
+
+
+h1 {
+   font-size: 2em;
+   line-height: 1.3em;
+   font-weight: 100;
+}
+h2, h2.groupheader {
+   font-size: 1.8em;
+   line-height: 1.3em;
+   font-weight: 100;
+}
+h3 {
+   font-size: 1.4em;
+   line-height: 1.2em;
+   font-weight: 100;
+}
+
+/* specific font settings */
+
+a.el {
+   font-weight: bold;
+}
+code a.el, pre a.el, div.line a.el {
+   font-weight: normal;
+}
+.memname {
+   font-weight: normal;
+}
+
+table.fieldtable th {
+   font-weight: 100;
+   font-size: 0.9em;
+}
+
+dl dt {
+   font-weight: 100;
+   font-size: 1.2em;
+   line-height: 1.5em;
+}
+
+dl.section.user dt {
+   font-weight: bold;
+   font-size: 1em;
+   line-height: 1.5em;
+}
+dl.section.user dd {
+   margin-left: 40px;
+}
+
+
+
+dl.note, dl.warning, dl.attention, dl.todo, dl.bug
+/*, dl.pre, dl.post, dl.invariant, dl.deprecated, dl.todo, dl.test, dl.bug */
+{
+   margin-left: 0px;
+   border-left: none 0px;
+   padding: 5px 50px 5px;
+   border-radius: 4px 4px 4px 4px;
+}
+dl.section dt
+{
+   font-weight: 100;
+   font-size: 1.2em;
+   line-height: 1.5em;
+}
+dl.section dd
+{
+   margin-left: 0px;
+   margin-bottom: 0px;
+}
+/* note */
+dl.note {
+   background-color: #e0e0ff;
+}
+dl.note dt {
+   color: #000050;
+}
+/* warning, attention */
+dl.warning, dl.attention {
+   background-color: #ffbcaf;
+}
+dl.warning dt, dl.attention dt {
+   color: #500000;
+}
+/* todo, bug */
+dl.todo, dl.bug {
+   background-color: #ffdc9f;
+}
+dl.todo a.el, dl.bug a.el {
+   font-weight: 100;
+   font-size: 1.2em;
+   line-height: 1.5em;
+}
+dl.todo dd, dl.bug dd {
+   margin-left: 0px;
+}
+
+
+div.fragment {
+   border: 0px none;
+   border-left-width: 1px;
+   border-left-style: solid;
+   border-left-color: #8AEAEA;
+   padding: 4px 1.75em;
+   margin: 4px 0.5em;
+   background-color: transparent;
+}
+
+
+/* fixed width fonts */
+
+div.line,
+   code,
+   pre
+{
+   font-family: myDejaVuSansMono, "DejaVu Sans Mono", monospace, fixed;
+}
+
+div.line {
+   font-size: 1em;
+   line-height: 1.5em;
+}
+span.lineno {
+   display: inline-block;
+}
+div.line {
+   text-indent: 0px;
+   padding-left: 0px;
+}
+
+
+#powerTip,
+#powerTip div
+{
+   font-size: 0.9em;
+   line-height: 1.3em;
+}
+
+
+/* ------------------------------ TITLE ------------------------------ */
+
+#titlearea {
+   color: white;
+   background-color: #0d4e4e;
+   text-shadow: 2px 2px 4px white;
+}
+
+#projectname {
+   display: inline-block;
+   margin-right: 1em;
+   font-size: 3em;
+   font-weight: 100;
+   font-variant: small-caps;
+   letter-spacing: 5px;
+}
+#projectnumber {
+   font-size: 0.5em;
+   font-weight: 100;
+   letter-spacing: 2px;
+}
+#projectbrief {
+   font-weight: 100;
+   font-size: 1.4em;
+   letter-spacing: 0px;
+   /*font-style: italic;*/
+   display: inline-block;
+}
+
+#innerprojectname {
+   display: inline-block;
+   margin-right: .3em;
+   cursor: pointer;
+}
+
+/* ------------------------------ TABS & APPEARANCE-RELATED ------------------------------ */
+
+.tabs {
+   font-size: 1em;
+}
+.tabs2 {
+   font-size: 0.95em;
+}
+.tablist a {
+   font-weight: normal;
+}
+
+.tabs3 {
+   height: 30px;
+}
+.tabs3 .tablist li {
+   line-height: 30px;
+   height: 30px;
+}
+.tabs3 .tablist li a {
+   height: 30px;
+}
+
+.tabs, .tabs2, .tabs3,
+      .tablist a,
+      .tablist li,
+      .navpath ul,
+      .ui-resizable-e
+{
+   background-image: none;
+   background-color: #8ad4d4; /*#5ec8c8;*/
+}
+.tablist li {
+   border-right: dotted 1px #254f4f;
+}
+.tabs, .tabs2, .tabs3 {
+   border-bottom: solid 1px #6dbbbb;
+}
+.tablist a:hover {
+   background-image: none;
+   background-color: #0c8383;
+}
+
+span.arrow.arrowdown {
+   background-image: url(myarrowdown.png);
+   color: rgba(0, 80, 80, 0);
+}
+span.arrow.arrowright {
+   background-image: url(myarrowright.png);
+   color: rgba(0, 80, 80, 0);
+}
+
+
+div.header {
+   border-bottom: 1px solid #8ad4d4;
+}
+div.summary {
+   display: none;
+   width: 80%;
+}
+
+.paramname {
+   color: #98611b;
+   vertical-align: top;
+}
+h2 {
+   border-bottom: 1px solid #d5eeee;
+}
+h2.groupheader {
+   color: #98611b;
+   border-bottom: 1px solid #e3c093; /*e3b172;*/
+}
+
+
+dl.reflist a.el {
+   font-weight: normal;
+}
+.memproto, dl.reflist dt,
+      .fieldtable th
+{
+   background-image: none;
+   background-color: #d5eeee;
+   font-weight: 100;
+   font-size: 0.95em;
+   line-height: 1.2em;
+}
+
+.mdescRight a.el {
+    font-weight: normal;
+}
+
+table.fieldtable,
+   table.fieldtable th
+{
+   border: 1px solid #d5eeee;
+}
+.fieldtable td.fieldtype,
+      .fieldtable td.fieldname
+{
+   border-right: 1px solid #d5eeee;
+   border-bottom: 1px solid #d5eeee;
+}
+.fieldtable td.fielddoc {
+   border-bottom: 1px solid #d5eeee;
+}
+
+.memproto, dl.reflist dt
+{
+   border-top: 1px solid #d5eeee;
+   border-left: 1px solid #d5eeee;
+   border-right: 1px solid #d5eeee;
+}
+.memdoc, dl.reflist dd
+{
+   border-left: 1px solid #d5eeee;
+   border-right: 1px solid #d5eeee;
+   border-bottom: 1px solid #d5eeee;
+}
+
+div.directory {
+   border-top: 1px solid #d5eeee;
+   border-bottom: 1px solid #d5eeee;
+   padding: 10px 0px;
+}
+
+/* ------------------------------ GLOW ------------------------------ */
+
+h1.glow, h2.glow, h3.glow, h4.glow, h5.glow, h6.glow {
+   text-shadow: 0 0 15px #ff8237;
+}
+div.line.glow {
+   background-color: #ff8237;
+   box-shadow: 0 0 10px #ff8237;
+}
+.memberdecls td.glow, .fieldtable tr.glow {
+   background-color: #ff8237;
+   box-shadow: 0 0 15px #ff8237;
+}
+.memitem.glow {
+   box-shadow: 0 0 15px #ff8237;
+}
+
+
+
+/* ------------------------------ LAYOUT ISSUES ------------------------------ */
+
+table.directory {
+   width: 100%;
+}
+.directory td.entry {
+   white-space: nowrap;/*normal;*/
+   text-overflow: ellipsis;
+   overflow: hidden;
+   width: 24em;
+   min-width: 16em;
+   max-width: 24em;
+   line-height: 1.6em;
+   font-family: myDejaVuSansCondensed;
+   /*letter-spacing: -1px;*/
+}
+.directory td.entry a.el {
+   font-weight: normal;
+}
+.icon {
+   line-height: initial;
+}
+
+.mdescLeft, .memItemLeft, .memTemplItemLeft
+{
+   white-space: normal;
+   word-wrap: break-word;
+   min-width: 16em;
+   max-width: 24em;
+}
+
+table.memberdecls {
+   width: 100%;
+}
+
+#nav-tree {
+    overflow-x: hidden;
+    overflow-y: auto;
+}
+
+
+
+/* ------------------------------ CODE SYNTAX HIGHLIGHT ------------------------------ */
+
+span.keyword {
+   color: #008080;
+}
+span.keywordflow {
+   color: #008080;
+}
+span.keywordtype {
+   color: #40c0c0;
+}
+span.comment {
+   color: #a00000;
+}
+span.preprocessor {
+   color: #4040d0;
+}
+span.stringliteral {
+   color: #00a000;
+}
+div.line a.code {
+   color: #000090;
+}
+div.line a.codeRef {
+   color: #000050;
+}
+

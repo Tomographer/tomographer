@@ -1,0 +1,6 @@
+<map id="tomographer2/tools/ezmatio.h" name="tomographer2/tools/ezmatio.h">
+<area shape="rect" id="node15" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="1091,179,1228,217"/>
+<area shape="rect" id="node21" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="270,92,406,131"/>
+<area shape="rect" id="node24" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="721,92,857,131"/>
+<area shape="rect" id="node20" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="1029,265,1165,304"/>
+</map>

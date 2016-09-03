@@ -1,0 +1,13 @@
+<map id="tomographer2/densedm/tspacellhwalker.h" name="tomographer2/densedm/tspacellhwalker.h">
+<area shape="rect" id="node6" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="1003,252,1139,291"/>
+<area shape="rect" id="node24" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="346,252,510,291"/>
+<area shape="rect" id="node26" href="$densellh_8h.html" title="Some declarations for the DenseLLH type interface. " alt="" coords="1435,165,1597,204"/>
+<area shape="rect" id="node27" href="$dmtypes_8h.html" title="C++ types for describing dense density matrices in various parameterizations. " alt="" coords="93,339,256,377"/>
+<area shape="rect" id="node28" href="$param__herm__x_8h.html" title="Tools for parameterizing hermitian matrices with the X Parameterization. " alt="" coords="1723,165,1885,204"/>
+<area shape="rect" id="node30" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="995,92,1146,117"/>
+<area shape="rect" id="node16" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="1260,339,1396,377"/>
+<area shape="rect" id="node23" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="937,512,1073,551"/>
+<area shape="rect" id="node19" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="447,425,583,464"/>
+<area shape="rect" id="node32" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="988,165,1154,204"/>
+<area shape="rect" id="node33" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="1353,252,1489,291"/>
+</map>

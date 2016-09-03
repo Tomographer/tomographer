@@ -1,0 +1,4 @@
+var struct_tomographer_1_1_tools_1_1_need_own_operator_new_3_01_type1_00_01_type2_00_01_other_types_8_8_8_01_4 =
+[
+    [ "ProviderType", "struct_tomographer_1_1_tools_1_1_need_own_operator_new_3_01_type1_00_01_type2_00_01_other_types_8_8_8_01_4.html#a3cb434c50ea39782ded5831e06270ad4", null ]
+];

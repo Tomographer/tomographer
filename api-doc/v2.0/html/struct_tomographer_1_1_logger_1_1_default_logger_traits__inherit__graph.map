@@ -1,0 +1,5 @@
+<map id="Tomographer::Logger::DefaultLoggerTraits" name="Tomographer::Logger::DefaultLoggerTraits">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_logger_1_1_logger_traits_3_01_buffer_logger_01_4.html" title="Specialized Traits for BufferLogger – see LoggerTraits. " alt="" coords="208,5,411,44"/>
+<area shape="rect" id="node3" href="$struct_tomographer_1_1_logger_1_1_logger_traits_3_01_file_logger_01_4.html" title="Specialized Traits for FileLogger – see LoggerTraits. " alt="" coords="215,68,404,107"/>
+<area shape="rect" id="node4" href="$struct_tomographer_1_1_logger_1_1_logger_traits_3_01_vacuum_logger_01_4.html" title="Specialied Traits for VacuumLogger. See LoggerTraits&lt;BaseLogger&gt;. " alt="" coords="202,131,418,169"/>
+</map>

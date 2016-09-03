@@ -1,0 +1,4 @@
+var struct_tomographer_1_1_tools_1_1_complex_real_scalar_3_01std_1_1complex_3_01_real_scalar_01_4_01_4 =
+[
+    [ "type", "struct_tomographer_1_1_tools_1_1_complex_real_scalar_3_01std_1_1complex_3_01_real_scalar_01_4_01_4.html#a57d6d5d113c4a49dd0d17d4bab8b4853", null ]
+];

@@ -1,0 +1,15 @@
+<map id="tomographer2/tools/needownoperatornew.h" name="tomographer2/tools/needownoperatornew.h">
+<area shape="rect" id="node2" href="$indepmeasllh_8h.html" title="C++ types and functions for calculating the log&#45;likelihood for independent measurements. " alt="" coords="5,92,168,131"/>
+<area shape="rect" id="node3" href="$tspacefigofmerit_8h.html" title="Implement some standard figures of merit for when integrating in T space densely represented density ..." alt="" coords="192,92,355,131"/>
+<area shape="rect" id="node4" href="$tspacellhwalker_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="480,265,643,304"/>
+<area shape="rect" id="node5" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="721,99,898,124"/>
+<area shape="rect" id="node7" href="$mhrw__valuehist__tasks_8h.html" title="Tasks for collecting a histogram of values during a Metropolis&#45;Hastings random walk. " alt="" coords="629,352,830,391"/>
+<area shape="rect" id="node8" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Task Manager/Dispatcher Interfaces) for parallel Metropolis&#45;Hast..." alt="" coords="767,272,950,297"/>
+<area shape="rect" id="node9" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="486,185,637,211"/>
+<area shape="rect" id="node10" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="531,92,696,131"/>
+<area shape="rect" id="node11" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="973,99,1147,124"/>
+<area shape="rect" id="node12" href="$multiprocomp_8h.html" title="Multiprocessing with OpenMP parallel multithreading. " alt="" coords="1203,185,1402,211"/>
+<area shape="rect" id="node14" href="$valuecalculator_8h.html" title="Some elementary definitions which relate to the ValueCalculator Interface. " alt="" coords="1222,99,1429,124"/>
+<area shape="rect" id="node6" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="661,185,897,211"/>
+<area shape="rect" id="node13" href="$signal__status__report_8h.html" title="Basic common code for intercepting a signal to print status information of a task manager..." alt="" coords="1023,179,1180,217"/>
+</map>

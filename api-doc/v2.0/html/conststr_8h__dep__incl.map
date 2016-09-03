@@ -1,0 +1,29 @@
+<map id="tomographer2/tools/conststr.h" name="tomographer2/tools/conststr.h">
+<area shape="rect" id="node2" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="1179,92,1315,131"/>
+<area shape="rect" id="node23" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="667,265,803,304"/>
+<area shape="rect" id="node3" href="$dmtypes_8h.html" title="C++ types for describing dense density matrices in various parameterizations. " alt="" coords="243,179,406,217"/>
+<area shape="rect" id="node4" href="$indepmeasllh_8h.html" title="C++ types and functions for calculating the log&#45;likelihood for independent measurements. " alt="" coords="480,265,643,304"/>
+<area shape="rect" id="node5" href="$param__rho__a_8h.html" title="Tools for parameterizing density matrices with the A Parameterization. " alt="" coords="5,265,168,304"/>
+<area shape="rect" id="node8" href="$param__herm__x_8h.html" title="Tools for parameterizing hermitian matrices with the X Parameterization. " alt="" coords="455,179,618,217"/>
+<area shape="rect" id="node9" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="1241,272,1418,297"/>
+<area shape="rect" id="node10" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="1294,439,1530,464"/>
+<area shape="rect" id="node11" href="$mhrw__valuehist__tasks_8h.html" title="Tasks for collecting a histogram of values during a Metropolis&#45;Hastings random walk. " alt="" coords="1441,599,1642,637"/>
+<area shape="rect" id="node13" href="$check__derivatives_8h.html" title="Tools to check numerical derivatives. " alt="" coords="1688,179,1854,217"/>
+<area shape="rect" id="node14" href="$pos__semidef__util_8h.html" title="Tools for dealing with positive semidefinite matrices. " alt="" coords="1877,179,2043,217"/>
+<area shape="rect" id="node15" href="$random__unitary_8h.html" title="Produce a random unitary according to the Haar measure. " alt="" coords="923,352,1088,391"/>
+<area shape="rect" id="node16" href="$solveclyap_8h.html" title="Routine for solving a complex Lyapunov equation. See Tomographer::SolveCLyap::solve(). " alt="" coords="2067,179,2232,217"/>
+<area shape="rect" id="node17" href="$sphcoords_8h.html" title="spherical coordinates conversion routines, with jacobian etc. See Hyperspherical Coordinates. " alt="" coords="2256,179,2422,217"/>
+<area shape="rect" id="node18" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="1017,439,1168,464"/>
+<area shape="rect" id="node19" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1213,352,1379,391"/>
+<area shape="rect" id="node20" href="$multiprocomp_8h.html" title="Multiprocessing with OpenMP parallel multithreading. " alt="" coords="1838,359,2037,384"/>
+<area shape="rect" id="node21" href="$ezmatio_8h.html" title="Utilities for reading MATLAB &quot;*.mat&quot; data files. See Tomographer::MAT. " alt="" coords="827,265,963,304"/>
+<area shape="rect" id="node22" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="877,179,1014,217"/>
+<area shape="rect" id="node25" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="1400,179,1563,217"/>
+<area shape="rect" id="node28" href="$valuecalculator_8h.html" title="Some elementary definitions which relate to the ValueCalculator Interface. " alt="" coords="2214,272,2421,297"/>
+<area shape="rect" id="node6" href="$tspacefigofmerit_8h.html" title="Implement some standard figures of merit for when integrating in T space densely represented density ..." alt="" coords="243,265,406,304"/>
+<area shape="rect" id="node7" href="$tspacellhwalker_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="412,512,575,551"/>
+<area shape="rect" id="node12" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Task Manager/Dispatcher Interfaces) for parallel Metropolis&#45;Hast..." alt="" coords="1450,519,1633,544"/>
+<area shape="rect" id="node24" href="$simple__find__zero_8h.html" title="A very simplistic tool for finding a relatively straightforward zero with few iterations. " alt="" coords="531,352,696,391"/>
+<area shape="rect" id="node26" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="1645,272,1819,297"/>
+<area shape="rect" id="node27" href="$signal__status__report_8h.html" title="Basic common code for intercepting a signal to print status information of a task manager..." alt="" coords="1606,352,1762,391"/>
+</map>
