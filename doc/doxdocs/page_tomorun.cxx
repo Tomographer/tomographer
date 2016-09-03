@@ -27,12 +27,16 @@
 
 /** \page pageTomorunNewFigureOfMerit Adding a new figure of merit to the \c tomorun program
  *
- *
  * The \c tomorun executable has several figures of merit built into the program: the
  * trace distance, the purified distance, or the fidelity to any reference state, as well
  * as the expectation value of an observable.  If you wish to produce a histogram of a
  * different figure of merit which can't be cast into one of these, you need to change the
  * source code of the tomorun program.
+ *
+ * Another option, which may be easier if you have a very special purpose which might not
+ * warrant inclusion into the generic \c tomorun program, is to combine the required
+ * classes into a new special-purpose program.  This is not difficult, and there is
+ * already an example ready&mdash;see \ref pageCustomTomorunExe.
  *
  * This information page describes how you should change the source code of \c tomorun to
  * include your figure of merit.
@@ -286,5 +290,38 @@
  *      logger);
  *  }
  * \endcode
+ * 
+ */
+
+
+
+
+
+// =============================================================================
+
+
+
+
+
+/** \page pageCustomTomorunExe Creating a custom tomorun-like program
+ *
+ * The \c tomorun executable has several features and has a relatively rigid structure.
+ * If it doesn't quite suit your needs, for example, if you have to integrate over a
+ * different state space or using another parameterization, then you are probably better
+ * off combining the correct C++ classes into a new, special-purpose C++ program (instead
+ * of attempting to modify \c tomorun to include your use case).
+ *
+ * A very minimal version of a &quot;<code>tomorun</code>-like&quot; program is provided
+ * in the test suite as \c "cxx/test/minimal_tomorun.cxx".
+ *
+ * You may want to copy it into a new source file, change the way you specify your inputs
+ * (use the \ref Tomographer::MAT classes to read inputs from a \c matlab file, for
+ * example), and generally speaking adjust any other aspect of the program you may want.
+ *
+ * The code in \c "cxx/test/minimal_tomorun.cxx" should be commented and understandable.
+ * The basic logic is to use the \ref Tomographer::MHRWTasks::ValueHistogramTasks classes,
+ * in combination with \ref Tomographer::DenseDM::TSpace::LLHMHWalker, to run random walks
+ * over quantum states in T-space (see \ref pageParamsT) and collect statistics about a
+ * figure of merit.  If you have any questions, don't hesitate to ask me.
  * 
  */
