@@ -10,10 +10,12 @@ Overview
 
 This project comprises two parts:
 
- * The `tomorun` program — you probably want this
+ * The `tomorun` program — use this to analyze data from a typical tomography
+   experiment;
 
- * The generic, `Tomographer` C++ framework — flexible, but you'll need to
-   invest more time.
+ * The generic, `Tomographer` C++ framework — a flexible set of tools to run
+   Metropolis-Hastings random walks, deal with density matrices, and other
+   utilities.
 
 The `tomorun` executable produces a histogram of a figure of merit under the
 distribution relevant for a reliable error analysis as described in [Faist &
@@ -81,11 +83,11 @@ The configuration, compilation and installation process is done using CMake.
 (You'll need CMake >= 2.8.5.)  Download an official release of Tomographer,
 unpack it, and enter the unpacked directory.  Then, issue the commands:
 
-    tomographer-1.0> mkdir build
-    tomographer-1.0> cd build
-    tomographer-1.0/build> cmake .. <ADDITIONAL CMAKE OPTIONS HERE>
-    tomographer-1.0/build> make
-    tomographer-1.0/build> make install/strip
+    tomographer-X.Y> mkdir build
+    tomographer-X.Y> cd build
+    tomographer-X.Y/build> cmake ..
+    tomographer-X.Y/build> make
+    tomographer-X.Y/build> make install/strip
 
 And you'll have the `tomorun` installed on your system.
 
@@ -188,7 +190,7 @@ API Documentation
 You can build the API documentation using [Doxygen >= 1.8][doxygen]. You'll also
 need `dot` (from the `graphviz` suite). To build the documentation, simply run
 
-    tomographer-1.0/build> make doc
+    tomographer-X.Y/build> make doc
 
 This will create API documentation in both HTML and LaTeX format. The HTML
 output is located in `build/html` and the latex files are in `build/latex`.
@@ -212,16 +214,16 @@ being changed and maintained.
 To compile and run the test suite, you need to specify to cmake that you want to
 build it:
 
-    tomographer-1.0/build> cmake .. -DTOMOGRAPHER_ENABLE_TESTS=on
+    tomographer-X.Y/build> cmake .. -DTOMOGRAPHER_ENABLE_TESTS=on
 
 The test suite will then be compiled normally when you run `make`. Use the `-j`
 option with the number of CPU cores on your system to speed up the compilation:
 
-    tomographer-1.0/build> make -j4
+    tomographer-X.Y/build> make -j4
 
 Run the test suite with the command
 
-    tomographer-1.0/build> make test
+    tomographer-X.Y/build> make test
 
 The test suite uses [CTest][ctest].  You can also run the test programs
 individually.  Most test executables use the [Boost Unit Test
