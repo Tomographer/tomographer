@@ -16,12 +16,14 @@ cmake .. -G"MinGW Makefiles" ^
   -DMATIO_INCLUDE_DIR=Z:/MatIO/matio-1.5.6/src ^
   -DMATIO_LIBRARY=Z:/MatIO/matio-1.5.6/src/libmatio.a ^
   -DBOOST_INCLUDEDIR=Z:/Boost/boost_1_61_0 ^
-  -DBoost_PROGRAM_OPTIONS_LIBRARY=Z:/Boost/boost_1_61_0/libs/program_options/src/libboost_program_options.a ^
-  -DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE=Z:/Boost/boost_1_61_0/libs/program_options/src/libboost_program_options.a ^
+  -DBoost_PROGRAM_OPTIONS_LIBRARY=Z:/Boost/libboost_program_options.a ^
+  -DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE=Z:/Boost/libboost_program_options.a ^
   -DZLIB_INCLUDE_DIR=Z:/MinGW/include ^
   -DZLIB_LIBRARY=Z:/MinGW/lib/libz.a ^
   -DTARGET_ARCHITECTURE=none ^
   "-DCMAKE_CXX_FLAGS_RELEASE=-O2 -msse2 -Wall -Wextra"
+
+rem previously using: -DBoost_PROGRAM_OPTIONS_LIBRARY[_RELEASE]=Z:/Boost/boost_1_61_0_gcc44/libs/program_options/src/libboost_program_options.a 
 
 mingw32-make VERBOSE=1
 
