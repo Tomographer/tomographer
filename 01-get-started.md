@@ -85,7 +85,7 @@ steps to follow in order to get started:
    which uses the Curve Fitting Toolbox to analyze the output from `tomorun`.
 
 
-7. Publish paper. Please don't forget to cite us :)
+7. Write up and publish paper. We will be very happy if you cite us :)
 
    > 1. Philippe Faist and Renato Renner. Practical and Reliable Error Bars in
    >    Quantum Tomography. Phys. Rev. Lett. 117:1, 010404 (2016).
