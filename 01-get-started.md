@@ -20,7 +20,7 @@ steps to follow in order to get started:
         > tomorun --help
 
 3. Create a MATLAB data file with your experimental data, as specified in `tomorun`'s help
-   text. This includes in particular the MATLAB variables `dim`, `Emn`, `Nm`, and `rho_MLE`.
+   text, encoded in the MATLAB variables `dim`, `Emn`, and `Nm`.
 
    Don't forget to properly model noise in your measurement device into effective POVM
    effects.
