@@ -395,6 +395,87 @@ inline std::string fmtDuration(std::chrono::duration<Rep, Period> dt)
 
 
 
+
+
+/** \brief Minimal tool for formatting console stuff with fixed line width
+ *
+ */
+class ConsoleFormatterHelper
+{
+public:
+  /** \brief Constructor
+   *
+   * \param width is the target with of the stuff you want to output.  If \a width is
+   *        zero, then an appropriate default is chosen including an attempt to detect the
+   *        current console width.
+   *
+   */
+  ConsoleFormatterHelper(int width = 0)
+    : _columns(Tomographer::Tools::getWidthForTerminalOutput(width))
+  {
+  }
+
+  //! The number of character columns (as specified to the constructor)
+  inline int columns() const { return _columns; }
+
+  /** \brief Produce a centered string
+   *
+   * \returns a string of columns() characters, with \a x displayed in the middle of the
+   *          line.  A newline is added.  If \a x is wider than the line length, it is
+   *          returned in full with a newline appended.
+   */
+  inline std::string centerLine(std::string x)
+  {
+    if ((int)x.size() > columns()) {
+      return std::move(x) + "\n";
+    }
+    const int r = columns() - x.size();
+    const int rleft = r/2;
+    const int rright = r - rleft; // may differ from r/2 if r is odd
+    return std::string(rleft, ' ') + std::move(x) + std::string(rright, ' ') + "\n";
+  }
+
+  /** \brief Produce a right-aligned string
+   *
+   * \returns a string of columns() characters, with \a x displayed at the right of the
+   *          line.  A newline is added.  If \a x is wider than the line length, it is
+   *          returned in full with a newline appended.
+   */
+  inline std::string rightLine(std::string x)
+  {
+    if ((int)x.size() > columns()) {
+      return std::move(x) + "\n";
+    }
+    const int r = columns() - x.size();
+    return std::string(r, ' ') + std::move(x) + "\n";
+  }
+
+  /** \brief Produce a left-aligned string
+   *
+   * \returns a string of columns() characters, with \a x displayed at the left of the
+   *          line.  The string is padded with spaces and a final newline.  If \a x is
+   *          wider than the line length, it is returned in full with a newline appended.
+   */
+  inline std::string leftLine(std::string x)
+  {
+    if ((int)x.size() > columns()) {
+      return std::move(x) + "\n";
+    }
+    const int r = columns() - x.size();
+    return std::move(x) + std::string(r, ' ') + "\n";
+  }
+  
+  inline std::string hrule(char pattern = '-')
+  {
+    // remember that std::string(10, '-') constructs 10 copies of '-', that is : "----------".
+    return std::string(columns(), pattern) + std::string("\n");
+  }
+  
+private:
+  const int _columns;
+};
+
+
 } // namespace Tools
 } // namespace Tomographer
 

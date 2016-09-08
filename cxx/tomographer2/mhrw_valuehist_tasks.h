@@ -27,6 +27,9 @@
 #ifndef TOMOGRAPHER_MHRW_VALUEHIST_TASKS_H
 #define TOMOGRAPHER_MHRW_VALUEHIST_TASKS_H
 
+#include <iostream>
+#include <iomanip>
+
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/tools/cxxutil.h> // tomographer_assert()
 #include <tomographer2/tools/needownoperatornew.h>
@@ -75,6 +78,31 @@ struct histogram_types<CDataBaseType, true> {// version WITH binning analysis:
 
 
 // ------------------------------------------------
+
+
+
+
+namespace tomo_internal {
+template<typename HistogramType>
+void print_hist_short_bar_with_accept_info(std::ostream & str, int dig_w, int j, const HistogramType & hist,
+                                           double acceptance_ratio, int columns)
+{
+  histogramShortBarWithInfo(str,
+                            streamstr("#" << std::setw(dig_w) << j << ": "),
+                            hist,
+                            Tomographer::Tools::fmts(" [accept ratio = %.2f]", acceptance_ratio),
+                            false, columns);
+  if (acceptance_ratio > 0.35 || acceptance_ratio < 0.2) {
+    str << "    *** Accept ratio out of recommended bounds [0.20, 0.35] ! Adapt step size ***\n";
+  }
+}
+} // namespace tomo_internal
+
+
+
+
+
+
 
 
 /** \brief Results collector, if no binning analysis is being used.
@@ -190,6 +218,37 @@ struct ResultsCollectorSimple
     }
   }
 
+
+  inline void printFinalReport(std::ostream & str, const CDataBaseType & cdata, int max_width = 0)
+  {
+    Tools::ConsoleFormatterHelper h(max_width); // possibly detect terminal width etc.
+
+    const auto& res = *this;
+
+    const RunTaskResultList & collresults = res.collectedRunTaskResults();
+    const FinalHistogramType finalhistogram = res.finalHistogram();
+    str << "\n"
+        << h.centerLine("Final Header")
+        << h.hrule()
+      ;
+    cdata.printBasicCDataMHRWInfo(str);
+    int dig_w = (int)std::ceil(std::log10(res.numTasks()));
+    for (std::size_t j = 0; j < res.numTasks(); ++j) {
+      tomo_internal::print_hist_short_bar_with_accept_info(str, dig_w, j, collresults[j]->histogram,
+                                                           collresults[j]->acceptance_ratio, h.columns());
+    }
+    str << h.hrule()
+        << "\n";
+    // and the final histogram
+    str << h.centerLine("Final Histogram")
+        << h.hrule();
+    histogramPrettyPrint(str, finalhistogram, h.columns());
+    str << h.hrule()
+        << "\n";
+  }
+    
+
+  
 private:
   bool _finalized;
   FinalHistogramType _finalhistogram;
@@ -340,7 +399,8 @@ struct ResultsCollectorWithBinningAnalysis
 
 
   template<typename RealType = double>
-  inline void printHistogramCsv(std::ostream & stream, std::string sep = "\t", std::string linesep = "\n", int precision = 10)
+  inline void printHistogramCsv(std::ostream & stream, std::string sep = "\t", std::string linesep = "\n",
+                                int precision = 10)
   {
     stream << "Value" << sep << "Counts" << sep << "Error" << sep << "SimpleError" << linesep
            << std::scientific << std::setprecision(precision);
@@ -352,6 +412,57 @@ struct ResultsCollectorWithBinningAnalysis
     }
   }
 
+
+  inline void printFinalReport(std::ostream & str, const CDataBaseType & cdata, int max_width = 0)
+  {
+    Tools::ConsoleFormatterHelper h(max_width); // possibly detect terminal width etc.
+
+    const auto& res = *this;
+  
+    // produce report on runs
+    const RunTaskResultList & collresults = res.collectedRunTaskResults();
+    const FinalHistogramType finalhistogram = res.finalHistogram();
+    str << "\n"
+        << h.centerLine("Final Report of Runs")
+        << h.hrule()
+      ;
+    cdata.printBasicCDataMHRWInfo(str);
+    int dig_w = (int)std::ceil(std::log10(res.numTasks()));
+    for (std::size_t j = 0; j < res.numTasks(); ++j) {
+      const auto& stats_coll_result = collresults[j]->stats_collector_result;
+
+      tomo_internal::print_hist_short_bar_with_accept_info(str, dig_w, j, stats_coll_result.hist,
+                                                           collresults[j]->acceptance_ratio, h.columns());
+
+      // error bars stats:
+      const int nbins = stats_coll_result.converged_status.size();
+      const int n_conv = stats_coll_result.converged_status
+        .cwiseEqual(BinningAnalysisParamsType::CONVERGED).count();
+      Eigen::ArrayXi unkn_arr = (stats_coll_result.converged_status
+                                 .cwiseEqual(BinningAnalysisParamsType::UNKNOWN_CONVERGENCE))
+        .template cast<int>();
+      // little heuristic to see whether the "unknown" converged error bars are isolated or not
+      const int n_unknown = unkn_arr.count();
+      const int n_unknown_followingotherunknown
+        = unkn_arr.segment(0,nbins-1).cwiseProduct(unkn_arr.segment(1,nbins-1)).count();
+      const int n_unknown_isolated = n_unknown - n_unknown_followingotherunknown;
+      const int n_notconv = stats_coll_result.converged_status
+        .cwiseEqual(BinningAnalysisParamsType::NOT_CONVERGED).count();
+      str << "    error bars: " << n_conv << " converged / "
+          << n_unknown << " maybe (" << n_unknown_isolated << " isolated) / "
+          << n_notconv << " not converged\n";
+    }
+    str << h.hrule()
+        << "\n";
+    // and the final histogram
+    str << h.centerLine("Final Histogram")
+        << h.hrule();
+    histogramPrettyPrint(str, finalhistogram, h.columns());
+    str << h.hrule()
+        << "\n";
+  }
+
+  
 private:
   bool _finalized;
   FinalHistogramType _finalhistogram;
