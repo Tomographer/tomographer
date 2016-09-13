@@ -49,6 +49,7 @@ extern "C" {
 #include <tomographer2/tools/cxxutil.h>
 #include <tomographer2/tools/eigenutil.h>
 #include <tomographer2/tools/fmt.h>
+#include <tomographer2/mathtools/pos_semidef_util.h>
 
 
 /** \file ezmatio.h
@@ -776,7 +777,16 @@ inline std::ostream& operator<<(std::ostream& str, const IndexListIterator<IsRow
  *
  * The \a Enabled template parameter is provided for convenience, if you wish to employ
  * SFINAE to conditionally enable specializations. See the VarValueDecoder<T> for simple
- * numeric values for an example.
+ * numeric values for an example.  The idea is to use a construct
+ * \code
+ * template<...>
+ * struct VarValueDecoder<..., typename std::enable_if<condition>::type >
+ * \endcode
+ * where the second argument (\c Enabled) is an invalid C++ expression (SFINAE) if the
+ * required condition is not met, and resolves to \c void if the condition is met.  Don't
+ * forget that because of the initial template declaration, when invoking
+ * <code>VarValueDecoder<T></code>, the second paramter is always defaulted to \c void
+ * regardless of the specialization.
  *
  * In addition, this class may have an additional typedef (or nested struct/class) member
  * named \a Params (no example available yet).  In that case, it is possible to pass a
@@ -827,15 +837,20 @@ struct VarValueDecoder
 
 
 namespace tomo_internal {
+
+  template<typename T, typename Res = void>
+  struct enable_if_is_type { typedef T check_type; typedef Res type; };
+
   // has_params_member<T>::value is true if T has a type member named Params,
   // i.e. typename T::Params, else it is false.
   template<typename T, typename Enabled = void>
   struct has_params_member {
     enum { value = 0 };
   };
-  // if T has no Params member, following will fail by SFINAE
+  // if T has no Params member, following will fail by SFINAE (the default arguemnt of
+  // parameter #2 always stays int)
   template<typename T>
-  struct has_params_member<T, typename T::Params>
+  struct has_params_member<T, typename enable_if_is_type<typename T::Params>::type >
   {
     enum { value = 1 };
   };
@@ -2019,6 +2034,79 @@ struct VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRow
   }
   
 };
+
+
+// get a (guaranteed) positive semidefinite matrix from the variable, along with its
+// matrix square root
+
+template<typename EigenType> class EigenPosSemidefMatrixWithSqrt;
+template<typename EigenType> class VarValueDecoder<EigenPosSemidefMatrixWithSqrt<EigenType> >;
+
+template<typename EigenType_>
+struct EigenPosSemidefMatrixWithSqrt
+{
+  typedef EigenType_ EigenType;
+  typedef typename Eigen::NumTraits<typename EigenType::Scalar>::Real RealScalarType;
+
+  struct Params {
+    Params(RealScalarType tolerance_ = Eigen::NumTraits<RealScalarType>::dummy_precision())
+      : tolerance(tolerance_) { }
+    const RealScalarType tolerance;
+  };
+
+  Eigen::SelfAdjointEigenSolver<EigenType> eig;
+
+  EigenType mat;
+  EigenType sqrt;
+
+private:
+  friend class VarValueDecoder<EigenPosSemidefMatrixWithSqrt<EigenType> >;
+
+  EigenPosSemidefMatrixWithSqrt(EigenType && m, const Params & p)
+    : eig( m )
+  {
+    typedef typename Eigen::SelfAdjointEigenSolver<EigenType>::RealVectorType RealVectorType;
+    
+    auto U = eig.eigenvectors();
+    auto d = eig.eigenvalues();
+  
+    Tomographer::MathTools::forcePosVecKeepSum<RealVectorType>(d, p.tolerance);
+  
+    mat = U * d.asDiagonal() * U.adjoint();
+    sqrt = U * d.cwiseSqrt().asDiagonal() * U.adjoint();
+  }
+};
+//! Specialization of \ref VarValueDecoder for extracting a positive semidefinite matrix along with sqrt
+template<typename EigenType_>
+struct VarValueDecoder<EigenPosSemidefMatrixWithSqrt<EigenType_> >
+{
+  typedef EigenType_ EigenType;
+  typedef EigenPosSemidefMatrixWithSqrt<EigenType> RetType;
+
+  typedef typename EigenPosSemidefMatrixWithSqrt<EigenType>::Params Params;
+
+  typedef VarValueDecoder<EigenType> EigenVarDecoder;
+
+  static inline void checkShape(const Var & var, const Params & = Params())
+  {
+    // make sure we can decode the given variable
+    EigenVarDecoder::checkShape(var);
+    // make sure that var is a square matrix
+    const DimList d = var.dims();
+    if (d.size() != 2 || d[0] != d[1]) {
+      throw VarTypeError(var.varName(), std::string("variable to decode is not a square matrix"));
+    }
+  }
+                             
+  static inline RetType decodeValue(const Var & var, const Params & p = Params())
+  {
+    return EigenPosSemidefMatrixWithSqrt<EigenType>(EigenVarDecoder::decodeValue(var), p);
+  }
+
+};
+
+
+
   
 
 } // namespace MAT

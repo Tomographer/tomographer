@@ -182,36 +182,6 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
 
 
 
-// -----------------------------------------------------------------------------
-
-template<typename MatrixType, typename LoggerType>
-inline void read_ref_state(MatrixType & rho_ref, MatrixType & T_ref,
-                           Tomographer::MAT::File * matf, std::string refname,
-                           LoggerType & logger)
-{
-  if (refname.size() == 0) {
-    refname = "rho_MLE";
-  }
-  
-  rho_ref = Tomographer::MAT::value<MatrixType>(matf->var(refname));
-  
-  typedef typename Eigen::SelfAdjointEigenSolver<MatrixType>::RealVectorType RealVectorType;
-  
-  Eigen::SelfAdjointEigenSolver<MatrixType> eig_rho_ref( rho_ref );
-  auto U = eig_rho_ref.eigenvectors();
-  auto d = eig_rho_ref.eigenvalues();
-  
-  Tomographer::MathTools::forcePosVecKeepSum<RealVectorType>(d, 1e-12);
-  
-  rho_ref = U * d.asDiagonal() * U.adjoint();
-  T_ref = U * d.cwiseSqrt().asDiagonal() * U.adjoint();
-  
-  makeLocalLogger(TOMO_ORIGIN, logger).debug([&](std::ostream & str) {
-      str << "Using rho_ref = \n" << rho_ref << "\n\t-> T_ref = \n" << T_ref << "\n";
-    });
-}
-
-
 
 
 
@@ -221,9 +191,11 @@ inline void read_ref_state(MatrixType & rho_ref, MatrixType & T_ref,
 //
 //
 template<int FixedDim, int FixedMaxDim, int FixedMaxPOVMEffects, bool UseBinningAnalysisErrorBars, typename LoggerType>
-inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::MAT::File * matf, LoggerType & logger)
+inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::MAT::File * matf, LoggerType & baselogger)
 {
-  logger.debug("tomorun_dispatch()", "preparing to dispatch. FixedDim=%d, FixedMaxDim=%d, FixedMaxPOVMEffects=%d",
+  Tomographer::Logger::LocalLogger<LoggerType> logger(TOMO_ORIGIN, baselogger);
+
+  logger.debug("preparing to dispatch. FixedDim=%d, FixedMaxDim=%d, FixedMaxPOVMEffects=%d",
                FixedDim, FixedMaxDim, FixedMaxPOVMEffects);
 
   //
@@ -255,7 +227,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
     llh.addMeasEffect(Emn[k], Nm(k), TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS);
   }
 
-  logger.debug("tomorun_dispatch()", [&](std::ostream & ss) {
+  logger.debug([&](std::ostream & ss) {
       ss << "\n\nExn: size="<<llh.Exn().size()<<"\n"
 	 << llh.Exn() << "\n";
       ss << "\n\nNx: size="<<llh.Nx().size()<<"\n"
@@ -275,7 +247,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 #if TOMORUN_USE_MULTIPLEXORVALUECALCULATOR == 1 ////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 
-  logger.debug("tomorun_dispatch()", "Using MultiplexorValueCalculator.");
+  logger.debug("Using MultiplexorValueCalculator.");
 
   // Instantiate & Use a MultiplexorValueCalculator for the different possible figures of
   // merit.
@@ -295,7 +267,16 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
       opt->valtype.valtype == val_type_spec::PURIF_DIST) {
     
     // read the reference state given explicitly as, e.g., "fidelity:rho_ref"
-    read_ref_state<MatrixType>(rho_ref, T_ref, matf, opt->valtype.ref_obj_name, logger);
+    Tomographer::MAT::EigenPosSemidefMatrixWithSqrt mpsd =
+      Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(
+          matf->var(opt->valtype.ref_obj_name.size() ? opt->valtype.ref_obj_name : std::string("rho_ref"))
+          );
+    rho_ref = std::move(mpsd.mat);
+    T_ref = std::move(mpsd.sqrt);
+
+    logger.debug([&](std::ostream & str) {
+        str << "Using rho_ref = \n" << rho_ref << "\n\t-> T_ref = \n" << T_ref << "\n";
+      });
 
   }
   else if (opt->valtype.valtype == val_type_spec::OBS_VALUE) {
@@ -350,13 +331,13 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
       llh,
       opt,
       multiplexor_value_calculator,
-      logger);
+      logger.parentLogger());
         
   //////////////////////////////////////////////////////////////////////////////
 #else  /////////////////////////////////////////////////////////////////////////
   //////////////////////////////////////////////////////////////////////////////
 
-  logger.debug("tomorun_dispatch()", "Not using MultiplexorValueCalculator, but directly specialized"
+  logger.debug("Not using MultiplexorValueCalculator, but directly specialized"
                " templated versions for each figure of merit.");
 
   //
@@ -376,27 +357,31 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
     MatrixType T_ref(dmt.initMatrixType());
     
     // read the reference state given explicitly as, e.g., "fidelity:rho_ref"
-    read_ref_state<MatrixType>(rho_ref, T_ref, matf, opt->valtype.ref_obj_name, logger);
-
+    Tomographer::Mat::EigenPosSemidefMatrixWithSqrt mpsd =
+      Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(
+        matf->var(opt->valtype.ref_obj_name.size() ? opt->valtype.ref_obj_name : "rho_ref")
+        );
+    rho_ref = std::move(mpsd.mat);
+    T_ref = std::move(mpsd.sqrt);
 
     if (opt->valtype.valtype == val_type_spec::FIDELITY) {
       tomorun<UseBinningAnalysisErrorBars>(
           llh,
           opt,
 	  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, TomorunReal>(T_ref),
-          logger);
+          logger.parentLogger());
     } else if (opt->valtype.valtype == val_type_spec::PURIF_DIST) {
       tomorun<UseBinningAnalysisErrorBars>(
           llh,
           opt,
 	  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, TomorunReal>(T_ref),
-          logger);
+          logger.parentLogger());
     } else if (opt->valtype.valtype == val_type_spec::TR_DIST) {
       tomorun<UseBinningAnalysisErrorBars>(
           llh,
           opt,
 	  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, TomorunReal>(rho_ref),
-          logger);
+          logger.parentLogger());
     } else {
       throw std::logic_error("WTF?? You shouldn't be here!");
     }
@@ -427,7 +412,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
         llh,
         opt,
 	Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>(dmt, A),
-        logger);
+        logger.parentLogger());
 
     return;
   }

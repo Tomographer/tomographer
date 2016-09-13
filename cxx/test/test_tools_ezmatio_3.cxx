@@ -33,6 +33,8 @@
 
 #include <tomographer2/tools/ezmatio.h>
 
+#include <boost/math/constants/constants.hpp>
+
 #include "test_tools_ezmatio_common.h"
 
 BOOST_FIXTURE_TEST_SUITE(test_tools_ezmatio_3, load_mat_test_file);
@@ -194,5 +196,255 @@ BOOST_AUTO_TEST_CASE(mcd_2x3x2x2_rowmaj)
 }
 BOOST_AUTO_TEST_SUITE_END(); // stdvec_of_eigen
 
+
+BOOST_AUTO_TEST_SUITE(psdeigen);
+
+BOOST_AUTO_TEST_SUITE(psdf_3x3);
+BOOST_AUTO_TEST_CASE(eigf)
+{
+  typedef Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> MatrixType;
+  Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> mpsd =
+    Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(f.var("psdf_3x3"));
+  MatrixType truemat(3,3);
+  truemat <<
+    1, 0.5, 0.2,
+    0.5,   1, 0.1,
+    0.2, 0.1,   1;
+  MatrixType truesqrt(3,3);
+  truesqrt <<
+    9.6135908e-01,   2.5755921e-01,   9.7219139e-02,
+    2.5755921e-01,   9.6550506e-01,   3.8244441e-02,
+    9.7219139e-02,   3.8244441e-02,   9.9452764e-01;
+
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.mat, truemat, 1e-3);
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.sqrt, truesqrt, 1e-3);
+}
+BOOST_AUTO_TEST_CASE(eigf_st3)
+{
+  typedef Eigen::Matrix<float,3,3> MatrixType;
+  Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> mpsd =
+    Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(f.var("psdf_3x3"));
+  MatrixType truemat;
+  truemat <<
+    1, 0.5, 0.2,
+    0.5,   1, 0.1,
+    0.2, 0.1,   1;
+  MatrixType truesqrt;
+  truesqrt <<
+    9.6135908e-01,   2.5755921e-01,   9.7219139e-02,
+    2.5755921e-01,   9.6550506e-01,   3.8244441e-02,
+    9.7219139e-02,   3.8244441e-02,   9.9452764e-01;
+
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.mat, truemat, 1e-3);
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.sqrt, truesqrt, 1e-3);
+}
+BOOST_AUTO_TEST_CASE(eigd)
+{
+  typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> MatrixType;
+  Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> mpsd =
+    Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(f.var("psdf_3x3"));
+  MatrixType truemat(3,3);
+  truemat <<
+    1, 0.5, 0.2,
+    0.5,   1, 0.1,
+    0.2, 0.1,   1;
+  MatrixType truesqrt(3,3);
+  truesqrt <<
+    9.6135908e-01,   2.5755921e-01,   9.7219139e-02,
+    2.5755921e-01,   9.6550506e-01,   3.8244441e-02,
+    9.7219139e-02,   3.8244441e-02,   9.9452764e-01;
+
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.mat, truemat, 1e-8);
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.sqrt, truesqrt, 1e-5);
+}
+BOOST_AUTO_TEST_CASE(eigd_p)
+{
+  typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> MatrixType;
+  Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> mpsd =
+    Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(f.var("psdf_3x3"), 1e-6);
+  MatrixType truemat(3,3);
+  truemat <<
+    1, 0.5, 0.2,
+    0.5,   1, 0.1,
+    0.2, 0.1,   1;
+  MatrixType truesqrt(3,3);
+  truesqrt <<
+    9.6135908e-01,   2.5755921e-01,   9.7219139e-02,
+    2.5755921e-01,   9.6550506e-01,   3.8244441e-02,
+    9.7219139e-02,   3.8244441e-02,   9.9452764e-01;
+
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.mat, truemat, 1e-8);
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.sqrt, truesqrt, 1e-3);
+}
+BOOST_AUTO_TEST_SUITE_END(); // psdf_3x3
+
+BOOST_AUTO_TEST_SUITE(psdd_2x2);
+BOOST_AUTO_TEST_CASE(eigd)
+{
+  typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> MatrixType;
+  Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> mpsd =
+    Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(f.var("psdd_2x2"));
+  auto SQRT2 = boost::math::constants::root_two<double>();
+
+  // reasonable default for tolerance
+  auto tolerance = Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType>::Params().tolerance;
+  BOOST_MESSAGE("tolerance is " << std::scientific << tolerance) ;
+  BOOST_CHECK(tolerance < 1e-8 && tolerance > 1e-15);
+
+  MatrixType truemat(2,2);
+  truemat <<
+    0.5*SQRT2,    0.5*SQRT2,
+    0.5*SQRT2,    0.5*SQRT2;
+  MatrixType truesqrt(2,2);
+  auto ssqrt2 = std::sqrt(SQRT2);
+  truesqrt <<
+    0.5*ssqrt2,    0.5*ssqrt2,
+    0.5*ssqrt2,    0.5*ssqrt2;
+
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.mat, truemat, 2e-8);
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.sqrt, truesqrt, 2e-4);
+
+  auto v = mpsd.eig.eigenvalues();
+  auto v1 = std::min(v(0), v(1));
+  auto v2 = std::max(v(0), v(1));
+  MY_BOOST_CHECK_FLOATS_EQUAL(v1, 0.0, 1e-12);
+  MY_BOOST_CHECK_FLOATS_EQUAL(v2, boost::math::constants::root_two<double>(), 1e-12);
+}
+BOOST_AUTO_TEST_CASE(eigf)
+{
+  typedef Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> MatrixType;
+  Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> mpsd =
+    Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(f.var("psdd_2x2"));
+  MatrixType truemat(2,2);
+  truemat <<
+    boost::math::constants::half_root_two<float>(), boost::math::constants::half_root_two<float>(),
+    boost::math::constants::half_root_two<float>(), boost::math::constants::half_root_two<float>();
+  MatrixType truesqrt(2,2);
+  truesqrt << 0.5, 0.5, 0.5, 0.5;
+  truesqrt *= std::sqrt(boost::math::constants::root_two<float>());
+
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.mat, truemat, 1e-4f);
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.sqrt, truesqrt, 5e-3f);
+
+  auto v = mpsd.eig.eigenvalues();
+  auto v1 = std::min(v(0), v(1));
+  auto v2 = std::max(v(0), v(1));
+  MY_BOOST_CHECK_FLOATS_EQUAL(v1, 0.0f, 1e-5f);
+  MY_BOOST_CHECK_FLOATS_EQUAL(v2, boost::math::constants::root_two<float>(), 1e-5f);
+}
+BOOST_AUTO_TEST_CASE(eigd_testp)
+{
+  typedef Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> MatrixType;
+
+  double tolerance = 0.1;
+
+  Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> mpsd =
+    Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(f.var("psdd_2x2"), tolerance);
+
+  auto SQRT2 = boost::math::constants::root_two<double>();
+
+  MatrixType truemat(2,2);
+  truemat <<
+    0.5*SQRT2,    0.5*(SQRT2-2*tolerance),
+    0.5*(SQRT2-2*tolerance),    0.5*SQRT2;
+  
+  MatrixType truesqrt(2,2);
+  auto aa = std::sqrt(SQRT2 - tolerance);
+  auto bb = std::sqrt(tolerance);
+  truesqrt <<
+    0.5*(aa+bb), 0.5*(aa-bb),
+    0.5*(aa-bb), 0.5*(aa+bb);
+
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.mat, truemat, tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.sqrt, truesqrt, tol);
+
+  auto v = mpsd.eig.eigenvalues();
+  auto v1 = std::min(v(0), v(1));
+  auto v2 = std::max(v(0), v(1));
+
+  MY_BOOST_CHECK_FLOATS_EQUAL(v1, 0.0, 1e-12);
+  MY_BOOST_CHECK_FLOATS_EQUAL(v2, boost::math::constants::root_two<double>(), 1e-12);
+
+  Eigen::SelfAdjointEigenSolver<MatrixType> eigx(mpsd.mat);
+  auto vv = eigx.eigenvalues();
+  auto vv1 = std::min(vv(0), vv(1));
+  auto vv2 = std::max(vv(0), vv(1));
+
+  MY_BOOST_CHECK_FLOATS_EQUAL(vv1, 0.1, 1e-12);
+  MY_BOOST_CHECK_FLOATS_EQUAL(vv2, boost::math::constants::root_two<double>()-0.1, 1e-12);
+
+  Eigen::SelfAdjointEigenSolver<MatrixType> eigy(mpsd.sqrt);
+  auto vy = eigy.eigenvalues();
+  auto vy1 = std::min(vy(0), vy(1));
+  auto vy2 = std::max(vy(0), vy(1));
+
+  MY_BOOST_CHECK_FLOATS_EQUAL(vy1, std::sqrt(0.1), 1e-12);
+  MY_BOOST_CHECK_FLOATS_EQUAL(vy2, std::sqrt(boost::math::constants::root_two<double>()-0.1), 1e-12);
+}
+BOOST_AUTO_TEST_SUITE_END(); // psdd_2x2
+
+BOOST_AUTO_TEST_SUITE(psdcf_2x2);
+BOOST_AUTO_TEST_CASE(eigf)
+{
+  typedef Eigen::Matrix<std::complex<float>,Eigen::Dynamic,Eigen::Dynamic> MatrixType;
+  Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> mpsd =
+    Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(f.var("psdcf_2x2"));
+
+  // reasonable default for tolerance
+  auto tolerance = Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType>::Params().tolerance;
+  BOOST_MESSAGE("tolerance is " << std::scientific << tolerance) ;
+  BOOST_CHECK(tolerance < 1e-3 && tolerance > 1e-7);
+
+  MatrixType truemat(2,2);
+  truemat <<
+    0.5f,    std::complex<float>(0,0.5f),
+    std::complex<float>(0,-0.5f),    0.5f;
+
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.mat, truemat, 2e-3);
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.sqrt, truemat, 2e-2);
+
+  auto v = mpsd.eig.eigenvalues();
+  auto v1 = std::min(v(0), v(1));
+  auto v2 = std::max(v(0), v(1));
+  MY_BOOST_CHECK_FLOATS_EQUAL(v1, 0.0, tolerance);
+  MY_BOOST_CHECK_FLOATS_EQUAL(v2, 1, tolerance);
+}
+BOOST_AUTO_TEST_SUITE_END(); // psdcf_2x2
+
+BOOST_AUTO_TEST_SUITE(psdcd_2x2);
+BOOST_AUTO_TEST_CASE(eigd)
+{
+  typedef Eigen::Matrix<std::complex<double>,Eigen::Dynamic,Eigen::Dynamic> MatrixType;
+  Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> mpsd =
+    Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(f.var("psdcd_2x2"));
+  auto SQRT2 = boost::math::constants::root_two<double>();
+
+  // reasonable default for tolerance
+  auto tolerance = Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType>::Params().tolerance;
+  BOOST_MESSAGE("tolerance is " << std::scientific << tolerance) ;
+  BOOST_CHECK(tolerance < 1e-8 && tolerance > 1e-15);
+
+  MatrixType truemat(2,2);
+  truemat <<
+    0.5*SQRT2,     std::complex<double>(0,0.5*SQRT2),
+    std::complex<double>(0,-0.5*SQRT2),    0.5*SQRT2;
+  MatrixType truesqrt(2,2);
+  auto ssqrt2 = std::sqrt(SQRT2);
+  truesqrt <<
+    0.5*ssqrt2,     std::complex<double>(0,0.5*ssqrt2),
+    std::complex<double>(0,-0.5*ssqrt2),    0.5*ssqrt2;
+
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.mat, truemat, 2e-8);
+  MY_BOOST_CHECK_EIGEN_EQUAL(mpsd.sqrt, truesqrt, 2e-4);
+
+  auto v = mpsd.eig.eigenvalues();
+  auto v1 = std::min(v(0), v(1));
+  auto v2 = std::max(v(0), v(1));
+  MY_BOOST_CHECK_FLOATS_EQUAL(v1, 0.0, 1e-12);
+  MY_BOOST_CHECK_FLOATS_EQUAL(v2, boost::math::constants::root_two<double>(), 1e-12);
+}
+BOOST_AUTO_TEST_SUITE_END(); // psdcd_2x2
+
+BOOST_AUTO_TEST_SUITE_END(); // psdeigen
 
 BOOST_AUTO_TEST_SUITE_END(); // test_tools_ezmatio_3
