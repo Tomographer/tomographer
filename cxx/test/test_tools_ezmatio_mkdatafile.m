@@ -74,6 +74,21 @@ d.mi32_3x3 = int32([1 1 1; 2 2 2; 2147483647 0 -2147483648]);
 % uint32, 3x3 matrix
 d.mu32_3x3 = uint32([1 1 1; 2 2 2; 4294967295 0 0]);
 
+% single real, pos semidef matrix
+d.psdf_3x3 = single([   1, 0.5, 0.2; ...
+                      0.5,   1, 0.1; ...
+                      0.2, 0.1,   1]);
+% double real, pos semidef matrix
+d.psdd_2x2 = [ 1/sqrt(2.0), 1/sqrt(2.0); ...
+               1/sqrt(2.0), 1/sqrt(2.0) ];
+% complex single, pos semidef matrix
+d.psdcf_2x2 = single([ 0.5, 0.5*1i;
+                      -0.5*1i, 0.5 ]);
+% complex double, pos semidef matrix
+d.psdcd_2x2 = [ 1/sqrt(2.0),   1i/sqrt(2.0); ...
+                -1i/sqrt(2.0), 1/sqrt(2.0) ];
+
+
 % char, N row vector
 d.rvc = 'A character string.';
 
