@@ -37,7 +37,7 @@
  *
  * The classes and routines of the project belong to several categories.
  *
- * <h3>Tools</h3>
+ * <h3>Generic Tools</h3>
  *
  * These are basic tools and utilities:
  *
@@ -60,15 +60,16 @@
  *   what the state space is, the jump function, starting point, step size, etc. in the
  *   form of a type implementing the \ref pageInterfaceMHWalker.
  *
- * - The \ref Tomographer::DenseDM::TSpace::LLHMHWalker is a type implementing the \ref
- *   pageInterfaceMHWalker, which is capable of running a random walk on the space of
- *   quantum states represented by dense C++ Eigen matrices, and using the distribution
- *   proportional to the loglikelihood function on the Hilbert-Schmidt measure.
- *
  * - While running the random walk, you'll want to collect some form of statistics. This
  *   is done with objects which comply with the \ref pageInterfaceMHRWStatsCollector. For
  *   example, see \ref Tomographer::ValueHistogramMHRWStatsCollector and \ref
  *   Tomographer::ValueHistogramWithBinningMHRWStatsCollector.
+ *
+ * - For example a specific implementation: The \ref
+ *   Tomographer::DenseDM::TSpace::LLHMHWalker is a type implementing the \ref
+ *   pageInterfaceMHWalker, which is capable of running a random walk on the space of
+ *   quantum states represented by dense C++ Eigen matrices, and using the distribution
+ *   proportional to the loglikelihood function on the Hilbert-Schmidt measure.
  *
  * <h3>Engine for Multiprocessing: Running Tasks in Parallel</h3>
  *
@@ -162,5 +163,11 @@
  * Topics:
  *
  *   - \subpage pageTomorunNewFigureOfMerit
+ *   - \subpage pageCustomTomorunExe
+ *
+ * <h3>Known Bugs & To Do List</h3>
+ *
+ *   - \subpage bugs "Bug List"
+ *   - \subpage todo "To Do List"
  *
  */

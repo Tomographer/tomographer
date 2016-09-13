@@ -96,148 +96,6 @@ struct TomorunCData : public CDataBaseType_
 
 };
 
-// ------------------------------------------------------------------------------
-// Utility to generate report
-// ------------------------------------------------------------------------------
-
-
-struct console_headers
-{
-  // remember that std::string(10, '-') constructs 10 copies of '-', that is : "----------".
-  
-  console_headers()
-    : columns(_get_columns()),
-      hline(std::string(columns, '-')+std::string("\n")),
-      final_header(_center_line("Final Report of Runs", columns)+std::string("\n")),
-      final_histogram(_center_line("Final Histogram", columns)+std::string("\n"))
-  {
-  }
-  
-  const int columns;
-  const std::string hline;
-  const std::string final_header;
-  const std::string final_histogram;
-  
-private:
-  static int _get_columns() {
-    const int c = Tomographer::Tools::getWidthForTerminalOutput();
-    return c;
-  }
-  static std::string _center_line(std::string x, int w)
-  {
-    if ((int)x.size() > w) {
-      w = x.size();
-      return x; // std::move(x); // std::move is unnecessary, see warning with Clang++
-    }
-    const int r = w - x.size();
-    const int rleft = r/2;
-    const int rright = r - rleft; // may differ from r/2 if r is odd
-    return std::string(rleft, ' ') + std::move(x) + std::string(rright, ' ');
-  }
-};
-
-template<typename HistType>
-inline void print_short_bar_and_accept_ratio(std::ostream & str, int j, HistType&& hist,
-					     double acceptance_ratio, int dig_width, int full_max_width)
-{
-  std::string accept_ratio_appendstr =
-    " [accept ratio = " + Tomographer::Tools::fmts("%.2f", acceptance_ratio) + "]";
-
-  str << "#" << std::setw(dig_width) << j << ": ";
-  int w = histogramShortBar(str, std::forward<HistType>(hist), false,
-                            full_max_width - 3 - dig_width - accept_ratio_appendstr.size());
-  str << std::setw(w + accept_ratio_appendstr.size()) << std::right << accept_ratio_appendstr << "\n";
-  if (acceptance_ratio > 0.35 || acceptance_ratio < 0.2) {
-    str << "    *** Accept ratio out of recommended bounds [0.20, 0.35] ! Adapt step size ***\n";
-  }
-}
-
-template<typename TomorunCDataType, typename ResultsCollector, typename LoggerType,
-	 TOMOGRAPHER_ENABLED_IF_TMPL(!TomorunCDataType::BinningAnalysisEnabled)>
-static inline void produce_final_report(TomorunCDataType & cdata, ResultsCollector & res,
-					LoggerType & logger)
-{
-  logger.debug("produce_final_report()", "about to produce final report.");
-
-  console_headers h; // detect terminal width etc.
-  
-  // produce report on runs
-  logger.info("produce_final_report()", [&](std::ostream & str) {
-      const typename ResultsCollector::RunTaskResultList & collresults = res.collectedRunTaskResults();
-      const typename ResultsCollector::FinalHistogramType finalhistogram = res.finalHistogram();
-      str << "\n"
-	  << h.final_header
-	  << h.hline
-	;
-      cdata.printBasicCDataMHRWInfo(str);
-      int dig_w = (int)std::ceil(std::log10(res.numTasks()));
-      for (std::size_t j = 0; j < res.numTasks(); ++j) {
-	print_short_bar_and_accept_ratio(str, j, collresults[j]->histogram, collresults[j]->acceptance_ratio,
-                                         dig_w, h.columns);
-      }
-      str << h.hline
-	  << "\n";
-      // and the final histogram
-      str << h.final_histogram
-	  << h.hline;
-      histogramPrettyPrint(str, finalhistogram, h.columns);
-      str << h.hline
-	  << "\n";
-    });
-}
-
-template<typename TomorunCDataType, typename ResultsCollector, typename LoggerType,
-	 TOMOGRAPHER_ENABLED_IF_TMPL(TomorunCDataType::BinningAnalysisEnabled)>
-inline void produce_final_report(TomorunCDataType & cdata, ResultsCollector & res,
-				 LoggerType & logger)
-{
-  logger.debug("produce_final_report()", "about to produce final report.");
-
-  console_headers h; // detect terminal width etc.
-  
-  // produce report on runs
-  logger.info("produce_final_report()", [&](std::ostream & str) {
-      const typename ResultsCollector::RunTaskResultList & collresults = res.collectedRunTaskResults();
-      const typename ResultsCollector::FinalHistogramType finalhistogram = res.finalHistogram();
-      str << "\n"
-	  << h.final_header
-	  << h.hline
-	;
-      cdata.printBasicCDataMHRWInfo(str);
-      int dig_w = (int)std::ceil(std::log10(res.numTasks()));
-      for (std::size_t j = 0; j < res.numTasks(); ++j) {
-	const auto& stats_coll_result = collresults[j]->stats_collector_result;
-	print_short_bar_and_accept_ratio(str, j, stats_coll_result.hist, collresults[j]->acceptance_ratio,
-                                         dig_w, h.columns);
-	// error bars stats:
-	const int nbins = stats_coll_result.converged_status.size();
-	const int n_conv = stats_coll_result.converged_status
-	  .cwiseEqual(ResultsCollector::BinningAnalysisParamsType::CONVERGED).count();
-	Eigen::ArrayXi unkn_arr = (stats_coll_result.converged_status
-				   .cwiseEqual(ResultsCollector::BinningAnalysisParamsType::UNKNOWN_CONVERGENCE))
-	  .template cast<int>();
-	// little heuristic to see whether the "unknown" converged error bars are isolated or not
-	const int n_unknown = unkn_arr.count();
-	const int n_unknown_followingotherunknown
-	  = unkn_arr.segment(0,nbins-1).cwiseProduct(unkn_arr.segment(1,nbins-1)).count();
-	const int n_unknown_isolated = n_unknown - n_unknown_followingotherunknown;
-	const int n_notconv = stats_coll_result.converged_status
-	  .cwiseEqual(ResultsCollector::BinningAnalysisParamsType::NOT_CONVERGED).count();
-	str << "    error bars: " << n_conv << " converged / "
-	    << n_unknown << " maybe (" << n_unknown_isolated << " isolated) / "
-	    << n_notconv << " not converged\n";
-      }
-      str << h.hline
-	  << "\n";
-      // and the final histogram
-      str << h.final_histogram
-	  << h.hline;
-      histogramPrettyPrint(str, finalhistogram, h.columns);
-      str << h.hline
-              << "\n";
-    });
-}
-
 
 
 
@@ -304,7 +162,9 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
   // delta-time, in seconds and fraction of seconds
   std::string elapsed_s = Tomographer::Tools::fmtDuration(time_end - time_start);
 
-  produce_final_report(taskcdat, results, logger.parentLogger());
+  logger.info([&](std::ostream & stream) {
+      results.printFinalReport(stream, taskcdat);
+    });
 
   // save the histogram to a CSV file if the user required it
   if (opt->write_histogram.size()) {

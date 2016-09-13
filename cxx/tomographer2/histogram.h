@@ -1164,6 +1164,64 @@ inline std::string histogramShortBar(const HistogramType & histogram, bool log_s
 }
 
 
+/** \brief Format the histogram as a one-line bar, with some surrounding info
+ *
+ * Produces a one-line visual representation of the histogram, streamed into an
+ * std::ostream.  The bar is surrounded by some info, given as two strings \a head and \a
+ * tail. A final newline is inserted.
+ *
+ * More precisely, this function outputs \a head, then the histogram bar, and then \a
+ * tail, while ensuring that the full width of everything reaches exactly \a
+ * full_max_width.  If max_width <= 0, then the screen width (or default width) minus the
+ * given amount in absolute value is used instead. The negative amount is useful if your
+ * line is already occupied by some content.
+ *
+ * See also \ref histogramShortBarWithInfo(std::string, const HistogramType&, std::string, bool, int)
+ */
+template<typename HistogramType>
+inline void histogramShortBarWithInfo(std::ostream & str,
+                                      std::string head,
+                                      const HistogramType& hist,
+                                      std::string tail,
+                                      bool log_scale = true,
+                                      int full_max_width = 0)
+{
+  full_max_width = Tools::getWidthForTerminalOutput(full_max_width);
+
+  str << head;
+  int w = histogramShortBar(str, hist, log_scale, full_max_width - head.size() - tail.size());
+  str << std::setw(w + tail.size()) << std::right << tail << "\n";
+}
+
+/** \brief Format the histogram as a one-line bar, with some surrounding info
+ *
+ * Produces a one-line visual representation of the histogram, returned as a string.  The
+ * bar is surrounded by some info, given as two strings \a head and \a tail. A final
+ * newline is inserted.
+ *
+ * More precisely, this function outputs \a head, then the histogram bar, and then \a
+ * tail, while ensuring that the full width of everything reaches exactly \a
+ * full_max_width.  If max_width <= 0, then the screen width (or default width) minus the
+ * given amount in absolute value is used instead. The negative amount is useful if your
+ * line is already occupied by some content.
+ *
+ * See also \ref histogramShortBarWithInfo(std::ostream&, std::string, const HistogramType&, std::string, bool, int)
+ */
+template<typename HistogramType>
+inline std::string histogramShortBarWithInfo(std::string head,
+                                             const HistogramType& hist,
+                                             std::string tail,
+                                             bool log_scale = true,
+                                             int full_max_width = 0)
+{
+  std::ostringstream ss;
+  histogramShortBarWithInfo(ss, head, hist, tail, log_scale, full_max_width);
+  return ss.str();
+}
+
+
+
+
 
 
 
