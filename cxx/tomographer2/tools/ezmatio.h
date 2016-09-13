@@ -2042,21 +2042,54 @@ struct VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRow
 template<typename EigenType> class EigenPosSemidefMatrixWithSqrt;
 template<typename EigenType> class VarValueDecoder<EigenPosSemidefMatrixWithSqrt<EigenType> >;
 
+
+/** \brief Read a positive semidefinite matrix along with its matrix square root
+ *
+ * Use this type for \ref VarValueDecoder "VarValueDecoder<T>" to decode a positive
+ * semidefinite matrix from a given variable, make sure that it is indeed numerically
+ * positive semidefinite, and calculate as well its matrix square root.
+ *
+ * We read a square matrix, calculate its eigenvalue decomposition, and re-create a new
+ * matix with the same eigenvectors, where all eigenvalues are at least a given \a
+ * tolerance (the other eigenvalues are adjusted so as to perserve the overall trace).
+ * Internally, we use the \ref Tomographer::MathTools::forcePosSemiDef() family of
+ * utilities (preserving the total trace of the matrix).
+ *
+ * You should not construct this type directly, just use it with \ref
+ * VarValueDecoder<EigenPosSmidefMatrixWithSqrt<EigenType> >.
+ */
 template<typename EigenType_>
 struct EigenPosSemidefMatrixWithSqrt
 {
   typedef EigenType_ EigenType;
   typedef typename Eigen::NumTraits<typename EigenType::Scalar>::Real RealScalarType;
 
+  /** \brief Parameters to read the positive semidefinite matrix
+   *
+   * The main parameter is the tolerance.  The tolerance is the minimal acceptable
+   * eigenvalue of the returned matrix (in any case must be positive).
+   *
+   * The tolerance defaults to Eigen's tolerance, typically <code>1e-12</code> for \c
+   * double type.
+   *
+   * Internally, we use the \ref Tomographer::MathTools::forcePosSemiDef() family of
+   * utilities (preserving the total trace of the matrix).  This means that the minimal
+   * eigenvalue of the returned matrix will be the \a tolerance.
+   */
   struct Params {
+    //! Constructor, specify the tolerance
     Params(RealScalarType tolerance_ = Eigen::NumTraits<RealScalarType>::dummy_precision())
       : tolerance(tolerance_) { }
+    //! The tolerance
     const RealScalarType tolerance;
   };
 
+  //! The readily-initialized eigenvalue decomposition of the matrix read from the MAT file
   Eigen::SelfAdjointEigenSolver<EigenType> eig;
 
+  //! The matrix itself
   EigenType mat;
+  //! The matrix square root of the read matrix
   EigenType sqrt;
 
 private:

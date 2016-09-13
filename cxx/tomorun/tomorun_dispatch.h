@@ -267,7 +267,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
       opt->valtype.valtype == val_type_spec::PURIF_DIST) {
     
     // read the reference state given explicitly as, e.g., "fidelity:rho_ref"
-    Tomographer::MAT::EigenPosSemidefMatrixWithSqrt mpsd =
+    Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> mpsd =
       Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(
           matf->var(opt->valtype.ref_obj_name.size() ? opt->valtype.ref_obj_name : std::string("rho_ref"))
           );
@@ -357,7 +357,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
     MatrixType T_ref(dmt.initMatrixType());
     
     // read the reference state given explicitly as, e.g., "fidelity:rho_ref"
-    Tomographer::Mat::EigenPosSemidefMatrixWithSqrt mpsd =
+    Tomographer::Mat::EigenPosSemidefMatrixWithSqrt<MatrixType> mpsd =
       Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(
         matf->var(opt->valtype.ref_obj_name.size() ? opt->valtype.ref_obj_name : "rho_ref")
         );
