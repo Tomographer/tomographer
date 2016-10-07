@@ -23,6 +23,9 @@ each one of them with the system command
 
     > tomorun --config tomorun-config-XYZ
 
+While the command is running, you can hit CTRL+C to get a status report. If you wish to
+interrupt the running program, hit CTRL+C twice in short succession.
+
 After running this command, the file `tomorun-config-XYZ-histogram.csv` should appear.
 This is the histogram collected during the random walk, and is the main output of the
 `tomorun` program.

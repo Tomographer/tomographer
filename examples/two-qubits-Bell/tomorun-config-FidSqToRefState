@@ -1,0 +1,26 @@
+# Tomorun configuration file. All settings specified here are values for command-line
+# options to the `tomorun` program. See help by running the command `tomorun --help`.
+#
+# Run `tomorun` with this configuration by issuing the command:
+#     tomorun --config tomorun-config-FidSqToRefState
+
+# ------------------
+data-file-name=thedata.mat
+write-histogram-from-config-file-name = 1
+# ------------------
+
+n-repeats = 12
+n-chunk = 1
+
+n-sweep = 100
+n-run = 32768
+
+# The step size of the random walk
+step-size = 0.01
+
+# Calculate the squared fidelity to the pure reference state (remember: use
+# "obs-value" in this case, see `tomorun --help`)
+value-type=obs-value:rho_ref
+
+# Histogram range:  MINVALUE:MAXVALUE/NUMBEROFBINS
+value-hist=0.9:1/50

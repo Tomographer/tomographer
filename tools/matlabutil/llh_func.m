@@ -11,16 +11,16 @@ function [llh] = llh_func(Nm, Emn, rho)
 
   % needed for when we use this function with CVX
   iscvx = false;
-  if (strcmp(class(sigma), 'cvx'))
+  if (strcmp(class(rho), 'cvx'))
     iscvx = true;
   end
 
-  for k=1:numel(N)
+  for k=1:numel(Nm)
 
-    if (N(k) > 0  &&  any(any(En(:,:,k))))
-      trprojsigma = real(trace(En(:,:,k) * sigma));
-      if (iscvx || abs(trprojsigma) > 1e-6)
-        llh = llh  -  2 * N(k) * log(trprojsigma);
+    if (Nm(k) > 0  &&  any(any(Emn(:,:,k))))
+      trprojrho = real(trace(Emn(:,:,k) * rho));
+      if (iscvx || abs(trprojrho) > 1e-6)
+        llh = llh  -  2 * Nm(k) * log(trprojrho);
       end
     end
 
