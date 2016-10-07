@@ -2,7 +2,7 @@
 # options to the `tomorun` program. See help by running the command `tomorun --help`.
 #
 # Run `tomorun` with this configuration by issuing the command:
-#     tomorun --config tomorun-config-FidSqToRefState
+#     tomorun --config tomorun-config-TrDistToMLE
 
 # ------------------
 data-file-name=thedata.mat
@@ -18,9 +18,9 @@ step-size = 0.01
 n-sweep = 100
 n-run = 32768
 
-# Calculate the squared fidelity to the pure reference state (remember: use
-# "obs-value" in this case, see `tomorun --help`)
-value-type=obs-value:rho_ref
+# Calculate the trace distance to the maximum likelihood estimate state rho_MLE (which is
+# specified in the MATLAB data file)
+value-type=tr-dist:rho_MLE
 
 # Histogram range:  MINVALUE:MAXVALUE/NUMBEROFBINS
-value-hist=0.9:1/50
+value-hist=0:0.2/200

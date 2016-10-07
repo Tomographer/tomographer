@@ -46,7 +46,7 @@ function [ fhandle ] = mynamedfigure(figname, figtitle, varargin)
   % findobj() : ~ "list of open figures"
   % idea: find(in list of open figures, handle fh)
   % needsinit=true if not found.
-  needsinit = (numel(find(not(findobj()-fh))) == 0);
+  needsinit = (numel(find(findobj()==fh)) == 0);
   
   % ** open or focus the figure **
   figure(fh);
