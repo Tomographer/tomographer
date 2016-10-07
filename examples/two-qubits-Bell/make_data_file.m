@@ -114,7 +114,7 @@ Cdata.Nm = Nm;
 Cdata.rho_MLE = rho_MLE;
 
 % An entanglement witness which is appropriate for our target state
-Cdata.EntWitness = -eye(4) - kron(QLib.sigma.x,QLib.sigma.y) ...
+Cdata.EntglWitness = -eye(4) - kron(QLib.sigma.x,QLib.sigma.y) ...
     + kron(QLib.sigma.y,QLib.sigma.x) - kron(QLib.sigma.z,QLib.sigma.z) ;
 
 
