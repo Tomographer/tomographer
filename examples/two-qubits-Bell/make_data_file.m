@@ -38,7 +38,8 @@ end
 
 
 % These are the measurement counts. Nm(k) is the number of times the POVM effect
-% Emn(:,:,k) was observed.
+% Emn(:,:,k) was observed. The numbers here were obtained by simulating measurements
+% from the state `rho_sim` given above using the described measurement settings.
 Nm = [ ...
    122; ...
    105; ...
