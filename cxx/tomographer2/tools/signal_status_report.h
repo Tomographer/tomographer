@@ -96,7 +96,7 @@ struct SigHandlerTaskDispatcherStatusReporter
             elapsed.c_str());
     if (report.workers_running.size() == 1) {
       if (report.workers_running[0]) {
-        fprintf(stderr, "%s\n", report.workers_reports[0].msg.c_str());
+        fprintf(stderr, "--> %s\n", report.workers_reports[0].msg.c_str());
       }
     } else if (report.workers_running.size() > 1) {
       fprintf(stderr,

@@ -8,6 +8,10 @@ https://dx.doi.org/10.1103/PhysRevLett.117.010404 .
 
 ### Create the data file
 
+The data file is already in this git repository, so you don't need to do this manually to
+run the example.  The following steps are provided as an illustration for how to create
+your own data file.
+
 Perform the following, using MATLAB.
 
 - make sure you have installed the libraries
@@ -17,7 +21,7 @@ Perform the following, using MATLAB.
 - make sure that the directory `tools/matlabtools` (of the Tomographer project)
   is in your MATLAB path;
 
-- run the script `make_data_file.m`;
+- run the script `make_data_file.m` -- edit at will;
 
 - You should now have a file `thedata.mat`. This is the input file you can
   specify to `tomorun`.
