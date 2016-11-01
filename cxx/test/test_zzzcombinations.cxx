@@ -45,7 +45,7 @@
 #include <tomographer2/densedm/tspacefigofmerit.h>
 #include <tomographer2/densedm/tspacellhwalker.h>
 
-#include "boost_test_logger.h"
+#include <tomographer2/tools/boost_test_logger.h>
 
 
 

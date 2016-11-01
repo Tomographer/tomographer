@@ -38,7 +38,7 @@
 
 #include <tomographer2/mhrwstatscollectors.h>
 
-#include "boost_test_logger.h"
+#include <tomographer2/tools/boost_test_logger.h>
 
 
 // -----------------------------------------------------------------------------

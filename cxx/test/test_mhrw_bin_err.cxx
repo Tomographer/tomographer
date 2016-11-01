@@ -39,7 +39,7 @@
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/mhrw.h>
 
-#include "boost_test_logger.h"
+#include <tomographer2/tools/boost_test_logger.h>
 
 
 BOOST_AUTO_TEST_SUITE(test_mhrw_bin_err)

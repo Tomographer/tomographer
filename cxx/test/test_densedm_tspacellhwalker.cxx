@@ -43,7 +43,7 @@
 #include <tomographer2/densedm/densellh.h>
 #include <tomographer2/densedm/indepmeasllh.h>
 
-#include "boost_test_logger.h"
+#include <tomographer2/tools/boost_test_logger.h>
 
 
 // -----------------------------------------------------------------------------

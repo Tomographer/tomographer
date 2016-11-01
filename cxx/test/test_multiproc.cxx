@@ -38,8 +38,9 @@
 
 #include <tomographer2/multiproc.h>
 
+#include <tomographer2/tools/boost_test_logger.h>
+
 #include "test_multi_tasks_common.h"
-#include "boost_test_logger.h"
 
 
 // -----------------------------------------------------------------------------

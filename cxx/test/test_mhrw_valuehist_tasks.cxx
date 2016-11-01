@@ -39,7 +39,8 @@
 #include <tomographer2/mhrw_valuehist_tasks.h>
 #include <tomographer2/multiproc.h>
 
-#include "boost_test_logger.h"
+#include <tomographer2/tools/boost_test_logger.h>
+
 #include "test_mh_random_walk_common.h" // our test-case random walk
 
 

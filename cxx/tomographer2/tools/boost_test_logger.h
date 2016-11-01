@@ -25,14 +25,13 @@
  */
 
 
-#ifndef TOMOGRAPHER_TEST_BOOST_TEST_LOGGER_H
-#define TOMOGRAPHER_TEST_BOOST_TEST_LOGGER_H
+#ifndef TOMOGRAPHER_TOOLS_BOOST_TEST_LOGGER_H
+#define TOMOGRAPHER_TOOLS_BOOST_TEST_LOGGER_H
+
 
 #include <tomographer2/tools/loggers.h>
 
-//
-// A logger we can use in tests, which calls BOOST_MESSAGE()
-//
+
 class BoostTestLogger;
 namespace Tomographer { namespace Logger {
 // traits for BoostTestLogger
@@ -44,10 +43,20 @@ namespace Tomographer { namespace Logger {
     };
   };
 } } // namespaces
+
+/** \brief  A logger we can use in tests, which calls \c BOOST_TEST_MESSAGE()
+ *
+ * A logger implementation for use when writing tests with the Boost Unit Test Framework.
+ *
+ * This logger simply relays all messages to the \c BOOST_TEST_MESSAGE() macro to display
+ * testing output.
+ *
+ * Specify a logging level to the constructor, by default it is \c DEBUG.
+ */
 class BoostTestLogger : public Tomographer::Logger::LoggerBase<BoostTestLogger>
 {
 public:
-  BoostTestLogger(int level = Tomographer::Logger::INFO)
+  BoostTestLogger(int level = Tomographer::Logger::DEBUG)
     : Tomographer::Logger::LoggerBase<BoostTestLogger>(level)
   {
   }
@@ -59,7 +68,7 @@ public:
   inline void emitLog(int level, const char * origin,
                       const std::string & msg)
   {
-    BOOST_MESSAGE("(" << Tomographer::Logger::LogLevel(level) << ")" << "[" << origin << "] " << msg) ;
+    BOOST_TEST_MESSAGE("(" << Tomographer::Logger::LogLevel(level) << ")" << "[" << origin << "] " << msg) ;
   }
 };
 

@@ -41,7 +41,7 @@
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/mathtools/random_unitary.h>
 
-#include "boost_test_logger.h"
+#include <tomographer2/tools/boost_test_logger.h>
 
 
 // -----------------------------------------------------------------------------

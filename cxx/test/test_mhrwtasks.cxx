@@ -45,8 +45,8 @@
 #include <tomographer2/densedm/tspacefigofmerit.h>
 #include <tomographer2/densedm/tspacellhwalker.h>
 
+#include <tomographer2/tools/boost_test_logger.h>
 #include "test_mh_random_walk_common.h"
-#include "boost_test_logger.h"
 
 // -----------------------------------------------------------------------------
 // fixture(s)
