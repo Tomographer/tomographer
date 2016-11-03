@@ -12,7 +12,7 @@ include_dirs = [ "/usr/local/include",
                  "." ]
 libraries = [ "boost_python-mt" ]
 library_dirs = ['.']
-cflags = ['-std=c++11', '-fdiagnostics-color']
+cflags = ['-std=c++11', '-fdiagnostics-color', '-DEIGEN_DEFAULT_TO_ROW_MAJOR']
 
 files = [ "tomographerbase.cxx" ]
 
