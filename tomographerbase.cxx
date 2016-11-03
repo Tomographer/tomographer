@@ -201,16 +201,16 @@ std::size_t (UniformBinsHistogramWithErrorBars::*hlp_ubhweb_record2)(RealType,Co
 
 // AveragedSimpleHistogram (underlying histogram w/o error bars)
 typedef Tomographer::AveragedHistogram<UniformBinsHistogram, CountIntType> AveragedSimpleHistogram;
-void hlp_ash_addHistogram(AveragedSimpleHistogram & h, const UniformBinsHistogram & other) {
-  h.addHistogram(other);
-}
-void hlp_ash_finalize(AveragedSimpleHistogram & h) { h.finalize(); }
+// void hlp_ash_addHistogram(AveragedSimpleHistogram & h, const UniformBinsHistogram & other) {
+//   h.addHistogram(other);
+// }
+//void hlp_ash_finalize(AveragedSimpleHistogram & h) { h.finalize(); }
 // AveragedErrorBarHistogram (underlying histogram with error bars)
 typedef Tomographer::AveragedHistogram<UniformBinsHistogramWithErrorBars, CountIntType> AveragedErrorBarHistogram;
-void hlp_aebh_addHistogram(AveragedErrorBarHistogram & h, const UniformBinsHistogramWithErrorBars & other) {
-  h.addHistogram(other);
-}
-void hlp_aebh_finalize(AveragedErrorBarHistogram & h) { h.finalize(); }
+// void hlp_aebh_addHistogram(AveragedErrorBarHistogram & h, const UniformBinsHistogramWithErrorBars & other) {
+//   h.addHistogram(other);
+// }
+//void hlp_aebh_finalize(AveragedErrorBarHistogram & h) { h.finalize(); }
 
 } // namespace Py
 
@@ -335,8 +335,9 @@ BOOST_PYTHON_MODULE(tomographer)
                             boost::python::bases<Py::UniformBinsHistogramWithErrorBars>
                             >("AveragedSimpleHistogram")
       .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogram::Params> >())
-      .def("addHistogram", &Py::hlp_ash_addHistogram)
-      .def("finalize", &Py::hlp_ash_finalize)
+      .def("addHistogram",
+           +[](Py::AveragedSimpleHistogram & h, const UniformBinsHistogram & o) { h.addHistogram(o); })
+      .def("finalize", +[](Py::AveragedSimpleHistogram & h) { h.finalize(); })
       ;
   }
   // AveragedErrorBarHistogram
@@ -346,8 +347,9 @@ BOOST_PYTHON_MODULE(tomographer)
                             boost::python::bases<Py::UniformBinsHistogramWithErrorBars>
                             >("AveragedErrorBarHistogram")
       .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogram::Params> >())
-      .def("addHistogram", &Py::hlp_aebh_addHistogram)
-      .def("finalize", &Py::hlp_aebh_finalize)
+      .def("addHistogram",
+           +[](Py::AveragedErrorBarsHistogram & h, const UniformBinsHistogramWithErrorBars & o) { h.addHistogram(o); })
+      .def("finalize", +[](Py::AveragedErrorBarHistogram & h) { h.finalize(); })
       ;
   }
 
