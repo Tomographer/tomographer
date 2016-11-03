@@ -85,7 +85,7 @@ BOOST_AUTO_TEST_CASE(tspacellhmhwalker)
 
   llh.setMeas(Exn, Nx, false);
 
-  typedef BoostTestLogger LoggerType;
+  typedef Tomographer::Logger::BoostTestLogger LoggerType;
   LoggerType logger(Tomographer::Logger::DEBUG);
 
   std::mt19937 rng(46570); // seeded rng, deterministic results

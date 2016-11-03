@@ -73,7 +73,7 @@ BOOST_AUTO_TEST_CASE(types)
 {
   typedef Tomographer::MHRWTasks::ValueHistogramTasks::ResultsCollectorSimple<
     Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<IdentValueCalculator, false>,
-    BoostTestLogger> ResultsCollectorSimple;
+    Tomographer::Logger::BoostTestLogger> ResultsCollectorSimple;
 
   BOOST_CHECK( ! ResultsCollectorSimple::HistogramType::HasErrorBars ) ;
   BOOST_CHECK( ! ResultsCollectorSimple::NormalizedHistogramType::HasErrorBars ) ;
@@ -84,10 +84,10 @@ BOOST_AUTO_TEST_CASE(collects_histograms)
 {
   typedef Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<IdentValueCalculator, false>  CDataType;
   typedef Tomographer::MHRWTasks::ValueHistogramTasks::ResultsCollectorSimple<
-    CDataType, BoostTestLogger
+    CDataType, Tomographer::Logger::BoostTestLogger
     > ResultsCollectorSimple;
 
-  BoostTestLogger logger;
+  Tomographer::Logger::BoostTestLogger logger;
 
   IdentValueCalculator valcalc;
   CDataType::HistogramParams hp(0, 10, 10);
@@ -191,7 +191,7 @@ BOOST_AUTO_TEST_CASE(types)
 {
   typedef Tomographer::MHRWTasks::ValueHistogramTasks::ResultsCollectorWithBinningAnalysis<
     Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<IdentValueCalculator, true>,
-    BoostTestLogger> ResultsCollectorBinning;
+    Tomographer::Logger::BoostTestLogger> ResultsCollectorBinning;
 
   BOOST_CHECK( ResultsCollectorBinning::HistogramType::HasErrorBars ) ;
   BOOST_CHECK( ! ResultsCollectorBinning::SimpleNormalizedHistogramType::HasErrorBars ) ;
@@ -203,10 +203,10 @@ BOOST_AUTO_TEST_CASE(collects_histograms)
 {
   typedef Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<IdentValueCalculator, true>  CDataType;
   typedef Tomographer::MHRWTasks::ValueHistogramTasks::ResultsCollectorWithBinningAnalysis<
-    CDataType, BoostTestLogger
+    CDataType, Tomographer::Logger::BoostTestLogger
     > ResultsCollectorBinning;
 
-  BoostTestLogger logger;
+  Tomographer::Logger::BoostTestLogger logger;
 
   IdentValueCalculator valcalc;
   CDataType::HistogramParams hp(0, 10, 10);
@@ -396,12 +396,12 @@ BOOST_AUTO_TEST_CASE(createstatscoll_simple)
 
   CDataType cdata(valcalc, hp, mhrwparams);
 
-  BoostTestLogger logger;
+  Tomographer::Logger::BoostTestLogger logger;
   auto stcoll = cdata.createStatsCollector(logger);
 
   BOOST_CHECK_EQUAL(std::string(typeid(decltype(stcoll)).name()),
                     std::string(typeid(Tomographer::ValueHistogramMHRWStatsCollector<
-                                       IdentValueCalculator,BoostTestLogger
+                                       IdentValueCalculator,Tomographer::Logger::BoostTestLogger
                                        >).name()));
 }
 
@@ -416,7 +416,7 @@ BOOST_AUTO_TEST_CASE(createstatscoll_binning)
   // need to specify also binning level
   CDataType cdata(valcalc, hp, 7, mhrwparams);
 
-  BoostTestLogger logger;
+  Tomographer::Logger::BoostTestLogger logger;
   auto stcoll = cdata.createStatsCollector(logger);
 
   BOOST_CHECK_EQUAL(std::string(typeid(decltype(stcoll)).name()),
@@ -424,7 +424,7 @@ BOOST_AUTO_TEST_CASE(createstatscoll_binning)
                                        Tomographer::MHRWTasks::ValueHistogramTasks::tomo_internal
                                        ::histogram_types<CDataType, true>
                                        ::BinningMHRWStatsCollectorParams,
-                                       BoostTestLogger>).name()));
+                                       Tomographer::Logger::BoostTestLogger>).name()));
 }
 
 BOOST_AUTO_TEST_SUITE_END() ;
@@ -482,7 +482,7 @@ typedef Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<NormValueCalculat
 
 BOOST_AUTO_TEST_CASE(interfaces_simple)
 {
-  BoostTestLogger logger;
+  Tomographer::Logger::BoostTestLogger logger;
 
   const int step_size = 2;
   const int nsweep = 10;
@@ -493,7 +493,7 @@ BOOST_AUTO_TEST_CASE(interfaces_simple)
 
   MyCData cdata(Tomographer::MHRWParams<int,double>(step_size, nsweep, ntherm, nrun));
 
-  typedef typename MyCData::ResultsCollectorType<BoostTestLogger>::Type OurResultsCollector;
+  typedef typename MyCData::ResultsCollectorType<Tomographer::Logger::BoostTestLogger>::Type OurResultsCollector;
 
   OurResultsCollector results(logger);
 
@@ -501,7 +501,7 @@ BOOST_AUTO_TEST_CASE(interfaces_simple)
     Tomographer::MHRWTasks::MHRandomWalkTask<MyCData, std::mt19937>,
     MyCData,
     OurResultsCollector,
-    BoostTestLogger,
+    Tomographer::Logger::BoostTestLogger,
     long
     > dispatcher(&cdata, &results, logger, 5);
   
@@ -525,7 +525,7 @@ BOOST_AUTO_TEST_CASE(interfaces_simple)
 
 BOOST_AUTO_TEST_CASE(interfaces_binning)
 {
-  BoostTestLogger logger;
+  Tomographer::Logger::BoostTestLogger logger;
 
   const int step_size = 2;
   const int nsweep = 10;
@@ -536,7 +536,7 @@ BOOST_AUTO_TEST_CASE(interfaces_binning)
 
   MyCData cdata(Tomographer::MHRWParams<int,double>(step_size, nsweep, ntherm, nrun));
 
-  typedef typename MyCData::ResultsCollectorType<BoostTestLogger>::Type OurResultsCollector;
+  typedef typename MyCData::ResultsCollectorType<Tomographer::Logger::BoostTestLogger>::Type OurResultsCollector;
 
   OurResultsCollector results(logger);
 
@@ -544,7 +544,7 @@ BOOST_AUTO_TEST_CASE(interfaces_binning)
     Tomographer::MHRWTasks::MHRandomWalkTask<MyCData, std::mt19937>,
     MyCData,
     OurResultsCollector,
-    BoostTestLogger,
+    Tomographer::Logger::BoostTestLogger,
     long
     > dispatcher(&cdata, &results, logger, 5);
   

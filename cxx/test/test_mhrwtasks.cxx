@@ -136,14 +136,14 @@ BOOST_AUTO_TEST_CASE(instantiate_1b)
 }
 BOOST_AUTO_TEST_CASE(instantiate_2)
 {
-  BoostTestLogger logger;
+  Tomographer::Logger::BoostTestLogger logger;
 
   typedef std::mt19937 Rng;
   Rng rng(0);
 
   typedef Tomographer::MHRandomWalk<Rng, TestLatticeMHRWGaussPeak<int>,
                                     Tomographer::TrivialMHRWStatsCollector,
-                                    BoostTestLogger, int>  MHRandomWalkType;
+                                    Tomographer::Logger::BoostTestLogger, int>  MHRandomWalkType;
 
   Tomographer::TrivialMHRWStatsCollector stats;
 
@@ -245,7 +245,7 @@ struct MyTestResultsCollector {
 
 BOOST_AUTO_TEST_CASE(base)
 {
-  BoostTestLogger logger;
+  Tomographer::Logger::BoostTestLogger logger;
 
   const int step_size = 2;
   const int nsweep = 10;
@@ -260,7 +260,7 @@ BOOST_AUTO_TEST_CASE(base)
     Tomographer::MHRWTasks::MHRandomWalkTask<MyCData, std::mt19937>,
     MyCData,
     MyTestResultsCollector,
-    BoostTestLogger,
+    Tomographer::Logger::BoostTestLogger,
     long
     > dispatcher(&cdata, &results, logger, 5);
   

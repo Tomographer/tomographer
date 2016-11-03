@@ -32,17 +32,18 @@
 #include <tomographer2/tools/loggers.h>
 
 
-class BoostTestLogger;
 namespace Tomographer { namespace Logger {
+
+class BoostTestLogger;
+
 // traits for BoostTestLogger
-  template<>
-  struct LoggerTraits<BoostTestLogger> : DefaultLoggerTraits
-  {
-    enum {
-      IsThreadSafe = 0, StaticMinimumImportanceLevel = -1
-    };
+template<>
+struct LoggerTraits<BoostTestLogger> : DefaultLoggerTraits
+{
+  enum {
+    IsThreadSafe = 0, StaticMinimumImportanceLevel = -1
   };
-} } // namespaces
+};
 
 /** \brief  A logger we can use in tests, which calls \c BOOST_TEST_MESSAGE()
  *
@@ -72,6 +73,10 @@ public:
   }
 };
 
+
+
+
+} } // namespaces
 
 
 

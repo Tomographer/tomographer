@@ -323,8 +323,8 @@ BOOST_AUTO_TEST_SUITE(tValueHistogramMHRWStatsCollector)
 BOOST_FIXTURE_TEST_CASE(simple, TestStatsCollectorFixture)
 {
   MyMinimalistValueCalculator valcalc;
-  BoostTestLogger logger;
-  typedef Tomographer::ValueHistogramMHRWStatsCollector<MyMinimalistValueCalculator, BoostTestLogger>
+  Tomographer::Logger::BoostTestLogger logger;
+  typedef Tomographer::ValueHistogramMHRWStatsCollector<MyMinimalistValueCalculator, Tomographer::Logger::BoostTestLogger>
     MyValueHistogramMHRWStatsCollector;
 
   MyValueHistogramMHRWStatsCollector statcoll(MyValueHistogramMHRWStatsCollector::HistogramParams(0,4,4),
@@ -356,9 +356,9 @@ BOOST_AUTO_TEST_SUITE(tValueHistogramWithBinningMHRWStatsCollector)
 BOOST_FIXTURE_TEST_CASE(simple, TestStatsCollectorFixture)
 {
   MyMinimalistValueCalculator valcalc;
-  BoostTestLogger logger;
+  Tomographer::Logger::BoostTestLogger logger;
   typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<MyMinimalistValueCalculator> VHWBParams;
-  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<VHWBParams, BoostTestLogger>
+  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<VHWBParams, Tomographer::Logger::BoostTestLogger>
     MyStatsCollector;
 
   MyStatsCollector statcoll(MyStatsCollector::HistogramParams(0,4,4),
@@ -441,8 +441,8 @@ BOOST_AUTO_TEST_CASE(base_multi_status)
 BOOST_FIXTURE_TEST_CASE(status_for_valuehistogram, TestStatsCollectorFixture)
 {
   MyMinimalistValueCalculator valcalc;
-  BoostTestLogger logger;
-  typedef Tomographer::ValueHistogramMHRWStatsCollector<MyMinimalistValueCalculator, BoostTestLogger>
+  Tomographer::Logger::BoostTestLogger logger;
+  typedef Tomographer::ValueHistogramMHRWStatsCollector<MyMinimalistValueCalculator, Tomographer::Logger::BoostTestLogger>
     MyValueHistogramMHRWStatsCollector;
 
   MyValueHistogramMHRWStatsCollector statcoll(MyValueHistogramMHRWStatsCollector::HistogramParams(0,4,4),
@@ -460,9 +460,9 @@ BOOST_FIXTURE_TEST_CASE(status_for_valuehistogram, TestStatsCollectorFixture)
 BOOST_FIXTURE_TEST_CASE(status_for_valuehistogrambinning, TestStatsCollectorFixture)
 {
   MyMinimalistValueCalculator valcalc;
-  BoostTestLogger logger;
+  Tomographer::Logger::BoostTestLogger logger;
   typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<MyMinimalistValueCalculator> VHWBParams;
-  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<VHWBParams, BoostTestLogger>
+  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<VHWBParams, Tomographer::Logger::BoostTestLogger>
     MyStatsCollector;
 
   MyStatsCollector statcoll(MyStatsCollector::HistogramParams(0,4,4),

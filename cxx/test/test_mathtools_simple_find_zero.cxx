@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(test_simple_find_zero_4)
   double final_value = std::numeric_limits<double>::quiet_NaN();
   int final_iters = -1;
 
-  BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
+  Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
 
   double pt = Tomographer::Tools::simpleFindZero<double, double>(f4, x1, x2, 50, tol,
 								 &final_value, &final_iters,
@@ -161,7 +161,7 @@ BOOST_AUTO_TEST_CASE(test_simple_find_zero_5)
   double final_value = std::numeric_limits<double>::quiet_NaN();
   int final_iters = -1;
 
-  BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
+  Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
 
   double pt = Tomographer::Tools::simpleFindZero<double, double>(
       [](double x) -> double {

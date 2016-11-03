@@ -57,9 +57,9 @@ Eigen::Array<double,4,1> inline_vector(double a1, double a2, double a3, double a
 
 BOOST_AUTO_TEST_CASE(basic)
 {
-  BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
+  Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
   typedef Tomographer::BinningAnalysis<Tomographer::BinningAnalysisParams<double>,
-                                       BoostTestLogger> OurBinningAnalysis;
+                                       Tomographer::Logger::BoostTestLogger> OurBinningAnalysis;
   OurBinningAnalysis bina(4, 2, logger);
 
   logger.debug("basic()", "Starting to feed samples to the binning analysis object");
@@ -147,7 +147,7 @@ BOOST_AUTO_TEST_CASE(basic)
   BOOST_CHECK_EQUAL(bina.numLevels(), 2);
 
   Tomographer::BinningAnalysis<Tomographer::BinningAnalysisParams<double>,
-                               BoostTestLogger>::BinSumSqArray
+                               Tomographer::Logger::BoostTestLogger>::BinSumSqArray
     error_levels_calc(4,3);
   error_levels_calc = bina.calcErrorLevels();
 
@@ -161,9 +161,9 @@ BOOST_AUTO_TEST_CASE(basic)
 
 BOOST_AUTO_TEST_CASE(no_bin_means)
 {
-  BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
+  Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
   typedef Tomographer::BinningAnalysis<Tomographer::BinningAnalysisParams<double, 4, 1, false /*StoreBinSums_*/>,
-                                       BoostTestLogger>
+                                       Tomographer::Logger::BoostTestLogger>
     OurBinningAnalysis;
   OurBinningAnalysis bina(4, 1, logger);
 

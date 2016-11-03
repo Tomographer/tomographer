@@ -388,6 +388,9 @@ struct UniformBinsHistogram
  *
  * Builds on top of \ref UniformBinsHistogram<Scalar,CountType> to store error bars
  * corresponding to each bin.
+ *
+ * \bug Here we need to override \ref add() and \ref load() to take care of error bars.
+ *
  */
 template<typename Scalar_, typename CountType_ = double>
 struct UniformBinsHistogramWithErrorBars

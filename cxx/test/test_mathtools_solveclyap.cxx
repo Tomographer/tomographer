@@ -129,7 +129,7 @@ struct test_solveclyap_fixture
 
     MatType X2(d,d);
 
-    BoostTestLogger logger(Tomographer::Logger::DEBUG);
+    Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::DEBUG);
 
     Tomographer::MathTools::SolveCLyap::solve<true>(X2, A, C, logger, 1e-8);
 

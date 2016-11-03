@@ -121,7 +121,7 @@ BOOST_AUTO_TEST_SUITE(valuehistogramwithbinning)
 BOOST_AUTO_TEST_CASE(simple1)
 {
   //<<<<<<<<<<<
-  typedef BoostTestLogger LoggerType;
+  typedef Tomographer::Logger::BoostTestLogger LoggerType;
   LoggerType buflog(Tomographer::Logger::DEBUG);
   //-----------
   //  typedef Tomographer::Logger::FileLogger LoggerType;
@@ -207,7 +207,7 @@ BOOST_AUTO_TEST_CASE(basic1)
   // now, prepare the integrator.
   std::mt19937 rng(0); // seeded random number generator
 
-  typedef BoostTestLogger LoggerType;
+  typedef Tomographer::Logger::BoostTestLogger LoggerType;
   LoggerType logger(Tomographer::Logger::DEBUG);
 
   DMTypes::MatrixType start_T(dmt.initMatrixType());
@@ -296,7 +296,7 @@ BOOST_AUTO_TEST_CASE(with_binning_analysis)
 
   // --------
 
-  typedef BoostTestLogger LoggerType;
+  typedef Tomographer::Logger::BoostTestLogger LoggerType;
   LoggerType logger(Tomographer::Logger::DEBUG);
 
   typedef Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes> OurValueCalculator;
