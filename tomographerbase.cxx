@@ -99,48 +99,17 @@ namespace Py {
 typedef Tomographer::UniformBinsHistogram<RealType, CountIntType> UniformBinsHistogram;
 
 // UniformBinsWithErrorBars
-typedef Tomographer::UniformBinsHistogramWithErrorBars<RealType, CountIntType> UniformBinsHistogramWithErrorBars;
-const UniformBinsHistogram::Params & hlp_ubhweb_params_get(const UniformBinsHistogramWithErrorBars & p)
-{ return p.params; }
-Eigen::MatrixXi hlp_ubhweb_bins_get(const UniformBinsHistogramWithErrorBars & p) { return p.bins; }
-void hlp_ubhweb_bins_set(UniformBinsHistogramWithErrorBars & p, const Eigen::MatrixXi& bins) { p.bins = bins; }
-Eigen::MatrixXi hlp_ubhweb_delta_get(UniformBinsHistogramWithErrorBars & h) {
-  return h.delta;
-}
-void hlp_ubhweb_delta_set(UniformBinsHistogramWithErrorBars & h, const Eigen::MatrixXi & m) {
-  h.delta = m;
-}
-CountIntType hlp_ubhweb_off_chart_get(const UniformBinsHistogramWithErrorBars & p) { return p.off_chart; }
-void hlp_ubhweb_off_chart_set(UniformBinsHistogramWithErrorBars & p, CountIntType off_chart)
-{ p.off_chart = off_chart; }
-bool hlp_ubhweb_HasErrorBars_get(const UniformBinsHistogramWithErrorBars & ) { return true; }
-void hlp_ubhweb_load1(UniformBinsHistogramWithErrorBars & h, const Eigen::MatrixXi& m) {
-  h.load(m);
-}
-void hlp_ubhweb_load2(UniformBinsHistogramWithErrorBars & h, const Eigen::MatrixXi& m, CountIntType off_chart) {
-  h.load(m, off_chart);
-}
-void hlp_ubhweb_add1(UniformBinsHistogramWithErrorBars & h, const Eigen::MatrixXi& m)
-{
-  h.add(m.array());
-}
-void hlp_ubhweb_add2(UniformBinsHistogramWithErrorBars & h, const Eigen::MatrixXi& m, CountIntType off_chart)
-{
-  h.add(m.array(), off_chart);
-}
-std::size_t (UniformBinsHistogramWithErrorBars::*hlp_ubhweb_record1)(RealType) =
-  &UniformBinsHistogramWithErrorBars::record;
-std::size_t (UniformBinsHistogramWithErrorBars::*hlp_ubhweb_record2)(RealType,CountIntType) =
-  &UniformBinsHistogramWithErrorBars::record;
+typedef Tomographer::UniformBinsHistogramWithErrorBars<RealType, RealType> UniformBinsHistogramWithErrorBars;
+
 
 // AveragedSimpleHistogram (underlying histogram w/o error bars)
-typedef Tomographer::AveragedHistogram<UniformBinsHistogram, CountIntType> AveragedSimpleHistogram;
+typedef Tomographer::AveragedHistogram<UniformBinsHistogram, RealType> AveragedSimpleHistogram;
 // void hlp_ash_addHistogram(AveragedSimpleHistogram & h, const UniformBinsHistogram & other) {
 //   h.addHistogram(other);
 // }
 //void hlp_ash_finalize(AveragedSimpleHistogram & h) { h.finalize(); }
 // AveragedErrorBarHistogram (underlying histogram with error bars)
-typedef Tomographer::AveragedHistogram<UniformBinsHistogramWithErrorBars, CountIntType> AveragedErrorBarHistogram;
+typedef Tomographer::AveragedHistogram<UniformBinsHistogramWithErrorBars, RealType> AveragedErrorBarHistogram;
 // void hlp_aebh_addHistogram(AveragedErrorBarHistogram & h, const UniformBinsHistogramWithErrorBars & other) {
 //   h.addHistogram(other);
 // }
@@ -225,7 +194,7 @@ BOOST_PYTHON_MODULE(tomographer)
         .def(boost::python::init<boost::python::optional<RealType,RealType,std::size_t> >())
         .add_property("min", +[](Kl & p) { return p.min; }, +[](Kl & p, RealType min) { p.min = min; })
         .add_property("max", +[](Kl & p) { return p.max; }, +[](Kl & p, RealType max) { p.max = max; })
-        .add_property("num_bins", +[](Kl & p) { return p.num_bins; }, +[](Kl & p, CountIntType n) { p.num_bins = n; })
+        .add_property("num_bins", +[](Kl & p) { return p.num_bins; }, +[](Kl & p, std::size_t n) { p.num_bins = n; })
         .def("isWithinBounds", &Kl::isWithinBounds)
         .def("binIndex", &Kl::binIndex)
         .def("binLowerValue", &Kl::binLowerValue)
@@ -240,29 +209,32 @@ BOOST_PYTHON_MODULE(tomographer)
 
   // UniformBinsWithErrorBars
   {
+    typedef Py::UniformBinsHistogramWithErrorBars Kl;
     boost::python::scope cl =
       // seems we can't use bases<> because the class isn't polymorphic (no virtual destructor)
       boost::python::class_<Py::UniformBinsHistogramWithErrorBars>("UniformBinsHistogramWithErrorBars")
       .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogram::Params> >())
       .def(boost::python::init<RealType, RealType, std::size_t>())
-      .def("reset", &Py::UniformBinsHistogramWithErrorBars::reset)
-      .def("load", Py::hlp_ubhweb_load1)
-      .def("load", Py::hlp_ubhweb_load2)
-      .def("add", Py::hlp_ubhweb_add1)
-      .def("add", Py::hlp_ubhweb_add2)
-      .def("numBins", &Py::UniformBinsHistogramWithErrorBars::numBins)
-      .def("count", &Py::UniformBinsHistogramWithErrorBars::count)
-      .def("errorBar", &Py::UniformBinsHistogramWithErrorBars::errorBar)
-      .def("record", Py::hlp_ubhweb_record1)
-      .def("record", Py::hlp_ubhweb_record2)
-      .def("prettyPrint", &Py::UniformBinsHistogramWithErrorBars::prettyPrint)
-      .add_property("params",
-                    boost::python::make_function(Py::hlp_ubhweb_params_get,
-                                                 boost::python::return_internal_reference<>()))
-      .add_property("bins", Py::hlp_ubhweb_bins_get, Py::hlp_ubhweb_bins_set)
-      .add_property("delta", Py::hlp_ubhweb_delta_get, Py::hlp_ubhweb_delta_set)
-      .add_property("off_chart", Py::hlp_ubhweb_off_chart_get, Py::hlp_ubhweb_off_chart_set)
-      .add_static_property("HasErrorBars", Py::hlp_ubhweb_HasErrorBars_get)
+      .def("reset", &Kl::reset)
+      .def("load", +[](Kl & h, const Eigen::MatrixXd& x) { h.load(x); })
+      .def("load", +[](Kl & h, const Eigen::MatrixXd& x, RealType o) { h.load(x, o); })
+      .def("add", +[](Kl & h, const Eigen::MatrixXd& x) { h.add(x.array()); })
+      .def("add", +[](Kl & h, const Eigen::MatrixXd& x, RealType o) { h.add(x.array(), o); })
+      .def("numBins", &Kl::numBins)
+      .def("count", &Kl::count)
+      .def("errorBar", &Kl::errorBar)
+      .def("record", +[](Kl & h, RealType x) { return h.record(x); })
+      .def("record", +[](Kl & h, RealType x, RealType o) { return h.record(x, o); })
+      .def("prettyPrint", &Kl::prettyPrint)
+      .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
+                                                           boost::python::return_internal_reference<>()))
+      .add_property("bins", +[](Kl & h) { return h.bins; },
+                    +[](Kl & h, const Eigen::MatrixXd v) { h.bins = v; })
+      .add_property("delta", +[](Kl & h) { return h.delta; },
+                    +[](Kl & h, const Eigen::MatrixXd v) { h.delta = v; })
+      .add_property("off_chart", +[](Kl & h) { return h.off_chart; },
+                    +[](Kl & h, RealType o) { h.off_chart = o; })
+      .add_static_property("HasErrorBars", +[](Kl &) { return true; })
       ;
   }
 
@@ -270,28 +242,30 @@ BOOST_PYTHON_MODULE(tomographer)
 
   // AveragedSimpleHistogram
   {
+    typedef Py::AveragedSimpleHistogram Kl;
     boost::python::scope cl =
       boost::python::class_<Py::AveragedSimpleHistogram,
                             boost::python::bases<Py::UniformBinsHistogramWithErrorBars>
                             >("AveragedSimpleHistogram")
       .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogram::Params> >())
       .def("addHistogram",
-           +[](Py::AveragedSimpleHistogram & h, const Py::UniformBinsHistogram & o) { h.addHistogram(o); })
-      .def("finalize", +[](Py::AveragedSimpleHistogram & h) { h.finalize(); })
+           +[](Kl & h, const Py::UniformBinsHistogram & o) { h.addHistogram(o); })
+      .def("finalize", +[](Kl & h) { h.finalize(); })
       ;
   }
   // AveragedErrorBarHistogram
   {
+    typedef Py::AveragedSimpleHistogram Kl;
     boost::python::scope cl =
       boost::python::class_<Py::AveragedErrorBarHistogram,
                             boost::python::bases<Py::UniformBinsHistogramWithErrorBars>
                             >("AveragedErrorBarHistogram")
       .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogram::Params> >())
       .def("addHistogram",
-           +[](Py::AveragedErrorBarHistogram & h, const Py::UniformBinsHistogramWithErrorBars & o) {
+           +[](Kl & h, const Py::UniformBinsHistogramWithErrorBars & o) {
              h.addHistogram(o);
            })
-      .def("finalize", +[](Py::AveragedErrorBarHistogram & h) { h.finalize(); })
+      .def("finalize", +[](Kl & h) { h.finalize(); })
       ;
   }
 
