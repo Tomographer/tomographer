@@ -858,7 +858,7 @@ struct histogram_pretty_print_value
 private:
   static inline int abs_precision_for(const int powten, const int relprecision)
   {
-    return (powten > relprecision) ? 0 : (relprecision - powten - 1);
+    return (powten >= relprecision) ? 0 : (relprecision - powten - 1);
   }
 };
 
