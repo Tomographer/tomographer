@@ -22,7 +22,8 @@ libraries = [ "boost_python-mt" ]
 library_dirs = ['.']
 cflags = ['-std=c++11', '-fdiagnostics-color', '-DEIGEN_DEFAULT_TO_ROW_MAJOR']
 
-files = [ "tomographerbase.cxx" ]
+files = [ "tomographerbase.cxx", "pyhistogram.cxx", "eigpyconv.cxx" ]
+headers = [ "eigpyconv.h", "pyhistogram.h", "common.h" ]
 
 setup(name="tomographer",
       ext_modules=[
@@ -31,6 +32,6 @@ setup(name="tomographer",
                     libraries=libraries,
                     include_dirs=include_dirs,
                     extra_compile_args=cflags,
-                    depends=[ 'eigpyconv.h' ]),
+                    depends=headers),
       ]
 )

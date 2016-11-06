@@ -1,5 +1,6 @@
 
-
+#ifndef EIGPYCONV_H
+#define EIGPYCONV_H
 
 #include <cstring>
 
@@ -14,9 +15,13 @@
 #include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
 
+#define TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION
+#include <tomographer2/tools/eigen_assert_exception.h>
+
 #include <Eigen/Core>
 
 #include <tomographer2/tools/cxxutil.h>
+
 
 
 struct EigenNumpyConversionError : public std::exception
@@ -29,11 +34,6 @@ struct EigenNumpyConversionError : public std::exception
 private:
   std::string _msg;
 };
-
-void hlp_EigenNumpyConversionError_py_translate(EigenNumpyConversionError exc)
-{
-  PyErr_SetString(PyExc_RuntimeError, exc.what());
-}
 
 
 
@@ -127,11 +127,11 @@ struct CopyNumpyDataToEigen
   static inline void run(void * storage, PyArrayObject * array,
                          const npy_intp dims[2], const npy_intp strides[2])
   {
-    std::cerr << "DEBUG: decoding NumPy array: " << boost::core::demangle(typeid(NPScalar).name())
-              << "(sizeof="<<sizeof(NPScalar)<<") "
-              << "dims=["<<dims[0]<<","<<dims[1]<<"] strides=["<<strides[0]<<","<<strides[1]<<"] into "
-              << boost::core::demangle(typeid(EigScalar).name())
-              << "(sizeof="<<sizeof(EigScalar)<<") .\n";
+    //    std::cerr << "DEBUG: decoding NumPy array: " << boost::core::demangle(typeid(NPScalar).name())
+    //              << "(sizeof="<<sizeof(NPScalar)<<") "
+    //              << "dims=["<<dims[0]<<","<<dims[1]<<"] strides=["<<strides[0]<<","<<strides[1]<<"] into "
+    //              << boost::core::demangle(typeid(EigScalar).name())
+    //              << "(sizeof="<<sizeof(EigScalar)<<") .\n";
     
     // prepare the Eigen mapped object, of element type NPScalar
     auto mapped = 
@@ -144,7 +144,7 @@ struct CopyNumpyDataToEigen
           Eigen::Stride<Eigen::Dynamic,Eigen::Dynamic>(strides[0]/sizeof(NPScalar), strides[1]/sizeof(NPScalar))
           );
 
-    std::cerr << "DEBUG: mapped = \n" << mapped << "\n";
+    //    std::cerr << "DEBUG: mapped = \n" << mapped << "\n";
 
     // in-place construct at *storage
     (void) new (storage) EigDenseType(mapped.template cast<EigScalar>());
@@ -184,12 +184,11 @@ struct eigen_python_converter
                    ? matrix.outerStride() : matrix.innerStride() )
     };
 
-    std::cerr << "DEBUG: creating NumPy object of type "
-              << NpyCode<EigScalar>::getCodeName()
-              << " with elsize=" << elsize
-              //PyString_AsString(PyObject_Repr(PyArray_TypeObjectFromType(descr->type_num)))
-              << " shape=["<<shape[0]<<","<<shape[1]<<"] strides=["<<strides[0]<<","<<strides[1]<<"] "
-              << "from Eigen matrix = \n" << matrix << " .\n";
+    //    std::cerr << "DEBUG: creating NumPy object of type "
+    //              << NpyCode<EigScalar>::getCodeName()
+    //              << " with elsize=" << elsize
+    //              << " shape=["<<shape[0]<<","<<shape[1]<<"] strides=["<<strides[0]<<","<<strides[1]<<"] "
+    //              << "from Eigen matrix = \n" << matrix << " .\n";
     
     // copy data because the scope of the Eigen::MatrixXd is completely unknown (it could
     // be temporary return value, for example)
@@ -203,9 +202,9 @@ struct eigen_python_converter
     // just copy the freakin' bytes:
     std::memcpy( PyArray_DATA(reinterpret_cast<PyArrayObject*>(pyarr)), (void*)matrix.data(), arr_data_sz );
 
-    std::cerr << "DEBUG: the constructed pyarr is "
-              << PyString_AsString(PyObject_Repr(pyarr))
-              << " .\n";
+    //    std::cerr << "DEBUG: the constructed pyarr is "
+    //              << PyString_AsString(PyObject_Repr(pyarr))
+    //              << " .\n";
     
     //return boost::python::incref(boost::python::object(pyarr).ptr());
     //return boost::python::object(boost::python::handle<>(boost::python::borrowed(pyarr))).ptr();
@@ -241,9 +240,9 @@ struct eigen_python_converter
     const npy_intp * arraydimensions = PyArray_DIMS(array);
     const npy_intp * arraystrides = PyArray_STRIDES(array);
 
-    std::cerr << "DEBUG: decoding NumPy array, nd=" << nd << ", "
-              << "dims=[" << arraydimensions[0] << "," << (nd>1 ? arraydimensions[1] : -1) << "], "
-              << "strides=[" << arraystrides[0] << ", " << (nd>1 ? arraystrides[1] : -1) << "]\n";
+    //    std::cerr << "DEBUG: decoding NumPy array, nd=" << nd << ", "
+    //              << "dims=[" << arraydimensions[0] << "," << (nd>1 ? arraydimensions[1] : -1) << "], "
+    //              << "strides=[" << arraystrides[0] << ", " << (nd>1 ? arraystrides[1] : -1) << "]\n";
 
     // prepare as if for 1-D array
     npy_intp dims[2] = { arraydimensions[0], 1 };
@@ -275,30 +274,8 @@ struct eigen_python_converter
 
 
 
+void register_eigen_converter();
 
 
-// add the types you want to add
-void register_eigen_converter()
-{
-  import_array(); //< required, or conversion leads to segfault
-  
-  eigen_python_converter< Eigen::Matrix<long,Eigen::Dynamic,Eigen::Dynamic> >::to_python();
-  eigen_python_converter< Eigen::Matrix<long,Eigen::Dynamic,Eigen::Dynamic> >::from_python();
-  eigen_python_converter< Eigen::Matrix<int,Eigen::Dynamic,Eigen::Dynamic> >::to_python();
-  eigen_python_converter< Eigen::Matrix<int,Eigen::Dynamic,Eigen::Dynamic> >::from_python();
-  eigen_python_converter< Eigen::Matrix<unsigned long,Eigen::Dynamic,Eigen::Dynamic> >::to_python();
-  eigen_python_converter< Eigen::Matrix<unsigned long,Eigen::Dynamic,Eigen::Dynamic> >::from_python();
-  eigen_python_converter< Eigen::Matrix<unsigned int,Eigen::Dynamic,Eigen::Dynamic> >::to_python();
-  eigen_python_converter< Eigen::Matrix<unsigned int,Eigen::Dynamic,Eigen::Dynamic> >::from_python();
-  eigen_python_converter< Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> >::to_python();
-  eigen_python_converter< Eigen::Matrix<float,Eigen::Dynamic,Eigen::Dynamic> >::from_python();
-  eigen_python_converter< Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> >::to_python();
-  eigen_python_converter< Eigen::Matrix<double,Eigen::Dynamic,Eigen::Dynamic> >::from_python();
-  eigen_python_converter< Eigen::Matrix<std::complex<float>,Eigen::Dynamic,Eigen::Dynamic> >::to_python();
-  eigen_python_converter< Eigen::Matrix<std::complex<float>,Eigen::Dynamic,Eigen::Dynamic> >::from_python();
-  eigen_python_converter< Eigen::Matrix<std::complex<double>,Eigen::Dynamic,Eigen::Dynamic> >::to_python();
-  eigen_python_converter< Eigen::Matrix<std::complex<double>,Eigen::Dynamic,Eigen::Dynamic> >::from_python();
 
-  boost::python::register_exception_translator<EigenNumpyConversionError>(hlp_EigenNumpyConversionError_py_translate);
-}
-
+#endif
