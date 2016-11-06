@@ -1,4 +1,6 @@
 
+#include "common.h"
+
 #include "pyhistogram.h"
 
 
@@ -24,7 +26,7 @@ void py_tomo_histogram()
       .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
                                                            boost::python::return_internal_reference<>()))
       .add_property("bins", +[](Kl & h) { return h.bins; },
-                    +[](Kl & h, const Eigen::MatrixXi v) { h.bins = v; })
+                    +[](Kl & h, const Eigen::MatrixXi& v) { h.bins = v; })
       .add_property("off_chart", +[](Kl & h) { return h.off_chart; },
                     +[](Kl & h, CountIntType o) { h.off_chart = o; })
       .add_static_property("HasErrorBars", +[](Kl &) { return false; })
@@ -50,8 +52,32 @@ void py_tomo_histogram()
     }
   }
 
-  //  std::cerr << "(B)\n";
-
+  // CLASS: UniformBinsRealHistogram
+  {
+    typedef Py::UniformBinsRealHistogram Kl;
+    boost::python::scope cl = boost::python::class_<Py::UniformBinsRealHistogram>("UniformBinsRealHistogram")
+      .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogram::Params> >())
+      .def(boost::python::init<RealType, RealType, std::size_t>())
+      .def("reset", &Kl::reset)
+      .def("load", +[](Kl & h, const Eigen::MatrixXd& x) { h.load(x); })
+      .def("load", +[](Kl & h, const Eigen::MatrixXd& x, RealType o) { h.load(x, o); })
+      .def("add", +[](Kl & h, const Eigen::MatrixXd& x) { h.add(x.array()); })
+      .def("add", +[](Kl & h, const Eigen::MatrixXd& x, RealType o) { h.add(x.array(), o); })
+      .def("numBins", &Kl::numBins)
+      .def("count", &Kl::count)
+      .def("record", +[](Kl & h, RealType x) { return h.record(x); })
+      .def("record", +[](Kl & h, RealType x, RealType o) { return h.record(x, o); })
+      .def("prettyPrint", &Kl::prettyPrint)
+      .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
+                                                           boost::python::return_internal_reference<>()))
+      .add_property("bins", +[](Kl & h) { return h.bins; },
+                    +[](Kl & h, const Eigen::MatrixXd& v) { h.bins = v; })
+      .add_property("off_chart", +[](Kl & h) { return h.off_chart; },
+                    +[](Kl & h, RealType o) { h.off_chart = o; })
+      .add_static_property("HasErrorBars", +[](Kl &) { return false; })
+      ;
+  }
+  
   // UniformBinsWithErrorBars
   {
     typedef Py::UniformBinsHistogramWithErrorBars Kl;
@@ -98,9 +124,22 @@ void py_tomo_histogram()
       .def("finalize", +[](Kl & h) { h.finalize(); })
       ;
   }
+  // AveragedSimpleRealHistogram
+  {
+    typedef Py::AveragedSimpleRealHistogram Kl;
+    boost::python::scope cl =
+      boost::python::class_<Py::AveragedSimpleRealHistogram,
+                            boost::python::bases<Py::UniformBinsHistogramWithErrorBars>
+                            >("AveragedSimpleHistogram")
+      .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogram::Params> >())
+      .def("addHistogram",
+           +[](Kl & h, const Py::UniformBinsRealHistogram & o) { h.addHistogram(o); })
+      .def("finalize", +[](Kl & h) { h.finalize(); })
+      ;
+  }
   // AveragedErrorBarHistogram
   {
-    typedef Py::AveragedSimpleHistogram Kl;
+    typedef Py::AveragedErrorBarHistogram Kl;
     boost::python::scope cl =
       boost::python::class_<Py::AveragedErrorBarHistogram,
                             boost::python::bases<Py::UniformBinsHistogramWithErrorBars>

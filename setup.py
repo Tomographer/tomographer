@@ -20,9 +20,10 @@ include_dirs = [ "/usr/local/include",
                  "." ]
 libraries = [ "boost_python-mt" ]
 library_dirs = ['.']
-cflags = ['-std=c++11', '-fdiagnostics-color', '-DEIGEN_DEFAULT_TO_ROW_MAJOR']
+cflags = ['-std=c++11', '-fdiagnostics-color',  '-fopenmp'] #'-DEIGEN_DEFAULT_TO_ROW_MAJOR',
+ldflags = ['-fopenmp']
 
-files = [ "tomographerbase.cxx", "pyhistogram.cxx", "eigpyconv.cxx" ]
+files = [ "pytomorun.cxx", "tomographerbase.cxx", "pyhistogram.cxx", "eigpyconv.cxx" ]
 headers = [ "eigpyconv.h", "pyhistogram.h", "common.h" ]
 
 setup(name="tomographer",
@@ -32,6 +33,7 @@ setup(name="tomographer",
                     libraries=libraries,
                     include_dirs=include_dirs,
                     extra_compile_args=cflags,
+                    extra_link_args=ldflags,
                     depends=headers),
       ]
 )

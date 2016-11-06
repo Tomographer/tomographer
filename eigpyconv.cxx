@@ -8,6 +8,7 @@ void register_eigen_converter()
 {
   import_array(); //< required, or conversion leads to segfault
   
+  // matrices...
   eigen_python_converter< Eigen::Matrix<long,Eigen::Dynamic,Eigen::Dynamic> >::to_python();
   eigen_python_converter< Eigen::Matrix<long,Eigen::Dynamic,Eigen::Dynamic> >::from_python();
   eigen_python_converter< Eigen::Matrix<int,Eigen::Dynamic,Eigen::Dynamic> >::to_python();
@@ -24,6 +25,7 @@ void register_eigen_converter()
   eigen_python_converter< Eigen::Matrix<std::complex<float>,Eigen::Dynamic,Eigen::Dynamic> >::from_python();
   eigen_python_converter< Eigen::Matrix<std::complex<double>,Eigen::Dynamic,Eigen::Dynamic> >::to_python();
   eigen_python_converter< Eigen::Matrix<std::complex<double>,Eigen::Dynamic,Eigen::Dynamic> >::from_python();
+  // ... and vectors
   eigen_python_converter< Eigen::Matrix<long,Eigen::Dynamic,1> >::to_python();
   eigen_python_converter< Eigen::Matrix<long,Eigen::Dynamic,1> >::from_python();
   eigen_python_converter< Eigen::Matrix<int,Eigen::Dynamic,1> >::to_python();
@@ -45,6 +47,7 @@ void register_eigen_converter()
   boost::python::register_exception_translator<EigenNumpyConversionError>(+[](const EigenNumpyConversionError & exc) {
       PyErr_SetString(PyExc_RuntimeError, exc.what());
     });
+  
   boost::python::register_exception_translator<Tomographer::Tools::EigenAssertException>(
       +[](const Tomographer::Tools::EigenAssertException & exc) {
         PyErr_SetString(PyExc_RuntimeError, exc.what());

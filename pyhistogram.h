@@ -8,22 +8,19 @@ namespace Py {
 
 typedef Tomographer::UniformBinsHistogram<RealType, CountIntType> UniformBinsHistogram;
 
+typedef Tomographer::UniformBinsHistogram<RealType, RealType> UniformBinsRealHistogram;
+
 // UniformBinsWithErrorBars
 typedef Tomographer::UniformBinsHistogramWithErrorBars<RealType, RealType> UniformBinsHistogramWithErrorBars;
 
 
 // AveragedSimpleHistogram (underlying histogram w/o error bars)
 typedef Tomographer::AveragedHistogram<UniformBinsHistogram, RealType> AveragedSimpleHistogram;
-// void hlp_ash_addHistogram(AveragedSimpleHistogram & h, const UniformBinsHistogram & other) {
-//   h.addHistogram(other);
-// }
-//void hlp_ash_finalize(AveragedSimpleHistogram & h) { h.finalize(); }
-// AveragedErrorBarHistogram (underlying histogram with error bars)
+
+typedef Tomographer::AveragedHistogram<UniformBinsRealHistogram, RealType> AveragedSimpleRealHistogram;
+
 typedef Tomographer::AveragedHistogram<UniformBinsHistogramWithErrorBars, RealType> AveragedErrorBarHistogram;
-// void hlp_aebh_addHistogram(AveragedErrorBarHistogram & h, const UniformBinsHistogramWithErrorBars & other) {
-//   h.addHistogram(other);
-// }
-//void hlp_aebh_finalize(AveragedErrorBarHistogram & h) { h.finalize(); }
+
 
 } // namespace Py
 

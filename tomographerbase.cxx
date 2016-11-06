@@ -44,27 +44,28 @@ Eigen::MatrixXi testgetmatrix_i(const Eigen::MatrixXi & x)
 
 
 void py_tomo_histogram();
-
+void py_tomo_tomorun();
 
 
 
 BOOST_PYTHON_MODULE(tomographer)
 {
+  // Eigen converters
+  register_eigen_converter();
+
   //  std::cerr << "INIT TOMOGRAPHER\n";
 
   py_tomo_histogram();
 
-  
-  //  std::cerr << "DONE 1\n";
+  py_tomo_tomorun();
 
-  
-  // Eigen converters ---- tests ---------
-  register_eigen_converter();
+
+  // some dummy tests for the eigen converters:
   boost::python::def("test_eigen", test_eigen);
   boost::python::def("test_eigen2", test_eigen2);
   boost::python::def("testgetmatrix_d", testgetmatrix_d);
   boost::python::def("testgetmatrix_cd", testgetmatrix_cd);
   boost::python::def("testgetmatrix_i", testgetmatrix_i);
 
-  //  std::cerr << "DONE 2\n";
+  //  std::cerr << "DONE FINALLY\n";
 }
