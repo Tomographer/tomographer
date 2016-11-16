@@ -104,18 +104,26 @@ To specify paths to the Boost, Eigen3 and MatIO libraries, use the CMake
 switches:
 
     -DEIGEN3_INCLUDE_DIR=/path/to/include/eigen3
+    -DBOOST_ROOT=/path/to/boost
     -DMATIO_LIBRARY=/path/to/libmatio.a
     -DMATIO_INCLUDE_DIR=/path/to/include
-
-(See [here][cmake_findboost] for switches relating to Boost libraries.)
-
-[cmake_findboost]: http://www.cmake.org/cmake/help/v3.0/module/FindBoost.html
 
 You may of course also alternatively use CMake's graphical interface, CMake-GUI.
 
 Note the compilation step (`make`) is quite computation-heavy because of the
 extensive C++11 template metaprogramming. It might take a minute or two to
 complete depending on your hardware, and might be pretty greedy on RAM.
+
+### GCC/G++ and RAM usage
+
+The heavy template meta-programming can cause GCC/G++ to use a LOT of memory
+while compiling.  If your system is limited on memory, you should consider
+tuning the [gcc flags](https://gcc.gnu.org/onlinedocs/gcc-3.3/gcc/Optimize-Options.html)
+`--param ggc-min-expand` and `--param ggc-min-heapsize`: I have found
+`--param ggc-min-expand=10 --param ggc-min-heapsize=32768` to work OK for 4GB of
+memory; if you want to be really conservative use `--param ggc-min-expand=0
+--param ggc-min-heapsize=8192`.  These options should be specified to CMake as
+`-DCMAKE_CXX_FLAGS="--param ..."`.
 
 
 Running Tomorun
