@@ -96,7 +96,7 @@ struct TestSphJacFixture
       rtheta = Tomographer::Tools::denseRandom<Eigen::VectorXd>(rng, dist, CART_DIM);
       // so translate them to the correct ranges.
       rtheta(0) *= R; // rtheta(0) in [0, R]
-      rtheta.block(1,0,ds-1,1) = rtheta.block(1,0,ds-1,1) * pi; // theta_i in [0, pi] for 1 <= i < ds
+      rtheta.segment(1,ds-1) = rtheta.segment(1,ds-1) * pi; // theta_i in [0, pi] for 1 <= i < ds
       rtheta(ds) = rtheta(ds) * 2 * pi; // theta_{ds} in [0, 2*pi]
 
       vol += Tomographer::MathTools::SphCoords::cart_to_sph_jacobian(rtheta);
@@ -172,7 +172,7 @@ BOOST_AUTO_TEST_CASE(test_cart_to_sph_3)
 
   // test sphsurf
   Eigen::Vector3d cartonsphsurf = Eigen::Vector3d::Zero();
-  Tomographer::MathTools::SphCoords::sphsurf_to_cart(cartonsphsurf, rtheta.block(1,0,2,1));
+  Tomographer::MathTools::SphCoords::sphsurf_to_cart(cartonsphsurf, rtheta.segment(1,2));
   double orignorm = cart.norm();
   BOOST_CHECK_CLOSE(cartonsphsurf(0)*orignorm, cart(0), tol_percent);
   BOOST_CHECK_CLOSE(cartonsphsurf(1)*orignorm, cart(1), tol_percent);
@@ -208,7 +208,7 @@ BOOST_AUTO_TEST_CASE(test_cart_to_sph_7)
 
   // test sphsurf
   Eigen::VectorXd cartonsphsurf = Eigen::VectorXd::Zero(7);
-  Tomographer::MathTools::SphCoords::sphsurf_to_cart(cartonsphsurf, rtheta.block(1,0,6,1));
+  Tomographer::MathTools::SphCoords::sphsurf_to_cart(cartonsphsurf, rtheta.segment(1,6));
   double orignorm = cart.norm();
   BOOST_CHECK_CLOSE(cartonsphsurf(0)*orignorm, cart(0), tol_percent);
   BOOST_CHECK_CLOSE(cartonsphsurf(1)*orignorm, cart(1), tol_percent);

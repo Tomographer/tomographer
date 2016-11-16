@@ -93,6 +93,12 @@ endif(NOT BOOST_FOUND)
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wall -Wextra")
 
+# NOTE: By default GCC/G++ uses a LOT of RAM (g++ 6.2). [Clang-3.9 was very good by
+# comparison.]  You can instruct gcc to use less RAM by fiddling around with the options
+# "--param ggc-min-expand=10 --param ggc-min-heapsize=32768"
+# or "--param ggc-min-expand=0 --param ggc-min-heapsize=8192" to be even more conservative.
+
+
 # .### This is no longer needed as I have now included a function call with the GCC
 # .### attribute __attribute__((force_align_arg_pointer,noinline)), which gives the code
 # .### the necessary chance to realign the stack.

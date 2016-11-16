@@ -89,9 +89,10 @@ void cart_to_sph(Eigen::MatrixBase<Der2>& rtheta, const Eigen::MatrixBase<Der1>&
   //
 
   // REMEMBER: .block() arguments are (OFFSET, SIZE) and not (STARTOFFSET, ENDOFFSET)
+  //           .segment() arguments are (STARTPOS, LEN) and not (STARTPOS, ENDPOS)
 
   // all except last
-  rtheta.block(1,0,ds-1,1).setZero();
+  rtheta.segment(1,ds-1).setZero();
 
   size_t i;
 
@@ -155,7 +156,7 @@ inline void sphsurf_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBa
   size_t i;
   for (i = 0; i < ds; ++i) {
     cart(i) *= cos(theta(i));
-    cart.block(i+1, 0, ds+1 - (i+1), 1) *= sin(theta(i));
+    cart.segment(i+1, ds+1 - (i+1)) *= sin(theta(i));
   }
 }
 
@@ -186,7 +187,7 @@ void sph_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<Der1>& r
 
   // see http://people.sc.fsu.edu/~jburkardt/cpp_src/hypersphere_properties/hypersphere_properties.cpp
 
-  sphsurf_to_cart(cart, rtheta.block(1,0,ds,1), rtheta(0));
+  sphsurf_to_cart(cart, rtheta.segment(1,ds), rtheta(0));
 }
 
 
