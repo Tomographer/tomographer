@@ -38,6 +38,7 @@
 #include <cstdlib>
 
 #include <type_traits>
+#include <exception>
 
 #include <Eigen/Core> // NumTraits
 
@@ -588,8 +589,95 @@ constexpr inline conststr extractFuncName(const conststr & funcname)
 
 
 
+} // namespace Tools
+} // namespace Tomographer
 
 
+
+
+/** \brief Define a simple exception class
+ *
+ * This macro defines a class named \a ClassName which derives from \a std::exception.
+ * The constructor is given a string (the error message) which it prefixes with the given
+ * \a ErrPrefix to form the full error message.
+ *
+ * The exception class consists of:
+ *
+ * - a constructor taking a single argument of type \a std::string.  The constructor
+ *   stores the string internally, prefixing it with the error prefix.
+ *
+ * - the usual method <code>const char * what() const noexcept</code> retrieves the string
+ *   passed to the constructor (including the error prefix).
+ *
+ * - another method <code>std::string msg() const noexcept</code> allows to retrieve the
+ *   message string as an \a std::string (also including the error prefix).
+ *
+ * Example usage:
+ * \code
+ *   TOMOGRAPHER_DEFINE_MSG_EXCEPTION(invalid_input, "Invalid input: ") ;
+ *   ...
+ *   try {
+ *     ...
+ *     if (dim != matrix.rows()) {  // for example
+ *       throw invalid_input("Matrix dimensions are incorrect!");
+ *     }
+ *     ...
+ *   } catch (const std::exception & e) {
+ *     std::cerr << "An error occurred, aborting.\n"
+ *               << e.what() << "\n";
+ *     ::exit(1);
+ *   }
+ * \endcode
+ *
+ */
+#define TOMOGRAPHER_DEFINE_MSG_EXCEPTION(ClassName, ErrPrefix)          \
+  class ClassName : public std::exception {                             \
+    std::string _msg;                                                   \
+  public:                                                               \
+    ClassName(std::string msg) : _msg(std::string(ErrPrefix) + std::move(msg)) { } \
+    virtual ~ClassName() throw() { }                                    \
+    std::string msg() const { return _msg; }                            \
+    const char * what() const throw() { return _msg.c_str(); }          \
+  };
+
+/** \brief Define a simple exception class
+ *
+ * In contrast to \ref TOMOGRAPHER_DEFINE_MSG_EXCEPTION, the newly defined class does not
+ * itself store the error message.  Rather, it passes it on to the base class \a BaseClass
+ * which is responsible of storing it and returning a meaningful \a what() string.
+ *
+ * There is also no \a msg() method provided.
+ */
+#define TOMOGRAPHER_DEFINE_MSG_EXCEPTION_BASE(ClassName, ErrPrefix, BaseClass) \
+  class ClassName : public BaseClass {                                  \
+  public:                                                               \
+    ClassName(std::string msg) : BaseClass(std::string(ErrPrefix) + std::move(msg)) { } \
+    virtual ~ClassName() throw() { }                                    \
+  };
+
+
+
+namespace Tomographer {
+namespace Tools {
+
+/** \brief Ensure that a condition is met, or throw an exception
+ *
+ * If \a condition is \a true, no action is taken.  If \a condition is \a false, then an
+ * instance of the exception \a ExceptionClass is thrown.  The exception is instantiated
+ * using \a message as parameter.
+ *
+ * \tparam ExceptionClass is the exception to throw if the given condition is \a false
+ *
+ * \param condition controls whether to throw an error (if its value is \a false)
+ *
+ * \param message is the string to pass on to the exception class if condition is \a false
+ */
+template<typename ExceptionClass = std::exception>
+inline void tomographerEnsure(bool condition, std::string message) {
+  if (!condition) {
+    throw ExceptionClass(message);
+  }
+}
 
 
 } // namespace Tools

@@ -62,7 +62,7 @@ struct test_dmtypes_fixture {
     DMTypes dmt(dim);
 
     // has dim() property
-    BOOST_CHECK_EQUAL(dmt.dim(), dim);
+    BOOST_CHECK_EQUAL((int)dmt.dim(), dim);
 
     BOOST_CHECKPOINT("About to test that a wrong fixed dimension will throw");
 

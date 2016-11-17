@@ -298,36 +298,13 @@ struct ProgOptions
 // ------------------------------------------------------------------------------
 
 
+TOMOGRAPHER_DEFINE_MSG_EXCEPTION(bad_options, "Invalid input: ") ;
 
-class bad_options : public std::exception
-{
-  std::string _msg;
-public:
-  bad_options(const std::string& msg) : _msg("Bad program options: " + msg) { }
-  virtual ~bad_options() throw() { }
+TOMOGRAPHER_DEFINE_MSG_EXCEPTION(invalid_input, "Bad program options: ") ;
 
-  virtual const char * what() const throw() {
-    return _msg.c_str();
-  }
-};
-
-class invalid_input : public std::exception
-{
-  std::string _msg;
-public:
-  invalid_input(const std::string& msg) : _msg("Invalid Input: " + msg) { }
-  virtual ~invalid_input() throw() { }
-
-  virtual const char * what() const throw() {
-    return _msg.c_str();
-  }
-};
-
-#define ensure_valid_input(condition, msg)	\
-  do { if (!(condition)) {			\
-    throw invalid_input(msg);	\
-  } } while (0)
-
+inline void ensure_valid_input(bool condition, std::string msg) {
+  tomographerEnsure<invalid_input>(condition, msg);
+}
 
 
 

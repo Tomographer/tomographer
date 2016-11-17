@@ -29,6 +29,7 @@
 
 #include <tomographer2/tools/cxxutil.h>
 
+#include <stdexcept>
 
 
 
@@ -210,6 +211,63 @@ TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::extractFuncName("conststr ns::subcla
 TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::extractFuncName("int ns::subclass::method(const int&, void, conststr *)") == "ns::subclass::method");
 TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::extractFuncName("int ns::subclass::operator==(int)") == "ns::subclass::operator==");
 TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::extractFuncName("int operator==(const ns::subclass&, char)") == "operator==(const ns::subclass&, char)");
+
+
+
+
+// exception class utils
+
+TOMOGRAPHER_DEFINE_MSG_EXCEPTION(test_except_1, "Exception 1: ") ;
+TOMOGRAPHER_DEFINE_MSG_EXCEPTION_BASE(test_except_2, "Exception 2: ", std::logic_error) ;
+TOMOGRAPHER_DEFINE_MSG_EXCEPTION_BASE(test_except_3, "Exception 3: ", test_except_1) ;
+
+struct myfix_exctest {
+  myfix_exctest() { }
+  template<typename Exc, typename GoodBaseClass>
+  void testexc(std::string good_prefix) {
+    Exc e("abc");
+    BOOST_CHECK_EQUAL(e.what(), good_prefix + "abc");
+    GoodBaseClass * b = dynamic_cast<GoodBaseClass*>(&e);
+    BOOST_CHECK(b != NULL) ; // Exc must inherit GoodBaseClass
+    BOOST_CHECK_EQUAL(b->what(), good_prefix + "abc");
+  }
+};
+
+BOOST_AUTO_TEST_SUITE(testExceptionUtils) ;
+
+BOOST_FIXTURE_TEST_CASE(class_well_formed, myfix_exctest)
+{
+  testexc<test_except_1, std::exception>("Exception 1: ");
+  testexc<test_except_2, std::logic_error>("Exception 2: ");
+  testexc<test_except_3, test_except_1>("Exception 1: Exception 3: ");
+
+  // only those exceptions which are defined using "TOMOGRAPHER_DEFINE_MSG_EXCEPTION"
+  // (i.e. w/o delegation to base class) have the .msg() method.
+  test_except_1 e("xyz");
+  BOOST_CHECK_EQUAL(e.msg(), std::string("Exception 1: xyz")) ;
+}
+
+BOOST_AUTO_TEST_CASE(ensure_utils)
+{
+  BOOST_CHECK_NO_THROW( Tomographer::Tools::tomographerEnsure<std::logic_error>(true, "ERROR!")  );
+  BOOST_CHECK_THROW( Tomographer::Tools::tomographerEnsure<std::invalid_argument>(false, "ERROR!") ,
+                     std::invalid_argument );
+  BOOST_CHECK_THROW( Tomographer::Tools::tomographerEnsure<test_except_2>(false, "ERROR!")  ,
+                     test_except_2 );
+  BOOST_CHECK_THROW( Tomographer::Tools::tomographerEnsure<test_except_2>(false, "ERROR!")  ,
+                     std::logic_error );
+
+  try {
+    Tomographer::Tools::tomographerEnsure<test_except_3>(1+1 == 3, "Error, 1+1!=3");
+    BOOST_CHECK( false ); // above must have thrown an exception
+  } catch (const test_except_3 & e) {
+    BOOST_CHECK_EQUAL(e.what(), "Exception 1: Exception 3: Error, 1+1!=3") ;
+    BOOST_CHECK_EQUAL(e.msg(), "Exception 1: Exception 3: Error, 1+1!=3") ;
+  }
+}
+
+
+BOOST_AUTO_TEST_SUITE_END() ;
 
 
 BOOST_AUTO_TEST_SUITE_END()

@@ -63,6 +63,8 @@
 
 
 
+#ifndef __MINGW32__
+// MinGW32 does not have SIGALRM / alarm()
 std::function<void()> sigalarm_act;
 
 void sigalarm_act_cfn(int signum)
@@ -72,7 +74,7 @@ void sigalarm_act_cfn(int signum)
     sigalarm_act();
   }
 }
-
+#endif
 
 // -----------------------------------------------------------------------------
 // test cases:

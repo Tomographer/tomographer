@@ -43,7 +43,10 @@ string(TOUPPER "${CMAKE_BUILD_TYPE}" cmake_build_type_upper)
 RemoveFlag(CMAKE_CXX_FLAGS_${cmake_build_type_upper} "${CMAKE_CXX_FLAGS_${cmake_build_type_upper}}" "-DNDEBUG")
 RemoveFlag(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}"  "-DNDEBUG")
 
-add_definitions(-DBOOST_TEST_DYN_LINK)
+if (Boost_UNIT_TEST_FRAMEWORK_LIBRARY MATCHES "\\.a\$")
+else()
+  add_definitions(-DBOOST_TEST_DYN_LINK)
+endif()
 
 # we need to access the expected output patterns. Trailing slash needed.
 set(TOMOGRAPHER_TEST_PATTERNS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patterns/"

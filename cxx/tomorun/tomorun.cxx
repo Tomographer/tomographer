@@ -161,8 +161,8 @@ int main(int argc, char **argv)
   //
 
   Tomographer::MAT::File * matf = 0;
-  unsigned int dim = 0;
-  unsigned int n_povms = 0;
+  int dim = 0;
+  int n_povms = 0;
   try {
     matf = new Tomographer::MAT::File(opt.data_file_name);
     dim = Tomographer::MAT::value<int>(matf->var("dim"));

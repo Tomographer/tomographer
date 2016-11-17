@@ -191,7 +191,7 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
 //
 //
 template<int FixedDim, int FixedMaxDim, int FixedMaxPOVMEffects, bool UseBinningAnalysisErrorBars, typename LoggerType>
-inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::MAT::File * matf, LoggerType & baselogger)
+inline void tomorun_dispatch(const int dim, ProgOptions * opt, Tomographer::MAT::File * matf, LoggerType & baselogger)
 {
   Tomographer::Logger::LocalLogger<LoggerType> logger(TOMO_ORIGIN, baselogger);
 
@@ -441,7 +441,7 @@ inline void tomorun_dispatch(unsigned int dim, ProgOptions * opt, Tomographer::M
 
 
 template<int FixedDim, int FixedMaxDim, int FixedMaxPOVMEffects, typename LoggerType>
-inline void tomorun_dispatch_eb(unsigned int dim, ProgOptions * opt, Tomographer::MAT::File * matf, LoggerType & logger)
+inline void tomorun_dispatch_eb(const int dim, ProgOptions * opt, Tomographer::MAT::File * matf, LoggerType & logger)
 {
   if (opt->binning_analysis_error_bars) {
     tomorun_dispatch<FixedDim, FixedMaxDim, FixedMaxPOVMEffects, true, LoggerType>(dim, opt, matf, logger);

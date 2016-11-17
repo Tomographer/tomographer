@@ -106,7 +106,7 @@ struct TestResultsCollector {
   template<typename ResultType>
   void collectResult(int task_no, const ResultType& taskresult, const TestBasicCData * pcdata_)
   {
-    BOOST_CHECK_GE(task_no, 0); BOOST_CHECK_LT(task_no, check_correct_results.size());
+    BOOST_CHECK_GE(task_no, 0); BOOST_CHECK_LT(task_no, (int)check_correct_results.size());
     BOOST_CHECK_EQUAL(taskresult.value, check_correct_results[task_no].value);
     BOOST_CHECK_EQUAL(pcdata, pcdata_) ;
     BOOST_MESSAGE("Collected result: " << taskresult.msg) ;
