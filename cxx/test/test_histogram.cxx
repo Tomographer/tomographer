@@ -412,6 +412,60 @@ BOOST_AUTO_TEST_CASE(errbars)
   Tomographer::histogramPrettyPrint(ss, hist, max_width);
   BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
 }
+BOOST_AUTO_TEST_CASE(mednumbers)
+{
+  Tomographer::UniformBinsHistogramWithErrorBars<double> hist(0.0, 1.0, 5);
+  // make the values small (<1) to make sure that there hasn't been a conversion to int
+  // somewhere in the process
+  hist.load( (Eigen::VectorXd(5) << 0, 181.6, 427.3, 1051.4, 1394.8).finished() );
+  hist.delta = (Eigen::VectorXd(5) << 0, 32.069439, 46.908433, 46.468675, 32.718598).finished();
+
+  const int max_width = 80;
+
+  const std::string correct_str =
+    "0.1000 ||                                                             0 +-     0\n"
+    "0.3000 |******|-|                                                   182 +-    32\n"
+    "0.5000 |***************|---|                                        427 +-    47\n"
+    "0.7000 |***************************************|---|               1051 +-    46\n"
+    "0.9000 |*****************************************************|-|   1395 +-    33\n"
+    ;
+
+  const std::string s = Tomographer::histogramPrettyPrint(hist, max_width);
+  BOOST_CHECK_EQUAL(s, correct_str) ;
+  const std::string s2 = hist.prettyPrint(max_width);
+  BOOST_CHECK_EQUAL(s2, correct_str) ;
+
+  std::ostringstream ss;
+  Tomographer::histogramPrettyPrint(ss, hist, max_width);
+  BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
+}
+BOOST_AUTO_TEST_CASE(largenumbers)
+{
+  Tomographer::UniformBinsHistogramWithErrorBars<double> hist(0.0, 1.0, 5);
+  // make the values small (<1) to make sure that there hasn't been a conversion to int
+  // somewhere in the process
+  hist.load( (Eigen::VectorXd(5) << 0, 100033.931, 4538205.111, 6501842.882, 221045.155).finished() );
+  hist.delta = (Eigen::VectorXd(5) << 0, 40342.111, 51044.209, 30114.315, 90104.919).finished();
+
+  const int max_width = 80;
+
+  const std::string correct_str =
+    "0.1000 ||                                                             0 +-     0\n"
+    "0.3000 |||                                                       100034 +- 40342\n"
+    "0.5000 |*************************************||                 4538205 +- 51044\n"
+    "0.7000 |*****************************************************|  6501843 +- 30114\n"
+    "0.9000 |*|-|                                                     221045 +- 90105\n"
+    ;
+
+  const std::string s = Tomographer::histogramPrettyPrint(hist, max_width);
+  BOOST_CHECK_EQUAL(s, correct_str) ;
+  const std::string s2 = hist.prettyPrint(max_width);
+  BOOST_CHECK_EQUAL(s2, correct_str) ;
+
+  std::ostringstream ss;
+  Tomographer::histogramPrettyPrint(ss, hist, max_width);
+  BOOST_CHECK_EQUAL(ss.str(), correct_str) ;
+}
 
 BOOST_AUTO_TEST_SUITE(nobug)
 
