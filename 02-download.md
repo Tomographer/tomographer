@@ -67,16 +67,16 @@ Prerequisites
 
 You'll need:
 
-- a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14)
-- [CMake >= 2.8.5](http://www.cmake.org/){:target="_blank"}
-- [Boost libraries](http://www.boost.org/){:target="_blank"}
-- [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/){:target="_blank"}
-- [MatIO library](https://sourceforge.net/projects/matio/){:target="_blank"}
+  - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, LLVM/Clang++ >= 3.8)
+  - [CMake >= 2.8.5](http://www.cmake.org/)
+  - [Boost libraries](http://www.boost.org/)
+  - [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/)
+  - [MatIO library](https://sourceforge.net/projects/matio/)
 
 A recent C++ compiler is required as some C++11 features and elements of its
 standard library are used. Also, make sure it supports OpenMP or you won't
-benefit from parallelization. A recent Clang++ will compile as well (tested
-with clang++ >= 3.3), but I haven't managed to get OpenMP working.
+benefit from parallelization. If you use LLVM/Clang++, you might need to install
+additional packages for OpenMP (e.g. `libomp`).
 
 Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
 
