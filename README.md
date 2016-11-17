@@ -59,7 +59,7 @@ anything else.
 
 To compile from source, you'll need:
 
-  - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14)
+  - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, LLVM/Clang++ >= 3.8)
   - [CMake >= 2.8.5](http://www.cmake.org/)
   - [Boost libraries](http://www.boost.org/)
   - [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/)
@@ -67,8 +67,8 @@ To compile from source, you'll need:
 
 A recent C++ compiler is required as some C++11 features and elements of its
 standard library are used. Also, make sure it supports OpenMP or you won't
-benefit from parallelization. A recent Clang++ will compile as well (tested
-with clang++ >= 3.3), but I haven't managed to get OpenMP working.
+benefit from parallelization. If you use LLVM/Clang++, you might need to install
+additional packages for OpenMP (e.g. `libomp`).
 
 Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
 
@@ -104,18 +104,26 @@ To specify paths to the Boost, Eigen3 and MatIO libraries, use the CMake
 switches:
 
     -DEIGEN3_INCLUDE_DIR=/path/to/include/eigen3
+    -DBOOST_ROOT=/path/to/boost
     -DMATIO_LIBRARY=/path/to/libmatio.a
     -DMATIO_INCLUDE_DIR=/path/to/include
-
-(See [here][cmake_findboost] for switches relating to Boost libraries.)
-
-[cmake_findboost]: http://www.cmake.org/cmake/help/v3.0/module/FindBoost.html
 
 You may of course also alternatively use CMake's graphical interface, CMake-GUI.
 
 Note the compilation step (`make`) is quite computation-heavy because of the
 extensive C++11 template metaprogramming. It might take a minute or two to
 complete depending on your hardware, and might be pretty greedy on RAM.
+
+### GCC/G++ and RAM usage
+
+The heavy template meta-programming can cause GCC/G++ to use a LOT of memory
+while compiling.  If your system is limited on memory, you should consider
+tuning the [gcc flags](https://gcc.gnu.org/onlinedocs/gcc-3.3/gcc/Optimize-Options.html)
+`--param ggc-min-expand` and `--param ggc-min-heapsize`: I have found
+`--param ggc-min-expand=10 --param ggc-min-heapsize=32768` to work OK for 4GB of
+memory; if you want to be really conservative use `--param ggc-min-expand=0
+--param ggc-min-heapsize=8192`.  These options should be specified to CMake as
+`-DCMAKE_CXX_FLAGS="--param ..."`.
 
 
 Running Tomorun

@@ -308,8 +308,7 @@ public:
     tomographer_assert((std::size_t)rho.cols() == _dmt.dim());
     rho = trace * MatrixType::Identity(rho.rows(), rho.cols()) / _dmt.dim();
     for (std::size_t n = 0; n < lambda.size(); ++n) {
-      rho += a(n) * lambda[n].template selfadjointView<Eigen::Lower>()
-	* boost::math::constants::half_root_two<RealScalar>();
+      rho += a(n) * boost::math::constants::half_root_two<RealScalar>() * lambda[n];
     }
     return rho;
   }

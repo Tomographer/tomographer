@@ -798,8 +798,9 @@ inline std::ostream& operator<<(std::ostream& str, const IndexListIterator<IsRow
  * type, or whatever other additional info the decoding procedure may like to have.
  */
 template<typename T, typename Enabled = void>
-struct VarValueDecoder
+class VarValueDecoder
 {
+public:
   /** \brief Type returned by \ref decodeValue()
    *
    * The specialization of VarValueDecoder<T> should explicitly specify which type is
@@ -1319,7 +1320,7 @@ template<>  struct MatType<MAT_T_UINT8> { typedef uint8_t Type; };
  *
  */
 template<typename T>
-struct VarValueDecoder<T,
+class VarValueDecoder<T,
 #ifdef TOMOGRAPHER_PARSED_BY_DOXYGEN
                        _IS_NUMERIC_TYPE
 #else
@@ -1328,6 +1329,7 @@ struct VarValueDecoder<T,
 #endif
                        >
 {
+public:
   //! See \ref VarValueDecoder::RetType
   typedef T RetType;
 
@@ -1718,8 +1720,9 @@ struct GetStdVector {
 
 //! Specialization of \ref VarValueDecoder to obtain an \ref std::vector with the matrix data. See \ref GetStdVector.
 template<typename T, bool IsRowMajor>
-struct VarValueDecoder<GetStdVector<T, IsRowMajor> >
+class VarValueDecoder<GetStdVector<T, IsRowMajor> >
 {
+public:
   typedef std::vector<T> RetType;
 
   static inline void checkShape(const Var & var)
@@ -1850,8 +1853,10 @@ void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
  *
  */
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
-struct VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
+class VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
 {
+public:
+
   typedef Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> MatrixType;
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
   typedef MatrixType RetType;
@@ -1952,8 +1957,10 @@ struct VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
  * the \a std::vector index.
  */
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols, typename Alloc>
-struct VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols>, Alloc> >
+class VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols>, Alloc> >
 {
+public:
+
   typedef Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> MatrixType;
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
 
@@ -2059,8 +2066,9 @@ template<typename EigenType> class VarValueDecoder<EigenPosSemidefMatrixWithSqrt
  * VarValueDecoder<EigenPosSmidefMatrixWithSqrt<EigenType> >.
  */
 template<typename EigenType_>
-struct EigenPosSemidefMatrixWithSqrt
+class EigenPosSemidefMatrixWithSqrt
 {
+public:
   typedef EigenType_ EigenType;
   typedef typename Eigen::NumTraits<typename EigenType::Scalar>::Real RealScalarType;
 
@@ -2111,8 +2119,9 @@ private:
 };
 //! Specialization of \ref VarValueDecoder for extracting a positive semidefinite matrix along with sqrt
 template<typename EigenType_>
-struct VarValueDecoder<EigenPosSemidefMatrixWithSqrt<EigenType_> >
+class VarValueDecoder<EigenPosSemidefMatrixWithSqrt<EigenType_> >
 {
+public:
   typedef EigenType_ EigenType;
   typedef EigenPosSemidefMatrixWithSqrt<EigenType> RetType;
 
