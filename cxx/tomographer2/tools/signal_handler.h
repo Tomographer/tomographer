@@ -75,7 +75,7 @@ namespace tomo_internal {
   static std::time_t last_sig_hit_time[NSIG] = { 0 };
   static SignalHandler * signal_handler[NSIG] = { NULL };
 
-  void signal_dispatch_fn(int signum)
+  static void signal_dispatch_fn(int signum)
   {
     assert(signum >= 0 && signum < NSIG && "signum out of range 0...NSIG !") ;
     

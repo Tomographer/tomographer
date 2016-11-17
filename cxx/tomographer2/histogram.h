@@ -196,7 +196,10 @@ struct UniformBinsHistogram
   CountType off_chart;
 
   //! Constructor: stores the parameters and initializes the histogram to zero counts everywhere
-  UniformBinsHistogram(Params p = Params())
+  template<typename Params2 = Params,
+           // enforce Params-like type by checking that properties 'min','max','num_bins' exist:
+           decltype((int)(Params2().min + Params2().max + Params2().num_bins)) dummyval = 0>
+  UniformBinsHistogram(Params2 p = Params())
     : params(p), bins(Eigen::Array<CountType,Eigen::Dynamic,1>::Zero(p.num_bins)),
       off_chart(0)
   {
@@ -210,7 +213,8 @@ struct UniformBinsHistogram
   }
 
   //! Constructor: copy another histogram type
-  template<typename HistogramType>
+  template<typename HistogramType,// and enforce it's indeed a histogram type by testing its 'HasErrorBars' property:
+           TOMOGRAPHER_ENABLED_IF_TMPL(HistogramType::HasErrorBars == 0 || HistogramType::HasErrorBars == 1)>
   UniformBinsHistogram(const HistogramType & other)
     : params(other.params), bins(other.params.num_bins), off_chart(other.off_chart)
   {
