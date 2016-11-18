@@ -193,7 +193,7 @@ namespace tomo_internal {
  * Specifies the parameters of a Metropolis-Hastings random walk (number of thermalization
  * runs, sweep size, number of live runs, step size).
  */
-template<typename CountIntType_, typename StepRealType_>
+template<typename CountIntType_ = int, typename StepRealType_ = double>
 struct MHRWParams
 {
   typedef CountIntType_ CountIntType;

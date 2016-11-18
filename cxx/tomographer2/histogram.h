@@ -57,6 +57,123 @@
 namespace Tomographer {
 
 
+
+/** \brief The parameters of a \ref UniformBinsHistogram
+ *
+ * This is the \f$[\text{min},\text{max}]\f$ range along with the number of bins.
+ */
+template<typename Scalar_ = double>
+struct UniformBinsHistogramParams
+{
+  //! The scalar type used to specify the "value" (horizongal axis) of the histogram
+  typedef Scalar_ Scalar;
+
+  //! The obvious constructor
+  Params(Scalar min_ = 0.0, Scalar max_ = 1.0, std::size_t num_bins_ = 50)
+    : min(min_), max(max_), num_bins(num_bins_)
+  {
+  }
+  //! Copy constructor, from any other UniformBinsHistogram::Params type.
+  template<typename Params2,
+           // enforce Params-like type by checking that properties 'min','max','num_bins' exist:
+           decltype((int)(Params2().min + Params2().max + Params2().num_bins)) dummyval = 0>
+  Params(const Params2& other)
+    : min(other.min), max(other.max), num_bins(other.num_bins)
+  {
+  }
+
+  //! Lower range value
+  Scalar min;
+  //! Upper range value
+  Scalar max;
+  //! Number of bins to split the range into
+  std::size_t num_bins;
+
+  /** \brief Tests whether the given value is in the range of the histogram
+   *
+   * \return \c true if \c value is finite (not inf or nan) and within the interval
+   * \f$[\text{min},\text{max}[\f$.
+   */
+  inline bool isWithinBounds(Scalar value) const
+  {
+    return std::isfinite(value) && value >= min && value < max;
+  }
+  /** \brief Returns which bin this value should be counted in (index in \ref bins array)
+   *
+   * \note Raises \a std::out_of_range if the value is not in the range \f$
+   * [\text{min},\text{max}[ \f$.
+   */
+  inline std::size_t binIndex(Scalar value) const
+  {
+    if ( !isWithinBounds(value) ) {
+      throw std::out_of_range(streamstr("UniformBinsHistogram::Params: Value "<<value
+                                        <<" out of range ["<<min<<","<<max<<"["));
+    }
+    return binIndexUnsafe(value);
+  }
+  /** \brief Returns which bin this value should be counted in.
+   *
+   * This function blindly assumes its argument is within bounds, i.e. it must satisfy
+   * <code>isWithinBounds(value)</code>.
+   *
+   * Use this function only if you're sure the value is within bounds, otherwise call
+   * \ref binIndex().
+   */
+  inline std::size_t binIndexUnsafe(Scalar value) const
+  {
+    return (std::size_t)((value-min) / (max-min) * num_bins);
+  }
+  /** \brief Returns the value which a given bin index represents (lower bin value
+   * limit)
+   *
+   * This is the value at the left edge of the bin.
+   *
+   * \note The index must be valid, i.e. <code>index >= 0 && index < num_bins</code>,
+   * or you might get an <code>assert()</code> failure in your face.
+   */
+  inline Scalar binLowerValue(std::size_t index) const
+  {
+    tomographer_assert(Tools::isPositive(index) && (std::size_t)index < num_bins);
+    return min + index * (max-min) / num_bins;
+  }
+  /** \brief Returns the value which a given bin index represents (center bin value)
+   *
+   * This is the value at the center of the bin.
+   *
+   * \note The index must be valid, i.e. <code>index >= 0 && index < num_bins</code>,
+   * or you might get an <code>assert()</code> failure in your face.
+   */
+  inline Scalar binCenterValue(std::size_t index) const
+  {
+    tomographer_assert(Tools::isPositive(index) && (std::size_t)index < num_bins);
+    return min + (index+boost::math::constants::half<Scalar>()) * (max-min) / num_bins;
+  }
+  /** \brief Returns the value which a given bin index represents (upper bin value
+   * limit)
+   *
+   * This is the value at the right edge of the bin.
+   *
+   * \note The index must be valid, i.e. <code>index >= 0 && index < num_bins</code>,
+   * or you might get an <code>assert()</code> failure in your face.
+   */
+  inline Scalar binUpperValue(std::size_t index) const
+  {
+    tomographer_assert(Tools::isPositive(index) && (std::size_t)index < num_bins);
+    return min + (index+1) * (max-min) / num_bins;
+  }
+  /** \brief Returns the width of a bin
+   *
+   * This is simply <code>(max - min) / num_bins</code>.
+   */
+  inline Scalar binResolution() const
+  {
+    return (max - min) / num_bins;
+  }
+};
+
+
+
+
 /** \brief Stores a histogram
  *
  * Splits the range of values \f$[\text{min},\text{max}]\f$ into \c num_bins number of
@@ -80,113 +197,8 @@ struct UniformBinsHistogram
   //! This histogram type does not provide error bars (see \ref pageInterfaceHistogram)
   static constexpr bool HasErrorBars = false;
 
-  /** \brief The parameters of a \ref UniformBinsHistogram
-   *
-   * This is the \f$[\text{min},\text{max}]\f$ range and the number of bins.
-   */
-  struct Params {
-    //! The obvious constructor
-    Params(Scalar min_ = 0.0, Scalar max_ = 1.0, std::size_t num_bins_ = 50)
-      : min(min_), max(max_), num_bins(num_bins_)
-    {
-    }
-    //! Copy constructor, from any other UniformBinsHistogram::Params type.
-    template<typename OtherParams/*,
-             typename std::enable_if<(tomo_internal::is_histogram_params_type<OtherParams>::value), bool>::type
-             dummy2 = true*/>
-    Params(const OtherParams& other)
-      : min(other.min), max(other.max), num_bins(other.num_bins)
-    {
-    }
-
-    //! Lower range value
-    Scalar min;
-    //! Upper range value
-    Scalar max;
-    //! Number of bins to split the range into
-    std::size_t num_bins;
-
-    /** \brief Tests whether the given value is in the range of the histogram
-     *
-     * \return \c true if \c value is finite (not inf or nan) and within the interval
-     * \f$[\text{min},\text{max}[\f$.
-     */
-    inline bool isWithinBounds(Scalar value) const
-    {
-      return std::isfinite(value) && value >= min && value < max;
-    }
-    /** \brief Returns which bin this value should be counted in (index in \ref bins array)
-     *
-     * \note Raises \a std::out_of_range if the value is not in the range \f$
-     * [\text{min},\text{max}[ \f$.
-     */
-    inline std::size_t binIndex(Scalar value) const
-    {
-      if ( !isWithinBounds(value) ) {
-        throw std::out_of_range(streamstr("UniformBinsHistogram::Params: Value "<<value
-					  <<" out of range ["<<min<<","<<max<<"["));
-      }
-      return binIndexUnsafe(value);
-    }
-    /** \brief Returns which bin this value should be counted in.
-     *
-     * This function blindly assumes its argument is within bounds, i.e. it must satisfy
-     * <code>isWithinBounds(value)</code>.
-     *
-     * Use this function only if you're sure the value is within bounds, otherwise call
-     * \ref binIndex().
-     */
-    inline std::size_t binIndexUnsafe(Scalar value) const
-    {
-      return (std::size_t)((value-min) / (max-min) * num_bins);
-    }
-    /** \brief Returns the value which a given bin index represents (lower bin value
-     * limit)
-     *
-     * This is the value at the left edge of the bin.
-     *
-     * \note The index must be valid, i.e. <code>index >= 0 && index < num_bins</code>,
-     * or you might get an <code>assert()</code> failure in your face.
-     */
-    inline Scalar binLowerValue(std::size_t index) const
-    {
-      tomographer_assert(Tools::isPositive(index) && (std::size_t)index < num_bins);
-      return min + index * (max-min) / num_bins;
-    }
-    /** \brief Returns the value which a given bin index represents (center bin value)
-     *
-     * This is the value at the center of the bin.
-     *
-     * \note The index must be valid, i.e. <code>index >= 0 && index < num_bins</code>,
-     * or you might get an <code>assert()</code> failure in your face.
-     */
-    inline Scalar binCenterValue(std::size_t index) const
-    {
-      tomographer_assert(Tools::isPositive(index) && (std::size_t)index < num_bins);
-      return min + (index+boost::math::constants::half<Scalar>()) * (max-min) / num_bins;
-    }
-    /** \brief Returns the value which a given bin index represents (upper bin value
-     * limit)
-     *
-     * This is the value at the right edge of the bin.
-     *
-     * \note The index must be valid, i.e. <code>index >= 0 && index < num_bins</code>,
-     * or you might get an <code>assert()</code> failure in your face.
-     */
-    inline Scalar binUpperValue(std::size_t index) const
-    {
-      tomographer_assert(Tools::isPositive(index) && (std::size_t)index < num_bins);
-      return min + (index+1) * (max-min) / num_bins;
-    }
-    /** \brief Returns the width of a bin
-     *
-     * This is simply <code>(max - min) / num_bins</code>.
-     */
-    inline Scalar binResolution() const
-    {
-      return (max - min) / num_bins;
-    }
-  };
+  //! The type for specifying parameters of this histogram (limits, number of bins)
+  typedef UniformBinsHistogramParams<Scalar_> Params;
 
   //! Parameters of this histogram (range and # of bins)
   Params params;

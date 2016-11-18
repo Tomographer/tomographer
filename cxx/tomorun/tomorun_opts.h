@@ -303,7 +303,7 @@ TOMOGRAPHER_DEFINE_MSG_EXCEPTION(bad_options, "Invalid input: ") ;
 TOMOGRAPHER_DEFINE_MSG_EXCEPTION(invalid_input, "Bad program options: ") ;
 
 inline void ensure_valid_input(bool condition, std::string msg) {
-  tomographerEnsure<invalid_input>(condition, msg);
+  Tomographer::Tools::tomographerEnsure<invalid_input>(condition, msg);
 }
 
 
