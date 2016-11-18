@@ -264,6 +264,15 @@ BOOST_AUTO_TEST_CASE(ensure_utils)
     BOOST_CHECK_EQUAL(e.what(), "Exception 1: Exception 3: Error, 1+1!=3") ;
     BOOST_CHECK_EQUAL(e.msg(), "Exception 1: Exception 3: Error, 1+1!=3") ;
   }
+
+  try {
+    Tomographer::Tools::tomographerEnsure(1+1 == 3, "Error, 1+1!=3");
+    BOOST_CHECK( false ); // above must have thrown an exception
+  } catch (const std::exception & e) {
+    std::string s = e.what();
+    BOOST_MESSAGE("Exception string = " << s);
+    BOOST_CHECK(s.find("Error, 1+1!=3") != std::string::npos) ;
+  }
 }
 
 

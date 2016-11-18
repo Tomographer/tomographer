@@ -69,7 +69,7 @@ struct UniformBinsHistogramParams
   typedef Scalar_ Scalar;
 
   //! The obvious constructor
-  Params(Scalar min_ = 0.0, Scalar max_ = 1.0, std::size_t num_bins_ = 50)
+  UniformBinsHistogramParams(Scalar min_ = 0.0, Scalar max_ = 1.0, std::size_t num_bins_ = 50)
     : min(min_), max(max_), num_bins(num_bins_)
   {
   }
@@ -77,7 +77,7 @@ struct UniformBinsHistogramParams
   template<typename Params2,
            // enforce Params-like type by checking that properties 'min','max','num_bins' exist:
            decltype((int)(Params2().min + Params2().max + Params2().num_bins)) dummyval = 0>
-  Params(const Params2& other)
+  UniformBinsHistogramParams(const Params2& other)
     : min(other.min), max(other.max), num_bins(other.num_bins)
   {
   }
@@ -106,7 +106,7 @@ struct UniformBinsHistogramParams
   inline std::size_t binIndex(Scalar value) const
   {
     if ( !isWithinBounds(value) ) {
-      throw std::out_of_range(streamstr("UniformBinsHistogram::Params: Value "<<value
+      throw std::out_of_range(streamstr("UniformBinsHistogramParams: Value "<<value
                                         <<" out of range ["<<min<<","<<max<<"["));
     }
     return binIndexUnsafe(value);

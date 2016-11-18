@@ -39,6 +39,7 @@
 
 #include <type_traits>
 #include <exception>
+#include <stdexcept>
 
 #include <Eigen/Core> // NumTraits
 
@@ -672,7 +673,7 @@ namespace Tools {
  *
  * \param message is the string to pass on to the exception class if condition is \a false
  */
-template<typename ExceptionClass = std::exception>
+template<typename ExceptionClass = std::runtime_error>
 inline void tomographerEnsure(bool condition, std::string message) {
   if (!condition) {
     throw ExceptionClass(message);
