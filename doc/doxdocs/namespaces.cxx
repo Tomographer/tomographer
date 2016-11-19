@@ -103,6 +103,13 @@
  */
 
 
+/** \namespace Tomographer::MultiProc::Sequential
+ *
+ * \brief A Sequential Task dispatcher running tasks one after the other
+ *
+ */
+
+
 /** \namespace Tomographer::Tools
  *
  * \brief Various useful tools.

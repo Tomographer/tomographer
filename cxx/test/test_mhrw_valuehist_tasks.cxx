@@ -156,9 +156,9 @@ BOOST_AUTO_TEST_CASE(collects_histograms)
   res.runsFinished(4, &cdata);
   
   BOOST_CHECK( res.isFinalized() );
-  BOOST_CHECK_EQUAL( res.numTasks(), 4 );
+  BOOST_CHECK_EQUAL( res.numTasks(), 4u );
   auto fhist = res.finalHistogram();
-  BOOST_CHECK_EQUAL( fhist.numBins(), 10 );
+  BOOST_CHECK_EQUAL( fhist.numBins(), 10u );
   MY_BOOST_CHECK_FLOATS_EQUAL( fhist.count(0) , 0.0 , tol );
   MY_BOOST_CHECK_FLOATS_EQUAL( fhist.count(1) , 0.006591796875 , tol );
   MY_BOOST_CHECK_FLOATS_EQUAL( fhist.count(2) , 0.022705078125 , tol );
@@ -287,9 +287,9 @@ BOOST_AUTO_TEST_CASE(collects_histograms)
   res.runsFinished(4, &cdata);
   
   BOOST_CHECK( res.isFinalized() );
-  BOOST_CHECK_EQUAL( res.numTasks(), 4 );
+  BOOST_CHECK_EQUAL( res.numTasks(), 4u );
   auto fhist = res.finalHistogram();
-  BOOST_CHECK_EQUAL( fhist.numBins(), 10 );
+  BOOST_CHECK_EQUAL( fhist.numBins(), 10u );
   MY_BOOST_CHECK_FLOATS_EQUAL( fhist.count(0) , 0.0 , tol );
   MY_BOOST_CHECK_FLOATS_EQUAL( fhist.count(1) , 0.006591796875 , tol );
   MY_BOOST_CHECK_FLOATS_EQUAL( fhist.count(2) , 0.022705078125 , tol );
@@ -313,7 +313,7 @@ BOOST_AUTO_TEST_CASE(collects_histograms)
 
   // these values are the same as the test case without binning analysis
   auto sfhist = res.simpleFinalHistogram();
-  BOOST_CHECK_EQUAL( sfhist.numBins(), 10 );
+  BOOST_CHECK_EQUAL( sfhist.numBins(), 10u );
   MY_BOOST_CHECK_FLOATS_EQUAL( sfhist.count(0) , 0.0 , tol );
   MY_BOOST_CHECK_FLOATS_EQUAL( sfhist.count(1) , 0.006591796875 , tol );
   MY_BOOST_CHECK_FLOATS_EQUAL( sfhist.count(2) , 0.022705078125 , tol );

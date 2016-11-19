@@ -1810,12 +1810,16 @@ public:
    * We need this for \ref makeLocalLogger().
    */
   LocalLogger(LocalLogger && movecopy)
-    : _origin_prefix(movecopy._origin_prefix), _glue(movecopy._glue),
+    : _origin_prefix(std::move(movecopy._origin_prefix)), _glue(std::move(movecopy._glue)),
       _baselogger(movecopy._baselogger)
   {
   }
-  //! These objects are not copyable
-  LocalLogger(const LocalLogger & other) = delete;
+  //! Make the local-logger copyable -- there's nothing wrong with that
+  LocalLogger(const LocalLogger & other)
+    : _origin_prefix(other._origin_prefix), _glue(other._glue),
+      _baselogger(other._baselogger)
+  {
+  }
 
   /** \brief The fixed origin specified at the constructor
    *
