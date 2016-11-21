@@ -62,7 +62,7 @@ endif()
 
 # Find Eigen3 package
 if(NOT EIGEN3_FOUND)
-  find_package(Eigen3 REQUIRED)
+  find_package(Eigen3 3.2.5 REQUIRED)
 endif(NOT EIGEN3_FOUND)
 
 # Find OpenMP

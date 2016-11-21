@@ -1,7 +1,7 @@
 
-# more recent distro - Ubuntu 14.04
+# more recent distro - Ubuntu Wily 15.10 (need Eigen3 >= 3.2.5)
 sudo: required
-dist: trusty
+dist: wily
 
 # Enable C++ support
 language: cpp
