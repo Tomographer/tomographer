@@ -1,16 +1,8 @@
 
-# more recent distro - Ubuntu Trusty
-#dist: trusty
 sudo: required
 
 # Enable C++ support
 language: cpp
-
-# Compiler selection
-#compiler:
-#  - clang
-#  - gcc
-
 
 # Install dependencies (Eigen3 >= 3.2.5, MatIO 1.5)
 install:
@@ -60,4 +52,11 @@ matrix:
           packages:
             - clang++-3.8
             - libboost-all-dev
-      env: COMPILER=clang++-3.8
+            - gcc-4.9
+      env:
+        - COMPILER=clang++-3.8
+        - CXXFLAGS=-stdlib=libstdc++
+
+# No e-mail notifications
+notifications:
+  email: false
