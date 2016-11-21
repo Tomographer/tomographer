@@ -52,10 +52,9 @@ matrix:
           - ubuntu-toolchain-r-test
         apt:
           packages:
-            - llvm-toolchain-precise-3.8
             - clang++-3.8
             - libiomp5
-            - libiomp5-dev
+            - libiomp-dev
             - libeigen3-dev
             - libboost-all-dev
             - libmatio4
