@@ -44,18 +44,17 @@ matrix:
             - libboost-all-dev
       env: COMPILER=g++-5
     - compiler: clang
+      dist: trusty
       addons:
         apt:
-          sources:
-            - ubuntu-toolchain-r-test
-            - llvm-toolchain-precise-3.8
+          #sources:
+          #  - ubuntu-toolchain-r-test
+          #  - llvm-toolchain-precise-3.8
           packages:
-            - clang++-3.8
-            - libc++
             - libboost-all-dev
       env:
-        - COMPILER=clang++-3.8
-        - CXXFLAGS=-stdlib=libc++
+        - COMPILER=clang++
+        #- CXXFLAGS=-stdlib=libc++
 
 # No e-mail notifications
 notifications:
