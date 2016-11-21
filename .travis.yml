@@ -41,8 +41,6 @@ matrix:
             - gcc-4.6
             - g++-4.6
             - libboost-all-dev
-            - libmatio2
-            - libmatio-dev
       env: COMPILER=g++-4.6
     - compiler: gcc
       addons:
@@ -52,8 +50,6 @@ matrix:
           packages:
             - gcc-5
             - libboost-all-dev
-            - libmatio2
-            - libmatio-dev
       env: COMPILER=g++-5
     - compiler: clang
       addons:
@@ -65,6 +61,4 @@ matrix:
             - libiomp5
             - libiomp-dev
             - libboost-all-dev
-            - libmatio2
-            - libmatio-dev
       env: COMPILER=clang++-3.9
