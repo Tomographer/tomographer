@@ -21,7 +21,7 @@ install:
   # MatIO:
   - curl -L -o matio-1.5.9.tar.gz  https://sourceforge.net/projects/matio/files/matio/1.5.9/matio-1.5.9.tar.gz/download
   - tar xvfz matio-1.5.9.tar.gz
-  - cd matio-1.5.9 && ./configure --prefix=/usr && make && sudo make install
+  - ( cd matio-1.5.9 && ./configure --prefix=/usr && make && sudo make install )
 
 
 # Build steps
