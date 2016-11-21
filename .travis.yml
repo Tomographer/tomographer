@@ -26,8 +26,8 @@ matrix:
           - ubuntu-toolchain-r-test
         apt:
           packages:
-            - g++-4.6
             - gcc-4.6
+            - g++-4.6
             - libeigen3-dev
             - libboost-all-dev
             - libmatio2
@@ -39,7 +39,6 @@ matrix:
           - ubuntu-toolchain-r-test
         apt:
           packages:
-            - g++-5
             - gcc-5
             - libeigen3-dev
             - libboost-all-dev
