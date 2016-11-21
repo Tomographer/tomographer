@@ -51,11 +51,11 @@ matrix:
             - llvm-toolchain-precise-3.8
           packages:
             - clang++-3.8
+            - libc++
             - libboost-all-dev
-            - gcc-4.9
       env:
         - COMPILER=clang++-3.8
-        - CXXFLAGS=-stdlib=libstdc++
+        - CXXFLAGS=-stdlib=libc++
 
 # No e-mail notifications
 notifications:
