@@ -212,6 +212,25 @@ BOOST_AUTO_TEST_CASE(floatcounttype)
   BOOST_CHECK_CLOSE(hist.off_chart, 120.399, tol_percent);
 }
 
+BOOST_AUTO_TEST_CASE(assign)
+{
+  Tomographer::UniformBinsHistogram<float, int> hist(0.0f, 1.0f, 5);
+  hist.bins << 0, 3, 19, 24, 8;
+  
+  Tomographer::UniformBinsHistogram<float, double> histtgt(0.0f, 1.0f, 5);
+  histtgt = hist;
+
+  MY_BOOST_CHECK_EIGEN_EQUAL( hist.bins.cast<double>(), histtgt.bins, tol );
+}
+BOOST_AUTO_TEST_CASE(copy_construct)
+{
+  Tomographer::UniformBinsHistogram<float, int> hist(0.0f, 1.0f, 5);
+  hist.bins << 0, 3, 19, 24, 8;
+  
+  Tomographer::UniformBinsHistogram<float, double> histtgt(hist);
+
+  MY_BOOST_CHECK_EIGEN_EQUAL( hist.bins.cast<double>(), histtgt.bins, tol );
+}
 
 BOOST_AUTO_TEST_SUITE_END(); // uniform_bins_histogram
 

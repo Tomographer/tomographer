@@ -30,6 +30,7 @@
 #include <cmath>
 #include <cstdlib>
 
+#include <utility> // std::declval
 #include <iostream>
 #include <iomanip> // std::setprecision
 #include <sstream> // std::stringstream
@@ -76,7 +77,8 @@ struct UniformBinsHistogramParams
   //! Copy constructor, from any other UniformBinsHistogram::Params type.
   template<typename Params2,
            // enforce Params-like type by checking that properties 'min','max','num_bins' exist:
-           decltype((int)Params2().min + (int)Params2().max + Params2().num_bins) dummyval = 0>
+           decltype((int)std::declval<const Params2>().min + (int)std::declval<const Params2>().max
+                    + std::declval<Params2>().num_bins) dummyval = 0>
   UniformBinsHistogramParams(const Params2& other)
     : min(other.min), max(other.max), num_bins(other.num_bins)
   {
@@ -210,7 +212,8 @@ struct UniformBinsHistogram
   //! Constructor: stores the parameters and initializes the histogram to zero counts everywhere
   template<typename Params2 = Params,
            // enforce Params-like type by checking that properties 'min','max','num_bins' exist:
-           decltype((int)Params2().min + (int)Params2().max + Params2().num_bins) dummyval = 0>
+           decltype((int)std::declval<const Params2>().min + (int)std::declval<const Params2>().max
+                    + std::declval<Params2>().num_bins) dummyval = 0>
   UniformBinsHistogram(Params2 p = Params())
     : params(p), bins(Eigen::Array<CountType,Eigen::Dynamic,1>::Zero(p.num_bins)),
       off_chart(0)
