@@ -27,6 +27,10 @@ matrix:
         apt:
           packages:
             - g++-4.6
+            - libeigen3-dev
+            - libboost-all-dev
+            - libmatio4
+            - libmatio-dev
       env: COMPILER=g++-4.6
   include:
     - compiler: gcc
@@ -36,6 +40,10 @@ matrix:
         apt:
           packages:
             - g++-5
+            - libeigen3-dev
+            - libboost-all-dev
+            - libmatio4
+            - libmatio-dev
       env: COMPILER=g++-5
   include:
     - compiler: clang
@@ -48,4 +56,8 @@ matrix:
             - clang++-3.8
             - libiomp5
             - libiomp5-dev
+            - libeigen3-dev
+            - libboost-all-dev
+            - libmatio4
+            - libmatio-dev
       env: COMPILER=clang++-3.8
