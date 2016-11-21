@@ -59,7 +59,5 @@ matrix:
             - llvm-toolchain-precise-3.8
           packages:
             - clang++-3.8
-            - libiomp5
-            - libiomp-dev
             - libboost-all-dev
       env: COMPILER=clang++-3.8
