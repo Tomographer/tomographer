@@ -1,7 +1,7 @@
 
-# more recent distro - Ubuntu Wily 15.10 (need Eigen3 >= 3.2.5)
+# more recent distro - Ubuntu Trusty
+#dist: trusty
 sudo: required
-dist: wily
 
 # Enable C++ support
 language: cpp
@@ -11,12 +11,24 @@ language: cpp
 #  - clang
 #  - gcc
 
+
+# Install dependencies (Eigen3 >= 3.2.5, MatIO 1.5)
+install:
+  # Eigen3:
+  - curl -L https://bitbucket.org/eigen/eigen/get/3.2.5.tar.gz -o eigen-3.2.5.tar.gz
+  - tar xvfz eigen-3.2.5.tar.gz
+  - export EIGEN_PATH=`pwd`/eigen-eigen-bdd17ee3b1b3
+  # MatIO:
+  - curl -L -o matio-1.5.9.tar.gz  https://sourceforge.net/projects/matio/files/matio/1.5.9/matio-1.5.9.tar.gz/download
+  - tar xvfz matio-1.5.9.tar.gz
+  - cd matio-1.5.9 && ./configure --prefix=/usr && make && sudo make install
+
+
 # Build steps
 script:
   - mkdir build
   - cd build
-  - cmake .. -DTOMOGRAPHER_ENABLE_TESTS=on && make VERBOSE=1 && make test
-
+  - cmake .. -DTOMOGRAPHER_ENABLE_TESTS=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH" && make VERBOSE=1 && make test
 
 matrix:
   include:
@@ -28,7 +40,6 @@ matrix:
           packages:
             - gcc-4.6
             - g++-4.6
-            - libeigen3-dev
             - libboost-all-dev
             - libmatio2
             - libmatio-dev
@@ -40,7 +51,6 @@ matrix:
             - ubuntu-toolchain-r-test
           packages:
             - gcc-5
-            - libeigen3-dev
             - libboost-all-dev
             - libmatio2
             - libmatio-dev
@@ -50,12 +60,10 @@ matrix:
         apt:
           sources:
             - ubuntu-toolchain-r-test
-            - llvm-toolchain-trusty-3.9
           packages:
             - clang++-3.9
             - libiomp5
             - libiomp-dev
-            - libeigen3-dev
             - libboost-all-dev
             - libmatio2
             - libmatio-dev
