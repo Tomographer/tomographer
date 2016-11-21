@@ -29,7 +29,7 @@ matrix:
             - g++-4.6
             - libeigen3-dev
             - libboost-all-dev
-            - libmatio4
+            - libmatio2
             - libmatio-dev
       env: COMPILER=g++-4.6
   include:
@@ -42,7 +42,7 @@ matrix:
             - g++-5
             - libeigen3-dev
             - libboost-all-dev
-            - libmatio4
+            - libmatio2
             - libmatio-dev
       env: COMPILER=g++-5
   include:
@@ -57,6 +57,6 @@ matrix:
             - libiomp-dev
             - libeigen3-dev
             - libboost-all-dev
-            - libmatio4
+            - libmatio2
             - libmatio-dev
       env: COMPILER=clang++-3.8
