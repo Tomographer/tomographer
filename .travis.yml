@@ -15,7 +15,7 @@ language: cpp
 script:
   - mkdir build
   - cd build
-  - cmake .. -DTOMOGRAPHER_ENABLE_TESTS=on && make && make test
+  - cmake .. -DTOMOGRAPHER_ENABLE_TESTS=on && make VERBOSE=1 && make test
 
 
 matrix:
@@ -27,12 +27,12 @@ matrix:
         apt:
           packages:
             - g++-4.6
+            - gcc-4.6
             - libeigen3-dev
             - libboost-all-dev
             - libmatio2
             - libmatio-dev
       env: COMPILER=g++-4.6
-  include:
     - compiler: gcc
       addons:
         sources:
@@ -40,23 +40,23 @@ matrix:
         apt:
           packages:
             - g++-5
+            - gcc-5
             - libeigen3-dev
             - libboost-all-dev
             - libmatio2
             - libmatio-dev
       env: COMPILER=g++-5
-  include:
     - compiler: clang
       addons:
         sources:
           - ubuntu-toolchain-r-test
         apt:
           packages:
-            - clang++-3.8
+            - clang++-3.9
             - libiomp5
             - libiomp-dev
             - libeigen3-dev
             - libboost-all-dev
             - libmatio2
             - libmatio-dev
-      env: COMPILER=clang++-3.8
+      env: COMPILER=clang++-3.9
