@@ -49,6 +49,7 @@ matrix:
       addons:
         sources:
           - ubuntu-toolchain-r-test
+          - llvm-toolchain-trusty-3.9
         apt:
           packages:
             - clang++-3.9
