@@ -77,8 +77,9 @@ matrix:
         - sudo apt-add-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.8 main'
         - sudo apt-get update
         - sudo apt-get install clang-3.8 clang++-3.8
+        - sudo ln -s /usr/lib/libiomp5.so.5 /usr/lib/libiomp5.so
       env:
-        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8 -DOpenMP_C_FLAGS='-fopenmp=libomp' -DOpenMP_CXX_FLAGS='-fopenmp=libomp'"
+        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8 -DOpenMP_C_FLAGS='-fopenmp=libomp' -DOpenMP_CXX_FLAGS='-fopenmp=libiomp5'"
 
 # No e-mail notifications
 notifications:
