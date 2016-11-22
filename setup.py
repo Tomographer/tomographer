@@ -16,12 +16,17 @@ import sys
 
 include_dirs = [ "/usr/local/include",
                  "/usr/local/include/eigen3",
+                 "/usr/include/eigen3",
+                 "/usr/include",
                  "/opt/tomographer-install/include",
                  "." ]
-libraries = [ "boost_python-mt" ]
+libraries = [
+#    "boost_python-mt"
+    "boost_python-py35"
+]
 library_dirs = ['.']
-cflags = ['-std=c++11', '-fdiagnostics-color',  '-fopenmp'] #'-DEIGEN_DEFAULT_TO_ROW_MAJOR',
-ldflags = ['-fopenmp']
+cflags = ['-std=c++11', '-fdiagnostics-color',  '-fopenmp=libomp'] #'-DEIGEN_DEFAULT_TO_ROW_MAJOR',
+ldflags = ['-fopenmp=libomp']
 
 files = [ "pytomorun.cxx", "tomographerbase.cxx", "pyhistogram.cxx", "eigpyconv.cxx" ]
 headers = [ "eigpyconv.h", "pyhistogram.h", "common.h" ]

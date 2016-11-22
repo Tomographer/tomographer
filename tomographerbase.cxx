@@ -50,15 +50,20 @@ void py_tomo_tomorun();
 
 BOOST_PYTHON_MODULE(tomographer)
 {
+  std::cerr << "INIT TOMOGRAPHER\n";
+
   // Eigen converters
+  long ok = []() -> long { import_array(); return 1; } ();
+  if (!ok) { return; } // error
   register_eigen_converter();
 
-  //  std::cerr << "INIT TOMOGRAPHER\n";
+  std::cerr << "Registered eigen converters.\n";
 
   py_tomo_histogram();
 
   py_tomo_tomorun();
 
+  std::cerr << "some final toys...\n";
 
   // some dummy tests for the eigen converters:
   boost::python::def("test_eigen", test_eigen);
@@ -67,5 +72,5 @@ BOOST_PYTHON_MODULE(tomographer)
   boost::python::def("testgetmatrix_cd", testgetmatrix_cd);
   boost::python::def("testgetmatrix_i", testgetmatrix_i);
 
-  //  std::cerr << "DONE FINALLY\n";
+  std::cerr << "TOMOGRAPHER INIT COMPLETE.\n";
 }

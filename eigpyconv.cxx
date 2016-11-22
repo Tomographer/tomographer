@@ -6,7 +6,9 @@
 // add the types you want to add
 void register_eigen_converter()
 {
-  import_array(); //< required, or conversion leads to segfault
+  // NOTE: import_array() must be called from within the module's init function
+  // (https://mail.scipy.org/pipermail/numpy-discussion/2010-December/054349.html):
+  // import_array(); //< required, or conversion leads to segfault
   
   // matrices...
   eigen_python_converter< Eigen::Matrix<long,Eigen::Dynamic,Eigen::Dynamic> >::to_python();

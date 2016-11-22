@@ -6,6 +6,8 @@
 
 namespace Py {
 
+typedef Tomographer::UniformBinsHistogramParams<RealType> UniformBinsHistogramParams;
+
 typedef Tomographer::UniformBinsHistogram<RealType, CountIntType> UniformBinsHistogram;
 
 typedef Tomographer::UniformBinsHistogram<RealType, RealType> UniformBinsRealHistogram;

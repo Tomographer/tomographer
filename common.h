@@ -3,7 +3,7 @@
 #define TOMOPY_COMMON_H
 
 
-#include <Python/Python.h>
+#include <Python.h>
 
 #include <boost/python.hpp>
 

@@ -126,7 +126,7 @@ boost::python::dict py_tomorun(
     std::string fig_of_merit,
     const Eigen::MatrixXcd& ref_state,
     const Eigen::MatrixXcd& observable,
-    const Py::UniformBinsHistogram::Params& hist_params,
+    const Py::UniformBinsHistogramParams& hist_params,
     const Py::MHRWParams& mhrw_params,
     int binning_num_levels,
     int num_repeats,
@@ -168,7 +168,7 @@ boost::python::dict py_tomorun(
                                      " but Nm.rows()=" + std::to_string(Nm.rows()));
     }
     for (std::size_t k = 0; k < (std::size_t)Nm.rows(); ++k) {
-      MatrixType POVMeffect(boost::python::extract<MatrixType>(Emn[k]));
+      MatrixType POVMeffect = boost::python::extract<MatrixType>(Emn[k]);
       llh.addMeasEffect(POVMeffect, Nm(k), true);
     }
   } else {
@@ -301,6 +301,9 @@ boost::python::dict py_tomorun(
 
 void py_tomo_tomorun()
 {
+  std::cerr << "py_tomo_tomorun() ...\n";
+
+  std::cerr << "MHRWParams ...\n";
   { typedef Py::MHRWParams Kl;
     boost::python::class_<Py::MHRWParams>("MHRWParams")
       .def(boost::python::init<>())
@@ -316,34 +319,42 @@ void py_tomo_tomorun()
       ;
   }
 
+  std::cerr << "tomorun module ...\n";
+  
   boost::python::object tomorunsubmod(boost::python::borrowed(PyImport_AddModule("tomographer.tomorun")));
   boost::python::scope().attr("tomorun") = tomorunsubmod;
   {
     // now inside submodule
     boost::python::scope tomorunmodule(tomorunsubmod);
 
+    std::cerr << "tomorun.tomorun() ...\n";
+
     // the main run call:
     boost::python::def(
         "tomorun", // function name
         &py_tomorun, // fn pointer
         (boost::python::arg("dim"),
-         boost::python::arg("Exn") = Eigen::MatrixXd(),
+         /*         boost::python::arg("Exn") = Eigen::MatrixXd(),
          boost::python::arg("Emn") = boost::python::list(),
          boost::python::arg("Nm") = Eigen::VectorXi(),
          boost::python::arg("fig_of_merit") = std::string("obs-value"),
          boost::python::arg("ref_state") = Eigen::MatrixXcd(),
          boost::python::arg("observable") = Eigen::MatrixXcd(),
-         boost::python::arg("hist_params") = Py::UniformBinsHistogram::Params(),
+         boost::python::arg("hist_params") = Py::UniformBinsHistogramParams(),
          boost::python::arg("mhrw_params") = Py::MHRWParams(),
          boost::python::arg("binning_num_levels") = -1,
-         boost::python::arg("num_repeats") = omp_get_num_procs(),
+         boost::python::arg("num_repeats") = omp_get_num_procs(),*/
          boost::python::arg("log_level") = (int)Tomographer::Logger::INFO),
         "Docstring goes here?"
         );
+
+    std::cerr << "tomorun.TomorunInvalidInputError ...\n";
 
     boost::python::register_exception_translator<TomorunInvalidInputError>(
         +[](const TomorunInvalidInputError & exc) {
           PyErr_SetString(PyExc_RuntimeError, exc.what());
         });
   }
+
+  std::cerr << "py_tomo_tomorun() complete.\n";
 }
