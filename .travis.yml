@@ -21,7 +21,7 @@ install:
 script:
   - mkdir build
   - cd build
-  - cmake .. -DTOMOGRAPHER_ENABLE_TESTS=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH" && make VERBOSE=1 && make test
+  - cmake .. $CMAKE_COMPILER_ARGS -DTOMOGRAPHER_ENABLE_TESTS=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH" && make VERBOSE=1 && make test
 
 matrix:
   include:
@@ -35,7 +35,6 @@ matrix:
             - gcc-4.6
             - g++-4.6
             - libboost-all-dev
-      env: COMPILER=g++-4.6
     - compiler: gcc
       addons:
         apt:
@@ -44,7 +43,6 @@ matrix:
           packages:
             - gcc-5
             - libboost-all-dev
-      env: COMPILER=g++-5
     - compiler: gcc
       addons:
         apt:
@@ -53,7 +51,6 @@ matrix:
           packages:
             - gcc-6
             - libboost-all-dev
-      env: COMPILER=g++-6
     - compiler: clang
       addons:
         apt:
@@ -68,7 +65,7 @@ matrix:
         - sudo apt-get update
         - sudo apt-get install clang-3.8 clang++-3.8
       env:
-        - COMPILER=clang++-3.8
+        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8"
 
 # No e-mail notifications
 notifications:
