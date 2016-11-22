@@ -1754,14 +1754,14 @@ struct LoggerTraits<LocalLogger<BaseLoggerType_> > : public LoggerTraits<BaseLog
  * \endcode
  */
 template<typename BaseLoggerType_>
-class LocalLogger : public Tomographer::Logger::LoggerBase<LocalLogger<BaseLoggerType_> >
+class LocalLogger : public LoggerBase<LocalLogger<BaseLoggerType_> >
 {
 public:
   //! The base logger type (see class documentation)
   typedef BaseLoggerType_ BaseLoggerType;
 
 private:
-  typedef Tomographer::Logger::LoggerBase<LocalLogger> Base_;
+  typedef LoggerBase<LocalLogger> Base_;
 
   /** See \ref originPrefix() */
   const std::string _origin_prefix;
@@ -1782,7 +1782,7 @@ public:
    *        FileLogger, \ref BufferLogger, etc.)
    */
   LocalLogger(const std::string & origin_fn_name, BaseLoggerType & logger_)
-    : _origin_prefix(origin_fn_name), _glue("::"), _baselogger(logger_)
+    : Base_(), _origin_prefix(origin_fn_name), _glue("::"), _baselogger(logger_)
   {
   }
   /** \brief Construct a local logger
@@ -1792,7 +1792,7 @@ public:
    * glue() and \ref subLogger().
    */
   LocalLogger(const std::string & origin_prefix, const std::string & glue, BaseLoggerType & logger_)
-    : _origin_prefix(origin_prefix), _glue(glue), _baselogger(logger_)
+    : Base_(), _origin_prefix(origin_prefix), _glue(glue), _baselogger(logger_)
   {
   }
   /** \brief Construct a local logger
@@ -1801,7 +1801,7 @@ public:
    * which is called if you use the macro \ref TOMO_ORIGIN for the first argument.
    */
   LocalLogger(const LocalLoggerOriginSpec & spec, BaseLoggerType & logger_)
-    : _origin_prefix(spec.origin_prefix.to_string()+spec.origin_prefix_add.to_string()),
+    : Base_(), _origin_prefix(spec.origin_prefix.to_string()+spec.origin_prefix_add.to_string()),
       _glue(spec.glue.to_string()), _baselogger(logger_)
   {
   }
@@ -1810,13 +1810,13 @@ public:
    * We need this for \ref makeLocalLogger().
    */
   LocalLogger(LocalLogger && movecopy)
-    : _origin_prefix(std::move(movecopy._origin_prefix)), _glue(std::move(movecopy._glue)),
+    : Base_(), _origin_prefix(std::move(movecopy._origin_prefix)), _glue(std::move(movecopy._glue)),
       _baselogger(movecopy._baselogger)
   {
   }
   //! Make the local-logger copyable -- there's nothing wrong with that
   LocalLogger(const LocalLogger & other)
-    : _origin_prefix(other._origin_prefix), _glue(other._glue),
+    : Base_(), _origin_prefix(other._origin_prefix), _glue(other._glue),
       _baselogger(other._baselogger)
   {
   }
