@@ -35,6 +35,8 @@ matrix:
             - gcc-4.6
             - g++-4.6
             - libboost-all-dev
+      env:
+        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-4.6 -DCMAKE_CXX_COMPILER=g++-4.6"
     - compiler: gcc
       addons:
         apt:
@@ -43,6 +45,8 @@ matrix:
           packages:
             - gcc-5
             - libboost-all-dev
+      env:
+        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-5 -DCMAKE_CXX_COMPILER=g++-5"
     - compiler: gcc
       addons:
         apt:
@@ -51,6 +55,8 @@ matrix:
           packages:
             - gcc-6
             - libboost-all-dev
+      env:
+        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-6 -DCMAKE_CXX_COMPILER=g++-6"
     - compiler: clang
       addons:
         apt:
