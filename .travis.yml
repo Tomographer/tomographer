@@ -29,7 +29,8 @@ script:
   - cmake .. $CMAKE_COMPILER_ARGS -DTOMOGRAPHER_ENABLE_TESTS=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH"
   - make VERBOSE=1
 #  - CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all make test
-  - BOOST_TEST_LOG_LEVEL=all ctest --verbose
+#  - BOOST_TEST_LOG_LEVEL=all ctest --verbose
+  - CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all ctest --timeout 300
 
 matrix:
   include:
