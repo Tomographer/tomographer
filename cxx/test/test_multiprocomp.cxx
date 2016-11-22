@@ -214,7 +214,7 @@ struct TestTaskCheckAlignedStack : public TestTask {
   template<typename LoggerType, typename TaskManagerIface>
   void run(const TestBasicCData * pcdata, LoggerType & logger, TaskManagerIface * iface)
   {
-    char blah_data[4] = {0}; // some random stuff -- not really needed, it's just here to clutter the code and memory
+    char blah_data[5] = {0}; // some random stuff -- not really needed, it's just here to clutter the code and memory
     
     // make sure that the stack is aligned
     Eigen::Matrix4d m;
@@ -252,13 +252,6 @@ struct StatusRepTestBasicCData {
   bool getTaskInput(int k) const {
     return (k == 0);
   }
-
-  //  void do_request_status_report() const
-  //  {
-  //    fn();
-  //  }
-  //
-  //  std::function<void()> fn;
 };
 struct StatusRepTestTask {
   typedef bool Input;
