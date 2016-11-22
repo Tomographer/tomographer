@@ -17,6 +17,11 @@ install:
   - ( cd matio-1.5.9 && ./configure --prefix=/usr && make && sudo make install )
 
 
+# Allow git-describe to find the right version string, otherwise the build fails
+git:
+  depth: 100
+
+
 # Build steps
 script:
   - mkdir build
