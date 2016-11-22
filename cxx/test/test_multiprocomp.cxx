@@ -249,19 +249,18 @@ BOOST_FIXTURE_TEST_CASE(inner_code_stack_aligned, test_task_dispatcher_fixture)
 struct StatusRepTestBasicCData {
   StatusRepTestBasicCData() { }
 
-  bool getTaskInput(int k) const {
+  int getTaskInput(int k) const {
     return (k == 0);
   }
 };
 struct StatusRepTestTask {
-  typedef bool Input;
 
   typedef Tomographer::MultiProc::TaskStatusReport StatusReportType;
   
   typedef bool ResultType;
 
   template<typename LoggerType>
-  StatusRepTestTask(Input input, const StatusRepTestBasicCData * , LoggerType & )
+  StatusRepTestTask(int input, const StatusRepTestBasicCData * , LoggerType & )
     : _input(input)
   {
   }
@@ -270,9 +269,10 @@ struct StatusRepTestTask {
   void run(const StatusRepTestBasicCData * , LoggerType & logger, TaskManagerIface * iface)
   {
     _result = false;
-    // "slaves" : check for status reports, and generate one once requested.  Continue
-    // adding to our internal counter until we submit a status report; after that just
-    // stop.
+
+    // Check for status reports, and generate one once requested.  Run the task
+    // like this for five seconds.
+
     unsigned long count = 0;
     std::time_t time_start;
     std::time(&time_start);
@@ -282,7 +282,7 @@ struct StatusRepTestTask {
       std::time(&now);
       elapsed = now - time_start;
       if (iface->statusReportRequested()) {
-        logger.longdebug("StatusRepTestTask::run", "Status report requested");
+        logger.longdebug("StatusRepTestTask::run", "Task #%02d: Status report requested", _input);
         StatusReportType s(elapsed / 5.0,
                            Tomographer::Tools::fmts("elapsed = %d [%.2f%%]; count = %lu = %#lx",
                                                     elapsed, 100*elapsed/5.0, count, count));
@@ -301,7 +301,7 @@ struct StatusRepTestTask {
   ResultType getResult() const { return _result; }
 
 private:
-  Input _input;
+  int _input;
   ResultType _result;
 };
 struct StatusRepTestResultsCollector {
@@ -336,10 +336,6 @@ BOOST_AUTO_TEST_CASE(status_report_withthread)
                                               Tomographer::Logger::BoostTestLogger, long>
       task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
 
-  // cData.fn = [&task_dispatcher]() {
-  //   task_dispatcher.requestStatusReport();
-  // };
-
   task_dispatcher.setStatusReportHandler(
       [&logger](const Tomographer::MultiProc::FullStatusReport<StatusRepTestTask::StatusReportType>& r) {
         logger.info("status_report test case", [&](std::ostream & stream) {
@@ -356,9 +352,10 @@ BOOST_AUTO_TEST_CASE(status_report_withthread)
           });
       });
 
+   omp_set_dynamic(0);
    omp_set_nested(1);
 
-   std::sig_atomic_t finished = 0;
+   volatile std::sig_atomic_t finished = 0;
 
 #pragma omp parallel num_threads(2)
    {
@@ -369,10 +366,16 @@ BOOST_AUTO_TEST_CASE(status_report_withthread)
          sleep(1);
          task_dispatcher.requestStatusReport();
        }
+
      } else if (omp_get_thread_num() == 1) {
+       // run the slave tasks
+
        task_dispatcher.run();
+
        finished = 1;
+
      } else {
+       // never here
        assert( false ) ;
      }
    }
@@ -380,6 +383,12 @@ BOOST_AUTO_TEST_CASE(status_report_withthread)
    logger.debug("test case:status_report", "Test case done.");
 }
 #endif
+
+
+//
+// Also provide some testing for non-OpenMP enabled platforms:
+//
+
 
 #ifndef __MINGW32__
 // MinGW32 does not have SIGALRM / alarm()
@@ -431,6 +440,7 @@ BOOST_AUTO_TEST_CASE(status_report_withsigalrm)
   }
 }
 #endif
+
 
 #if !defined(_OPENMP) && defined(__MINGW__)
 BOOST_AUTO_TEST_CASE(status_report_not_implemented)
