@@ -134,7 +134,7 @@ public:
 
 
 
-boost::python::dict py_tomorun(
+boost::python::object py_tomorun(
     int dim,
     const Eigen::MatrixXd& Exn,
     const boost::python::list& Emn,
@@ -327,8 +327,8 @@ boost::python::dict py_tomorun(
       // no Python exception set?? -- set a RuntimError via Boost
       throw e;
     }
-    // return gracefully, Python will notice the exception set.
-    return boost::python::dict();
+    // tell boost.python that the exception is already set
+    throw boost::python::error_already_set();
   }
 
   auto time_end = std::chrono::steady_clock::now();

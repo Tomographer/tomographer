@@ -48,7 +48,7 @@ void py_tomo_histogram()
       .def("prettyPrint", &Kl::prettyPrint)
       .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
                                                            boost::python::return_internal_reference<>()))
-      .add_property("bins", +[](Kl & h) { return h.bins; },
+      .add_property("bins", +[](Kl & h) -> Eigen::MatrixXi { return h.bins.matrix(); },
                     +[](Kl & h, const Eigen::MatrixXi& v) { h.bins = v; })
       .add_property("off_chart", +[](Kl & h) { return h.off_chart; },
                     +[](Kl & h, CountIntType o) { h.off_chart = o; })
@@ -78,7 +78,7 @@ void py_tomo_histogram()
       .def("prettyPrint", &Kl::prettyPrint)
       .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
                                                            boost::python::return_internal_reference<>()))
-      .add_property("bins", +[](Kl & h) { return h.bins; },
+      .add_property("bins", +[](Kl & h) -> Eigen::MatrixXd { return h.bins.matrix(); },
                     +[](Kl & h, const Eigen::MatrixXd& v) { h.bins = v; })
       .add_property("off_chart", +[](Kl & h) { return h.off_chart; },
                     +[](Kl & h, RealType o) { h.off_chart = o; })
@@ -109,9 +109,9 @@ void py_tomo_histogram()
       .def("prettyPrint", &Kl::prettyPrint)
       .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
                                                            boost::python::return_internal_reference<>()))
-      .add_property("bins", +[](Kl & h) { return h.bins; },
+      .add_property("bins", +[](Kl & h) -> Eigen::MatrixXd { return h.bins.matrix(); },
                     +[](Kl & h, const Eigen::MatrixXd v) { h.bins = v; })
-      .add_property("delta", +[](Kl & h) { return h.delta; },
+      .add_property("delta", +[](Kl & h) { return h.delta.matrix(); },
                     +[](Kl & h, const Eigen::MatrixXd v) { h.delta = v; })
       .add_property("off_chart", +[](Kl & h) { return h.off_chart; },
                     +[](Kl & h, RealType o) { h.off_chart = o; })
