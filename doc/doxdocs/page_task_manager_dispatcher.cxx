@@ -213,7 +213,7 @@
  *          be implemented such that it can be called often without performance problems
  *          (e.g. check shared variable value).
  *
- * \par void statusReport(const TaskStatusReportType &)
+ * \par void submitStatusReport(const TaskStatusReportType &)
  *          Submit the status report if \a statusReportRequested() returned \c
  *          true. Call this function ONCE only per task, and only if a status report was
  *          requested. The behavior of this function otherwise is undefined.
