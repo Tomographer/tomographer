@@ -408,19 +408,26 @@ private:
       // if we're the master thread, update the status_report_counter according to whether
       // we should provoke a periodic status report
       if (omp_get_thread_num() == 0 && shared_data->status_report_periodic_interval > 0) {
-        shared_data->status_report_counter =
-          ( std::chrono::duration_cast<std::chrono::milliseconds>(
-              std::chrono::steady_clock::now().time_since_epoch()
-              ).count()  /  shared_data->status_report_periodic_interval ) * 100;
-        // the * 100 allows individual increments from unrelated additional
-        // requestStatusReport() to be taken into account (allows 100 such additional
-        // requests per periodic status report)
+        typedef
+#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6
+          std::chrono::monotonic_clock
+#else
+          std::chrono::steady_clock
+#endif
+          StdClockType;
+        shared_data->status_report_counter = (
+            (std::chrono::duration_cast<std::chrono::milliseconds>(
+                StdClockType::now().time_since_epoch()
+                ).count()  /  shared_data->status_report_periodic_interval) & 0x00FFFFFF
+            ) << 6;
+        // the (x << 6) (equivalent to (x * 64)) allows individual increments from
+        // unrelated additional requestStatusReport() to be taken into account (allows 64
+        // such additional requests per periodic status report)
       }
 
       //fprintf(stderr, "statusReportRequested(), shared_data=%p\n", shared_data);
       return (int)local_status_report_counter != (int)shared_data->status_report_counter;
     }
-
     inline void submitStatusReport(const TaskStatusReportType &statreport)
     {
       if ((int)local_status_report_counter == (int)shared_data->status_report_counter) {
