@@ -131,6 +131,9 @@ public:
 
 
 
+
+
+
 boost::python::dict py_tomorun(
     int dim,
     const Eigen::MatrixXd& Exn,
@@ -270,15 +273,65 @@ boost::python::dict py_tomorun(
       1 // n_chunk
       );
 
+  std::chrono::steady_clock::time_point time_start;
+
   // TODO: add some form of progress feedback, e.g. call to a custom Python function.
+  tasks.setStatusReportHandler(
+      [&](const Tomographer::MultiProc::FullStatusReport<OurMHRandomWalkTask::StatusReportType> & report) {
+        // check to see if we got any KeyboardInterrupt
+        // PyErr_CheckSignals() returns -1 if an exception was raised
+        if (PyErr_CheckSignals() == -1) {
+          tasks.requestInterrupt();
+        }
+        // borrowed from tomographer2/tools/signal_status_handler.h: --->
+        std::string elapsed = Tomographer::Tools::fmtDuration(std::chrono::steady_clock::now() - time_start);
+        fprintf(stderr,
+                "\n"
+                "=========================== Intermediate Progress Report ============================\n"
+                "  Total Completed Runs: %d/%d: %5.2f%%\n"
+                "  %s total elapsed\n",
+                report.num_completed, report.num_total_runs,
+                (double)report.num_completed/report.num_total_runs*100.0,
+                elapsed.c_str());
+        if (report.workers_running.size() == 1) {
+          if (report.workers_running[0]) {
+            fprintf(stderr, "--> %s\n", report.workers_reports[0].msg.c_str());
+          }
+        } else if (report.workers_running.size() > 1) {
+          fprintf(stderr,
+                  "Current Run(s) information (workers working/spawned %d/%d):\n",
+                  (int)std::count(report.workers_running.begin(), report.workers_running.end(), true),
+                  (int)report.workers_running.size()
+              );
+          for (unsigned int k = 0; k < report.workers_running.size(); ++k) {
+            std::string msg = report.workers_running[k] ? report.workers_reports[k].msg : std::string("<idle>");
+            fprintf(stderr, "=== #%2u: %s\n", k, msg.c_str());
+          }
+        } else {
+          // no info. (workers_running.size() == 0)
+        }
+        fprintf(stderr,
+                "=====================================================================================\n\n");
+        // <----
+      });
+  tasks.requestPeriodicStatusReport(500);
 
   // and run our tomo process
 
-  auto time_start = std::chrono::system_clock::now();
+  time_start = std::chrono::steady_clock::now();
 
-  tasks.run();
+  try {
+    tasks.run();
+  } catch (const Tomographer::MultiProc::TasksInterruptedException & e) {
+    if (PyErr_Occurred() == NULL) {
+      // no Python exception set?? -- set a RuntimError via Boost
+      throw e;
+    }
+    // return gracefully, Python will notice the exception set.
+    return boost::python::dict();
+  }
 
-  auto time_end = std::chrono::system_clock::now();
+  auto time_end = std::chrono::steady_clock::now();
 
   logger.debug("Random walks done.");
 
@@ -304,7 +357,6 @@ boost::python::dict py_tomorun(
 
   return res;
 }
-
 
 
 

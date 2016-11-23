@@ -29,7 +29,7 @@ rho_ref = np.array([[1,0],[0,0]])
 
 r = tomographer.tomorun.tomorun(dim=2, Nm=Nm, Emn=Emn,
                                 hist_params=tomographer.UniformBinsHistogramParams(0.9,1,50),
-                                mhrw_params=tomographer.MHRWParams(0.01,100,500,8192),
+                                mhrw_params=tomographer.MHRWParams(0.03,35,500,8192),
                                 fig_of_merit="obs-value",
                                 observable=rho_ref)
 
