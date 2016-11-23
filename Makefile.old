@@ -4,7 +4,8 @@ EIGEN_INCLUDE_DIR = -I/usr/local/include/eigen3
 
 BOOST_INCLUDE_DIR = -I/usr/local/include
 
-TOMOGRAPHER_INCLUDE_DIR = -I/opt/tomographer-install/include
+#TOMOGRAPHER_INCLUDE_DIR = -I/opt/tomographer-install/include
+TOMOGRAPHER_INCLUDE_DIR = -I/Users/philippe/Research/projects/tomographer/cxx
 
 
 

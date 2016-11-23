@@ -3,19 +3,24 @@
 #include "eigpyconv.h"
 
 
+#if PY_VERSION_HEX >= 0x03000000
 static long workaround_import_array() {
-  //  import_array();
   import_array();
   return 0;
 }
+#elif PY_VERSION_HEX >= 0x02070000
+static void workaround_import_array() {
+  import_array();
+}
+#else
+#error "Unknown or unsupported Python version"
+#endif
 
 // add the types you want to add
 void register_eigen_converter()
 {
   std::cerr << "register_eigen_converter() ...\n";
 
-  // NOTE: import_array() must be called from within the module's init function
-  // (https://mail.scipy.org/pipermail/numpy-discussion/2010-December/054349.html):
   workaround_import_array(); //< required, or conversion leads to segfault
   
   std::cerr << "register_eigen_converter(): imported NumPy Array OK, registering types ...\n";

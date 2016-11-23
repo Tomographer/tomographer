@@ -60,7 +60,11 @@ add_library(tomographer SHARED ${tomographerpy_SRCS})
 set_property(TARGET tomographer PROPERTY CXX_STANDARD 11)
 
 # create tomographer.so, not libtomographer.so
-SET_TARGET_PROPERTIES(tomographer PROPERTIES PREFIX "")
+set_property(TARGET tomographer PROPERTY PREFIX "")
+if(APPLE)
+  set_property(TARGET tomographer PROPERTY SUFFIX ".so") # and not .dylib
+endif()
+
 
 target_include_directories(tomographer PUBLIC SYSTEM ${EIGEN3_INCLUDE_DIR})
 target_include_directories(tomographer PUBLIC SYSTEM ${PYTHON_INCLUDE_DIRS})
