@@ -29,14 +29,20 @@
 
 
 
-
-
-
-
-
 namespace Py {
 
 typedef Tomographer::MHRWParams<CountIntType, RealType> MHRWParams;
+
+
+
+
+struct FullStatusReport {
+  FullStatusReport() : num_completed(-1), num_total_runs(-1), workers_running(), workers_reports() { }
+  int num_completed;
+  int num_total_runs;
+  boost::python::list workers_running; // std::vector<bool>
+  boost::python::list workers_reports; // std::vector<TaskStatusReportType>
+};
 
 }
 
@@ -146,7 +152,8 @@ boost::python::object py_tomorun(
     const Py::MHRWParams& mhrw_params,
     int binning_num_levels,
     int num_repeats,
-    int log_level
+    int log_level,
+    boost::python::object progress_fn
     )
 {
   Tomographer::Logger::FileLogger baselogger(stderr, log_level, true /*display_origin*/);
@@ -282,8 +289,46 @@ boost::python::object py_tomorun(
         // PyErr_CheckSignals() returns -1 if an exception was raised
         if (PyErr_CheckSignals() == -1) {
           tasks.requestInterrupt();
+          return;
         }
-        // borrowed from tomographer2/tools/signal_status_handler.h: --->
+        // call the python progress callback:
+        if (!progress_fn.is_none()) {
+          try {
+            fprintf(stderr, "PREPARING REPORT\n");
+            Py::FullStatusReport r;
+            r.num_completed = report.num_completed;
+            r.num_total_runs = report.num_total_runs;
+            fprintf(stderr, "PREPARING REPORT - B\n");
+            for (std::size_t k = 0; k < report.workers_reports.size(); ++k) {
+              fprintf(stderr, "PREPARING REPORT - worker\n");
+              // worker running? add this value
+              r.workers_running.append(report.workers_running[k]);
+              // and prepare the report object
+              const auto& wrp = report.workers_reports[k];
+              boost::python::dict d;
+              // generic status report fields
+              d["fraction_done"] = wrp.fraction_done;
+              d["msg"] = wrp.msg;
+              // fields specific to MHRWValueHistogramTasks
+              d["kstep"] = wrp.kstep;
+              d["mhrw_params"] = wrp.mhrw_params;
+              d["acceptance_ratio"] = wrp.acceptance_ratio;
+              d["n_total_iters"] = wrp.n_total_iters;
+              fprintf(stderr, "PREPARING REPORT - worker dict ready\n");
+              // add this report
+              r.workers_reports.append(d);
+              fprintf(stderr, "PREPARING REPORT - worker dict added\n");
+            }
+            // call python callback
+            fprintf(stderr, "PROGRESS CALLBACK ...\n");
+            progress_fn(boost::python::object(r));
+            fprintf(stderr, "PROGRESS CALLBACK DONE\n");
+          } catch (boost::python::error_already_set & ) {
+            tasks.requestInterrupt();
+            return;
+          }
+        }
+        // borrowed from tomographer2/tools/signal_status_handler.h: --->  DEBUG::
         std::string elapsed = Tomographer::Tools::fmtDuration(std::chrono::steady_clock::now() - time_start);
         fprintf(stderr,
                 "\n"
@@ -384,6 +429,26 @@ void py_tomo_tomorun()
       ;
   }
 
+  std::cerr << "multiproc module ... \n";
+
+  boost::python::object multiprocsubmod(boost::python::borrowed(PyImport_AddModule("tomographer.multiproc")));
+  boost::python::scope().attr("multiproc") = multiprocsubmod;
+  {
+    // now inside submodule
+    boost::python::scope multiprocmodule(multiprocsubmod);
+
+    std::cerr << "multiproc.FullStatusReport ...\n";
+
+    { typedef Py::FullStatusReport Kl;
+      boost::python::class_<Py::FullStatusReport>("FullStatusReport")
+        .add_property("num_completed", +[](const Kl& r) { return r.num_completed; })
+        .add_property("num_total_runs", +[](const Kl& r) { return r.num_total_runs; })
+        .add_property("workers_running", +[](const Kl& r) { return r.workers_running; })
+        .add_property("workers_reports", +[](const Kl& r) { return r.workers_reports; })
+        ;
+    }
+  }
+
   std::cerr << "tomorun module ...\n";
   
   boost::python::object tomorunsubmod(boost::python::borrowed(PyImport_AddModule("tomographer.tomorun")));
@@ -409,7 +474,8 @@ void py_tomo_tomorun()
          boost::python::arg("mhrw_params") = Py::MHRWParams(),
          boost::python::arg("binning_num_levels") = -1,
          boost::python::arg("num_repeats") = omp_get_num_procs(),
-         boost::python::arg("log_level") = (int)Tomographer::Logger::INFO),
+         boost::python::arg("log_level") = (int)Tomographer::Logger::INFO,
+         boost::python::arg("progress_fn") = boost::python::object()),
         "Docstring here"
         );
 

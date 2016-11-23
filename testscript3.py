@@ -27,11 +27,21 @@ Emn = [
 
 rho_ref = np.array([[1,0],[0,0]])
 
+print("Data ready.")
+
+def progress(report):
+    print("PROGRESS REPORT:\n", report.num_completed, "/", report.num_total_runs, "\n")
+    for r in report.workers_reports:
+        print(repr(r))
+    print("\n")
+
 r = tomographer.tomorun.tomorun(dim=2, Nm=Nm, Emn=Emn,
                                 hist_params=tomographer.UniformBinsHistogramParams(0.9,1,50),
                                 mhrw_params=tomographer.MHRWParams(0.03,35,500,8192),
                                 fig_of_merit="obs-value",
-                                observable=rho_ref)
+                                observable=rho_ref,
+                                num_repeats=12,
+                                progress_fn=progress)
 
 print(repr(r))
 
