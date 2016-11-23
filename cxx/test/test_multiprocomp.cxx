@@ -230,7 +230,7 @@ struct TestTaskCheckAlignedStack : public TestTask {
 
 BOOST_FIXTURE_TEST_CASE(inner_code_stack_aligned, test_task_dispatcher_fixture)
 {
-  Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::DEBUG);
+  Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
   Tomographer::MultiProc::OMP::TaskDispatcher<TestTaskCheckAlignedStack, TestBasicCData,
                                               TestResultsCollector,
                                               Tomographer::Logger::BoostTestLogger, long>
@@ -239,7 +239,11 @@ BOOST_FIXTURE_TEST_CASE(inner_code_stack_aligned, test_task_dispatcher_fixture)
   char blah_data[4] = {0}; // some random stuff -- not really needed, it's just here to clutter the code and memory
   char blah_data2[7] = {0}; // some random stuff -- not really needed, it's just here to clutter the code and memory
 
+  BOOST_MESSAGE("About to run tasks.");
+
   task_dispatcher.run();
+
+  BOOST_MESSAGE("All tasks finished, run() completed.");
 
   (void)blah_data;
   (void)blah_data2;
