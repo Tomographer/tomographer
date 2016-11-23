@@ -409,11 +409,12 @@ private:
       // we should provoke a periodic status report
       if (omp_get_thread_num() == 0 && shared_data->status_report_periodic_interval > 0) {
         typedef
-#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6
-          std::chrono::monotonic_clock
-#else
+          //totally does not work.... :( :( :(
+          //#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6
+          //          std::chrono::monotonic_clock
+          //#else
           std::chrono::steady_clock
-#endif
+          //#endif
           StdClockType;
         shared_data->status_report_counter = (
             (std::chrono::duration_cast<std::chrono::milliseconds>(
