@@ -9,11 +9,11 @@ language: cpp
 install:
   # Eigen3:
   - curl -L https://bitbucket.org/eigen/eigen/get/3.2.5.tar.gz -o eigen-3.2.5.tar.gz
-  - tar xvfz eigen-3.2.5.tar.gz
+  - tar xfz eigen-3.2.5.tar.gz
   - export EIGEN_PATH=`pwd`/eigen-eigen-bdd17ee3b1b3
   # MatIO:
   - curl -L -o matio-1.5.9.tar.gz  https://sourceforge.net/projects/matio/files/matio/1.5.9/matio-1.5.9.tar.gz/download
-  - tar xvfz matio-1.5.9.tar.gz
+  - tar xfz matio-1.5.9.tar.gz
   - ( cd matio-1.5.9 && ./configure --prefix=/usr && make && sudo make install )
 
 

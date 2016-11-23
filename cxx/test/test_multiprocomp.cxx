@@ -252,8 +252,6 @@ BOOST_FIXTURE_TEST_CASE(inner_code_stack_aligned, test_task_dispatcher_fixture)
 
 
 
-/*
-// THESE TESTS ARE NOT RELIABLE ... not sure why
 
 struct StatusRepTestBasicCData {
   StatusRepTestBasicCData() { }
@@ -331,7 +329,116 @@ struct StatusRepTestResultsCollector {
 };
 
 
+
+BOOST_AUTO_TEST_CASE(status_report_periodic)
+{
+  StatusRepTestBasicCData cData;
+  const int num_runs = 10;
+  StatusRepTestResultsCollector resultsCollector;
+
+  Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
+
+  Tomographer::MultiProc::OMP::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
+                                              StatusRepTestResultsCollector,
+                                              Tomographer::Logger::BoostTestLogger, long>
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+
+  task_dispatcher.setStatusReportHandler(
+      [&logger](const Tomographer::MultiProc::FullStatusReport<StatusRepTestTask::StatusReportType>& r) {
+        logger.info("status_report test case", [&](std::ostream & stream) {
+            stream << "Full status report recieved. num_completed = " << r.num_completed
+                   << ", num_total_runs = " << r.num_total_runs << "\n";
+            for (std::size_t k = 0; k < r.workers_running.size(); ++k) {
+              if (!r.workers_running[k]) {
+                stream << "Worker #" << k << " idle\n";
+              } else {
+                stream << "Worker #" << k << ":  " << r.workers_reports[k].fraction_done * 100 << "%, "
+                       << r.workers_reports[k].msg << "\n";
+              }
+            }
+          });
+      });
+
+  task_dispatcher.requestPeriodicStatusReport(1000); // every second
+
+  task_dispatcher.run();
+
+  logger.debug("test case:status_report_periodic", "Test case done.");
+}
+
+
 #ifdef _OPENMP
+BOOST_AUTO_TEST_CASE(interrupt_tasks_withthread)
+{
+  StatusRepTestBasicCData cData;
+  const int num_runs = 10;
+  StatusRepTestResultsCollector resultsCollector;
+  
+  Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::DEBUG);
+
+  Tomographer::MultiProc::OMP::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
+                                              StatusRepTestResultsCollector,
+                                              Tomographer::Logger::BoostTestLogger, long>
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+
+  task_dispatcher.setStatusReportHandler(
+      [&logger](const Tomographer::MultiProc::FullStatusReport<StatusRepTestTask::StatusReportType>& r) {
+        logger.info("status_report test case", [&](std::ostream & stream) {
+            stream << "Full status report recieved. num_completed = " << r.num_completed
+                   << ", num_total_runs = " << r.num_total_runs << "\n";
+            for (std::size_t k = 0; k < r.workers_running.size(); ++k) {
+              if (!r.workers_running[k]) {
+                stream << "Worker #" << k << " idle\n";
+              } else {
+                stream << "Worker #" << k << ":  " << r.workers_reports[k].fraction_done * 100 << "%, "
+                       << r.workers_reports[k].msg << "\n";
+              }
+            }
+          });
+      });
+
+   omp_set_dynamic(0);
+   omp_set_nested(1);
+
+   bool tasks_interrupted = false;
+
+   auto starttime = std::chrono::steady_clock::now();
+
+#pragma omp parallel num_threads(2) default(shared)
+   {
+     if (omp_get_thread_num() == 0) {
+       // take care of sending the interrupt request
+
+       sleep(1);
+       task_dispatcher.requestInterrupt();
+
+     } else if (omp_get_thread_num() == 1) {
+       // run the slave tasks
+
+       try {
+         task_dispatcher.run();
+       } catch (const Tomographer::MultiProc::TasksInterruptedException & e) {
+         tasks_interrupted = true;
+       }
+
+     } else {
+       // never here
+       assert( false ) ;
+     }
+   }
+
+   auto endtime = std::chrono::steady_clock::now();
+
+   BOOST_CHECK(tasks_interrupted);
+   
+   logger.debug("test case:interrupt_tasks", [&](std::ostream & stream) {
+       stream << "Tasks (hopefully) interrupted after "
+              << std::chrono::duration_cast<std::chrono::seconds>(endtime-starttime).count()
+              << " seconds.";
+     });
+
+   logger.debug("test case:interrupt_tasks", "Test case done.");
+}
 BOOST_AUTO_TEST_CASE(status_report_withthread)
 {
   StatusRepTestBasicCData cData;
@@ -366,7 +473,7 @@ BOOST_AUTO_TEST_CASE(status_report_withthread)
 
    volatile std::sig_atomic_t finished = 0;
 
-#pragma omp parallel num_threads(2)
+#pragma omp parallel num_threads(2) default(shared)
    {
      if (omp_get_thread_num() == 0) {
        // take care of sending status report requests
@@ -459,7 +566,6 @@ BOOST_AUTO_TEST_CASE(status_report_not_implemented)
 #endif
 
 
-*/
 
 
 BOOST_AUTO_TEST_SUITE_END();

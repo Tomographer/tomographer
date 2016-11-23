@@ -28,6 +28,7 @@
 #define MULTIPROCOMP_H
 
 #include <csignal>
+#include <chrono>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -340,6 +341,14 @@ public:
 
 private:
 
+  struct TaskInterruptedInnerException : public std::exception {
+    std::string msg;
+  public:
+    TaskInterruptedInnerException() : msg("Task Interrupted") { }
+    virtual ~TaskInterruptedInnerException() { };
+    const char * what() const throw() { return msg.c_str(); }
+  };
+
   //! thread-shared variables
   struct thread_shared_data {
     thread_shared_data(const TaskCData * pcdata_, ResultsCollector * results_, LoggerType & logger_,
@@ -350,9 +359,11 @@ private:
         status_report_underway(false),
         status_report_initialized(false),
         status_report_counter(0),
+        status_report_periodic_interval(-1),
         status_report_numreportsrecieved(0),
         status_report_full(),
         status_report_user_fn(),
+        interrupt_requested(0),
         num_total_runs(num_total_runs_), n_chunk(n_chunk_), num_completed(0),
         num_active_working_threads(0)
     { }
@@ -364,10 +375,13 @@ private:
     bool status_report_underway;
     bool status_report_initialized;
     volatile std::sig_atomic_t status_report_counter;
+    int status_report_periodic_interval;
     CountIntType status_report_numreportsrecieved;
 
     FullStatusReportType status_report_full;
     FullStatusReportCallbackType status_report_user_fn;
+
+    volatile std::sig_atomic_t interrupt_requested;
 
     CountIntType num_total_runs;
     CountIntType n_chunk;
@@ -385,8 +399,24 @@ private:
     CountIntType kiter;
     CountIntType local_status_report_counter;
 
-    inline bool statusReportRequested()
+    inline bool statusReportRequested() const
     {
+      if (shared_data->interrupt_requested) {
+        throw TaskInterruptedInnerException();
+      }
+
+      // if we're the master thread, update the status_report_counter according to whether
+      // we should provoke a periodic status report
+      if (omp_get_thread_num() == 0 && shared_data->status_report_periodic_interval > 0) {
+        shared_data->status_report_counter =
+          ( std::chrono::duration_cast<std::chrono::milliseconds>(
+              std::chrono::steady_clock::now().time_since_epoch()
+              ).count()  /  shared_data->status_report_periodic_interval ) * 100;
+        // the * 100 allows individual increments from unrelated additional
+        // requestStatusReport() to be taken into account (allows 100 such additional
+        // requests per periodic status report)
+      }
+
       //fprintf(stderr, "statusReportRequested(), shared_data=%p\n", shared_data);
       return (int)local_status_report_counter != (int)shared_data->status_report_counter;
     }
@@ -580,17 +610,26 @@ public:
         // platforms which don't do that automatically (yes, MinGW, it's you I'm looking
         // at)
         _run_task(privdat, shdat, k);
+        
+      } // omp for
+    } // omp parallel
 
-      }
+    if (shared_data.interrupt_requested) {
+      throw TasksInterruptedException();
     }
     
     shared_data.results->runsFinished(num_total_runs, shared_data.pcdata);
   }
 
 private:
-  void _run_task(thread_private_data & privdat, thread_shared_data * shdat, CountIntType k)
+  void _run_task(thread_private_data & privdat, thread_shared_data * shdat, CountIntType k)  noexcept(true)
     TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
   {
+
+    // do not execute task if an interrupt was requested.
+    if (shdat->interrupt_requested) {
+      return;
+    }
 
 #pragma omp critical
     {
@@ -614,7 +653,7 @@ private:
                                "Run #%lu: querying CData for task input", (unsigned long)k);
 
     auto input = shdat->pcdata->getTaskInput(k);
-      
+
     // not sure an std::ostream would be safe here threadwise...?
     threadsafelogger.debug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
                            "Running task #%lu ...", (unsigned long)k);
@@ -627,7 +666,11 @@ private:
                                "Task #%lu set up.", (unsigned long)k);
       
     // and run it
-    t.run(shdat->pcdata, threadsafelogger, &privdat);
+    try {
+      t.run(shdat->pcdata, threadsafelogger, &privdat);
+    } catch (const TaskInterruptedInnerException & ) {
+      return;
+    }
       
 #pragma omp critical
     {
@@ -689,6 +732,38 @@ public:
 
   }
 
+  /** \brief Request a periodic status report
+   *
+   * The status report function callback set with \ref setStatusReportHandler() will be
+   * called every \a milliseconds milliseconds with a status report.
+   *
+   * Pass \a -1 as argument to milliseconds to disable periodic status reports.
+   */
+  inline void requestPeriodicStatusReport(int milliseconds)
+  {
+#pragma omp critical
+    {
+      shared_data.status_report_periodic_interval = milliseconds;
+    }
+  }
+
+  /** \brief Request an immediate interruption of the tasks.
+   *
+   * Execution inside the function \ref run() will stop as soon as each workers notices
+   * the interrupt request, and will emit the \ref TasksInterruptedException.
+   *
+   * The periodic check on the tasks' side is implemented in each tasks' check for a
+   * status report, so that any \ref pageInterfaceTask-compliant type which periodically
+   * checks for status reports is automatically interruptible.
+   *
+   * \note This function is safe to be called from within a signal handler.
+   */
+  inline void requestInterrupt()
+  {
+    shared_data.interrupt_requested = 1;
+  }
+
+    
 }; // class TaskDispatcher
 
 

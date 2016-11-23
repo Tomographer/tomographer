@@ -30,6 +30,7 @@
 #include <csignal>
 
 #include <string>
+#include <exception>
 
 #include <tomographer2/tools/needownoperatornew.h>
 
@@ -117,6 +118,16 @@ struct FullStatusReport
               typename Tools::NeedOwnOperatorNew<TaskStatusReportType>::AllocatorType> workers_reports;
 };
 
+
+
+class TasksInterruptedException : public std::exception
+{
+  std::string msg_;
+public:
+  TasksInterruptedException(std::string msg = "Tasks Interrupted.") : msg_(msg) { }
+  virtual ~TasksInterruptedException() throw() { }
+  const char * what() const throw() { return msg_.c_str(); }
+};
 
 
 
