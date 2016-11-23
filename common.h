@@ -3,8 +3,6 @@
 #define TOMOPY_COMMON_H
 
 
-#include <Python.h>
-
 #include <boost/python.hpp>
 
 // must be included at top, before any other Eigen header (sets eigen_assert() macro)

@@ -2,8 +2,10 @@
 #ifndef EIGPYCONV_H
 #define EIGPYCONV_H
 
-#include <cstring>
 
+#include <boost/python.hpp>
+
+#include <cstring>
 #include <iostream>
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
@@ -12,7 +14,6 @@
 
 #include <boost/core/demangle.hpp>
 
-#include <boost/python.hpp>
 #include <boost/python/numeric.hpp>
 
 #define TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION
@@ -27,7 +28,7 @@
 struct EigenNumpyConversionError : public std::exception
 {
   EigenNumpyConversionError(std::string msg)
-    : _msg(std::move(msg)) { }
+    : _msg(msg) { }
   virtual ~EigenNumpyConversionError() { }
 
   const char * what() const throw() { return _msg.c_str(); }
@@ -133,6 +134,8 @@ struct CopyNumpyDataToEigen
     //              << boost::core::demangle(typeid(EigScalar).name())
     //              << "(sizeof="<<sizeof(EigScalar)<<") .\n";
     
+    std::cerr << "CopyNumpyDataToEigen::run() ...\n";
+
     // prepare the Eigen mapped object, of element type NPScalar
     auto mapped = 
       Eigen::Map<
@@ -148,14 +151,19 @@ struct CopyNumpyDataToEigen
 
     // in-place construct at *storage
     (void) new (storage) EigDenseType(mapped.template cast<EigScalar>());
+
+    std::cerr << "CopyNumpyDataToEigen::run() completed.\n";
   }
 
   template<typename NPScalar, TOMOGRAPHER_ENABLED_IF_TMPL(!IsNumConvertible<NPScalar,EigScalar>::value)>
   static inline void run(void * , PyArrayObject * , const npy_intp [2], const npy_intp [2]) {
-    throw EigenNumpyConversionError(
-        std::string() + "Cannot convert `" + boost::core::demangle(typeid(NPScalar).name()) + "' "
-        + "to `" + boost::core::demangle(typeid(EigScalar).name()) + "'"
-        );
+    std::string s;
+    s += "Cannot convert `";
+    s += boost::core::demangle(typeid(NPScalar).name());
+    s += "' to `";
+    s += boost::core::demangle(typeid(EigScalar).name());
+    s += "'";
+    throw EigenNumpyConversionError(s);
   }
 };
 
@@ -172,6 +180,9 @@ struct eigen_python_converter
 
   static PyObject* convert(const EigDenseType & matrix)
   {
+    std::cerr << "eigen_python_converter::convert() ...\n";
+    std::cerr << "matrix = " << matrix << "\n";
+
     PyArray_Descr * descr = PyArray_DescrFromType(NpyCode<EigScalar>::TypeCode);
 
     npy_intp shape[2] = { (npy_intp)matrix.rows(), (npy_intp)matrix.cols() };
@@ -184,11 +195,11 @@ struct eigen_python_converter
                    ? matrix.outerStride() : matrix.innerStride() )
     };
 
-    //    std::cerr << "DEBUG: creating NumPy object of type "
-    //              << NpyCode<EigScalar>::getCodeName()
-    //              << " with elsize=" << elsize
-    //              << " shape=["<<shape[0]<<","<<shape[1]<<"] strides=["<<strides[0]<<","<<strides[1]<<"] "
-    //              << "from Eigen matrix = \n" << matrix << " .\n";
+    std::cerr << "DEBUG: creating NumPy object of type "
+              << NpyCode<EigScalar>::getCodeName()
+              << " with elsize=" << elsize
+              << " shape=["<<shape[0]<<","<<shape[1]<<"] strides=["<<strides[0]<<","<<strides[1]<<"] "
+              << "from Eigen matrix = \n" << matrix << " .\n";
     
     // copy data because the scope of the Eigen::MatrixXd is completely unknown (it could
     // be temporary return value, for example)
@@ -202,9 +213,9 @@ struct eigen_python_converter
     // just copy the freakin' bytes:
     std::memcpy( PyArray_DATA(reinterpret_cast<PyArrayObject*>(pyarr)), (void*)matrix.data(), arr_data_sz );
 
-    //    std::cerr << "DEBUG: the constructed pyarr is "
-    //              << PyString_AsString(PyObject_Repr(pyarr))
-    //              << " .\n";
+    //std::cerr << "DEBUG: the constructed pyarr is " << PyString_AsString(PyObject_Repr(pyarr)) << " .\n";
+
+    std::cerr << "DEBUG: eigen_python_converter::convert() completed.\n";
     
     //return boost::python::incref(boost::python::object(pyarr).ptr());
     //return boost::python::object(boost::python::handle<>(boost::python::borrowed(pyarr))).ptr();
@@ -217,18 +228,31 @@ struct eigen_python_converter
 
   static void* convertible(PyObject* py_obj_ptr)
   {
-    if (!PyArray_Check(py_obj_ptr))
+    std::cerr << "eigen_python_converter::convertible() ...\n";
+
+    // std::cerr << "py_obj_ptr = " << py_obj_ptr << ";\n";
+    // std::cerr << "&PyArray_Type=" << &PyArray_Type << ";\n";
+    // std::cerr << "Py_TYPE(py_obj_ptr) = " << Py_TYPE(py_obj_ptr) << ";\n";
+    // std::cerr << "PyType_IsSubType(Py_TYPE(py_obj_ptr), &PyArray_Type) = "
+    //           << PyType_IsSubtype(Py_TYPE(py_obj_ptr), &PyArray_Type) << ".\n";
+
+    if (!PyArray_Check(py_obj_ptr)) {
+      std::cerr << "eigen_python_converter::convertible(): not convertible\n";
       return NULL;
+    }
 
     // when this converter is installed, we must attempt to translate ANY numpy array into
     // an Eigen object, and fail at conversion if an error occurs.
 
+    std::cerr << "eigen_python_converter::convertible(): IS convertible\n";
     return py_obj_ptr;
   }
 
   static void construct(PyObject* py_obj_ptr,
                         boost::python::converter::rvalue_from_python_stage1_data* data)
   {
+    std::cerr << "eigen_python_converter::construct() ...\n";
+
     PyArrayObject *array = reinterpret_cast<PyArrayObject*>(py_obj_ptr);
     void *storage = ((boost::python::converter::rvalue_from_python_storage<EigDenseType>*)data)->storage.bytes;
 
@@ -260,6 +284,7 @@ struct eigen_python_converter
     npyToCxxType<CopyNumpyDataToEigen<EigDenseType> >(PyArray_TYPE(array), storage, array, dims, strides);
 
     data->convertible = storage;
+    std::cerr << "eigen_python_converter::construct() completed.\n";
   }
 
   static void from_python() {

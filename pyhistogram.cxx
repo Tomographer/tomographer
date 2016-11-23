@@ -16,16 +16,16 @@ void py_tomo_histogram()
     typedef Py::UniformBinsHistogramParams Kl;
     boost::python::class_<Py::UniformBinsHistogramParams>("UniformBinsHistogramParams")
       .def(boost::python::init<boost::python::optional<RealType,RealType,std::size_t> >())
-      .add_property("min", +[](Kl & p) { return p.min; }, +[](Kl & p, RealType min) { p.min = min; })
-      .add_property("max", +[](Kl & p) { return p.max; }, +[](Kl & p, RealType max) { p.max = max; })
-      .add_property("num_bins", +[](Kl & p) { return p.num_bins; }, +[](Kl & p, std::size_t n) { p.num_bins = n; })
-      .def("isWithinBounds", &Kl::isWithinBounds)
+      .add_property("min", +[](const Kl & p) { return p.min; }, +[](Kl & p, RealType min) { p.min = min; })
+      .add_property("max", +[](const Kl & p) { return p.max; }, +[](Kl & p, RealType max) { p.max = max; })
+      .add_property("num_bins", +[](const Kl & p) { return p.num_bins; }, +[](Kl & p, std::size_t n) { p.num_bins = n; })
+      ;/*      .def("isWithinBounds", &Kl::isWithinBounds)
       .def("binIndex", &Kl::binIndex)
       .def("binLowerValue", &Kl::binLowerValue)
       .def("binCenterValue", &Kl::binCenterValue)
       .def("binUpperValue", &Kl::binUpperValue)
       .def("binResolution", &Kl::binResolution)
-      ;
+      ;*/
   }
 
   std::cerr << "UniformBinsHistogram...\n";
@@ -140,7 +140,7 @@ void py_tomo_histogram()
     boost::python::scope cl =
       boost::python::class_<Py::AveragedSimpleRealHistogram,
                             boost::python::bases<Py::UniformBinsHistogramWithErrorBars>
-                            >("AveragedSimpleHistogram")
+                            >("AveragedSimpleRealHistogram")
       .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogramParams> >())
       .def("addHistogram",
            +[](Kl & h, const Py::UniformBinsRealHistogram & o) { h.addHistogram(o); })

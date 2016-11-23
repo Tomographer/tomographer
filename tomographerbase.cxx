@@ -6,11 +6,13 @@
 // tests .... ---------------
 double test_eigen(const Eigen::MatrixXd & x)
 {
+  std::cerr << "test_eigen() ...\n";
   std::ostringstream s;
   s << "x = \n" << x << ";\n";
   std::string ss(s.str());
   fprintf(stderr, "%s", ss.c_str());
   //
+  std::cerr << "test_eigen() about to return.\n";
   return x.sum();//rows() * 10000 + x.cols() * 100 + x(1,0);
 }
 boost::python::object test_eigen2(const Eigen::MatrixXcd & x)
@@ -53,8 +55,7 @@ BOOST_PYTHON_MODULE(tomographer)
   std::cerr << "INIT TOMOGRAPHER\n";
 
   // Eigen converters
-  long ok = []() -> long { import_array(); return 1; } ();
-  if (!ok) { return; } // error
+  //long ok = []() -> long { import_array(); return 1; } (); if (!ok) { return; } // error
   register_eigen_converter();
 
   std::cerr << "Registered eigen converters.\n";

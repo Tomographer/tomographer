@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 import tomographer
 import numpy as np
 
@@ -26,13 +28,13 @@ Emn = [
 rho_ref = np.array([[1,0],[0,0]])
 
 r = tomographer.tomorun.tomorun(dim=2, Nm=Nm, Emn=Emn,
-                                hist_params=tomographer.UniformBinsHistogram.Params(0.9,1,50),
+                                hist_params=tomographer.UniformBinsHistogramParams(0.9,1,50),
                                 mhrw_params=tomographer.MHRWParams(0.01,100,500,8192),
                                 fig_of_merit="obs-value",
                                 observable=rho_ref)
 
-print repr(r)
+print(repr(r))
 
-print r['final_histogram'].prettyPrint(100)
+print(r['final_histogram'].prettyPrint(100))
 
-print r['final_report']
+print(r['final_report'])

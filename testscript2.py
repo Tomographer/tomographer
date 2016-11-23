@@ -1,8 +1,10 @@
 
+from __future__ import print_function
+
 import tomographer
 import numpy as np
 
-param = tomographer.UniformBinsHistogram.Params(0.0, 1.0, 10)
+param = tomographer.UniformBinsHistogramParams(0.0, 1.0, 10)
 
 
 basearray = np.array([0, 30, 80, 100, 200, 800, 1200, 600, 300, 50]);
@@ -20,4 +22,4 @@ for x in range(10):
 
 a.finalize()
 
-print a.prettyPrint(80)
+print(a.prettyPrint(80))

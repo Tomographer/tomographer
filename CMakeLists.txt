@@ -62,9 +62,9 @@ set_property(TARGET tomographer PROPERTY CXX_STANDARD 11)
 # create tomographer.so, not libtomographer.so
 SET_TARGET_PROPERTIES(tomographer PROPERTIES PREFIX "")
 
-target_include_directories(tomographer PUBLIC ${EIGEN3_INCLUDE_DIR})
-target_include_directories(tomographer PUBLIC ${PYTHON_INCLUDE_DIRS})
-target_include_directories(tomographer PUBLIC ${Boost_INCLUDE_DIR})
+target_include_directories(tomographer PUBLIC SYSTEM ${EIGEN3_INCLUDE_DIR})
+target_include_directories(tomographer PUBLIC SYSTEM ${PYTHON_INCLUDE_DIRS})
+target_include_directories(tomographer PUBLIC SYSTEM ${Boost_INCLUDE_DIR})
 target_include_directories(tomographer PUBLIC ${TOMOGRAPHER2_INCLUDE_DIR})
 target_compile_options(tomographer PRIVATE ${OpenMP_CXX_FLAGS})
 target_link_libraries(tomographer  ${OpenMP_CXX_FLAGS})

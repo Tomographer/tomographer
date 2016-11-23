@@ -21,6 +21,19 @@
 
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
 namespace Py {
 
 typedef Tomographer::MHRWParams<CountIntType, RealType> MHRWParams;
@@ -334,7 +347,7 @@ void py_tomo_tomorun()
         "tomorun", // function name
         &py_tomorun, // fn pointer
         (boost::python::arg("dim"),
-         /*         boost::python::arg("Exn") = Eigen::MatrixXd(),
+         boost::python::arg("Exn") = Eigen::MatrixXd(),
          boost::python::arg("Emn") = boost::python::list(),
          boost::python::arg("Nm") = Eigen::VectorXi(),
          boost::python::arg("fig_of_merit") = std::string("obs-value"),
@@ -343,9 +356,9 @@ void py_tomo_tomorun()
          boost::python::arg("hist_params") = Py::UniformBinsHistogramParams(),
          boost::python::arg("mhrw_params") = Py::MHRWParams(),
          boost::python::arg("binning_num_levels") = -1,
-         boost::python::arg("num_repeats") = omp_get_num_procs(),*/
+         boost::python::arg("num_repeats") = omp_get_num_procs(),
          boost::python::arg("log_level") = (int)Tomographer::Logger::INFO),
-        "Docstring goes here?"
+        "Docstring here"
         );
 
     std::cerr << "tomorun.TomorunInvalidInputError ...\n";
