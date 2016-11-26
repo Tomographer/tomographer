@@ -402,7 +402,16 @@ BOOST_AUTO_TEST_CASE(interrupt_tasks_withthread)
 
    bool tasks_interrupted = false;
 
-   auto starttime = std::chrono::steady_clock::now();
+   typedef
+#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
+     std::chrono::monotonic_clock
+#else
+     std::chrono::steady_clock
+#endif
+     StdClockType;
+
+
+   auto starttime = StdClockType::now();
 
 #pragma omp parallel num_threads(2) default(shared)
    {
@@ -427,7 +436,7 @@ BOOST_AUTO_TEST_CASE(interrupt_tasks_withthread)
      }
    }
 
-   auto endtime = std::chrono::steady_clock::now();
+   auto endtime = StdClockType::now();
 
    BOOST_CHECK(tasks_interrupted);
    
