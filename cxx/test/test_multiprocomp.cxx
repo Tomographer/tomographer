@@ -218,7 +218,12 @@ struct TestTaskCheckAlignedStack : public TestTask {
     
     // make sure that the stack is aligned
     Eigen::Matrix4d m;
-    BOOST_MESSAGE( "m.data() == " << (uintptr_t)m.data() );
+
+    // BOOST_TEST_MESSAGE is not thread-safe
+    //    BOOST_TEST_MESSAGE( "m.data() == " << (uintptr_t)m.data() );
+    logger.debug("TestTaskCheckAlignedStack::run()", [&](std::ostream & stream) {
+        stream << "m.data() == " << (uintptr_t)m.data();
+      });
     BOOST_CHECK( (((uintptr_t)m.data()) & 0xf) == 0 ); // pointer to matrix data is aligned to multiple of 16 bytes
 
     // and run the parent task
@@ -299,9 +304,9 @@ struct StatusRepTestTask {
         _result = true;
       }
       ++count;
-      if ((count & 0xffff) == 0) {
-        logger.longdebug("StatusRepTestTask::run", "count = %lu", count);
-      }
+      //      if ((count & 0xffff) == 0) {
+      //        logger.longdebug("StatusRepTestTask::run", "count = %lu", count);
+      //      }
     } while (now - time_start < 5);
   }
 
