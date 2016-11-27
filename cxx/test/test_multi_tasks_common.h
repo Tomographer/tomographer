@@ -76,12 +76,12 @@ struct TestTask {
   void run(const TestBasicCData * pcdata, LoggerType & logger, TaskManagerIface * )
   {
     //BOOST_MESSAGE("Running task.") ; // BOOST_TEST_MESSAGE may not be thread-safe!!!!!
-    logger.info("Running task.") ;
+    logger.info("TestTask::run", "Running task.") ;
     logger.debug("TestTask::run", "running task.");
     _result.value = ( _input.a + _input.b ) * pcdata->c ;
     _result.msg = Tomographer::Tools::fmts("((a=%d)+(b=%d))*(c=%d) == %d",
                                            _input.a, _input.b, pcdata->c, _result.value);
-    logger.info("Task finished.") ;
+    logger.info("TestTask::run", "Task finished.") ;
     //    BOOST_MESSAGE("Task finished.") ;
   }
 

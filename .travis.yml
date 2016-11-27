@@ -82,7 +82,7 @@ matrix:
         - sudo apt-get update
         - sudo apt-get install clang-3.8 clang++-3.8
       env:
-        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8 -DOpenMP_C_FLAGS='-fopenmp=libomp' -DOpenMP_CXX_FLAGS='-fopenmp=libiomp5'"
+        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8 -DOpenMP_C_FLAGS='-fopenmp=libiomp5' -DOpenMP_CXX_FLAGS='-fopenmp=libiomp5'"
 
 # No e-mail notifications
 notifications:
