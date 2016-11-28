@@ -69,7 +69,7 @@ std::function<void()> sigalarm_act;
 
 void sigalarm_act_cfn(int signum)
 {
-  printf("[SIGALRM]\n");
+  //  printf("[SIGALRM]\n");
   if (signum == SIGALRM) {
     sigalarm_act();
   }

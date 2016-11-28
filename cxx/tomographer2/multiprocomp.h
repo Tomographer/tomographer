@@ -29,6 +29,7 @@
 
 #include <csignal>
 #include <chrono>
+#include <thread>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -407,27 +408,35 @@ private:
 
       // if we're the master thread, update the status_report_counter according to whether
       // we should provoke a periodic status report
-      if (omp_get_thread_num() == 0 && shared_data->status_report_periodic_interval > 0) {
-        typedef
-#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
-          std::chrono::monotonic_clock
-#else
-          std::chrono::steady_clock
-#endif
-          StdClockType;
-        shared_data->status_report_counter = (
-            (std::chrono::duration_cast<std::chrono::milliseconds>(
-                StdClockType::now().time_since_epoch()
-                ).count()  /  shared_data->status_report_periodic_interval) & 0x00FFFFFF
-            ) << 6;
-        // the (x << 6) (equivalent to (x * 64)) allows individual increments from
-        // unrelated additional requestStatusReport() to be taken into account (allows 64
-        // such additional requests per periodic status report)
+#pragma omp master
+      if (shared_data->status_report_periodic_interval > 0) {
+        _master_thread_update_status_report_periodic_interval_counter();
       }
 
       //fprintf(stderr, "statusReportRequested(), shared_data=%p\n", shared_data);
       return (int)local_status_report_counter != (int)shared_data->status_report_counter;
     }
+
+    // internal use only:
+    inline void _master_thread_update_status_report_periodic_interval_counter() const
+    {
+      typedef
+#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
+        std::chrono::monotonic_clock // for GCC/G++ 4.6
+#else
+        std::chrono::steady_clock
+#endif
+        StdClockType;
+      shared_data->status_report_counter = (
+          (std::chrono::duration_cast<std::chrono::milliseconds>(
+              StdClockType::now().time_since_epoch()
+              ).count()  /  shared_data->status_report_periodic_interval) & 0x00FFFFFF
+          ) << 6;
+      // the (x << 6) (equivalent to (x * 64)) allows individual increments from
+      // unrelated additional requestStatusReport() to be taken into account (allows 64
+      // such additional requests per periodic status report)
+    }
+
     inline void submitStatusReport(const TaskStatusReportType &statreport)
     {
       if ((int)local_status_report_counter == (int)shared_data->status_report_counter) {
@@ -605,11 +614,19 @@ public:
 
     shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "About to start parallel section");
 
-#pragma omp parallel default(none) private(k, privdat) shared(shdat, num_total_runs, n_chunk)
+    int num_active_parallel = 0;
+
+#pragma omp parallel default(none) private(k, privdat) shared(shdat, num_total_runs, n_chunk, num_active_parallel)
     {
       privdat.shared_data = shdat;
       privdat.kiter = 0;
 
+#pragma omp atomic
+      ++num_active_parallel;
+
+      //
+      // The main, parallel FOR loop:
+      //
 #pragma omp for schedule(dynamic,n_chunk) nowait
       for (k = 0; k < num_total_runs; ++k) {
 
@@ -619,6 +636,21 @@ public:
         _run_task(privdat, shdat, k);
         
       } // omp for
+
+#pragma omp atomic
+      --num_active_parallel;
+
+#pragma omp master
+      {
+        if (shdat->status_report_periodic_interval > 0) {
+          // master thread should continue providing regular status updates
+          while (num_active_parallel > 0) {
+            std::this_thread::sleep_for(std::chrono::milliseconds(shdat->status_report_periodic_interval));
+            privdat._master_thread_update_status_report_periodic_interval_counter();
+          }
+        }
+      }
+      
     } // omp parallel
 
     if (shared_data.interrupt_requested) {

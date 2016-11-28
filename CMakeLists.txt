@@ -50,9 +50,26 @@ include(CheckCXXCompilerFlag)
 CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
 CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
 if(MINGW)
-  # On MinGW, we need to specify gnu++11 instead of c++11 standard to work around a bug
+  # On MinGW, we should use gnu++11, otherwise we get weird errors about some missing
+  # functions... (_hypot in math.h etc.)
   CHECK_CXX_COMPILER_FLAG("-std=gnu++11" COMPILER_SUPPORTS_GNUXX11)
+  CHECK_CXX_COMPILER_FLAG("-std=gnu++0x" COMPILER_SUPPORTS_GNUXX0X)
 endif()
+#
+if(COMPILER_SUPPORTS_GNUXX11)
+  set(TOMOGRAPHER_CXX11_STD_FLAGS "-std=gnu++11" CACHE STRING "Compiler flags to enable C++11")
+elseif(COMPILER_SUPPORTS_CXX11)
+  set(TOMOGRAPHER_CXX11_STD_FLAGS "-std=c++11" CACHE STRING "Compiler flags to enable C++11")
+elseif(COMPILER_SUPPORTS_GNUXX0X)
+  set(TOMOGRAPHER_CXX11_STD_FLAGS "-std=gnu++0x" CACHE STRING "Compiler flags to enable C++11")
+elseif(COMPILER_SUPPORTS_CXX0X)
+  set(TOMOGRAPHER_CXX11_STD_FLAGS "-std=c++0x" CACHE STRING "Compiler flags to enable C++11")
+else()
+  message(FATAL_ERROR
+    "The compiler ${CMAKE_CXX_COMPILER} has no C++0x/C++11 support. Please use a different C++ compiler or set TOMOGRAPHER_CXX11_STD_FLAGS."
+    )
+endif()
+
 
 #
 # Using "if(NOT mypackage_FOUND)" for the find_package() directives below allows the user

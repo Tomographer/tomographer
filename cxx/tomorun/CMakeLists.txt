@@ -38,12 +38,7 @@ set(TOMORUN_SUFFIX "" CACHE STRING
   "Optional suffix to append to 'tomorun' executable name, to indicate special configuration in case you override settings in tomorun_config.h with -D... compiler flags (such as -DTOMORUN_CUSTOM_FIXED_DIM=... etc.)")
 
 
-# already parallelized application, so disable Eigen's own parallelization (see
-# http://eigen.tuxfamily.org/dox/TopicMultiThreading.html)
-add_definitions(-DEIGEN_DONT_PARALLELIZE)
-
-include(CheckCXXSourceCompiles)
-
+# can we use the nice() function to reduce the process priority?
 CHECK_CXX_SOURCE_COMPILES(
   "#include <unistd.h>
   int main() { nice(1); }"
@@ -51,6 +46,7 @@ CHECK_CXX_SOURCE_COMPILES(
 if(NOT tomorun_HAVE_NICE)
   add_definitions(-DTOMORUN_NOT_HAVE_NICE)
 endif()
+
 
 add_executable(tomorun tomorun.cxx)
 add_dependencies(tomorun tomographer) # in particular tomographer_version.h

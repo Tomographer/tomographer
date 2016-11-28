@@ -318,4 +318,17 @@ void dump_histogram_test(std::ostream & str, const HistogramType & histogram,
 
 
 
+
+// problems with C++11 ABI: see http://stackoverflow.com/a/33755176/1694896 
+#ifdef TOMOGRAPHER_TESTS_LINK_AGAINST_CXX11_ABI_WITH_OLD_GCC
+namespace boost { namespace unit_test { namespace ut_detail {
+    std::string normalize_test_case_name(const_string name) {
+        return ( name[0] == '&' ? std::string(name.begin()+1, name.size()-1) : std::string(name.begin(), name.size() ));
+    }
+}}}
+#endif
+
+
+
+
 #endif
