@@ -38,6 +38,7 @@ inline constexpr int omp_get_thread_num() { return 0; }
 inline constexpr int omp_get_num_threads() { return 1; }
 #endif
 
+#include <boost/exception/diagnostic_information.hpp>
 
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/tools/cxxutil.h> // tomographer_assert()
@@ -79,19 +80,41 @@ struct ThreadSanitizerLoggerHelper
 {
   static inline void emitLog(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
   {
+    bool got_exception = false;
+    std::string exception_str;
 #pragma omp critical
     {
-      //printf("ThreadSanitizerLoggerHelper::emitLog(%d, %s, %s) -- OMP CRITICAL\n", level, origin, msg.c_str());
-      baselogger.emitLog(level, origin, msg);
+      //fprintf(stderr, "ThreadSanitizerLoggerHelper::emitLog(%d, %s, %s) -- OMP CRITICAL\n", level, origin, msg.c_str());
+      try {
+        baselogger.emitLog(level, origin, msg);
+      } catch (...) {
+        got_exception = true;
+        exception_str = std::string("Caught exception in emitLog: ") + boost::current_exception_diagnostic_information();
+      }
+    }
+    if (got_exception) {
+      throw std::runtime_error(exception_str);
     }
   }
   static inline bool filterByOrigin(BaseLogger & baselogger, int level, const char * origin)
   {
+    bool got_exception = false;
+    std::string exception_str;
+
     bool ok = true;
 #pragma omp critical
     {
-      //printf("ThreadSanitizerLoggerHelper::filterByOrigin(%d, %s) -- OMP CRITICAL\n", level, origin);
-      ok = baselogger.filterByOrigin(level, origin);
+      //fprintf(stderr, "ThreadSanitizerLoggerHelper::filterByOrigin(%d, %s) -- OMP CRITICAL\n", level, origin);
+      try {
+        ok = baselogger.filterByOrigin(level, origin);
+      } catch (...) {
+        got_exception = true;
+        exception_str = std::string("Caught exception in filterByOrigni: ")
+          + boost::current_exception_diagnostic_information();
+      }
+    }
+    if (got_exception) {
+      throw std::runtime_error(exception_str);
     }
     return ok;
   }
@@ -103,15 +126,15 @@ struct ThreadSanitizerLoggerHelper
 //
 template<typename BaseLogger>
 struct ThreadSanitizerLoggerHelper<BaseLogger, true>
-{
+ {
   static inline void emitLog(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
   {
-    //printf("ThreadSanitizerLoggerHelper::emitLog(%d, %s, %s) -- NORMAL\n", level, origin, msg.c_str());
+    //fprintf(stderr, "ThreadSanitizerLoggerHelper::emitLog(%d, %s, %s) -- NORMAL\n", level, origin, msg.c_str());
     baselogger.emitLog(level, origin, msg);
   }
   static inline bool filterByOrigin(BaseLogger & baselogger, int level, const char * origin)
   {
-    //printf("ThreadSanitizerLoggerHelper::filterByOrigin(%d, %s) -- NORMAL\n", level, origin);
+    //fprintf(stderr, "ThreadSanitizerLoggerHelper::filterByOrigin(%d, %s) -- NORMAL\n", level, origin);
     return baselogger.filterByOrigin(level, origin);
   }
 };
@@ -445,118 +468,137 @@ private:
         return;
       }
 
+
+      bool got_exception = false;
+      std::string exception_str;
 #pragma omp critical
       {
-        bool ok = true; // whether to proceed or not
+        try {
+          bool ok = true; // whether to proceed or not
 
-        // we've reacted to the given "signal"
-        local_status_report_counter = shared_data->status_report_counter;
+          // we've reacted to the given "signal"
+          local_status_report_counter = shared_data->status_report_counter;
           
-        // add our status report to being-prepared status report in the  shared data
-        int threadnum = omp_get_thread_num();
+          // add our status report to being-prepared status report in the  shared data
+          int threadnum = omp_get_thread_num();
 
-        // Important: access the original logger, not the thread-safe-wrapped logger!!
-        // Otherwise this could lead to deadlocks because of nested critical blocks.
-        shared_data->logger.longdebug("OMP TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
-            stream << "status report received for thread #" << threadnum << ", treating it ...";
-          });
-
-        //
-        // If we're the first reporting thread, we need to initiate the status reporing
-        // procedure and initialize the general data
-        //
-        if (!shared_data->status_report_initialized) {
+          // Important: access the original logger, not the thread-safe-wrapped logger!!
+          // Otherwise this could lead to deadlocks because of nested critical blocks.
+          shared_data->logger.longdebug("OMP TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
+              stream << "status report received for thread #" << threadnum << ", treating it ...";
+            });
 
           //
-          // Check that we indeed have to submit a status report.
+          // If we're the first reporting thread, we need to initiate the status reporing
+          // procedure and initialize the general data
           //
-          if (shared_data->status_report_underway) {
-            // status report already underway!
-            // Important: access the original logger, not the thread-safe-wrapped logger!!
-            // Otherwise this could lead to deadlocks because of nested critical blocks.
-            shared_data->logger.warning("OMP TaskDispatcher/taskmanageriface",
-                                        "status report already underway!");
-            ok = false;
-          }
-          if (!shared_data->status_report_user_fn) {
-            // no user handler set
-            // Important: access the original logger, not the thread-safe-wrapped logger!!
-            // Otherwise this could lead to deadlocks because of nested critical blocks.
-            shared_data->logger.warning("OMP TaskDispatcher/taskmanageriface",
-                                        "no user status report handler set!"
-                                        " call setStatusReportHandler() first.");
-            ok = false;
-          }
+          if (!shared_data->status_report_initialized) {
 
-          // since we can't return out of a critical section(?), we use an if block.
-          if (ok) {
+            //
+            // Check that we indeed have to submit a status report.
+            //
+            if (shared_data->status_report_underway) {
+              // status report already underway!
+              // Important: access the original logger, not the thread-safe-wrapped logger!!
+              // Otherwise this could lead to deadlocks because of nested critical blocks.
+              shared_data->logger.warning("OMP TaskDispatcher/taskmanageriface",
+                                          "status report already underway!");
+              ok = false;
+            }
+            if (!shared_data->status_report_user_fn) {
+              // no user handler set
+              // Important: access the original logger, not the thread-safe-wrapped logger!!
+              // Otherwise this could lead to deadlocks because of nested critical blocks.
+              shared_data->logger.warning("OMP TaskDispatcher/taskmanageriface",
+                                          "no user status report handler set!"
+                                          " call setStatusReportHandler() first.");
+              ok = false;
+            }
 
-            shared_data->status_report_underway = true;
-            shared_data->status_report_initialized = true;
+            // since we can't return out of a critical section(?), we use an if block.
+            if (ok) {
+
+              shared_data->status_report_underway = true;
+              shared_data->status_report_initialized = true;
               
-            // initialize status report object & overall data
-            shared_data->status_report_full = FullStatusReportType();
-            shared_data->status_report_full.num_completed = shared_data->num_completed;
-            shared_data->status_report_full.num_total_runs = shared_data->num_total_runs;
-            // shared_data->status_report_full.num_active_working_threads = shared_data->num_active_working_threads;
-            int num_threads = omp_get_num_threads();
-            // shared_data->status_report_full.num_threads = num_threads;
+              // initialize status report object & overall data
+              shared_data->status_report_full = FullStatusReportType();
+              shared_data->status_report_full.num_completed = shared_data->num_completed;
+              shared_data->status_report_full.num_total_runs = shared_data->num_total_runs;
+              // shared_data->status_report_full.num_active_working_threads = shared_data->num_active_working_threads;
+              int num_threads = omp_get_num_threads();
+              // shared_data->status_report_full.num_threads = num_threads;
               
-            // initialize task-specific reports
-            // fill our lists with default-constructed values & set all running to false.
-            shared_data->status_report_full.workers_running.clear();
-            shared_data->status_report_full.workers_reports.clear();
-            shared_data->status_report_full.workers_running.resize(num_threads, false);
-            shared_data->status_report_full.workers_reports.resize(num_threads);
+              // initialize task-specific reports
+              // fill our lists with default-constructed values & set all running to false.
+              shared_data->status_report_full.workers_running.clear();
+              shared_data->status_report_full.workers_reports.clear();
+              shared_data->status_report_full.workers_running.resize(num_threads, false);
+              shared_data->status_report_full.workers_reports.resize(num_threads);
 
-            // Important: access the original logger, not the thread-safe-wrapped logger!!
-            // Otherwise this could lead to deadlocks because of nested critical blocks.
-            shared_data->logger.debug("OMP TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
-                stream << "vectors resized to workers_running.size()="
-                       << shared_data->status_report_full.workers_running.size()
-                       << " and workers_reports.size()="
-                       << shared_data->status_report_full.workers_reports.size()
-                       << ".";
-              });
+              // Important: access the original logger, not the thread-safe-wrapped logger!!
+              // Otherwise this could lead to deadlocks because of nested critical blocks.
+              shared_data->logger.debug("OMP TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
+                  stream << "vectors resized to workers_running.size()="
+                         << shared_data->status_report_full.workers_running.size()
+                         << " and workers_reports.size()="
+                         << shared_data->status_report_full.workers_reports.size()
+                         << ".";
+                });
               
-            shared_data->status_report_numreportsrecieved = 0;
-          }
+              shared_data->status_report_numreportsrecieved = 0;
+            }
 
-        } // status_report_initialized
+          } // status_report_initialized
 
           // if we're the first reporting thread, then maybe ok was set to false above, so
           // check again.
-        if (ok) {
+          if (ok) {
 
-          //
-          // Report the data corresponding to this thread.
-          //
-          // Important: access the original logger, not the thread-safe-wrapped logger!!
-          // Otherwise this could lead to deadlocks because of nested critical blocks.
-          shared_data->logger.debug("OMP TaskDispatcher/taskmanageriface", "threadnum=%ld, workers_reports.size()=%ld",
-                                    (long)threadnum, (long)shared_data->status_report_full.workers_reports.size());
+            //
+            // Report the data corresponding to this thread.
+            //
+            // Important: access the original logger, not the thread-safe-wrapped logger!!
+            // Otherwise this could lead to deadlocks because of nested critical blocks.
+            shared_data->logger.debug("OMP TaskDispatcher/taskmanageriface", "threadnum=%ld, workers_reports.size()=%ld",
+                                      (long)threadnum, (long)shared_data->status_report_full.workers_reports.size());
 
-          tomographer_assert(0 <= threadnum &&
-                             (std::size_t)threadnum < shared_data->status_report_full.workers_reports.size());
+            tomographer_assert(0 <= threadnum &&
+                               (std::size_t)threadnum < shared_data->status_report_full.workers_reports.size());
 
-          shared_data->status_report_full.workers_running[threadnum] = true;
-          shared_data->status_report_full.workers_reports[threadnum] = statreport;
+            shared_data->status_report_full.workers_running[threadnum] = true;
+            shared_data->status_report_full.workers_reports[threadnum] = statreport;
 
-          ++ shared_data->status_report_numreportsrecieved;
+            ++ shared_data->status_report_numreportsrecieved;
 
-          if (shared_data->status_report_numreportsrecieved == shared_data->num_active_working_threads) {
-            // the report is ready to be transmitted to the user: go!
-            shared_data->status_report_user_fn(shared_data->status_report_full);
-            // all reports recieved: done --> reset our status_report_* flags
-            shared_data->status_report_numreportsrecieved = 0;
-            shared_data->status_report_underway = false;
-            shared_data->status_report_initialized = false;
-            shared_data->status_report_full.workers_running.clear();
-            shared_data->status_report_full.workers_reports.clear();
-          }
-        } // if ok
+            if (shared_data->status_report_numreportsrecieved == shared_data->num_active_working_threads) {
+              // the report is ready to be transmitted to the user: go!
+              shared_data->status_report_user_fn(shared_data->status_report_full);
+              // all reports recieved: done --> reset our status_report_* flags
+              shared_data->status_report_numreportsrecieved = 0;
+              shared_data->status_report_underway = false;
+              shared_data->status_report_initialized = false;
+              shared_data->status_report_full.workers_running.clear();
+              shared_data->status_report_full.workers_reports.clear();
+            }
+          } // if ok
+        } catch (...) {
+          // if an exception occurred, request an interrupt. the user may not know what
+          // caused the interrupt.  Don't terminate or cause a huge fuss, as this might be
+          // actually controlled (e.g. boost::python::error_already_set)
+          // Also, the logger itself may have caused the exception, so this one could as well:
+          //shared_data->logger.debug("OMP TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
+          //        stream << "Error while processing status report, exception caught: "
+          //        << boost::current_exception_diagnostic_information();
+          //      });
+          got_exception = true;
+          exception_str = std::string("Caught exception while processing status report: ")
+            + boost::current_exception_diagnostic_information();
+        }
       } // omp critical
-
+      if (got_exception) {
+        throw std::runtime_error(exception_str);
+      }
     }
   };
 
@@ -616,7 +658,9 @@ public:
 
     int num_active_parallel = 0;
 
-#pragma omp parallel default(none) private(k, privdat) shared(shdat, num_total_runs, n_chunk, num_active_parallel)
+    std::string inner_exception;
+
+#pragma omp parallel default(none) private(k, privdat) shared(shdat, num_total_runs, n_chunk, num_active_parallel, inner_exception)
     {
       privdat.shared_data = shdat;
       privdat.kiter = 0;
@@ -630,11 +674,22 @@ public:
 #pragma omp for schedule(dynamic,n_chunk) nowait
       for (k = 0; k < num_total_runs; ++k) {
 
-        // make separate function call, so that we can tell GCC to realign the stack on
-        // platforms which don't do that automatically (yes, MinGW, it's you I'm looking
-        // at)
-        _run_task(privdat, shdat, k);
-        
+        try {
+
+          // make separate function call, so that we can tell GCC to realign the stack on
+          // platforms which don't do that automatically (yes, MinGW, it's you I'm looking
+          // at)
+          _run_task(privdat, shdat, k);
+
+        } catch (...) {
+#pragma omp critical
+          {
+            shdat->interrupt_requested = 1;
+            inner_exception += std::string("Exception caught inside task: ")
+              + boost::current_exception_diagnostic_information() + "\n";
+          }
+        }
+          
       } // omp for
 
 #pragma omp atomic
@@ -652,6 +707,11 @@ public:
       }
       
     } // omp parallel
+
+    if (inner_exception.size()) {
+      // interrupt was requested because of an inner exception, not an explicit interrupt request
+      throw std::runtime_error(inner_exception);
+    }
 
     if (shared_data.interrupt_requested) {
       throw TasksInterruptedException();
@@ -711,9 +771,17 @@ private:
       return;
     }
       
+    bool got_exception = false;
+    std::string exception_str;
 #pragma omp critical
     {
-      shdat->results->collectResult(k, t.getResult(), shdat->pcdata);
+      try {
+        shdat->results->collectResult(k, t.getResult(), shdat->pcdata);
+      } catch (...) {
+          got_exception = true;
+          exception_str = std::string("Caught exception while processing status report: ")
+            + boost::current_exception_diagnostic_information();
+      }
         
       if ((int)privdat.local_status_report_counter != (int)shdat->status_report_counter) {
         // status report request missed by task... do as if we had provided a
@@ -723,7 +791,11 @@ private:
         
       ++ shdat->num_completed;
       -- shdat->num_active_working_threads;
+    } // omp critical
+    if (got_exception) {
+      throw std::runtime_error(exception_str);
     }
+
   }
 
 public:
