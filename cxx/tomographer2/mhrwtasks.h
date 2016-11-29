@@ -430,10 +430,13 @@ private:
     {
       // see if we should provide a status report
       //        fprintf(stderr, "StatusReportCheck::rawMove(): testing for status report requested!\n");
-      if (tmgriface->statusReportRequested()) {
+      // only check once per sweep, to speed up things
+      if ((k % rw.nSweep() == 0) && tmgriface->statusReportRequested()) {
         // prepare & provide status report
         CountIntType totiters = rw.nSweep()*(rw.nTherm()+rw.nRun());
-        double fdone = (double)k/totiters;
+        // k restarts at zero after thermalization, so account for that:
+        CountIntType kreal = is_thermalizing ? k : k + rw.nSweep()*rw.nTherm();
+        double fdone = (double)kreal/totiters;
         double accept_ratio = std::numeric_limits<double>::quiet_NaN();
         bool warn_accept_ratio = false;
         if (rw.hasAcceptanceRatio()) {
@@ -445,7 +448,7 @@ private:
             ( ! is_thermalizing
               ? "iteration"
               : "[therm.] "),
-            (unsigned long)k, (unsigned long)totiters, (unsigned long)rw.nSweep(),
+            (unsigned long)kreal, (unsigned long)totiters, (unsigned long)rw.nSweep(),
             (unsigned long)rw.nTherm(), (unsigned long)rw.nRun(),
             fdone*100.0,
             warn_accept_ratio ? "!!** " : "",
@@ -465,7 +468,7 @@ private:
             }
           }
         }
-        tmgriface->submitStatusReport(StatusReport(fdone, msg, k, rw.mhrwParams(), accept_ratio));
+        tmgriface->submitStatusReport(StatusReport(fdone, msg, kreal, rw.mhrwParams(), accept_ratio));
       }
       //        fprintf(stderr, "StatusReportCheck::rawMove(): done\n");
     }
