@@ -8,25 +8,28 @@ language: cpp
 # Install dependencies (Eigen3 >= 3.2.5, MatIO 1.5)
 install:
   # Eigen3:
-  - curl -L https://bitbucket.org/eigen/eigen/get/3.2.5.tar.gz -o eigen-3.2.5.tar.gz
-  - tar xfz eigen-3.2.5.tar.gz
-  - export EIGEN_PATH=`pwd`/eigen-eigen-bdd17ee3b1b3
+  - export EIGEN_PATH=`pwd`/eigen-3.2.5
+  - if [ ! -d "$EIGEN_PATH" ]; then curl -L https://bitbucket.org/eigen/eigen/get/3.2.5.tar.gz -o eigen-3.2.5.tar.gz && tar xfz eigen-3.2.5.tar.gz && mv eigen-bdd17ee3b1b3 eigen-3.2.5 ; fi
   # MatIO:
-  - curl -L -o matio-1.5.9.tar.gz  https://sourceforge.net/projects/matio/files/matio/1.5.9/matio-1.5.9.tar.gz/download
-  - tar xfz matio-1.5.9.tar.gz
-  - ( cd matio-1.5.9 && ./configure --prefix=/usr && make && sudo make install )
+  - export MATIO_PATH=`pwd`/matio-1.5.9
+  - if [ ! -d "$MATIO_PATH/_install" ]; then curl -L -o matio-1.5.9.tar.gz  https://sourceforge.net/projects/matio/files/matio/1.5.9/matio-1.5.9.tar.gz/download  && tar xfz matio-1.5.9.tar.gz && ( cd matio-1.5.9 && ./configure --prefix="$MATIO_PATH/_install" && make && make install ) ; fi
+
+cache:
+  directories:
+    - eigen-3.2.5
+    - matio-1.5.9/_install
 
 
 # Allow git-describe to find the right version string, otherwise the build fails
 git:
-  depth: 100
+  depth: 150
 
 
 # Build steps
 script:
   - mkdir build
   - cd build
-  - cmake .. $CMAKE_COMPILER_ARGS -DTOMOGRAPHER_ENABLE_TESTS=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH"
+  - cmake .. $CMAKE_COMPILER_ARGS -DTOMOGRAPHER_ENABLE_TESTS=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH" -DMATIO_INCLUDE_DIR="$MATIO_PATH/_install/include" -DMATIO_LIBRARY="$MATIO_PATH/_install/libmatio.so"
   - make VERBOSE=1
 #  - CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all make test
 #  - BOOST_TEST_LOG_LEVEL=all ctest --verbose
