@@ -39,10 +39,12 @@ rho_ref = np.array([[1,0],[0,0]])
 print("Data ready.")
 
 def progress(report):
-    print("PROGRESS REPORT: ", report.num_completed, "/", report.num_total_runs, "\n")
+    print("PROGRESS REPORT: ", report.num_completed, "/", report.num_total_runs)
     for r in report.workers_reports:
-        print(repr(r))
-    print("\n")
+        #print("  {worker_id:2d}: {fraction_done:.2f%}  accept={acceptance_ratio:.2f} \n".format(**r))
+        print("    {worker_id:02d}: {fraction_done:.2%}  accept={acceptance_ratio:.2f}".format(**r))
+        print("        {}".format(r['msg'].replace('\n', '\n    ')))
+    print()
 
 r = tomographer.tomorun.tomorun(dim=2, Nm=Nm, Emn=Emn,
                                 hist_params=tomographer.UniformBinsHistogramParams(0.9,1,50),

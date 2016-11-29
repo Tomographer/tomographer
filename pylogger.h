@@ -77,6 +77,7 @@ public:
 
   inline void emitLog(int level, const char * origin, const std::string & msg)
   {
+    //fprintf(stderr, "HERE (X)\n");
     if (_bypasspython) {
       fprintf(stderr, "%s:%s:%s (bypassed python logger)\n",
               Tomographer::Logger::LogLevel(level).levelName().c_str(),
@@ -84,7 +85,6 @@ public:
               msg.c_str());
       return;
     }
-    // need custom critical:
     if (py_logger.is_none()) {
       fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGER NOT SET.\n");
       fprintf(stderr, "Message was (%d): %s: %s\n\n", level, origin, msg.c_str());
@@ -101,11 +101,12 @@ public:
       try {
         logfn(*boost::python::make_tuple(pylevel, msg), **kwargs);
       } catch (boost::python::error_already_set & e) {
-        PyErr_Print();
-        //fprintf(stderr, "Ignored error in call to python logging function.\n");
-        throw(e);
+        //PyErr_Print();
+        //fprintf(stderr, "Propagating exception in call to python logging function.\n");
+        throw e;
       }
     }
+    //fprintf(stderr, "HERE (Y)\n");
   }
 
   inline boost::python::object toPythonLevel(int level)

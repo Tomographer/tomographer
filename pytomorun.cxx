@@ -1,6 +1,9 @@
 
 #include "common.h"
 
+#include <exception>
+#include <stdexcept>
+
 #include "pyhistogram.h"
 
 #include <omp.h>
@@ -303,6 +306,7 @@ boost::python::object py_tomorun(
               const auto& wrp = report.workers_reports[k];
               boost::python::dict d;
               // generic status report fields
+              d["worker_id"] = k;
               d["fraction_done"] = wrp.fraction_done;
               d["msg"] = wrp.msg;
               // fields specific to MHRWValueHistogramTasks
@@ -366,18 +370,18 @@ boost::python::object py_tomorun(
   try {
     tasks.run();
   } catch (const Tomographer::MultiProc::TasksInterruptedException & e) {
-    if (PyErr_Occurred() == NULL) {
-      // no Python exception set?? -- set a RuntimError via Boost
-      throw e;
+    if (PyErr_Occurred() != NULL) {
+      // tell boost.python that the exception is already set
+      throw boost::python::error_already_set();
     }
-    // tell boost.python that the exception is already set
-    throw boost::python::error_already_set();
+    // no Python exception set?? -- set a RuntimeError via Boost
+    throw e;
   } catch (std::exception & e) {
+    //fprintf(stderr, "EXCEPTION: %s\n", e.what());
     // another exception
     if (PyErr_Occurred() != NULL) { // an inner boost::python::error_already_set() was caught & rethrown by MultiProc::OMP
       throw boost::python::error_already_set();
     }
-    fprintf(stderr, "Caught exception: %s\n", e.what());
     throw e; // error via boost::python
   }
 
