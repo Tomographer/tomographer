@@ -160,7 +160,7 @@ addTomographerTest(test_mhrwtasks.cxx  "")
 addTomographerTest(test_valuecalculator.cxx  "")
 addTomographerTest(test_mhrw_bin_err.cxx  "")
 addTomographerTest(test_mhrw_valuehist_tasks.cxx  "")
-addTomographerTest(test_multiproc.cxx  "")
+addTomographerTest(test_multiproc.cxx  "openmp") # openmp needed for testing the status report feature
 addTomographerTest(test_multiprocomp.cxx  "openmp")
 # only works with g++ because we do exact comparison of the output histogram data, and
 # other compilers may have small differences:

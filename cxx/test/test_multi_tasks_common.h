@@ -28,9 +28,13 @@
 #define TEST_MULTI_TASKS_COMMON_H
 
 #include <string>
+#include <functional>
 
 #include <tomographer2/tools/fmt.h>
 
+#ifdef _OPENMP
+#include <omp.h>
+#endif
 
 
 struct MyTaskInput {
@@ -188,6 +192,324 @@ struct test_task_dispatcher_fixture {
       << MyTaskInput(1, 2);
   }
 };
+
+
+
+
+//
+// Utilities for testing the status reporting mechanism of a task dispatcher
+//
+
+
+
+
+#ifndef __MINGW32__
+// MinGW32 does not have SIGALRM / alarm()
+std::function<void()> sigalarm_act;
+
+void sigalarm_act_cfn(int signum)
+{
+  //  printf("[SIGALRM]\n");
+  if (signum == SIGALRM) {
+    sigalarm_act();
+  }
+}
+#endif
+
+
+
+
+
+
+struct StatusRepTestBasicCData {
+  StatusRepTestBasicCData() { }
+
+  int getTaskInput(int k) const {
+    return k;
+  }
+};
+struct StatusRepTestTask {
+
+  typedef Tomographer::MultiProc::TaskStatusReport StatusReportType;
+  
+  typedef bool ResultType;
+
+  template<typename LoggerType>
+  StatusRepTestTask(int input, const StatusRepTestBasicCData * , LoggerType & )
+    : _input(input) // input is task number
+  {
+  }
+
+  template<typename LoggerType, typename TaskManagerIface>
+  void run(const StatusRepTestBasicCData * , LoggerType & logger, TaskManagerIface * iface)
+  {
+    _result = false;
+
+    // Check for status reports, and generate one once requested.  Run the task
+    // like this for five seconds.
+
+    unsigned long count = 0;
+    std::time_t time_start;
+    std::time(&time_start);
+    std::time_t now = time_start;
+    int elapsed = 0;
+    int seconds_to_run = 3+_input/4;
+    do {
+      std::time(&now);
+      elapsed = now - time_start;
+      if (iface->statusReportRequested()) {
+        logger.longdebug("StatusRepTestTask::run", "Task #%02d: Status report requested", _input);
+        StatusReportType s(elapsed / (double)seconds_to_run,
+                           Tomographer::Tools::fmts("elapsed = %d [%.2f%%]; count = %lu = %#lx",
+                                                    elapsed, 100.0*elapsed/seconds_to_run, count, count));
+        logger.longdebug("StatusRepTestTask::run", "s.msg = %s", s.msg.c_str());
+        iface->submitStatusReport(s);
+        logger.longdebug("StatusRepTestTask::run", "report submitted.");
+        _result = true;
+      }
+      ++count;
+      //      if ((count & 0xffff) == 0) {
+      //        logger.longdebug("StatusRepTestTask::run", "count = %lu", count);
+      //      }
+    } while (now - time_start < seconds_to_run);
+  }
+
+  ResultType getResult() const { return _result; }
+
+private:
+  int _input;
+  ResultType _result;
+};
+struct StatusRepTestResultsCollector {
+  StatusRepTestResultsCollector()
+  {
+  }
+  void init(int, int, const StatusRepTestBasicCData * )
+  {
+  }
+  template<typename ResultType>
+  void collectResult(int, const ResultType& taskresult, const StatusRepTestBasicCData *)
+  {
+    BOOST_CHECK_EQUAL(taskresult, true);
+  }
+  void runsFinished(int, const StatusRepTestBasicCData * )
+  {
+  }
+};
+
+
+
+
+
+
+struct test_task_dispatcher_status_reporting_fixture {
+  StatusRepTestBasicCData cData;
+  const int num_runs;
+  StatusRepTestResultsCollector resultsCollector;
+  
+  test_task_dispatcher_status_reporting_fixture()
+    : cData(), num_runs(10), resultsCollector()
+  {
+  }
+
+
+  template<typename TaskDispatcher, typename LoggerType>
+  inline void set_report_handler(TaskDispatcher& task_dispatcher, LoggerType & logger)
+  {
+    auto plogger = &logger; // see http://stackoverflow.com/q/21443023/1694896
+    task_dispatcher.setStatusReportHandler(
+        [plogger](const Tomographer::MultiProc::FullStatusReport<StatusRepTestTask::StatusReportType>& r) {
+          plogger->info("status_report test case", [&](std::ostream & stream) {
+              stream << "Full status report recieved. num_completed = " << r.num_completed
+                     << ", num_total_runs = " << r.num_total_runs << "\n";
+              for (std::size_t k = 0; k < r.workers_running.size(); ++k) {
+                if (!r.workers_running[k]) {
+                  stream << "Worker #" << k << " idle\n";
+                } else {
+                  stream << "Worker #" << k << ":  " << r.workers_reports[k].fraction_done * 100 << "%, "
+                         << r.workers_reports[k].msg << "\n";
+                }
+              }
+            });
+        });
+  }
+
+
+  template<typename TaskDispatcher, typename LoggerType>
+  inline void perform_test_status_report_periodic(TaskDispatcher & task_dispatcher, LoggerType & logger)
+  {
+    logger.info("test case:status_report_periodic", "Starting test case.");
+
+    set_report_handler(task_dispatcher, logger);
+
+    task_dispatcher.requestPeriodicStatusReport(1000); // every second
+
+    task_dispatcher.run();
+
+    logger.info("test case:status_report_periodic", "Test case done.");
+  }
+
+  template<typename TaskDispatcher, typename LoggerType>
+  inline void perform_test_interrupt_tasks_withthread(TaskDispatcher & task_dispatcher, LoggerType & logger)
+  {
+#ifdef _OPENMP
+    logger.info("test case:interrupt_tasks_withthread", "Starting test case.");
+
+    set_report_handler(task_dispatcher, logger);
+
+    omp_set_dynamic(0);
+    omp_set_nested(1);
+
+    bool tasks_interrupted = false;
+
+    typedef
+#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
+      std::chrono::monotonic_clock // for g++ 4.6
+#else
+      std::chrono::steady_clock
+#endif
+      StdClockType;
+
+    auto starttime = StdClockType::now();
+
+#pragma omp parallel num_threads(2) default(shared)
+    {
+      if (omp_get_thread_num() == 0) {
+        // take care of sending the interrupt request
+
+        sleep(1);
+        task_dispatcher.requestInterrupt();
+
+      } else if (omp_get_thread_num() == 1) {
+        // run the slave tasks
+
+        try {
+          task_dispatcher.run();
+        } catch (const Tomographer::MultiProc::TasksInterruptedException & e) {
+          tasks_interrupted = true;
+        }
+
+      } else {
+        // never here
+        assert( false ) ;
+      }
+    }
+
+    auto endtime = StdClockType::now();
+
+    BOOST_CHECK(tasks_interrupted);
+   
+    logger.debug("test case:interrupt_tasks_withthread", [&](std::ostream & stream) {
+        stream << "Tasks (hopefully) interrupted after "
+               << std::chrono::duration_cast<std::chrono::seconds>(endtime-starttime).count()
+               << " seconds.";
+      });
+
+    logger.info("test case:interrupt_tasks_withthread", "Test case done.");
+
+#else // _OPENMP
+    (void)task_dispatcher; (void)logger;
+    BOOST_TEST_MESSAGE("test case interrupt_tasks_withthread: nothing to do because OpenMP is disabled");
+    BOOST_CHECK( true ) ; // dummy test case
+#endif
+  }
+
+  template<typename TaskDispatcher, typename LoggerType>
+  inline void perform_test_status_report_withthread(TaskDispatcher & task_dispatcher, LoggerType & logger)
+  {
+#ifdef _OPENMP
+    logger.info("test case:status_report_withthread", "Starting test case.");
+
+    set_report_handler(task_dispatcher, logger);
+
+    omp_set_dynamic(0);
+    omp_set_nested(1);
+
+    volatile std::sig_atomic_t finished = 0;
+
+#pragma omp parallel num_threads(2) default(shared)
+    {
+      if (omp_get_thread_num() == 0) {
+        // take care of sending status report requests
+
+        while (!finished) {
+          sleep(1);
+          task_dispatcher.requestStatusReport();
+        }
+
+      } else if (omp_get_thread_num() == 1) {
+        // run the slave tasks
+
+        task_dispatcher.run();
+
+        finished = 1;
+
+      } else {
+        // never here
+        assert( false ) ;
+      }
+    }
+
+    logger.debug("test case:status_report_withthread", "Test case done.");
+#else // _OPENMP
+    (void)task_dispatcher; (void)logger;
+    BOOST_TEST_MESSAGE("test case status_report_withthread: nothing to do because OpenMP is disabled");
+    BOOST_CHECK( true ) ; // dummy test case
+#endif
+  }
+
+  template<typename TaskDispatcher, typename LoggerType>
+  inline void perform_test_status_report_withsigalrm(TaskDispatcher & task_dispatcher, LoggerType & logger)
+  {
+#ifndef __MINGW32__ // MinGW32 does not have SIGALRM / alarm()
+    logger.info("test case:status_report_withsigalrm", "Starting test case.");
+
+    set_report_handler(task_dispatcher, logger);
+
+    {
+      auto finally = Tomographer::Tools::finally([](){
+          alarm(0);
+          signal(SIGALRM, SIG_DFL);
+        });
+    
+      sigalarm_act = [&task_dispatcher]() {
+        task_dispatcher.requestStatusReport();
+        alarm(2);
+        signal(SIGALRM, sigalarm_act_cfn);
+      };
+    
+      alarm(1);
+      signal(SIGALRM, sigalarm_act_cfn);
+    
+      task_dispatcher.run();
+    }
+
+    logger.info("test case:status_report_withsigalrm", "Test case done.");
+#else // MINGW
+    (void)task_dispatcher; (void)logger;
+    BOOST_TEST_MESSAGE("test case status_report_withsigalrm: nothing to do because signal/alarm is not supported");
+    BOOST_CHECK( true ) ; // dummy test case
+
+#if !defined(_OPENMP)
+    // but on MINGW & !OPENMP, we have no way of testing status report checking ... so fail here
+    BOOST_CHECK(false && "Status report check NOT IMPLEMENTED on your platform, sorry");
+#endif // at least some form of status report checked
+#endif // MINGW
+  }
+  
+};
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 

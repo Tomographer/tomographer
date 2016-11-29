@@ -9,7 +9,7 @@ language: cpp
 install:
   # Eigen3:
   - export EIGEN_PATH=`pwd`/eigen-3.2.5
-  - if [ ! -d "$EIGEN_PATH" ]; then curl -L https://bitbucket.org/eigen/eigen/get/3.2.5.tar.gz -o eigen-3.2.5.tar.gz && tar xfz eigen-3.2.5.tar.gz && mv eigen-bdd17ee3b1b3 eigen-3.2.5 ; fi
+  - if [ ! -d "$EIGEN_PATH" ]; then curl -L https://bitbucket.org/eigen/eigen/get/3.2.5.tar.gz -o eigen-3.2.5.tar.gz && tar xfz eigen-3.2.5.tar.gz && mv eigen-eigen-bdd17ee3b1b3 eigen-3.2.5 ; fi
   # MatIO:
   - export MATIO_PATH=`pwd`/matio-1.5.9
   - if [ ! -d "$MATIO_PATH/_install" ]; then curl -L -o matio-1.5.9.tar.gz  https://sourceforge.net/projects/matio/files/matio/1.5.9/matio-1.5.9.tar.gz/download  && tar xfz matio-1.5.9.tar.gz && ( cd matio-1.5.9 && ./configure --prefix="$MATIO_PATH/_install" && make && make install ) ; fi
