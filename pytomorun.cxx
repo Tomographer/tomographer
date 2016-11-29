@@ -152,15 +152,11 @@ boost::python::object py_tomorun(
     const Py::MHRWParams& mhrw_params,
     int binning_num_levels,
     int num_repeats,
-    int log_level,
-    boost::python::object progress_fn
+    boost::python::object progress_fn,
+    int progress_interval_ms
     )
 {
-  Tomographer::Logger::FileLogger baselogger(stderr, log_level, true /*display_origin*/);
-
-  typedef decltype(baselogger) LoggerType;
-
-  Tomographer::Logger::LocalLogger<LoggerType> logger(TOMO_ORIGIN, baselogger);
+  Tomographer::Logger::LocalLogger<TPyLoggerType> logger(TOMO_ORIGIN, tpy_logger);
 
   logger.debug("py_tomorun()");
 
@@ -258,7 +254,7 @@ boost::python::object py_tomorun(
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>  OurMHRandomWalkTask;
 
-  typedef typename OurCData::template ResultsCollectorType<LoggerType>::Type OurResultsCollector;
+  typedef typename OurCData::template ResultsCollectorType<TPyLoggerType>::Type OurResultsCollector;
 
   // seed for random number generator
   auto base_seed = std::chrono::system_clock::now().time_since_epoch().count();
@@ -294,13 +290,13 @@ boost::python::object py_tomorun(
         // call the python progress callback:
         if (!progress_fn.is_none()) {
           try {
-            fprintf(stderr, "PREPARING REPORT\n");
+            //            fprintf(stderr, "PREPARING REPORT\n");
             Py::FullStatusReport r;
             r.num_completed = report.num_completed;
             r.num_total_runs = report.num_total_runs;
-            fprintf(stderr, "PREPARING REPORT - B\n");
+            //            fprintf(stderr, "PREPARING REPORT - B\n");
             for (std::size_t k = 0; k < report.workers_reports.size(); ++k) {
-              fprintf(stderr, "PREPARING REPORT - worker\n");
+              //              fprintf(stderr, "PREPARING REPORT - worker\n");
               // worker running? add this value
               r.workers_running.append(report.workers_running[k]);
               // and prepare the report object
@@ -314,21 +310,22 @@ boost::python::object py_tomorun(
               d["mhrw_params"] = wrp.mhrw_params;
               d["acceptance_ratio"] = wrp.acceptance_ratio;
               d["n_total_iters"] = wrp.n_total_iters;
-              fprintf(stderr, "PREPARING REPORT - worker dict ready\n");
+              //              fprintf(stderr, "PREPARING REPORT - worker dict ready\n");
               // add this report
               r.workers_reports.append(d);
-              fprintf(stderr, "PREPARING REPORT - worker dict added\n");
+              //              fprintf(stderr, "PREPARING REPORT - worker dict added\n");
             }
             // call python callback
-            fprintf(stderr, "PROGRESS CALLBACK ...\n");
+            //            fprintf(stderr, "PROGRESS CALLBACK ...\n");
             progress_fn(boost::python::object(r));
-            fprintf(stderr, "PROGRESS CALLBACK DONE\n");
+            //            fprintf(stderr, "PROGRESS CALLBACK DONE\n");
           } catch (boost::python::error_already_set & ) {
             tasks.requestInterrupt();
             return;
           }
         }
         // borrowed from tomographer2/tools/signal_status_handler.h: --->  DEBUG::
+        /*
         std::string elapsed = Tomographer::Tools::fmtDuration(std::chrono::steady_clock::now() - time_start);
         fprintf(stderr,
                 "\n"
@@ -357,9 +354,10 @@ boost::python::object py_tomorun(
         }
         fprintf(stderr,
                 "=====================================================================================\n\n");
+        */
         // <----
       });
-  tasks.requestPeriodicStatusReport(500);
+  tasks.requestPeriodicStatusReport(progress_interval_ms);
 
   // and run our tomo process
 
@@ -411,9 +409,11 @@ boost::python::object py_tomorun(
 
 void py_tomo_tomorun()
 {
-  std::cerr << "py_tomo_tomorun() ...\n";
+  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
 
-  std::cerr << "MHRWParams ...\n";
+  logger.debug("py_tomo_tomorun() ...");
+
+  logger.debug("MHRWParams ...");
   { typedef Py::MHRWParams Kl;
     boost::python::class_<Py::MHRWParams>("MHRWParams")
       .def(boost::python::init<>())
@@ -429,7 +429,7 @@ void py_tomo_tomorun()
       ;
   }
 
-  std::cerr << "multiproc module ... \n";
+  logger.debug("multiproc module ... ");
 
   boost::python::object multiprocsubmod(boost::python::borrowed(PyImport_AddModule("tomographer.multiproc")));
   boost::python::scope().attr("multiproc") = multiprocsubmod;
@@ -437,7 +437,7 @@ void py_tomo_tomorun()
     // now inside submodule
     boost::python::scope multiprocmodule(multiprocsubmod);
 
-    std::cerr << "multiproc.FullStatusReport ...\n";
+    logger.debug("multiproc.FullStatusReport ...");
 
     { typedef Py::FullStatusReport Kl;
       boost::python::class_<Py::FullStatusReport>("FullStatusReport")
@@ -449,7 +449,7 @@ void py_tomo_tomorun()
     }
   }
 
-  std::cerr << "tomorun module ...\n";
+  logger.debug("tomorun module ...");
   
   boost::python::object tomorunsubmod(boost::python::borrowed(PyImport_AddModule("tomographer.tomorun")));
   boost::python::scope().attr("tomorun") = tomorunsubmod;
@@ -457,7 +457,7 @@ void py_tomo_tomorun()
     // now inside submodule
     boost::python::scope tomorunmodule(tomorunsubmod);
 
-    std::cerr << "tomorun.tomorun() ...\n";
+    logger.debug("tomorun.tomorun() ...");
 
     // the main run call:
     boost::python::def(
@@ -474,12 +474,12 @@ void py_tomo_tomorun()
          boost::python::arg("mhrw_params") = Py::MHRWParams(),
          boost::python::arg("binning_num_levels") = -1,
          boost::python::arg("num_repeats") = omp_get_num_procs(),
-         boost::python::arg("log_level") = (int)Tomographer::Logger::INFO,
-         boost::python::arg("progress_fn") = boost::python::object()),
+         boost::python::arg("progress_fn") = boost::python::object(),
+         boost::python::arg("progress_interval_ms") = (int)500),
         "Docstring here"
         );
 
-    std::cerr << "tomorun.TomorunInvalidInputError ...\n";
+    logger.debug("tomorun.TomorunInvalidInputError ...");
 
     boost::python::register_exception_translator<TomorunInvalidInputError>(
         +[](const TomorunInvalidInputError & exc) {
@@ -487,5 +487,5 @@ void py_tomo_tomorun()
         });
   }
 
-  std::cerr << "py_tomo_tomorun() complete.\n";
+  logger.debug("py_tomo_tomorun() complete.");
 }

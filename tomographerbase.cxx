@@ -50,21 +50,38 @@ void py_tomo_tomorun();
 
 
 
+
+PyLogger tpy_logger;
+
+
 BOOST_PYTHON_MODULE(tomographer)
 {
-  std::cerr << "INIT TOMOGRAPHER\n";
+  // python logging
+  tpy_logger.initPythonLogger();
+  tpy_logger.setLevel(Tomographer::Logger::DEBUG);
+  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
+
+  //auto tmp_py_log = tpy_logger.pushBypassPython();
+
+  logger.debug("INIT TOMOGRAPHER");
 
   // Eigen converters
   //long ok = []() -> long { import_array(); return 1; } (); if (!ok) { return; } // error
   register_eigen_converter();
 
-  std::cerr << "Registered eigen converters.\n";
+  logger.debug("Registered eigen converters.");
 
   py_tomo_histogram();
 
   py_tomo_tomorun();
 
-  std::cerr << "some final toys...\n";
+  // expose a Python API for setting the C++ logging level
+  boost::python::def("set_log_level", +[](boost::python::object lvl) {
+      tpy_logger.setLevel(tpy_logger.fromPythonLevel(lvl));
+    });
+
+  // haha
+  logger.debug("importing some final toys...");
 
   // some dummy tests for the eigen converters:
   boost::python::def("test_eigen", test_eigen);
@@ -73,5 +90,5 @@ BOOST_PYTHON_MODULE(tomographer)
   boost::python::def("testgetmatrix_cd", testgetmatrix_cd);
   boost::python::def("testgetmatrix_i", testgetmatrix_i);
 
-  std::cerr << "TOMOGRAPHER INIT COMPLETE.\n";
+  logger.debug("TOMOGRAPHER INIT COMPLETE.");
 }

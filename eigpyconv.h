@@ -128,13 +128,16 @@ struct CopyNumpyDataToEigen
   static inline void run(void * storage, PyArrayObject * array,
                          const npy_intp dims[2], const npy_intp strides[2])
   {
+    // LET'S NOT MAKE PYTHON CALLS FROM BOOST/PYTHON CONVERSION ROUTINES
+    //    auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
+
     //    std::cerr << "DEBUG: decoding NumPy array: " << boost::core::demangle(typeid(NPScalar).name())
     //              << "(sizeof="<<sizeof(NPScalar)<<") "
     //              << "dims=["<<dims[0]<<","<<dims[1]<<"] strides=["<<strides[0]<<","<<strides[1]<<"] into "
     //              << boost::core::demangle(typeid(EigScalar).name())
     //              << "(sizeof="<<sizeof(EigScalar)<<") .\n";
     
-    std::cerr << "CopyNumpyDataToEigen::run() ...\n";
+    //    logger.debug("CopyNumpyDataToEigen::run() ...");
 
     // prepare the Eigen mapped object, of element type NPScalar
     auto mapped = 
@@ -147,12 +150,12 @@ struct CopyNumpyDataToEigen
           Eigen::Stride<Eigen::Dynamic,Eigen::Dynamic>(strides[0]/sizeof(NPScalar), strides[1]/sizeof(NPScalar))
           );
 
-    //    std::cerr << "DEBUG: mapped = \n" << mapped << "\n";
+    //    logger.longdebug([&](std::ostream & stream) { stream << "mapped = \n" << mapped; });
 
     // in-place construct at *storage
     (void) new (storage) EigDenseType(mapped.template cast<EigScalar>());
 
-    std::cerr << "CopyNumpyDataToEigen::run() completed.\n";
+    //    logger.debug("CopyNumpyDataToEigen::run() completed.");
   }
 
   template<typename NPScalar, TOMOGRAPHER_ENABLED_IF_TMPL(!IsNumConvertible<NPScalar,EigScalar>::value)>
@@ -180,8 +183,13 @@ struct eigen_python_converter
 
   static PyObject* convert(const EigDenseType & matrix)
   {
-    std::cerr << "eigen_python_converter::convert() ...\n";
-    std::cerr << "matrix = " << matrix << "\n";
+    // LET'S NOT MAKE PYTHON CALLS FROM BOOST/PYTHON CONVERSION ROUTINES
+    //    auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
+
+    //    logger.debug("eigen_python_converter::convert() ...");
+    // logger.debug([&](std::ostream & stream) {
+    //     stream << "matrix = \n" << matrix;
+    //   });
 
     PyArray_Descr * descr = PyArray_DescrFromType(NpyCode<EigScalar>::TypeCode);
 
@@ -195,11 +203,13 @@ struct eigen_python_converter
                    ? matrix.outerStride() : matrix.innerStride() )
     };
 
-    std::cerr << "DEBUG: creating NumPy object of type "
-              << NpyCode<EigScalar>::getCodeName()
-              << " with elsize=" << elsize
-              << " shape=["<<shape[0]<<","<<shape[1]<<"] strides=["<<strides[0]<<","<<strides[1]<<"] "
-              << "from Eigen matrix = \n" << matrix << " .\n";
+    //    logger.debug([&](std::ostream & stream) {
+      //   stream << "DEBUG: creating NumPy object of type "
+      //          << NpyCode<EigScalar>::getCodeName()
+      //          << " with elsize=" << elsize
+      //          << " shape=["<<shape[0]<<","<<shape[1]<<"] strides=["<<strides[0]<<","<<strides[1]<<"] "
+      //          << "from Eigen matrix = \n" << matrix << " .\n";
+      // });
     
     // copy data because the scope of the Eigen::MatrixXd is completely unknown (it could
     // be temporary return value, for example)
@@ -213,9 +223,7 @@ struct eigen_python_converter
     // just copy the freakin' bytes:
     std::memcpy( PyArray_DATA(reinterpret_cast<PyArrayObject*>(pyarr)), (void*)matrix.data(), arr_data_sz );
 
-    //std::cerr << "DEBUG: the constructed pyarr is " << PyString_AsString(PyObject_Repr(pyarr)) << " .\n";
-
-    std::cerr << "DEBUG: eigen_python_converter::convert() completed.\n";
+    //    logger.debug("DEBUG: eigen_python_converter::convert() completed.");
     
     //return boost::python::incref(boost::python::object(pyarr).ptr());
     //return boost::python::object(boost::python::handle<>(boost::python::borrowed(pyarr))).ptr();
@@ -228,7 +236,9 @@ struct eigen_python_converter
 
   static void* convertible(PyObject* py_obj_ptr)
   {
-    std::cerr << "eigen_python_converter::convertible() ...\n";
+    // LET'S NOT MAKE PYTHON CALLS FROM BOOST/PYTHON CONVERSION ROUTINES
+    //    auto logger = Tomographer::Logger::makeLocalLogger("eigen_python_converter::convertible()", tpy_logger);
+    //    logger.debug("eigen_python_converter::convertible() ...");
 
     // std::cerr << "py_obj_ptr = " << py_obj_ptr << ";\n";
     // std::cerr << "&PyArray_Type=" << &PyArray_Type << ";\n";
@@ -237,21 +247,23 @@ struct eigen_python_converter
     //           << PyType_IsSubtype(Py_TYPE(py_obj_ptr), &PyArray_Type) << ".\n";
 
     if (!PyArray_Check(py_obj_ptr)) {
-      std::cerr << "eigen_python_converter::convertible(): not convertible\n";
+      //      logger.debug("eigen_python_converter::convertible(): not convertible");
       return NULL;
     }
 
     // when this converter is installed, we must attempt to translate ANY numpy array into
     // an Eigen object, and fail at conversion if an error occurs.
 
-    std::cerr << "eigen_python_converter::convertible(): IS convertible\n";
+    //    logger.debug("eigen_python_converter::convertible(): IS convertible");
     return py_obj_ptr;
   }
 
   static void construct(PyObject* py_obj_ptr,
                         boost::python::converter::rvalue_from_python_stage1_data* data)
   {
-    std::cerr << "eigen_python_converter::construct() ...\n";
+    // LET'S NOT MAKE PYTHON CALLS FROM BOOST/PYTHON CONVERSION ROUTINES
+    //    auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
+    //    logger.debug("eigen_python_converter::construct() ...");
 
     PyArrayObject *array = reinterpret_cast<PyArrayObject*>(py_obj_ptr);
     void *storage = ((boost::python::converter::rvalue_from_python_storage<EigDenseType>*)data)->storage.bytes;
@@ -284,7 +296,7 @@ struct eigen_python_converter
     npyToCxxType<CopyNumpyDataToEigen<EigDenseType> >(PyArray_TYPE(array), storage, array, dims, strides);
 
     data->convertible = storage;
-    std::cerr << "eigen_python_converter::construct() completed.\n";
+    //    logger.debug("eigen_python_converter::construct() completed.");
   }
 
   static void from_python() {

@@ -19,11 +19,13 @@ static void workaround_import_array() {
 // add the types you want to add
 void register_eigen_converter()
 {
-  std::cerr << "register_eigen_converter() ...\n";
+  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
+
+  logger.debug("register_eigen_converter() ...");
 
   workaround_import_array(); //< required, or conversion leads to segfault
   
-  std::cerr << "register_eigen_converter(): imported NumPy Array OK, registering types ...\n";
+  logger.debug("register_eigen_converter(): imported NumPy Array OK, registering types ...");
 
   // matrices...
   eigen_python_converter< Eigen::Matrix<long,Eigen::Dynamic,Eigen::Dynamic> >::to_python();
@@ -70,6 +72,6 @@ void register_eigen_converter()
         PyErr_SetString(PyExc_RuntimeError, exc.what());
       });
 
-  std::cerr << "register_eigen_converter() done.\n";
+  logger.debug("register_eigen_converter() done.");
 }
 

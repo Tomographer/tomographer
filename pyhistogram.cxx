@@ -7,9 +7,11 @@
 
 void py_tomo_histogram()
 {
-  std::cerr << "py_tomo_histogram() ...\n";
+  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
 
-  std::cerr << "UniformBinsHistogramParams...\n";
+  logger.debug("py_tomo_histogram() ...");
+
+  logger.debug("UniformBinsHistogramParams...");
 
   // CLASS: UniformBinsHistogramParams
   {
@@ -28,7 +30,7 @@ void py_tomo_histogram()
       ;*/
   }
 
-  std::cerr << "UniformBinsHistogram...\n";
+  logger.debug("UniformBinsHistogram...");
 
   // CLASS: UniformBinsHistogram
   {
@@ -55,10 +57,10 @@ void py_tomo_histogram()
       .add_static_property("HasErrorBars", +[](Kl &) { return false; })
       ;
 
-    //    std::cerr << "(A)\n";
+    //    logger.debug("(A)");
   }
 
-  std::cerr << "UniformBinsRealHistogram...\n";
+  logger.debug("UniformBinsRealHistogram...");
 
   // CLASS: UniformBinsRealHistogram
   {
@@ -86,7 +88,7 @@ void py_tomo_histogram()
       ;
   }
   
-  std::cerr << "UniformBinsHistogramWithErrorBars...\n";
+  logger.debug("UniformBinsHistogramWithErrorBars...");
 
   // UniformBinsHistogramWithErrorBars
   {
@@ -119,7 +121,7 @@ void py_tomo_histogram()
       ;
   }
 
-  std::cerr << "AveragedSimpleHistogram...\n";
+  logger.debug("AveragedSimpleHistogram...");
   // AveragedSimpleHistogram
   {
     typedef Py::AveragedSimpleHistogram Kl;
@@ -133,7 +135,7 @@ void py_tomo_histogram()
       .def("finalize", +[](Kl & h) { h.finalize(); })
       ;
   }
-  std::cerr << "AveragedSimpleRealHistogram...\n";
+  logger.debug("AveragedSimpleRealHistogram...");
   // AveragedSimpleRealHistogram
   {
     typedef Py::AveragedSimpleRealHistogram Kl;
@@ -147,7 +149,7 @@ void py_tomo_histogram()
       .def("finalize", +[](Kl & h) { h.finalize(); })
       ;
   }
-  std::cerr << "AveragedErrorBarHistogram...\n";
+  logger.debug("AveragedErrorBarHistogram...");
   // AveragedErrorBarHistogram
   {
     typedef Py::AveragedErrorBarHistogram Kl;
@@ -164,5 +166,5 @@ void py_tomo_histogram()
       ;
   }
 
-  std::cerr << "py_tomo_histogram() completed.\n";
+  logger.debug("py_tomo_histogram() completed.");
 }

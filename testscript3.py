@@ -1,8 +1,15 @@
 
 from __future__ import print_function
 
+import logging
+logging.basicConfig(level=logging.DEBUG)
+
 import tomographer
 import numpy as np
+
+tomographer.set_log_level(logging.DEBUG)
+#tlg = logging.getLogger("tomographer")
+#tlg.debug("EXAMPLE MESSAGE")
 
 
 Nm = np.array([ 490, 510, 494, 506, 980, 20 ])
@@ -30,7 +37,7 @@ rho_ref = np.array([[1,0],[0,0]])
 print("Data ready.")
 
 def progress(report):
-    print("PROGRESS REPORT:\n", report.num_completed, "/", report.num_total_runs, "\n")
+    print("PROGRESS REPORT: ", report.num_completed, "/", report.num_total_runs, "\n")
     for r in report.workers_reports:
         print(repr(r))
     print("\n")
