@@ -868,15 +868,15 @@ namespace tomo_internal {
     static inline void call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin,
                                      const std::string & msg)
     {
-      try {
+      //      try {
         //printf("Calling emit_log(%d,\"%s\",\"%s\") on object %p\n", level, origin, msg.c_str(), loggerbase);
-        static_cast<Derived*>(loggerbase)->emitLog(level, origin, msg);
-      } catch (const std::exception & e) {
-        std::fprintf(stderr,
-		     "Warning in LoggerBaseHelperDynamic::call_emit_log(%d, \"%s\", msg):"
-		     " Exception caught: %s\n",
-		     level, origin, e.what());
-      }
+      static_cast<Derived*>(loggerbase)->emitLog(level, origin, msg);
+      // } catch (const std::exception & e) {
+      //   std::fprintf(stderr,
+      //   	     "Warning in LoggerBaseHelperDynamic::call_emit_log(%d, \"%s\", \"%s\"):"
+      //   	     " Exception caught: %s\n",
+      //   	     level, origin, msg.c_str(), e.what());
+      // }
     }
     static inline bool test_should_emit(LoggerBase<Derived> * loggerbase, int level, const char * origin)
     {
@@ -906,15 +906,15 @@ namespace tomo_internal {
         return;
       }
 
-      try {
-        const std::string msg = Tools::vfmts(fmt, ap);
-        call_emit_log(loggerbase, level, origin, msg);
-      } catch (const std::exception & e) {
-        std::fprintf(stderr,
-		     "Warning in LoggerBase::test_and_call_emit_log(%d, \"%s\", \"%s\", ...):"
-		     " Exception caught: %s\n",
-		     level, origin, fmt, e.what());
-      }
+      //      try {
+      const std::string msg = Tools::vfmts(fmt, ap);
+      call_emit_log(loggerbase, level, origin, msg);
+      // } catch (const std::exception & e) {
+      //   std::fprintf(stderr,
+      //   	     "Warning in LoggerBase::test_and_call_emit_log(%d, \"%s\", \"%s\", ...):"
+      //   	     " Exception caught: %s\n",
+      //   	     level, origin, fmt, e.what());
+      // }
     }
     template<typename Fn>
     static inline
@@ -925,15 +925,15 @@ namespace tomo_internal {
         return;
       }
 
-      try {
-        std::ostringstream sstr;
-        f(sstr);
-        call_emit_log(loggerbase, level, origin, sstr.str());
-      } catch (const std::exception & e) {
-        std::fprintf(stderr, "Warning in LoggerBase::test_and_call_emit_log(%d, \"%s\", f(ostream)):"
-		     " Exception caught: %s\n",
-		     level, origin, e.what());
-      }
+      //      try {
+      std::ostringstream sstr;
+      f(sstr);
+      call_emit_log(loggerbase, level, origin, sstr.str());
+      // } catch (const std::exception & e) {
+      //   std::fprintf(stderr, "Warning in LoggerBase::test_and_call_emit_log(%d, \"%s\", f(ostream)):"
+      //   	     " Exception caught: %s\n",
+      //   	     level, origin, e.what());
+      // }
     }
   };
 
