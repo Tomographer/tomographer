@@ -261,7 +261,7 @@ private:
       fullstatus.workers_running.resize(1, false);
       fullstatus.workers_running[0] = true;
 
-      fullstatus.workers_reports.resize(1, TaskStatusReportType());
+      fullstatus.workers_reports.resize(1);
       fullstatus.workers_reports[0] = statreport;
 
       status_report_user_fn(fullstatus);

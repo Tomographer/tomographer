@@ -253,7 +253,7 @@ struct StatusRepTestTask {
     std::time(&time_start);
     std::time_t now = time_start;
     int elapsed = 0;
-    int seconds_to_run = 3+_input/4;
+    int seconds_to_run = 2+_input/4;
     do {
       std::time(&now);
       elapsed = now - time_start;
