@@ -4,3 +4,5 @@ build-opt
 build-py2
 __pycache__
 .ipynb_checkpoints
+*.pyc
+*.pyo
