@@ -46,16 +46,22 @@ def progress(report):
         print("        {}".format(r['msg'].replace('\n', '\n    ')))
     print()
 
-r = tomographer.tomorun.tomorun(dim=2, Nm=Nm, Emn=Emn,
-                                hist_params=tomographer.UniformBinsHistogramParams(0.9,1,50),
-                                mhrw_params=tomographer.MHRWParams(0.03,35,500,8192),
-                                fig_of_merit="obs-value",
-                                observable=rho_ref,
-                                num_repeats=12,
-                                progress_fn=progress)
+try:
+    r = tomographer.tomorun.tomorun(dim=2, Nm=Nm, Emn=Emn,
+                                    hist_params=tomographer.UniformBinsHistogramParams(0.9,1,50),
+                                    mhrw_params=tomographer.MHRWParams(0.03,35,500,8192),
+                                    fig_of_merit="obs-value",
+                                    observable=rho_ref,
+                                    num_repeats=12,
+                                    progress_fn=progress)
+    print(repr(r))
 
-print(repr(r))
+    print(r['final_histogram'].prettyPrint(100))
 
-print(r['final_histogram'].prettyPrint(100))
+    print(r['final_report'])
 
-print(r['final_report'])
+except KeyboardInterrupt as e:
+    print("INTERRUPTED!")
+    import traceback
+    traceback.print_exc()
+

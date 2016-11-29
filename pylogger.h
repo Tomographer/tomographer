@@ -98,13 +98,19 @@ public:
       boost::python::dict kwargs;
       kwargs["extra"] = extra;
       auto logfn = py_logger.attr("log");
-      try {
-        logfn(*boost::python::make_tuple(pylevel, msg), **kwargs);
-      } catch (boost::python::error_already_set & e) {
-        //PyErr_Print();
-        //fprintf(stderr, "Propagating exception in call to python logging function.\n");
-        throw e;
+      //      try {
+      if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
+        throw boost::python::error_already_set();
       }
+      logfn(*boost::python::make_tuple(pylevel, msg), **kwargs);
+      if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
+        throw boost::python::error_already_set();
+      }
+      // } catch (boost::python::error_already_set & e) {
+      //   //PyErr_Print();
+      //   //fprintf(stderr, "Propagating exception in call to python logging function.\n");
+      //   throw e;
+      // }
     }
     //fprintf(stderr, "HERE (Y)\n");
   }
