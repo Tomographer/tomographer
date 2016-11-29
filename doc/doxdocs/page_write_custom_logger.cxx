@@ -73,8 +73,8 @@
  *       setLogLevel(level);
  *     }
  *   
- *     inline void emit_log(int level, const char * origin,
- *                          const std::string & msg)
+ *     inline void emitLog(int level, const char * origin,
+ *                         const std::string & msg)
  *     {
  *       std::string finalmsg;
  *

@@ -68,5 +68,53 @@ BOOST_FIXTURE_TEST_CASE(sequential_dispatcher, test_task_dispatcher_fixture)
   BOOST_CHECK_EQUAL(resultsCollector.runsfinished_called, 1);
 }
 
-BOOST_AUTO_TEST_SUITE_END()
+BOOST_FIXTURE_TEST_SUITE(status_reporting, test_task_dispatcher_status_reporting_fixture) ;
+
+BOOST_AUTO_TEST_CASE(status_report_periodic)
+{
+  Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
+  Tomographer::MultiProc::Sequential::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
+                                                     StatusRepTestResultsCollector,
+                                                     Tomographer::Logger::BoostTestLogger, long>
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
+
+  perform_test_status_report_periodic(task_dispatcher, logger) ;
+}
+BOOST_AUTO_TEST_CASE(interrupt_tasks_withthread)
+{
+  Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
+
+  Tomographer::MultiProc::Sequential::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
+                                              StatusRepTestResultsCollector,
+                                              Tomographer::Logger::BoostTestLogger, long>
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
+
+  perform_test_interrupt_tasks_withthread(task_dispatcher, logger) ;
+
+}
+BOOST_AUTO_TEST_CASE(status_report_withthread)
+{
+  Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
+
+  Tomographer::MultiProc::Sequential::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
+                                              StatusRepTestResultsCollector,
+                                              Tomographer::Logger::BoostTestLogger, long>
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
+
+  perform_test_status_report_withthread(task_dispatcher, logger);
+}
+BOOST_AUTO_TEST_CASE(status_report_withsigalrm)
+{
+  Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
+  
+  Tomographer::MultiProc::Sequential::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
+                                                     StatusRepTestResultsCollector,
+                                                     Tomographer::Logger::BoostTestLogger, long>
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
+
+  perform_test_status_report_withsigalrm(task_dispatcher, logger);
+}
+BOOST_AUTO_TEST_SUITE_END() ; // status_reporting
+
+BOOST_AUTO_TEST_SUITE_END() ; // test_multiproc
 

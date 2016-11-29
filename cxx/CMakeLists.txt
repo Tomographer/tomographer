@@ -29,20 +29,8 @@
 # Set up the build environment
 # ==============================================================================
 
-# Activate C++0x/C++11 support
-if(COMPILER_SUPPORTS_GNUXX11)
-  # on MinGW, we should use gnu++11, otherwise we get weird errors about some missing
-  # functions... (_hypot in math.h etc.)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=gnu++11")
-elseif(COMPILER_SUPPORTS_CXX11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-elseif(COMPILER_SUPPORTS_CXX0X)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-else()
-  message(FATAL_ERROR
-    "The compiler ${CMAKE_CXX_COMPILER} has no C++0x/C++11 support. Please use a different C++ compiler."
-    )
-endif()
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOMOGRAPHER_CXX11_STD_FLAGS}")
+
 
 # Access <Eigen/...> include path
 include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
@@ -51,6 +39,43 @@ include_directories(SYSTEM ${EIGEN3_INCLUDE_DIR})
 # the good automatic header dependencies
 include_directories(.)
 
+
+
+
+# ==============================================================================
+# Common C++ stuff
+# ==============================================================================
+
+include(CheckCXXSourceCompiles)
+
+
+set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${TOMOGRAPHER_CXX11_STD_FLAGS}")
+CHECK_CXX_SOURCE_COMPILES(
+  "#include <thread>
+#include <chrono>
+int main() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }"
+  tomographer_HAVE_CXX11_THREAD_SLEEP_FOR
+  )
+if (NOT tomographer_HAVE_CXX11_THREAD_SLEEP_FOR)
+  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${TOMOGRAPHER_CXX11_STD_FLAGS}")
+  set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS} -D_GLIBCXX_USE_NANOSLEEP)
+  CHECK_CXX_SOURCE_COMPILES(
+    "#include <thread>
+#include <chrono>
+int main() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }"
+    tomographer_HAVE_CXX11_THREAD_SLEEP_FOR_wdef
+    )
+  if (tomographer_HAVE_CXX11_THREAD_SLEEP_FOR_wdef)
+    add_definitions(-D_GLIBCXX_USE_NANOSLEEP)
+  else()
+    message(FATAL_ERROR "Your C++ compiler doesn't seem to support std::this_thread::sleep_for(). You may need to use a different compiler, or set the required flags yourself.")
+  endif()
+endif()
+
+
+# already parallelized application, so disable Eigen's own parallelization (see
+# http://eigen.tuxfamily.org/dox/TopicMultiThreading.html)
+add_definitions(-DEIGEN_DONT_PARALLELIZE)
 
 
 # ==============================================================================

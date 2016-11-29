@@ -143,13 +143,13 @@
  * Any logger may be directly queried whether a message at a given log level will be
  * emitted or discarded:
  * \code
- *   if (logger.enabled_for(Tomographer::Logger::INFO)) {
+ *   if (logger.enabledFor(Tomographer::Logger::INFO)) {
  *     logger.info(...); // will emit message and not discard it
  *   }
  * \endcode
  *
  * \note In order to prepare a log message only if it is to be displayed, it is preferable
- *       not to use \a enabled_for(), but to provide a callback which accepts a reference
+ *       not to use \a enabledFor(), but to provide a callback which accepts a reference
  *       to a C++ stream as explained above.  In this case, the callback is only invoked
  *       if the message is actually going to be emitted, and can take into account more
  *       specific message filtering (such as filtering by origin). 

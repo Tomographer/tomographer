@@ -252,5 +252,13 @@
  *   sometime later the callback set by \a setStatusReportHandler() will be called with
  *   the relevant status report information.
  *
+ * \par void requestPeriodicStatusReport(int milliseconds)
+ *   Request that the task manager periodically send a status report to the handler set by
+ *   \a setStatusReportHandler().  The interval time is specified in milliseconds.  Pass
+ *   the value \c -1 to disable periodic status reports.
+ *
+ * \par void requestInterrupt()
+ *   Interrupt all tasks as soon as possible.
+ *
  *
  */

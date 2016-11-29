@@ -30,6 +30,8 @@
 #include <csignal>
 
 #include <string>
+#include <chrono>
+#include <exception>
 
 #include <tomographer2/tools/needownoperatornew.h>
 
@@ -119,6 +121,16 @@ struct FullStatusReport
 
 
 
+class TasksInterruptedException : public std::exception
+{
+  std::string msg_;
+public:
+  TasksInterruptedException(std::string msg = "Tasks Interrupted.") : msg_(msg) { }
+  virtual ~TasksInterruptedException() throw() { }
+  const char * what() const throw() { return msg_.c_str(); }
+};
+
+
 
 namespace Sequential {
 
@@ -178,21 +190,60 @@ private:
   struct TaskMgrIface {
     TaskMgrIface(TaskDispatcher * dispatcher_)
       : dispatcher(dispatcher_),
-        status_report_requested(false),
-        status_report_user_fn()
+        interrupt_requested(0),
+        status_report_requested(0),
+        status_report_user_fn(),
+        _last_status_report(StdClockType::now()),
+        _status_report_periodic_interval(0)
     {
     }
 
+  private:
     TaskDispatcher * dispatcher;
 
-    volatile std::sig_atomic_t status_report_requested;
+    volatile std::sig_atomic_t interrupt_requested; // could be written to by signal handler
+    volatile std::sig_atomic_t status_report_requested; // could be written to by signal handler
     FullStatusReportCallbackType status_report_user_fn;
-  
-    inline void _request_status_report() { status_report_requested = 1; }
 
+    typedef
+#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
+      std::chrono::monotonic_clock // for GCC/G++ 4.6
+#else
+      std::chrono::steady_clock
+#endif
+      StdClockType;
+    StdClockType::time_point _last_status_report;
+    StdClockType::duration _status_report_periodic_interval;
+
+    friend class TaskDispatcher;
+
+    inline void _request_status_report() {
+      status_report_requested = 1;
+    }
+    inline void _request_interrupt() {
+      interrupt_requested = 1;
+    }
+    inline void _request_periodic_status_report(int milliseconds) {
+      if ( milliseconds >= 0 ) {
+        _status_report_periodic_interval = std::chrono::duration_cast<StdClockType::duration>(
+            std::chrono::milliseconds(1+milliseconds)
+            );
+      } else {
+        _status_report_periodic_interval = StdClockType::duration(0);
+      }
+    }
+
+  public:
     inline bool statusReportRequested() const
     {
-      return status_report_requested;
+      if (interrupt_requested) {
+        throw TasksInterruptedException();
+      }
+      if (_status_report_periodic_interval.count() > 0
+          && (StdClockType::now() - (_last_status_report + _status_report_periodic_interval)).count() > 0) {
+        return true;
+      }
+      return (bool) status_report_requested;
     }
 
     inline void submitStatusReport(const TaskStatusReportType &statreport)
@@ -210,12 +261,13 @@ private:
       fullstatus.workers_running.resize(1, false);
       fullstatus.workers_running[0] = true;
 
-      fullstatus.workers_reports.resize(1, false);
+      fullstatus.workers_reports.resize(1);
       fullstatus.workers_reports[0] = statreport;
 
       status_report_user_fn(fullstatus);
 
       status_report_requested = false;
+      _last_status_report = StdClockType::now();
     }
 
   };
@@ -230,6 +282,10 @@ public:
   {
   }
   
+  /** \brief Run the tasks
+   *
+   *
+   */
   void run()
   {
     results->init(num_total_runs, CountIntType(1), pcdata);
@@ -287,6 +343,29 @@ public:
   inline void requestStatusReport()
   {
     mgriface._request_status_report();
+  }
+
+  /** \brief Request a status report periodically
+   *
+   * After this function is called, a status report will be automatically deliviered every
+   * \a milliseconds milliseconds to the handler set by \ref setStatusReportHandler().
+   *
+   * Pass \a -1 to cancel the periodic status reporting.
+   */
+  inline void requestPeriodicStatusReport(int milliseconds)
+  {
+    mgriface._request_periodic_status_report(milliseconds);
+  }
+
+  /** \brief Interrupt all tasks as soon as possible
+   *
+   * As soon as the tasks notice this request, they will quit.  Any computation performed
+   * until then is undefined, and the run() function throws a \ref
+   * TasksInterruptedException.
+   */
+  inline void requestInterrupt()
+  {
+    mgriface._request_interrupt();
   }
   
 }; // class TaskDispatcher
