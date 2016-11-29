@@ -30,6 +30,7 @@
 #include <csignal>
 #include <chrono>
 #include <thread>
+#include <stdexcept>
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -372,6 +373,13 @@ private:
     virtual ~TaskInterruptedInnerException() throw() { };
     const char * what() const throw() { return msg.c_str(); }
   };
+  struct TaskInnerException : public std::exception {
+    std::string msg;
+  public:
+    TaskInnerException(std::string msgexc) : msg("Task raised an exception: "+msgexc) { }
+    virtual ~TaskInnerException() throw() { };
+    const char * what() const throw() { return msg.c_str(); }
+  };
 
   //! thread-shared variables
   struct thread_shared_data {
@@ -515,7 +523,7 @@ private:
               ok = false;
             }
 
-            // since we can't return out of a critical section(?), we use an if block.
+            // since we can't return out of a critical section, we use an if block.
             if (ok) {
 
               shared_data->status_report_underway = true;
@@ -536,6 +544,8 @@ private:
               shared_data->status_report_full.workers_running.resize(num_threads, false);
               shared_data->status_report_full.workers_reports.resize(num_threads);
 
+              shared_data->status_report_numreportsrecieved = 0;
+
               // Important: access the original logger, not the thread-safe-wrapped logger!!
               // Otherwise this could lead to deadlocks because of nested critical blocks.
               shared_data->logger.debug("OMP TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
@@ -545,8 +555,6 @@ private:
                          << shared_data->status_report_full.workers_reports.size()
                          << ".";
                 });
-              
-              shared_data->status_report_numreportsrecieved = 0;
             }
 
           } // status_report_initialized
@@ -583,10 +591,14 @@ private:
             }
           } // if ok
         } catch (...) {
-          // if an exception occurred, request an interrupt. the user may not know what
-          // caused the interrupt.  Don't terminate or cause a huge fuss, as this might be
-          // actually controlled (e.g. boost::python::error_already_set)
-          // Also, the logger itself may have caused the exception, so this one could as well:
+          //      std::string msg(boost::current_exception_diagnostic_information());
+          //      fprintf(stderr, "CAUGHT AN EXCEPTION: %s\n", msg.c_str());
+
+          // if an exception occurred propagate it out to end the task and cause an
+          // interruption. The user may not know what caused the interrupt.  Don't
+          // terminate or cause a huge fuss, as this might be actually controlled
+          // (e.g. boost::python::error_already_set) Also, the logger itself may have
+          // caused the exception, so don't use the logger here!!:
           //shared_data->logger.debug("OMP TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
           //        stream << "Error while processing status report, exception caught: "
           //        << boost::current_exception_diagnostic_information();
@@ -597,7 +609,7 @@ private:
         }
       } // omp critical
       if (got_exception) {
-        throw std::runtime_error(exception_str);
+        throw TaskInnerException(exception_str);
       }
     }
   };
@@ -637,7 +649,6 @@ public:
    * Do everything, run tasks, collect results etc.
    */
   void run()
-    TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
   {
     shared_data.results->init(shared_data.num_total_runs, shared_data.n_chunk, shared_data.pcdata);
       
@@ -721,7 +732,7 @@ public:
   }
 
 private:
-  void _run_task(thread_private_data & privdat, thread_shared_data * shdat, CountIntType k)  noexcept(true)
+  void _run_task(thread_private_data & privdat, thread_shared_data * shdat, CountIntType k)
     TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
   {
 

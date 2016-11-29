@@ -866,7 +866,7 @@ namespace tomo_internal {
   template<typename Derived>
   struct LoggerBaseHelperDynamic {
     static inline void call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin,
-                                     const std::string & msg) throw()
+                                     const std::string & msg)
     {
       try {
         //printf("Calling emit_log(%d,\"%s\",\"%s\") on object %p\n", level, origin, msg.c_str(), loggerbase);
@@ -891,7 +891,7 @@ namespace tomo_internal {
     }
 
     static inline void test_and_call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin,
-                                              const std::string & msg) throw()
+                                              const std::string & msg)
     {
       if ( ! test_should_emit(loggerbase, level, origin) ) {
         return;
@@ -900,7 +900,7 @@ namespace tomo_internal {
       call_emit_log(loggerbase, level, origin, msg);
     }
     static inline void test_and_call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin,
-                                              const char * fmt, va_list ap) throw()
+                                              const char * fmt, va_list ap)
     {
       if ( ! test_should_emit(loggerbase, level, origin) ) {
         return;
@@ -912,14 +912,14 @@ namespace tomo_internal {
       } catch (const std::exception & e) {
         std::fprintf(stderr,
 		     "Warning in LoggerBase::test_and_call_emit_log(%d, \"%s\", \"%s\", ...):"
-		     " Exception caught for vfmts(): %s\n",
+		     " Exception caught: %s\n",
 		     level, origin, fmt, e.what());
       }
     }
     template<typename Fn>
     static inline
     ENABLE_IF_Fn_CALLABLE_OSTREAM
-    test_and_call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin, Fn f) throw()
+    test_and_call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin, Fn f)
     {
       if ( ! test_should_emit(loggerbase, level, origin) ) {
         return;
@@ -947,7 +947,7 @@ namespace tomo_internal {
   struct LoggerBaseHelperStatic2 {
     template<typename... Args>
     static inline void test_and_call_emit_log(LoggerBase<Derived> * loggerbase, const char * origin,
-                                              Args... args) throw()
+                                              Args... args)
     {
       LoggerBaseHelperDynamic<Derived>::test_and_call_emit_log(loggerbase, Level, origin, args...);
     }
@@ -956,7 +956,7 @@ namespace tomo_internal {
   template<typename Derived, int Level>
   struct LoggerBaseHelperStatic2<Derived, Level, true> {
     template<typename... Args>
-    static inline void test_and_call_emit_log(LoggerBase<Derived> *, const char *, Args...) throw()
+    static inline void test_and_call_emit_log(LoggerBase<Derived> *, const char *, Args...)
     {
       // discard logging message.
     }
@@ -969,7 +969,7 @@ namespace tomo_internal {
   struct LoggerBaseHelperStatic {
     template<typename... Args>
     static inline void test_and_call_emit_log(LoggerBase<Derived> * loggerbase, const char * origin,
-                                              Args... args) throw()
+                                              Args... args)
     {
       // call the default or specialized version of our second helper, which will either
       // relay the call the dynamic version or discard the message.
