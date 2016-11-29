@@ -52,6 +52,7 @@ set(tomographerpy_SRCS
   eigpyconv.cxx
   pyhistogram.cxx
   pytomorun.cxx
+  pylogger.cxx
   tomographerbase.cxx
   )
 add_library(tomographer SHARED ${tomographerpy_SRCS})

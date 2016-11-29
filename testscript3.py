@@ -7,7 +7,8 @@ logging.basicConfig(level=logging.DEBUG)
 import tomographer
 import numpy as np
 
-tomographer.cxxlogger.level = logging.DEBUG
+#tomographer.cxxlogger.level = logging.DEBUG
+tomographer.cxxlogger.level = logging.NOTSET
 #tlg = logging.getLogger("tomographer")
 #tlg.debug("EXAMPLE MESSAGE")
 
@@ -40,10 +41,14 @@ print("Data ready.")
 
 def progress(report):
     print("PROGRESS REPORT: ", report.num_completed, "/", report.num_total_runs)
-    for r in report.workers_reports:
+    for r in report.workers:
+        if not r:
+            print("  :: (idle thread)")
+            continue
         #print("  {worker_id:2d}: {fraction_done:.2f%}  accept={acceptance_ratio:.2f} \n".format(**r))
-        print("    {worker_id:02d}: {fraction_done:.2%}  accept={acceptance_ratio:.2f}".format(**r))
-        print("        {}".format(r['msg'].replace('\n', '\n    ')))
+        print("    {worker_id:02d}: {fraction_done:.2%}  accept={acceptance_ratio:.2f}".format(
+            worker_id=r.worker_id, fraction_done=r.fraction_done, **r.data))
+        print("        {}".format(r.msg.replace('\n', '\n    ')))
     print()
 
 try:

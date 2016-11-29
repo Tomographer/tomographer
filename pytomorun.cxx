@@ -39,12 +39,28 @@ typedef Tomographer::MHRWParams<CountIntType, RealType> MHRWParams;
 
 
 
+struct WorkerStatusReport {
+  int worker_id;
+  double fraction_done;
+  std::string msg;
+  boost::python::dict data;
+};
+
 struct FullStatusReport {
-  FullStatusReport() : num_completed(-1), num_total_runs(-1), workers_running(), workers_reports() { }
+  FullStatusReport() : num_completed(-1), num_total_runs(-1), workers() { }
   int num_completed;
   int num_total_runs;
-  boost::python::list workers_running; // std::vector<bool>
-  boost::python::list workers_reports; // std::vector<TaskStatusReportType>
+  boost::python::list workers; // list of [WorkerStatusReport or None (for idle)]
+
+  double total_fraction_done() const {
+    double f = num_completed;
+    for (long k = 0; k < boost::python::len(workers); ++k) {
+      if (!boost::python::object(workers[k]).is_none()) {
+        f += boost::python::extract<WorkerStatusReport>(workers[k])().fraction_done;
+      }
+    }
+    return f / num_total_runs;
+  }
 };
 
 }
@@ -301,22 +317,25 @@ boost::python::object py_tomorun(
             for (std::size_t k = 0; k < report.workers_reports.size(); ++k) {
               //              fprintf(stderr, "PREPARING REPORT - worker\n");
               // worker running? add this value
-              r.workers_running.append(report.workers_running[k]);
+              if (!report.workers_running[k]) {
+                r.workers.append(boost::python::object());
+                continue;
+              }
               // and prepare the report object
-              const auto& wrp = report.workers_reports[k];
-              boost::python::dict d;
-              // generic status report fields
-              d["worker_id"] = k;
-              d["fraction_done"] = wrp.fraction_done;
-              d["msg"] = wrp.msg;
+              const auto& rr = report.workers_reports[k];
+              Py::WorkerStatusReport wreport;
+              // generic worker status report fields
+              wreport.worker_id = k;
+              wreport.fraction_done = rr.fraction_done;
+              wreport.msg = rr.msg;
               // fields specific to MHRWValueHistogramTasks
-              d["kstep"] = wrp.kstep;
-              d["mhrw_params"] = wrp.mhrw_params;
-              d["acceptance_ratio"] = wrp.acceptance_ratio;
-              d["n_total_iters"] = wrp.n_total_iters;
+              wreport.data["kstep"] = rr.kstep;
+              wreport.data["mhrw_params"] = rr.mhrw_params;
+              wreport.data["acceptance_ratio"] = rr.acceptance_ratio;
+              wreport.data["n_total_iters"] = rr.n_total_iters;
               //              fprintf(stderr, "PREPARING REPORT - worker dict ready\n");
               // add this report
-              r.workers_reports.append(d);
+              r.workers.append(wreport);
               //              fprintf(stderr, "PREPARING REPORT - worker dict added\n");
             }
             // call python callback
@@ -328,7 +347,7 @@ boost::python::object py_tomorun(
             return;
           }
         }
-        // borrowed from tomographer2/tools/signal_status_handler.h: --->  DEBUG::
+        // borrowed from tomographer2/tools/signal_status_handler.h: --->  FOR DEBUGGING::
         /*
         std::string elapsed = Tomographer::Tools::fmtDuration(std::chrono::steady_clock::now() - time_start);
         fprintf(stderr,
@@ -449,14 +468,21 @@ void py_tomo_tomorun()
     boost::python::scope multiprocmodule(multiprocsubmod);
 
     logger.debug("multiproc.FullStatusReport ...");
-
     { typedef Py::FullStatusReport Kl;
       boost::python::class_<Py::FullStatusReport>("FullStatusReport")
+        .add_property("total_fraction_done", &Kl::total_fraction_done)
         .add_property("num_completed", +[](const Kl& r) { return r.num_completed; })
         .add_property("num_total_runs", +[](const Kl& r) { return r.num_total_runs; })
-        .add_property("workers_running", +[](const Kl& r) { return r.workers_running; })
-        .add_property("workers_reports", +[](const Kl& r) { return r.workers_reports; })
+        .add_property("workers", +[](const Kl& r) { return r.workers; })
         ;
+    }
+    logger.debug("multiproc.WorkerStatusReport ...");
+    { typedef Py::WorkerStatusReport Kl;
+      boost::python::class_<Py::WorkerStatusReport>("WorkerStatusReport")
+        .add_property("worker_id", +[](const Kl& r) { return r.worker_id; })
+        .add_property("fraction_done", +[](const Kl& r) { return r.fraction_done; })
+        .add_property("msg", +[](const Kl& r) { return r.msg; })
+        .add_property("data", +[](const Kl& r) { return r.data; });
     }
   }
 

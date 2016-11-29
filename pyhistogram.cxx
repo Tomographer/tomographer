@@ -21,13 +21,13 @@ void py_tomo_histogram()
       .add_property("min", +[](const Kl & p) { return p.min; }, +[](Kl & p, RealType min) { p.min = min; })
       .add_property("max", +[](const Kl & p) { return p.max; }, +[](Kl & p, RealType max) { p.max = max; })
       .add_property("num_bins", +[](const Kl & p) { return p.num_bins; }, +[](Kl & p, std::size_t n) { p.num_bins = n; })
-      ;/*      .def("isWithinBounds", &Kl::isWithinBounds)
+      .def("isWithinBounds", &Kl::isWithinBounds)
       .def("binIndex", &Kl::binIndex)
       .def("binLowerValue", &Kl::binLowerValue)
       .def("binCenterValue", &Kl::binCenterValue)
       .def("binUpperValue", &Kl::binUpperValue)
       .def("binResolution", &Kl::binResolution)
-      ;*/
+      ;
   }
 
   logger.debug("UniformBinsHistogram...");

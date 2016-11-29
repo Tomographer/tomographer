@@ -1,6 +1,7 @@
 
 #include "common.h"
 
+#include "eigpyconv.h"
 
 
 // tests .... ---------------
@@ -59,8 +60,6 @@ BOOST_PYTHON_MODULE(tomographer)
   // python logging
   tpy_logger.initPythonLogger();
   auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
-
-  //auto tmp_py_log = tpy_logger.pushBypassPython();
 
   logger.debug("INIT TOMOGRAPHER");
 
