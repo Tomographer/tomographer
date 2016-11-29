@@ -58,7 +58,6 @@ BOOST_PYTHON_MODULE(tomographer)
 {
   // python logging
   tpy_logger.initPythonLogger();
-  tpy_logger.setLevel(Tomographer::Logger::DEBUG);
   auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
 
   //auto tmp_py_log = tpy_logger.pushBypassPython();
@@ -66,7 +65,6 @@ BOOST_PYTHON_MODULE(tomographer)
   logger.debug("INIT TOMOGRAPHER");
 
   // Eigen converters
-  //long ok = []() -> long { import_array(); return 1; } (); if (!ok) { return; } // error
   register_eigen_converter();
 
   logger.debug("Registered eigen converters.");
@@ -75,10 +73,6 @@ BOOST_PYTHON_MODULE(tomographer)
 
   py_tomo_tomorun();
 
-  // expose a Python API for setting the C++ logging level
-  boost::python::def("set_log_level", +[](boost::python::object lvl) {
-      tpy_logger.setLevel(tpy_logger.fromPythonLevel(lvl));
-    });
 
   // haha
   logger.debug("importing some final toys...");

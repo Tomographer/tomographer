@@ -14,7 +14,9 @@ namespace Tomographer { namespace Logger {
       IsThreadSafe = 0,
       // set this to a particular level to unconditinally discard any
       // message logged with strictly lower importance level.
-      StaticMinimumImportanceLevel = -1
+      StaticMinimumImportanceLevel = -1,
+      // reflect the level from Python's logger
+      HasOwnGetLevel = 1
     };
   };
 } } // namespaces
@@ -25,8 +27,8 @@ private:
   boost::python::object py_logger; // the Python "logging.Logger" instance for our use
   bool _bypasspython;
 public:
-  PyLogger(int level = Tomographer::Logger::INFO)
-    : Tomographer::Logger::LoggerBase<PyLogger>(level),
+  PyLogger()
+    : Tomographer::Logger::LoggerBase<PyLogger>(),
     py_logging(),
     py_logger(),
     _bypasspython(false)
@@ -41,17 +43,18 @@ public:
     this->debug("PyLogger::initPythonLogger", "Initialized python-compatible logging.");
   }
 
-  // Change the log level
-  inline void setLevel(int level)
+  inline int level() const
   {
-    // call the protected LoggerBase<PyLogger>::setLogLevel()
-    setLogLevel(level);
-    // if (py_logger.is_none()) {
-    //   fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGER NOT SET.\nIn attempt to call setLevel().");
-    //   return;
-    // }
-    // py_logger.attr("setLevel")(toPythonLevel(level));
+    if (_bypasspython) {
+      return Tomographer::Logger::INFO;
+    }
+    if (py_logger.is_none()) {
+      fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGER NOT SET.\nIn attempt to call level()\n");
+      return -1;
+    }
+    return fromPythonLevel(py_logger.attr("getEffectiveLevel")());
   }
+
   inline void emitLog(int level, const char * origin, const std::string & msg)
   {
     if (_bypasspython) {
@@ -66,7 +69,7 @@ public:
       fprintf(stderr, "Message was (%d): %s: %s\n\n", level, origin, msg.c_str());
       return;
     }
-    //DEBUG the debugger: fprintf(stderr, "Emitting log ... (%s)\n", msg.c_str());
+    fprintf(stderr, "Emitting log ... (%s)\n", msg.c_str());
 
     boost::python::object pylevel = toPythonLevel(level);
 
@@ -105,7 +108,7 @@ public:
     }
   }
 
-  inline int fromPythonLevel(boost::python::object pylvl)
+  inline int fromPythonLevel(boost::python::object pylvl) const
   {
     if (py_logging.is_none()) {
       fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGING MODULE NOT SET.\nIn attempt to call fromPythonLevel().");
