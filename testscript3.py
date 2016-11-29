@@ -7,11 +7,11 @@ logging.basicConfig(level=logging.DEBUG)
 import tomographer
 import numpy as np
 
-#tomographer.set_log_level(logging.DEBUG)
+tomographer.cxxlogger.level = logging.DEBUG
 #tlg = logging.getLogger("tomographer")
 #tlg.debug("EXAMPLE MESSAGE")
 
-logging.getLogger("tomographer").setLevel(logging.INFO)
+#logging.getLogger("tomographer").setLevel(logging.INFO)
 
 
 Nm = np.array([ 490, 510, 494, 506, 980, 20 ])

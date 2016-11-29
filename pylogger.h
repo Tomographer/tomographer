@@ -10,13 +10,13 @@ namespace Tomographer { namespace Logger {
   struct LoggerTraits<PyLogger> : DefaultLoggerTraits
   {
     enum {
-      // python calls are not thread-safe
-      IsThreadSafe = 0,
+      //      // We enforce thread-safety with "#pragma omp critical" sections
+      //      IsThreadSafe = 1, // does not work, causes deadlocks when already in a critical section
       // set this to a particular level to unconditinally discard any
       // message logged with strictly lower importance level.
-      StaticMinimumImportanceLevel = -1,
-      // reflect the level from Python's logger
-      HasOwnGetLevel = 1
+      StaticMinimumImportanceLevel = -1
+      //      // reflect the level from Python's logger -- NO, TOO SLOW.
+      //      HasOwnGetLevel = 1
     };
   };
 } } // namespaces
@@ -40,20 +40,40 @@ public:
     py_logging = boost::python::import("logging");
     py_logger = py_logging.attr("getLogger")("tomographer");
 
+    setLevel( fromPythonLevel(py_logger.attr("level")) );
+
     this->debug("PyLogger::initPythonLogger", "Initialized python-compatible logging.");
   }
 
-  inline int level() const
+  inline void setLevel(int level)
   {
-    if (_bypasspython) {
-      return Tomographer::Logger::INFO;
-    }
-    if (py_logger.is_none()) {
-      fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGER NOT SET.\nIn attempt to call level()\n");
-      return -1;
-    }
-    return fromPythonLevel(py_logger.attr("getEffectiveLevel")());
+    setLogLevel(level);
   }
+
+//   inline int level() const
+//   {
+//     bool boost_error = false;
+//     int level = -1;
+// #pragma omp critical
+//     {
+//       try {
+//         if (_bypasspython) {
+//           level = Tomographer::Logger::INFO;
+//         } else if (py_logger.is_none()) {
+//           fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGER NOT SET.\nIn attempt to call level()\n");
+//           level = -1;
+//         } else {
+//           level = fromPythonLevel(py_logger.attr("getEffectiveLevel")());
+//         }
+//       } catch (boost::python::error_already_set & e) {
+//         boost_error = true;
+//       }
+//     } // omp critical
+//     if (boost_error) {
+//       throw boost::python::error_already_set();
+//     }
+//     return level;
+//   }
 
   inline void emitLog(int level, const char * origin, const std::string & msg)
   {
@@ -64,26 +84,27 @@ public:
               msg.c_str());
       return;
     }
+    // need custom critical:
     if (py_logger.is_none()) {
       fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGER NOT SET.\n");
       fprintf(stderr, "Message was (%d): %s: %s\n\n", level, origin, msg.c_str());
-      return;
-    }
-    fprintf(stderr, "Emitting log ... (%s)\n", msg.c_str());
+    } else {
+      //fprintf(stderr, "Emitting log ... (%s)\n", msg.c_str());
 
-    boost::python::object pylevel = toPythonLevel(level);
+      boost::python::object pylevel = toPythonLevel(level);
 
-    boost::python::dict extra;
-    extra["origin"] = origin;
-    boost::python::dict kwargs;
-    kwargs["extra"] = extra;
-    auto logfn = py_logger.attr("log");
-    try {
-      logfn(*boost::python::make_tuple(pylevel, msg), **kwargs);
-    } catch (boost::python::error_already_set & e) {
-      // no idea why, but if an error occurs in the call above then terminate() seems to get called ... :(
-      PyErr_Print();
-      throw(e);
+      boost::python::dict extra;
+      extra["origin"] = origin;
+      boost::python::dict kwargs;
+      kwargs["extra"] = extra;
+      auto logfn = py_logger.attr("log");
+      try {
+        logfn(*boost::python::make_tuple(pylevel, msg), **kwargs);
+      } catch (boost::python::error_already_set & e) {
+        PyErr_Print();
+        //fprintf(stderr, "Ignored error in call to python logging function.\n");
+        throw(e);
+      }
     }
   }
 
@@ -151,6 +172,8 @@ public:
   inline _BypassPython pushBypassPython() {
     return _BypassPython(this);
   }
+
+  
 };
 
 

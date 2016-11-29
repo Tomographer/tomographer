@@ -74,6 +74,23 @@ BOOST_PYTHON_MODULE(tomographer)
   py_tomo_tomorun();
 
 
+  // expose an interface for our C++/python logger wrapper, in particular to set C++ log level
+  struct PyCxxLoggerInterface {
+    PyCxxLoggerInterface() : the_tpy_logger(&tpy_logger) { }
+    PyLogger *the_tpy_logger;
+  };
+  {
+    boost::python::class_<PyCxxLoggerInterface>("_pycxxlogger")
+      .add_property("level", +[](PyCxxLoggerInterface & l) {
+          return l.the_tpy_logger->toPythonLevel(l.the_tpy_logger->level());
+        },
+        +[](PyCxxLoggerInterface & l, boost::python::object newlevel) {
+          l.the_tpy_logger->setLevel(l.the_tpy_logger->fromPythonLevel(newlevel));
+        });
+  }
+  boost::python::scope().attr("cxxlogger") = PyCxxLoggerInterface();
+  
+
   // haha
   logger.debug("importing some final toys...");
 

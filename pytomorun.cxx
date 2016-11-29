@@ -372,6 +372,13 @@ boost::python::object py_tomorun(
     }
     // tell boost.python that the exception is already set
     throw boost::python::error_already_set();
+  } catch (std::exception & e) {
+    // another exception
+    if (PyErr_Occurred() != NULL) { // an inner boost::python::error_already_set() was caught & rethrown by MultiProc::OMP
+      throw boost::python::error_already_set();
+    }
+    fprintf(stderr, "Caught exception: %s\n", e.what());
+    throw e; // error via boost::python
   }
 
   auto time_end = std::chrono::steady_clock::now();
