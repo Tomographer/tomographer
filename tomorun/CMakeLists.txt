@@ -29,47 +29,63 @@
 # Add our executable
 # ==============================================================================
 
+add_executable(tomorun tomorun.cxx)
+
+# depends in particular on tomographer_version.h
+add_dependencies(tomorun tomographer)
+
+# C++11 target
+set_property(TARGET tomorun PROPERTY CXX_STANDARD 11)
+
+# include our tomographer2 headers
+target_include_directories(tomorun PRIVATE "..")  # relative path for automatic dependency detection
+
 # for <tomographer/tomographer_version.h> which was auto-generated in the binary
 # dir tree, and is not yet installed.
-include_directories("${CMAKE_BINARY_DIR}/cxx")
+target_include_directories(tomorun PRIVATE "${CMAKE_BINARY_DIR}")
 
-
-set(TOMORUN_SUFFIX "" CACHE STRING
-  "Optional suffix to append to 'tomorun' executable name, to indicate special configuration in case you override settings in tomorun_config.h with -D... compiler flags (such as -DTOMORUN_CUSTOM_FIXED_DIM=... etc.)")
-
-
-# can we use the nice() function to reduce the process priority?
-CHECK_CXX_SOURCE_COMPILES(
-  "#include <unistd.h>
-  int main() { nice(1); }"
-  tomorun_HAVE_NICE)
-if(NOT tomorun_HAVE_NICE)
-  add_definitions(-DTOMORUN_NOT_HAVE_NICE)
+if(NOT tomographer_HAVE_NICE)
+  target_compile_definitions(tomorun PRIVATE "-DTOMORUN_NOT_HAVE_NICE")
 endif()
-
-
-add_executable(tomorun tomorun.cxx)
-add_dependencies(tomorun tomographer) # in particular tomographer_version.h
 
 if(TOMORUN_SUFFIX)
   if(CMAKE_BUILD_TYPE)
     string(TOUPPER "${CMAKE_BUILD_TYPE}" tmp_buildtype)
-    set_target_properties(tomorun PROPERTIES ${tmp_buildtype}_OUTPUT_NAME "tomorun${TOMORUN_SUFFIX}")
+    set_target_properties(tomorun PROPERTIES OUTPUT_NAME_${tmp_buildtype} "tomorun${TOMORUN_SUFFIX}")
   else(CMAKE_BUILD_TYPE)
-    set_target_properties(tomorun PROPERTIES OUTPUT_NAME "tomorun${TOMORUN_SUFFIX}")
+    message(FATAL_ERROR "Internal error: CMAKE_BUILD_TYPE is not set.")
   endif(CMAKE_BUILD_TYPE)
 endif(TOMORUN_SUFFIX)
 
-SetOpenMPTarget(tomorun)
+# dependency: Eigen
+target_include_directories(tomorun SYSTEM PRIVATE "${EIGEN3_INCLUDE_DIR}")
+# already parallelized application, so disable Eigen's own parallelization (see
+# http://eigen.tuxfamily.org/dox/TopicMultiThreading.html)
+target_compile_definitions(tomorun PRIVATE -DEIGEN_DONT_PARALLELIZE)
 
-AppendTargetProperty(tomorun COMPILE_FLAGS "-I${MATIO_INCLUDE_DIR} -I${Boost_INCLUDE_DIR} -I${ZLIB_INCLUDE_DIRS}")
-target_link_libraries(tomorun ${MATIO_LIBRARIES})
-target_link_libraries(tomorun ${ZLIB_LIBRARIES})
-target_link_libraries(tomorun ${Boost_PROGRAM_OPTIONS_LIBRARY})
 
+# dependency: Boost headers, Boost program_options library
+target_include_directories(tomorun SYSTEM PRIVATE "${Boost_INCLUDE_DIR}")
+target_link_libraries(tomorun "${Boost_PROGRAM_OPTIONS_LIBRARY}")
+
+# dependency: MatIO (and MatIO's ZLIB dependency)
+target_include_directories(tomorun SYSTEM PRIVATE "${MATIO_INCLUDE_DIR}" "${ZLIB_INCLUDE_DIRS}")
+target_link_libraries(tomorun "${MATIO_LIBRARIES}" "${ZLIB_LIBRARIES}")
+
+# compile with OpenMP
+if (OPENMP_FOUND)
+  target_compile_options(tomorun PRIVATE "${OpenMP_CXX_FLAGS}")
+  target_link_libraries(tomorun "${OpenMP_CXX_FLAGS}")
+else()
+  WarnTargetNoOpenMP("The tomorun executable")
+endif()
+
+
+
+# the installation target
 install(TARGETS tomorun
-  RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR}
-  ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR}
-  PUBLIC_HEADER DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}
+  RUNTIME DESTINATION "${CMAKE_INSTALL_BINDIR}"
+  ARCHIVE DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+  LIBRARY DESTINATION "${CMAKE_INSTALL_LIBDIR}"
+  PUBLIC_HEADER DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}"
   )

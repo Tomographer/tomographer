@@ -73,6 +73,6 @@ if(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION)
 endif(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION)
 
 
-add_custom_target(tomographer
+add_custom_target(tomographer ALL
   DEPENDS "${CMAKE_CURRENT_BINARY_DIR}/tomographer_version.h"
   )

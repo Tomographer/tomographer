@@ -5,7 +5,7 @@ sudo: required
 # Enable C++ support
 language: cpp
 
-# Install dependencies (Eigen3 >= 3.2.5, MatIO 1.5)
+# Install dependencies (Eigen3 >= 3.2.5, MatIO 1.5, CMake >= 3.1)
 install:
   - pwd
   # Eigen3:
@@ -14,11 +14,15 @@ install:
   # MatIO:
   - export MATIO_PATH=`pwd`/matio-1.5.9
   - if [ ! -f "$MATIO_PATH/_install/include/matio.h" ]; then curl -L -o matio-1.5.9.tar.gz  https://sourceforge.net/projects/matio/files/matio/1.5.9/matio-1.5.9.tar.gz/download  && tar xfz matio-1.5.9.tar.gz && ( cd matio-1.5.9 && ./configure --prefix="$MATIO_PATH/_install" && make && make install ) ; fi
+  # CMake:
+  - export CMAKE_PATH=`pwd`/cmake-3.1.3-Linux-x86_64
+  - if [ ! -f "$CMAKE_PATH/bin/cmake" ]; then curl -L -O https://cmake.org/files/v3.1/cmake-3.1.3-Linux-x86_64.tar.gz && tar xfz cmake-3.1.3-Linux-x86_64.tar.gz ; fi
 
 cache:
   directories:
     - eigen-3.2.5
     - matio-1.5.9/_install
+    - cmake-3.1.3-Linux-x86_64
 
 
 # Allow git-describe to find the right version string, otherwise the build fails
@@ -30,7 +34,7 @@ git:
 script:
   - mkdir build
   - cd build
-  - cmake .. $CMAKE_COMPILER_ARGS -DTOMOGRAPHER_ENABLE_TESTS=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH" -DMATIO_INCLUDE_DIR="$MATIO_PATH/_install/include" -DMATIO_LIBRARY="$MATIO_PATH/_install/lib/libmatio.so"
+  - "$CMAKE_PATH/bin/cmake" .. $CMAKE_COMPILER_ARGS -DTOMOGRAPHER_ENABLE_TESTS=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH" -DMATIO_INCLUDE_DIR="$MATIO_PATH/_install/include" -DMATIO_LIBRARY="$MATIO_PATH/_install/lib/libmatio.so"
   - make VERBOSE=1
 #  - CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all make test
 #  - BOOST_TEST_LOG_LEVEL=all ctest --verbose

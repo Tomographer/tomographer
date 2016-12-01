@@ -5,6 +5,7 @@
 # 
 # Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe
 # Faist
+# Copyright (c) 2016 Caltech, Philippe Faist
 # 
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -29,25 +30,26 @@
 # Required Definitions Etc.
 # ==============================================================================
 
-if(NOT TOMOGRAPHER_ENABLE_TESTS) 
-  return()
-endif(NOT TOMOGRAPHER_ENABLE_TESTS) 
-
-enable_testing()
-
 
 # 
-# remove -DNDEBUG from flags!
-# 
-# The last thing we want here is to remove the assertion tests from the code.
+# Make sure we don't have -DNDEBUG in flags.  The last thing we want here is to remove the
+# assertion tests from the code.
+#
+# We won't remove it automatically because we don't want to be too "smart" and cause
+# trouble to the user.  In any case, we still have a #error in test_tomographer.h in case
+# -DNDEBUG is still defined.
+#
+# NOTE: overriding the variables CMAKE_CXX_FLAGS[_XXX] only has effect in this directory
+# (CHECK THIS?? the docs are terrible)
 #
 string(TOUPPER "${CMAKE_BUILD_TYPE}" cmake_build_type_upper)
 RemoveFlag(CMAKE_CXX_FLAGS_${cmake_build_type_upper} "${CMAKE_CXX_FLAGS_${cmake_build_type_upper}}" "-DNDEBUG")
-RemoveFlag(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}"  "-DNDEBUG")
+RemoveFlag(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "-DNDEBUG")
 
 if (Boost_UNIT_TEST_FRAMEWORK_LIBRARY MATCHES "\\.a\$")
+  set(tomotests_set_BOOST_TEST_DYN_LINK false)
 else()
-  add_definitions(-DBOOST_TEST_DYN_LINK)
+  set(tomotests_set_BOOST_TEST_DYN_LINK true)
 endif()
 
 # we need to access the expected output patterns. Trailing slash needed.
@@ -61,13 +63,6 @@ add_definitions(-DTOMOGRAPHER_TEST_DATA_DIR="${TOMOGRAPHER_TEST_DATA_DIR}")
 
 
 # ==============================================================================
-# Enable Testing.
-# ==============================================================================
-
-enable_testing()
-
-
-# ==============================================================================
 # Add the tests.
 # ==============================================================================
 
@@ -78,34 +73,53 @@ macro(addTomographerTest test_cxx NeedsList)
   # file name without extension (NAME_WE)
   get_filename_component(test_name ${test_cxx} NAME_WE)
         
-  if (";${NeedsList};" MATCHES ";LAPACK;")
-    # compile & link with LAPACK, but only if it is available.
-    if(NOT LAPACK_FOUND)
-      return()
-    endif()
-  endif()
+  set(LIST_OF_ALL_TESTS ${LIST_OF_ALL_TESTS} ${test_name})
+
+  # NEED lapack in order to run test suite---don't want tests silently not to run because
+  # we didn't realize lapack wasn't found
+  #
+  #  if (";${NeedsList};" MATCHES ";LAPACK;")
+  #    # compile & link with LAPACK, but only if it is available.
+  #    if(NOT LAPACK_FOUND)
+  #      return()
+  #    endif()
+  #  endif()
 
   # the test binary executable
   add_executable(${test_name}
     ${test_cxx}
     test_tomographer.cxx
     )
-  
-  set(LIST_OF_ALL_TESTS ${LIST_OF_ALL_TESTS} ${test_name})
 
+  # Enable C++11
+  set_property(TARGET ${test_name} PROPERTY CXX_STANDARD 11)
+
+  # tomographer2 headers
+  target_include_directories(${test_name} PRIVATE "..")
+
+  # dependency: Eigen
+  target_include_directories(${test_name} SYSTEM PRIVATE "${EIGEN3_INCLUDE_DIR}")
+  target_compile_definitions(${test_name} PRIVATE -DEIGEN_DONT_PARALLELIZE)
+
+  if (tomotests_set_BOOST_TEST_DYN_LINK)
+    target_compile_definitions(${test_name} PRIVATE "-DBOOST_TEST_DYN_LINK")
+  endif()
+  
   if (";${NeedsList};" MATCHES ";openmp;")
     # compile & link with OpenMP
-    SetOpenMPTarget(${test_name})
+    if (OPENMP_FOUND)
+      target_compile_options(${test_name} PRIVATE "${OpenMP_CXX_FLAGS}")
+      target_link_libraries(${test_name} "${OpenMP_CXX_FLAGS}")
+    else()
+      WarnTargetNoOpenMP("Test ${test_name}")
+    endif()
   endif()
 
-  AppendTargetProperty(${test_name}
-    COMPILE_FLAGS
-    "-DBOOST_TEST_MODULE=${test_name} -I${MATIO_INCLUDE_DIR} -I${Boost_INCLUDE_DIR} -I${ZLIB_INCLUDE_DIRS}"
-    )
+  target_compile_definitions(${test_name} PRIVATE "-DBOOST_TEST_MODULE=${test_name}")
+  target_include_directories(${test_name} SYSTEM PRIVATE "${MATIO_INCLUDE_DIR}" "${Boost_INCLUDE_DIR}" "${ZLIB_INCLUDE_DIRS}")
 
   if (";${NeedsList};" MATCHES ";LAPACK;")
-    AppendTargetProperty(${test_name}
-      LINKER_FLAGS
+    target_link_libraries(${test_name}
       "${LAPACK_LINKER_FLAGS}"
       )
     target_link_libraries(${test_name} ${LAPACK_LIBRARIES})
@@ -169,12 +183,27 @@ addTomographerTest(test_multiprocomp.cxx  "openmp")
 #addTomographerTest(test_zzzcombinations.cxx "openmp")
 
 
-# check "minimal tomorun" program compiles and runs
+
+#
+# check "minimal tomorun" example program compiles and runs
+#
 add_executable(minimal_tomorun
   minimal_tomorun.cxx
   )
-SetOpenMPTarget(minimal_tomorun)
-AppendTargetProperty(minimal_tomorun COMPILE_FLAGS "-I${Boost_INCLUDE_DIR}")
+# Enable C++11
+set_property(TARGET minimal_tomorun PROPERTY CXX_STANDARD 11)
+# tomographer2 headers
+target_include_directories(minimal_tomorun PRIVATE "..")
+# dependency: Eigen
+target_include_directories(minimal_tomorun SYSTEM PRIVATE "${EIGEN3_INCLUDE_DIR}")
+target_compile_definitions(minimal_tomorun PRIVATE -DEIGEN_DONT_PARALLELIZE)
+if (OPENMP_FOUND)
+  target_compile_options(minimal_tomorun PRIVATE "${OpenMP_CXX_FLAGS}")
+  target_link_libraries(minimal_tomorun "${OpenMP_CXX_FLAGS}")
+else()
+  WarnTargetNoOpenMP("The example minimal_tomorun executable")
+endif()
+target_include_directories(minimal_tomorun PRIVATE "${Boost_INCLUDE_DIR}")
 
 add_test(NAME minimal_tomorun
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
@@ -183,9 +212,14 @@ add_test(NAME minimal_tomorun
 
 
 
+#
+# Add tests to check for tomorun's overall behavior
+#
 add_executable(test_tomorun_1qubit_analytic_solution_check
   "tomorun/test_tomorun_1qubit_analytic_solution_check.cxx"
   )
+# Enable C++11
+set_property(TARGET test_tomorun_1qubit_analytic_solution_check PROPERTY CXX_STANDARD 11)
 
 # version without binning analysis
 add_test(NAME test_tomorun_1qubit_analytic_solution_run_simple

@@ -28,7 +28,10 @@ cmake_minimum_required(VERSION 3.1)
 
 project(tomographer)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake" "${CMAKE_CURRENT_SOURCE_DIR}/cmake/vc")
+set(CMAKE_MODULE_PATH
+  ${CMAKE_MODULE_PATH}
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/vc")
 
 include(TomographerVersion)
 include(Util)
@@ -78,10 +81,11 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wall -Wex
 
 
 
-# NOTE: By default GCC/G++ uses a LOT of RAM (g++ 6.2). [Clang-3.9 was very good by
-# comparison.]  You can instruct gcc to use less RAM by fiddling around with the options
-# "--param ggc-min-expand=10 --param ggc-min-heapsize=32768"
-# or "--param ggc-min-expand=0 --param ggc-min-heapsize=8192" to be even more conservative.
+# NOTE: By default GCC/G++ uses a LOT of RAM (g++ 6.2 with 4GB was not working well).
+# [Clang-3.9 was very good by comparison.]  You can instruct gcc to use less RAM by
+# fiddling around with the options "--param ggc-min-expand=10 --param
+# ggc-min-heapsize=32768", or "--param ggc-min-expand=0 --param ggc-min-heapsize=8192" if
+# you want to be even more conservative.
 
 
 
@@ -90,7 +94,8 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wall -Wex
 # -> use -DTARGET_ARCHITECTURE=generic to disable simd instruction sets
 include(OptimizeForArchitecture)
 OptimizeForArchitecture()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Vc_ARCHITECTURE_FLAGS}")
+string(REPLACE ";" " " _vc_arch_flags_joined "${Vc_ARCHITECTURE_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_vc_arch_flags_joined}")
 
 
 
@@ -109,9 +114,9 @@ if(DOXYGEN_FOUND)
   # to make sure the version file is set up properly
   add_dependencies(doc tomographer)
   message(STATUS "You can build the API documentation by running `make doc`.")
-else(DOXYGEN_FOUND)
+else()
   message(STATUS "Doxygen not found. Don't worry, you'd only need this if you wanted to generate API documentation.")
-endif(DOXYGEN_FOUND)
+endif()
 
 # ==============================================================================
 # Set up Install Targets
@@ -135,6 +140,16 @@ install(FILES README.md README.txt LICENSE.txt
 
 
 # ==============================================================================
+# The basic tomographer2 header-only C++ template library
+# ==============================================================================
+
+# there are essentially two things to do: set up tomographer_version.h (obtaining the
+# current version from git-describe or explicit VERSION file), and define the install
+# target.
+add_subdirectory(tomographer2)
+
+
+# ==============================================================================
 # Build Tomorun?
 # ==============================================================================
 
@@ -154,8 +169,19 @@ if (BUILD_TOMORUN)
   find_package(Boost 1.50 COMPONENTS program_options REQUIRED)
 
   EnsureCXX11StdThisThreadSleepForAvailable()
-   
+  
+  # can we use the nice() function to reduce the process priority?
+  CHECK_CXX_SOURCE_COMPILES(
+    "#include <unistd.h>
+int main() { nice(1); }"
+    tomographer_HAVE_NICE)
+
+  set(TOMORUN_SUFFIX "" CACHE STRING
+    "Optional suffix to append to 'tomorun' executable name, to indicate special configuration in case you override settings in tomorun_config.h with -D... compiler flags (such as -DTOMORUN_CUSTOM_FIXED_DIM=... etc.)")
+
   message(STATUS "Will build tomorun executable (BUILD_TOMORUN=on)")
+  add_subdirectory(tomorun)
+
 else()
   message(STATUS "Will not build tomorun executable (BUILD_TOMORUN=off)")
 endif()
@@ -164,7 +190,7 @@ endif()
 # Build Python interface library module?
 # ==============================================================================
 
-option(BUILD_TOMOPY "Build the tomographer python interface" on)
+option(BUILD_TOMOPY "Build the tomographer Python interface" off)
 if (BUILD_TOMOPY)
 
   find_package(PythonLibs REQUIRED)
@@ -172,9 +198,21 @@ if (BUILD_TOMOPY)
 
   EnsureCXX11StdThisThreadSleepForAvailable()
 
-  message(STATUS "Will build tomographer python interface (BUILD_TOMOPY=on)")
+  message(STATUS "Will build tomographer Python interface (BUILD_TOMOPY=on)")
+  message("
+    *** NOTE ***
+    Building the Python interface with CMake is meant for development (and for
+    running the tests); in particular 'make install' will not install any python
+    interface related files.
+
+    Please use 'python setup.py install' inside the py/ directory to properly
+    build and install the python module.
+
+")
+  add_subdirectory(py)
+
 else()
-  message(STATUS "Will not build tomographer python interface (BUILD_TOMOPY=off)")
+  message(STATUS "Will not build tomographer Python interface (BUILD_TOMOPY=off)")
 endif()
 
 # ==============================================================================
@@ -186,7 +224,7 @@ option(TOMOGRAPHER_ENABLE_TESTS "Build Tomographer/Tomorun tests" off)
 if(TOMOGRAPHER_ENABLE_TESTS)
 
   if(NOT BUILD_TOMORUN OR NOT BUILD_TOMOPY)
-    message(FATAL_ERROR "You can only build the tests if you are building both tomorun and the python interface library.")
+    message(FATAL_ERROR "You can only build the tests if you are building both tomorun and the Python interface library.")
   endif()
 
   #if(NOT Boost_UNIT_TEST_FRAMEWORK_LIBRARY)
@@ -200,18 +238,13 @@ if(TOMOGRAPHER_ENABLE_TESTS)
 
   EnsureCXX11StdThisThreadSleepForAvailable()
 
+  # Enable testing for the project
+  enable_testing()
 
   message(STATUS "Will build tomographer tests. Use `make test' or `ctest' to run the tests.")
-else(TOMOGRAPHER_ENABLE_TESTS)
+  add_subdirectory(test)
+  
+else()
   message(STATUS "Will not build tests (meant for developers). Set TOMOGRAPHER_ENABLE_TESTS=on if you wanted them.")
-endif(TOMOGRAPHER_ENABLE_TESTS)
-
-
-# ==============================================================================
-# Include our subdirectories
-# ==============================================================================
-
-add_subdirectory(cxx)
-
-
+endif()
 

@@ -33,6 +33,10 @@
 
 #define EIGEN_INITIALIZE_MATRICES_BY_NAN
 
+#ifdef NDEBUG
+#error "Cannot compile tests with -DNDEBUG: this would disable assertion tests, defeating the purpose of the tests."
+#endif
+
 #include <cmath>
 #include <cstdlib>
 #include <complex>

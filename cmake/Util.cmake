@@ -57,6 +57,10 @@
 #   endif()
 # endmacro(SetOpenMPTarget)
 
+macro(WarnTargetNoOpenMP target_msg)
+  message(WARNING "OpenMP not found. ${target_msg} will run serially with no parallelization.")
+endmacro(WarnTargetNoOpenMP)
+
 
 macro(RemoveFlag str_out str_in flag)
   # first, escape the flag to a valid regex pattern. Just backslash all chars.
@@ -66,12 +70,6 @@ macro(RemoveFlag str_out str_in flag)
 
   #message(STATUS "Removed flag '${flag}' from '${str_in}': flag_escaped='${flag_escaped}', str_out='${${str_out}}'")
 endmacro(RemoveFlag)
-
-# macro(RemoveFlagTarget tgt prop flag)
-#   get_target_property(compile_flags ${tgt} ${prop})
-#   RemoveFlag(compile_flags_new "${compile_flags}" "-DNDEBUG")
-#   set_target_properties(${tgt} PROPERTIES ${prop} "${compile_flags_new}")
-# endmacro(RemoveFlagTarget)
 
 
 
@@ -104,4 +102,4 @@ int main() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }"
       message(FATAL_ERROR "Your C++ compiler doesn't seem to support std::this_thread::sleep_for(). You may need to use a different compiler, or set the required flags yourself.")
     endif()
   endif()
-endmacro()
+endmacro(EnsureCXX11StdThisThreadSleepForAvailable)
