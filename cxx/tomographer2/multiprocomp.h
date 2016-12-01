@@ -390,6 +390,7 @@ private:
         logger(logger_),
         status_report_underway(false),
         status_report_initialized(false),
+        status_report_ready(false),
         status_report_counter(0),
         status_report_periodic_interval(-1),
         status_report_numreportsrecieved(0),
@@ -406,6 +407,7 @@ private:
 
     bool status_report_underway;
     bool status_report_initialized;
+    bool status_report_ready;
     volatile std::sig_atomic_t status_report_counter;
     int status_report_periodic_interval;
     CountIntType status_report_numreportsrecieved;
@@ -437,14 +439,46 @@ private:
         throw TaskInterruptedInnerException();
       }
 
-      // if we're the master thread, update the status_report_counter according to whether
-      // we should provoke a periodic status report
-#pragma omp master
-      if (shared_data->status_report_periodic_interval > 0) {
-        _master_thread_update_status_report_periodic_interval_counter();
-      }
+      //
+      // if we're the master thread, we have some admin to do.
+      //      
+      // NOTE: #pragma omp master prevents us from throwing an exception! (at least on clang++3.8)
+      if (omp_get_thread_num() == 0) {
+        // Update the status_report_counter according to whether
+        // we should provoke a periodic status report
+        if (shared_data->status_report_periodic_interval > 0) {
+          _master_thread_update_status_report_periodic_interval_counter();
+        }
 
-      //fprintf(stderr, "statusReportRequested(), shared_data=%p\n", shared_data);
+        // if we're the master thread, then also check if there is a status report ready
+        // to be sent.
+        if (shared_data->status_report_ready) {
+          bool got_exception = false;
+          std::string exception_str;
+#pragma omp critical
+          {
+            try {
+              // call user-defined status report handler
+              shared_data->status_report_user_fn(shared_data->status_report_full);
+              // all reports recieved: done --> reset our status_report_* flags
+              shared_data->status_report_numreportsrecieved = 0;
+              shared_data->status_report_underway = false;
+              shared_data->status_report_initialized = false;
+              shared_data->status_report_ready = false;
+              shared_data->status_report_full.workers_running.clear();
+              shared_data->status_report_full.workers_reports.clear();
+            } catch (...) {
+              got_exception = true;
+              exception_str = std::string("Caught exception in status reporting callback: ")
+                + boost::current_exception_diagnostic_information();
+            }
+          }
+          if (got_exception) {
+            throw TaskInnerException(exception_str);
+          }
+        }
+      } // omp master
+
       return (int)local_status_report_counter != (int)shared_data->status_report_counter;
     }
 
@@ -528,6 +562,7 @@ private:
 
               shared_data->status_report_underway = true;
               shared_data->status_report_initialized = true;
+              shared_data->status_report_ready = false;
               
               // initialize status report object & overall data
               shared_data->status_report_full = FullStatusReportType();
@@ -580,14 +615,13 @@ private:
             ++ shared_data->status_report_numreportsrecieved;
 
             if (shared_data->status_report_numreportsrecieved == shared_data->num_active_working_threads) {
+              //
               // the report is ready to be transmitted to the user: go!
-              shared_data->status_report_user_fn(shared_data->status_report_full);
-              // all reports recieved: done --> reset our status_report_* flags
-              shared_data->status_report_numreportsrecieved = 0;
-              shared_data->status_report_underway = false;
-              shared_data->status_report_initialized = false;
-              shared_data->status_report_full.workers_running.clear();
-              shared_data->status_report_full.workers_reports.clear();
+              //
+              // Don't send it quite yet, queue it for the master thread to send.  We add
+              // this guarantee so that the status report handler can do things which only
+              // the master thread can do (e.g. in Python, call PyErr_CheckSignals()).
+              shared_data->status_report_ready = true;
             }
           } // if ok
         } catch (...) {
@@ -822,8 +856,9 @@ public:
    * invoked.
    *
    * The callback, when invoked, will be called with a single parameter of type \ref
-   * FullStatusReport "FullStatusReport<TaskStatusReportType>".
-   *
+   * FullStatusReport "FullStatusReport<TaskStatusReportType>".  It is guaranteed to be
+   * called from within the main thread, that is, the one with <code>omp_get_thread_num()
+   * == 0</code>.
    */
   inline void setStatusReportHandler(FullStatusReportCallbackType fnstatus)
   {
