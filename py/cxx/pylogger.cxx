@@ -1,8 +1,8 @@
 
 
-#include "common.h"
+#include "tomographerpy/common.h"
 
-#include "pylogger.h"
+#include "tomographerpy/pylogger.h"
 
 
 

@@ -1,7 +1,7 @@
 
-#include "common.h"
+#include "tomographerpy/common.h"
 
-#include "eigpyconv.h"
+#include "tomographerpy/eigpyconv.h"
 
 
 // tests .... ---------------

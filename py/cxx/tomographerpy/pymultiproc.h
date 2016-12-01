@@ -4,7 +4,7 @@
 
 #include <string>
 
-#include "common.h"
+#include <tomographerpy/common.h>
 
 #include <tomographer2/mhrw.h>
 #include <tomographer2/mhrwtasks.h>

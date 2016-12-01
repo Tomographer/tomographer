@@ -1,5 +1,9 @@
 
-#include "common.h"
+#ifndef PY_HISTOGRAM_H
+#define PY_HISTOGRAM_H
+
+
+#include <tomographerpy/common.h>
 
 #include <tomographer2/histogram.h>
 
@@ -28,3 +32,7 @@ typedef Tomographer::AveragedHistogram<UniformBinsHistogramWithErrorBars, RealTy
 
 
 void py_tomo_histogram();
+
+
+
+#endif

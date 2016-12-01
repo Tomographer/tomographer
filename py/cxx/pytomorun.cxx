@@ -1,10 +1,9 @@
 
-#include "common.h"
+#include "tomographerpy/common.h"
 
 #include <exception>
 #include <stdexcept>
 
-#include "pyhistogram.h"
 
 #include <omp.h>
 
@@ -23,8 +22,8 @@
 #include <tomographer2/mathtools/pos_semidef_util.h>
 
 
-
-#include "pymultiproc.h"
+#include "tomographerpy/pyhistogram.h"
+#include "tomographerpy/pymultiproc.h"
 
 
 

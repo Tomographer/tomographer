@@ -1,5 +1,5 @@
 
-#include "common.h"
+#include "tomographerpy/common.h"
 
 #include <boost/python.hpp>
 
@@ -18,7 +18,7 @@
 
 #include <tomographer2/tools/cxxutil.h>
 
-#include "eigpyconv.h"
+#include "tomographerpy/eigpyconv.h"
 
 
 struct EigenNumpyConversionError : public std::exception

@@ -9,14 +9,14 @@
 #define TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION
 #include <tomographer2/tools/eigen_assert_exception.h>
 
-#include "eigpyconv.h"
+#include <tomographerpy/eigpyconv.h>
 
 #include <Eigen/Eigen>
 
 #include <tomographer2/tools/cxxutil.h>
 #include <tomographer2/tools/loggers.h>
 
-#include "pylogger.h"
+#include <tomographerpy/pylogger.h>
 
 
 

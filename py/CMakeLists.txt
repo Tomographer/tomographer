@@ -12,7 +12,7 @@ message(STATUS "CMake Build Type: ${CMAKE_BUILD_TYPE}")
 
 
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/../cmake")
 
 find_package(Eigen3 3.2.5 REQUIRED)
 
@@ -48,12 +48,13 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Vc_ARCHITECTURE_FLAGS}")
 # Include our target
 # ==============================================================================
 
+
 set(tomographerpy_SRCS
-  eigpyconv.cxx
-  pyhistogram.cxx
-  pytomorun.cxx
-  pylogger.cxx
-  tomographerbase.cxx
+  cxx/eigpyconv.cxx
+  cxx/pyhistogram.cxx
+  cxx/pytomorun.cxx
+  cxx/pylogger.cxx
+  cxx/tomographerbase.cxx
   )
 add_library(tomographer SHARED ${tomographerpy_SRCS})
 
@@ -67,6 +68,7 @@ if(APPLE)
 endif()
 
 
+target_include_directories(tomographer PUBLIC cxx)
 target_include_directories(tomographer PUBLIC SYSTEM ${EIGEN3_INCLUDE_DIR})
 target_include_directories(tomographer PUBLIC SYSTEM ${PYTHON_INCLUDE_DIRS})
 target_include_directories(tomographer PUBLIC SYSTEM ${Boost_INCLUDE_DIR})

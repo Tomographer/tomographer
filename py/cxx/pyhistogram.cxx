@@ -1,7 +1,7 @@
 
-#include "common.h"
+#include "tomographerpy/common.h"
 
-#include "pyhistogram.h"
+#include "tomographerpy/pyhistogram.h"
 
 
 
