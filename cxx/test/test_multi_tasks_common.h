@@ -29,6 +29,8 @@
 
 #include <string>
 #include <functional>
+#include <chrono>
+#include <thread> // std::this_thread::sleep_for
 
 #include <tomographer2/tools/fmt.h>
 
@@ -377,7 +379,7 @@ struct test_task_dispatcher_status_reporting_fixture {
       if (omp_get_thread_num() == 0) {
         // take care of sending the interrupt request
 
-        sleep(1);
+        std::this_thread::sleep_for(std::chrono::seconds(1));
         task_dispatcher.requestInterrupt();
 
       } else if (omp_get_thread_num() == 1) {
@@ -433,7 +435,7 @@ struct test_task_dispatcher_status_reporting_fixture {
         // take care of sending status report requests
 
         while (!finished) {
-          sleep(1);
+          std::this_thread::sleep_for(std::chrono::seconds(1));
           task_dispatcher.requestStatusReport();
         }
 

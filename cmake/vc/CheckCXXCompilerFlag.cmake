@@ -39,8 +39,6 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
 
-# FROM https://gitorious.org/vc/vc/source/18e6ba4262168f0ac9d17455899c9c02df0957df:cmake
-
 INCLUDE(CheckCXXSourceCompiles)
 
 MACRO (CHECK_CXX_COMPILER_FLAG _FLAG _RESULT)
@@ -59,6 +57,7 @@ MACRO (CHECK_CXX_COMPILER_FLAG _FLAG _RESULT)
      FAIL_REGEX "unrecognized .*option"                     # GNU
      FAIL_REGEX "ignored for target"                        # GNU
      FAIL_REGEX "ignoring unknown option"                   # MSVC
+     FAIL_REGEX "warning D9002"                             # MSVC
      FAIL_REGEX "[Uu]nknown option"                         # HP
      FAIL_REGEX "[Ww]arning: [Oo]ption"                     # SunPro
      FAIL_REGEX "command option .* is not recognized"       # XL

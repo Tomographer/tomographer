@@ -29,7 +29,7 @@
 # Set up the build environment
 # ==============================================================================
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOMOGRAPHER_CXX11_STD_FLAGS}")
+#set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${TOMOGRAPHER_CXX11_STD_FLAGS}")
 
 
 # Access <Eigen/...> include path
@@ -46,32 +46,7 @@ include_directories(.)
 # Common C++ stuff
 # ==============================================================================
 
-include(CheckCXXSourceCompiles)
-
-
-set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${TOMOGRAPHER_CXX11_STD_FLAGS}")
-CHECK_CXX_SOURCE_COMPILES(
-  "#include <thread>
-#include <chrono>
-int main() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }"
-  tomographer_HAVE_CXX11_THREAD_SLEEP_FOR
-  )
-if (NOT tomographer_HAVE_CXX11_THREAD_SLEEP_FOR)
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${TOMOGRAPHER_CXX11_STD_FLAGS}")
-  set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS} -D_GLIBCXX_USE_NANOSLEEP)
-  CHECK_CXX_SOURCE_COMPILES(
-    "#include <thread>
-#include <chrono>
-int main() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }"
-    tomographer_HAVE_CXX11_THREAD_SLEEP_FOR_wdef
-    )
-  if (tomographer_HAVE_CXX11_THREAD_SLEEP_FOR_wdef)
-    add_definitions(-D_GLIBCXX_USE_NANOSLEEP)
-  else()
-    message(FATAL_ERROR "Your C++ compiler doesn't seem to support std::this_thread::sleep_for(). You may need to use a different compiler, or set the required flags yourself.")
-  endif()
-endif()
-
+EnsureCXX11StdThisThreadSleepForAvailable()
 
 # already parallelized application, so disable Eigen's own parallelization (see
 # http://eigen.tuxfamily.org/dox/TopicMultiThreading.html)

@@ -33,6 +33,8 @@ if(NOT TOMOGRAPHER_ENABLE_TESTS)
   return()
 endif(NOT TOMOGRAPHER_ENABLE_TESTS) 
 
+enable_testing()
+
 
 # 
 # remove -DNDEBUG from flags!
