@@ -31,7 +31,7 @@ private:
 public:
   PyLogger();
 
-  void initPythonLogger();
+  void initPythonLogger(std::string logger_name = "tomographer");
 
   void setLevel(int level);
 

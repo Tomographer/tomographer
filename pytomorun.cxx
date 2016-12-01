@@ -24,46 +24,7 @@
 
 
 
-
-
-
-
-
-
-
-
-namespace Py {
-
-typedef Tomographer::MHRWParams<CountIntType, RealType> MHRWParams;
-
-
-
-
-struct WorkerStatusReport {
-  int worker_id;
-  double fraction_done;
-  std::string msg;
-  boost::python::dict data;
-};
-
-struct FullStatusReport {
-  FullStatusReport() : num_completed(-1), num_total_runs(-1), workers() { }
-  int num_completed;
-  int num_total_runs;
-  boost::python::list workers; // list of [WorkerStatusReport or None (for idle)]
-
-  double total_fraction_done() const {
-    double f = num_completed;
-    for (long k = 0; k < boost::python::len(workers); ++k) {
-      if (!boost::python::object(workers[k]).is_none()) {
-        f += boost::python::extract<WorkerStatusReport>(workers[k])().fraction_done;
-      }
-    }
-    return f / num_total_runs;
-  }
-};
-
-}
+#include "pymultiproc.h"
 
 
 
@@ -144,15 +105,8 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<
 
 
 
-class TomorunInvalidInputError : public std::exception
-{
-  std::string _msg;
-public:
-  TomorunInvalidInputError(std::string msg) : _msg(std::move(msg)) { }
-  virtual ~TomorunInvalidInputError() { }
-
-  const char * what() const throw() { return _msg.c_str(); }
-};
+// define an exception class for invalid inputs
+TOMOGRAPHER_DEFINE_MSG_EXCEPTION(TomorunInvalidInputError, "Invalid Input: ") ;
 
 
 
@@ -295,96 +249,11 @@ boost::python::object py_tomorun(
       1 // n_chunk
       );
 
-  std::chrono::steady_clock::time_point time_start;
-
-  // TODO: add some form of progress feedback, e.g. call to a custom Python function.
-  tasks.setStatusReportHandler(
-      [&](const Tomographer::MultiProc::FullStatusReport<OurMHRandomWalkTask::StatusReportType> & report) {
-        // check to see if we got any KeyboardInterrupt
-        // PyErr_CheckSignals() returns -1 if an exception was raised
-        if (PyErr_CheckSignals() == -1) {
-          tasks.requestInterrupt();
-          return;
-        }
-        // call the python progress callback:
-        if (!progress_fn.is_none()) {
-          try {
-            //            fprintf(stderr, "PREPARING REPORT\n");
-            Py::FullStatusReport r;
-            r.num_completed = report.num_completed;
-            r.num_total_runs = report.num_total_runs;
-            //            fprintf(stderr, "PREPARING REPORT - B\n");
-            for (std::size_t k = 0; k < report.workers_reports.size(); ++k) {
-              //              fprintf(stderr, "PREPARING REPORT - worker\n");
-              // worker running? add this value
-              if (!report.workers_running[k]) {
-                r.workers.append(boost::python::object());
-                continue;
-              }
-              // and prepare the report object
-              const auto& rr = report.workers_reports[k];
-              Py::WorkerStatusReport wreport;
-              // generic worker status report fields
-              wreport.worker_id = k;
-              wreport.fraction_done = rr.fraction_done;
-              wreport.msg = rr.msg;
-              // fields specific to MHRWValueHistogramTasks
-              wreport.data["kstep"] = rr.kstep;
-              wreport.data["mhrw_params"] = rr.mhrw_params;
-              wreport.data["acceptance_ratio"] = rr.acceptance_ratio;
-              wreport.data["n_total_iters"] = rr.n_total_iters;
-              //              fprintf(stderr, "PREPARING REPORT - worker dict ready\n");
-              // add this report
-              r.workers.append(wreport);
-              //              fprintf(stderr, "PREPARING REPORT - worker dict added\n");
-            }
-            // call python callback
-            //            fprintf(stderr, "PROGRESS CALLBACK ...\n");
-            progress_fn(boost::python::object(r));
-            //            fprintf(stderr, "PROGRESS CALLBACK DONE\n");
-          } catch (boost::python::error_already_set & ) {
-            tasks.requestInterrupt();
-            return;
-          }
-        }
-        // borrowed from tomographer2/tools/signal_status_handler.h: --->  FOR DEBUGGING::
-        /*
-        std::string elapsed = Tomographer::Tools::fmtDuration(std::chrono::steady_clock::now() - time_start);
-        fprintf(stderr,
-                "\n"
-                "=========================== Intermediate Progress Report ============================\n"
-                "  Total Completed Runs: %d/%d: %5.2f%%\n"
-                "  %s total elapsed\n",
-                report.num_completed, report.num_total_runs,
-                (double)report.num_completed/report.num_total_runs*100.0,
-                elapsed.c_str());
-        if (report.workers_running.size() == 1) {
-          if (report.workers_running[0]) {
-            fprintf(stderr, "--> %s\n", report.workers_reports[0].msg.c_str());
-          }
-        } else if (report.workers_running.size() > 1) {
-          fprintf(stderr,
-                  "Current Run(s) information (workers working/spawned %d/%d):\n",
-                  (int)std::count(report.workers_running.begin(), report.workers_running.end(), true),
-                  (int)report.workers_running.size()
-              );
-          for (unsigned int k = 0; k < report.workers_running.size(); ++k) {
-            std::string msg = report.workers_running[k] ? report.workers_reports[k].msg : std::string("<idle>");
-            fprintf(stderr, "=== #%2u: %s\n", k, msg.c_str());
-          }
-        } else {
-          // no info. (workers_running.size() == 0)
-        }
-        fprintf(stderr,
-                "=====================================================================================\n\n");
-        */
-        // <----
-      });
-  tasks.requestPeriodicStatusReport(progress_interval_ms);
+  setTasksStatusReportPyCallback(tasks, progress_fn, progress_interval_ms);
 
   // and run our tomo process
 
-  time_start = std::chrono::steady_clock::now();
+  std::chrono::steady_clock::time_point time_start = std::chrono::steady_clock::now();
 
   try {
     tasks.run();
@@ -394,14 +263,14 @@ boost::python::object py_tomorun(
       throw boost::python::error_already_set();
     }
     // no Python exception set?? -- set a RuntimeError via Boost
-    throw e;
+    throw;
   } catch (std::exception & e) {
     //fprintf(stderr, "EXCEPTION: %s\n", e.what());
     // another exception
     if (PyErr_Occurred() != NULL) { // an inner boost::python::error_already_set() was caught & rethrown by MultiProc::OMP
       throw boost::python::error_already_set();
     }
-    throw e; // error via boost::python
+    throw; // error via boost::python
   }
 
   auto time_end = std::chrono::steady_clock::now();
@@ -415,6 +284,7 @@ boost::python::object py_tomorun(
 
   res["final_histogram"] = boost::python::object(results.finalHistogram());
   res["simple_final_histogram"] = boost::python::object(results.simpleFinalHistogram());
+  res["elapsed_seconds"] = 1.0e-6 * std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_start).count();
 
   std::string final_report;
   { std::ostringstream ss;
@@ -473,7 +343,42 @@ void py_tomo_tomorun()
         .add_property("total_fraction_done", &Kl::total_fraction_done)
         .add_property("num_completed", +[](const Kl& r) { return r.num_completed; })
         .add_property("num_total_runs", +[](const Kl& r) { return r.num_total_runs; })
+        .add_property("elapsed", +[](const Kl& r) { return r.elapsed; })
         .add_property("workers", +[](const Kl& r) { return r.workers; })
+        // a shortcut to get scripts up&running real fast:
+        .def("getHumanReport", +[](const Kl& r) {
+            // adapted from tomographer2/tools/signal_status_handler.h: -->
+            std::string elapsed = Tomographer::Tools::fmtDuration(std::chrono::milliseconds(int(r.elapsed*1000)));
+            std::stringstream ss;
+            ss << "=========================== Intermediate Progress Report ============================\n"
+               << "  Total Completed Runs: " << Tomographer::Tools::fmts(
+                   "%d/%d: %5.2f%%", r.num_completed, r.num_total_runs, r.num_completed*100.0/r.num_total_runs
+                   ) << "\n"
+               << "  " << elapsed << "s total elapsed\n";
+            if (boost::python::len(r.workers) == 1) {
+              if (!boost::python::object(r.workers[0]).is_none()) {
+                ss << "--> " << boost::python::extract<Py::WorkerStatusReport>(r.workers[0])().msg << "\n";
+              }
+            } else if (boost::python::len(r.workers) > 1) {
+              const int numtotal = boost::python::len(r.workers);
+              int numworking = 0;
+              int k;
+              for (k = 0; k < numtotal; ++k) { numworking += (boost::python::object(r.workers[k]).is_none() ? 0 : 1); }
+              ss << "Current Run(s) information (workers working/spawned " << numworking << "/" << numtotal << "):\n";
+              for (k = 0; k < numtotal; ++k) {
+                ss << "=== " << std::setw(2) << k << ": ";
+                if (boost::python::object(r.workers[k]).is_none()) {
+                  ss << "<idle>\n";
+                } else {
+                  ss << boost::python::extract<Py::WorkerStatusReport>(r.workers[k])().msg << "\n";
+                }
+              }
+            } else {
+              // no info. (workers_running.size() == 0)
+            }
+            ss << "=====================================================================================\n";
+            return ss.str();
+          })
         ;
     }
     logger.debug("multiproc.WorkerStatusReport ...");

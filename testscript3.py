@@ -2,13 +2,13 @@
 from __future__ import print_function
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.INFO)
 
 import tomographer
 import numpy as np
 
 #tomographer.cxxlogger.level = logging.DEBUG
-tomographer.cxxlogger.level = logging.NOTSET
+#tomographer.cxxlogger.level = logging.NOTSET
 #tlg = logging.getLogger("tomographer")
 #tlg.debug("EXAMPLE MESSAGE")
 
@@ -40,7 +40,7 @@ rho_ref = np.array([[1,0],[0,0]])
 print("Data ready.")
 
 def progress(report):
-    print("PROGRESS REPORT: ", report.num_completed, "/", report.num_total_runs)
+    print("PROGRESS REPORT: ", report.num_completed, "/", report.num_total_runs, "   ", report.elapsed, "s elapsed")
     for r in report.workers:
         if not r:
             print("  :: (idle thread)")
@@ -50,6 +50,8 @@ def progress(report):
             worker_id=r.worker_id, fraction_done=r.fraction_done, **r.data))
         print("        {}".format(r.msg.replace('\n', '\n    ')))
     print()
+def progress2(report):
+    print(report.getHumanReport())
 
 try:
     r = tomographer.tomorun.tomorun(dim=2, Nm=Nm, Emn=Emn,
@@ -58,7 +60,7 @@ try:
                                     fig_of_merit="obs-value",
                                     observable=rho_ref,
                                     num_repeats=12,
-                                    progress_fn=progress)
+                                    progress_fn=progress2)
     print(repr(r))
 
     print(r['final_histogram'].prettyPrint(100))

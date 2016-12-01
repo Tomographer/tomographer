@@ -55,11 +55,20 @@ void py_tomo_tomorun();
 PyLogger tpy_logger;
 
 
+
 BOOST_PYTHON_MODULE(tomographer)
 {
   // python logging
   tpy_logger.initPythonLogger();
   auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
+
+  boost::python::class_<PyLogger>("PyLogger")
+    .add_property("level", +[](const PyLogger & l) { return l.level(); },
+                  +[](PyLogger & l, boost::python::object newlevel) {
+                    l.setLevel(l.fromPythonLevel(newlevel));
+                  });
+  
+  boost::python::scope().attr("cxxlogger") = boost::ref(tpy_logger);
 
   logger.debug("INIT TOMOGRAPHER");
 
@@ -72,22 +81,21 @@ BOOST_PYTHON_MODULE(tomographer)
 
   py_tomo_tomorun();
 
-
-  // expose an interface for our C++/python logger wrapper, in particular to set C++ log level
-  struct PyCxxLoggerInterface {
-    PyCxxLoggerInterface() : the_tpy_logger(&tpy_logger) { }
-    PyLogger *the_tpy_logger;
-  };
-  {
-    boost::python::class_<PyCxxLoggerInterface>("_pycxxlogger")
-      .add_property("level", +[](PyCxxLoggerInterface & l) {
-          return l.the_tpy_logger->toPythonLevel(l.the_tpy_logger->level());
-        },
-        +[](PyCxxLoggerInterface & l, boost::python::object newlevel) {
-          l.the_tpy_logger->setLevel(l.the_tpy_logger->fromPythonLevel(newlevel));
-        });
-  }
-  boost::python::scope().attr("cxxlogger") = PyCxxLoggerInterface();
+  // // expose an interface for our C++/python logger wrapper, in particular to set C++ log level
+  // struct PyCxxLoggerInterface {
+  //   PyCxxLoggerInterface() : the_tpy_logger(&tpy_logger) { }
+  //   PyLogger *the_tpy_logger;
+  // };
+  // {
+  //   boost::python::class_<PyCxxLoggerInterface>("_pycxxlogger")
+  //     .add_property("level", +[](PyCxxLoggerInterface & l) {
+  //         return l.the_tpy_logger->toPythonLevel(l.the_tpy_logger->level());
+  //       },
+  //       +[](PyCxxLoggerInterface & l, boost::python::object newlevel) {
+  //         l.the_tpy_logger->setLevel(l.the_tpy_logger->fromPythonLevel(newlevel));
+  //       });
+  // }
+  // boost::python::scope().attr("cxxlogger") = PyCxxLoggerInterface();
   
 
   // haha

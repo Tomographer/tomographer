@@ -15,10 +15,10 @@ PyLogger::PyLogger()
 }
 
 
-void PyLogger::initPythonLogger()
+void PyLogger::initPythonLogger(std::string logger_name)
 {
   py_logging = boost::python::import("logging");
-  py_logger = py_logging.attr("getLogger")("tomographer");
+  py_logger = py_logging.attr("getLogger")(logger_name);
 
   //setLevel( fromPythonLevel(py_logger.attr("level")) );
   setLevel( fromPythonLevel(py_logger.attr("getEffectiveLevel")()) ); // level at which messages will be seen
@@ -30,6 +30,23 @@ void PyLogger::initPythonLogger()
 void PyLogger::setLevel(int level)
 {
   setLogLevel(level);
+  // produce a warning if the level is set to LONGDEBUG but the messages won't display --
+  // this really slows down the computation time and a user could be wondering why
+  if (level == Tomographer::Logger::LONGDEBUG) {
+    if (!py_logger.is_none()) {
+      // but only perform this check if py_logger is not None
+      int effective_level = fromPythonLevel(py_logger.attr("getEffectiveLevel")());
+      if (effective_level != Tomographer::Logger::LONGDEBUG) {
+        this->warning("PyLogger::setLevel", [&](std::ostream & stream) {
+            stream << "Log level LONGDEBUG set on C++ logger but Python logger only displays messages of "
+                   << "severity at least " << Tomographer::Logger::LogLevel(effective_level) << ". This will "
+                   << "considerably and uselessly slow down the computation as tons of messages on the "
+                   << "C++ side will be emitted to the Python logger (where they will be ignored) instead of "
+                   << "being filtered out immediately.";
+          });
+      }
+    }
+  }
 }
 
 void PyLogger::emitLog(int level, const char * origin, const std::string & msg)

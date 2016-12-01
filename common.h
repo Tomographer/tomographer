@@ -39,5 +39,4 @@ extern PyLogger tpy_logger;
 typedef decltype(tpy_logger) TPyLoggerType;
 
 
-
 #endif
