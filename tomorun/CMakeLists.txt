@@ -58,24 +58,24 @@ if(TOMORUN_SUFFIX)
 endif(TOMORUN_SUFFIX)
 
 # dependency: Eigen
-target_include_directories(tomorun SYSTEM PRIVATE "${EIGEN3_INCLUDE_DIR}")
+target_include_directories(tomorun SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
 # already parallelized application, so disable Eigen's own parallelization (see
 # http://eigen.tuxfamily.org/dox/TopicMultiThreading.html)
 target_compile_definitions(tomorun PRIVATE -DEIGEN_DONT_PARALLELIZE)
 
 
 # dependency: Boost headers, Boost program_options library
-target_include_directories(tomorun SYSTEM PRIVATE "${Boost_INCLUDE_DIR}")
-target_link_libraries(tomorun "${Boost_PROGRAM_OPTIONS_LIBRARY}")
+target_include_directories(tomorun SYSTEM PRIVATE ${Boost_INCLUDE_DIR})
+target_link_libraries(tomorun ${Boost_PROGRAM_OPTIONS_LIBRARY})
 
 # dependency: MatIO (and MatIO's ZLIB dependency)
-target_include_directories(tomorun SYSTEM PRIVATE "${MATIO_INCLUDE_DIR}" "${ZLIB_INCLUDE_DIRS}")
-target_link_libraries(tomorun "${MATIO_LIBRARIES}" "${ZLIB_LIBRARIES}")
+target_include_directories(tomorun SYSTEM PRIVATE ${MATIO_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
+target_link_libraries(tomorun ${MATIO_LIBRARIES} ${ZLIB_LIBRARIES})
 
 # compile with OpenMP
 if (OPENMP_FOUND)
-  target_compile_options(tomorun PRIVATE "${OpenMP_CXX_FLAGS}")
-  target_link_libraries(tomorun "${OpenMP_CXX_FLAGS}")
+  target_compile_options(tomorun PRIVATE ${OpenMP_CXX_FLAGS})
+  target_link_libraries(tomorun ${OpenMP_CXX_FLAGS})
 else()
   WarnTargetNoOpenMP("The tomorun executable")
 endif()

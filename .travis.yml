@@ -37,8 +37,8 @@ script:
   - "$CMAKE_PATH/bin/cmake" .. $CMAKE_COMPILER_ARGS -DTOMOGRAPHER_ENABLE_TESTS=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH" -DMATIO_INCLUDE_DIR="$MATIO_PATH/_install/include" -DMATIO_LIBRARY="$MATIO_PATH/_install/lib/libmatio.so"
   - make VERBOSE=1
 #  - CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all make test
-#  - BOOST_TEST_LOG_LEVEL=all ctest --verbose
-  - CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all ctest --timeout 300
+#  - BOOST_TEST_LOG_LEVEL=all "$CMAKE_PATH/bin/ctest" --verbose
+  - CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all "$CMAKE_PATH/bin/ctest" --timeout 300
 
 matrix:
   include:

@@ -98,7 +98,7 @@ macro(addTomographerTest test_cxx NeedsList)
   target_include_directories(${test_name} PRIVATE "..")
 
   # dependency: Eigen
-  target_include_directories(${test_name} SYSTEM PRIVATE "${EIGEN3_INCLUDE_DIR}")
+  target_include_directories(${test_name} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
   target_compile_definitions(${test_name} PRIVATE -DEIGEN_DONT_PARALLELIZE)
 
   if (tomotests_set_BOOST_TEST_DYN_LINK)
@@ -108,19 +108,19 @@ macro(addTomographerTest test_cxx NeedsList)
   if (";${NeedsList};" MATCHES ";openmp;")
     # compile & link with OpenMP
     if (OPENMP_FOUND)
-      target_compile_options(${test_name} PRIVATE "${OpenMP_CXX_FLAGS}")
-      target_link_libraries(${test_name} "${OpenMP_CXX_FLAGS}")
+      target_compile_options(${test_name} PRIVATE ${OpenMP_CXX_FLAGS})
+      target_link_libraries(${test_name} ${OpenMP_CXX_FLAGS})
     else()
       WarnTargetNoOpenMP("Test ${test_name}")
     endif()
   endif()
 
   target_compile_definitions(${test_name} PRIVATE "-DBOOST_TEST_MODULE=${test_name}")
-  target_include_directories(${test_name} SYSTEM PRIVATE "${MATIO_INCLUDE_DIR}" "${Boost_INCLUDE_DIR}" "${ZLIB_INCLUDE_DIRS}")
+  target_include_directories(${test_name} SYSTEM PRIVATE ${MATIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 
   if (";${NeedsList};" MATCHES ";LAPACK;")
     target_link_libraries(${test_name}
-      "${LAPACK_LINKER_FLAGS}"
+      ${LAPACK_LINKER_FLAGS}
       )
     target_link_libraries(${test_name} ${LAPACK_LIBRARIES})
   endif()
@@ -195,15 +195,15 @@ set_property(TARGET minimal_tomorun PROPERTY CXX_STANDARD 11)
 # tomographer2 headers
 target_include_directories(minimal_tomorun PRIVATE "..")
 # dependency: Eigen
-target_include_directories(minimal_tomorun SYSTEM PRIVATE "${EIGEN3_INCLUDE_DIR}")
+target_include_directories(minimal_tomorun SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
 target_compile_definitions(minimal_tomorun PRIVATE -DEIGEN_DONT_PARALLELIZE)
 if (OPENMP_FOUND)
-  target_compile_options(minimal_tomorun PRIVATE "${OpenMP_CXX_FLAGS}")
-  target_link_libraries(minimal_tomorun "${OpenMP_CXX_FLAGS}")
+  target_compile_options(minimal_tomorun PRIVATE ${OpenMP_CXX_FLAGS})
+  target_link_libraries(minimal_tomorun ${OpenMP_CXX_FLAGS})
 else()
   WarnTargetNoOpenMP("The example minimal_tomorun executable")
 endif()
-target_include_directories(minimal_tomorun PRIVATE "${Boost_INCLUDE_DIR}")
+target_include_directories(minimal_tomorun PRIVATE ${Boost_INCLUDE_DIR})
 
 add_test(NAME minimal_tomorun
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
@@ -247,6 +247,12 @@ add_test(NAME test_tomorun_1qubit_analytic_solution_runcheck_binerr
   )
 set_tests_properties(test_tomorun_1qubit_analytic_solution_runcheck_binerr
   PROPERTIES DEPENDS "test_tomorun_1qubit_analytic_solution_check;test_tomorun_1qubit_analytic_solution_run_binerr")
+
+
+add_test(NAME test_python_interface
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/pytests.py"
+  )
 
 
 message(STATUS "Added test targets")

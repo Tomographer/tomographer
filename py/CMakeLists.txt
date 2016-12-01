@@ -56,14 +56,14 @@ target_include_directories(tomographerpy PUBLIC "..")
 # our own tomographerpy headers
 target_include_directories(tomographerpy PUBLIC "cxx")
 
-target_include_directories(tomographerpy SYSTEM PUBLIC "${EIGEN3_INCLUDE_DIR}")
+target_include_directories(tomographerpy SYSTEM PUBLIC ${EIGEN3_INCLUDE_DIR})
 target_compile_definitions(tomographerpy PRIVATE -DEIGEN_DONT_PARALLELIZE)
 
-target_include_directories(tomographerpy SYSTEM PUBLIC "${PYTHON_INCLUDE_DIRS}")
-target_link_libraries(tomographerpy "${PYTHON_LIBRARY}")
-target_include_directories(tomographerpy SYSTEM PUBLIC "${Boost_INCLUDE_DIR}")
-target_link_libraries(tomographerpy "${Boost_PYTHON_LIBRARY}")
+target_include_directories(tomographerpy SYSTEM PUBLIC ${PYTHON_INCLUDE_DIRS})
+target_link_libraries(tomographerpy ${PYTHON_LIBRARY})
+target_include_directories(tomographerpy SYSTEM PUBLIC ${Boost_INCLUDE_DIR})
+target_link_libraries(tomographerpy ${Boost_PYTHON_LIBRARY})
 
-target_compile_options(tomographerpy PRIVATE "${OpenMP_CXX_FLAGS}")
-target_link_libraries(tomographerpy "${OpenMP_CXX_FLAGS}")
+target_compile_options(tomographerpy PRIVATE ${OpenMP_CXX_FLAGS})
+target_link_libraries(tomographerpy ${OpenMP_CXX_FLAGS})
 

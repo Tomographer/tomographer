@@ -3,6 +3,11 @@
 
 #include "tomographerpy/eigpyconv.h"
 
+// TOMOGRAPHER_VERSION directly provided by setup.py
+#ifndef TOMOGRAPHER_VERSION
+#  include <tomographer2/tomographer_version.h>
+#endif
+
 
 // tests .... ---------------
 double test_eigen(const Eigen::MatrixXd & x)
@@ -62,6 +67,9 @@ BOOST_PYTHON_MODULE(tomographer)
   tpy_logger.initPythonLogger();
   auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
 
+  logger.debug("INIT TOMOGRAPHER");
+
+  // expose Python API for setting the C++ logger level
   boost::python::class_<PyLogger>("PyLogger")
     .add_property("level", +[](const PyLogger & l) { return l.level(); },
                   +[](PyLogger & l, boost::python::object newlevel) {
@@ -70,7 +78,8 @@ BOOST_PYTHON_MODULE(tomographer)
   
   boost::python::scope().attr("cxxlogger") = boost::ref(tpy_logger);
 
-  logger.debug("INIT TOMOGRAPHER");
+  // the version of this library module
+  boost::python::scope().attr("__version__") = TOMOGRAPHER_VERSION;
 
   // Eigen converters
   register_eigen_converter();

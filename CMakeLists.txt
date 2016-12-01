@@ -238,6 +238,9 @@ if(TOMOGRAPHER_ENABLE_TESTS)
 
   EnsureCXX11StdThisThreadSleepForAvailable()
 
+  # find the python executable -- used to run the tests for the python interface
+  find_package(PythonInterp REQUIRED)
+
   # Enable testing for the project
   enable_testing()
 
