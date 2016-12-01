@@ -651,8 +651,12 @@ public:
   void run()
   {
     shared_data.results->init(shared_data.num_total_runs, shared_data.n_chunk, shared_data.pcdata);
-      
+    
     shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "preparing for parallel runs");
+
+#ifndef _OPENMP
+    shared_data.logger.warning("MultiProc::OMP::TaskDispatcher::run()", "OpenMP is disabled; tasks will run serially.");
+#endif
 
     // declaring these as "const" causes a weird compiler error
     // "`n_chunk' is predetermined `shared' for `shared'"

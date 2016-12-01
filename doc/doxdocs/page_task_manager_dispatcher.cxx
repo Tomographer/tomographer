@@ -260,5 +260,9 @@
  * \par void requestInterrupt()
  *   Interrupt all tasks as soon as possible.
  *
+ * The task manager/dispatcher must also provide the following typedef:
+ *
+ * \par typedef ... TaskType;
+ *   The \ref pageInterfaceTask-compliant type used to describe a task.
  *
  */
