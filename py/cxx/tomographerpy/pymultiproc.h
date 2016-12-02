@@ -96,7 +96,15 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, boost::python
   typedef typename TaskDispatcher::TaskType TaskType;
   typedef typename TaskType::StatusReportType TaskStatusReportType;
 
-  auto time_start = std::chrono::steady_clock::now();
+  typedef
+#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
+    std::chrono::monotonic_clock // for GCC/G++ 4.6
+#else
+    std::chrono::steady_clock
+#endif
+    StdClockType;
+
+  auto time_start = StdClockType::now();
 
   tasks.setStatusReportHandler(
       [progress_fn,time_start](const Tomographer::MultiProc::FullStatusReport<TaskStatusReportType> & report) {
@@ -109,13 +117,13 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, boost::python
         if (!progress_fn.is_none()) {
           auto r = preparePyTaskStatusReport<TaskType>(report);
           r.elapsed =
-            std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::steady_clock::now() - time_start).count()
+            std::chrono::duration_cast<std::chrono::milliseconds>(StdClockType::now() - time_start).count()
             / 1000.0;
           progress_fn(boost::python::object(r));
         }
         // borrowed from tomographer2/tools/signal_status_handler.h: --->  FOR DEBUGGING::
         /*
-          std::string elapsed = Tomographer::Tools::fmtDuration(std::chrono::steady_clock::now() - time_start);
+          std::string elapsed = Tomographer::Tools::fmtDuration(StdClockType::now() - time_start);
           fprintf(stderr,
           "\n"
           "=========================== Intermediate Progress Report ============================\n"

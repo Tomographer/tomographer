@@ -30,8 +30,9 @@ set(tomographerpy_SRCS
   cxx/eigpyconv.cxx
   cxx/pyhistogram.cxx
   cxx/pytomorun.cxx
+  cxx/pymultiproc.cxx
   cxx/pylogger.cxx
-  cxx/tomographerbase.cxx
+  cxx/tomographerpy.cxx
   )
 add_library(tomographerpy SHARED ${tomographerpy_SRCS})
 

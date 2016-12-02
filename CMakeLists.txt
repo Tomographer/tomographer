@@ -198,7 +198,7 @@ if (BUILD_TOMOPY)
   find_package(Boost 1.40 COMPONENTS python REQUIRED)
   
   # We need NumPy also
-  find_package(NumPy REQUIRED)
+  find_package(NumPy 1.7 REQUIRED)
 
   EnsureCXX11StdThisThreadSleepForAvailable()
 

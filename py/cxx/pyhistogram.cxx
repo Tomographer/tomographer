@@ -3,6 +3,7 @@
 
 #include "tomographerpy/pyhistogram.h"
 
+#include "common_p.h"
 
 
 void py_tomo_histogram()
@@ -48,6 +49,7 @@ void py_tomo_histogram()
       .def("record", +[](Kl & h, RealType x) { return h.record(x); })
       .def("record", +[](Kl & h, RealType x, CountIntType o) { return h.record(x, o); })
       .def("prettyPrint", &Kl::prettyPrint)
+      .def("prettyPrint", +[](Kl & h) { return h.prettyPrint(); })
       .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
                                                            boost::python::return_internal_reference<>()))
       .add_property("bins", +[](Kl & h) -> Eigen::MatrixXi { return h.bins.matrix(); },
@@ -78,6 +80,7 @@ void py_tomo_histogram()
       .def("record", +[](Kl & h, RealType x) { return h.record(x); })
       .def("record", +[](Kl & h, RealType x, RealType o) { return h.record(x, o); })
       .def("prettyPrint", &Kl::prettyPrint)
+      .def("prettyPrint", +[](Kl & h) { return h.prettyPrint(); })
       .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
                                                            boost::python::return_internal_reference<>()))
       .add_property("bins", +[](Kl & h) -> Eigen::MatrixXd { return h.bins.matrix(); },
@@ -109,6 +112,7 @@ void py_tomo_histogram()
       .def("record", +[](Kl & h, RealType x) { return h.record(x); })
       .def("record", +[](Kl & h, RealType x, RealType o) { return h.record(x, o); })
       .def("prettyPrint", &Kl::prettyPrint)
+      .def("prettyPrint", +[](Kl & h) { return h.prettyPrint(); })
       .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
                                                            boost::python::return_internal_reference<>()))
       .add_property("bins", +[](Kl & h) -> Eigen::MatrixXd { return h.bins.matrix(); },

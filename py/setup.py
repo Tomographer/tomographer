@@ -134,6 +134,7 @@ files = [ os.path.join('cxx', x) for x in [
     "eigpyconv.cxx",
     "pyhistogram.cxx",
     "pylogger.cxx",
+    "pymultiproc.cxx",
     "pytomorun.cxx",
 ] ]
 

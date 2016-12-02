@@ -31,8 +31,4 @@ typedef Tomographer::AveragedHistogram<UniformBinsHistogramWithErrorBars, RealTy
 } // namespace Py
 
 
-void py_tomo_histogram();
-
-
-
 #endif

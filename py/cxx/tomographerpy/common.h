@@ -19,24 +19,8 @@
 #include <tomographerpy/pylogger.h>
 
 
-
 typedef double RealType;
 typedef int CountIntType;
-
-
-
-// Python/C++ logger:
-
-// to allow for debugging
-//extern Tomographer::Logger::FileLogger tpy_logger(std::stderr, Tomographer::Logger::INFO, true /* display_origin */);
-// to be fast
-//extern Tomographer::Logger::VacuumLogger tpy_logger;
-// by default: slow, but really good integration to Python logging
-extern PyLogger tpy_logger;
-
-
-// the type of the C++ logger we are using -- for any of the above
-typedef decltype(tpy_logger) TPyLoggerType;
 
 
 #endif

@@ -1,9 +1,16 @@
-#ifndef PYLOGGER_H
-#define PYLOGGER_H
 
-#include <boost/python.hpp>
+
+#ifndef TOMOGRAPHER_PY_PYLOGGER_H
+#define TOMOGRAPHER_PY_PYLOGGER_H
+
+// this is normally not required (circular), because common.h includes this file; yet keep
+// this in case a user includes pylogger.h without including common.h first.
+#include <tomographerpy/common.h>
 
 #include <tomographer2/tools/loggers.h>
+
+
+
 
 class PyLogger; // forward declaration
 namespace Tomographer { namespace Logger {
@@ -12,16 +19,14 @@ namespace Tomographer { namespace Logger {
   struct LoggerTraits<PyLogger> : DefaultLoggerTraits
   {
     enum {
-      //      // We enforce thread-safety with "#pragma omp critical" sections
-      //      IsThreadSafe = 1, // does not work, causes deadlocks when already in a critical section
-      // set this to a particular level to unconditinally discard any
-      // message logged with strictly lower importance level.
-      StaticMinimumImportanceLevel = -1
-      //      // reflect the level from Python's logger -- NO, TOO SLOW.
-      //      HasOwnGetLevel = 1
+      // Python calls are not thread-safe. Enforcing thread-safety manually with "#pragma
+      // omp critical" sections is not a good idea, as it will cause deadlocks if called
+      // from within code which itself is in a critical section.
+      IsThreadSafe = 0
     };
   };
 } } // namespaces
+
 class PyLogger : public Tomographer::Logger::LoggerBase<PyLogger>
 {
 private:
@@ -63,6 +68,15 @@ public:
       }
     }
   };
+  /**
+   * \code
+   *   {
+   *     auto dummy = pushBypassPython();
+   *
+   *     ...
+   *   } // bypass released after "dummy" goes out of scope
+   * \endcode
+   */
   inline _BypassPython pushBypassPython() {
     return _BypassPython(this);
   }
