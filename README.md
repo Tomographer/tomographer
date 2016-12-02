@@ -10,20 +10,25 @@ A toolbox for error analysis in quantum tomography.
 Overview
 --------
 
-This project comprises two parts:
+This project comprises three parts:
 
  * The `tomorun` program — use this to analyze data from a typical tomography
    experiment;
 
  * The generic, `Tomographer` C++ framework — a flexible set of tools to run
    Metropolis-Hastings random walks, deal with density matrices, and other
-   utilities.
+   utilities;
+
+ * A python interface — analyze data from a typical tomography experiment in a
+   python workflow.
 
 The `tomorun` executable produces a histogram of a figure of merit under the
 distribution relevant for a reliable error analysis as described in [Faist &
 Renner, Practical and Reliable Error Bars in Quantum Tomography, Phys. Rev.
 Lett. 117, 010404 (2016)](http://dx.doi.org/10.1103/PhysRevLett.117.010404)
-([arXiv:1509.06763](http://arxiv.org/abs/1509.06763)).
+([arXiv:1509.06763](http://arxiv.org/abs/1509.06763)).  The python interface
+provides an interface to the same functionality as `tomorun` from python/numpy
+code.
 
 The C++ framework is a set of abstract and generic classes which you can combine
 in your preferred way to implement this random walk for even more general
@@ -47,10 +52,10 @@ If you compile from source, make sure you download the offical source package
 from our releases page (or clone the git repo). If you use github's automatic
 `Download ZIP' links from the source code, you'll end up with missing files.
 
-[![Build Status](https://travis-ci.org/Tomographer/tomographer.svg?branch=master)](https://travis-ci.org/Tomographer/tomographer)
-
 If you wish to contribute to development, don't hesitate to fork the repo on
 github and send me pull requests, or to contact me if you have questions.
+
+[![Build Status](https://travis-ci.org/Tomographer/tomographer.svg?branch=master)](https://travis-ci.org/Tomographer/tomographer)
 
 
 Prerequisites
@@ -59,7 +64,7 @@ Prerequisites
 If you're lucky and there's a binary release for your system, you won't need
 anything else.
 
-To compile from source, you'll need:
+To compile `tomorun` from source, you'll need:
 
   - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, LLVM/Clang++ >= 3.8)
   - [CMake >= 3.1](http://www.cmake.org/)
@@ -67,16 +72,24 @@ To compile from source, you'll need:
   - [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/)
   - [MatIO library](https://sourceforge.net/projects/matio/)
 
-A recent C++ compiler is required as some C++11 features and elements of its
-standard library are used. Also, make sure it supports OpenMP or you won't
-benefit from parallelization. If you use LLVM/Clang++, you might need to install
-additional packages for OpenMP (e.g. `libomp`).
+To compile the python interface, you'll need:
+
+  - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, LLVM/Clang++ >= 3.8)
+  - [CMake >= 3.1](http://www.cmake.org/)
+  - [Boost libraries >= 1.40, which includes boost::python](http://www.boost.org/)
+  - [Python 2 or Python 3](http://www.python.org/)
+  - [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/)
+
+In both cases a recent C++ compiler is required as some C++11 features and
+elements of its standard library are used. Also, make sure it supports OpenMP or
+you won't benefit from parallelization. If you use LLVM/Clang++, you might need
+to install additional packages for OpenMP (e.g. `libomp`).
 
 Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
 
 
-Installation
-------------
+Installing `tomorun`
+--------------------
 
 If you found a binary release for your system, simply unpack it wherever you like.
 It is then ready for use.
@@ -130,8 +143,8 @@ memory; if you want to be really conservative use `--param ggc-min-expand=0
 `-DCMAKE_CXX_FLAGS="--param ..."`.
 
 
-Running Tomorun
----------------
+Running `tomorun`
+-----------------
 
 In the binary distributions, `tomorun` is located in the `bin/` subdirectory.
 Detailed information about how to use & run `tomorun` is obtained by querying
@@ -187,8 +200,7 @@ An example config file would be:
     value-hist=0.9:1/50
 
 
-MATLAB Tools
-------------
+### MATLAB Tools
 
 Some tools are provided for fitting the resulting histogram to our theoretical
 model. These are MATLAB scripts located in the `tools` subdirectory.
@@ -198,11 +210,35 @@ For more information on how to run the histogram analyzer/fitter, run:
     >> analyze_tomorun_histogram('Help')
 
 
-API Documentation
------------------
+Installing the Python Interface
+-------------------------------
 
-You can build the API documentation using [Doxygen >= 1.8][doxygen]. You'll also
-need `dot` (from the `graphviz` suite). To build the documentation, simply run
+TODO: WRITE ME ...............................
+
+
+Using the Python Interface
+--------------------------
+
+TODO: WRITE ME AND PROVIDE EXAMPLES in `examples/` ..........
+
+
+C++ Framework: API Documentation
+--------------------------------
+
+Tomographer, at its core, is a set of C++ template classes which can be put
+together in the way that fits your needs.  C++ template metaprogramming is very
+advantageous performancewise, as most optimizations and specializations are
+performed during compilation and thus avoiding runtime look-ups.
+
+In most cases, the `tomorun` executable or the python interface is probably what
+you're looking for.  However, if you would like to consider a more general
+setting (such as a different random walk method), then you can do so by reusing
+existing code as much as possible.
+
+The API documentation of the Tomographer C++ Framework can be found
+(here)[tomographer_apidoc].  You can also build the API documentation of the
+Tomographer C++ Framework using [Doxygen >= 1.8][doxygen]. You'll also need
+`dot` (from the `graphviz` suite). To build the documentation, simply run
 
     tomographer-X.X/build> make doc
 
@@ -215,6 +251,7 @@ of Doxygen using the `-DDOXYGEN_EXECUTABLE=/location/of/doxygen` switch.
 To build the latex documentation, enter the `latex` directory and run `make`.
 The output file is called `refman.pdf`.
 
+[tomographer_apidoc]: https://tomographer.github.io/tomographer/api-doc/
 [doxygen]: http://www.doxygen.org/
 
 
@@ -223,7 +260,8 @@ Test Suite (for developers)
 
 There is a test suite which checks that the tomographer C++ framework works
 correctly, and that no bugs or regressions are being introduced as the code is
-being changed and maintained.
+being changed and maintained.  The tests cover `tomorun` and the python
+interface as well.
 
 To compile and run the test suite, you need to specify to cmake that you want to
 build it:
@@ -285,8 +323,9 @@ works:
 Authors, Copyright, License
 ---------------------------
 
-Author: Philippe Faist, pfaist@phys.ethz.ch.
+Author: Philippe Faist, phfaist@caltech.edu.
 
 Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+Copyright (c) 2016 Caltech, Philippe Faist
 
 Released under the terms of the MIT License (see file LICENSE.txt)
