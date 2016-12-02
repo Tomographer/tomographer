@@ -35,7 +35,7 @@ git:
 script:
   - mkdir build
   - cd build
-  - $CMAKE_PATH/bin/cmake .. $CMAKE_COMPILER_ARGS -DTOMOGRAPHER_ENABLE_TESTS=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH" -DMATIO_INCLUDE_DIR="$MATIO_PATH/_install/include" -DMATIO_LIBRARY="$MATIO_PATH/_install/lib/libmatio.so"
+  - $CMAKE_PATH/bin/cmake .. $CMAKE_COMPILER_ARGS -DBUILD_TOMOPY=on -DTOMOGRAPHER_ENABLE_TESTS=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH" -DMATIO_INCLUDE_DIR="$MATIO_PATH/_install/include" -DMATIO_LIBRARY="$MATIO_PATH/_install/lib/libmatio.so"
   - make VERBOSE=1
   - CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all $CMAKE_PATH/bin/ctest --timeout 300
 
@@ -50,6 +50,8 @@ matrix:
           packages:
             - gcc-4.6
             - g++-4.6
+            - python-dev
+            - libboost-python-dev
             - libboost-all-dev
       env:
         - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-4.6 -DCMAKE_CXX_COMPILER=g++-4.6"
@@ -61,6 +63,8 @@ matrix:
           packages:
             - gcc-5
             - g++-5
+            - python-dev
+            - libboost-python-dev
             - libboost-all-dev
       env:
         - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-5 -DCMAKE_CXX_COMPILER=g++-5"
@@ -72,15 +76,19 @@ matrix:
           packages:
             - gcc-6
             - g++-6
+            - python3-dev
+            - libboost-python-dev
             - libboost-all-dev
       env:
-        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-6 -DCMAKE_CXX_COMPILER=g++-6"
+        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-6 -DCMAKE_CXX_COMPILER=g++-6 -DBoost_PYTHON_LIBRARY_RELEASE=/usr/lib/libboost_python-py34.so"
     - compiler: clang
       addons:
         apt:
           packages:
             - libiomp5
             - libiomp-dev
+            - python3-dev
+            - libboost-python-dev
             - libboost-all-dev
       before_install:
         - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
@@ -89,7 +97,7 @@ matrix:
         - sudo apt-get update
         - sudo apt-get install clang-3.8 clang++-3.8
       env:
-        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8 -DOpenMP_C_FLAGS='-fopenmp=libiomp5' -DOpenMP_CXX_FLAGS='-fopenmp=libiomp5'"
+        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8 -DOpenMP_C_FLAGS='-fopenmp=libiomp5' -DOpenMP_CXX_FLAGS='-fopenmp=libiomp5' -DBoost_PYTHON_LIBRARY_RELEASE=/usr/lib/libboost_python-py34.so"
 
 # No e-mail notifications
 notifications:

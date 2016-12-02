@@ -80,7 +80,8 @@ macro(EnsureCXX11StdThisThreadSleepForAvailable)
   # Some older gcc/g++ (e.g. 4.7) needs -D_GLIBCXX_USE_NANOSLEEP in order to make available
   # std::this_thread::sleep_for().  So perform a test to see if this is the case.
   #
-  set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${TOMOGRAPHER_CXX11_STD_FLAGS}")
+  set(_save_CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS}")
+  set(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} ${CMAKE_CXX11_STANDARD_COMPILE_OPTION}")
   CHECK_CXX_SOURCE_COMPILES(
     "#include <thread>
 #include <chrono>
@@ -102,4 +103,5 @@ int main() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }"
       message(FATAL_ERROR "Your C++ compiler doesn't seem to support std::this_thread::sleep_for(). You may need to use a different compiler, or set the required flags yourself.")
     endif()
   endif()
+  set(CMAKE_REQUIRED_DEFINITIONS "${_save_CMAKE_REQUIRED_DEFINITIONS}")
 endmacro(EnsureCXX11StdThisThreadSleepForAvailable)
