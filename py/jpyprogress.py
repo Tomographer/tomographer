@@ -32,5 +32,5 @@ class NiceProgressBar(object):
         else:
             self.progress_widget.value = 100
             self.progress_widget.bar_style = 'success'
-            self.labelval.value = ""
+            self.labelval.value = "<span style=\"font-weight: bold; padding-left: 1em;\">finished</span>"
 
