@@ -47,6 +47,8 @@ If you compile from source, make sure you download the offical source package
 from our releases page (or clone the git repo). If you use github's automatic
 `Download ZIP' links from the source code, you'll end up with missing files.
 
+[![Build Status](https://travis-ci.org/Tomographer/tomographer.svg?branch=master)](https://travis-ci.org/Tomographer/tomographer)
+
 If you wish to contribute to development, don't hesitate to fork the repo on
 github and send me pull requests, or to contact me if you have questions.
 
@@ -60,8 +62,8 @@ anything else.
 To compile from source, you'll need:
 
   - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, LLVM/Clang++ >= 3.8)
-  - [CMake >= 2.8.5](http://www.cmake.org/)
-  - [Boost libraries](http://www.boost.org/)
+  - [CMake >= 3.1](http://www.cmake.org/)
+  - [Boost libraries >= 1.40](http://www.boost.org/)
   - [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/)
   - [MatIO library](https://sourceforge.net/projects/matio/)
 
@@ -82,8 +84,10 @@ It is then ready for use.
 The rest of this section concerns compiling Tomographer/Tomorun from source.
 
 The configuration, compilation and installation process is done using CMake.
-(You'll need CMake >= 2.8.5.)  Download an official release of Tomographer,
-unpack it, and enter the unpacked directory.  Then, issue the commands:
+(You'll need CMake >= 3.1. Don't worry, it's easy [install a binary
+release](https://cmake.org/download/).)  Download an official release of
+Tomographer, unpack it, and enter the unpacked directory.  Then, issue the
+commands:
 
     tomographer-X.X> mkdir build
     tomographer-X.X> cd build

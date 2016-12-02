@@ -226,7 +226,7 @@ boost::python::object py_tomorun(
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>  OurMHRandomWalkTask;
 
-  typedef typename OurCData::template ResultsCollectorType<TPyLoggerType>::Type OurResultsCollector;
+  typedef typename OurCData::ResultsCollectorType<TPyLoggerType>::Type OurResultsCollector;
 
   // seed for random number generator
   auto base_seed = std::chrono::system_clock::now().time_since_epoch().count();
