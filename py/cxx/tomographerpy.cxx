@@ -26,7 +26,7 @@ PyLogger tpy_logger;
 
 
 
-BOOST_PYTHON_MODULE(tomographer)
+BOOST_PYTHON_MODULE(_tomographer_cxx)
 {
   // python logging
   tpy_logger.initPythonLogger();
@@ -61,7 +61,7 @@ BOOST_PYTHON_MODULE(tomographer)
 
 
   // add utility modules, written in Python
-  boost::python::scope().attr("jpyutil") = boost::python::import("_tomographer_jpyutil");
+  //boost::python::scope().attr("jpyutil") = boost::python::import("_tomographer_jpyutil");
 
 
   logger.debug("TOMOGRAPHER INIT COMPLETE.");

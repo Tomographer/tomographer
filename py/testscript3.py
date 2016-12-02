@@ -5,7 +5,12 @@ import logging
 logging.basicConfig(level=logging.INFO)
 
 import tomographer
+#from tomographer import *
 import numpy as np
+
+# just see if we can import this
+import tomographer.jpyutil
+
 
 #tomographer.cxxlogger.level = logging.DEBUG
 #tomographer.cxxlogger.level = logging.NOTSET

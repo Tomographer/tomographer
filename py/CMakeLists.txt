@@ -40,8 +40,9 @@ add_library(tomographerpy SHARED ${tomographerpy_SRCS})
 # Enable C++11
 set_property(TARGET tomographerpy PROPERTY CXX_STANDARD 11)
 
-# create tomographer.so for "import tomographer", not libtomographerpy.so or libtomographerpy.dylib
-set_property(TARGET tomographerpy PROPERTY OUTPUT_NAME "tomographer")
+# create _tomographer_cxx.so for "import _tomographer_cxx" (internal to tomographer/__init__.py),
+# not libtomographerpy.so or libtomographerpy.dylib
+set_property(TARGET tomographerpy PROPERTY OUTPUT_NAME "_tomographer_cxx")
 set_property(TARGET tomographerpy PROPERTY PREFIX "")
 if(APPLE)
   set_property(TARGET tomographer PROPERTY SUFFIX ".so") # and not .dylib

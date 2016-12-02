@@ -130,7 +130,7 @@ ldflags = [
 ]
 
 files = [ os.path.join('cxx', x) for x in [
-    "tomographerbase.cxx",
+    "tomographerpy.cxx",
     "eigpyconv.cxx",
     "pyhistogram.cxx",
     "pylogger.cxx",
@@ -155,7 +155,7 @@ setup(name="tomographer",
       author_email='phfaist@caltech.edu',
       url='https://github.com/Tomographer/tomographer/',
       ext_modules=[
-          Extension("tomographer",
+          Extension("_tomographer_cxx",
                     files,
                     library_dirs=library_dirs,
                     libraries=libraries,
