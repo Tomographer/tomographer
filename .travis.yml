@@ -55,7 +55,7 @@ matrix:
             - libboost-python-dev
             - libboost-all-dev
       env:
-        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-4.6 -DCMAKE_CXX_COMPILER=g++-4.6 -DPYTHON_EXECUTABLE=/usr/bin/python -DCMAKE_CXX11_STANDARD_COMPILE_OPTION=-std=c++0x"
+        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-4.6 -DCMAKE_CXX_COMPILER=g++-4.6 -DPYTHON_EXECUTABLE=/usr/bin/python -DCMAKE_CXX11_STANDARD_COMPILE_OPTION=-std=c++0x -DCMAKE_CXX_FLAGS=-std=c++0x"
     - compiler: gcc
       addons:
         apt:
@@ -69,7 +69,7 @@ matrix:
             - libboost-python-dev
             - libboost-all-dev
       env:
-        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-5 -DCMAKE_CXX_COMPILER=g++-5 -DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython2.7.so -DPYTHON_INCLUDE_DIR=/usr/include/python2.7"
+        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-5 -DCMAKE_CXX_COMPILER=g++-5 -DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython2.7.so -DPYTHON_INCLUDE_DIR=/usr/include/python2.7 -DPYTHON_EXECUTABLE=/usr/bin/python"
     - compiler: gcc
       addons:
         apt:
@@ -83,7 +83,7 @@ matrix:
             - libboost-python-dev
             - libboost-all-dev
       env:
-        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-6 -DCMAKE_CXX_COMPILER=g++-6 -DBoost_PYTHON_LIBRARY_RELEASE=/usr/lib/libboost_python-py34.so -DPYTHON_EXECUTABLE=/usr/bin/python3"
+        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-6 -DCMAKE_CXX_COMPILER=g++-6 -DBoost_PYTHON_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_python-py34.so -DPYTHON_EXECUTABLE=/usr/bin/python3"
     - compiler: clang
       addons:
         apt:
@@ -101,7 +101,7 @@ matrix:
         - sudo apt-get update
         - sudo apt-get install clang-3.8 clang++-3.8
       env:
-        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8 -DOpenMP_C_FLAGS='-fopenmp=libiomp5' -DOpenMP_CXX_FLAGS='-fopenmp=libiomp5' -DBoost_PYTHON_LIBRARY_RELEASE=/usr/lib/libboost_python-py34.so  -DPYTHON_EXECUTABLE=/usr/bin/python3"
+        - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=clang-3.8 -DCMAKE_CXX_COMPILER=clang++-3.8 -DOpenMP_C_FLAGS='-fopenmp=libiomp5' -DOpenMP_CXX_FLAGS='-fopenmp=libiomp5' -DBoost_PYTHON_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_python-py34.so  -DPYTHON_EXECUTABLE=/usr/bin/python3"
 
 # No e-mail notifications
 notifications:
