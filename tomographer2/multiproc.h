@@ -33,6 +33,7 @@
 #include <chrono>
 #include <exception>
 
+#include <tomographer2/tools/fmt.h>
 #include <tomographer2/tools/needownoperatornew.h>
 
 
