@@ -66,7 +66,7 @@ find_package(OpenMP)
 
 # Find boost headers (math, ...) 
 #if(NOT BOOST_FOUND)
-find_package(Boost 1.50 REQUIRED)
+find_package(Boost 1.40 REQUIRED)
 #endif(NOT BOOST_FOUND)
 
 #
@@ -166,7 +166,7 @@ if (BUILD_TOMORUN)
   #endif(NOT ZLIB_FOUND)
 
   # Boost program_options
-  find_package(Boost 1.50 COMPONENTS program_options REQUIRED)
+  find_package(Boost 1.40 COMPONENTS program_options REQUIRED)
 
   EnsureCXX11StdThisThreadSleepForAvailable()
   
@@ -195,7 +195,7 @@ if (BUILD_TOMOPY)
 
   # We need python and boost::python
   find_package(PythonLibs REQUIRED)
-  find_package(Boost 1.50 COMPONENTS python REQUIRED)
+  find_package(Boost 1.40 COMPONENTS python REQUIRED)
   
   # We need NumPy also
   find_package(NumPy REQUIRED)
@@ -232,7 +232,7 @@ if(TOMOGRAPHER_ENABLE_TESTS)
   endif()
 
   #if(NOT Boost_UNIT_TEST_FRAMEWORK_LIBRARY)
-  find_package(Boost 1.50 COMPONENTS unit_test_framework REQUIRED)
+  find_package(Boost 1.40 COMPONENTS unit_test_framework REQUIRED)
   #endif()
   
   # LAPACK is required in some tests (but not for tomorun)
