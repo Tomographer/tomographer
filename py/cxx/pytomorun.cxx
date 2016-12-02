@@ -274,7 +274,8 @@ boost::python::object py_tomorun(
   } catch (std::exception & e) {
     //fprintf(stderr, "EXCEPTION: %s\n", e.what());
     // another exception
-    if (PyErr_Occurred() != NULL) { // an inner boost::python::error_already_set() was caught & rethrown by MultiProc::OMP
+    if (PyErr_Occurred() != NULL) {
+      // an inner boost::python::error_already_set() was caught & rethrown by MultiProc::OMP
       throw boost::python::error_already_set();
     }
     throw; // error via boost::python
@@ -291,13 +292,29 @@ boost::python::object py_tomorun(
 
   res["final_histogram"] = boost::python::object(results.finalHistogram());
   res["simple_final_histogram"] = boost::python::object(results.simpleFinalHistogram());
-  res["elapsed_seconds"] = 1.0e-6 * std::chrono::duration_cast<std::chrono::microseconds>(time_end - time_start).count();
+  res["elapsed_seconds"] = 1.0e-6 * std::chrono::duration_cast<std::chrono::microseconds>(
+      time_end - time_start
+      ).count();
 
+  boost::python::list runs_results;
+  for (std::size_t k = 0; k < results.numTasks(); ++k) {
+    const auto & run_result = *results.collectedRunTaskResult(k);
+    runs_results.append(run_result);
+  }
+  res["runs_results"] = runs_results;
+
+  // full final report
   std::string final_report;
   { std::ostringstream ss;
     results.printFinalReport(ss, taskcdat);
     final_report = ss.str();
     res["final_report"] = final_report;
+  }
+
+  // final report of runs only
+  { std::ostringstream ss;
+    results.printFinalReport(ss, taskcdat, 0, false);
+    res["final_report_runs"] = ss.str();
   }
 
   logger.debug([&](std::ostream & stream) {

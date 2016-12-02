@@ -86,7 +86,8 @@ struct FullStatusReport
     : num_completed(0),
       num_total_runs(0),
       workers_running(),
-      workers_reports()
+      workers_reports(),
+      elapsed(std::numeric_limits<double>::quiet_NaN())
   {
   }
 
@@ -117,6 +118,72 @@ struct FullStatusReport
    */
   std::vector<TaskStatusReportType,
               typename Tools::NeedOwnOperatorNew<TaskStatusReportType>::AllocatorType> workers_reports;
+
+  /** \brief Number of seconds elapsed since launching the tasks
+   *
+   */
+  double elapsed;
+
+
+  /** \brief  The total fraction of the job completed
+   *
+   * Returns the total fraction of the tasks completed, taking into account the number of
+   * tasks fully completed and any partially completed tasks.
+   *
+   * This is the figure you want to report in a global progress bar, for example.
+   */
+  inline double totalFractionDone() const
+  {
+    // idea: cumulate in f one unit per task completed.
+    double f = num_completed;
+    for (std::size_t k = 0; k < workers_running.size(); ++k) {
+      if (workers_running[k]) {
+        // partially completed tasks contribute a fraction
+        f += workers_reports[k].fraction_done;
+      }
+    }
+    // and f goes from zero to num_total_runs
+    return f / num_total_runs;
+  }
+
+  /** \brief Produce a text-based human-readable short representation of the status report
+   *
+   */
+  inline std::string getHumanReport() const
+  {
+    std::string elapsed_s = Tomographer::Tools::fmtDuration(std::chrono::milliseconds(int(elapsed*1000)));
+    std::stringstream ss;
+    ss << "=========================== Intermediate Progress Report ============================\n"
+       << "  "
+       << elapsed_s << "s elapsed"
+       << "  -  "
+       << "Runs Completed: " << num_completed << "/" << num_total_runs
+       << "  -  "
+       << std::setprecision(2) << totalFractionDone() * 100.0 << "% total done"
+       << "\n";
+
+    if (workers_running.size() == 0) {
+      // no info
+    } else if (workers_running.size() == 1) {
+      if (workers_running[0]) {
+        ss << "--> " << workers_reports[0].msg << "\n";
+      }
+    } else {
+      ss << "Current Run(s) information (workers working/spawned "
+         << (int)std::count(workers_running.begin(), workers_running.end(), true)
+         << "/" << workers_running.size() << "):\n";
+      for (std::size_t k = 0; k < workers_running.size(); ++k) {
+        ss << "=== " << std::setw(2) << k << ": ";
+        if (!workers_running[k]) {
+          ss << "<idle>\n";
+        } else {
+          ss << workers_reports[k].msg << "\n";
+        }
+      }
+    }
+    ss << "=====================================================================================\n";
+    return ss.str();
+  }
 };
 
 
@@ -187,12 +254,22 @@ private:
    */
   CountIntType task_k;
 
+  typedef
+#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
+    std::chrono::monotonic_clock // for GCC/G++ 4.6
+#else
+    std::chrono::steady_clock
+#endif
+    StdClockType;
+
+
   struct TaskMgrIface {
     TaskMgrIface(TaskDispatcher * dispatcher_)
       : dispatcher(dispatcher_),
         interrupt_requested(0),
         status_report_requested(0),
         status_report_user_fn(),
+        _tasks_start_time(StdClockType::now()),
         _last_status_report(StdClockType::now()),
         _status_report_periodic_interval(0)
     {
@@ -205,13 +282,7 @@ private:
     volatile std::sig_atomic_t status_report_requested; // could be written to by signal handler
     FullStatusReportCallbackType status_report_user_fn;
 
-    typedef
-#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
-      std::chrono::monotonic_clock // for GCC/G++ 4.6
-#else
-      std::chrono::steady_clock
-#endif
-      StdClockType;
+    const StdClockType::time_point _tasks_start_time;
     StdClockType::time_point _last_status_report;
     StdClockType::duration _status_report_periodic_interval;
 
@@ -263,6 +334,10 @@ private:
 
       fullstatus.workers_reports.resize(1);
       fullstatus.workers_reports[0] = statreport;
+
+      fullstatus.elapsed = std::chrono::duration_cast<std::chrono::microseconds>(
+          StdClockType::now() - _tasks_start_time
+          ).count() * 1e-6;
 
       status_report_user_fn(fullstatus);
 

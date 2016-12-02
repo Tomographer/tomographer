@@ -1,0 +1,50 @@
+
+#ifndef PYMHRWTASKS_H
+#define PYMHRWTASKS_H
+
+#include <string>
+
+#include <tomographerpy/common.h>
+
+#include <tomographer2/mhrw.h>
+#include <tomographer2/mhrwtasks.h>
+
+#include <tomographerpy/pyhistogram.h>
+
+
+namespace Py {
+
+namespace tomo_internal {
+struct DummyValueCalculator {
+  typedef RealType ValueType;
+  template<typename PointType>
+  inline ValueType getValue(const PointType & ) const { return 0; }
+};
+} // tomo_internal
+
+typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<
+    tomo_internal::DummyValueCalculator, CountIntType, RealType, Eigen::Dynamic, Eigen::Dynamic
+  >::Result
+  ValueHistogramWithBinningMHRWStatsCollectorResult;
+
+
+
+typedef Tomographer::MHRWTasks::MHRandomWalkTaskResult<
+    ValueHistogramWithBinningMHRWStatsCollectorResult, CountIntType, RealType
+  >
+  MHRandomWalkValueHistogramTaskResult;
+
+
+} // Py
+
+
+
+
+
+
+
+
+
+
+
+#endif

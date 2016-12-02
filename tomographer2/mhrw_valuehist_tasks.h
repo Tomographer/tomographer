@@ -219,7 +219,8 @@ struct ResultsCollectorSimple
   }
 
 
-  inline void printFinalReport(std::ostream & str, const CDataBaseType & cdata, int max_width = 0)
+  inline void printFinalReport(std::ostream & str, const CDataBaseType & cdata,
+                               int max_width = 0, bool print_histogram = true)
   {
     Tools::ConsoleFormatterHelper h(max_width); // possibly detect terminal width etc.
 
@@ -228,7 +229,7 @@ struct ResultsCollectorSimple
     const RunTaskResultList & collresults = res.collectedRunTaskResults();
     const FinalHistogramType finalhistogram = res.finalHistogram();
     str << "\n"
-        << h.centerLine("Final Header")
+        << h.centerLine("Final Report of Runs")
         << h.hrule()
       ;
     cdata.printBasicCDataMHRWInfo(str);
@@ -239,12 +240,15 @@ struct ResultsCollectorSimple
     }
     str << h.hrule()
         << "\n";
-    // and the final histogram
-    str << h.centerLine("Final Histogram")
-        << h.hrule();
-    histogramPrettyPrint(str, finalhistogram, h.columns());
-    str << h.hrule()
-        << "\n";
+
+    if (print_histogram) {
+      // and the final histogram
+      str << h.centerLine("Final Histogram")
+          << h.hrule();
+      histogramPrettyPrint(str, finalhistogram, h.columns());
+      str << h.hrule()
+          << "\n";
+    }
   }
     
 
@@ -413,7 +417,8 @@ struct ResultsCollectorWithBinningAnalysis
   }
 
 
-  inline void printFinalReport(std::ostream & str, const CDataBaseType & cdata, int max_width = 0)
+  inline void printFinalReport(std::ostream & str, const CDataBaseType & cdata,
+                               int max_width = 0, bool print_histogram = true)
   {
     Tools::ConsoleFormatterHelper h(max_width); // possibly detect terminal width etc.
 
@@ -454,12 +459,15 @@ struct ResultsCollectorWithBinningAnalysis
     }
     str << h.hrule()
         << "\n";
-    // and the final histogram
-    str << h.centerLine("Final Histogram")
-        << h.hrule();
-    histogramPrettyPrint(str, finalhistogram, h.columns());
-    str << h.hrule()
-        << "\n";
+
+    if (print_histogram) {
+      // and the final histogram
+      str << h.centerLine("Final Histogram")
+          << h.hrule();
+      histogramPrettyPrint(str, finalhistogram, h.columns());
+      str << h.hrule()
+          << "\n";
+    }
   }
 
   

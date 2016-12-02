@@ -16,6 +16,7 @@
 void py_tomo_histogram();
 void py_tomo_multiproc();
 void py_tomo_tomorun();
+void py_tomo_mhrwtasks();
 
 
 
@@ -54,7 +55,14 @@ BOOST_PYTHON_MODULE(tomographer)
 
   py_tomo_multiproc();
 
+  py_tomo_mhrwtasks();
+
   py_tomo_tomorun();
+
+
+  // add utility modules, written in Python
+  boost::python::scope().attr("jpyutil") = boost::python::import("_tomographer_jpyutil");
+
 
   logger.debug("TOMOGRAPHER INIT COMPLETE.");
 }

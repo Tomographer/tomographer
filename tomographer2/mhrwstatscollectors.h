@@ -366,15 +366,81 @@ public:
 };
 
 
-// // specialize NeedOwnOperatorNew for this class
-// namespace Tools {
-// template<typename ValueCalculator_,
-// 	 typename LoggerType,
-// 	 typename HistogramType_>
-// 	 >
-// struct NeedOwnOperatorNew<ValueHistogramMHRWStatsCollector<ValueCalculator_,LoggerType_,HistogramType_> >
-//   : public NeedEigenAlignedOperatorNew { };
-// };
+
+
+/** \brief Result type of a ValueHistogramWithBinningMHRWStatsCollector
+ *
+ * Stores a histogram with error bars, detailed information about error bars at different binning
+ * levels, and information about the convergence of these error bars.
+ */
+template<typename HistogramType_, typename BinningAnalysisParamsType_>
+struct ValueHistogramWithBinningMHRWStatsCollectorResult
+  : public virtual Tools::NeedOwnOperatorNew<
+  HistogramType_,
+  typename BinningAnalysisParamsType_::BinSumSqArray
+  >::ProviderType
+{
+  typedef HistogramType_ HistogramType;
+  typedef typename HistogramType::Params HistogramParams;
+  typedef BinningAnalysisParamsType_ BinningAnalysisParamsType;
+
+  //! Simple default constructor (e.g. to use as std::vector<Result>).
+  explicit ValueHistogramWithBinningMHRWStatsCollectorResult()
+    : hist(), error_levels(), converged_status()
+  {
+  }
+
+  //! Constructor which initializes the fields from the histogram and binning analysis type.
+  template<typename BinningAnalysisType>
+  ValueHistogramWithBinningMHRWStatsCollectorResult(HistogramParams p, const BinningAnalysisType & b)
+    : hist(p),
+      error_levels(b.numTrackValues(), b.numLevels()+1),
+      converged_status(Eigen::ArrayXi::Constant(b.numTrackValues(), BinningAnalysisType::UNKNOWN_CONVERGENCE))
+  {
+    tomographer_assert(converged_status.rows() == b.numTrackValues() && converged_status.cols() == 1);
+  }
+
+  //! Histogram, already with error bars
+  HistogramType hist;
+
+  //! Detailed error bars for all binning levels
+  typename BinningAnalysisParamsType::BinSumSqArray error_levels;
+
+  /** \brief Information of convergence status of the error bars (see e.g. \ref
+   * BinningAnalysisParamsType::CONVERGED)
+   */
+  Eigen::ArrayXi converged_status;
+  
+  //! Dump values, error bars and convergence status in human-readable form into ostream
+  inline void dumpConvergenceAnalysis(std::ostream & str) const
+  {
+    for (int k = 0; k < converged_status.size(); ++k) {
+      str << "\tval[" << std::setw(3) << k << "] = "
+          << std::setw(12) << hist.bins(k)
+          << " +- " << std::setw(12) << hist.delta(k);
+      if (converged_status(k) == BinningAnalysisParamsType::CONVERGED) {
+	  str << "  [CONVERGED]";
+      } else if (converged_status(k) == BinningAnalysisParamsType::NOT_CONVERGED) {
+        str << "  [NOT CONVERGED]";
+      } else if (converged_status(k) == BinningAnalysisParamsType::UNKNOWN_CONVERGENCE) {
+        str << "  [UNKNOWN]";
+      } else {
+        str << "  [UNKNOWN CONVERGENCE STATUS: " << converged_status(k) << "]";
+      }
+      str << "\n";
+    }
+  }
+
+  //! Dump values, error bars and convergence status in human-readable form as string
+  inline std::string dumpConvergenceAnalysis() const
+  {
+    std::stringstream ss;
+    dumpConvergenceAnalysis(ss);
+    return ss.str();
+  }
+  
+};
+
 
 
 
@@ -428,70 +494,8 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
   typedef typename HistogramType::Params HistogramParams;
 
   /** \brief Result type of the corresponding ValueHistogramWithBinningMHRWStatsCollector
-   *
-   * Stores a histogram with error bars, detailed information about error bars at different binning
-   * levels, and information about the convergence of these error bars.
    */
-  struct Result
-    : public virtual Tools::NeedOwnOperatorNew<
-        HistogramType,
-        typename BinningAnalysisParamsType::BinSumSqArray
-      >::ProviderType
-  {
-    //! Simple default constructor (e.g. to use as std::vector<Result>).
-    explicit Result()
-      : hist(), error_levels(), converged_status()
-    {
-    }
-
-    //! Constructor which initializes the fields from the histogram and binning analysis type.
-    template<typename BinningAnalysisType>
-    Result(HistogramParams p, const BinningAnalysisType & b)
-      : hist(p),
-	error_levels(b.numTrackValues(), b.numLevels()+1),
-	converged_status(Eigen::ArrayXi::Constant(b.numTrackValues(), BinningAnalysisType::UNKNOWN_CONVERGENCE))
-    {
-      tomographer_assert(converged_status.rows() == b.numTrackValues() && converged_status.cols() == 1);
-    }
-
-    //! Histogram, already with error bars
-    HistogramType hist;
-    //! Detailed error bars for all binning levels
-    typename BinningAnalysisParamsType::BinSumSqArray error_levels;
-    /** \brief Information of convergence status of the error bars (see e.g. \ref
-     * BinningAnalysisParamsType::CONVERGED)
-     */
-    Eigen::ArrayXi converged_status;
-
-    //! Dump values, error bars and convergence status in human-readable form into ostream
-    inline void dumpConvergenceAnalysis(std::ostream & str) const
-    {
-      for (int k = 0; k < converged_status.size(); ++k) {
-	str << "\tval[" << std::setw(3) << k << "] = "
-	    << std::setw(12) << hist.bins(k)
-	    << " +- " << std::setw(12) << hist.delta(k);
-	if (converged_status(k) == BinningAnalysisParamsType::CONVERGED) {
-	  str << "  [CONVERGED]";
-	} else if (converged_status(k) == BinningAnalysisParamsType::NOT_CONVERGED) {
-	  str << "  [NOT CONVERGED]";
-	} else if (converged_status(k) == BinningAnalysisParamsType::UNKNOWN_CONVERGENCE) {
-	  str << "  [UNKNOWN]";
-	} else {
-	  str << "  [UNKNOWN CONVERGENCE STATUS: " << converged_status(k) << "]";
-	}
-	str << "\n";
-      }
-    }
-
-    //! Dump values, error bars and convergence status in human-readable form as string
-    inline std::string dumpConvergenceAnalysis() const
-    {
-      std::stringstream ss;
-      dumpConvergenceAnalysis(ss);
-      return ss.str();
-    }
-
-  };
+  typedef ValueHistogramWithBinningMHRWStatsCollectorResult<HistogramType,BinningAnalysisParamsType>  Result;
 
 };
 

@@ -22,22 +22,15 @@ struct WorkerStatusReport {
 };
 
 struct FullStatusReport {
-  FullStatusReport() : num_completed(-1), num_total_runs(-1), elapsed(0), workers() { }
+  FullStatusReport() : num_completed(-1), num_total_runs(-1), elapsed(0), workers(), total_fraction_done(), human_report() { }
   int num_completed;
   int num_total_runs;
   double elapsed; // elapsed time in seconds
 
   boost::python::list workers; // list of [WorkerStatusReport or None (for idle)]
 
-  double total_fraction_done() const {
-    double f = num_completed;
-    for (long k = 0; k < boost::python::len(workers); ++k) {
-      if (!boost::python::object(workers[k]).is_none()) {
-        f += boost::python::extract<WorkerStatusReport>(workers[k])().fraction_done;
-      }
-    }
-    return f / num_total_runs;
-  }
+  double total_fraction_done;
+  std::string human_report;
 };
 
 }
@@ -68,6 +61,9 @@ inline Py::FullStatusReport preparePyTaskStatusReport(
   Py::FullStatusReport r;
   r.num_completed = report.num_completed;
   r.num_total_runs = report.num_total_runs;
+  r.elapsed = report.elapsed;
+  r.total_fraction_done = report.totalFractionDone();
+  r.human_report = report.getHumanReport();
   for (std::size_t k = 0; k < report.workers_reports.size(); ++k) {
     if (!report.workers_running[k]) {
       r.workers.append(boost::python::object());
@@ -116,9 +112,6 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, boost::python
         // call the python progress callback:
         if (!progress_fn.is_none()) {
           auto r = preparePyTaskStatusReport<TaskType>(report);
-          r.elapsed =
-            std::chrono::duration_cast<std::chrono::milliseconds>(StdClockType::now() - time_start).count()
-            / 1000.0;
           progress_fn(boost::python::object(r));
         }
         // borrowed from tomographer2/tools/signal_status_handler.h: --->  FOR DEBUGGING::
@@ -156,6 +149,25 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, boost::python
       });
   tasks.requestPeriodicStatusReport(progress_interval_ms);
 }
+
+
+
+
+
+
+
+// namespace Py {
+
+// struct MHRandomWalkValueHistogramTaskResult
+// {
+//   MHRWParams mhrw_params;
+//   double acceptance_ratio;
+// };
+
+// }
+
+
+
 
 
 

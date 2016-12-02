@@ -47,11 +47,8 @@ namespace Tools
 
 /** \brief A generic handler which requests a status report from an OMPTaskDispatcher
  *
- * Note: The time displayed in the report is counted from the moment this signal handler
- * is instantiated.
  */
-template<typename TaskDispatcher, typename Logger,
-         typename TimerClock = std::chrono::system_clock>
+template<typename TaskDispatcher, typename Logger>
 struct SigHandlerTaskDispatcherStatusReporter
   : public SignalHandler
 {
@@ -59,7 +56,7 @@ struct SigHandlerTaskDispatcherStatusReporter
     FullStatusReportType;
 
   SigHandlerTaskDispatcherStatusReporter(TaskDispatcher * tasks_, Logger & logger_)
-    : tasks(tasks_), logger(logger_), time_start()
+    : tasks(tasks_), logger(logger_)
   {
     tasks->setStatusReportHandler(
         [this](const FullStatusReportType& report) {
@@ -71,8 +68,6 @@ struct SigHandlerTaskDispatcherStatusReporter
   TaskDispatcher * tasks;
   Logger & logger;
 
-  typename TimerClock::time_point time_start;
-
   virtual void handleSignal(int /*sig*/)
   {
     tasks->requestStatusReport();
@@ -83,36 +78,8 @@ struct SigHandlerTaskDispatcherStatusReporter
    */
   void intermediateProgressReport(const FullStatusReportType& report)
   {
-    std::string elapsed = fmtDuration(TimerClock::now() - time_start);
-    fprintf(stderr,
-            "\n"
-            "=========================== Intermediate Progress Report ============================\n"
-            "                                             (hit Ctrl+C within %2d sec. to interrupt)\n"
-            "  Total Completed Runs: %d/%d: %5.2f%%\n"
-            "  %s total elapsed\n",
-            TOMOGRAPHER_SIG_HANDLER_REPEAT_EXIT_DELAY,
-            report.num_completed, report.num_total_runs,
-            (double)report.num_completed/report.num_total_runs*100.0,
-            elapsed.c_str());
-    if (report.workers_running.size() == 1) {
-      if (report.workers_running[0]) {
-        fprintf(stderr, "--> %s\n", report.workers_reports[0].msg.c_str());
-      }
-    } else if (report.workers_running.size() > 1) {
-      fprintf(stderr,
-              "Current Run(s) information (workers working/spawned %d/%d):\n",
-              (int)std::count(report.workers_running.begin(), report.workers_running.end(), true),
-              (int)report.workers_running.size()
-          );
-      for (unsigned int k = 0; k < report.workers_running.size(); ++k) {
-        std::string msg = report.workers_running[k] ? report.workers_reports[k].msg : std::string("<idle>");
-        fprintf(stderr, "=== #%2u: %s\n", k, msg.c_str());
-      }
-    } else {
-      // no info. (workers_running.size() == 0)
-    }
-    fprintf(stderr,
-            "=====================================================================================\n\n");
+    std::string human_report = report.getHumanReport();
+    fprintf(stderr, "\n%s\n", human_report.c_str());
   };
 
 };

@@ -282,8 +282,6 @@ int main()
 
   auto time_start = std::chrono::system_clock::now();
 
-  srep.time_start = time_start;
-
   tasks.run(); // GO!
 
   auto time_end = std::chrono::system_clock::now();

@@ -366,6 +366,14 @@ public:
 
 private:
 
+  typedef
+#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
+    std::chrono::monotonic_clock // for GCC/G++ 4.6
+#else
+    std::chrono::steady_clock
+#endif
+    StdClockType;
+
   struct TaskInterruptedInnerException : public std::exception {
     std::string msg;
   public:
@@ -388,6 +396,7 @@ private:
       : pcdata(pcdata_),
         results(results_),
         logger(logger_),
+        time_start(),
         status_report_underway(false),
         status_report_initialized(false),
         status_report_ready(false),
@@ -404,6 +413,8 @@ private:
     const TaskCData * pcdata;
     ResultsCollector * results;
     LoggerType & logger;
+
+    StdClockType::time_point time_start;
 
     bool status_report_underway;
     bool status_report_initialized;
@@ -485,13 +496,6 @@ private:
     // internal use only:
     inline void _master_thread_update_status_report_periodic_interval_counter() const
     {
-      typedef
-#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
-        std::chrono::monotonic_clock // for GCC/G++ 4.6
-#else
-        std::chrono::steady_clock
-#endif
-        StdClockType;
       shared_data->status_report_counter = (
           (std::chrono::duration_cast<std::chrono::milliseconds>(
               StdClockType::now().time_since_epoch()
@@ -568,6 +572,9 @@ private:
               shared_data->status_report_full = FullStatusReportType();
               shared_data->status_report_full.num_completed = shared_data->num_completed;
               shared_data->status_report_full.num_total_runs = shared_data->num_total_runs;
+              shared_data->status_report_full.elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                  StdClockType::now() - shared_data->time_start
+                  ).count() * 1e-3;
               // shared_data->status_report_full.num_active_working_threads = shared_data->num_active_working_threads;
               int num_threads = omp_get_num_threads();
               // shared_data->status_report_full.num_threads = num_threads;
@@ -684,6 +691,9 @@ public:
    */
   void run()
   {
+    shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "Let's go!");
+    shared_data.time_start = StdClockType::now();
+
     shared_data.results->init(shared_data.num_total_runs, shared_data.n_chunk, shared_data.pcdata);
     
     shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "preparing for parallel runs");

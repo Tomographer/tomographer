@@ -135,6 +135,7 @@ files = [ os.path.join('cxx', x) for x in [
     "pyhistogram.cxx",
     "pylogger.cxx",
     "pymultiproc.cxx",
+    "pymhrwtasks.cxx",
     "pytomorun.cxx",
 ] ]
 
@@ -142,6 +143,7 @@ dep_headers = [ os.path.join('cxx', 'tomographerpy', x) for x in [
     "eigpyconv.h",
     "pyhistogram.h",
     "pymultiproc.h",
+    "pymhrwtasks.h",
     "pylogger.h",
     "common.h"
 ] ]
