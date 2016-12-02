@@ -251,7 +251,7 @@ set_tests_properties(test_tomorun_1qubit_analytic_solution_runcheck_binerr
 
 add_test(NAME test_python_interface
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-  COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/pytests.py" "$<TARGET_FILE:tomographerpy>"
+  COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/pytests.py" "$<TARGET_FILE:tomographerpy>" "${CMAKE_SOURCE_DIR}"
   )
 
 

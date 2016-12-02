@@ -45,7 +45,7 @@ class SimpleProgressBar(object):
 
 class RandWalkProgressBar(SimpleProgressBar):
     def __init__(self, label_msg_html="Random Walk Progress: "):
-        super(RandWalkProgressBar, self).__init__(displaybox=False)
+        super(RandWalkProgressBar, self).__init__(label_msg_html=label_msg_html, displaybox=False)
         self.innerhbox = HBox(children=[self.label, self.progress_widget, self.labelval])
         self.rwinfo = HTML()
         self.vbox = VBox(children=[self.innerhbox, self.rwinfo])

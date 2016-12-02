@@ -7,7 +7,8 @@ import os.path
 print("Run: "+" ".join(sys.argv))
 
 TomographerPyMod = sys.argv[1]
-sys.path = [ os.path.dirname(TomographerPyMod) ] + sys.path
+TomographerSourcePath = sys.argv[2]
+sys.path = [ os.path.dirname(TomographerPyMod), os.path.join(TomographerSourcePath, 'py') ] + sys.path
 
 # import the module
 import tomographer

@@ -37,7 +37,7 @@ add_dependencies(tomorun tomographer)
 # C++11 target
 set_property(TARGET tomorun PROPERTY CXX_STANDARD 11)
 
-# include our tomographer2 headers
+# include our tomographer headers
 target_include_directories(tomorun PRIVATE "..")  # relative path for automatic dependency detection
 
 # for <tomographer/tomographer_version.h> which was auto-generated in the binary

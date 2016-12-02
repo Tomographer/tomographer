@@ -32,8 +32,8 @@
 
 #include <boost/version.hpp>
 
-#include <tomographer2/tomographer_version.h>
-#include <tomographer2/tools/ezmatio.h>
+#include <tomographer/tomographer_version.h>
+#include <tomographer/tools/ezmatio.h>
 
 
 static const std::string prog_version_info_1 =

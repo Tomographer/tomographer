@@ -36,13 +36,13 @@ execute_process(
 
 # Install our headers in the standard header location of the system
 install(DIRECTORY .
-  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/tomographer2"
+  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/tomographer-${TOMOGRAPHER_VERSION}/tomographer"
   FILES_MATCHING
   PATTERN "*.h"
   )
 # Install version header
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/tomographer_version.h"
-  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/tomographer2"
+  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/tomographer-${TOMOGRAPHER_VERSION}/tomographer"
   )
 
 if(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION)
