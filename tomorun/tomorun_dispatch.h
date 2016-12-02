@@ -151,8 +151,6 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
 
   auto time_start = TimerClock::now();
 
-  srep.time_start = time_start;
-
   tasks.run();
 
   auto time_end = TimerClock::now();
