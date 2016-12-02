@@ -139,6 +139,29 @@ BOOST_AUTO_TEST_CASE(boundaries)
   }
 }
 
+
+BOOST_AUTO_TEST_CASE(values)
+{
+  Tomographer::UniformBinsHistogramParams<double> params(0.0f, 1.f, 10);
+
+  auto vcenter = params.valuesCenter();
+  BOOST_CHECK_EQUAL(vcenter.size(), 10);
+  MY_BOOST_CHECK_FLOATS_EQUAL(vcenter(0), 0.05, tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(vcenter(4), 0.45, tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(vcenter(9), 0.95, tol);
+
+  auto vlower = params.valuesLower();
+  BOOST_CHECK_EQUAL(vlower.size(), 10);
+  MY_BOOST_CHECK_FLOATS_EQUAL(vlower(0), 0.0, tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(vlower(9), 0.9, tol);
+  
+  auto vupper = params.valuesUpper();
+  BOOST_CHECK_EQUAL(vupper.size(), 10);
+  MY_BOOST_CHECK_FLOATS_EQUAL(vupper(0), 0.1, tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(vupper(9), 1.0, tol);
+}
+
+
 BOOST_AUTO_TEST_CASE(add_load_reset)
 {
   Tomographer::UniformBinsHistogram<float, long> hist(0.0f, 1.0f, 10);

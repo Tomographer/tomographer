@@ -9,7 +9,7 @@
 #define TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION
 #include <tomographer/tools/eigen_assert_exception.h>
 
-#include <tomographerpy/eigpyconv.h>
+//#include <tomographerpy/eigpyconv.h>
 
 #include <Eigen/Eigen>
 

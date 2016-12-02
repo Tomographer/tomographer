@@ -23,3 +23,5 @@ for x in range(10):
 a.finalize()
 
 print(a.prettyPrint(80))
+
+print("\n".join(['\t%.4g\t%.4g'%(k,v) for k,v in zip(a.values_center, a.bins)]))

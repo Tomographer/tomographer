@@ -171,6 +171,28 @@ struct UniformBinsHistogramParams
   {
     return (max - min) / num_bins;
   }
+
+  /** \brief Return an array of values corresponding to the center of each bin
+   */
+  inline Eigen::Array<Scalar, Eigen::Dynamic, 1> valuesCenter() const
+  {
+    const auto halfbinres = boost::math::constants::half<Scalar>() * binResolution();
+    return Eigen::Array<Scalar, Eigen::Dynamic, 1>::LinSpaced(num_bins, min+halfbinres, max-halfbinres);
+  }
+
+  /** \brief Return an array of values corresponding to the lower value of each bin
+   */
+  inline Eigen::Array<Scalar, Eigen::Dynamic, 1> valuesLower() const
+  {
+    return Eigen::Array<Scalar, Eigen::Dynamic, 1>::LinSpaced(num_bins, min, max-binResolution());
+  }
+
+  /** \brief Return an array of values corresponding to the upper value of each bin
+   */
+  inline Eigen::Array<Scalar, Eigen::Dynamic, 1> valuesUpper() const
+  {
+    return Eigen::Array<Scalar, Eigen::Dynamic, 1>::LinSpaced(num_bins, min+binResolution(), max);
+  }
 };
 
 

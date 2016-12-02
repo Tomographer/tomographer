@@ -2,7 +2,7 @@
 #include "tomographerpy/common.h"
 #include "common_p.h"
 
-#include "tomographerpy/eigpyconv.h"
+//#include "tomographerpy/eigpyconv.h"
 
 
 // TOMOGRAPHER_VERSION directly provided by setup.py
@@ -12,6 +12,7 @@
 
 
 
+void register_eigen_converter();
 
 void py_tomo_histogram();
 void py_tomo_multiproc();
@@ -58,11 +59,6 @@ BOOST_PYTHON_MODULE(_tomographer_cxx)
   py_tomo_mhrwtasks();
 
   py_tomo_tomorun();
-
-
-  // add utility modules, written in Python
-  //boost::python::scope().attr("jpyutil") = boost::python::import("_tomographer_jpyutil");
-
 
   logger.debug("TOMOGRAPHER INIT COMPLETE.");
 }

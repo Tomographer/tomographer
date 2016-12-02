@@ -183,50 +183,65 @@ struct eigen_python_converter
 
   static PyObject* convert(const EigDenseType & matrix)
   {
-    // LET'S NOT MAKE PYTHON CALLS FROM BOOST/PYTHON CONVERSION ROUTINES
-    //    auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
-
-    //    logger.debug("eigen_python_converter::convert() ...");
-    // logger.debug([&](std::ostream & stream) {
-    //     stream << "matrix = \n" << matrix;
-    //   });
-
     PyArray_Descr * descr = PyArray_DescrFromType(NpyCode<EigScalar>::TypeCode);
 
-    npy_intp shape[2] = { (npy_intp)matrix.rows(), (npy_intp)matrix.cols() };
+    const int elsize = descr->elsize;
 
-    int elsize = descr->elsize;
-    npy_intp strides[2] = {
-      elsize * ( ((EigDenseType::Options & Eigen::RowMajor) == 0)
-                   ? matrix.innerStride() : matrix.outerStride() ),
-      elsize * ( ((EigDenseType::Options & Eigen::RowMajor) == 0)
-                   ? matrix.outerStride() : matrix.innerStride() )
-    };
+    int nd = -1;
+    npy_intp shape[2] = {0};
+    npy_intp strides[2] = {0};
 
-    //    logger.debug([&](std::ostream & stream) {
-      //   stream << "DEBUG: creating NumPy object of type "
-      //          << NpyCode<EigScalar>::getCodeName()
-      //          << " with elsize=" << elsize
-      //          << " shape=["<<shape[0]<<","<<shape[1]<<"] strides=["<<strides[0]<<","<<strides[1]<<"] "
-      //          << "from Eigen matrix = \n" << matrix << " .\n";
-      // });
-    
+    std::size_t arr_data_sz; 
+
+    if (EigDenseType::ColsAtCompileTime == 1) {
+      // this in fact a true vector object -- generate a 1D NumPy array
+      //
+      // Note: We make a difference between a Eigen::MatrixXd with one column and a
+      // Eigen::VectorXd.  The former converts to a np array of shape (size, 1,) while the
+      // latter converts to a 1-D array.
+
+      nd = 1;
+      shape[0] = (npy_intp)matrix.rows();
+      strides[0] = elsize * ( ((EigDenseType::Options & Eigen::RowMajor) == 0)
+                              ? matrix.innerStride() : matrix.outerStride());
+      if (shape[0] == 0) {
+        arr_data_sz = 0;
+      } else {
+        arr_data_sz = (shape[0]-1)*strides[0] + elsize;
+      }
+
+      //fprintf(stderr, "Vector has strides (inner=%d,outer=%d), sz=%d, data sz=%u\n", (int)matrix.innerStride(),
+      //        (int)matrix.outerStride(), (int)matrix.rows(), (unsigned int) arr_data_sz);
+
+    } else {
+
+      // a Matrix object --> convert to a 2D numpy array (even if the matrix has in fact
+      // one column)
+
+      nd = 2;
+      shape[0] = matrix.rows();
+      shape[1] = matrix.cols();
+      strides[0] = elsize * ( ((EigDenseType::Options & Eigen::RowMajor) == 0)
+                              ? matrix.innerStride() : matrix.outerStride() );
+      strides[1] = elsize * ( ((EigDenseType::Options & Eigen::RowMajor) == 0)
+                   ? matrix.outerStride() : matrix.innerStride() );
+      if (shape[0] == 0 || shape[1] == 0) {
+        arr_data_sz = 0;
+      } else {
+        arr_data_sz = (shape[0]-1)*strides[0] + (shape[1]-1)*strides[1] + elsize;
+      }
+    }
+
     // copy data because the scope of the Eigen::MatrixXd is completely unknown (it could
     // be temporary return value, for example)
     PyObject *pyarr = PyArray_NewFromDescr(&PyArray_Type, descr,
-                                           2, shape, strides, NULL, 0, NULL);
+                                           nd, shape, strides, NULL, 0, NULL);
 
-
-    std::size_t arr_data_sz = (shape[0]-1)*strides[0] + (shape[1]-1)*strides[1] + elsize;
-
-    //npyToCxxType<CopyEigenDataToNumpy<EigDenseType> >(PyArray_TYPE(array), pyarr, matrix, dims, strides);
     // just copy the freakin' bytes:
-    std::memcpy( PyArray_DATA(reinterpret_cast<PyArrayObject*>(pyarr)), (void*)matrix.data(), arr_data_sz );
+    if (arr_data_sz > 0) {
+      std::memcpy( PyArray_DATA(reinterpret_cast<PyArrayObject*>(pyarr)), (void*)matrix.data(), arr_data_sz );
+    }
 
-    //    logger.debug("DEBUG: eigen_python_converter::convert() completed.");
-    
-    //return boost::python::incref(boost::python::object(pyarr).ptr());
-    //return boost::python::object(boost::python::handle<>(boost::python::borrowed(pyarr))).ptr();
     return pyarr; // no need to go via boost::python::object, right?
   }
 
@@ -236,35 +251,18 @@ struct eigen_python_converter
 
   static void* convertible(PyObject* py_obj_ptr)
   {
-    // LET'S NOT MAKE PYTHON CALLS FROM BOOST/PYTHON CONVERSION ROUTINES
-    //    auto logger = Tomographer::Logger::makeLocalLogger("eigen_python_converter::convertible()", tpy_logger);
-    //    logger.debug("eigen_python_converter::convertible() ...");
-
-    // std::cerr << "py_obj_ptr = " << py_obj_ptr << ";\n";
-    // std::cerr << "&PyArray_Type=" << &PyArray_Type << ";\n";
-    // std::cerr << "Py_TYPE(py_obj_ptr) = " << Py_TYPE(py_obj_ptr) << ";\n";
-    // std::cerr << "PyType_IsSubType(Py_TYPE(py_obj_ptr), &PyArray_Type) = "
-    //           << PyType_IsSubtype(Py_TYPE(py_obj_ptr), &PyArray_Type) << ".\n";
-
     if (!PyArray_Check(py_obj_ptr)) {
-      //      logger.debug("eigen_python_converter::convertible(): not convertible");
       return NULL;
     }
 
     // when this converter is installed, we must attempt to translate ANY numpy array into
     // an Eigen object, and fail at conversion if an error occurs.
-
-    //    logger.debug("eigen_python_converter::convertible(): IS convertible");
     return py_obj_ptr;
   }
 
   static void construct(PyObject* py_obj_ptr,
                         boost::python::converter::rvalue_from_python_stage1_data* data)
   {
-    // LET'S NOT MAKE PYTHON CALLS FROM BOOST/PYTHON CONVERSION ROUTINES
-    //    auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
-    //    logger.debug("eigen_python_converter::construct() ...");
-
     PyArrayObject *array = reinterpret_cast<PyArrayObject*>(py_obj_ptr);
     void *storage = ((boost::python::converter::rvalue_from_python_storage<EigDenseType>*)data)->storage.bytes;
 
@@ -275,10 +273,6 @@ struct eigen_python_converter
 
     const npy_intp * arraydimensions = PyArray_DIMS(array);
     const npy_intp * arraystrides = PyArray_STRIDES(array);
-
-    //    std::cerr << "DEBUG: decoding NumPy array, nd=" << nd << ", "
-    //              << "dims=[" << arraydimensions[0] << "," << (nd>1 ? arraydimensions[1] : -1) << "], "
-    //              << "strides=[" << arraystrides[0] << ", " << (nd>1 ? arraystrides[1] : -1) << "]\n";
 
     // prepare as if for 1-D array
     npy_intp dims[2] = { arraydimensions[0], 1 };
@@ -296,7 +290,6 @@ struct eigen_python_converter
     npyToCxxType<CopyNumpyDataToEigen<EigDenseType> >(PyArray_TYPE(array), storage, array, dims, strides);
 
     data->convertible = storage;
-    //    logger.debug("eigen_python_converter::construct() completed.");
   }
 
   static void from_python() {
