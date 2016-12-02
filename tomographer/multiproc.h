@@ -160,7 +160,7 @@ struct FullStatusReport
        << "  -  "
        << "Runs Completed: " << num_completed << "/" << num_total_runs
        << "  -  "
-       << std::setprecision(2) << totalFractionDone() * 100.0 << "% total done"
+       << std::fixed << std::setw(5) << std::setprecision(2) << totalFractionDone() * 100.0 << "% total done"
        << "\n";
 
     if (workers_running.size() == 0) {
