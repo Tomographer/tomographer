@@ -89,7 +89,6 @@ int main() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }"
     tomographer_HAVE_CXX11_THREAD_SLEEP_FOR
     )
   if (NOT tomographer_HAVE_CXX11_THREAD_SLEEP_FOR)
-    set(CMAKE_REQUIRED_FLAGS "${CMAKE_REQUIRED_FLAGS} ${TOMOGRAPHER_CXX11_STD_FLAGS}")
     set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS} -D_GLIBCXX_USE_NANOSLEEP)
     CHECK_CXX_SOURCE_COMPILES(
       "#include <thread>
