@@ -94,7 +94,7 @@ macro(addTomographerTest test_cxx NeedsList)
   # Enable C++11
   set_property(TARGET ${test_name} PROPERTY CXX_STANDARD 11)
 
-  # tomographer2 headers
+  # tomographer headers
   target_include_directories(${test_name} PRIVATE "..")
 
   # dependency: Eigen
@@ -192,7 +192,7 @@ add_executable(minimal_tomorun
   )
 # Enable C++11
 set_property(TARGET minimal_tomorun PROPERTY CXX_STANDARD 11)
-# tomographer2 headers
+# tomographer headers
 target_include_directories(minimal_tomorun PRIVATE "..")
 # dependency: Eigen
 target_include_directories(minimal_tomorun SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})

@@ -140,13 +140,13 @@ install(FILES README.md README.txt LICENSE.txt
 
 
 # ==============================================================================
-# The basic tomographer2 header-only C++ template library
+# The basic tomographer header-only C++ template library
 # ==============================================================================
 
 # there are essentially two things to do: set up tomographer_version.h (obtaining the
 # current version from git-describe or explicit VERSION file), and define the install
 # target.
-add_subdirectory(tomographer2)
+add_subdirectory(tomographer)
 
 
 # ==============================================================================
