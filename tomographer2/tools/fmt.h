@@ -42,7 +42,7 @@
 #include <iostream>
 #include <utility> // std::declval
 
-#include <tomographer2/tools/cxxutil.h> // PRINTFN_ARGS_SAFE
+#include <tomographer/tools/cxxutil.h> // PRINTFN_ARGS_SAFE
 
 
 namespace Tomographer {

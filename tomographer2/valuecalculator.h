@@ -28,8 +28,8 @@
 #define TOMOGRAPHER_VALUECALCULATOR_H
 
 
-#include <tomographer2/tools/cxxutil.h>
-#include <tomographer2/tools/needownoperatornew.h>
+#include <tomographer/tools/cxxutil.h>
+#include <tomographer/tools/needownoperatornew.h>
 
 
 /** \file valuecalculator.h

@@ -34,12 +34,12 @@
 
 #include <boost/math/constants/constants.hpp>
 
-#include <tomographer2/tools/loggers.h>
-#include <tomographer2/tools/needownoperatornew.h>
-#include <tomographer2/densedm/densellh.h>
-#include <tomographer2/densedm/dmtypes.h>
-#include <tomographer2/densedm/param_herm_x.h>
-#include <tomographer2/mhrw.h>
+#include <tomographer/tools/loggers.h>
+#include <tomographer/tools/needownoperatornew.h>
+#include <tomographer/densedm/densellh.h>
+#include <tomographer/densedm/dmtypes.h>
+#include <tomographer/densedm/param_herm_x.h>
+#include <tomographer/mhrw.h>
 
 /** \file tspacellhwalker.h
  *

@@ -39,11 +39,11 @@
 #include <random>
 #include <sstream>
 
-#include <tomographer2/tools/fmt.h>
-#include <tomographer2/tools/needownoperatornew.h>
-#include <tomographer2/mhrw.h>
-#include <tomographer2/mhrwstatscollectors.h>
-#include <tomographer2/multiproc.h> // StatusReport Base
+#include <tomographer/tools/fmt.h>
+#include <tomographer/tools/needownoperatornew.h>
+#include <tomographer/mhrw.h>
+#include <tomographer/mhrwstatscollectors.h>
+#include <tomographer/multiproc.h> // StatusReport Base
 
 
 namespace Tomographer {

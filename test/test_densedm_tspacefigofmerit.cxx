@@ -35,7 +35,7 @@
 // include before <Eigen/*> !
 #include "test_tomographer.h"
 
-#include <tomographer2/densedm/tspacefigofmerit.h>
+#include <tomographer/densedm/tspacefigofmerit.h>
 
 
 

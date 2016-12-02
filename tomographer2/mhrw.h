@@ -33,11 +33,11 @@
 #include <random>
 #include <iomanip>
 
-#include <tomographer2/tools/loggers.h>
-#include <tomographer2/tools/fmt.h>
-#include <tomographer2/tools/cxxutil.h>
-#include <tomographer2/mhrw_bin_err.h>
-#include <tomographer2/tools/needownoperatornew.h>
+#include <tomographer/tools/loggers.h>
+#include <tomographer/tools/fmt.h>
+#include <tomographer/tools/cxxutil.h>
+#include <tomographer/mhrw_bin_err.h>
+#include <tomographer/tools/needownoperatornew.h>
 
 
 

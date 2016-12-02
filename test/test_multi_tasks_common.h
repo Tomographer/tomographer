@@ -32,7 +32,7 @@
 #include <chrono>
 #include <thread> // std::this_thread::sleep_for
 
-#include <tomographer2/tools/fmt.h>
+#include <tomographer/tools/fmt.h>
 
 #ifdef _OPENMP
 #include <omp.h>

@@ -74,8 +74,8 @@
  *   #define HS_DIST_H
  *
  *   #include <Eigen/Eigen>
- *   #include <tomographer2/tools/needownoperatornew.h>
- *   #include <tomographer2/densedm/dmtypes.h>
+ *   #include <tomographer/tools/needownoperatornew.h>
+ *   #include <tomographer/densedm/dmtypes.h>
  *
  *   template<typename DMTypes_, typename DistValueType_ = double>
  *   class HSDistToRefCalculator

@@ -30,11 +30,11 @@
 #include <iostream>
 #include <iomanip>
 
-#include <tomographer2/tools/loggers.h>
-#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
-#include <tomographer2/tools/needownoperatornew.h>
-#include <tomographer2/mhrwstatscollectors.h>
-#include <tomographer2/mhrwtasks.h>
+#include <tomographer/tools/loggers.h>
+#include <tomographer/tools/cxxutil.h> // tomographer_assert()
+#include <tomographer/tools/needownoperatornew.h>
+#include <tomographer/mhrwstatscollectors.h>
+#include <tomographer/mhrwtasks.h>
 
 #include <boost/math/constants/constants.hpp>
 

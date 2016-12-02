@@ -42,10 +42,10 @@
 
 #include <Eigen/Core>
 
-#include <tomographer2/tools/fmt.h>
-#include <tomographer2/tools/eigenutil.h>
-#include <tomographer2/tools/cxxutil.h> // TOMOGRAPHER_ENABLED_IF, tomographer_assert(), getWidthForTerminalOutput
-#include <tomographer2/tools/needownoperatornew.h>
+#include <tomographer/tools/fmt.h>
+#include <tomographer/tools/eigenutil.h>
+#include <tomographer/tools/cxxutil.h> // TOMOGRAPHER_ENABLED_IF, tomographer_assert(), getWidthForTerminalOutput
+#include <tomographer/tools/needownoperatornew.h>
 
 
 /** \file histogram.h

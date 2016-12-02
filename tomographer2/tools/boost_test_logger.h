@@ -29,7 +29,7 @@
 #define TOMOGRAPHER_TOOLS_BOOST_TEST_LOGGER_H
 
 
-#include <tomographer2/tools/loggers.h>
+#include <tomographer/tools/loggers.h>
 
 
 namespace Tomographer { namespace Logger {

@@ -5,7 +5,7 @@
 
 #include <tomographerpy/common.h>
 
-#include <tomographer2/histogram.h>
+#include <tomographer/histogram.h>
 
 
 namespace Py {

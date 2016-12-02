@@ -26,16 +26,16 @@
 
 #include <iostream>
 
-#include <tomographer2/tools/loggers.h>
-#include <tomographer2/densedm/dmtypes.h>
-#include <tomographer2/densedm/indepmeasllh.h>
-#include <tomographer2/densedm/tspacellhwalker.h>
-#include <tomographer2/densedm/tspacefigofmerit.h>
-#include <tomographer2/mhrw.h>
-#include <tomographer2/mhrwtasks.h>
-#include <tomographer2/mhrw_valuehist_tasks.h>
-#include <tomographer2/multiprocomp.h>
-#include <tomographer2/tools/signal_status_report.h>
+#include <tomographer/tools/loggers.h>
+#include <tomographer/densedm/dmtypes.h>
+#include <tomographer/densedm/indepmeasllh.h>
+#include <tomographer/densedm/tspacellhwalker.h>
+#include <tomographer/densedm/tspacefigofmerit.h>
+#include <tomographer/mhrw.h>
+#include <tomographer/mhrwtasks.h>
+#include <tomographer/mhrw_valuehist_tasks.h>
+#include <tomographer/multiprocomp.h>
+#include <tomographer/tools/signal_status_report.h>
 
 
 

@@ -42,7 +42,7 @@
 
 #include <Eigen/Core>
 
-#include <tomographer2/tools/cxxutil.h> // static_or_dynamic, tomographer_assert()
+#include <tomographer/tools/cxxutil.h> // static_or_dynamic, tomographer_assert()
 
 
 // // heavily inspired by Eigen::Replicate [Eigen/src/Core/Replicate.h]

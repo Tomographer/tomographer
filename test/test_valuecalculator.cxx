@@ -33,11 +33,11 @@
 #include <boost/math/constants/constants.hpp>
 
 // definitions for Tomographer test framework -- this must be included before any
-// <Eigen/...> or <tomographer2/...> header
+// <Eigen/...> or <tomographer/...> header
 #include "test_tomographer.h"
 
-#include <tomographer2/valuecalculator.h>
-#include <tomographer2/densedm/tspacefigofmerit.h>
+#include <tomographer/valuecalculator.h>
+#include <tomographer/densedm/tspacefigofmerit.h>
 
 
 // -----------------------------------------------------------------------------

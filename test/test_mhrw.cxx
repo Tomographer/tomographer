@@ -31,7 +31,7 @@
 
 #include "test_tomographer.h"
 
-#include <tomographer2/mhrw.h>
+#include <tomographer/mhrw.h>
 
 #include "test_mh_random_walk_common.h" // our test-case random walk
 

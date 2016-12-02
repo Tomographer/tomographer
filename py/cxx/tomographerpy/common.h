@@ -7,14 +7,14 @@
 #include <boost/python.hpp>
 
 #define TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION
-#include <tomographer2/tools/eigen_assert_exception.h>
+#include <tomographer/tools/eigen_assert_exception.h>
 
 #include <tomographerpy/eigpyconv.h>
 
 #include <Eigen/Eigen>
 
-#include <tomographer2/tools/cxxutil.h>
-#include <tomographer2/tools/loggers.h>
+#include <tomographer/tools/cxxutil.h>
+#include <tomographer/tools/loggers.h>
 
 #include <tomographerpy/pylogger.h>
 

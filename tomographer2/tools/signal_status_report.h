@@ -36,8 +36,8 @@
  *
  */
 
-#include <tomographer2/tools/signal_handler.h>
-#include <tomographer2/multiproc.h>
+#include <tomographer/tools/signal_handler.h>
+#include <tomographer/multiproc.h>
 
 
 namespace Tomographer

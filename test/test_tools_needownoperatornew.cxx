@@ -33,11 +33,11 @@
 #include <boost/math/constants/constants.hpp>
 
 // definitions for Tomographer test framework -- this must be included before any
-// <Eigen/...> or <tomographer2/...> header
+// <Eigen/...> or <tomographer/...> header
 #include "test_tomographer.h"
 
 #define TOMOGRAPHER_TEST_TOOLS_NEEDOWNOPERATORNEW_DEBUG_MEMBERS
-#include <tomographer2/tools/needownoperatornew.h>
+#include <tomographer/tools/needownoperatornew.h>
 
 
 // -----------------------------------------------------------------------------

@@ -31,15 +31,15 @@
 
 
 // definitions for Tomographer test framework -- this must be included before any
-// <Eigen/...> or <tomographer2/...> header
+// <Eigen/...> or <tomographer/...> header
 #include "test_tomographer.h"
 
-#include <tomographer2/mhrw_bin_err.h>
-#include <tomographer2/mhrwstatscollectors.h>
-#include <tomographer2/tools/loggers.h>
-#include <tomographer2/mhrw.h>
+#include <tomographer/mhrw_bin_err.h>
+#include <tomographer/mhrwstatscollectors.h>
+#include <tomographer/tools/loggers.h>
+#include <tomographer/mhrw.h>
 
-#include <tomographer2/tools/boost_test_logger.h>
+#include <tomographer/tools/boost_test_logger.h>
 
 
 BOOST_AUTO_TEST_SUITE(test_mhrw_bin_err)

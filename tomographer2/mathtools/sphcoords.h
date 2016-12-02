@@ -31,7 +31,7 @@
 
 #include <Eigen/Eigen>
 
-#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
+#include <tomographer/tools/cxxutil.h> // tomographer_assert()
 
 
 /** \file sphcoords.h

@@ -33,12 +33,12 @@
 
 #include <Eigen/Eigen>
 
-#include <tomographer2/tools/cxxutil.h> // StaticOrDynamic, TOMOGRAPHER_ENABLED_IF
-#include <tomographer2/tools/needownoperatornew.h>
-#include <tomographer2/tools/fmt.h> // streamstr
-#include <tomographer2/densedm/dmtypes.h>
-#include <tomographer2/densedm/param_herm_x.h>
-#include <tomographer2/densedm/densellh.h>
+#include <tomographer/tools/cxxutil.h> // StaticOrDynamic, TOMOGRAPHER_ENABLED_IF
+#include <tomographer/tools/needownoperatornew.h>
+#include <tomographer/tools/fmt.h> // streamstr
+#include <tomographer/densedm/dmtypes.h>
+#include <tomographer/densedm/param_herm_x.h>
+#include <tomographer/densedm/densellh.h>
 
 /** \file indepmeasllh.h
  * \brief C++ types and functions for calculating the log-likelihood for independent measurements

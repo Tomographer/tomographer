@@ -7,7 +7,7 @@
 
 // TOMOGRAPHER_VERSION directly provided by setup.py
 #ifndef TOMOGRAPHER_VERSION
-#  include <tomographer2/tomographer_version.h>
+#  include <tomographer/tomographer_version.h>
 #endif
 
 

@@ -6,8 +6,8 @@
 
 #include <tomographerpy/common.h>
 
-#include <tomographer2/mhrw.h>
-#include <tomographer2/mhrwtasks.h>
+#include <tomographer/mhrw.h>
+#include <tomographer/mhrwtasks.h>
 
 #include <tomographerpy/pyhistogram.h>
 

@@ -6,8 +6,8 @@
 
 #include <tomographerpy/common.h>
 
-#include <tomographer2/mhrw.h>
-#include <tomographer2/mhrwtasks.h>
+#include <tomographer/mhrw.h>
+#include <tomographer/mhrwtasks.h>
 
 
 namespace Py {
@@ -114,7 +114,7 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, boost::python
           auto r = preparePyTaskStatusReport<TaskType>(report);
           progress_fn(boost::python::object(r));
         }
-        // borrowed from tomographer2/tools/signal_status_handler.h: --->  FOR DEBUGGING::
+        // borrowed from tomographer/tools/signal_status_handler.h: --->  FOR DEBUGGING::
         /*
           std::string elapsed = Tomographer::Tools::fmtDuration(StdClockType::now() - time_start);
           fprintf(stderr,

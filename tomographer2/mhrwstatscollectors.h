@@ -36,10 +36,10 @@
 #include <typeinfo>
 
 
-#include <tomographer2/tools/cxxutil.h>
-#include <tomographer2/tools/loggers.h>
-#include <tomographer2/histogram.h>
-#include <tomographer2/mhrw_bin_err.h>
+#include <tomographer/tools/cxxutil.h>
+#include <tomographer/tools/loggers.h>
+#include <tomographer/histogram.h>
+#include <tomographer/mhrw_bin_err.h>
 
 /** \file mhrwstatscollectors.h
  *

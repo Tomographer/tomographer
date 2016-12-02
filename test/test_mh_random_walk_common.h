@@ -29,9 +29,9 @@
 
 #include <random>
 
-#include <tomographer2/mhrw.h>
-#include <tomographer2/tools/cxxutil.h>
-#include <tomographer2/tools/loggers.h>
+#include <tomographer/mhrw.h>
+#include <tomographer/tools/cxxutil.h>
+#include <tomographer/tools/loggers.h>
 
 #include <Eigen/Core>
 

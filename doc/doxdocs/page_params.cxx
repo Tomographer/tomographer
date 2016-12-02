@@ -60,7 +60,7 @@
  * \f}
  *
  * Routines that allow to compute the coordinate transforamtions, as well as corresponding
- * jacobian and "differential" jacobian, are defined in \ref tomographer2/mathtools/sphcoords.h.
+ * jacobian and "differential" jacobian, are defined in \ref tomographer/mathtools/sphcoords.h.
  *
  * The transformation to cartesian coordinates is given by:
  * \f{align*}{

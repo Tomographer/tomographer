@@ -29,13 +29,13 @@
 #include <iostream>
 
 // definitions for Tomographer test framework -- this must be included before any
-// <Eigen/...> or <tomographer2/...> header
+// <Eigen/...> or <tomographer/...> header
 #include "test_tomographer.h"
 
-#include <tomographer2/mathtools/simple_find_zero.h>
-#include <tomographer2/tools/loggers.h>
+#include <tomographer/mathtools/simple_find_zero.h>
+#include <tomographer/tools/loggers.h>
 
-#include <tomographer2/tools/boost_test_logger.h>
+#include <tomographer/tools/boost_test_logger.h>
 
 
 

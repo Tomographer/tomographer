@@ -41,10 +41,10 @@ inline constexpr int omp_get_num_threads() { return 1; }
 
 #include <boost/exception/diagnostic_information.hpp>
 
-#include <tomographer2/tools/loggers.h>
-#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
-#include <tomographer2/tools/needownoperatornew.h>
-#include <tomographer2/multiproc.h>
+#include <tomographer/tools/loggers.h>
+#include <tomographer/tools/cxxutil.h> // tomographer_assert()
+#include <tomographer/tools/needownoperatornew.h>
+#include <tomographer/multiproc.h>
 
 
 /** \file multiprocomp.h

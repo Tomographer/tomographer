@@ -29,10 +29,10 @@
 #define TOMOGRAPHER_DENSEDM_TSPACEFIGOFMERIT_H
 
 
-#include <tomographer2/tools/needownoperatornew.h>
-#include <tomographer2/densedm/dmtypes.h>
-#include <tomographer2/densedm/distmeasures.h>
-#include <tomographer2/densedm/param_herm_x.h>
+#include <tomographer/tools/needownoperatornew.h>
+#include <tomographer/densedm/dmtypes.h>
+#include <tomographer/densedm/distmeasures.h>
+#include <tomographer/densedm/param_herm_x.h>
 
 
 /** \file tspacefigofmerit.h

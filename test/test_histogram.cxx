@@ -30,7 +30,7 @@
 
 #include "test_tomographer.h"
 
-#include <tomographer2/histogram.h>
+#include <tomographer/histogram.h>
 
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>

@@ -35,15 +35,15 @@
 // include before <Eigen/*> !
 #include "test_tomographer.h"
 
-#include <tomographer2/densedm/tspacellhwalker.h>
+#include <tomographer/densedm/tspacellhwalker.h>
 
 #include <unsupported/Eigen/MatrixFunctions>
 
-#include <tomographer2/densedm/param_herm_x.h>
-#include <tomographer2/densedm/densellh.h>
-#include <tomographer2/densedm/indepmeasllh.h>
+#include <tomographer/densedm/param_herm_x.h>
+#include <tomographer/densedm/densellh.h>
+#include <tomographer/densedm/indepmeasllh.h>
 
-#include <tomographer2/tools/boost_test_logger.h>
+#include <tomographer/tools/boost_test_logger.h>
 
 
 // -----------------------------------------------------------------------------

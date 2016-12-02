@@ -43,7 +43,7 @@
 
 #include <Eigen/Core> // NumTraits
 
-#include <tomographer2/tools/conststr.h>
+#include <tomographer/tools/conststr.h>
 
 
 

@@ -35,7 +35,7 @@
 // include before <Eigen/*> !
 #include "test_tomographer.h"
 
-#include <tomographer2/densedm/dmtypes.h>
+#include <tomographer/densedm/dmtypes.h>
 
 
 

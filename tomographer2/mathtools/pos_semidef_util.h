@@ -37,7 +37,7 @@
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 
-#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
+#include <tomographer/tools/cxxutil.h> // tomographer_assert()
 
 
 namespace Tomographer {

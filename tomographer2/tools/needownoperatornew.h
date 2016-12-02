@@ -39,7 +39,7 @@
 
 #include <Eigen/Eigen> // EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
-#include <tomographer2/tools/cxxutil.h> // tomo_internal::sfinae_yes, tomo_internal::sfinae_no
+#include <tomographer/tools/cxxutil.h> // tomo_internal::sfinae_yes, tomo_internal::sfinae_no
 
 
 namespace Tomographer {

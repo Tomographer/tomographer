@@ -37,9 +37,9 @@
 #include <Eigen/Core>
 #include <Eigen/StdVector>
 
-#include <tomographer2/densedm/dmtypes.h>
-#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
-#include <tomographer2/tools/eigenutil.h>
+#include <tomographer/densedm/dmtypes.h>
+#include <tomographer/tools/cxxutil.h> // tomographer_assert()
+#include <tomographer/tools/eigenutil.h>
 
 #include <boost/math/constants/constants.hpp>
 

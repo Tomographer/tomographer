@@ -39,9 +39,9 @@
 
 #include <Eigen/Core>
 
-#include <tomographer2/tools/eigenutil.h>
-#include <tomographer2/tools/loggers.h>
-#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
+#include <tomographer/tools/eigenutil.h>
+#include <tomographer/tools/loggers.h>
+#include <tomographer/tools/cxxutil.h> // tomographer_assert()
 
 
 namespace Tomographer {

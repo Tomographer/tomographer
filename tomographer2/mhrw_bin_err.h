@@ -28,10 +28,10 @@
 #define TOMOGRAPHER_MHRW_BIN_ERR_H
 
 
-#include <tomographer2/tools/loggers.h>
-#include <tomographer2/tools/eigenutil.h> // replicated(), powersOfTwo()
-#include <tomographer2/tools/cxxutil.h>
-#include <tomographer2/tools/needownoperatornew.h>
+#include <tomographer/tools/loggers.h>
+#include <tomographer/tools/eigenutil.h> // replicated(), powersOfTwo()
+#include <tomographer/tools/cxxutil.h>
+#include <tomographer/tools/needownoperatornew.h>
 
 #include <boost/math/constants/constants.hpp>
 

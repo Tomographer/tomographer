@@ -21,7 +21,7 @@ namespace boost { namespace core {  using boost::units::detail::demangle; } }
 
 #include <Eigen/Core>
 
-#include <tomographer2/tools/cxxutil.h>
+#include <tomographer/tools/cxxutil.h>
 
 
 

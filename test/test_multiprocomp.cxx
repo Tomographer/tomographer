@@ -41,18 +41,18 @@
 #include <boost/math/constants/constants.hpp>
 
 // definitions for Tomographer test framework -- this must be included before any
-// <Eigen/...> or <tomographer2/...> header
+// <Eigen/...> or <tomographer/...> header
 #include "test_tomographer.h"
 
-#include <tomographer2/multiprocomp.h>
-#include <tomographer2/tools/loggers.h>
-#include <tomographer2/mhrwtasks.h>
-#include <tomographer2/densedm/dmtypes.h>
-#include <tomographer2/densedm/indepmeasllh.h>
-#include <tomographer2/densedm/tspacefigofmerit.h>
-#include <tomographer2/densedm/tspacellhwalker.h>
+#include <tomographer/multiprocomp.h>
+#include <tomographer/tools/loggers.h>
+#include <tomographer/mhrwtasks.h>
+#include <tomographer/densedm/dmtypes.h>
+#include <tomographer/densedm/indepmeasllh.h>
+#include <tomographer/densedm/tspacefigofmerit.h>
+#include <tomographer/densedm/tspacellhwalker.h>
 
-#include <tomographer2/tools/boost_test_logger.h>
+#include <tomographer/tools/boost_test_logger.h>
 
 #include "test_multi_tasks_common.h"
 

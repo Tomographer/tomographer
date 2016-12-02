@@ -39,7 +39,7 @@
 #include <Eigen/Core>
 #include <Eigen/Eigenvalues>
 
-#include <tomographer2/tools/cxxutil.h> // tomographer_assert()
+#include <tomographer/tools/cxxutil.h> // tomographer_assert()
 
 
 extern "C" void ztrsyl_(char *TRANA, char *TRANB, int *ISGN, int *M, int *N,

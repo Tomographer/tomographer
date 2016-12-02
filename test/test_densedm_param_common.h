@@ -1,7 +1,7 @@
 
 
-#include <tomographer2/densedm/dmtypes.h>
-#include <tomographer2/mathtools/random_unitary.h>
+#include <tomographer/densedm/dmtypes.h>
+#include <tomographer/mathtools/random_unitary.h>
 
 
 template<typename DMTypes_>

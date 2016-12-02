@@ -33,13 +33,13 @@
 #include <boost/math/constants/constants.hpp>
 
 // definitions for Tomographer test framework -- this must be included before any
-// <Eigen/...> or <tomographer2/...> header
+// <Eigen/...> or <tomographer/...> header
 #include "test_tomographer.h"
 
-#include <tomographer2/mhrw_valuehist_tasks.h>
-#include <tomographer2/multiproc.h>
+#include <tomographer/mhrw_valuehist_tasks.h>
+#include <tomographer/multiproc.h>
 
-#include <tomographer2/tools/boost_test_logger.h>
+#include <tomographer/tools/boost_test_logger.h>
 
 #include "test_mh_random_walk_common.h" // our test-case random walk
 

@@ -7,7 +7,7 @@
 // this in case a user includes pylogger.h without including common.h first.
 #include <tomographerpy/common.h>
 
-#include <tomographer2/tools/loggers.h>
+#include <tomographer/tools/loggers.h>
 
 
 

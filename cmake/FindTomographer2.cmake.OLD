@@ -20,7 +20,7 @@ find_package(ZLIB QUIET)
 
 
 find_path(TOMOGRAPHER2_INCLUDE_DIR
-  tomographer2/tomographer_version.h
+  tomographer/tomographer_version.h
   )
 
 

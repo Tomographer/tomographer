@@ -46,10 +46,10 @@ extern "C" {
 
 #include <Eigen/Core>
 
-#include <tomographer2/tools/cxxutil.h>
-#include <tomographer2/tools/eigenutil.h>
-#include <tomographer2/tools/fmt.h>
-#include <tomographer2/mathtools/pos_semidef_util.h>
+#include <tomographer/tools/cxxutil.h>
+#include <tomographer/tools/eigenutil.h>
+#include <tomographer/tools/fmt.h>
+#include <tomographer/mathtools/pos_semidef_util.h>
 
 
 /** \file ezmatio.h

@@ -51,9 +51,9 @@ endif()
 # depends in particular on tomographer_version.h
 add_dependencies(tomographerpy tomographer)
 
-# tomographer2/tomographer_version.h (not yet installed)
+# tomographer/tomographer_version.h (not yet installed)
 target_include_directories(tomographerpy PRIVATE "${CMAKE_BINARY_DIR}")
-# tomographer2/ headers -- relative for auto dependency detection
+# tomographer/ headers -- relative for auto dependency detection
 target_include_directories(tomographerpy PUBLIC "..")
 
 # our own tomographerpy headers

@@ -32,7 +32,7 @@
 
 #include <Eigen/Eigen>
 
-#include <tomographer2/tools/cxxutil.h> // StaticOrDynamic, TOMOGRAPHER_ENABLED_IF
+#include <tomographer/tools/cxxutil.h> // StaticOrDynamic, TOMOGRAPHER_ENABLED_IF
 
 /** \file dmtypes.h
  * \brief C++ types for describing dense density matrices in various parameterizations
