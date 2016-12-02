@@ -33,7 +33,7 @@ struct EigenNumpyConversionError : public std::exception
 {
   EigenNumpyConversionError(std::string msg)
     : _msg(msg) { }
-  virtual ~EigenNumpyConversionError() { }
+  virtual ~EigenNumpyConversionError() throw() { }
 
   const char * what() const throw() { return _msg.c_str(); }
 private:
@@ -322,9 +322,9 @@ struct eigen_python_converter
 
 
 #if PY_VERSION_HEX >= 0x03000000
-static long workaround_import_array() {
+static PyObject * workaround_import_array() {
   import_array();
-  return 0;
+  return NULL;
 }
 #elif PY_VERSION_HEX >= 0x02070000
 static void workaround_import_array() {
