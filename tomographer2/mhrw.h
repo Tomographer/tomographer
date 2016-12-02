@@ -31,6 +31,7 @@
 
 #include <limits>
 #include <random>
+#include <iomanip>
 
 #include <tomographer2/tools/loggers.h>
 #include <tomographer2/tools/fmt.h>
