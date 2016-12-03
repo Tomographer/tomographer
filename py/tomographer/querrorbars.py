@@ -4,7 +4,6 @@ import numpy as np
 import scipy
 import scipy.optimize as sciopt
 import matplotlib.pyplot as matplt
-from IPython.display import display, Markdown
 
 
 class _Ns:

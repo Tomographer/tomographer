@@ -17,7 +17,8 @@ install:
   # CMake:
   - export CMAKE_PATH=`pwd`/cmake-3.1.3-Linux-x86_64
   - if [ ! -f "$CMAKE_PATH/bin/cmake" ]; then curl -L -O https://cmake.org/files/v3.1/cmake-3.1.3-Linux-x86_64.tar.gz && tar xfz cmake-3.1.3-Linux-x86_64.tar.gz ; fi
-
+  # Python's matplotlib -- install for both python2 and/or python3, whichever works
+  - (sudo pip install matplotlib ; sudo pip3 install matplotlib) || true
 
 cache:
   directories:
@@ -53,6 +54,7 @@ matrix:
             - python-dev
             - python-numpy
             - python-scipy
+            - python-pip
             - libboost-python-dev
             - libboost-all-dev
       env:
@@ -68,6 +70,7 @@ matrix:
             - python-dev
             - python-numpy
             - python-scipy
+            - python-pip
             - libboost-python-dev
             - libboost-all-dev
       env:
@@ -83,6 +86,7 @@ matrix:
             - python3-dev
             - python3-numpy
             - python3-scipy
+            - python3-pip
             - libboost-python-dev
             - libboost-all-dev
       env:
@@ -96,6 +100,7 @@ matrix:
             - python3-dev
             - python3-numpy
             - python3-scipy
+            - python3-pip
             - libboost-python-dev
             - libboost-all-dev
       before_install:
