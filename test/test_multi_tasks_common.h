@@ -39,6 +39,23 @@
 #endif
 
 
+
+
+typedef
+#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
+    std::chrono::monotonic_clock // for g++ 4.6
+#else
+    std::chrono::steady_clock
+#endif
+    StdClockType;
+
+
+int UnitTimeSleepMs = 300;
+
+
+
+
+
 struct MyTaskInput {
   MyTaskInput(int a_ = 0, int b_ = 0) : a(a_), b(b_) { }
   int a;
@@ -224,10 +241,12 @@ void sigalarm_act_cfn(int signum)
 
 
 struct StatusRepTestBasicCData {
-  StatusRepTestBasicCData() { }
+  StatusRepTestBasicCData() : UnitTimeSleepMs_(UnitTimeSleepMs) { }
+
+  int UnitTimeSleepMs_;
 
   int getTaskInput(int k) const {
-    return k;
+    return 2*UnitTimeSleepMs_ + (k/3)*UnitTimeSleepMs_;
   }
 };
 struct StatusRepTestTask {
@@ -237,9 +256,10 @@ struct StatusRepTestTask {
   typedef bool ResultType;
 
   template<typename LoggerType>
-  StatusRepTestTask(int input, const StatusRepTestBasicCData * , LoggerType & )
+  StatusRepTestTask(int input, const StatusRepTestBasicCData * , LoggerType & logger)
     : _input(input) // input is task number
   {
+    logger.debug("StatsRepTestTask constructor", "Task will run for %d ms", input);
   }
 
   template<typename LoggerType, typename TaskManagerIface>
@@ -251,29 +271,23 @@ struct StatusRepTestTask {
     // like this for five seconds.
 
     unsigned long count = 0;
-    std::time_t time_start;
-    std::time(&time_start);
-    std::time_t now = time_start;
-    int elapsed = 0;
-    int seconds_to_run = 2+_input/4;
+    StdClockType::time_point time_start = StdClockType::now();
+    int elapsed_ms = 0;
+    int ms_to_run = _input;
     do {
-      std::time(&now);
-      elapsed = now - time_start;
+      elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(StdClockType::now() - time_start).count();
       if (iface->statusReportRequested()) {
         logger.longdebug("StatusRepTestTask::run", "Task #%02d: Status report requested", _input);
-        StatusReportType s(elapsed / (double)seconds_to_run,
+        StatusReportType s(elapsed_ms / (double)ms_to_run,
                            Tomographer::Tools::fmts("elapsed = %d [%.2f%%]; count = %lu = %#lx",
-                                                    elapsed, 100.0*elapsed/seconds_to_run, count, count));
+                                                    elapsed_ms, 100.0*elapsed_ms/ms_to_run, count, count));
         logger.longdebug("StatusRepTestTask::run", "s.msg = %s", s.msg.c_str());
         iface->submitStatusReport(s);
         logger.longdebug("StatusRepTestTask::run", "report submitted.");
         _result = true;
       }
       ++count;
-      //      if ((count & 0xffff) == 0) {
-      //        logger.longdebug("StatusRepTestTask::run", "count = %lu", count);
-      //      }
-    } while (now - time_start < seconds_to_run);
+    } while (elapsed_ms < ms_to_run);
   }
 
   ResultType getResult() const { return _result; }
@@ -301,16 +315,13 @@ struct StatusRepTestResultsCollector {
 
 
 
-
-
-
 struct test_task_dispatcher_status_reporting_fixture {
   StatusRepTestBasicCData cData;
   const int num_runs;
   StatusRepTestResultsCollector resultsCollector;
   
   test_task_dispatcher_status_reporting_fixture()
-    : cData(), num_runs(10), resultsCollector()
+    : cData(), num_runs(6), resultsCollector()
   {
   }
 
@@ -344,7 +355,7 @@ struct test_task_dispatcher_status_reporting_fixture {
 
     set_report_handler(task_dispatcher, logger);
 
-    task_dispatcher.requestPeriodicStatusReport(1000); // every second
+    task_dispatcher.requestPeriodicStatusReport(UnitTimeSleepMs); // every unit time
 
     task_dispatcher.run();
 
@@ -364,14 +375,6 @@ struct test_task_dispatcher_status_reporting_fixture {
 
     bool tasks_interrupted = false;
 
-    typedef
-#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
-      std::chrono::monotonic_clock // for g++ 4.6
-#else
-      std::chrono::steady_clock
-#endif
-      StdClockType;
-
     auto starttime = StdClockType::now();
 
 #pragma omp parallel num_threads(2) default(shared)
@@ -379,7 +382,7 @@ struct test_task_dispatcher_status_reporting_fixture {
       if (omp_get_thread_num() == 0) {
         // take care of sending the interrupt request
 
-        std::this_thread::sleep_for(std::chrono::seconds(1));
+        std::this_thread::sleep_for(std::chrono::milliseconds(UnitTimeSleepMs/2));
         task_dispatcher.requestInterrupt();
 
       } else if (omp_get_thread_num() == 1) {
@@ -435,7 +438,7 @@ struct test_task_dispatcher_status_reporting_fixture {
         // take care of sending status report requests
 
         while (!finished) {
-          std::this_thread::sleep_for(std::chrono::seconds(1));
+          std::this_thread::sleep_for(std::chrono::milliseconds(UnitTimeSleepMs));
           task_dispatcher.requestStatusReport();
         }
 
@@ -466,6 +469,9 @@ struct test_task_dispatcher_status_reporting_fixture {
 #ifndef __MINGW32__ // MinGW32 does not have SIGALRM / alarm()
     logger.info("test case:status_report_withsigalrm", "Starting test case.");
 
+    // sigalarm only accepts integer seconds so make that our time step unit
+    cData.UnitTimeSleepMs_ = 1000;
+
     set_report_handler(task_dispatcher, logger);
 
     {
@@ -476,7 +482,7 @@ struct test_task_dispatcher_status_reporting_fixture {
     
       sigalarm_act = [&task_dispatcher]() {
         task_dispatcher.requestStatusReport();
-        alarm(2);
+        alarm(1);
         signal(SIGALRM, sigalarm_act_cfn);
       };
     

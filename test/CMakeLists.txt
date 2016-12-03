@@ -249,10 +249,19 @@ set_tests_properties(test_tomorun_1qubit_analytic_solution_runcheck_binerr
   PROPERTIES DEPENDS "test_tomorun_1qubit_analytic_solution_check;test_tomorun_1qubit_analytic_solution_run_binerr")
 
 
-add_test(NAME test_python_interface
-  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-  COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/pytests.py" "$<TARGET_FILE:tomographerpy>" "${CMAKE_SOURCE_DIR}"
-  )
+macro(addTomographerPyTest pymodule)
+  add_test(NAME ${pymodule}
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/pyruntest.py" "--test=${pymodule}" "--tomographer-cxx-lib=$<TARGET_FILE:tomographerpy>" "--tomographer-source=${CMAKE_SOURCE_DIR}"
+    )
+endmacro()
+
+
+addTomographerPyTest(pytest_tomographer)
+addTomographerPyTest(pytest_t_querrorbars)
+
+
+
 
 
 message(STATUS "Added test targets")
