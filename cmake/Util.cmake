@@ -30,36 +30,36 @@
 ################################################################################
 
 
-# http://stackoverflow.com/a/7216542
-function(ListJoin VALUES GLUE OUTPUT)
-  string (REGEX REPLACE "([^\\]|^);" "\\1${GLUE}" _TMP_STR "${VALUES}")
-  string (REGEX REPLACE "[\\](.)" "\\1" _TMP_STR "${_TMP_STR}") #fixes escaping
-  set (${OUTPUT} "${_TMP_STR}" PARENT_SCOPE)
-endfunction()
+# # http://stackoverflow.com/a/7216542
+# function(ListJoin VALUES GLUE OUTPUT)
+#   string (REGEX REPLACE "([^\\]|^);" "\\1${GLUE}" _TMP_STR "${VALUES}")
+#   string (REGEX REPLACE "[\\](.)" "\\1" _TMP_STR "${_TMP_STR}") #fixes escaping
+#   set (${OUTPUT} "${_TMP_STR}" PARENT_SCOPE)
+# endfunction()
 
+# macro(AppendTargetProperty tgt property value)
+#   set(new_property_value "${value}")
+#   get_target_property(existing_property_value ${tgt} ${property})
+#   if(existing_property_value)
+#     set(new_property_value "${existing_property_value} ${new_property_value}")
+#   endif()
+#   set_target_properties(${tgt} PROPERTIES ${property} "${new_property_value}")
+# endmacro(AppendTargetProperty)
 
-macro(AppendTargetProperty tgt property value)
-  set(new_property_value "${value}")
-  get_target_property(existing_property_value ${tgt} ${property})
-  if(existing_property_value)
-    set(new_property_value "${existing_property_value} ${new_property_value}")
-  endif()
-  set_target_properties(${tgt} PROPERTIES ${property} "${new_property_value}")
-endmacro(AppendTargetProperty)
+# macro(SetOpenMPTarget target)
+#   if(OPENMP_FOUND)
+#     #OpenMP_C_FLAGS   - flags to add to the C compiler for OpenMP support
+#     #OpenMP_CXX_FLAGS - flags to add to the CXX compiler for OpenMP support
+#     AppendTargetProperty(${target} COMPILE_FLAGS "${OpenMP_CXX_FLAGS}")
+#     AppendTargetProperty(${target} LINK_FLAGS "${OpenMP_CXX_FLAGS}")
+#   else()
+#     message(WARNING "OpenMP not found. `${target}' will run serially with no parallelization.")
+#   endif()
+# endmacro(SetOpenMPTarget)
 
-
-
-macro(SetOpenMPTarget target)
-  if(OPENMP_FOUND)
-    #OpenMP_C_FLAGS   - flags to add to the C compiler for OpenMP support
-    #OpenMP_CXX_FLAGS - flags to add to the CXX compiler for OpenMP support
-    AppendTargetProperty(${target} COMPILE_FLAGS "${OpenMP_CXX_FLAGS}")
-    AppendTargetProperty(${target} LINK_FLAGS "${OpenMP_CXX_FLAGS}")
-  else()
-    message(WARNING "OpenMP not found. `${target}' will run serially with no parallelization.")
-  endif()
-endmacro(SetOpenMPTarget)
-
+macro(WarnTargetNoOpenMP target_msg)
+  message(WARNING "OpenMP not found. ${target_msg} will run serially with no parallelization.")
+endmacro(WarnTargetNoOpenMP)
 
 
 macro(RemoveFlag str_out str_in flag)
@@ -71,8 +71,36 @@ macro(RemoveFlag str_out str_in flag)
   #message(STATUS "Removed flag '${flag}' from '${str_in}': flag_escaped='${flag_escaped}', str_out='${${str_out}}'")
 endmacro(RemoveFlag)
 
-macro(RemoveFlagTarget tgt prop flag)
-  get_target_property(compile_flags ${tgt} ${prop})
-  RemoveFlag(compile_flags_new "${compile_flags}" "-DNDEBUG")
-  set_target_properties(${tgt} PROPERTIES ${prop} "${compile_flags_new}")
-endmacro(RemoveFlagTarget)
+
+
+include(CheckCXXSourceCompiles)
+
+macro(EnsureCXX11StdThisThreadSleepForAvailable)
+  #
+  # Some older gcc/g++ (e.g. 4.7) needs -D_GLIBCXX_USE_NANOSLEEP in order to make available
+  # std::this_thread::sleep_for().  So perform a test to see if this is the case.
+  #
+  set(_save_CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS}")
+  set(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} ${CMAKE_CXX11_STANDARD_COMPILE_OPTION}")
+  CHECK_CXX_SOURCE_COMPILES(
+    "#include <thread>
+#include <chrono>
+int main() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }"
+    tomographer_HAVE_CXX11_THREAD_SLEEP_FOR
+    )
+  if (NOT tomographer_HAVE_CXX11_THREAD_SLEEP_FOR)
+    set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS} -D_GLIBCXX_USE_NANOSLEEP)
+    CHECK_CXX_SOURCE_COMPILES(
+      "#include <thread>
+#include <chrono>
+int main() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }"
+      tomographer_HAVE_CXX11_THREAD_SLEEP_FOR_with_GLIBCXX_USE_NANOSLEEP
+      )
+    if (tomographer_HAVE_CXX11_THREAD_SLEEP_FOR_with_GLIBCXX_USE_NANOSLEEP)
+      add_definitions(-D_GLIBCXX_USE_NANOSLEEP)
+    else()
+      message(FATAL_ERROR "Your C++ compiler doesn't seem to support std::this_thread::sleep_for(). You may need to use a different compiler, or set the required flags yourself.")
+    endif()
+  endif()
+  set(CMAKE_REQUIRED_DEFINITIONS "${_save_CMAKE_REQUIRED_DEFINITIONS}")
+endmacro(EnsureCXX11StdThisThreadSleepForAvailable)

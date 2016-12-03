@@ -24,11 +24,14 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
-cmake_minimum_required(VERSION 2.8.5)
+cmake_minimum_required(VERSION 3.1)
 
 project(tomographer)
 
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(CMAKE_MODULE_PATH
+  ${CMAKE_MODULE_PATH}
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
+  "${CMAKE_CURRENT_SOURCE_DIR}/cmake/vc")
 
 include(TomographerVersion)
 include(Util)
@@ -45,32 +48,6 @@ message(STATUS "CMake Build Type: ${CMAKE_BUILD_TYPE}")
 # Find specific features and packages
 # ==============================================================================
 
-# Check for C++0x/C++11 features
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-if(MINGW)
-  # On MinGW, we should use gnu++11, otherwise we get weird errors about some missing
-  # functions... (_hypot in math.h etc.)
-  CHECK_CXX_COMPILER_FLAG("-std=gnu++11" COMPILER_SUPPORTS_GNUXX11)
-  CHECK_CXX_COMPILER_FLAG("-std=gnu++0x" COMPILER_SUPPORTS_GNUXX0X)
-endif()
-#
-if(COMPILER_SUPPORTS_GNUXX11)
-  set(TOMOGRAPHER_CXX11_STD_FLAGS "-std=gnu++11" CACHE STRING "Compiler flags to enable C++11")
-elseif(COMPILER_SUPPORTS_CXX11)
-  set(TOMOGRAPHER_CXX11_STD_FLAGS "-std=c++11" CACHE STRING "Compiler flags to enable C++11")
-elseif(COMPILER_SUPPORTS_GNUXX0X)
-  set(TOMOGRAPHER_CXX11_STD_FLAGS "-std=gnu++0x" CACHE STRING "Compiler flags to enable C++11")
-elseif(COMPILER_SUPPORTS_CXX0X)
-  set(TOMOGRAPHER_CXX11_STD_FLAGS "-std=c++0x" CACHE STRING "Compiler flags to enable C++11")
-else()
-  message(FATAL_ERROR
-    "The compiler ${CMAKE_CXX_COMPILER} has no C++0x/C++11 support. Please use a different C++ compiler or set TOMOGRAPHER_CXX11_STD_FLAGS."
-    )
-endif()
-
-
 #
 # Using "if(NOT mypackage_FOUND)" for the find_package() directives below allows the user
 # to specify custom values to configurations (such as explicitly turning off OpenMP) and
@@ -78,55 +55,38 @@ endif()
 #
 
 # Find Eigen3 package
-if(NOT EIGEN3_FOUND)
-  find_package(Eigen3 3.2.5 REQUIRED)
-endif(NOT EIGEN3_FOUND)
+#if(NOT EIGEN3_FOUND)
+find_package(Eigen3 3.2.5 REQUIRED)
+#endif(NOT EIGEN3_FOUND)
 
 # Find OpenMP
-if(NOT OPENMP_FOUND)
-  find_package(OpenMP)
-endif(NOT OPENMP_FOUND)
+#if(NOT OPENMP_FOUND)
+find_package(OpenMP)
+#endif(NOT OPENMP_FOUND)
 
-# Find MatIO library (https://sourceforge.net/projects/matio/)
-if(NOT MATIO_FOUND)
-  find_package(MatIO REQUIRED)
-endif(NOT MATIO_FOUND)
+# Find boost headers (math, ...) 
+#if(NOT BOOST_FOUND)
+find_package(Boost 1.40 REQUIRED)
+#endif(NOT BOOST_FOUND)
 
-# ... which requires the libz library
-if(NOT ZLIB_FOUND)
-  find_package(ZLIB REQUIRED)
-endif(NOT ZLIB_FOUND)
+#
+# More find_package calls appear below, depending on which targets are being compiled
+#
 
-# Find boost::program_options and boost::math
-if(NOT BOOST_FOUND)
-  find_package(Boost 1.40 COMPONENTS program_options REQUIRED)
-endif(NOT BOOST_FOUND)
-
-
-# more find_package stuff below for stuff we only need in tests....
 
 
 # activate warning flags on DEBUG and RELWITHDEBINFO builds
 set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -Wall -Wextra")
 set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wall -Wextra")
 
-# NOTE: By default GCC/G++ uses a LOT of RAM (g++ 6.2). [Clang-3.9 was very good by
-# comparison.]  You can instruct gcc to use less RAM by fiddling around with the options
-# "--param ggc-min-expand=10 --param ggc-min-heapsize=32768"
-# or "--param ggc-min-expand=0 --param ggc-min-heapsize=8192" to be even more conservative.
 
 
-# .### This is no longer needed as I have now included a function call with the GCC
-# .### attribute __attribute__((force_align_arg_pointer,noinline)), which gives the code
-# .### the necessary chance to realign the stack.
-# 
-# if(MINGW) MinGW: avoid misalignment errors with Eigen objects in OpenMP blocks. For
-# this, force realignment of all stacks. Ugly, but works.  There doesn't even seem to be a
-# large overhead---see http://stackoverflow.com/a/6718067/1694896
-# set(TOMOGRAPHER_MINGW_STACK_REALIGN_FLAG "-mstackrealign" CACHE STRING "The flag(s) to
-# pass to the MinGW C++ compiler to fix alignment issues with OpenMP")
-# mark_as_advanced(TOMOGRAPHER_MINGW_STACK_REALIGN_FLAG) set(CMAKE_CXX_FLAGS
-# "${CMAKE_CXX_FLAGS} ${TOMOGRAPHER_MINGW_STACK_REALIGN_FLAG}") endif()
+# NOTE: By default GCC/G++ uses a LOT of RAM (g++ 6.2 with 4GB was not working well).
+# [Clang-3.9 was very good by comparison.]  You can instruct gcc to use less RAM by
+# fiddling around with the options "--param ggc-min-expand=10 --param
+# ggc-min-heapsize=32768", or "--param ggc-min-expand=0 --param ggc-min-heapsize=8192" if
+# you want to be even more conservative.
+
 
 
 # optimization flags for computer architecture.
@@ -134,7 +94,10 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -Wall -Wex
 # -> use -DTARGET_ARCHITECTURE=generic to disable simd instruction sets
 include(OptimizeForArchitecture)
 OptimizeForArchitecture()
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Vc_ARCHITECTURE_FLAGS}")
+string(REPLACE ";" " " _vc_arch_flags_joined "${Vc_ARCHITECTURE_FLAGS}")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_vc_arch_flags_joined}")
+
+
 
 # ==============================================================================
 # Documentation Target
@@ -143,7 +106,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${Vc_ARCHITECTURE_FLAGS}")
 find_package(Doxygen)
 if(DOXYGEN_FOUND)
   add_custom_target(doc
-    COMMAND "${CMAKE_COMMAND}" "-DVersionFile=${CMAKE_BINARY_DIR}/cxx/tomographer2/tomographer_VERSION" "-DRootSourceDir=${CMAKE_SOURCE_DIR}" "-DTargetDoxyfileDir=${CMAKE_BINARY_DIR}" -P "${CMAKE_SOURCE_DIR}/cmake/CreateDoxyfile.cmake"
+    COMMAND "${CMAKE_COMMAND}" "-DVersionFile=${CMAKE_BINARY_DIR}/tomographer/tomographer_VERSION" "-DRootSourceDir=${CMAKE_SOURCE_DIR}" "-DTargetDoxyfileDir=${CMAKE_BINARY_DIR}" -P "${CMAKE_SOURCE_DIR}/cmake/CreateDoxyfile.cmake"
     COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_BINARY_DIR}/Doxyfile"
     WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
     COMMENT "Generating API documentation with Doxygen" VERBATIM
@@ -151,16 +114,15 @@ if(DOXYGEN_FOUND)
   # to make sure the version file is set up properly
   add_dependencies(doc tomographer)
   message(STATUS "You can build the API documentation by running `make doc`.")
-else(DOXYGEN_FOUND)
+else()
   message(STATUS "Doxygen not found. Don't worry, you'd only need this if you wanted to generate API documentation.")
-endif(DOXYGEN_FOUND)
+endif()
 
 # ==============================================================================
 # Set up Install Targets
 # ==============================================================================
 
 include(GNUInstallDirs)
-
 
 # Set up uninstall target
 configure_file(
@@ -178,6 +140,86 @@ install(FILES README.md README.txt LICENSE.txt
 
 
 # ==============================================================================
+# The basic tomographer header-only C++ template library
+# ==============================================================================
+
+# there are essentially two things to do: set up tomographer_version.h (obtaining the
+# current version from git-describe or explicit VERSION file), and define the install
+# target.
+add_subdirectory(tomographer)
+
+
+# ==============================================================================
+# Build Tomorun?
+# ==============================================================================
+
+option(BUILD_TOMORUN "Build the tomorun executable" on)
+if (BUILD_TOMORUN)
+
+  # Find MatIO library (https://sourceforge.net/projects/matio/)
+  #if(NOT MATIO_FOUND)
+  find_package(MatIO REQUIRED)
+  #endif(NOT MATIO_FOUND)
+  # ... which requires the libz library
+  #if(NOT ZLIB_FOUND)
+  find_package(ZLIB REQUIRED)
+  #endif(NOT ZLIB_FOUND)
+
+  # Boost program_options
+  find_package(Boost 1.40 COMPONENTS program_options REQUIRED)
+
+  EnsureCXX11StdThisThreadSleepForAvailable()
+  
+  # can we use the nice() function to reduce the process priority?
+  CHECK_CXX_SOURCE_COMPILES(
+    "#include <unistd.h>
+int main() { nice(1); }"
+    tomographer_HAVE_NICE)
+
+  set(TOMORUN_SUFFIX "" CACHE STRING
+    "Optional suffix to append to 'tomorun' executable name, to indicate special configuration in case you override settings in tomorun_config.h with -D... compiler flags (such as -DTOMORUN_CUSTOM_FIXED_DIM=... etc.)")
+
+  message(STATUS "Will build tomorun executable (BUILD_TOMORUN=on)")
+  add_subdirectory(tomorun)
+
+else()
+  message(STATUS "Will not build tomorun executable (BUILD_TOMORUN=off)")
+endif()
+
+# ==============================================================================
+# Build Python interface library module?
+# ==============================================================================
+
+option(BUILD_TOMOPY "Build the tomographer Python interface" off)
+if (BUILD_TOMOPY)
+
+  # We need python and boost::python
+  find_package(PythonLibs REQUIRED)
+  find_package(Boost 1.40 COMPONENTS python REQUIRED)
+  
+  # We need NumPy also
+  find_package(NumPy 1.7 REQUIRED)
+
+  EnsureCXX11StdThisThreadSleepForAvailable()
+
+  message(STATUS "Will build tomographer Python interface (BUILD_TOMOPY=on)")
+  message("
+    *** NOTE ***
+    Building the Python interface with CMake is meant for development (and for
+    running the tests); in particular 'make install' will not install any python
+    interface related files.
+
+    Please use 'python setup.py install' inside the py/ directory to properly
+    build and install the python module.
+
+")
+  add_subdirectory(py)
+
+else()
+  message(STATUS "Will not build tomographer Python interface (BUILD_TOMOPY=off)")
+endif()
+
+# ==============================================================================
 # Tests?
 # ==============================================================================
 
@@ -185,27 +227,31 @@ option(TOMOGRAPHER_ENABLE_TESTS "Build Tomographer/Tomorun tests" off)
 
 if(TOMOGRAPHER_ENABLE_TESTS)
 
-  if(NOT Boost_UNIT_TEST_FRAMEWORK_LIBRARY)
-    find_package(Boost 1.40 COMPONENTS unit_test_framework REQUIRED)
+  if(NOT BUILD_TOMORUN OR NOT BUILD_TOMOPY)
+    message(FATAL_ERROR "You can only build the tests if you are building both tomorun and the Python interface library.")
   endif()
+
+  #if(NOT Boost_UNIT_TEST_FRAMEWORK_LIBRARY)
+  find_package(Boost 1.40 COMPONENTS unit_test_framework REQUIRED)
+  #endif()
   
-  # LAPACK is only required if you want to run all the tests (but not for tomorun)
-  if(NOT LAPACK_FOUND)
-    find_package(LAPACK REQUIRED)
-  endif(NOT LAPACK_FOUND)
+  # LAPACK is required in some tests (but not for tomorun)
+  #if(NOT LAPACK_FOUND)
+  find_package(LAPACK REQUIRED)
+  #endif(NOT LAPACK_FOUND)
 
-  message(STATUS "Will build tomographer tests")
+  EnsureCXX11StdThisThreadSleepForAvailable()
+
+  # find the python executable -- used to run the tests for the python interface
+  find_package(PythonInterp REQUIRED)
+
+  # Enable testing for the project
   enable_testing()
-else(TOMOGRAPHER_ENABLE_TESTS)
+
+  message(STATUS "Will build tomographer tests. Use `make test' or `ctest' to run the tests.")
+  add_subdirectory(test)
+  
+else()
   message(STATUS "Will not build tests (meant for developers). Set TOMOGRAPHER_ENABLE_TESTS=on if you wanted them.")
-endif(TOMOGRAPHER_ENABLE_TESTS)
-
-
-# ==============================================================================
-# Include our subdirectories
-# ==============================================================================
-
-add_subdirectory(cxx)
-
-
+endif()
 
