@@ -54,6 +54,7 @@ matrix:
             - python-dev
             - python-numpy
             - python-scipy
+            - python-tk
             - python-pip
             - libboost-python-dev
             - libboost-all-dev
@@ -70,6 +71,7 @@ matrix:
             - python-dev
             - python-numpy
             - python-scipy
+            - python-tk
             - python-pip
             - libboost-python-dev
             - libboost-all-dev
@@ -86,6 +88,7 @@ matrix:
             - python3-dev
             - python3-numpy
             - python3-scipy
+            - python3-tk
             - python3-pip
             - libboost-python-dev
             - libboost-all-dev
@@ -100,6 +103,7 @@ matrix:
             - python3-dev
             - python3-numpy
             - python3-scipy
+            - python3-tk
             - python3-pip
             - libboost-python-dev
             - libboost-all-dev
