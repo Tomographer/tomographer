@@ -208,9 +208,7 @@ struct TestTaskCheckAlignedStack : public TestTask {
 
     // BOOST_TEST_MESSAGE is not thread-safe
     //    BOOST_TEST_MESSAGE( "m.data() == " << (uintptr_t)m.data() );
-    logger.debug("TestTaskCheckAlignedStack::run()", [&](std::ostream & stream) {
-        stream << "m.data() == " << (uintptr_t)m.data();
-      });
+    logger.debug("TestTaskCheckAlignedStack::run()", "m.data() == %p", (void*)m.data());
     BOOST_CHECK( (((uintptr_t)m.data()) & 0xf) == 0 ); // pointer to matrix data is aligned to multiple of 16 bytes
 
     // and run the parent task

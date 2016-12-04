@@ -39,38 +39,46 @@ thisdir = os.path.dirname(__file__)
 #   - default value
 #
 class Vars(object):
-    def __init__(self, cachefile=None):
-        self.d = {} # values read & cached
+    def __init__(self, cachefile=None, defaults={}):
+        # self.d: values read & cached
+        self.d = {}
+
         if cachefile:
-            rx = re.compile(r'^(?P<name>[A-Za-z0-9_]+)(:(?P<type>[A-Za-z_]+))=(?P<value>.*)$')
-            with open(cachefile) as f:
-                for line in f:
-                    m = rx.match(line)
-                    if not m:
-                        continue
-                    self.d[m.group('name')] = m.group('value')
+            dc = self._readcache(cachefile)
 
-    def setDefault(self, name, default):
-        try:
-            self.get(name)
-        except KeyError:
-            self.d[name] = default
-            
+        for k, dfltval in defaults.items():
+            if k in os.environ:
+                self.d[k] = os.environ.get(k)
+            elif k in dc:
+                self.d[k] = dc[k]
+            else:
+                self.d[k] = dfltval
+
+    def _readcache(self, cachefile):
+        dc = {}
+        rx = re.compile(r'^(?P<name>[A-Za-z0-9_]+)(:(?P<type>[A-Za-z_]+))=(?P<value>.*)$')
+        with open(cachefile) as f:
+            for line in f:
+                m = rx.match(line)
+                if not m:
+                    continue
+                dc[m.group('name')] = m.group('value')
+        return dc
+
     def get(self, name):
-        if name in os.environ:
-            return os.environ[name]
-        if name in self.d:
-            return self.d[name]
-        raise KeyError("Variable "+name+" not found")
+        return self.d.get(name)
 
-vv = Vars(os.environ.get('CMAKE_CACHE_FILE', None))
 
-vv.setDefault('GIT', '/usr/bin/git')
-vv.setDefault('Boost_INCLUDE_DIR', '/usr/include')
-vv.setDefault('Boost_PYTHON_LIBRARY_RELEASE', '/usr/lib/libboost_python.so')
-vv.setDefault('EIGEN3_INCLUDE_DIR', '/usr/include')
-vv.setDefault('OpenMP_CXX_FLAGS', '-fopenmp')
-vv.setDefault('CXX11_STD_FLAGS', '-std=c++11')
+cmake_cache_file = os.environ.get('CMAKE_CACHE_FILE', None)
+vv = Vars(cmake_cache_file, {
+    'GIT': '/usr/bin/git',
+    'Boost_INCLUDE_DIR': '/usr/include',
+    'Boost_PYTHON_LIBRARY_RELEASE': '/usr/lib/libboost_python.so',
+    'EIGEN3_INCLUDE_DIR': '/usr/include',
+    'OpenMP_CXX_FLAGS': '-fopenmp',
+    'CXX11_STD_FLAGS': '-std=c++11',
+})
+
 
 CC = ''
 try:
@@ -85,9 +93,27 @@ if CC:
               "cache file ("+CC+"); the former will be used.")
 
 
+
+print("""
+  The `tomographer` python package requires some external C++ libraries and
+  compiler features. You may need to specify their location with the use of
+  environment variables. Current detected values are:
+
+{}
+""".format("\n".join([ "    {}={}".format(k,v) for k,v in vv.d.items() ])))
+
+if not cmake_cache_file:
+    print("""\
+  You may also read variables from a CMakeCache.txt file with
+  CMAKE_CACHE_FILE=path/to/CMakeCache.txt
+
+""")
+
 #print("VARIABLE CACHE: ")
 #for (k,v) in vv.d.items():
 #    print("    "+k+"="+v)
+
+
 
 
 # figure out version info
@@ -154,6 +180,9 @@ setup(name="tomographer",
       author='Philippe Faist',
       author_email='phfaist@caltech.edu',
       url='https://github.com/Tomographer/tomographer/',
+      packages=[
+          'tomographer',
+      ],
       ext_modules=[
           Extension("_tomographer_cxx",
                     files,
