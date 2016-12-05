@@ -88,8 +88,8 @@ to install additional packages for OpenMP (e.g. `libomp`).
 Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
 
 
-Installing `tomorun`
---------------------
+Installing and Running `tomorun`
+--------------------------------
 
 If you found a binary release for your system, simply unpack it wherever you like.
 It is then ready for use.
@@ -131,8 +131,7 @@ Note the compilation step (`make`) is quite computation-heavy because of the
 extensive C++11 template metaprogramming. It might take a minute or two to
 complete depending on your hardware, and might be pretty greedy on RAM.
 
-### GCC/G++ and RAM usage
-
+*GCC/G++ and RAM usage:*
 The heavy template meta-programming can cause GCC/G++ to use a LOT of memory
 while compiling.  If your system is limited on memory, you should consider
 tuning the [gcc flags](https://gcc.gnu.org/onlinedocs/gcc-3.3/gcc/Optimize-Options.html)
@@ -143,8 +142,7 @@ memory; if you want to be really conservative use `--param ggc-min-expand=0
 `-DCMAKE_CXX_FLAGS="--param ..."`.
 
 
-Running `tomorun`
------------------
+### Running `tomorun`
 
 In the binary distributions, `tomorun` is located in the `bin/` subdirectory.
 Detailed information about how to use & run `tomorun` is obtained by querying
@@ -210,16 +208,25 @@ For more information on how to run the histogram analyzer/fitter, run:
     >> analyze_tomorun_histogram('Help')
 
 
-Installing the Python Interface
--------------------------------
+Installing and Using the Python Package
+---------------------------------------
 
-TODO: WRITE ME ...............................
+The python `tomographer` package can be installed by entering the `py/` directory
+and running the `setup.py` script as for usual python packages:
 
+    tomographer/py> python setup.py install --user
 
-Using the Python Interface
---------------------------
+If tomographer's C++ library dependencies aren't installed in standard paths, you
+may need to specify them directly to the `setup.py` script in the form of
+environment variables (they can also be read from a CMake cache file). Check the
+output of `setup.py` for more info.
 
-TODO: WRITE ME AND PROVIDE EXAMPLES in `examples/` ..........
+### Using the Python Interface
+
+TODO: NEED TO WRITE DOCUMENTATION
+
+An example is provided in `examples/two-qubits-Bell/py/`, both in the form of a
+Jupyter notebook as well as a standalone Python script.
 
 
 C++ Framework: API Documentation
