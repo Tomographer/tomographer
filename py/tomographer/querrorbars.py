@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 import collections # namedtuple
 import inspect
 import numpy as np
