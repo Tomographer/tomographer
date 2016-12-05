@@ -149,7 +149,7 @@ class FileOpenError : public Exception
 {
 public:
   FileOpenError(const std::string fname, const std::string errmsg = std::string())
-    : Exception(heading(fname), "Error opening file" + (errmsg.size() ? "': "+errmsg : ""))
+    : Exception(heading(fname), "Error opening file" + (errmsg.size() ? ": "+errmsg : ""))
   {
   }
   virtual ~FileOpenError() noexcept { }
