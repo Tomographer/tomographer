@@ -3,6 +3,7 @@
 from distutils.core import setup
 from distutils.extension import Extension
 
+import codecs
 import os.path
 import sys
 import subprocess # for git
@@ -32,6 +33,18 @@ thisdir = os.path.dirname(__file__)
 #print("This dir = {}".format(thisdir))
 
 
+def ensure_str(s):
+    """
+    Convert value `s` to a `str`, that is, a byte string on Python 2 and a unicode string
+    on Python 3.
+
+    Input is expected to be a byte-string in both Py2 or Py3.
+    """
+    if not isinstance(s, str):
+        return s.decode('utf-8')
+    return s
+
+
 #
 # Looks up the variables:
 #   - in the environment
@@ -50,9 +63,9 @@ class Vars(object):
             if k in os.environ:
                 self.d[k] = os.environ.get(k)
             elif k in dc:
-                self.d[k] = dc[k]
+                self.d[k] = ensure_str(dc[k])
             else:
-                self.d[k] = dfltval
+                self.d[k] = ensure_str(dfltval)
 
     def _readcache(self, cachefile):
         dc = {}
@@ -62,7 +75,7 @@ class Vars(object):
                 m = rx.match(line)
                 if not m:
                     continue
-                dc[m.group('name')] = m.group('value')
+                dc[m.group('name')] = ensure_str(m.group('value'))
         return dc
 
     def get(self, name):
@@ -99,15 +112,17 @@ print("""
   compiler features. You may need to specify their location with the use of
   environment variables. Current detected values are:
 
-{}
-""".format("\n".join([ "    {}={}".format(k,v) for k,v in vv.d.items() ])))
+{}""".format("\n".join([ "    {}={}".format(k,v) for k,v in vv.d.items() ])))
 
 if not cmake_cache_file:
-    print("""\
+    print("""
   You may also read variables from a CMakeCache.txt file with
   CMAKE_CACHE_FILE=path/to/CMakeCache.txt
-
 """)
+else:
+    print("""
+  (read cache file {})
+""".format(cmake_cache_file))
 
 #print("VARIABLE CACHE: ")
 #for (k,v) in vv.d.items():
@@ -120,9 +135,9 @@ if not cmake_cache_file:
 version = None
 if os.path.exists(os.path.join(thisdir, '..', 'VERSION')):
     with open('../VERSION') as f:
-        version = f.read().strip()
+        version = ensure_str(f.read()).strip()
 try:
-    version = subprocess.check_output([vv.get('GIT'), 'describe', '--tags', 'HEAD']).strip()
+    version = ensure_str(subprocess.check_output([vv.get('GIT'), 'describe', '--tags', 'HEAD'])).strip()
 except Exception as e:
     print("ERROR: Can't retrieve the current code version.")
     raise
@@ -149,7 +164,7 @@ library_dirs = [
 cflags = [
     vv.get('CXX11_STD_FLAGS'),
     vv.get("OpenMP_CXX_FLAGS"),
-    '-DTOMOGRAPHER_VERSION=\"{}\"'.format(version.decode("utf-8")),
+    '-DTOMOGRAPHER_VERSION=\"{}\"'.format(version),
 ]
 ldflags = [
     vv.get("OpenMP_CXX_FLAGS"),
@@ -184,8 +199,8 @@ setup(name="tomographer",
           'tomographer',
       ],
       ext_modules=[
-          Extension("_tomographer_cxx",
-                    files,
+          Extension(name="_tomographer_cxx",
+                    sources=files,
                     library_dirs=library_dirs,
                     libraries=libraries,
                     include_dirs=include_dirs,
