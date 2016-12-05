@@ -4,7 +4,11 @@
 Here is the two-qubit example presented in Section 5 of the supplemental material to
 https://dx.doi.org/10.1103/PhysRevLett.117.010404 .
 
-## Running the example
+## Running the example (with `tomorun` and MATLAB)
+
+This section is about running the example with our `tomorun` program and using MATLAB for
+some side calculations and to prepare the data.  It is also possible to do everything
+using the Python interface (see below, section "Running the example in Python").
 
 ### Create the data file
 
@@ -54,3 +58,13 @@ For these scripts to run, make sure that the directories `tools` as well as
 `tools/matlabtools` (of the Tomographer project) are in your MATLAB path.
 
 
+## Running the example in Python
+
+In this section we explain how to run the example using the Python `tomographer` package.
+MATLAB and the `tomorun` program are not needed.
+
+The files are located in the `py/` subdirectory. The example is formatted as a Jupyter
+notebook (http://jupyter.org/). Jupyter is a convenient environment for interactively
+running Python code, and can be installed using Python's `pip`. If you don't want to use
+Jupyter, you can run the script `py_code_export.py` instead; it contains the same code
+formatted into a usual python script file.

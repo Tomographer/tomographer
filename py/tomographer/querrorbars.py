@@ -143,7 +143,7 @@ class HistogramAnalysis(object):
 
     def printFitParameters(self, print_func=print):
         print_func("Fit parameters:\n" + "\n".join([
-            '{:10s} = {:g}'.format(k, getattr(self.fit_params, k))
+            '{:>12s} = {:g}'.format(k, getattr(self.fit_params, k))
             for k in self.fit_params._fields
         ]))
 #        print_func("Fit Parameters:\n\ta2 = {a2:.4g}\n\ta1 = {a1:.4g}\n\t m = {m:.4g}\n\t c = {c:.4g}\n".format(
@@ -167,9 +167,9 @@ class HistogramAnalysis(object):
     def printQuantumErrorBars(self, print_func=print):
         q = self.quantumErrorBars()
         print_func(("Quantum Error Bars:\n"+
-                    "           f0 = {f0:.4g}\n"+
-                    "        Delta = {Delta:.4g}\n"+
-                    "        gamma = {gamma:.4g}\n").format(
+                    "          f0 = {f0:.4g}\n"+
+                    "       Delta = {Delta:.4g}\n"+
+                    "       gamma = {gamma:.4g}\n").format(
             f0=q.f0,
             Delta=q.Delta,
             gamma=q.gamma))

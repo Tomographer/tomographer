@@ -56,6 +56,7 @@ class _SimpleProgressBar_JupyterImpl(object):
 class _SimpleProgressBar_ConsoleImpl(object):
     def __init__(self, label_msg_html="Progress: ", displaybox=True):
         super(_SimpleProgressBar_ConsoleImpl, self).__init__()
+        self.addinfo = None
 
     def __enter__(self):
         return self
