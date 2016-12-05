@@ -46,6 +46,8 @@ set_property(TARGET tomographerpy PROPERTY OUTPUT_NAME "_tomographer_cxx")
 set_property(TARGET tomographerpy PROPERTY PREFIX "")
 if(APPLE)
   set_property(TARGET tomographerpy PROPERTY SUFFIX ".so") # and not .dylib
+  set_property(TARGET tomographerpy PROPERTY BUILD_WITH_INSTALL_RPATH 1)
+  set_property(TARGET tomographerpy PROPERTY INSTALL_NAME_DIR "${CMAKE_CURRENT_BINARY_DIR}")
 endif()
 
 # depends in particular on tomographer_version.h
