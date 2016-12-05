@@ -1,10 +1,10 @@
 
 import collections # namedtuple
+import inspect
 import numpy as np
 import scipy
 import scipy.optimize as sciopt
 import matplotlib.pyplot as matplt
-
 
 class _Ns:
     pass
@@ -32,7 +32,7 @@ def fit_histogram(final_histogram, fit_fn, ftox, **kwopts):
     # the max of the prob curve.  Indeed, low points are usually not very useful.
     #
     # Points are not filted out by default (threshold_fraction=0)
-    thresfrac = kwopts.get('threshold_fraction', 0)
+    thresfrac = kwopts.pop('threshold_fraction', 0)
     thres = thresfrac*np.max(p)
     #display(thres)
 
@@ -46,7 +46,7 @@ def fit_histogram(final_histogram, fit_fn, ftox, **kwopts):
     errlogpok = np.divide(errp[idxok], p[idxok]);
 
     # and perform the fit
-    popt, pcov = sciopt.curve_fit(fit_fn, xok, logpok, sigma=errlogpok)
+    popt, pcov = sciopt.curve_fit(fit_fn, xok, logpok, sigma=errlogpok, absolute_sigma=True, **kwopts)
     #display(popt)
     #display(pcov)
     
@@ -91,7 +91,7 @@ def qu_error_bars_from_deskewed(xtof, m, a, x0, y0):
 
 
 class HistogramAnalysis(object):
-    def __init__(self, final_histogram, ftox=(0,1), **kwopts):
+    def __init__(self, final_histogram, ftox=(0,1), fit_fn=None, **kwopts):
         """
         Arguments:
           - final_histogram: the final histogram returned by the random walks
@@ -111,13 +111,24 @@ class HistogramAnalysis(object):
         if ftox[1] not in [1, -1]:
             raise ValueError("Invalid value of `s` in `ftox=(h,s)`: s=%r"%(ftox[1]))
         self.ftox_hs = ftox
-        self.opts = kwopts
 
-        # User can specify fit function as 'fit_fn' keyword argument -- NOT SUPPORTED
-        #self.fit_fn = kwopts.get('fit_fn', fit_fn_default)
+        if fit_fn:
+            # User specified custom fit function
+            self.custom_fit_fn = True
+            self.fit_fn = fit_fn
+        else:
+            self.custom_fit_fn = False
+            self.fit_fn = fit_fn_default
+            if 'bounds' not in kwopts:
+                # a2, a1, m, c
+                kwopts['bounds'] = ( (0, -np.inf, 0.1, -np.inf), np.inf, )
+            if 'p0' not in kwopts:
+                kwopts['p0'] = [ 1000, 300, 10, 0 ]
 
-        self.fit_histogram_result = fit_histogram(final_histogram, fit_fn=fit_fn_default, ftox=self.ftox, **self.opts)
-        self.fit_params = FitParameters(*self.fit_histogram_result.popt)
+        self.FitParamsType = collections.namedtuple('FitParamsType', inspect.getargspec(self.fit_fn).args[1:])
+
+        self.fit_histogram_result = fit_histogram(final_histogram, fit_fn=self.fit_fn, ftox=self.ftox, **kwopts)
+        self.fit_params = self.FitParamsType(*self.fit_histogram_result.popt)
     
     def xtof(self, x):
         return self.ftox_hs[1]*x + self.ftox_hs[0]
@@ -128,7 +139,22 @@ class HistogramAnalysis(object):
     def fitParameters(self):
         return self.fit_params
 
+    def printFitParameters(self, print_func=print):
+        print_func("Fit parameters:\n" + "\n".join([
+            '{:10s} = {:g}'.format(k, getattr(self.fit_params, k))
+            for k in self.fit_params._fields
+        ]))
+#        print_func("Fit Parameters:\n\ta2 = {a2:.4g}\n\ta1 = {a1:.4g}\n\t m = {m:.4g}\n\t c = {c:.4g}\n".format(
+#            a2=self.fit_params.a2,
+#            a1=self.fit_params.a1,
+#            m=self.fit_params.m,
+#            c=self.fit_params.c))
+        return self.fit_params
+
     def quantumErrorBars(self):
+        if self.custom_fit_fn:
+            raise RuntimeError("You cannot call quantumErrorBars() when you specify a custom fit model.")
+
         (f0, Delta, gamma) = qu_error_bars_from_deskewed(
             self.xtof,
             self.fit_params.m,
@@ -136,11 +162,20 @@ class HistogramAnalysis(object):
         )
         return QuantumErrorBars(f0, Delta, gamma)
 
+    def printQuantumErrorBars(self, print_func=print):
+        q = self.quantumErrorBars()
+        print_func(("Quantum Error Bars:\n"+
+                    "           f0 = {f0:.4g}\n"+
+                    "        Delta = {Delta:.4g}\n"+
+                    "        gamma = {gamma:.4g}\n").format(
+            f0=q.f0,
+            Delta=q.Delta,
+            gamma=q.gamma))
+        return q
+
+
     def plot(self, log_scale=False, xlabel='Distribution of values', **kwopts):
         
-        opts = dict(self.opts)
-        opts.update(kwopts)
-
         d = _Ns()
 
         d.fig = matplt.figure()
@@ -159,8 +194,8 @@ class HistogramAnalysis(object):
 
         d.ax.errorbar(x=f, y=p, yerr=errp, c='b', fmt='.', label='numerics')
         d.ax.plot(np.linspace(np.min(f), np.max(f), 100),
-                  np.exp(fit_fn_default(self.ftox(np.linspace(np.min(f), np.max(f), 100)),
-                                        *self.fit_params)),
+                  np.exp(self.fit_fn(self.ftox(np.linspace(np.min(f), np.max(f), 100)),
+                                     *self.fit_params)),
                   c='r', label='fit')
 
         if kwopts.get('show_plot', True):

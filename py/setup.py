@@ -56,6 +56,7 @@ class Vars(object):
         # self.d: values read & cached
         self.d = {}
 
+        dc = {}
         if cachefile:
             dc = self._readcache(cachefile)
 
