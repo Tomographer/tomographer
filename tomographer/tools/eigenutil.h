@@ -261,12 +261,16 @@ namespace tomo_internal {
       return std::ldexp(result_type(1), a);
     }
 
-    template<typename IndexType>
-    inline const result_type operator() (IndexType a, IndexType b) const {
-      eigen_assert(b == 0 && "powers_of_two_generator may only be used with 1-D objects or with linear access!");
-      (void)b; // silence unused variable warning if eigen_assert is optimized out
-      return std::ldexp(result_type(1), a);
-    }
+    // Don't expose an operator()(i,j) method, because otherwise Eigen might think that we
+    // don't have linear access
+    // https://eigen.tuxfamily.org/dox/NullaryFunctors_8h_source.html#l00147
+    //
+    // template<typename IndexType>
+    // inline const result_type operator() (IndexType a, IndexType b) const {
+    //   eigen_assert(b == 0 && "powers_of_two_generator may only be used with 1-D objects or with linear access!");
+    //   (void)b; // silence unused variable warning if eigen_assert is optimized out
+    //   return std::ldexp(result_type(1), a);
+    // }
 
   };
 } // namespace tomo_internal
