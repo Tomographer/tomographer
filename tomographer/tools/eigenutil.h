@@ -283,9 +283,10 @@ namespace Eigen {
     struct functor_traits<Tomographer::Tools::tomo_internal::powers_of_two_generator<Scalar> >
     { enum { Cost = 8 * NumTraits<Scalar>::MulCost, PacketAccess = false, IsRepeatable = true }; };
 
-  //    template<typename Scalar>
-  //    struct functor_has_linear_access<Tomographer::Tools::tomo_internal::powers_of_two_generator<Scalar> >
-  //    { enum { ret = 0 }; };
+    // we have linear access
+    template<typename Scalar>
+    struct functor_has_linear_access<Tomographer::Tools::tomo_internal::powers_of_two_generator<Scalar> >
+    { enum { ret = 1 }; };
   }
 } // end namespace Eigen
 
