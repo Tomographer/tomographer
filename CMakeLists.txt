@@ -56,7 +56,7 @@ message(STATUS "CMake Build Type: ${CMAKE_BUILD_TYPE}")
 
 # Find Eigen3 package
 #if(NOT EIGEN3_FOUND)
-find_package(Eigen3 3.2.5 REQUIRED)
+find_package(Eigen3 3.3.0 REQUIRED)
 #endif(NOT EIGEN3_FOUND)
 
 # Find OpenMP
