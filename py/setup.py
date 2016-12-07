@@ -9,6 +9,8 @@ import sys
 import subprocess # for git
 import re
 
+import numpy # numpy.get_include()
+
 #
 # POSSIBLE ENVIRONMENT VARIABLES WHICH CAN BE SET:
 #
@@ -151,6 +153,7 @@ def libbasename(x):
     return fn
 
 include_dirs = [
+    numpy.get_include(),
     vv.get("Boost_INCLUDE_DIR"),
     vv.get("EIGEN3_INCLUDE_DIR"),
     os.path.join(thisdir, ".."), # tomographer
