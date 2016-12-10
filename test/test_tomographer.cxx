@@ -25,16 +25,8 @@
  */
 
 
-// the sole role of this file is to define the main() function for the tests.
-// See http://www.boost.org/doc/libs/1_56_0/libs/test/doc/html/utf/user-guide/test-runners.html
 
-//#define BOOST_TEST_MODULE test_tomographer // no longer now with CTest. We now use -D switch
-//#include <boost/test/unit_test.hpp>
-
-//#include "test_tomographer.h"
-
-// don't need to include all of "test_tomographer.h", just what is needed to define the
-// symbol "setting_scope_ptr":
+// We need to define the symbol "setting_scope_ptr":
 namespace EigenAssertTest {
   struct setting_scope;
   extern setting_scope * setting_scope_ptr;

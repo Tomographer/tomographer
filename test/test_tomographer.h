@@ -135,15 +135,104 @@ private:
     if (::EigenAssertTest::setting_scope_ptr && ::EigenAssertTest::setting_scope_ptr->throws_exception) { \
       /*std::fprintf(stderr, "an eigen_assert() failure will cause an exception!\n");*/ \
       if (!(x)) {                                                       \
+        tomographer_eigen_assert_cleanup();                             \
         throw (::Tomographer::Tools::EigenAssertException(#x, __FILE__, __LINE__)); \
       }                                                                 \
     } else {                                                            \
-      assert((x) && "eigen_assert(" #x ") failure");                    \
+      if (!(x)) {                                                       \
+        tomographer_eigen_assert_cleanup();                             \
+        assert(false && "eigen_assert() failure: " #x);                 \
+      }                                                                 \
     }                                                                   \
   } while (false)
 
 
 #include <Eigen/Core>
+
+
+
+
+
+
+// more eigen magic ... override the CommaInitializer class to fix a bug where the
+// destructor could generate an assertion failure while handling a prior exception, which
+// would immediately call terminate() in any case (it appears).  That's the reason for the
+// _tomographer_eigen_assert_cleanup() function above.
+namespace Tomographer { namespace Tools { namespace tomo_internal {
+template<typename XprType>
+struct FixCommaInitializer
+{
+  typedef typename XprType::Scalar Scalar;
+
+  FixCommaInitializer(XprType& xpr, const Scalar& s)
+    : m_xpr(xpr), m_row(0), m_col(1), m_currentBlockRows(1)
+  {
+    m_xpr.coeffRef(0,0) = s;
+  }
+
+  FixCommaInitializer(FixCommaInitializer&& o)
+  : m_xpr(o.m_xpr), m_row(o.m_row), m_col(o.m_col), m_currentBlockRows(o.m_currentBlockRows) {
+    // Mark original object as finished.
+    o.m_row = m_xpr.rows();
+    o.m_col = m_xpr.cols();
+    o.m_currentBlockRows = 0;
+  }
+
+  /* inserts a scalar value in the target matrix */
+  FixCommaInitializer& operator,(const Scalar& s)
+  {
+    if (m_col==m_xpr.cols())
+    {
+      m_row+=m_currentBlockRows;
+      m_col = 0;
+      m_currentBlockRows = 1;
+      eigen_assert(m_row<m_xpr.rows()
+        && "Too many rows passed to comma initializer (operator<<)");
+    }
+    eigen_assert(m_col<m_xpr.cols()
+      && "Too many coefficients passed to comma initializer (operator<<)");
+    eigen_assert(m_currentBlockRows==1);
+    m_xpr.coeffRef(m_row, m_col++) = s;
+    return *this;
+  }
+
+  inline ~FixCommaInitializer() noexcept(false)
+  {
+    finished();
+  }
+
+  inline XprType& finished() noexcept(false)
+  {
+    eigen_assert(((m_row+m_currentBlockRows) == m_xpr.rows() || m_xpr.cols() == 0)
+                 && m_col == m_xpr.cols()
+                 && "Too few coefficients passed to comma initializer (operator<<)");
+    return m_xpr;
+  }
+
+  XprType& m_xpr;           // target expression
+  Eigen::Index m_row;              // current row id
+  Eigen::Index m_col;              // current col id
+  Eigen::Index m_currentBlockRows; // current block height
+
+  void tomographer_eigen_assert_cleanup() {
+    // mark as finished, so that destructor doesn't further raise another exception
+    m_row = m_xpr.rows(); m_col = m_xpr.cols(); m_currentBlockRows = 1;
+  }
+};
+} } } // namespaces Tomographer::Tools::tomo_internal
+template<typename Derived, typename Scalar>
+inline Tomographer::Tools::tomo_internal::FixCommaInitializer<Derived>
+operator<<(Eigen::DenseBase<Derived> & m, const Scalar& s)
+{
+  return Tomographer::Tools::tomo_internal::FixCommaInitializer<Derived>(m.derived(), s);
+}
+
+
+
+
+
+
+
 
 #include <boost/test/unit_test.hpp>
 #include <boost/test/floating_point_comparison.hpp>

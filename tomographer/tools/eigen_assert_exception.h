@@ -50,6 +50,10 @@ namespace Tools {
 /** \brief Exception that is thrown upon failed \c eigen_assert
  *
  * This is useful, e.g. for the test suites.
+ *
+ * \note Eigen's \ref Eigen::CommaInitializer "CommaInitializer" has an assertion check in
+ * its destructor, which in C++11 are automatically \c noexcept.  This causes warnings
+ * under g++6, and the code will call terminate() at runtime if the assertion fails.
  */
 class EigenAssertException : public std::exception
 {
@@ -69,6 +73,14 @@ public:
 
 
 
+// define some Eigen internal magic (undocumented, hope they don't change this in the
+// future) in case there is a eigen_assert() in a destructor (e.g. CommaInitializer)
+#define VERIFY_RAISES_ASSERT 1
+namespace Eigen {
+typedef Tomographer::Tools::EigenAssertException eigen_assert_exception;
+}
+
+
 /** \brief Macro like \a eigen_assert(), but which throws an exception.
  *
  * You can use this macro in a definition of \c "eigen_assert()". If the assertion
@@ -76,8 +88,16 @@ public:
  * Tomographer::Tools::EigenAssertException is thrown.
  */
 #define eigen_assert_throw_exception(x)         \
-  if (!(x)) { throw (::Tomographer::Tools::EigenAssertException(#x, __FILE__, __LINE__)); }
-  
+  if (!(x)) {                                                           \
+    tomographer_eigen_assert_cleanup();                                \
+    throw (::Tomographer::Tools::EigenAssertException(#x, __FILE__, __LINE__)); \
+  }
+
+// may be overridden in various contexts, such as in classes (see FixCommaInitializer
+// in test_tomographer.h)
+inline void tomographer_eigen_assert_cleanup() { }
+
+
 
 #ifdef TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION
 // override Eigen's eigen_assert() macro

@@ -357,22 +357,22 @@ BOOST_AUTO_TEST_CASE(with_underlying_error_bars)
 
   { BaseHistogramType hist(p);
     hist.load( inline_vector_4<double>(15, 45, 42, 12) , 36 ); // sum=150
-    (hist.delta << 1, 1, 1, 1).finished();
+    hist.delta = inline_vector_4<float>(1, 1, 1, 1);
     avghist.addHistogram(hist);
   }
   { BaseHistogramType hist(p);
     hist.load( inline_vector_4<double>(17, 43, 40, 18) , 32 );
-    (hist.delta << 2, 2, 5, 2).finished();
+    hist.delta = inline_vector_4<float>(2, 2, 5, 2);
     avghist.addHistogram(hist);
   }
   { BaseHistogramType hist(p);
     hist.load( inline_vector_4<double>(20, 38, 47, 10) , 35 );
-    (hist.delta << 1, 2, 13, 4).finished();
+    hist.delta = inline_vector_4<float>(1, 2, 13, 4);
     avghist.addHistogram(hist);
   }
   { BaseHistogramType hist(p);
     hist.load( inline_vector_4<double>(18, 44, 43, 13) , 32 );
-    (hist.delta << 2, 1, 24, 3).finished();
+    hist.delta = inline_vector_4<float>(2, 1, 24, 3);
     avghist.addHistogram(hist);
   }
 

@@ -361,6 +361,9 @@ inline auto replicated(const Eigen::DenseBase<Derived> & x, int row_factor, int 
   return x.template replicate<RowFactorCTime, ColFactorCTime>();
 }
 
+
+
+
 } // namespace Tools
 } // namespace Tomographer
 

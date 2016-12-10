@@ -69,7 +69,7 @@ To compile `tomorun` from source, you'll need:
   - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, LLVM/Clang++ >= 3.8)
   - [CMake >= 3.1](http://www.cmake.org/)
   - [Boost libraries >= 1.40](http://www.boost.org/)
-  - [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/)
+  - [Eigen3 library >= 3.3](http://eigen.tuxfamily.org/)
   - [MatIO library](https://sourceforge.net/projects/matio/)
 
 To compile the python interface, you'll need:
@@ -78,7 +78,7 @@ To compile the python interface, you'll need:
   - [CMake >= 3.1](http://www.cmake.org/)
   - [Boost libraries >= 1.40, which includes boost::python](http://www.boost.org/)
   - [Python 2 or Python 3](http://www.python.org/)
-  - [Eigen3 library >= 3.2](http://eigen.tuxfamily.org/)
+  - [Eigen3 library >= 3.3](http://eigen.tuxfamily.org/)
 
 In both cases a recent C++ compiler is required as some C++11 features and
 elements of its standard library are used. Also, make sure it supports OpenMP or
@@ -243,7 +243,7 @@ setting (such as a different random walk method), then you can do so by reusing
 existing code as much as possible.
 
 The API documentation of the Tomographer C++ Framework can be found
-(here)[tomographer_apidoc].  You can also build the API documentation of the
+[here][tomographer_apidoc].  You can also build the API documentation of the
 Tomographer C++ Framework using [Doxygen >= 1.8][doxygen]. You'll also need
 `dot` (from the `graphviz` suite). To build the documentation, simply run
 
