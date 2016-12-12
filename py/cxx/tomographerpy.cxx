@@ -29,11 +29,16 @@ PyLogger tpy_logger;
 
 BOOST_PYTHON_MODULE(_tomographer_cxx)
 {
+  // hack module name so that classes, objects, etc. appear in the module "tomographer"
+  boost::python::scope().attr("__name__") = "tomographer";
+
   // python logging
   tpy_logger.initPythonLogger();
   auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
 
   logger.debug("INIT TOMOGRAPHER");
+
+  boost::python::docstring_options doc_options(true, false, false);
 
   // expose Python API for setting the C++ logger level
   boost::python::class_<PyLogger>("PyLogger")

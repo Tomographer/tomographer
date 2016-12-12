@@ -336,7 +336,13 @@ void py_tomo_tomorun()
 
   logger.debug("MHRWParams ...");
   { typedef Py::MHRWParams Kl;
-    boost::python::class_<Py::MHRWParams>("MHRWParams")
+    boost::python::class_<Py::MHRWParams>(
+        "MHRWParams",
+        "Parameters for a Metropolis-Hastings random walk.\n\n"
+        ".. py:function:: MHRWParams(step_size, n_sweep, n_therm, n_run)\n\n"
+        "    Construct a `MHRWParams` instance.  The read-only members `step_size`, `n_sweep`, "
+        "`n_therm` and `n_run` are initialized as given here.  See the C++ class doc for more info."
+        )
       .def(boost::python::init<>())
       .def(boost::python::init<RealType,CountIntType,CountIntType,CountIntType>())
       .add_property("step_size", +[](const Kl & p) { return p.step_size; },
@@ -358,6 +364,11 @@ void py_tomo_tomorun()
     // now inside submodule
     boost::python::scope tomorunmodule(tomorunsubmod);
 
+    tomorunmodule.attr("__doc__") =
+      ("Perform a random in the full state space of a quantum system according to "
+       "our practical, reliable procedure, and collect a histogram of a specific "
+       "figure of merit.");//  See :py:func:`~tomographer.tomorun.tomorun()`.") ;
+
     logger.debug("tomorun.tomorun() ...");
 
     // the main run call:
@@ -376,8 +387,47 @@ void py_tomo_tomorun()
          boost::python::arg("binning_num_levels") = -1,
          boost::python::arg("num_repeats") = omp_get_num_procs(),
          boost::python::arg("progress_fn") = boost::python::object(),
-         boost::python::arg("progress_interval_ms") = (int)500),
-        "Docstring here"
+         boost::python::arg("progress_interval_ms") = (int)500
+            ),
+        ("Run the tomography procedure by exploring the full quantum state space in :math:`T` parameterization.\n"
+         "\n"
+         "This python function provides comparable functionality to the `tomorun` executable program, and\n"
+         "allows for a better seamless interoperability with `NumPy`---all data matrices here are specified\n"
+         "as `NumPy` arrays.\n"
+         "\n"
+         ":param dim: The dimension of the quantum system\n"
+         ":param Exn: The observed POVM effects, specified as a matrix in which each row is the\n"
+         "            X-parameterization of a POVM effect. You may want to specify `Emn` instead,\n"
+         "            which may be simpler.\n"
+         ":param Emn: The observed POVM effects, specified as a list of $\\textit{dim}\\times\\textit{dim}$\n"
+         "            matrices.\n"
+         ":param Nm:  the list of observed frequency counts for each POVM effect in `Emn` or `Exn`.\n"
+         ":param fig_of_merit:  The choice of the figure of merit to study.  This must be one of 'obs-value',\n"
+         "            'fidelity', 'tr-dist' or 'purif-dist' (see below for more info).\n"
+         ":param ref_state:  For figures of merit which compare to a reference state ('fidelity', 'tr-dist',\n"
+         "            and 'purif-dist'), this is the reference state to calculate the figure of merit with,\n"
+         "            specified as a density matrix.\n"
+         ":param observable:  For the 'obs-value' figure of merit, specify the observable here as a matrix.\n"
+         ":param hist_params:  The requested range of values to look at when collecting a histogram of the\n"
+         "            figure of mert.  This should be a :py:class:`tomographer.UniformBinsHistogramParams`\n"
+         "            instance.\n"
+         ":param mhrw_params:  The parameters of the random walk, including the step size, the sweep size,\n"
+         "            the number of thermalization sweeps, and the number of live sweeps.  Specify a\n"
+         "            :py:class:`tomographer.MHRWParams` instance here."
+         ":param binning_num_levels:  The number of levels in the binning analysis. One should make sure\n"
+         "            that there are enough bins at the last level to estimate the standard\n"
+         "            deviation. This is done automatically by default (or if you specify the value `-1`),\n"
+         "            so in normal circumstances you won't have to change the default value.\n"
+         ":param num_repeats:  The number of independent random walks to run in parallel.  (The instances\n"
+         "            will run serially if `tomographer` was compiled without OpenMP.)\n"
+         ":param progress_fn:  A python callback function to monitor progress.  The function should accept\n"
+         "            a single argument of type :py:class:`tomographer.multiproc.FullStatusReport`.  Check\n"
+         "            out :py:class:`tomographer.jpyutil.RandWalkProgressBar` if you are using a\n"
+         "            Jupyter notebook."
+         ":param progress_interval_ms: The time interval in milliseconds between two progress reports."
+         "\n"
+         "FIGURES OF MERIT: ....... ...... (root fidelity, as in Nielsen & Chuang)"
+            )
         );
 
     logger.debug("tomorun.TomorunInvalidInputError ...");

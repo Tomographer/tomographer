@@ -18,6 +18,10 @@ void py_tomo_multiproc()
     // now inside submodule
     boost::python::scope multiprocmodule(multiprocsubmod);
 
+    multiprocmodule.attr("__doc__") = std::string(
+        "Classes and utilities for handling parallel tasks and for status reporting."
+        );
+
     logger.debug("multiproc.FullStatusReport ...");
     { typedef Py::FullStatusReport Kl;
       boost::python::class_<Py::FullStatusReport>("FullStatusReport")
