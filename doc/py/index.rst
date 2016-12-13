@@ -21,8 +21,8 @@ procedure into an existing tomography workflow.  Currently, there is only one
 "core task" implemented, :py:func:`tomographer.tomorun.tomorun()`, which is an
 alternative to the `tomorun` executable program.
 
-If you are interested, :tomocxx:`here is the detailed API documentation for the
-C++ framework <index.html>`.
+If you are interested, :tomocxx:`here is the API documentation for the
+Tomographer C++ framework <index.html>`.
 
 
 Modules and classes
