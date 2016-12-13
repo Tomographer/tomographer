@@ -20,7 +20,7 @@ def fit_fn_default(x, a2, a1, m, c):
     """
     The default fit model for the logarithm of the histogram data.  The `x`-values are not
     directly the figure of merit, but may be possibly transformed via a `f`-to-`x`
-    transformation (see :py:class:`HistogramAnalysis).
+    transformation (see :py:class:`HistogramAnalysis`).
 
     Returns the value :math:`-a_2\\,x^2 - a_1\\,x + m\\log(x) + c`, which is the default
     fit model.  If a `NumPy` vector is specified as `x`, the function is evaluated for all
@@ -49,7 +49,7 @@ def fit_histogram(final_histogram, fit_fn, ftox, **kwopts):
         since the error bars are taken into account this should be fine in most cases.)
 
     :param kwopts: additional keyword options are passed on to
-        `scipy.optimize.curve_fit()`.
+        `scipy.optimize.curve_fit(...)`.
     """
 
     f = final_histogram.values_center

@@ -79,54 +79,58 @@ class _SimpleProgressBar_ConsoleImpl(object):
 
 
 if in_ipynb():
-    SimpleProgressBar = _SimpleProgressBar_JupyterImpl
+    _SimpleProgressBar_base = _SimpleProgressBar_JupyterImpl
 else:
     # This also happens when parsed by Sphinx
-    SimpleProgressBar = _SimpleProgressBar_ConsoleImpl
-SimpleProgressBar.__name__ = 'SimpleProgressBar'
+    _SimpleProgressBar_base = _SimpleProgressBar_ConsoleImpl
 
 #
-# Document the SimpleProgressBar API here, so it is visible in either case.
+# We need to subclass the relevant class here, because we want to include docstrings.
+# Unfortunately with Python2 we cannot directly edit the docstrings as
+# "SimpleProgressBar.__doc__ = ...", although that works in Python 3.
 #
-SimpleProgressBar.__doc__ = """
-A simple progress bar implementation, to be used in a Python `with` statement::
+class SimpleProgressBar(_SimpleProgressBar_base):
+    """
+    A simple progress bar implementation, to be used in a Python `with` statement::
 
-    with SimpleProgressBar("Working very hard ... ") as prg:
-        for i in range(10000):
-            # do stuff that takes time
-            ...
-            # update the progress bar
-            prg.progress(fraction_done=i/10000.0)
+        with SimpleProgressBar("Working very hard ... ") as prg:
+            for i in range(10000):
+                # do stuff that takes time
+                ...
+                # update the progress bar
+                prg.progress(fraction_done=i/10000.0)
 
-This class works both inside a Jupyter notebook, providing a nice graphical progress bar,
-as well as in any other context such as a simple python console script, in which case
-information is simply displayed in the terminal using `print(...)`.
+    This class works both inside a Jupyter notebook, providing a nice graphical progress bar,
+    as well as in any other context such as a simple python console script, in which case
+    information is simply displayed in the terminal using `print(...)`.
 
-In addition, it is possible to display additional information to simply the fraction done.
-You can do this by specifying the argument `add_info` to the :py:meth:`progress()`
-callback.  Inside a Jupyter notebook, the information is displayed below the progress bar
-and is constantly updated at each call of :py:meth:`progress()`.  In the console version,
-the information is simply displayed each time using `print(...)`.
+    In addition, it is possible to display additional information to simply the fraction done.
+    You can do this by specifying the argument `add_info` to the :py:meth:`progress()`
+    callback.  Inside a Jupyter notebook, the information is displayed below the progress bar
+    and is constantly updated at each call of :py:meth:`progress()`.  In the console version,
+    the information is simply displayed each time using `print(...)`.
 
-Note: When we are inside a Jupyter notebook, there is an additional attribute which is
-exposed called `addinfo`.  It is an `IPython.display.HTML` widget which serves to display
-the additional info. By testing for this attribute you can display custom stuff in there,
-e.g. a final report after the work has finished.
+    Note: When we are inside a Jupyter notebook, there is an additional attribute which is
+    exposed called `addinfo`.  It is an `IPython.display.HTML` widget which serves to display
+    the additional info. By testing for this attribute you can display custom stuff in there,
+    e.g. a final report after the work has finished.
 
-"""
-SimpleProgressBar.progress.__doc__ = """
-progress(fraction_done[, add_info=None])
+    """
+    
+    def progress(self, *args, **kwargs):
+        """
+        progress(fraction_done[, add_info=None])
 
-The callback function to update the progress bar (or to display new information on the
-console).
+        The callback function to update the progress bar (or to display new information on the
+        console).
 
-:param fraction_done: is the fraction of the job done, a real number between zero and one.
-:param add_info: any additional information (formatted as plain text) which should be
-    displayed alongside the progress bar. If `None` (or not specified), then no additional
-    information is displayed.
+        :param fraction_done: is the fraction of the job done, a real number between zero and one.
+        :param add_info: any additional information (formatted as plain text) which should be
+            displayed alongside the progress bar. If `None` (or not specified), then no additional
+            information is displayed.
 
-"""
-
+        """
+        super(SimpleProgressBar, self).progress(*args, **kwargs)
 
 
 

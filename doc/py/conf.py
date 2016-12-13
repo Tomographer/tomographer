@@ -147,6 +147,15 @@ modindex_common_prefix = [ 'tomographer.' ]
 todo_include_todos = True
 
 
+nitpick_ignore = [
+    ('py:class', 'Boost.Python.instance'),
+    ('py:class', 'object'),
+    ('py:class', 'tuple'),
+    ('py:class', 'Exception'), # in inheritance
+    ('py:class', 'RuntimeError'), # in inheritance
+    ]
+
+
 # -- Options for HTML output ----------------------------------------------
 
 # The theme to use for HTML and HTML Help pages.  See the documentation for

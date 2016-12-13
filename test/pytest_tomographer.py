@@ -236,3 +236,11 @@ class Histograms(unittest.TestCase):
 # print(a.prettyPrint(80))
 
 # print("\n".join(['\t%.4g\t%.4g'%(k,v) for k,v in zip(a.values_center, a.bins)]))
+
+
+
+
+# normally, this is not needed as we are being run via pyruntest.py, but it might be
+# useful if we want to run individually picked tests
+if __name__ == '__main__':
+    unittest.main()

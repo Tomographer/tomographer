@@ -181,7 +181,7 @@ files = [ os.path.join('cxx', x) for x in [
     "pylogger.cxx",
     "pymultiproc.cxx",
     "pymhrwtasks.cxx",
-    "pymhrw.cxx"
+    "pymhrw.cxx",
     "pytomorun.cxx",
 ] ]
 
