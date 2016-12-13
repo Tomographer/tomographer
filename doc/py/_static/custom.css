@@ -1,0 +1,21 @@
+
+.logo {
+    padding-bottom: 0.75em;
+}
+
+div.body h1 {
+    margin-bottom: 0.5em;
+}
+div.body h2 {
+    margin-bottom: 0.5em;
+}
+
+.sphinxsidebar .toctree-l1 {
+    padding-bottom: 0.5em;
+    list-style: disc;
+}
+
+
+.genindextable {
+    font-size: 0.8em;
+}
