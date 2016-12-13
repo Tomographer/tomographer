@@ -1,5 +1,6 @@
 
 #include <tomographerpy/common.h>
+#include <tomographerpy/eigpyconv.h> // boost::core::demangle
 #include <tomographerpy/pymhrw.h>
 
 #include "common_p.h"
