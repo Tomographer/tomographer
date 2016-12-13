@@ -12,8 +12,6 @@
 
 namespace Py {
 
-typedef Tomographer::MHRWParams<CountIntType, RealType> MHRWParams;
-
 struct WorkerStatusReport {
   int worker_id;
   double fraction_done;

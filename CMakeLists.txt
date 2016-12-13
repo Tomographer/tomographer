@@ -104,19 +104,39 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_vc_arch_flags_joined}")
 # ==============================================================================
 
 find_package(Doxygen)
+find_package(Sphinx)
+
+# the master documentation target
+add_custom_target(doc)
+
 if(DOXYGEN_FOUND)
-  add_custom_target(doc
+  # C++ documentation target
+  add_custom_target(doxdoc
     COMMAND "${CMAKE_COMMAND}" "-DVersionFile=${CMAKE_BINARY_DIR}/tomographer/tomographer_VERSION" "-DRootSourceDir=${CMAKE_SOURCE_DIR}" "-DTargetDoxyfileDir=${CMAKE_BINARY_DIR}" -P "${CMAKE_SOURCE_DIR}/cmake/CreateDoxyfile.cmake"
     COMMAND "${DOXYGEN_EXECUTABLE}" "${CMAKE_BINARY_DIR}/Doxyfile"
-    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
-    COMMENT "Generating API documentation with Doxygen" VERBATIM
+    COMMENT "Generating C++ API documentation with Doxygen" VERBATIM
     )
   # to make sure the version file is set up properly
-  add_dependencies(doc tomographer)
-  message(STATUS "You can build the API documentation by running `make doc`.")
+  add_dependencies(doxdoc tomographer)
+  add_dependencies(doc doxdoc)
+  message(STATUS "C++ API documentation will be built when running `make doc`.")
 else()
-  message(STATUS "Doxygen not found. Don't worry, you'd only need this if you wanted to generate API documentation.")
+  message(STATUS "Doxygen not found. Don't worry, you'd only need this if you wanted to generate C++ API documentation.")
 endif()
+if(SPHINX_FOUND AND BUILD_TOMOPY)
+  # Python documentation target
+  add_custom_target(pydoc
+    COMMAND "${CMAKE_COMMAND}" -E env "PYTHONPATH=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py:\$PYTHONPATH" "${SPHINX_BUILD_COMMAND}" -a -E -n -b html "${CMAKE_SOURCE_DIR}/doc/py" "html/py"
+    WORKING_DIRECTORY "${CMAKE_BINARY_DIR}"
+    COMMENT "Generating Python API documentation with Sphinx" VERBATIM
+    )
+  add_dependencies(pydoc tomographerpy)
+  add_dependencies(doc pydoc)
+  message(STATUS "Python API documentation will be built when running `make doc`.")
+else()
+  message(STATUS "Sphinx not found, or not building python module. Don't worry, you'd only need this if you wanted to generate Python API documentation.")
+endif()
+
 
 # ==============================================================================
 # Set up Install Targets
@@ -205,9 +225,10 @@ if (BUILD_TOMOPY)
   message(STATUS "Will build tomographer Python interface (BUILD_TOMOPY=on)")
   message("
     *** NOTE ***
-    Building the Python interface with CMake is meant for development (and for
-    running the tests); in particular 'make install' will not install any python
-    interface related files.
+    Building the Python interface with CMake is meant for development (in
+    particular for running the tests and generating API documentation).  Please
+    note that 'make install' will NOT install any Python interface related
+    files.
 
     Please use 'python setup.py install' inside the py/ directory to properly
     build and install the python module.

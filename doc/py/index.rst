@@ -3,19 +3,26 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-Welcome to tomographer-python's documentation!
-==============================================
 
-Contents:
+Tomographer (Python Interface)
+==============================
+
+The `tomographer` package: Practical, Reliable Error Bars in Quantum Tomography.
+
+These Python bindings provide an easy-to-use interface to the underlying C++ routines.
+
+
+Modules and classes
+-------------------
 
 .. toctree::
    :maxdepth: 2
 
-   tomographerpy/modules
+   tomographerpy/tomographer
 
 
 Indices and tables
-==================
+------------------
 
 * :ref:`genindex`
 * :ref:`modindex`

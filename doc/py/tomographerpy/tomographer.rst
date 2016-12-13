@@ -1,22 +1,12 @@
-tomographer package
-===================
-
-Submodules
-----------
 
 .. toctree::
 
+   tomographer._hist_classes
+   tomographer._mhrw_classes
+   tomographer._exc_classes
    tomographer.multiproc
    tomographer.tomorun
-   tomographer.jpyutil
    tomographer.querrorbars
+   tomographer.jpyutil
 
 
-Module contents
----------------
-
-.. automodule:: tomographer
-    :members:
-    :show-inheritance:
-    :private-members:
-    :special-members:

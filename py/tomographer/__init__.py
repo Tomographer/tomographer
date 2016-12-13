@@ -1,10 +1,4 @@
 
-"""
-The `tomographer` package: Practical, Reliable Error Bars in Quantum Tomography.
-
-These Python bindings provide an easy-to-use interface to the underlying C++ routines.
-"""
-
 #from . import jpyutil as _jpyutil
 #from . import querrorbars as _querrorbars
 #def __bootstrap__():

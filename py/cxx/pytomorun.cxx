@@ -24,6 +24,9 @@
 
 #include "tomographerpy/pyhistogram.h"
 #include "tomographerpy/pymultiproc.h"
+#include "tomographerpy/pymhrw.h"
+#include "tomographerpy/pymhrwtasks.h"
+#include "tomographerpy/exc.h"
 
 #include "common_p.h"
 
@@ -327,34 +330,14 @@ boost::python::object py_tomorun(
 
 
 
+PyObject * pyTomorunInvalidInputError = NULL;
+
 
 void py_tomo_tomorun()
 {
   auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
 
   logger.debug("py_tomo_tomorun() ...");
-
-  logger.debug("MHRWParams ...");
-  { typedef Py::MHRWParams Kl;
-    boost::python::class_<Py::MHRWParams>(
-        "MHRWParams",
-        "Parameters for a Metropolis-Hastings random walk.\n\n"
-        ".. py:function:: MHRWParams(step_size, n_sweep, n_therm, n_run)\n\n"
-        "    Construct a `MHRWParams` instance.  The read-only members `step_size`, `n_sweep`, "
-        "`n_therm` and `n_run` are initialized as given here.  See the C++ class doc for more info."
-        )
-      .def(boost::python::init<>())
-      .def(boost::python::init<RealType,CountIntType,CountIntType,CountIntType>())
-      .add_property("step_size", +[](const Kl & p) { return p.step_size; },
-                    +[](Kl & p, RealType step_size) { p.step_size = step_size; })
-      .add_property("n_sweep", +[](const Kl & p) { return p.n_sweep; },
-                    +[](Kl & p, CountIntType n_sweep) { p.n_sweep = n_sweep; })
-      .add_property("n_therm", +[](const Kl & p) { return p.n_therm; },
-                    +[](Kl & p, CountIntType n_therm) { p.n_therm = n_therm; })
-      .add_property("n_run", +[](const Kl & p) { return p.n_run; },
-                    +[](Kl & p, CountIntType n_run) { p.n_run = n_run; })
-      ;
-  }
 
   logger.debug("tomorun module ...");
   
@@ -389,17 +372,21 @@ void py_tomo_tomorun()
          boost::python::arg("progress_fn") = boost::python::object(),
          boost::python::arg("progress_interval_ms") = (int)500
             ),
-        ("Run the tomography procedure by exploring the full quantum state space in :math:`T` parameterization.\n"
-         "\n"
-         "This python function provides comparable functionality to the `tomorun` executable program, and\n"
-         "allows for a better seamless interoperability with `NumPy`---all data matrices here are specified\n"
-         "as `NumPy` arrays.\n"
-         "\n"
+        ("tomorun(dim, ...)\n\n"
+         "\n\n"
+         "Produce a histogram of a figure of merit during a random walk in quantum state "
+         "space according to the distribution :math:`\\mu_{B^n}(\\cdot)` defined in Ref. [1]. The "
+         "likelihood function is specified with independent POVM effects (see below)."
+         "\n\n"
+         "This python function provides comparable functionality to the `tomorun` executable program, and "
+         "allows for a better seamless interoperability with `NumPy`---all data matrices here are specified "
+         "as `NumPy` arrays."
+         "\n\n"
          ":param dim: The dimension of the quantum system\n"
          ":param Exn: The observed POVM effects, specified as a matrix in which each row is the\n"
          "            X-parameterization of a POVM effect. You may want to specify `Emn` instead,\n"
          "            which may be simpler.\n"
-         ":param Emn: The observed POVM effects, specified as a list of $\\textit{dim}\\times\\textit{dim}$\n"
+         ":param Emn: The observed POVM effects, specified as a list of :math:`\\textit{dim}\\times\\textit{dim}`\n"
          "            matrices.\n"
          ":param Nm:  the list of observed frequency counts for each POVM effect in `Emn` or `Exn`.\n"
          ":param fig_of_merit:  The choice of the figure of merit to study.  This must be one of 'obs-value',\n"
@@ -414,7 +401,7 @@ void py_tomo_tomorun()
          ":param mhrw_params:  The parameters of the random walk, including the step size, the sweep size,\n"
          "            the number of thermalization sweeps, and the number of live sweeps.  Specify a\n"
          "            :py:class:`tomographer.MHRWParams` instance here."
-         ":param binning_num_levels:  The number of levels in the binning analysis. One should make sure\n"
+         ":param binning_num_levels:  The number of levels in the binning analysis [2]. One should make sure\n"
          "            that there are enough bins at the last level to estimate the standard\n"
          "            deviation. This is done automatically by default (or if you specify the value `-1`),\n"
          "            so in normal circumstances you won't have to change the default value.\n"
@@ -423,18 +410,70 @@ void py_tomo_tomorun()
          ":param progress_fn:  A python callback function to monitor progress.  The function should accept\n"
          "            a single argument of type :py:class:`tomographer.multiproc.FullStatusReport`.  Check\n"
          "            out :py:class:`tomographer.jpyutil.RandWalkProgressBar` if you are using a\n"
-         "            Jupyter notebook."
-         ":param progress_interval_ms: The time interval in milliseconds between two progress reports."
-         "\n"
-         "FIGURES OF MERIT: ....... ...... (root fidelity, as in Nielsen & Chuang)"
+         "            Jupyter notebook.\n"
+         ":param progress_interval_ms: The time interval in milliseconds between two progress reports.\n"
+         "\n\n"
+         ".. rubric:: Figures of merit"
+         "\n\n"
+         "The value of the `fig_of_merit` argument should be one of the following:\n\n"
+         "  - \"obs-value\": the expectation value of an observable. You should specify the argument "
+         "`observable` as a 2-D `NumPy` array specifying the observable you are interested in. "
+         "\n\n"
+         "  - \"tr-dist\": the trace distance to a reference state. You should specify the argument "
+         "`ref_state` as a 2-D `NumPy` array specifying the density matrix of the state which should serve "
+         "as reference state."
+         "\n\n"
+         "  - \"fidelity\": the (root) fidelity to a reference state [3]. You should specify the argument "
+         "`ref_state` as a 2-D `NumPy` array specifying the density matrix of the state which should serve "
+         "as reference state."
+         "\n\n"
+         "    .. note:: For the squared fidelity to a pure state (usually preferred in "
+         "experimental papers), you should use \"obs-value\" with the observable "
+         "being the density matrix of the reference state [4]."
+         "\n\n"
+         "  - \"purif-dist\": the purified distance to a reference state [5]. You should specify the argument "
+         "`ref_state` as a 2-D `NumPy` array specifying the density matrix of the state which should serve "
+         "as reference state."
+         "\n\n"
+         ".. rubric:: Status reporting"
+         "\n\n"
+         "You may receive periodic status reports via a custom Python callback, so that you can stay informed "
+         "of the overall progress.  The callback specified to `progress_fn` will be called approximately "
+         "every `progress_interval_ms` milliseconds with information on the overall progress given as a "
+         ":py:class:`tomographer.multiproc.FullStatusReport` object.  The individual workers provide the following "
+         "additional information, formatted within the `data` dictionary attribute of each "
+         ":py:class:`~tomographer.multiproc.WorkerStatusReport` object:\n\n"
+         "  - ``data['mhrw_params']`` -- a :py:class:`~tomographer.MHRWParams` instance with the current "
+         "parameters of the random walk\n\n"
+         "  - ``data['acceptance_ratio']`` -- the current acceptance ratio of the Metropolis-Hastings random walk, "
+         "as a real value between zero and one. You should try to keep this value around ~0.25.  The acceptance ratio "
+         "is not available during the thermalizing runs.\n\n"
+         "  - ``data['kstep']`` -- the current iteration step number (an iteration corresponds to creating a jump "
+         "proposal, and to jump with a certain probability)\n\n"
+         "  - ``data['n_total_iters']`` -- the total number of iterations this random walk is going to complete.\n\n"
+         "\n\n"
+         ".. rubric:: Footnotes and references"
+         "\n\n"
+         "| [1] Christandl and Renner, Phys. Rev. Lett. 12:120403 (2012), arXiv:1108.5329\n"
+         "| [2] Ambegaokar and Troyer, Am. J. Phys., 78(2):150 (2010), arXiv:0906.0943\n"
+         "| [3] The root fidelity is defined as "
+         ":math:`F(\\rho,\\sigma)=\\left\\Vert\\rho^{1/2}\\sigma^{1/2}\\right\\Vert_1`, "
+         "as in Nielsen and Chuang, \"Quantum Computation and Quantum Information\".\n"
+         "| [4] Indeed, for pure rho_ref, "
+         ":math:`F^2(\\rho,\\rho_\\mathrm{ref}) = \\mathrm{tr}(\\rho\\rho_\\mathrm{ref})`.\n"
+         "| [5] The purified distance, also called \"infidelity\" in the literature, is "
+         "defined as :math:`P(\\rho,\\sigma) = \\sqrt{1 - F^2(\\rho,\\sigma)}`.\n"
+         "\n\n"
             )
         );
 
     logger.debug("tomorun.TomorunInvalidInputError ...");
 
+    pyTomorunInvalidInputError = createExceptionClass("TomorunInvalidInputError", PyExc_RuntimeError);
+
     boost::python::register_exception_translator<TomorunInvalidInputError>(
         +[](const TomorunInvalidInputError & exc) {
-          PyErr_SetString(PyExc_RuntimeError, exc.what());
+          PyErr_SetString(pyTomorunInvalidInputError, exc.what());
         });
   }
 

@@ -8,6 +8,7 @@
 
 #include "common_p.h"
 #include "tomographerpy/eigpyconv.h"
+#include "tomographerpy/exc.h"
 
 
 
@@ -27,6 +28,10 @@ static void workaround_import_array() {
 #else
 #error "Unknown or unsupported Python version"
 #endif
+
+
+
+PyObject * pyTomographerNumpyConversionError = NULL;
 
 // add the types you want to add
 void register_eigen_converter()
@@ -74,14 +79,19 @@ void register_eigen_converter()
   eigen_python_converter< Eigen::Matrix<std::complex<double>,Eigen::Dynamic,1> >::to_python();
   eigen_python_converter< Eigen::Matrix<std::complex<double>,Eigen::Dynamic,1> >::from_python();
   
+  pyTomographerNumpyConversionError = createExceptionClass(
+      "TomographerNumpyConversionError", TomographerCxxError,
+      // docstring:
+      "Exception class which indicates an error in conversion of a `NumPy` object to or from a C++ Eigen matrix."
+      );
 
   boost::python::register_exception_translator<EigenNumpyConversionError>(+[](const EigenNumpyConversionError & exc) {
-      PyErr_SetString(PyExc_RuntimeError, exc.what());
+      PyErr_SetString(pyTomographerNumpyConversionError, exc.what());
     });
   
   boost::python::register_exception_translator<Tomographer::Tools::EigenAssertException>(
       +[](const Tomographer::Tools::EigenAssertException & exc) {
-        PyErr_SetString(PyExc_RuntimeError, exc.what());
+        PyErr_SetString(TomographerCxxError, exc.what());
       });
 
   logger.debug("register_eigen_converter() done.");

@@ -1,7 +1,6 @@
-tomographer.jpyutil module
-==========================
+Utilities for Jupyter notebooks (`tomographer.jpyutil`)
+=======================================================
 
 .. automodule:: tomographer.jpyutil
-    :members:
-    :undoc-members:
+    :members: SimpleProgressBar, RandWalkProgressBar
     :show-inheritance:

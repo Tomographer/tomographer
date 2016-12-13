@@ -1,4 +1,8 @@
 
+"""
+Utilities for fitting the histogram data and computing the *quantum error bars*.
+"""
+
 from __future__ import print_function
 
 import collections # namedtuple
@@ -13,13 +17,40 @@ class _Ns:
 
 
 def fit_fn_default(x, a2, a1, m, c):
+    """
+    The default fit model for the logarithm of the histogram data.  The `x`-values are not
+    directly the figure of merit, but may be possibly transformed via a `f`-to-`x`
+    transformation (see :py:class:`HistogramAnalysis).
+
+    Returns the value :math:`-a_2\\,x^2 - a_1\\,x + m\\log(x) + c`, which is the default
+    fit model.  If a `NumPy` vector is specified as `x`, the function is evaluated for all
+    the given values and the values are returned as a vector.
+    """
     return -a2*np.square(x) - a1*x + m*np.log(x) + c
 
-FitParameters = collections.namedtuple('FitParameters', ('a2', 'a1', 'm', 'c') )
 QuantumErrorBars = collections.namedtuple('QuantumErrorBars', ('f0', 'Delta', 'gamma') )
 
 
 def fit_histogram(final_histogram, fit_fn, ftox, **kwopts):
+    """
+    Fit the histogram data to a model function.
+
+    :param final_histogram: the final histogram data, provided as a
+        :py:class:`tomographer.UniformBinsHistogramWithErrorBars` class (or a subclass
+        thereof).
+
+    :param ftox: a function which transforms the figure of merit values (`f`-values) into
+        the natural parameter for the fit function (`x`-values).  For example, for the
+        fidelity, one should use :math:`x = 1 - f`.
+
+    :param threshold_fraction: a fraction (i.e. value between 0 and 1) of the maximum peak
+        value over which the data points are kept; values below the threshold are ignored
+        for the fit. (By default, `threshold_fraction=0` and all points are considered;
+        since the error bars are taken into account this should be fine in most cases.)
+
+    :param kwopts: additional keyword options are passed on to
+        `scipy.optimize.curve_fit()`.
+    """
 
     f = final_histogram.values_center
     x = ftox(f)
@@ -74,8 +105,12 @@ def fit_histogram(final_histogram, fit_fn, ftox, **kwopts):
 
 def deskew_logmu_curve(a2, a1, m, c):
     """
-    (a, x0, y0) = deskew_logmu_curve(a2, a1, m, c)
-    de-skew the fit model to obtain a second order approximation.
+    De-skew the fit model to obtain a second order approximation at the peak maximum (see
+    details of how to calculate the quantum error bars in our paper).
+
+    Usage::
+
+        (a, x0, y0) = deskew_logmu_curve(a2, a1, m, c)
     """
     
     x0 = (np.sqrt(a1**2 + 8*a2*m) - a1) / (4*a2)
@@ -93,22 +128,27 @@ def qu_error_bars_from_deskewed(xtof, m, a, x0, y0):
 
 
 class HistogramAnalysis(object):
+    """
+    Take care of analyzing histogram data obtained from performing a random walk over
+    state space according to the distribution :math:`\\mu_{B^n}(\\cdot)` defined by the
+    tomography data, while collecting a histogram of a figure of merit.
+
+    Arguments to the constructor:
+      - `final_histogram`: the final histogram returned by the random walks
+        procedure.  It is expected to be a
+        `tomographer.UniformBinsHistogramWithErrorBars`.
+      - `ftox`: Specify how to transform the figure of merit value `f` into
+        the `x` coordinate for fit. Specify the transformation as a pair of
+        values `(h, s)` in the relation `x = s*(f-h)` or `f=s*x+h`, where h
+        can be any constant, and where `s` must be plus or minus one. By
+        default there is no transformation (`x=f`, corresponding to
+        `ftox=(0,1)`.  For the fidelity, you should use `x = 1-f`
+        (`ftox=(1,-1)`). For an entanglement witness, you might use `x = 2-f`
+        (`ftox=(2,-1)`) for example.
+      - `fit_fn`: a function which serves as fit model (for the log of the data)
+      - additional named arguments in `kwopts` are passed on to :py:func:`fit_histogram`.
+    """
     def __init__(self, final_histogram, ftox=(0,1), fit_fn=None, **kwopts):
-        """
-        Arguments:
-          - final_histogram: the final histogram returned by the random walks
-            procedure.  It is expected to be a
-            `tomographer.UniformBinsHistogramWithErrorBars`.
-          - ftox: Specify how to transform the figure of merit value `f` into
-            the `x` coordinate for fit. Specify the transformation as a pair of
-            values `(h, s)` in the relation `x = s*(f-h)` or `f=s*x+h`, where h
-            can be any constant, and where `s` must be plus or minus one. By
-            default there is no transformation (`x=f`, corresponding to
-            `ftox=(0,1)`.  For the fidelity, you should use `x = 1-f`
-            (`ftox=(1,-1)`). For an entanglement witness, you might use `x = 2-f`
-            (`ftox=(2,-1)`) for example.
-          - fit_fn: a function which serves as fit model (for the log of the data)
-        """
         self.final_histogram = final_histogram
         if ftox[1] not in [1, -1]:
             raise ValueError("Invalid value of `s` in `ftox=(h,s)`: s=%r"%(ftox[1]))
@@ -133,15 +173,37 @@ class HistogramAnalysis(object):
         self.fit_params = self.FitParamsType(*self.fit_histogram_result.popt)
     
     def xtof(self, x):
+        """
+        Convert an `x`-value (natural variable of the fit model) to the value of the figure of
+        merit (`f`).
+        """
         return self.ftox_hs[1]*x + self.ftox_hs[0]
 
     def ftox(self, f):
+        """
+        Convert an `f`-value (value of the figure of merit) to an `x`-value (natural variable
+        of the fit model).
+        """
         return self.ftox_hs[1]*(f - self.ftox_hs[0])
 
     def fitParameters(self):
+        """
+        Return the parameters of the fit.  The return value type is a named tuple whose fields
+        are the argument names of the fit model `fit_fn` specified to the constructor.
+        For example, for the default fit model :py:func:`fit_fn_default`, the fields are
+        `(a2, a1, m, c)`.
+        """
         return self.fit_params
 
     def printFitParameters(self, print_func=print):
+        """
+        Display the fit parameters.
+
+        By default the values are displayed using `print(...)`. You may specify a custom
+        print function if you want them displayed somewhere else.
+
+        The fit parameters are returned in the same format as :py:meth:`fitParameters()`.
+        """
         print_func("Fit parameters:\n" + "\n".join([
             '{:>12s} = {:g}'.format(k, getattr(self.fit_params, k))
             for k in self.fit_params._fields
@@ -154,6 +216,15 @@ class HistogramAnalysis(object):
         return self.fit_params
 
     def quantumErrorBars(self):
+        """
+        Calculate the quantum error bars.
+
+        This function is only available if you use the default fit model (i.e., if you
+        didn't specify the `fit_fn` argument to the constructor).
+
+        Returns a :py:class:`QuantumErrorBars` named tuple.
+        """
+        
         if self.custom_fit_fn:
             raise RuntimeError("You cannot call quantumErrorBars() when you specify a custom fit model.")
 
@@ -165,6 +236,12 @@ class HistogramAnalysis(object):
         return QuantumErrorBars(f0, Delta, gamma)
 
     def printQuantumErrorBars(self, print_func=print):
+        """
+        Calculates and displays the values of the quantum error bars.
+
+        The quantum error bars are returned, provided in the same format as
+        :py:meth:`quantumErrorBars()`.
+        """
         q = self.quantumErrorBars()
         print_func(("Quantum Error Bars:\n"+
                     "          f0 = {f0:.4g}\n"+
@@ -177,6 +254,24 @@ class HistogramAnalysis(object):
 
 
     def plot(self, log_scale=False, xlabel='Distribution of values', **kwopts):
+        """
+        Plot the histogram data using `matplotlib`.
+
+        :param log_scale: if `True`, then use a logarithmic scale for the y-axis.
+
+        :param xlabel: the label for the x axis (i.e., the figure of merit). Note this
+            is the `f`-value, not the `x`-value.
+
+        :param show_plot: if `True` (the default), then the plot is displayed immediately.
+            If `False`, then the returned object has an additional method `show()` which can
+            be used to display the plot.
+
+        The return value is an object with the attributes `fig` (the `matplotlib` figure
+        object) and `ax` (the `matplotlib` axes object) which you can use to set specific
+        custom properties.  If you specified `show_plot=False`, then you should call the
+        `show()` method on the returned object in order to show the plots (which is simply
+        an alias for `matplotlib.pyplot.show()`.
+        """
         
         d = _Ns()
 

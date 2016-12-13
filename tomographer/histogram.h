@@ -206,12 +206,13 @@ struct UniformBinsHistogramParams
  * Does not store any form of error bars. Complies with the \ref pageInterfaceHistogram.
  */
 template<typename Scalar_, typename CountType_ = unsigned int>
-struct UniformBinsHistogram
+class UniformBinsHistogram
   // inheriting from this has some advantages over EIGEN_MAKE_ALIGNED_OPERATOR_NEW, such
   // as not needing to explicitly declare the specialization
   // NeedOwnOperatorNew<UniformBinsHistogram>:
   : public virtual Tools::EigenAlignedOperatorNewProvider
 {
+public:
   //! The scalar type of the "X"-axis of the histogram (usually \c double)
   typedef Scalar_ Scalar;
 
@@ -258,7 +259,7 @@ struct UniformBinsHistogram
     bins = other.bins.template cast<CountType>();
   }
 
-  //! Resets the histogram to zero counts everywhere
+  //! Resets the histogram to zero counts everywhere (including the off-chart counts)
   inline void reset()
   {
     bins.resize(params.num_bins);
@@ -434,10 +435,11 @@ struct UniformBinsHistogram
  *
  */
 template<typename Scalar_, typename CountType_ = double>
-struct UniformBinsHistogramWithErrorBars
+class UniformBinsHistogramWithErrorBars
   : public UniformBinsHistogram<Scalar_, CountType_>,
     public virtual Tools::EigenAlignedOperatorNewProvider
 {
+public:
   //! The Scalar (X-axis) Type. See UniformBinsHistogram::Scalar.
   typedef Scalar_ Scalar;
   //! The Type used to keep track of counts. See UniformBinsHistogram::CountType.
@@ -560,9 +562,10 @@ constexpr bool UniformBinsHistogramWithErrorBars<Scalar_,CountType_>::HasErrorBa
  *         for holding an average.
  */
 template<typename HistogramType_, typename RealAvgType = double>
-struct AveragedHistogram
+class AveragedHistogram
   : public UniformBinsHistogramWithErrorBars<typename HistogramType_::Scalar, RealAvgType>
 {
+public:
   /** \brief Type of the individual histograms we are averaging.
    *
    * This is the argument given as template parameter, and is expected to compily with

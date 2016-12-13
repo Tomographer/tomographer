@@ -510,11 +510,11 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"      \n"
 	"      Note: For the squared fidelity to a pure state (usually preferred in\n"
 	"      experimental papers), you should use \"obs-value\" with the observable\n"
-	// REFERENCE [5] is here
-        "      being the density matrix of the reference state [5].\n"
-	"\n"
 	// REFERENCE [4] is here
-	"    - \"purif-dist\": the purified distance to a reference state [4].\n"
+        "      being the density matrix of the reference state [4].\n"
+	"\n"
+	// REFERENCE [5] is here
+	"    - \"purif-dist\": the purified distance to a reference state [5].\n"
 	"      <RefObject> should be the name of a MATLAB variable present in the MATLAB\n"
 	"      data file. This object should be a complex dim x dim matrix, the density\n"
 	"      matrix of the reference state. If no <RefObject> is specified, then\n"
@@ -531,9 +531,9 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	" [2] Ambegaokar and Troyer, Am. J. Phys., 78(2):150 (2010), arXiv:0906.0943\n"
 	" [3] The root fidelity is defined as F(rho,sigma)=|| rho^{1/2} sigma^{1/2} ||_1,\n"
 	"     as in Nielsen and Chuang, \"Quantum Computation and Quantum Information\".\n"
-	" [4] The purified distance, also called \"infidelity\" in the literature, is\n"
+	" [4] Indeed, for pure rho_ref, F^2(rho,rho_ref) = tr(rho*rho_ref).\n"
+	" [5] The purified distance, also called \"infidelity\" in the literature, is\n"
 	"     defined as P(rho,sigma) = \\sqrt{1 - F^2(rho,sigma)}.\n"
-	" [5] Indeed, for pure rho_ref, F^2(rho,rho_ref) = tr(rho*rho_ref).\n"
 	"\n"
 	"CITATION:\n"
 	"If you use this program in your research, we warmly encourage you to cite the\n"

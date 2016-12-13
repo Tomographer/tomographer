@@ -1,7 +1,7 @@
-tomographer.querrorbars module
-==============================
+Computing the quantum error bars (`tomographer.querrorbars`)
+============================================================
+
 
 .. automodule:: tomographer.querrorbars
     :members:
-    :undoc-members:
     :show-inheritance:

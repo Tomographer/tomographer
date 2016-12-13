@@ -32,6 +32,7 @@ set(tomographerpy_SRCS
   cxx/pytomorun.cxx
   cxx/pymultiproc.cxx
   cxx/pymhrwtasks.cxx
+  cxx/pymhrw.cxx
   cxx/pylogger.cxx
   cxx/tomographerpy.cxx
   )

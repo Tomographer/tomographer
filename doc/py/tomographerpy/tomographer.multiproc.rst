@@ -1,7 +1,6 @@
-tomographer.multiproc module
-============================
+Multiprocessing related classes (`tomographer.multiproc`)
+=========================================================
 
 .. automodule:: tomographer.multiproc
     :members:
-    :undoc-members:
     :show-inheritance:

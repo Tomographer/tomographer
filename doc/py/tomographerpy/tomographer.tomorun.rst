@@ -1,7 +1,6 @@
-tomographer.tomorun module
-============================
+Tomorun, the main tomography routine (`tomographer.tomorun`)
+============================================================
 
 .. automodule:: tomographer.tomorun
     :members:
-    :undoc-members:
     :show-inheritance:
