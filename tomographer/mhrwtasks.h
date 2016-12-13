@@ -236,9 +236,12 @@ template<typename MHRandomWalkTaskCData,
          typename Rng = std::mt19937>
 struct MHRandomWalkTask
 {
+  //! The type used to count iterations (see \ref MHRWParams)
   typedef typename MHRandomWalkTaskCData::CountIntType CountIntType;
+  //! The type used to describe a step size (see \ref MHRWParams)
   typedef typename MHRandomWalkTaskCData::StepRealType StepRealType;
 
+  //! Type to stores the parameters of the random walk 
   typedef MHRWParams<CountIntType, StepRealType> MHRWParamsType;
 
   /** \brief Result type of a single task run.

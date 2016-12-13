@@ -107,8 +107,19 @@ void print_hist_short_bar_with_accept_info(std::ostream & str, int dig_w, int j,
 
 /** \brief Results collector, if no binning analysis is being used.
  *
- * You can directly get the right type by querying the type \a
- * "CDataBase::ResultsCollectorType<..>::Type".
+ * This class takes care of collecting the results of the executed random walk
+ * tasks, and merges them together to provide a final, averaged histogram with
+ * error bars.
+ *
+ * This class complies with the \ref pageInterfaceResultsCollector.
+ *
+ * This results collector should only be used if each task provides a "raw"
+ * histogram, ie. without any error bars.  If you have tasks which already
+ * provide some error bars from a binning analysis, then you should be using the
+ * class \ref ResultsCollectorWithBinningAnalysis.
+ *
+ * Note that you can directly get the right ResultsCollector type by querying
+ * the type \a "CDataBase::ResultsCollectorType<..>::Type".
  *
  * \todo DOC !!!!
  */
@@ -120,16 +131,29 @@ struct ResultsCollectorSimple
                         typename CDataBaseType_::CountRealType>
     >::ProviderType
 {
+  //! The structure which hold the constant shared data describing what we have to do
   typedef CDataBaseType_ CDataBaseType;
+  //! The class which calculates the value we are collecting a histogram of (\ref pageInterfaceValueCalculator compliant)
   typedef typename CDataBaseType::ValueCalculator ValueCalculator;
+  //! The real type which serves to average histogram counts (typically \c double)
   typedef typename CDataBaseType::CountRealType CountRealType;
+  //! The integer type which serves as histogram counts (typically \c int)
   typedef typename CDataBaseType::CountIntType CountIntType;
+  //! The real type which serves to describe the step size of the random walk (typically \c double)
   typedef typename CDataBaseType::StepRealType StepRealType;
+  //! The logger type we can send messages to
   typedef LoggerType_ LoggerType;
   
+  /** \brief The histogram type corresponding to the result of a task
+   *
+   * NOTE: if this histogram actually has error bars, they will be silently ignored.
+   */
   typedef typename CDataBaseType::HistogramType HistogramType;
+  //! The parameters type used to describe our histogram range and number of bins
   typedef typename CDataBaseType::HistogramParams HistogramParams;
+  //! The type of the histogram resulting from a single task, but normalized to unit area under the curve
   typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> NormalizedHistogramType;
+  //! The type of the final resulting, averaged and normalized histogram
   typedef AveragedHistogram<NormalizedHistogramType, CountRealType> FinalHistogramType;
   
   typedef HistogramType MHRWStatsCollectorResultType;
@@ -531,8 +555,8 @@ public:
 	});
     }
     
-    // because stats_coll_result is a histogram WITH error bars, add_histogram will do the
-    // right thing and take them into account.
+    // because stats_coll_result is a histogram WITH error bars, addHistogram
+    // will do the right thing and take them into account.
     _finalhistogram.addHistogram(stats_coll_result.hist);
     
     logger.debug("added histogram.");
