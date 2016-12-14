@@ -254,7 +254,8 @@ struct ProgOptions
     NMeasAmplifyFactor(1.0),
     loglevel(Tomographer::Logger::INFO),
     verbose_log_info(false), // display origins in log messages
-    write_histogram("")
+    write_histogram(""),
+    periodic_status_report_ms(-1)
   {
   }
 
@@ -290,6 +291,8 @@ struct ProgOptions
   bool verbose_log_info;
 
   std::string write_histogram;
+
+  int periodic_status_report_ms;
 };
 
 
@@ -396,6 +399,10 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
      "Same as --write-histogram=<config-file>, where <config-file> is the file name passed to "
      "the option --config. This option can only be used in conjunction with --config and may not "
      "be used with --write-histogram.")
+    ("periodic-status-report-ms",
+     value<int>(& opt->periodic_status_report_ms)->default_value(opt->periodic_status_report_ms),
+     "If set to a value > 0, then tomorun will produce a status report every so many milliseconds. The format "
+     "of the status report is the same as when you hit Ctrl+C. You can still get reports anytime with Ctrl+C.")
     ("version", "Print Tomographer/Tomorun version information as well as information about enabled features.")
     ("help", "Print Help Message")
     ;

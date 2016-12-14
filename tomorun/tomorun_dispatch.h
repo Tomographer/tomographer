@@ -147,6 +147,10 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
   auto srep = Tomographer::Tools::makeSigHandlerTaskDispatcherStatusReporter(&tasks, logger.parentLogger());
   Tomographer::Tools::installSignalHandler(SIGINT, &srep);
 
+  if (opt->periodic_status_report_ms > 0) {
+    tasks.requestPeriodicStatusReport(opt->periodic_status_report_ms);
+  }
+
   // and run our tomo process
 
   auto time_start = TimerClock::now();
