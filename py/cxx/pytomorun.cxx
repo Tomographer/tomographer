@@ -469,7 +469,11 @@ void py_tomo_tomorun()
 
     logger.debug("tomorun.TomorunInvalidInputError ...");
 
-    pyTomorunInvalidInputError = createExceptionClass("TomorunInvalidInputError", PyExc_RuntimeError);
+    pyTomorunInvalidInputError = createExceptionClass(
+        "TomorunInvalidInputError", PyExc_RuntimeError,
+        // docstring:
+        "Exception which gets raised if invalid input is supplied to the "
+        ":py:func:`tomographer.tomorun.tomorun()` function.");
 
     boost::python::register_exception_translator<TomorunInvalidInputError>(
         +[](const TomorunInvalidInputError & exc) {
