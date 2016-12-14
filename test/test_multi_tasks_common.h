@@ -30,9 +30,21 @@
 #include <string>
 #include <functional>
 #include <chrono>
-#include <thread> // std::this_thread::sleep_for
 
 #include <tomographer/tools/fmt.h>
+
+// don't include multiprocomp.h, because when compiling test_multiproc I don't want to
+// have included multiprocomp.h (be sure that there is no symbol pollution)
+#ifdef TOMOGRAPHER_USE_WINDOWS_SLEEP
+// use MS Window's Sleep() function
+#include <windows.h>
+#define TOMOGRAPHERTESTS_SLEEP_FOR_MS(x) Sleep((x))
+#else
+// normal C++11 API function, not available on mingw32 w/ win threads
+#include <thread>
+#define TOMOGRAPHERTESTS_SLEEP_FOR_MS(x) std::this_thread::sleep_for(std::chrono::milliseconds((x)))
+#endif
+
 
 #ifdef _OPENMP
 #include <omp.h>
@@ -382,7 +394,7 @@ struct test_task_dispatcher_status_reporting_fixture {
       if (omp_get_thread_num() == 0) {
         // take care of sending the interrupt request
 
-        std::this_thread::sleep_for(std::chrono::milliseconds(UnitTimeSleepMs/2));
+        TOMOGRAPHERTESTS_SLEEP_FOR_MS(UnitTimeSleepMs/2);
         task_dispatcher.requestInterrupt();
 
       } else if (omp_get_thread_num() == 1) {
@@ -438,7 +450,7 @@ struct test_task_dispatcher_status_reporting_fixture {
         // take care of sending status report requests
 
         while (!finished) {
-          std::this_thread::sleep_for(std::chrono::milliseconds(UnitTimeSleepMs));
+          TOMOGRAPHERTESTS_SLEEP_FOR_MS(UnitTimeSleepMs);
           task_dispatcher.requestStatusReport();
         }
 

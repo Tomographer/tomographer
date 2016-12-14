@@ -134,7 +134,9 @@ if(SPHINX_FOUND AND BUILD_TOMOPY)
   add_dependencies(doc pydoc)
   message(STATUS "Python API documentation will be built when running `make doc`.")
 else()
-  message(STATUS "Sphinx not found, or not building python module. Don't worry, you'd only need this if you wanted to generate Python API documentation.")
+  if (BUILD_TOMOPY)
+    message(STATUS "Sphinx not found. Don't worry, you'd only need this if you wanted to generate Python API documentation.")
+  endif()
 endif()
 
 
@@ -248,9 +250,13 @@ option(TOMOGRAPHER_ENABLE_TESTS "Build Tomographer/Tomorun tests" off)
 
 if(TOMOGRAPHER_ENABLE_TESTS)
 
-  if(NOT BUILD_TOMORUN OR NOT BUILD_TOMOPY)
-    message(FATAL_ERROR "You can only build the tests if you are building both tomorun and the Python interface library.")
-  endif()
+# we will selectively only enable those tests for which we have built all
+# components (but we will add a failing test if a component is not built, to
+# make sure we don't miss anything)
+#
+#  if(NOT BUILD_TOMORUN OR NOT BUILD_TOMOPY)
+#    message(FATAL_ERROR "You can only build the tests if you are building both tomorun and the Python interface library.")
+#  endif()
 
   #if(NOT Boost_UNIT_TEST_FRAMEWORK_LIBRARY)
   find_package(Boost 1.40 COMPONENTS unit_test_framework REQUIRED)

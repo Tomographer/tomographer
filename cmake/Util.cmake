@@ -77,8 +77,9 @@ include(CheckCXXSourceCompiles)
 
 macro(EnsureCXX11StdThisThreadSleepForAvailable)
   #
-  # Some older gcc/g++ (e.g. 4.7) needs -D_GLIBCXX_USE_NANOSLEEP in order to make available
-  # std::this_thread::sleep_for().  So perform a test to see if this is the case.
+  # Some older gcc/g++ (e.g. 4.7) needs -D_GLIBCXX_USE_NANOSLEEP in order to make
+  # available std::this_thread::sleep_for().  So perform a test to see if this is the
+  # case.  See otherwise if we can use Window's native Sleep() function.
   #
   set(_save_CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS}")
   set(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} ${CMAKE_CXX11_STANDARD_COMPILE_OPTION}")
@@ -98,8 +99,21 @@ int main() { std::this_thread::sleep_for(std::chrono::milliseconds(100)); }"
       )
     if (tomographer_HAVE_CXX11_THREAD_SLEEP_FOR_with_GLIBCXX_USE_NANOSLEEP)
       add_definitions(-D_GLIBCXX_USE_NANOSLEEP)
+#    else()
+#      message(FATAL_ERROR "Your C++ compiler doesn't seem to support std::this_thread::sleep_for(). You may need to use a different compiler, or set the required flags yourself.")
+    endif()
+  endif()
+  set(CMAKE_REQUIRED_DEFINITIONS "${_save_CMAKE_REQUIRED_DEFINITIONS}")
+  if (NOT tomographer_HAVE_CXX11_THREAD_SLEEP_FOR AND NOT tomographer_HAVE_CXX11_THREAD_SLEEP_FOR_with_GLIBCXX_USE_NANOSLEEP)
+    CHECK_CXX_SOURCE_COMPILES(
+      "#include <windows.h>
+int main() { Sleep(100); }"
+      tomographer_HAVE_WINDOWS_SLEEP
+      )
+    if (tomographer_HAVE_WINDOWS_SLEEP)
+      add_definitions(-DTOMOGRAPHER_USE_WINDOWS_SLEEP)
     else()
-      message(FATAL_ERROR "Your C++ compiler doesn't seem to support std::this_thread::sleep_for(). You may need to use a different compiler, or set the required flags yourself.")
+      message(FATAL_ERROR "Your C++ compiler doesn't seem to support neither std::this_thread::sleep_for() nor MS Window's Sleep(). You may need to use a different compiler, or set the required flags yourself.")
     endif()
   endif()
   set(CMAKE_REQUIRED_DEFINITIONS "${_save_CMAKE_REQUIRED_DEFINITIONS}")

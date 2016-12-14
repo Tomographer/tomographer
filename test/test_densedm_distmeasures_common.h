@@ -84,6 +84,7 @@ struct distmeasures_qubit_fixture
       fprintf(stderr, "INVALID 'which' for test fixture fid_with_1: %d", which);
       assert(false);
     }
+    return -1; // silence GCC warning about "control reaches end of non-void function"
   }
 
   template<typename OtherRealScalar = RealScalar>
@@ -105,6 +106,7 @@ struct distmeasures_qubit_fixture
       fprintf(stderr, "INVALID 'which' for test fixture trdist_with_1: %d", which);
       assert(false);
     }
+    return -1; // silence GCC warning about "control reaches end of non-void function"
   }
 };
 
@@ -170,6 +172,7 @@ struct distmeasures_qudit4_fixture
       fprintf(stderr, "INVALID 'which' for test fixture fid_with_1: %d", which);
       assert(false);
     }
+    return -1; // silence GCC warning about "control reaches end of non-void function"
   }
   template<typename OtherRealScalar = RealScalar>
   inline OtherRealScalar trdist_with_1(int which) const {
@@ -182,6 +185,7 @@ struct distmeasures_qudit4_fixture
       fprintf(stderr, "INVALID 'which' for test fixture trdist_with_1: %d", which);
       assert(false);
     }
+    return -1; // silence GCC warning about "control reaches end of non-void function"
   }
 
 };

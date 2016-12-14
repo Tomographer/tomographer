@@ -46,6 +46,15 @@ inline constexpr int omp_get_num_threads() { return 1; }
 #include <tomographer/tools/needownoperatornew.h>
 #include <tomographer/multiproc.h>
 
+#ifdef TOMOGRAPHER_USE_WINDOWS_SLEEP
+// use MS Window's Sleep() function
+#include <windows.h>
+#define TOMOGRAPHER_SLEEP_FOR_MS(x) Sleep((x))
+#else
+// normal C++11 API function, not available on mingw32 w/ win threads
+#define TOMOGRAPHER_SLEEP_FOR_MS(x) std::this_thread::sleep_for(std::chrono::milliseconds((x)))
+#endif
+
 
 /** \file multiprocomp.h
  *
@@ -759,7 +768,7 @@ public:
         if (shdat->status_report_periodic_interval > 0) {
           // master thread should continue providing regular status updates
           while (num_active_parallel > 0) {
-            std::this_thread::sleep_for(std::chrono::milliseconds(shdat->status_report_periodic_interval));
+            TOMOGRAPHER_SLEEP_FOR_MS(shdat->status_report_periodic_interval);
             privdat._master_thread_update_status_report_periodic_interval_counter();
           }
         }

@@ -57,19 +57,22 @@ if(TOMORUN_SUFFIX)
   endif(CMAKE_BUILD_TYPE)
 endif(TOMORUN_SUFFIX)
 
+# NOTE: no SYSTEM includes because if the path happens to be e.g. /usr/include, it messes
+# up the system include paths (and gcc 6 e.g. can't find "math.h" or "stdlib.h")
+#
 # dependency: Eigen
-target_include_directories(tomorun SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
+target_include_directories(tomorun  PRIVATE ${EIGEN3_INCLUDE_DIR})
 # already parallelized application, so disable Eigen's own parallelization (see
 # http://eigen.tuxfamily.org/dox/TopicMultiThreading.html)
 target_compile_definitions(tomorun PRIVATE -DEIGEN_DONT_PARALLELIZE)
 
 
 # dependency: Boost headers, Boost program_options library
-target_include_directories(tomorun SYSTEM PRIVATE ${Boost_INCLUDE_DIR})
+target_include_directories(tomorun  PRIVATE ${Boost_INCLUDE_DIR})
 target_link_libraries(tomorun ${Boost_PROGRAM_OPTIONS_LIBRARY})
 
 # dependency: MatIO (and MatIO's ZLIB dependency)
-target_include_directories(tomorun SYSTEM PRIVATE ${MATIO_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
+target_include_directories(tomorun  PRIVATE ${MATIO_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 target_link_libraries(tomorun ${MATIO_LIBRARIES} ${ZLIB_LIBRARIES})
 
 # compile with OpenMP

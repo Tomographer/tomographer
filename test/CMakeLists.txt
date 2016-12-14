@@ -97,8 +97,11 @@ macro(addTomographerTest test_cxx NeedsList)
   # tomographer headers
   target_include_directories(${test_name} PRIVATE "..")
 
+  # NOTE: no SYSTEM includes because if the path happens to be e.g. /usr/include, it messes
+  # up the system include paths (and gcc 6 e.g. can't find "math.h" or "stdlib.h")
+  #
   # dependency: Eigen
-  target_include_directories(${test_name} SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
+  target_include_directories(${test_name}  PRIVATE ${EIGEN3_INCLUDE_DIR})
   target_compile_definitions(${test_name} PRIVATE -DEIGEN_DONT_PARALLELIZE)
 
   if (tomotests_set_BOOST_TEST_DYN_LINK)
@@ -116,7 +119,7 @@ macro(addTomographerTest test_cxx NeedsList)
   endif()
 
   target_compile_definitions(${test_name} PRIVATE "-DBOOST_TEST_MODULE=${test_name}")
-  target_include_directories(${test_name} SYSTEM PRIVATE ${MATIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
+  target_include_directories(${test_name}  PRIVATE ${MATIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 
   if (";${NeedsList};" MATCHES ";LAPACK;")
     target_link_libraries(${test_name}
@@ -195,7 +198,7 @@ set_property(TARGET minimal_tomorun PROPERTY CXX_STANDARD 11)
 # tomographer headers
 target_include_directories(minimal_tomorun PRIVATE "..")
 # dependency: Eigen
-target_include_directories(minimal_tomorun SYSTEM PRIVATE ${EIGEN3_INCLUDE_DIR})
+target_include_directories(minimal_tomorun  PRIVATE ${EIGEN3_INCLUDE_DIR})
 target_compile_definitions(minimal_tomorun PRIVATE -DEIGEN_DONT_PARALLELIZE)
 if (OPENMP_FOUND)
   target_compile_options(minimal_tomorun PRIVATE ${OpenMP_CXX_FLAGS})
@@ -211,56 +214,72 @@ add_test(NAME minimal_tomorun
   )
 
 
+if (BUILD_TOMORUN)
 
-#
-# Add tests to check for tomorun's overall behavior
-#
-add_executable(test_tomorun_1qubit_analytic_solution_check
-  "tomorun/test_tomorun_1qubit_analytic_solution_check.cxx"
-  )
-# Enable C++11
-set_property(TARGET test_tomorun_1qubit_analytic_solution_check PROPERTY CXX_STANDARD 11)
+  #
+  # Add tests to check for tomorun's overall behavior
+  #
+  add_executable(test_tomorun_1qubit_analytic_solution_check
+    "tomorun/test_tomorun_1qubit_analytic_solution_check.cxx"
+    )
+  # Enable C++11
+  set_property(TARGET test_tomorun_1qubit_analytic_solution_check PROPERTY CXX_STANDARD 11)
 
-# version without binning analysis
-add_test(NAME test_tomorun_1qubit_analytic_solution_run_simple
-  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-  COMMAND "$<TARGET_FILE:tomorun>" --data-file-name "${CMAKE_CURRENT_SOURCE_DIR}/tomorun/test_tomorun_1qubit_analytic_solution.mat"  --n-repeats=64  --n-sweep=25  --n-run=4096  --step-size=0.04  --value-type=fidelity:rho_ref  --value-hist=0.985:1/200  --write-histogram=test_tomorun_1qubit_testrun_simple --no-binning-analysis-error-bars --verbose
-  )
-add_test(NAME test_tomorun_1qubit_analytic_solution_runcheck_simple
-  COMMAND "$<TARGET_FILE:test_tomorun_1qubit_analytic_solution_check>"
-  test_tomorun_1qubit_testrun_simple-histogram.csv
-  500
-  )
-set_tests_properties(test_tomorun_1qubit_analytic_solution_runcheck_simple
-  PROPERTIES DEPENDS "test_tomorun_1qubit_analytic_solution_check;test_tomorun_1qubit_analytic_solution_run_simple")
+  # version without binning analysis
+  add_test(NAME test_tomorun_1qubit_analytic_solution_run_simple
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    COMMAND "$<TARGET_FILE:tomorun>" --data-file-name "${CMAKE_CURRENT_SOURCE_DIR}/tomorun/test_tomorun_1qubit_analytic_solution.mat"  --n-repeats=64  --n-sweep=25  --n-run=4096  --step-size=0.04  --value-type=fidelity:rho_ref  --value-hist=0.985:1/200  --write-histogram=test_tomorun_1qubit_testrun_simple --no-binning-analysis-error-bars --verbose
+    )
+  add_test(NAME test_tomorun_1qubit_analytic_solution_runcheck_simple
+    COMMAND "$<TARGET_FILE:test_tomorun_1qubit_analytic_solution_check>"
+    test_tomorun_1qubit_testrun_simple-histogram.csv
+    500
+    )
+  set_tests_properties(test_tomorun_1qubit_analytic_solution_runcheck_simple
+    PROPERTIES DEPENDS "test_tomorun_1qubit_analytic_solution_check;test_tomorun_1qubit_analytic_solution_run_simple")
   
 
-# version with binning analysis
-add_test(NAME test_tomorun_1qubit_analytic_solution_run_binerr
-  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-  COMMAND "$<TARGET_FILE:tomorun>" --data-file-name "${CMAKE_CURRENT_SOURCE_DIR}/tomorun/test_tomorun_1qubit_analytic_solution.mat"  --n-repeats=4  --n-sweep=25  --n-run=32768  --step-size=0.04  --value-type=fidelity:rho_ref  --value-hist=0.985:1/200  --write-histogram=test_tomorun_1qubit_testrun_binerr --verbose
-  )
-add_test(NAME test_tomorun_1qubit_analytic_solution_runcheck_binerr
-  COMMAND "$<TARGET_FILE:test_tomorun_1qubit_analytic_solution_check>"
-  test_tomorun_1qubit_testrun_binerr-histogram.csv
-  500
-  )
-set_tests_properties(test_tomorun_1qubit_analytic_solution_runcheck_binerr
-  PROPERTIES DEPENDS "test_tomorun_1qubit_analytic_solution_check;test_tomorun_1qubit_analytic_solution_run_binerr")
-
-
-macro(addTomographerPyTest pymodule)
-  add_test(NAME ${pymodule}
+  # version with binning analysis
+  add_test(NAME test_tomorun_1qubit_analytic_solution_run_binerr
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/pyruntest.py" "--test=${pymodule}" "--tomographer-cxx-lib=$<TARGET_FILE:tomographerpy>" "--tomographer-source=${CMAKE_SOURCE_DIR}"
+    COMMAND "$<TARGET_FILE:tomorun>" --data-file-name "${CMAKE_CURRENT_SOURCE_DIR}/tomorun/test_tomorun_1qubit_analytic_solution.mat"  --n-repeats=4  --n-sweep=25  --n-run=32768  --step-size=0.04  --value-type=fidelity:rho_ref  --value-hist=0.985:1/200  --write-histogram=test_tomorun_1qubit_testrun_binerr --verbose
     )
-endmacro()
+  add_test(NAME test_tomorun_1qubit_analytic_solution_runcheck_binerr
+    COMMAND "$<TARGET_FILE:test_tomorun_1qubit_analytic_solution_check>"
+    test_tomorun_1qubit_testrun_binerr-histogram.csv
+    500
+    )
+  set_tests_properties(test_tomorun_1qubit_analytic_solution_runcheck_binerr
+    PROPERTIES DEPENDS "test_tomorun_1qubit_analytic_solution_check;test_tomorun_1qubit_analytic_solution_run_binerr")
+
+else() # BUILD_TOMORUN
+
+  add_test(NAME tomorun_NOT_BUILT
+    COMMAND "false"
+    )
+
+endif()
 
 
-addTomographerPyTest(pytest_tomographer)
-addTomographerPyTest(pytest_t_querrorbars)
+if (BUILD_TOMOPY)
 
+  macro(addTomographerPyTest pymodule)
+    add_test(NAME ${pymodule}
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+      COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/pyruntest.py" "--test=${pymodule}" "--tomographer-cxx-lib=$<TARGET_FILE:tomographerpy>" "--tomographer-source=${CMAKE_SOURCE_DIR}"
+      )
+  endmacro()
 
+  addTomographerPyTest(pytest_tomographer)
+  addTomographerPyTest(pytest_t_querrorbars)
+
+else() # BUILD_TOMOPY
+
+  add_test(NAME tomographerpy_NOT_BUILT
+    COMMAND "false"
+    )
+
+endif()
 
 
 
