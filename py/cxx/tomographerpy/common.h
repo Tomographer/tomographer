@@ -24,6 +24,19 @@
 #include <tomographerpy/pylogger.h>
 
 
+
+// get a demangle() function from Boost, either with boost::core::demangle() (boost >=
+// 1.56) or boost::units::detail::demangle() (boost before that)
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 105600
+#include <boost/core/demangle.hpp>
+#else
+#include <boost/units/detail/utility.hpp>
+namespace boost { namespace core {  using boost::units::detail::demangle; } }
+#endif
+
+
+
 typedef double RealType;
 typedef int CountIntType;
 

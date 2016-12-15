@@ -7,6 +7,7 @@
 #include <iostream>
 
 #include "common_p.h"
+#define TOMOGRAPHERPY_DO_NUMPY_IMPORT_ARRAY // import_array() is called in this C file
 #include "tomographerpy/eigpyconv.h"
 #include "tomographerpy/exc.h"
 

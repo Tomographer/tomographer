@@ -5,17 +5,12 @@
 #include <tomographerpy/common.h>
 
 #define NPY_NO_DEPRECATED_API NPY_1_7_API_VERSION
+#define PY_ARRAY_UNIQUE_SYMBOL tomographerpy_NUMPY_ARRAY_API
+#ifndef TOMOGRAPHERPY_DO_NUMPY_IMPORT_ARRAY
+#  define NO_IMPORT_ARRAY
+#endif
 #include <numpy/arrayobject.h>
 
-// get a demangle() function from Boost, either with boost::core::demangle() (boost >=
-// 1.56) or boost::units::detail::demangle() (boost before that)
-#include <boost/version.hpp>
-#if BOOST_VERSION >= 105600
-#include <boost/core/demangle.hpp>
-#else
-#include <boost/units/detail/utility.hpp>
-namespace boost { namespace core {  using boost::units::detail::demangle; } }
-#endif
 
 #include <boost/python/numeric.hpp>
 
