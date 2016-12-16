@@ -171,7 +171,7 @@ class HistogramAnalysis(object):
 
         self.FitParamsType = collections.namedtuple('FitParamsType', inspect.getargspec(self.fit_fn).args[1:])
 
-        self.fit_histogram_result = fit_histogram(normalized_histogram, fit_fn=self.fit_fn, ftox=self.ftox, **kwopts)
+        self.fit_histogram_result = fit_histogram(self.normalized_histogram, fit_fn=self.fit_fn, ftox=self.ftox, **kwopts)
         self.fit_params = self.FitParamsType(*self.fit_histogram_result.popt)
     
     def xtof(self, x):
