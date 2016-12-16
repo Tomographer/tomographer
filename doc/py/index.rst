@@ -4,26 +4,24 @@
    contain the root `toctree` directive.
 
 
-Tomographer |version| (Python Interface)
+Tomographer Python Interface (|version|)
 ========================================
 
 The `tomographer` package: Practical, Reliable Error Bars in Quantum Tomography.
 
-These Python bindings provide an easy-to-use interface to the underlying C++ routines.
+These Python bindings provide an easy-to-use interface to the underlying C++
+routines.  If you are interested, :tomocxx:`here is the API documentation for
+the Tomographer C++ framework <index.html>`.
 
 Please note that the Python interface is not meant to cover the entire extent of
-the C++ API.  Rather, we aim to provide the necessary a high-level access to
-core tasks implemented in optimized C++ routines.  We provide specific types
-(such as for handling histograms, receiving a status report or passing
-parameters of a random walk) in order to interact with those core tasks. The
-Python interface is designed to allow a seamless integration of our tomography
-procedure into an existing tomography workflow.  Currently, there is only one
-"core task" implemented, :py:func:`tomographer.tomorun.tomorun()`, which is an
-alternative to the `tomorun` executable program.
-
-If you are interested, :tomocxx:`here is the API documentation for the
-Tomographer C++ framework <index.html>`.
-
+the C++ API.  Rather, we aim to provide a high-level access to core tasks
+implemented in optimized C++ routines.  We provide specific types (such as for
+handling histograms, receiving a status report or passing parameters of a random
+walk) in order to interact with those core tasks. The Python interface is
+designed to allow a seamless integration of our tomography procedure into an
+existing experimental workflow.  Currently, there is only one "core task"
+implemented, :py:func:`tomographer.tomorun.tomorun()`, which is an alternative
+to the `tomorun` executable program.
 
 Modules and classes
 -------------------

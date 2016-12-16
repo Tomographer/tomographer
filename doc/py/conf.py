@@ -19,6 +19,7 @@
 #
 import os
 import sys
+import shutil
 # for our convenience -- not needed when called from our CMake script (make pydoc or make doc)
 #sys.path.insert(0, os.path.abspath('../../build/py'))
 #sys.path.insert(0, os.path.abspath('../../py'))
@@ -79,7 +80,7 @@ master_doc = 'index'
 
 
 # General information about the project.
-project = 'tomographer-python'
+project = 'Tomographer Python Interface'
 copyright = '2016, Philippe Faist'
 author = 'Philippe Faist'
 
@@ -158,6 +159,16 @@ nitpick_ignore = [
 
 # -- Options for HTML output ----------------------------------------------
 
+# import font files from ../../linux-libertine-fonts-ttf, if we don't have them already in _static
+heredir = os.path.dirname(os.path.abspath(__file__))
+linlibertinefontdir = os.path.join(heredir, '..', 'linux-libertine-fonts')
+for fontfile in os.listdir(linlibertinefontdir):
+    if (os.path.splitext(fontfile)[1].lower() in (".ttf", ".otf", ".woff", ".woff2") and
+            not os.path.exists(os.path.join(heredir, '_static', fontfile))):
+        print("Copying font file '{}' to _static ...".format(fontfile))
+        shutil.copy(os.path.join(linlibertinefontdir, fontfile), os.path.join(heredir, '_static'))
+
+
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
@@ -168,10 +179,10 @@ html_theme = 'alabaster'
 # documentation.
 #
 html_theme_options = {
-    'font_family': 'Linux Libertine',
+    'font_family': 'Lin-Libertine',
     'font_size': '14pt',
-    'head_font_family': 'Linux Libertine',
-    'code_font_family': 'Linux Biolinum',
+    'head_font_family': 'Lin-Libertine',
+    'code_font_family': 'Lin-Biolinum',
     'code_font_size': '0.8em',
 }
 
@@ -315,7 +326,7 @@ latex_elements = {
 # (source start file, target name, title,
 #  author, documentclass [howto, manual, or own class]).
 latex_documents = [
-    (master_doc, 'tomographer-python.tex', 'tomographer-python Documentation',
+    (master_doc, 'tomographer-python.tex', 'Tomographer Python Interface Documentation',
      'Philippe Faist', 'manual'),
 ]
 
@@ -357,7 +368,7 @@ latex_documents = [
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual section).
 man_pages = [
-    (master_doc, 'tomographer-python', 'tomographer-python Documentation',
+    (master_doc, 'tomographer-python', 'Tomographer Python Interface Documentation',
      [author], 1)
 ]
 
@@ -372,7 +383,7 @@ man_pages = [
 # (source start file, target name, title, author,
 #  dir menu entry, description, category)
 texinfo_documents = [
-    (master_doc, 'tomographer-python', 'tomographer-python Documentation',
+    (master_doc, 'tomographer-python', 'Tomographer Python Interface Documentation',
      author, 'tomographer-python', 'One line description of project.',
      'Miscellaneous'),
 ]

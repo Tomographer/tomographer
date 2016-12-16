@@ -1,6 +1,11 @@
 
 """
 Utilities for Jupyter notebooks.
+
+Note that the utilities here have simple fallbacks to make them also work outside of
+Jupyter notebooks.  For example, a :py:class:`SimpleProgressBar` would display a graphical
+progress bar inside a Jupyter notebook, but inside a python script executed on the
+console, it would simply print out progress information using ``print(...)``.
 """
 
 try:
@@ -108,7 +113,7 @@ class SimpleProgressBar(_SimpleProgressBar_base):
     You can do this by specifying the argument `add_info` to the :py:meth:`progress()`
     callback.  Inside a Jupyter notebook, the information is displayed below the progress bar
     and is constantly updated at each call of :py:meth:`progress()`.  In the console version,
-    the information is simply displayed each time using `print(...)`.
+    the information is simply displayed each time using ``print(...)``.
 
     Note: When we are inside a Jupyter notebook, there is an additional attribute which is
     exposed called `addinfo`.  It is an `IPython.display.HTML` widget which serves to display
@@ -158,9 +163,8 @@ class RandWalkProgressBar(SimpleProgressBar):
     This class works both inside a Jupyter notebook as well as in other contexts such as a
     console for a simple Python script.
 
-    .. note:: you should not use the `progress()` callback on this object, as you will not
-        take advantage of the ability to display the information contained in
-        :py:class:`~tomographer.multiproc.FullStatusReport`.
+    .. note:: The callback method which should be called regularly is `progress_fn()`, and
+              not `progress()`.
     """
     def __init__(self, label_msg_html="Random Walk Progress: "):
         super(RandWalkProgressBar, self).__init__(label_msg_html=label_msg_html)
