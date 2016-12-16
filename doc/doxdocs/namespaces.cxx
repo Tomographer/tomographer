@@ -66,10 +66,22 @@
 
 /** \namespace Tomographer::MHRWTasks
  *
- * \brief Definitions for running multiple random walks
+ * \brief Definitions for running multiple Metropolis-Hastings random walks, and
+ *        collecting statistics over the visited samples
  *
- * Provides class definitions for interfacing with a task manager/dispatcher (see \ref
- * pageTaskManagerDispatcher).
+ * This namespace provides class definitions for running multiple such random walks within
+ * a task manager/dispatcher (see \ref pageTaskManagerDispatcher, for example parallel
+ * threads \ref MultiProc::OMP::TaskDispatcher).
+ *
+ * The random walk may be over any space and with any jump function: The random walk is
+ * specified by any \ref pageInterfaceMHWalker compliant object.
+ *
+ * The statistics are collected by a \ref pageInterfaceMHRWStatsCollector.
+ *
+ * If you are interested in collecting a histogram of a particular function over the
+ * explored space, you should consider using the classes in \ref
+ * MHRWTasks::ValueHistogramTasks, which provides additional support for averaging
+ * histograms, calculating error bars etc.
  *
  */
 

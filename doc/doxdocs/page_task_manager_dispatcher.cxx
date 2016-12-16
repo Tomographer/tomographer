@@ -265,4 +265,22 @@
  * \par typedef ... TaskType;
  *   The \ref pageInterfaceTask-compliant type used to describe a task.
  *
+ *
+ * \todo DESCRIBE WHAT THE TASK MANAGER/DISPATCHER MUST DO; WHICH FUNCTIONS IT MUST CALL !!
+ *
+ * Grosso modo (see \ref MultiProc::Sequential::TaskDispatcher for a simple example):
+ *
+ * - initialize the results collector ;
+ * 
+ * - instantiate tasks and run them, by getting input for each one of them and providing
+ *   them a pointer to the shared data structure CData ;
+ *
+ * - provide a task-manager-interface object (\ref pageInterfaceTaskManagerIface) to allow
+ *   querying for status reports ;
+ *
+ * - after the task has finished, collect its result and call the results collector's
+ *   collectResult() method ;
+ *
+ * - finalize the resultscollector .
+ *
  */

@@ -149,14 +149,12 @@ void py_tomo_histogram()
            "reset()\n\n"
            "Clears the current histogram counts (including `off_chart` counts) to zero.  The histogram "
            "parameters in `params` are kept intact.")
-      //.def("load", +[](Kl & h, const Eigen::VectorXi& x) { h.load(x); })
       .def("load", +[](Kl & h, const Eigen::VectorXi& x, CountIntType o) { h.load(x, o); },
            (arg("bins"), arg("off_chart") = CountIntType(0)),
            "load(bins[, off_chart=0])\n\n"
            "Load bin values from the vector of values `bins`, which is expected to be a `NumPy` array. If "
            "`off_chart` is specified, the current `off_chart` count is also set to the given value; otherwise "
            "it is reset to zero.")
-      //.def("add", +[](Kl & h, const Eigen::VectorXi& x) { h.add(x.array()); })
       .def("add", +[](Kl & h, const Eigen::VectorXi& x, CountIntType o) { h.add(x.array(), o); },
            (arg("bins"), arg("off_chart") = CountIntType(0)),
            "add(bins[, off_chart=0])\n\n"
@@ -167,16 +165,25 @@ void py_tomo_histogram()
            "numBins()\n\n"
            "A shorthand for `params.num_bins`.  See :py:class:`UniformBinsHistogramParams`.")
       .def("count", &Kl::count,
+           (arg("index")),
            "count(index)\n\n"
            "Returns the number of counts in the bin indexed by `index`.  Indexes start at zero.  "
            "Raises :py:exc:`TomographerCxxError` if index is out of range.")
-      //.def("record", +[](Kl & h, RealType x) { return h.record(x); })
       .def("record", +[](Kl & h, RealType x, CountIntType o) { return h.record(x, o); },
            (arg("value"), arg("weight") = CountIntType(1)),
            "record(value[, weight=1])\n\n"
            "Record a new data sample. This increases the corresponding bin count by one, or by `weight` if the "
            "latter argument is provided.")
-      //.def("prettyPrint", +[](Kl & h) { return h.prettyPrint(); })
+      .def("normalization", +[](Kl & h) { return h.normalization<RealType>(); },
+           "normalization()\n\n"
+           "Calculate the normalization factor for the histogram.  This corresponds to the total number "
+           "of weight-1 data points, where the weight of a data point may be specified as a second argument "
+           "to :py:meth:`record()`.")
+      .def("normalized", +[](Kl & h) -> Py::UniformBinsRealHistogram { return h.normalized<RealType>(); },
+           "normalized()\n\n"
+           "Returns a normalized version of this histogram. The bin counts as well as the off_chart counts "
+           "are divided by :py:meth:`normalization()`.  The returned object is a "
+           ":py:class:`UniformBinsRealHistogram` instance.")
       .def("prettyPrint", &Kl::prettyPrint,
            (arg("max_width")=0),
            "prettyPrint([max_width=0])\n\n"
@@ -210,16 +217,18 @@ void py_tomo_histogram()
       .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogramParams> >())
       .def(boost::python::init<RealType, RealType, std::size_t>())
       .def("reset", &Kl::reset)
-      .def("load", +[](Kl & h, const Eigen::VectorXd& x) { h.load(x); })
-      .def("load", +[](Kl & h, const Eigen::VectorXd& x, RealType o) { h.load(x, o); })
-      .def("add", +[](Kl & h, const Eigen::VectorXd& x) { h.add(x.array()); })
-      .def("add", +[](Kl & h, const Eigen::VectorXd& x, RealType o) { h.add(x.array(), o); })
+      .def("load", +[](Kl & h, const Eigen::VectorXd& x, RealType o) { h.load(x, o); },
+           (arg("bins"), arg("off_chart") = CountIntType(0)))
+      .def("add", +[](Kl & h, const Eigen::VectorXd& x, RealType o) { h.add(x.array(), o); },
+           (arg("bins"), arg("off_chart") = CountIntType(0)))
       .def("numBins", &Kl::numBins)
-      .def("count", &Kl::count)
-      .def("record", +[](Kl & h, RealType x) { return h.record(x); })
-      .def("record", +[](Kl & h, RealType x, RealType o) { return h.record(x, o); })
-      .def("prettyPrint", &Kl::prettyPrint)
-      .def("prettyPrint", +[](Kl & h) { return h.prettyPrint(); })
+      .def("count", &Kl::count, (arg("index")))
+      .def("record", +[](Kl & h, RealType x, RealType o) { return h.record(x, o); },
+           (arg("value"), arg("weight")=RealType(1)))
+      .def("normalization", +[](Kl & h) { return h.normalization<RealType>(); })
+      .def("normalized", +[](Kl & h) -> Py::UniformBinsRealHistogram { return h.normalized<RealType>(); })
+      .def("prettyPrint", &Kl::prettyPrint,
+           (arg("max_width")=0))
       .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
                                                            boost::python::return_internal_reference<>()))
       .add_property("values_center", +[](Kl & p) -> Eigen::VectorXd { return p.params.valuesCenter(); })
@@ -247,11 +256,8 @@ void py_tomo_histogram()
           "\n\n"
           "This class internally inherits :py:class:`UniformBinsRealHistogram`, and all those methods are "
           "exposed in this class, except for `add()`. In addition, the `reset()` method also clears the "
-          "error bar values."
-          "\n\n"
-          ".. note:: The `load()` method currently leaves the error bar values unchanged, but this may "
-          "change in a future version. In a future version, we will also add a "
-          "`load()` overload which accepts also a vector of error bar values (TODO:!)."
+          "error bar values, and the `normalized()` method returns a histogram with the appropriate error "
+          " bars on the normalized histogram."
           "\n\n"
           "In addition to the members inherited from :py:class:`UniformBinsRealHistogram`, the following "
           "members are available:"
@@ -264,10 +270,16 @@ void py_tomo_histogram()
       .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogramParams> >())
       .def(boost::python::init<RealType, RealType, std::size_t>())
       .def("reset", &Kl::reset)
-      .def("load", +[](Kl & h, const Eigen::VectorXd& x) { h.load(x); })
-      .def("load", +[](Kl & h, const Eigen::VectorXd& x, RealType o) { h.load(x, o); })
-      //.def("add", +[](Kl & h, const Eigen::VectorXd& x) { h.add(x.array()); })
-      //.def("add", +[](Kl & h, const Eigen::VectorXd& x, RealType o) { h.add(x.array(), o); })
+      .def("load",
+           +[](Kl & h, const Eigen::VectorXd& x, const Eigen::VectorXd& err, RealType o) {
+             h.load(x, err, o);
+           },
+           (arg("d"), arg("derr"), arg("off_chart") = RealType(0)),
+           "load(d, derr[, off_chart=0])"
+           "\n\n"
+           "Load data into the histogram. The array `d` specifies the bin counts, and `err` specifies "
+           "the error bars on those bin counts.  The off-chart counter is set to `off_chart`."
+          )
       .def("numBins", &Kl::numBins)
       .def("count", &Kl::count)
       .def("errorBar", &Kl::errorBar,
@@ -275,10 +287,16 @@ void py_tomo_histogram()
           "errorBar(index)\n\n"
           "Get the error bar value associated to the bin of the given `index`. Raises "
            ":py:exc:`TomographerCxxError` if index is out of range.")
-      .def("record", +[](Kl & h, RealType x) { return h.record(x); })
-      .def("record", +[](Kl & h, RealType x, RealType o) { return h.record(x, o); })
-      .def("prettyPrint", &Kl::prettyPrint)
-      .def("prettyPrint", +[](Kl & h) { return h.prettyPrint(); })
+      .def("record", +[](Kl & h, RealType x, RealType o) { return h.record(x, o); },
+          (arg("value"), arg("weight")=RealType(1)))
+      .def("normalization", +[](Kl & h) { return h.normalization<RealType>(); })
+      .def("normalized",
+           +[](Kl & h) -> Py::UniformBinsHistogramWithErrorBars { return h.normalized<RealType>(); },
+           "normalized()\n\n"
+           "Returns a normalized version of this histogram, including the error bars. The bin counts, the "
+           "error bars and the off_chart counts are divided by :py:meth:`~UniformBinsHistogram.normalization()`. "
+           " The returned object is again a :py:class:`UniformBinsHistogramWithErrorBars` instance.")
+      .def("prettyPrint", &Kl::prettyPrint, (arg("max_width") = 0))
       .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
                                                            boost::python::return_internal_reference<>()))
       .add_property("values_center", +[](Kl & p) -> Eigen::VectorXd { return p.params.valuesCenter(); })

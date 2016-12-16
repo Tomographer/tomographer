@@ -153,18 +153,40 @@ class Histograms(unittest.TestCase):
                 n = h.errorBar(9999) # out of range
 
         # load()
+        def load_values_maybe_error_bars(h, values, errors, off_chart=None):
+            if off_chart is None:
+                if not has_error_bars:
+                    h.load(values)
+                else:
+                    h.load(values, errors)
+            else:
+                if not has_error_bars:
+                    h.load(values, off_chart)
+                else:
+                    h.load(values, errors, off_chart)
+        # load(x[, e])
         h = HCl(2.0, 3.0, 5)
         h.bins = np.array([1, 4, 9, 5, 2])
-        h.load(np.array([10, 20, 30, 40, 50]))
+        load_values_maybe_error_bars(h, np.array([10, 20, 30, 40, 50]), np.array([1, 2, 3, 4, 5]))
         npt.assert_array_almost_equal(h.bins, np.array([10, 20, 30, 40, 50]))
+        if has_error_bars:
+            npt.assert_array_almost_equal(h.delta, np.array([1, 2, 3, 4, 5]))
         self.assertAlmostEqual(h.off_chart, 0) # almost-equal in case cnttype=float
-        
-        # load()
+        # load(x[, e], off_chart)
         h = HCl(2.0, 3.0, 5)
         h.bins = np.array([1, 4, 9, 5, 2])
-        h.load(np.array([10, 20, 30, 40, 50]), 28)
+        load_values_maybe_error_bars(h, np.array([10, 20, 30, 40, 50]), np.array([1, 2, 3, 4, 5]), 28)
         npt.assert_array_almost_equal(h.bins, np.array([10, 20, 30, 40, 50]))
+        if has_error_bars:
+            npt.assert_array_almost_equal(h.delta, np.array([1, 2, 3, 4, 5]))
         self.assertAlmostEqual(h.off_chart, 28) # almost-equal in case cnttype=float
+        # load(x, e) error if wrong signature
+        if has_error_bars:
+            with self.assertRaises(Exception): h.load(np.array([10, 20, 30, 40, 50]))
+            with self.assertRaises(Exception): h.load(np.array([10, 20, 30, 40, 50]), 10.0)
+        else:
+            with self.assertRaises(Exception): h.load(np.array([10, 20, 30, 40, 50]), np.array([1, 2, 3, 4, 5]))
+            with self.assertRaises(Exception): h.load(np.array([10, 20, 30, 40, 50]), np.array([1, 2, 3, 4, 5]), 10.0)
         
         # add()
         if not has_error_bars:
@@ -185,14 +207,14 @@ class Histograms(unittest.TestCase):
 
         # reset()
         h = HCl(2.0, 3.0, 5)
-        h.load(np.array([10, 20, 30, 40, 50]), 28)
+        load_values_maybe_error_bars(h, np.array([10, 20, 30, 40, 50]), np.array([1, 2, 3, 4, 5]), 28)
         h.reset()
         npt.assert_array_almost_equal(h.bins, np.array([0,0,0,0,0]))
         self.assertAlmostEqual(h.off_chart, 0) # almost-equal in case cnttype=float
 
         # record()
         h = HCl(2.0, 3.0, 5)
-        h.load(np.array([10, 20, 30, 40, 50]), 28)
+        load_values_maybe_error_bars(h, np.array([10, 20, 30, 40, 50]), np.array([1, 2, 3, 4, 5]), 28)
         h.record(2.569)
         self.assertAlmostEqual(h.count(2), 31)
         h.record(2.569, cnttype(2))
@@ -202,9 +224,21 @@ class Histograms(unittest.TestCase):
         h.record(2.981, cnttype(7))
         self.assertAlmostEqual(h.count(4), 58)
 
+        # normalization()
+        h = HCl(2.0, 3.0, 5)
+        load_values_maybe_error_bars(h, np.array([10, 20, 30, 40, 50]), np.array([1, 2, 3, 4, 5]), 28)
+        n = h.normalization()
+        self.assertAlmostEqual(n, np.sum(np.array([10, 20, 30, 40, 50])) / 5.0 + 28)
+        hn = h.normalized()
+        npt.assert_array_almost_equal(hn.bins, h.bins / n)
+        self.assertAlmostEqual(hn.off_chart, h.off_chart / n)
+        if has_error_bars:
+            npt.assert_array_almost_equal(hn.delta, h.delta / n)
+        self.assertAlmostEqual(hn.normalization(), 1.0)
+
         # prettyPrint()
         h = HCl(2.0, 3.0, 5)
-        h.load(np.array([10, 20, 30, 40, 50]), 28)
+        load_values_maybe_error_bars(h, np.array([10, 20, 30, 40, 50]), np.array([1, 2, 3, 4, 5]), 28)
         s = h.prettyPrint()
         print(s)
         s = h.prettyPrint(120)

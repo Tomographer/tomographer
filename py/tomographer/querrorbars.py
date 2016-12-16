@@ -31,13 +31,14 @@ def fit_fn_default(x, a2, a1, m, c):
 QuantumErrorBars = collections.namedtuple('QuantumErrorBars', ('f0', 'Delta', 'gamma') )
 
 
-def fit_histogram(final_histogram, fit_fn, ftox, **kwopts):
+def fit_histogram(normalized_histogram, fit_fn, ftox, **kwopts):
     """
     Fit the histogram data to a model function.
 
-    :param final_histogram: the final histogram data, provided as a
+    :param normalized_histogram: the final histogram data, provided as a
         :py:class:`tomographer.UniformBinsHistogramWithErrorBars` class (or a subclass
-        thereof).
+        thereof), and normalized to a proper probability density (see
+        :py:meth:`tomographer.UniformBinsHistogramWithErrorBars.normalized()`).
 
     :param ftox: a function which transforms the figure of merit values (`f`-values) into
         the natural parameter for the fit function (`x`-values).  For example, for the
@@ -52,10 +53,10 @@ def fit_histogram(final_histogram, fit_fn, ftox, **kwopts):
         `scipy.optimize.curve_fit(...)`.
     """
 
-    f = final_histogram.values_center
+    f = normalized_histogram.values_center
     x = ftox(f)
-    p = final_histogram.bins
-    errp = final_histogram.delta
+    p = normalized_histogram.bins
+    errp = normalized_histogram.delta
 
     #print(f)
     #print(p)
@@ -89,7 +90,7 @@ def fit_histogram(final_histogram, fit_fn, ftox, **kwopts):
     d.x = x
     d.p = p
     d.errp = errp
-    d.final_histogram = final_histogram
+    d.normalized_histogram = normalized_histogram
     d.idxok = idxok
     d.fok = fok
     d.xok = xok
@@ -150,6 +151,7 @@ class HistogramAnalysis(object):
     """
     def __init__(self, final_histogram, ftox=(0,1), fit_fn=None, **kwopts):
         self.final_histogram = final_histogram
+        self.normalized_histogram = final_histogram.normalized()
         if ftox[1] not in [1, -1]:
             raise ValueError("Invalid value of `s` in `ftox=(h,s)`: s=%r"%(ftox[1]))
         self.ftox_hs = ftox
@@ -169,7 +171,7 @@ class HistogramAnalysis(object):
 
         self.FitParamsType = collections.namedtuple('FitParamsType', inspect.getargspec(self.fit_fn).args[1:])
 
-        self.fit_histogram_result = fit_histogram(final_histogram, fit_fn=self.fit_fn, ftox=self.ftox, **kwopts)
+        self.fit_histogram_result = fit_histogram(normalized_histogram, fit_fn=self.fit_fn, ftox=self.ftox, **kwopts)
         self.fit_params = self.FitParamsType(*self.fit_histogram_result.popt)
     
     def xtof(self, x):

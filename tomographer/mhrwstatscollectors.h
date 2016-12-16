@@ -400,10 +400,19 @@ struct ValueHistogramWithBinningMHRWStatsCollectorResult
     tomographer_assert(converged_status.rows() == b.numTrackValues() && converged_status.cols() == 1);
   }
 
-  //! Histogram, already with error bars
+  /** \brief Histogram, already with error bars
+   *
+   * The scaling of the histogram is chosen such that each bin value represents the fraction of
+   * sample data points whose value were inside this bin.
+   *
+   * \note This histogram is not normalized to unit area. You should call \ref
+   * UniformBinsHistogramWithErrorBars::normalized() to obtain a proper normalized histogram, i.e.
+   * to which one can fit a proper, normalized probability density.
+   */
   HistogramType hist;
 
-  //! Detailed error bars for all binning levels
+  /** \brief Detailed error bars for all binning levels
+   */
   typename BinningAnalysisParamsType::BinSumSqArray error_levels;
 
   /** \brief Information of convergence status of the error bars (see e.g. \ref
@@ -626,14 +635,22 @@ public:
 
     value_histogram.template done<false>();
 
+    //
+    // Determine the error bars from the binning analysis. Remember, the binning analysis was
+    // applied to each of the indicator functions "chi(value) = (value in bin # i) ? 1 : 0"
+    //
+    // The total number of samples is simply h.bins.sum()+h.off_chart; this is the relevant
+    // coefficient to calculate the bin means needed by binning_analysis.calcErrorLevels().  Indeed,
+    // in this way we really get the averaged observed value of each indicator function for each
+    // value interval.
+    //
     const BaseHistogramType & h = value_histogram.histogram();
     result.hist.params = h.params;
-    CountRealAvgType normalization = h.bins.sum() + h.off_chart; // need ALL samples, because that's
-								 // what the binning analysis sees
-    result.hist.bins = h.bins.template cast<CountRealAvgType>() / normalization;
+    CountRealAvgType numsamples = h.bins.sum() + h.off_chart;
+    result.hist.bins = h.bins.template cast<CountRealAvgType>() / numsamples;
     result.error_levels = binning_analysis.calcErrorLevels(result.hist.bins);
     result.hist.delta = result.error_levels.col(binning_analysis.numLevels()).template cast<CountRealAvgType>();
-    result.hist.off_chart = h.off_chart / normalization;
+    result.hist.off_chart = h.off_chart / numsamples;
 
     result.converged_status = binning_analysis.determineErrorConvergence(result.error_levels);
 

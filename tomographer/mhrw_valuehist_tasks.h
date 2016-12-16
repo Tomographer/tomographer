@@ -146,15 +146,22 @@ struct ResultsCollectorSimple
   
   /** \brief The histogram type corresponding to the result of a task
    *
-   * NOTE: if this histogram actually has error bars, they will be silently ignored.
+   * \warning This histogram type must not provide error bars.
    */
   typedef typename CDataBaseType::HistogramType HistogramType;
   //! The parameters type used to describe our histogram range and number of bins
   typedef typename CDataBaseType::HistogramParams HistogramParams;
-  //! The type of the histogram resulting from a single task, but normalized to unit area under the curve
-  typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> NormalizedHistogramType;
-  //! The type of the final resulting, averaged and normalized histogram
-  typedef AveragedHistogram<NormalizedHistogramType, CountRealType> FinalHistogramType;
+  /** \brief The type of the histogram resulting from a single task, but scaled so that
+   *         each bin value corresponds to the fraction of data points in bin
+   */
+  typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> ScaledHistogramType;
+  /** \berief The type of the final resulting, averaged histogram
+   *
+   * The scale of the histogram is chosen such that each bin value corresponds to the
+   * fraction of data points observed in this bin.  To normalize the histogram to a unit
+   * probability density, use \ref UniformBinsHistogram::normalized().
+   */
+  typedef AveragedHistogram<ScaledHistogramType, CountRealType> FinalHistogramType;
   
   typedef HistogramType MHRWStatsCollectorResultType;
   
@@ -170,7 +177,7 @@ struct ResultsCollectorSimple
    */
   struct RunTaskResult
     : public MHRandomWalkTaskResult<MHRWStatsCollectorResultType,CountIntType,StepRealType>,
-      public virtual Tools::NeedOwnOperatorNew<NormalizedHistogramType>::ProviderType
+      public virtual Tools::NeedOwnOperatorNew<ScaledHistogramType>::ProviderType
   {
     typedef MHRandomWalkTaskResult<MHRWStatsCollectorResultType,CountIntType,StepRealType> Base;
 
@@ -179,13 +186,15 @@ struct ResultsCollectorSimple
     {
     }
 
-    template<typename BaseType, typename NormalizedHistogramTypeRef>
-    RunTaskResult(BaseType&& b, NormalizedHistogramTypeRef&& histogram_)
+    template<typename BaseType, typename ScaledHistogramTypeRef>
+    RunTaskResult(BaseType&& b, ScaledHistogramTypeRef&& histogram_)
       : Base(std::forward<BaseType>(b)), histogram(histogram_)
     {
     }
 
-    const NormalizedHistogramType histogram;
+    /** \brief The resulting histogram.
+     */
+    const ScaledHistogramType histogram;
   };
   
   typedef std::vector<RunTaskResult*> RunTaskResultList;
@@ -207,29 +216,77 @@ struct ResultsCollectorSimple
     }
   }
   
+  /** \brief Returns \c TRUE after all runs have finished and results processed.
+   *
+   * Note that it is the task of the multiprocessing task manager/dispatcher (e.g. \ref
+   * MultiProc::OMP::TaskDispatcher::run) to finalize the results, as required by the \ref
+   * pageTaskManagerDispatcher API).
+   */
   inline bool isFinalized() const { return _finalized; }
   
+  /** \brief The final histogram, with error bars
+   *
+   * The error bars are calculated from the standard devitation of the histogram values
+   * reported by the different tasks.  Make sure enough tasks have been run in order for
+   * the error bars to be meaningful.
+   *
+   * The scale of the histogram is chosen such that each bin value corresponds to the
+   * fraction of data points observed in this bin.  To normalize the histogram to a unit
+   * probability density, use \ref UniformBinsHistogram::normalized().
+   */
   inline FinalHistogramType finalHistogram() const {
     tomographer_assert(isFinalized() && "You may only call finalHistogram() after the runs have been finalized.");
     return _finalhistogram;
   }
   
+  /** \brief Return the number of tasks that were run
+   *
+   * You may only call this function after the results have been finalized (see \ref
+   * isFinalized()), i.e. after the task dispatcher has finished executing all tasks.
+   */
   inline std::size_t numTasks() const {
     tomographer_assert(isFinalized() && "You may only call numTasks() after the runs have been finalized.");
     return _collected_runtaskresults.size();
   }
   
+  /** \brief Return a list of the resulting report of each run task
+   *
+   * The result (i.e. the individual task's final report) is stored in a \ref
+   * RunTaskResult structure.
+   *
+   * You may only call this function after the results have been finalized (see \ref
+   * isFinalized()), i.e. after the task dispatcher has finished executing all tasks.
+   */
   inline const RunTaskResultList & collectedRunTaskResults() const {
     tomographer_assert(isFinalized() && "You may only call collectedRunTaskResults() after the runs have been finalized.");
     return _collected_runtaskresults;
   }
 
+  /** \brief Return a list of the resulting report of one specific run task
+   *
+   * The result (i.e. the individual task's final report) is stored in a \ref
+   * RunTaskResult structure.
+   *
+   * \param task_no must be an index such that <code>task_no >= 0 && task_no <
+   *        numTasks()</code>.
+   *
+   * You may only call this function after the results have been finalized (see \ref
+   * isFinalized()), i.e. after the task dispatcher has finished executing all tasks.
+   */
   inline const RunTaskResult * collectedRunTaskResult(std::size_t task_no) const {
     tomographer_assert(isFinalized() && "You may only call collectedRunTaskResult(std::size_t) after the runs have been finalized.");
     tomographer_assert(task_no < _collected_runtaskresults.size());
     return _collected_runtaskresults[task_no];
   }
 
+  /** \brief Produce a comma-separated-value (CSV) representation of the final histogram
+   *
+   * The histogram data is written in CSV format on the C++ output stream \a stream.  You
+   * may specify the cell separator \a sep (by default a TAB char), the line separator (by
+   * default a simple newline), and the precision used when exporting the values.  Numbers
+   * are written in scientific format (e.g. <code>1.205115485e-01</code>).
+   *
+   */
   template<typename RealType = double>
   inline void printHistogramCsv(std::ostream & stream, std::string sep = "\t", std::string linesep = "\n", int precision = 10)
   {
@@ -242,7 +299,20 @@ struct ResultsCollectorSimple
     }
   }
 
-
+  /** \brief Produce a final, human-readable report of the whole procedure
+   *
+   * The report is written in the C++ stream \a str.  You should provide the shared
+   * constant data structure \a cdata used for the random walk, so that the random walk
+   * parameters can be displayed.
+   *
+   * You may specify the maximum width of your terminal in \a max_width, in which case we
+   * try very hard not make lines longer than that, and to fill all available horizontal
+   * space.
+   *
+   * If \a print_histogram is \c true, then the histogram is also printed in a human
+   * readable form, using \ref UniformBinsHistogramWithErrorBars::prettyPrint().
+   *
+   */
   inline void printFinalReport(std::ostream & str, const CDataBaseType & cdata,
                                int max_width = 0, bool print_histogram = true)
   {
@@ -307,11 +377,11 @@ public:
 	str << "Got task result. Histogram is:\n" << taskresult.stats_collector_result.prettyPrint();
       });
 
-    NormalizedHistogramType thishistogram = taskresult.stats_collector_result;
-    typename NormalizedHistogramType::CountType normalization =
+    ScaledHistogramType thishistogram = taskresult.stats_collector_result;
+    typename ScaledHistogramType::CountType numsamples =
       thishistogram.bins.sum() + thishistogram.off_chart;
-    thishistogram.bins /= normalization;
-    thishistogram.off_chart /= normalization;
+    thishistogram.bins /= numsamples;
+    thishistogram.off_chart /= numsamples;
 
     _finalhistogram.addHistogram(thishistogram);
     _collected_runtaskresults[task_no]
@@ -332,7 +402,7 @@ public:
 
 
 
-/** \brief Results collector, if no binning analysis is being used.
+/** \brief Results collector, if binning analysis is being used.
  *
  * You can directly get the right type by querying the type \a
  * "CDataBase::ResultsCollectorType<..>::type".
@@ -371,8 +441,8 @@ struct ResultsCollectorWithBinningAnalysis
    * Note we need a `double` counting type, because the histograms we'll be recording
    * are normalized.
    */
-  typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> SimpleNormalizedHistogramType;
-  typedef AveragedHistogram<SimpleNormalizedHistogramType, double> SimpleFinalHistogramType;
+  typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> SimpleScaledHistogramType;
+  typedef AveragedHistogram<SimpleScaledHistogramType, double> SimpleFinalHistogramType;
 
 
   typedef MHRandomWalkTaskResult<MHRWStatsCollectorResultType,CountIntType,StepRealType> RunTaskResult;
@@ -565,7 +635,7 @@ public:
     // UniformBinsHistogram), so it will just ignore the error bars.
     logger.debug([&](std::ostream & str) {
 	str << "Simple histogram is:\n";
-	histogramPrettyPrint<SimpleNormalizedHistogramType>(str, stats_coll_result.hist);
+	histogramPrettyPrint<SimpleScaledHistogramType>(str, stats_coll_result.hist);
       });
     _simplefinalhistogram.addHistogram(stats_coll_result.hist);
 

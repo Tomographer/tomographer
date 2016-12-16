@@ -76,7 +76,7 @@ BOOST_AUTO_TEST_CASE(types)
     Tomographer::Logger::BoostTestLogger> ResultsCollectorSimple;
 
   BOOST_CHECK( ! ResultsCollectorSimple::HistogramType::HasErrorBars ) ;
-  BOOST_CHECK( ! ResultsCollectorSimple::NormalizedHistogramType::HasErrorBars ) ;
+  BOOST_CHECK( ! ResultsCollectorSimple::ScaledHistogramType::HasErrorBars ) ;
   BOOST_CHECK( ResultsCollectorSimple::FinalHistogramType::HasErrorBars ) ;
 }
 
@@ -194,7 +194,7 @@ BOOST_AUTO_TEST_CASE(types)
     Tomographer::Logger::BoostTestLogger> ResultsCollectorBinning;
 
   BOOST_CHECK( ResultsCollectorBinning::HistogramType::HasErrorBars ) ;
-  BOOST_CHECK( ! ResultsCollectorBinning::SimpleNormalizedHistogramType::HasErrorBars ) ;
+  BOOST_CHECK( ! ResultsCollectorBinning::SimpleScaledHistogramType::HasErrorBars ) ;
   BOOST_CHECK( ResultsCollectorBinning::SimpleFinalHistogramType::HasErrorBars ) ;
   BOOST_CHECK( ResultsCollectorBinning::FinalHistogramType::HasErrorBars ) ;
 }

@@ -420,6 +420,43 @@ public:
     return index;
   }
 
+
+  /** \brief Calculate the total weight stored in this histogram
+   *
+   * Calculates the relevant normalization factor by which the bin counts (and possibly
+   * error bars) should be divided in order to get a proper normalized probability density
+   * on the real line.
+   *
+   * This function calculates
+   * \f[
+   *   \mathit{normalization} ~=~ \texttt{off_chart} ~+~
+   *       \texttt{binResolution()} \times \sum_i \texttt{bins[}i\texttt{]}
+   * \f]
+   *
+   */
+  template<typename NewCountType = Scalar>
+  inline NewCountType normalization() const
+  {
+    // DON'T DO NewCountType(binResolution())*NewCountType(bins.sum()) as we may loose
+    // precision (if NewCountType=int, for example)
+    return NewCountType(off_chart) + NewCountType(binResolution() * bins.sum());
+  }
+
+  /** \brief Get a normalized version of this histogram
+   *
+   * This function divides the bins and the off chart counts by the appropriate
+   * normalization() and stores these values into a new returned histogram.
+   *
+   */
+  template<typename NewCountType = Scalar>
+  inline UniformBinsHistogram<Scalar, NewCountType> normalized() const
+  {
+    UniformBinsHistogram<Scalar, NewCountType> h(params);
+    const NewCountType f = normalization<NewCountType>();
+    h.load(bins.template cast<NewCountType>() / f, NewCountType(off_chart) / f);
+    return h;
+  }
+
   /** \brief Pretty-print the histogram and return it as a string with horizontal bars
    *
    * \param max_width is the maximum line width the display should fit in.
@@ -438,8 +475,6 @@ public:
  *
  * Builds on top of \ref UniformBinsHistogram<Scalar,CountType> to store error bars
  * corresponding to each bin.
- *
- * \bug Here we need to override \ref add() and \ref load() to take care of error bars.
  *
  * \todo Once he base subclass gets a new normalize() method, we must also reimplement
  *       that method here to normalize also the deltas.
@@ -506,7 +541,7 @@ public:
     delta.resize(Base_::numBins());
     delta.setZero();
   }
-  
+
   /** \brief For the \ref pageInterfaceHistogram. Get error bar for bin number \a i.
    *
    * This simply returns <code>delta(i)</code>.
@@ -515,6 +550,60 @@ public:
   {
     return delta(i);
   }
+
+  
+  /** \brief Load data for the histogram. Uses current histogram parameters, just sets the bin
+   * counts and the error bars.
+   *
+   * \param d is an Eigen Vector or 1-D Array from which to load the data for the bin
+   *     counts. It must be dense, have one column and exactly \ref numBins() rows.
+   *
+   * \param derr is an Eigen Vector or 1-D Array from which to load the data for the error
+   *     bars. It must be dense, have one column and exactly \ref numBins() rows.
+   *
+   * \param off_chart_ if provided, then set the \ref off_chart count to this
+   *     number. Otherwise, reset the \ref off_chart counts to zero.
+   */
+  template<typename EigenType, typename EigenType2 = EigenType>
+  inline void load(const Eigen::DenseBase<EigenType> & d,
+                   const Eigen::DenseBase<EigenType2> & derr,
+                   CountType off_chart_ = 0)
+  {
+    Base_::load(d, off_chart_);
+    tomographer_assert(derr.cols() == 1);
+    tomographer_assert((std::size_t)derr.rows() == params.num_bins);
+    delta = derr.derived().template cast<CountType>();
+  }
+
+
+  /** \brief Get a normalized version of this histogram
+   *
+   * This function divides the bins, the error bars and the off chart counts by the
+   * appropriate normalization() and stores these values into a new returned histogram.
+   *
+   */
+  template<typename NewCountType = Scalar>
+  inline UniformBinsHistogramWithErrorBars<Scalar, NewCountType> normalized() const
+  {
+    UniformBinsHistogramWithErrorBars<Scalar, NewCountType> h(params);
+    const NewCountType f = Base_::template normalization<NewCountType>();
+    h.load(bins.template cast<NewCountType>() / f,
+           delta.template cast<NewCountType>() / f,
+           NewCountType(off_chart) / f);
+    return h;
+  }
+
+
+private:
+  /** \brief disable the add() method, which doesn't take care of error bars. To combine
+   *         histograms into an averaged histogram, use \ref AveragedHistogram.
+   */
+  template<typename... Args>
+  inline void add(Args && ... )
+  {
+  }
+public:
+
 
   /** \brief Print the histogram in human readable form
    *

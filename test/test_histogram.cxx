@@ -212,7 +212,6 @@ BOOST_AUTO_TEST_CASE(add_load_reset)
 }
 
 
-
 BOOST_AUTO_TEST_CASE(floatcounttype)
 {
   Tomographer::UniformBinsHistogram<float, double> hist(0.0f, 1.0f, 10);
@@ -233,6 +232,40 @@ BOOST_AUTO_TEST_CASE(floatcounttype)
 
   MY_BOOST_CHECK_EIGEN_EQUAL(hist.bins, a, tol);
   BOOST_CHECK_CLOSE(hist.off_chart, 120.399, tol_percent);
+}
+
+BOOST_AUTO_TEST_CASE(normalization)
+{
+  { Tomographer::UniformBinsHistogram<float, int> hist(0.0f, 4.0f, 4);
+    hist.load( inline_vector_4<int>(0, 3, 19, 24), 10 );
+    MY_BOOST_CHECK_FLOATS_EQUAL(hist.normalization(), 0.f+3+19+24+10, tol_f); }
+
+  { Tomographer::UniformBinsHistogram<float, int> hist(0.0f, 1.0f, 4);
+    hist.load( inline_vector_4<int>(0, 3, 19, 24), 10 );
+    BOOST_CHECK_EQUAL(hist.normalization<int>(), int((0+3+19+24)*0.25 + 10)); }
+
+  { Tomographer::UniformBinsHistogram<float, int> hist(0.0f, 1.0f, 4);
+    hist.load( inline_vector_4<int>(0, 3, 19, 24), 10 );
+    MY_BOOST_CHECK_FLOATS_EQUAL(hist.normalization<double>(), (0.0+3+19+24)*0.25 + 10, tol); }
+}
+BOOST_AUTO_TEST_CASE(normalized)
+{
+  { Tomographer::UniformBinsHistogram<float, int> hist(0.0f, 4.0f, 4);
+    hist.load( inline_vector_4<int>(0, 3, 19, 24), 10 );
+    auto hn = hist.normalized();
+    auto n = hist.normalization();
+    MY_BOOST_CHECK_EIGEN_EQUAL(hn.bins, inline_vector_4<float>(0, 3, 19, 24)/n, tol_f);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.off_chart, 10.f/n, tol_f);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.normalization(), 1.f, tol_f);
+  }
+  { Tomographer::UniformBinsHistogram<float, int> hist(0.0f, 1.0f, 4);
+    hist.load( inline_vector_4<int>(0, 3, 19, 24), 10 );
+    auto hn = hist.normalized<double>();
+    auto n = hist.normalization<double>();
+    MY_BOOST_CHECK_EIGEN_EQUAL(hn.bins, inline_vector_4<double>(0, 3, 19, 24)/n, tol);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.off_chart, 10.0/n, tol);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.normalization(), 1.f, tol_f);
+  }
 }
 
 BOOST_AUTO_TEST_CASE(assign)
@@ -290,6 +323,63 @@ BOOST_AUTO_TEST_CASE(basic)
   typedef Tomographer::UniformBinsHistogramWithErrorBars<double,float> MyHistType;
   BOOST_CHECK( MyHistType::HasErrorBars );
 }
+
+
+BOOST_AUTO_TEST_CASE(load_reset)
+{
+  Tomographer::UniformBinsHistogramWithErrorBars<double, float> hist(0.0f, 1.0f, 10);
+  Tomographer::UniformBinsHistogramWithErrorBars<double, double> hist2(0.0, 1.0, 10);
+
+  Eigen::Matrix<int,10,1> m;
+  (m << 0,    1,  4, 30, 95,
+        150, 77, 18,  5,  1).finished();
+  Eigen::Matrix<float,10,1> m2;
+  (m2 << 0,    1,  1, 4, 2,
+         5, 7, 1,  3,  0.5).finished();
+
+  hist.load(m, m2, 42);
+  MY_BOOST_CHECK_EIGEN_EQUAL(hist.bins, m.cast<float>(), tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(hist.delta, m2, tol);
+  BOOST_CHECK_EQUAL(hist.off_chart, 42);
+
+  hist2.load(m, m2, 42);
+  MY_BOOST_CHECK_EIGEN_EQUAL(hist2.bins, m.cast<double>(), tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(hist2.delta, m2.cast<double>(), tol);
+  BOOST_CHECK_EQUAL(hist2.off_chart, 42);
+
+  hist2.reset();
+  auto zeros = Eigen::Array<double,10,1>::Zero();
+  MY_BOOST_CHECK_EIGEN_EQUAL(hist2.bins, zeros, tol);
+  MY_BOOST_CHECK_EIGEN_EQUAL(hist2.delta, zeros, tol);
+  BOOST_CHECK_EQUAL(hist2.off_chart, 0);
+}
+
+BOOST_AUTO_TEST_CASE(normalized)
+{
+  { Tomographer::UniformBinsHistogramWithErrorBars<float, int> hist(0.0f, 4.0f, 4);
+    hist.load( inline_vector_4<int>(0, 3, 19, 24),
+               inline_vector_4<float>(0, 1, 4, 3),
+               10 );
+    auto hn = hist.normalized();
+    auto n = hist.normalization();
+    MY_BOOST_CHECK_EIGEN_EQUAL(hn.bins, inline_vector_4<float>(0, 3, 19, 24)/n, tol_f);
+    MY_BOOST_CHECK_EIGEN_EQUAL(hn.delta, inline_vector_4<float>(0, 1, 4, 3)/n, tol_f);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.off_chart, 10.f/n, tol_f);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.normalization(), 1.f, tol_f);
+  }
+  { Tomographer::UniformBinsHistogramWithErrorBars<float, int> hist(0.0f, 1.0f, 4);
+    hist.load( inline_vector_4<int>(0, 3, 19, 24),
+               inline_vector_4<float>(0, 1, 4, 3),
+               10 );
+    auto hn = hist.normalized<double>();
+    auto n = hist.normalization<double>();
+    MY_BOOST_CHECK_EIGEN_EQUAL(hn.bins, inline_vector_4<double>(0, 3, 19, 24)/n, tol);
+    MY_BOOST_CHECK_EIGEN_EQUAL(hn.delta, inline_vector_4<float>(0, 1, 4, 3)/n, tol_f);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.off_chart, 10.0/n, tol);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.normalization(), 1.f, tol_f);
+  }
+}
+
 
 BOOST_AUTO_TEST_SUITE_END(); // uniform_bins_histogram_with_error_bars
 
@@ -356,23 +446,23 @@ BOOST_AUTO_TEST_CASE(with_underlying_error_bars)
   BOOST_CHECK_EQUAL(avghist.numBins(), 4);
 
   { BaseHistogramType hist(p);
-    hist.load( inline_vector_4<double>(15, 45, 42, 12) , 36 ); // sum=150
-    hist.delta = inline_vector_4<float>(1, 1, 1, 1);
+    hist.load( inline_vector_4<float>(15, 45, 42, 12) ,
+               inline_vector_4<float>(1, 1, 1, 1), 36 ); // sum=150
     avghist.addHistogram(hist);
   }
   { BaseHistogramType hist(p);
-    hist.load( inline_vector_4<double>(17, 43, 40, 18) , 32 );
-    hist.delta = inline_vector_4<float>(2, 2, 5, 2);
+    hist.load( inline_vector_4<double>(17, 43, 40, 18) ,
+               inline_vector_4<float>(2, 2, 5, 2), 32 );
     avghist.addHistogram(hist);
   }
   { BaseHistogramType hist(p);
-    hist.load( inline_vector_4<double>(20, 38, 47, 10) , 35 );
-    hist.delta = inline_vector_4<float>(1, 2, 13, 4);
+    hist.load( inline_vector_4<double>(20, 38, 47, 10) ,
+               inline_vector_4<float>(1, 2, 13, 4), 35 );
     avghist.addHistogram(hist);
   }
   { BaseHistogramType hist(p);
-    hist.load( inline_vector_4<double>(18, 44, 43, 13) , 32 );
-    hist.delta = inline_vector_4<float>(2, 1, 24, 3);
+    hist.load( inline_vector_4<double>(18, 44, 43, 13) ,
+               inline_vector_4<float>(2, 1, 24, 3), 32 );
     avghist.addHistogram(hist);
   }
 
@@ -380,7 +470,7 @@ BOOST_AUTO_TEST_CASE(with_underlying_error_bars)
 
   BOOST_CHECK_EQUAL(avghist.num_histograms, 4);
 
-  BOOST_MESSAGE(avghist.prettyPrint());
+  BOOST_TEST_MESSAGE(avghist.prettyPrint());
 
   BOOST_CHECK_CLOSE(avghist.bins.sum() + avghist.off_chart, 150.f, tol_percent_f);
   auto vecbins = inline_vector_4<float>(70/4.f,170/4.f,172/4.f,53/4.f);
@@ -432,8 +522,8 @@ BOOST_AUTO_TEST_CASE(errbars)
   Tomographer::UniformBinsHistogramWithErrorBars<double> hist(0.0, 1.0, 5);
   // make the values small (<1) to make sure that there hasn't been a conversion to int
   // somewhere in the process
-  hist.load( 0.01 * (Eigen::VectorXd(5) << 0.0, 1.0, 4.53, 6.5, 2.2).finished() );
-  hist.delta = 0.01 * (Eigen::VectorXd(5) << 0, 0.4, 0.5, 0.3, 0.15).finished();
+  hist.load( 0.01 * (Eigen::VectorXd(5) << 0.0, 1.0, 4.53, 6.5, 2.2).finished(),
+             0.01 * (Eigen::VectorXd(5) << 0, 0.4, 0.5, 0.3, 0.15).finished() );
 
   const int max_width = 80;
 
@@ -459,8 +549,8 @@ BOOST_AUTO_TEST_CASE(mednumbers)
   Tomographer::UniformBinsHistogramWithErrorBars<double> hist(0.0, 1.0, 5);
   // make the values small (<1) to make sure that there hasn't been a conversion to int
   // somewhere in the process
-  hist.load( (Eigen::VectorXd(5) << 0, 181.6, 427.3, 1051.4, 1394.8).finished() );
-  hist.delta = (Eigen::VectorXd(5) << 0, 32.069439, 46.908433, 46.468675, 32.718598).finished();
+  hist.load( (Eigen::VectorXd(5) << 0, 181.6, 427.3, 1051.4, 1394.8).finished(),
+             (Eigen::VectorXd(5) << 0, 32.069439, 46.908433, 46.468675, 32.718598).finished() );
 
   const int max_width = 80;
 
@@ -486,8 +576,8 @@ BOOST_AUTO_TEST_CASE(largenumbers)
   Tomographer::UniformBinsHistogramWithErrorBars<double> hist(0.0, 1.0, 5);
   // make the values small (<1) to make sure that there hasn't been a conversion to int
   // somewhere in the process
-  hist.load( (Eigen::VectorXd(5) << 0, 100033.931, 4538205.111, 6501842.882, 221045.155).finished() );
-  hist.delta = (Eigen::VectorXd(5) << 0, 40342.111, 51044.209, 30114.315, 90104.919).finished();
+  hist.load( (Eigen::VectorXd(5) << 0, 100033.931, 4538205.111, 6501842.882, 221045.155).finished(),
+             (Eigen::VectorXd(5) << 0, 40342.111, 51044.209, 30114.315, 90104.919).finished() );
 
   const int max_width = 80;
 
@@ -516,8 +606,8 @@ BOOST_AUTO_TEST_CASE(toolargeerrbar)
   Tomographer::UniformBinsHistogramWithErrorBars<double> hist(-2.0, 2.0, 2);
   // make the values small (<1) to make sure that there hasn't been a conversion to int
   // somewhere in the process
-  hist.load( (Eigen::VectorXd(2) << 3.0, 4.0).finished() );
-  hist.delta = (Eigen::VectorXd(2) << 4.0, 2.0).finished();
+  hist.load( (Eigen::VectorXd(2) << 3.0, 4.0).finished() ,
+             (Eigen::VectorXd(2) << 4.0, 2.0).finished() );
 
   const int max_width = 80;
 
@@ -541,8 +631,8 @@ BOOST_AUTO_TEST_CASE(withinf)
   Tomographer::UniformBinsHistogramWithErrorBars<double> hist(-2.0, 2.0, 2);
   // make the values small (<1) to make sure that there hasn't been a conversion to int
   // somewhere in the process
-  hist.load( (Eigen::VectorXd(2) << 3.0, std::numeric_limits<double>::infinity()).finished() );
-  hist.delta = (Eigen::VectorXd(2) << 4.0, 1.0).finished();
+  hist.load( (Eigen::VectorXd(2) << 3.0, std::numeric_limits<double>::infinity()).finished(),
+             (Eigen::VectorXd(2) << 4.0, 1.0).finished() );
 
   const int max_width = 80;
 
@@ -564,8 +654,8 @@ BOOST_AUTO_TEST_CASE(withinf2)
   Tomographer::UniformBinsHistogramWithErrorBars<double> hist(-2.0, 2.0, 2);
   // make the values small (<1) to make sure that there hasn't been a conversion to int
   // somewhere in the process
-  hist.load( (Eigen::VectorXd(2) << 3.0, 2.0).finished() );
-  hist.delta = (Eigen::VectorXd(2) << 4.0, std::numeric_limits<double>::infinity()).finished();
+  hist.load( (Eigen::VectorXd(2) << 3.0, 2.0).finished() ,
+             (Eigen::VectorXd(2) << 4.0, std::numeric_limits<double>::infinity()).finished() );
 
   const int max_width = 80;
 
@@ -587,8 +677,8 @@ BOOST_AUTO_TEST_CASE(withnan)
   Tomographer::UniformBinsHistogramWithErrorBars<double> hist(-2.0, 2.0, 2);
   // make the values small (<1) to make sure that there hasn't been a conversion to int
   // somewhere in the process
-  hist.load( (Eigen::VectorXd(2) << 3.0, std::numeric_limits<double>::quiet_NaN()).finished() );
-  hist.delta = (Eigen::VectorXd(2) << 4.0, 1.0).finished();
+  hist.load( (Eigen::VectorXd(2) << 3.0, std::numeric_limits<double>::quiet_NaN()).finished() ,
+             (Eigen::VectorXd(2) << 4.0, 1.0).finished() );
 
   const int max_width = 80;
 
@@ -610,8 +700,8 @@ BOOST_AUTO_TEST_CASE(withnan2)
   Tomographer::UniformBinsHistogramWithErrorBars<double> hist(-2.0, 2.0, 2);
   // make the values small (<1) to make sure that there hasn't been a conversion to int
   // somewhere in the process
-  hist.load( (Eigen::VectorXd(2) << 3.0, 2.0).finished() );
-  hist.delta = (Eigen::VectorXd(2) << 4.0, std::numeric_limits<double>::quiet_NaN()).finished();
+  hist.load( (Eigen::VectorXd(2) << 3.0, 2.0).finished() ,
+             (Eigen::VectorXd(2) << 4.0, std::numeric_limits<double>::quiet_NaN()).finished() );
 
   const int max_width = 80;
 
@@ -639,8 +729,8 @@ BOOST_AUTO_TEST_CASE(histogram_short_bar)
   Tomographer::UniformBinsHistogramWithErrorBars<double> hist(0.0, 1.0, 5);
   // make the values small (<1) to make sure that there hasn't been a conversion to int
   // somewhere in the process
-  hist.load( 0.01*(Eigen::VectorXd(5) << 0.0, 1.0, 4.53, 6.5, 2.2).finished() );
-  hist.delta = 0.01*(Eigen::VectorXd(5) << 0, 0.4, 0.5, 0.3, 0.15).finished();
+  hist.load( 0.01*(Eigen::VectorXd(5) << 0.0, 1.0, 4.53, 6.5, 2.2).finished(),
+             0.01*(Eigen::VectorXd(5) << 0, 0.4, 0.5, 0.3, 0.15).finished() );
 
   const int max_width = 80;
 
@@ -657,8 +747,8 @@ BOOST_AUTO_TEST_CASE(histogram_short_bar)
 BOOST_AUTO_TEST_CASE(histogram_short_bar_log)
 {
   Tomographer::UniformBinsHistogramWithErrorBars<double> hist(0.0, 1.0, 5);
-  hist.load( 0.01*(Eigen::VectorXd(5) << 0.0, 1.0, 4.53, 6.5, 2.2).finished() );
-  hist.delta = 0.01*(Eigen::VectorXd(5) << 0, 0.4, 0.5, 0.3, 0.15).finished();
+  hist.load( 0.01*(Eigen::VectorXd(5) << 0.0, 1.0, 4.53, 6.5, 2.2).finished(),
+             0.01*(Eigen::VectorXd(5) << 0, 0.4, 0.5, 0.3, 0.15).finished() );
 
   const int max_width = 80;
 
