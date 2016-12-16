@@ -45,7 +45,7 @@ extensions = [
 
 
 extlinks = {
-    'tomocxx': ('file:///home/philippe/Research/projects/tomographer/build/html/%s', '')
+    'tomocxx': ('../%s', '')
 }
 
 

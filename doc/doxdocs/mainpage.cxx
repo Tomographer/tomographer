@@ -33,6 +33,9 @@
  * data from quantum experiments. These serve in particular as components for the \c
  * tomorun executable program.
  *
+ * <a href="py/index.html">The API documentation for the Python interface to Tomographer
+ * is available here.</a>
+ *
  * <h2>%Tomographer's Components</h2>
  *
  * The classes and routines of the project belong to several categories.

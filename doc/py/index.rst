@@ -4,8 +4,8 @@
    contain the root `toctree` directive.
 
 
-Tomographer (Python Interface)
-==============================
+Tomographer |version| (Python Interface)
+========================================
 
 The `tomographer` package: Practical, Reliable Error Bars in Quantum Tomography.
 
@@ -31,7 +31,7 @@ Modules and classes
 .. toctree::
    :maxdepth: 2
 
-   tomographerpy/tomographer
+   tomographer
 
 
 Indices and tables
