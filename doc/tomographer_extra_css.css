@@ -27,7 +27,7 @@
 /* ------------------------------ FONTS ------------------------------ */
 
 /* DejaVu Sans */
-@font-face {
+/*@font-face {
    font-family: myDejaVuSans;
    font-weight: normal;
    font-style: normal;
@@ -56,14 +56,14 @@
    font-weight: 100;
    font-style: normal;
    src: url(DejaVuSans-ExtraLight.ttf);
-}
+}*/
 /* DejaVu Sans Condensed */
-@font-face {
+/*@font-face {
    font-family: myDejaVuSansCondensed;
    font-weight: normal;
    font-style: normal;
    src: url(DejaVuSansCondensed.ttf);
-}
+}*/
 /*@font-face {
    font-family: myDejaVuSansCondensed;
    font-weight: bold;
@@ -83,7 +83,7 @@
    src: url(DejaVuSansCondensed-BoldOblique.ttf);
 }*/
 /* DejaVu Sans Mono */
-@font-face {
+/*@font-face {
    font-family: myDejaVuSansMono;
    src: url(DejaVuSansMono.ttf);
 }
@@ -91,7 +91,7 @@
    font-family: myDejaVuSansMono;
    font-weight: bold;
    src: url(DejaVuSansMono-Bold.ttf);
-}
+}*/
 /*@font-face {
    font-family: myDejaVuSansMono;
    font-style: italic;
@@ -104,6 +104,45 @@
    src: url(DejaVuSansMono-BoldOblique.ttf);
 }*/
 
+@font-face {
+    font-family: 'Lin-Libertine';
+    font-weight: normal;
+    font-style: normal;
+    src: url("LinLibertine_R.woff") format("woff");
+}
+@font-face {
+    font-family: 'Lin-Libertine';
+    font-weight: 600;
+    font-style: normal;
+    src: url("LinLibertine_RZ.woff") format("woff");
+}
+@font-face {
+    font-family: 'Lin-Libertine';
+    font-weight: normal;
+    font-style: italic;
+    src: url("LinLibertine_RI.woff") format("woff");
+}
+@font-face {
+    font-family: 'Lin-Libertine';
+    font-weight: 600;
+    font-style: italic;
+    src: url("LinLibertine_RZI.woff") format("woff");
+}
+@font-face {
+    font-family: 'Lin-Biolinum';
+    font-weight: normal;
+    font-style: normal;
+    src: url("LinBiolinum_R.woff") format("woff");
+}
+@font-face {
+    font-family: 'Lin-Biolinum';
+    font-weight: 600;
+    font-style: normal;
+    src: url("LinBiolinum_RB.woff") format("woff");
+}
+
+
+
 
 body, html {
    font-size: 100.01%;
@@ -114,35 +153,38 @@ body, table, div, p, dl,
    .title,
    table.directory,
    .navpath li.navelem a,
-    #projectname, #projectbrief, #projectnumber,
     div.toc li,
     div.toc h3,
     #powerTip div,
     #nav-tree .label
 {
-   font-family: myDejaVuSans, "DejaVu Sans", sans-serif;
+   font-family: 'Lin-Libertine', "Linux Libertine", serif;
+   font-weight: normal;
+   font-size: inherit;
+   line-height: 1.4em;
+}
+#projectname, #projectbrief, #projectnumber
+{
+   font-family: 'Lin-Biolinum', "Linux Biolinum", sans-serif;
    font-weight: normal;
 }
 
-.tabs, .tabs2, .tabs3 {
-   /*letter-spacing: -.05ex;*/
-}
 
 #doc-content table, #doc-content div, #doc-content p, #doc-content dl {
    font-size: inherit;
    /*line-height: inherit;*/
 }
 #doc-content {
-   font-size: 0.85em;
-   /*line-height: 1.3em;*/
-   /*font-weight: 100;*/
+    /*font-size: 0.85em;*/
+    font-size: 1.2em;
    font-style: normal;
 }
 
 #doc-content div.title {
-   font-size: 2.2em;
+   font-size: 1.8em;
+   font-family: "Lin-Biolinum", "Linux Biolinum", sans-serif;
    line-height: 1.3em;
-   font-weight: 100;
+   font-weight: normal;
    margin: 0.6em 0px 0.6em;
    word-wrap: break-word;
    /* doens't seem to work:
@@ -173,7 +215,10 @@ h3 {
 /* specific font settings */
 
 a.el {
-   font-weight: bold;
+    font-weight: bold;
+}
+a.el, a.elRef {
+    font-family: "Lin-Biolinum", "Linux Biolinum", sans-serif;
 }
 code a.el, pre a.el, div.line a.el {
    font-weight: normal;
@@ -251,24 +296,38 @@ dl.todo dd, dl.bug dd {
 }
 
 
+h2.memtitle {
+    font-size: 1.2em;
+}
+.permalink {
+    font-size: 0.7em;
+    opacity: 0.4;
+}
+.overload {
+    color: rgb(80,80,80);
+    font-family: "Lin-Biolinum", "Linux Biolinum", sans-serif;
+}
+
 div.fragment {
    border: 0px none;
-   border-left-width: 1px;
-   border-left-style: solid;
-   border-left-color: #8AEAEA;
+   border-left: none 0px;
    padding: 4px 1.75em;
    margin: 4px 0.5em;
-   background-color: transparent;
+   background-color: rgba(0,0,80,0.05);
 }
 
 
-/* fixed width fonts */
+/* code fonts */
 
 div.line,
    code,
    pre
 {
-   font-family: myDejaVuSansMono, "DejaVu Sans Mono", monospace, fixed;
+    font-family: "Lin-Biolinum", "Linux Biolinum", monospace, fixed;
+}
+code, pre {
+    padding: 0.1em;
+    background-color: rgba(0,0,80,0.05);
 }
 
 div.line {
@@ -276,7 +335,22 @@ div.line {
    line-height: 1.5em;
 }
 span.lineno {
-   display: inline-block;
+    font-size: 0.55em;
+    line-height: 2em;
+    vertical-align: 0.1em;
+    width: 2em;
+    margin-left: -2em;
+    background-color: transparent;
+    border: none 0px;
+    color: rgb(180,180,180);
+    display: inline-block;
+}
+div.line:hover span.lineno {
+    background-color: rgba(0,0,80,0.1);
+    color: rgb(100,100,100);
+}
+span.lineno a {
+    background-color: transparent;
 }
 div.line {
    text-indent: 0px;
@@ -297,16 +371,16 @@ div.line {
 #titlearea {
    color: white;
    background-color: #0d4e4e;
-   text-shadow: 2px 2px 4px white;
+   /*text-shadow: 2px 2px 4px white;*/
 }
 
 #projectname {
    display: inline-block;
    margin-right: 1em;
    font-size: 3em;
-   font-weight: 100;
+   /*font-weight: 100;*/
    font-variant: small-caps;
-   letter-spacing: 5px;
+   /*letter-spacing: 5px;*/
 }
 #projectnumber {
    font-size: 0.5em;
@@ -350,6 +424,10 @@ div.line {
    height: 30px;
 }
 
+.tabs, .tabs2, .tabs3 {
+   /*letter-spacing: -.05ex;*/
+}
+
 .tabs, .tabs2, .tabs3,
       .tablist a,
       .tablist li,
@@ -370,6 +448,38 @@ div.line {
    background-color: #0c8383;
 }
 
+
+
+.sm-dox {
+    background-image: none;
+    background-color: #8ad4d4; /*#5ec8c8;*/
+}
+.sm-dox a, .sm-dox a:focus, .sm-dox a:hover, .sm-dox a:active {
+    font-family: "Lin-Biolinum", "Linux Biolinum", sans-serif;
+    font-size: 0.9em;
+    background-image: none;
+    background-color: #8ad4d4; /*#5ec8c8;*/
+}
+.sm-dox a:hover
+/*, .sm-dox a.highlighted */ {
+    background-color: #0c8383;
+}
+.sm-dox ul a, .sm-dox ul a:focus, .sm-dox ul a:hover, .sm-dox ul a:active {
+    font-size: 0.9em;
+}
+.sm-dox a, .sm-dox a:focus, .sm-dox a:active, .sm-dox a:hover, .sm-dox a.highlighted {
+    padding: 0px 20px;
+    background-image: none;
+}
+.sm-dox a.has-submenu {
+    padding-right: 24px;
+}
+.sm-dox ul a:hover{
+    background-image: none;
+    background-color: #0c8383;
+}
+
+/*
 span.arrow.arrowdown {
    background-image: url(myarrowdown.png);
    color: rgba(0, 80, 80, 0);
@@ -377,6 +487,10 @@ span.arrow.arrowdown {
 span.arrow.arrowright {
    background-image: url(myarrowright.png);
    color: rgba(0, 80, 80, 0);
+}
+*/
+span.arrow {
+    font-family: "Arial", sans-serif;
 }
 
 
@@ -388,12 +502,16 @@ div.summary {
    width: 80%;
 }
 
+.params .paramdir {
+    font-family: "Lin-Biolinum", "Linux Biolinum", sans-serif;
+}
 .paramname {
    color: #98611b;
    vertical-align: top;
 }
 h2 {
-   border-bottom: 1px solid #d5eeee;
+    font-family: "Lin-Biolinum", "Linux Biolinum", sans-serif;
+    border-bottom: 1px solid #d5eeee;
 }
 h2.groupheader {
    color: #98611b;
@@ -404,7 +522,7 @@ h2.groupheader {
 dl.reflist a.el {
    font-weight: normal;
 }
-.memproto, dl.reflist dt,
+.memproto, .memtitle, dl.reflist dt,
       .fieldtable th
 {
    background-image: none;
@@ -433,7 +551,7 @@ table.fieldtable,
    border-bottom: 1px solid #d5eeee;
 }
 
-.memproto, dl.reflist dt
+.memproto, .memtitle, dl.reflist dt
 {
    border-top: 1px solid #d5eeee;
    border-left: 1px solid #d5eeee;
@@ -484,8 +602,10 @@ table.directory {
    min-width: 16em;
    max-width: 24em;
    line-height: 1.6em;
-   font-family: myDejaVuSansCondensed;
-   /*letter-spacing: -1px;*/
+   font-family: "Lin-Biolinum", "Linux Biolinum", sans-serif;
+   /*font-family: "Lin-Libertine", "Linux Libertine", serif;*//* myDejaVuSansCondensed;*/
+   font-size: 0.85em;
+   letter-spacing: -1px;
 }
 .directory td.entry a.el {
    font-weight: normal;
@@ -510,7 +630,39 @@ table.memberdecls {
     overflow-x: hidden;
     overflow-y: auto;
 }
+#nav-tree .label {
+    font-family: "Lin-Biolinum", "Linux Biolinum", sans-serif;
+    font-size: 1em;
+}
+#nav-tree .selected {
+    background-image: none;
+    background-color: #0c8383;
+}
 
+.navpath, .navpath ul {
+    font-size: 1em;
+}
+.navpath ul {
+    padding: 0px 0px 0px 0.5em;
+}
+.navpath li {
+    background-image: none;
+    padding-left: 0px;
+    padding-right: 0px;
+}
+.navpath li a::after {
+    padding-left: 0.6em;
+    padding-right: 0.6em;
+    line-height: 28px;
+    content: '\00203A'
+}
+.navpath li.navelem a {
+    font-size: 0.85em;
+    line-height: 28px;
+}
+.navpath li.footer {
+    font-size: 0.9em;
+}
 
 
 /* ------------------------------ CODE SYNTAX HIGHLIGHT ------------------------------ */

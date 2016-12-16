@@ -156,7 +156,7 @@
 
 /** \namespace Tomographer::MAT
  *
- * \brief Utilities and helpers for reading MATLAB \c .mat files
+ * \brief Utilities and helpers for reading MATLAB <code>.mat</code> files
  *
  * The class \ref File represents an open MATLAB file from which you can extract
  * data. Variables inside the file are represented with \ref Var objects.

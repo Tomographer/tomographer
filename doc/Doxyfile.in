@@ -1175,17 +1175,14 @@ HTML_EXTRA_STYLESHEET  = @DOCROOT@/tomographer_extra_css.css
 # files will be copied as-is; there are no commands or markers available.
 # This tag requires that the tag GENERATE_HTML is set to YES.
 
-HTML_EXTRA_FILES       = @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSans-Bold.ttf \
-                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSans-BoldOblique.ttf \
-                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSans-ExtraLight.ttf \
-                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSans-Oblique.ttf \
-                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSans.ttf \
-                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSansCondensed.ttf \
-                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono-Bold.ttf \
-                         @DOCROOT@/dejavu-fonts-ttf-2.35/ttf/DejaVuSansMono.ttf \
-			 @DOCROOT@/tomographer_script_setup.js \
-			 @DOCROOT@/myarrowdown.png \
-			 @DOCROOT@/myarrowright.png
+HTML_EXTRA_FILES       = @DOCROOT@/linux-libertine-fonts/LinLibertine_R.woff \
+                         @DOCROOT@/linux-libertine-fonts/LinLibertine_RI.woff \
+                         @DOCROOT@/linux-libertine-fonts/LinLibertine_RZ.woff \
+                         @DOCROOT@/linux-libertine-fonts/LinLibertine_RZI.woff \
+                         @DOCROOT@/linux-libertine-fonts/LinBiolinum_R.woff \
+                         @DOCROOT@/linux-libertine-fonts/LinBiolinum_RB.woff \
+			 @DOCROOT@/tomographer_script_setup.js
+
 
 # The HTML_COLORSTYLE_HUE tag controls the color of the HTML output. Doxygen
 # will adjust the colors in the style sheet and background images according to
