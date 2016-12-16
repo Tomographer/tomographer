@@ -135,12 +135,12 @@ private:
     if (::EigenAssertTest::setting_scope_ptr && ::EigenAssertTest::setting_scope_ptr->throws_exception) { \
       /*std::fprintf(stderr, "an eigen_assert() failure will cause an exception!\n");*/ \
       if (!(x)) {                                                       \
-        tomographer_eigen_assert_cleanup();                             \
+        tomographer_eigen_assert_failure_cleanup();                             \
         throw (::Tomographer::Tools::EigenAssertException(#x, __FILE__, __LINE__)); \
       }                                                                 \
     } else {                                                            \
       if (!(x)) {                                                       \
-        tomographer_eigen_assert_cleanup();                             \
+        tomographer_eigen_assert_failure_cleanup();                             \
         assert(false && "eigen_assert() failure: " #x);                 \
       }                                                                 \
     }                                                                   \
@@ -157,7 +157,7 @@ private:
 // more eigen magic ... override the CommaInitializer class to fix a bug where the
 // destructor could generate an assertion failure while handling a prior exception, which
 // would immediately call terminate() in any case (it appears).  That's the reason for the
-// _tomographer_eigen_assert_cleanup() function above.
+// tomographer_eigen_assert_failure_cleanup() function above.
 namespace Tomographer { namespace Tools { namespace tomo_internal {
 template<typename XprType>
 struct FixCommaInitializer
@@ -214,7 +214,7 @@ struct FixCommaInitializer
   Eigen::Index m_col;              // current col id
   Eigen::Index m_currentBlockRows; // current block height
 
-  void tomographer_eigen_assert_cleanup() {
+  void tomographer_eigen_assert_failure_cleanup() {
     // mark as finished, so that destructor doesn't further raise another exception
     m_row = m_xpr.rows(); m_col = m_xpr.cols(); m_currentBlockRows = 1;
   }

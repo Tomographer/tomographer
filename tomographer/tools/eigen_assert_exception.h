@@ -89,13 +89,38 @@ typedef Tomographer::Tools::EigenAssertException eigen_assert_exception;
  */
 #define eigen_assert_throw_exception(x)         \
   if (!(x)) {                                                           \
-    tomographer_eigen_assert_cleanup();                                \
+    tomographer_eigen_assert_failure_cleanup();                         \
     throw (::Tomographer::Tools::EigenAssertException(#x, __FILE__, __LINE__)); \
   }
 
-// may be overridden in various contexts, such as in classes (see FixCommaInitializer
-// in test_tomographer.h)
-inline void tomographer_eigen_assert_cleanup() { }
+/** \brief Gets called when we use eigen assertion exceptions and when eigen_assert() fails
+ *
+ * This function does nothing. However, you can override this function depending on the
+ * context, by locally defining another function called \a
+ * %tomographer_eigen_assert_failure_cleanup().  Because eigen_assert_throw_exception() is
+ * a macro which, in its expansion, invokes \a
+ * %tomographer_eigen_assert_failure_cleanup(), the closest function context-wise is
+ * invoked.
+ *
+ * This mechanism should be used in case classes must clean up after an eigen assertion
+ * failure.  The problem is the following: for instance, suppose a class \a X has calls to
+ * eigen_assert() in its destructor (note that such destructors must be declared
+ * <code>noexcept(false)</code> explicitly, as per C++11 standard). Now imaging that there
+ * is an other eigen_assert() failure somewhere else in one of \a X's methods, causing an
+ * exception to be thrown. If the instance of \a X goes out of scope before the exception
+ * is caught, it is highly likely that the eigen_assert() in the destructor also fails. In
+ * this case, no exception is thrown and std::terminate() is called (with g++ 6 and
+ * clang++; not sure what the C++ standard mandates).  To solve this, \a X should provide
+ * a private method called \a %tomographer_eigen_assert_failure_cleanup() which sets the
+ * class back to a consistent state, after which eigen_assert() tests in the destructor
+ * won't fail.
+ *
+ * This problem arises in particular for Eigen's Eigen::CommaInitializer class; we use the
+ * above mechanism in a patched class in the tests to avoid this problem (see
+ * <code>test/test_tomographer.h</code>).
+ *
+ */
+inline void tomographer_eigen_assert_failure_cleanup() { }
 
 
 
