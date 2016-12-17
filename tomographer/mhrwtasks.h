@@ -59,7 +59,7 @@ namespace MHRWTasks {
  * Stores the parameters to the random walk.
  *
  */
-template<typename CountIntType_ = unsigned int, typename StepRealType_ = double>
+template<typename IterCountIntType_ = int, typename StepRealType_ = double>
 struct CDataBase
 {
   /** \brief Constructor.
@@ -75,23 +75,23 @@ struct CDataBase
   }
 
   //! Type used to count the number of iterations
-  typedef CountIntType_ CountIntType;
+  typedef IterCountIntType_ IterCountIntType;
   //! Type used to specify the step size
   typedef StepRealType_ StepRealType;
 
   /** \brief Type to store the parameters of the Metropolis-Hastings random walk (number of
    *         runs, sweep size, etc.)
    *
-   * See \ref MHRWParams<CountIntType,StepRealType>
+   * See \ref MHRWParams<IterCountIntType,StepRealType>
    */
-  typedef MHRWParams<CountIntType, StepRealType> MHRWParamsType;
+  typedef MHRWParams<IterCountIntType, StepRealType> MHRWParamsType;
 
   /** \brief Parameters of the random walk
    *
    * Stores the number of iterations per sweep, the number of thermalizing sweeps, the
    * number of "live" sweeps, and the step size of the random walk.
    *
-   * See \ref MHRWParams<CountIntType,StepRealType>
+   * See \ref MHRWParams<IterCountIntType,StepRealType>
    */
   const MHRWParamsType mhrw_params;
 
@@ -153,11 +153,11 @@ struct CDataBase
  *
  * \tparam MHRWStatsCollectorResultType_ the result type of the MHRWStatsCollector which
  *         the task will be running.
- * \tparam CountIntType the integer type used for counting in the MHRW task.
+ * \tparam IterCountIntType the integer type used for counting iterations in the MHRW task.
  * \tparam StepRealType the real type used to describe the step size.
  *
  */
-template<typename MHRWStatsCollectorResultType_, typename CountIntType, typename StepRealType>
+template<typename MHRWStatsCollectorResultType_, typename IterCountIntType, typename StepRealType>
 struct MHRandomWalkTaskResult
   : public virtual Tools::NeedOwnOperatorNew<MHRWStatsCollectorResultType_>::ProviderType
 {
@@ -167,7 +167,7 @@ struct MHRandomWalkTaskResult
     
   /** \brief The type to use to store the parameters of the random walk
    */
-  typedef MHRWParams<CountIntType, StepRealType> MHRWParamsType;
+  typedef MHRWParams<IterCountIntType, StepRealType> MHRWParamsType;
     
   /** \brief Construct an empty task result
    *
@@ -215,7 +215,7 @@ struct MHRandomWalkTaskResult
   //! The result furnished by the stats collector itself
   const MHRWStatsCollectorResultType stats_collector_result;
     
-  //! The parameters of the random walk (see \ref MHRWParams<CountIntType,StepRealType>)
+  //! The parameters of the random walk (see \ref MHRWParams<IterCountIntType,StepRealType>)
   const MHRWParamsType mhrw_params;
 
   //! The acceptance ratio of the Metropolis-Hastings random walk
@@ -237,19 +237,19 @@ template<typename MHRandomWalkTaskCData,
 struct MHRandomWalkTask
 {
   //! The type used to count iterations (see \ref MHRWParams)
-  typedef typename MHRandomWalkTaskCData::CountIntType CountIntType;
+  typedef typename MHRandomWalkTaskCData::IterCountIntType IterCountIntType;
   //! The type used to describe a step size (see \ref MHRWParams)
   typedef typename MHRandomWalkTaskCData::StepRealType StepRealType;
 
   //! Type to stores the parameters of the random walk 
-  typedef MHRWParams<CountIntType, StepRealType> MHRWParamsType;
+  typedef MHRWParams<IterCountIntType, StepRealType> MHRWParamsType;
 
   /** \brief Result type of a single task run.
    *
    * See \ref MHRandomWalkTaskResult.
    */    
   typedef MHRandomWalkTaskResult<typename MHRandomWalkTaskCData::MHRWStatsCollectorResultType,
-                                 CountIntType, StepRealType> ResultType;
+                                 IterCountIntType, StepRealType> ResultType;
 
   /** \brief Status Report for a \ref MHRandomWalkTask
    *
@@ -263,7 +263,7 @@ struct MHRandomWalkTask
   {
     /** \brief Constructor which initializes all fields */
     StatusReport(double fdone = 0.0, const std::string & msg = std::string(),
-                 CountIntType kstep_ = 0, MHRWParamsType mhrw_params_ = MHRWParamsType(),
+                 IterCountIntType kstep_ = 0, MHRWParamsType mhrw_params_ = MHRWParamsType(),
                  double acceptance_ratio_ = 0.0)
       : MultiProc::TaskStatusReport(fdone, msg),
         kstep(kstep_),
@@ -274,7 +274,7 @@ struct MHRandomWalkTask
     }
 
     /** \brief the current iteration number */
-    CountIntType kstep;
+    IterCountIntType kstep;
 
     /** \brief the parameters of the random walk
      *
@@ -297,7 +297,7 @@ struct MHRandomWalkTask
      *  \textit{nTotalIters} = \textit{nSweep} \times \left( \textit{nTherm} + \textit{nRun} \right)
      * \f$.
      */
-    CountIntType n_total_iters;
+    IterCountIntType n_total_iters;
   };
   /** \brief Typedef for \ref StatusReport. This is needed by, e.g. \ref
    *         MultiProc::OMP::TaskDispatcher.
@@ -377,7 +377,7 @@ public:
 
     logger.longdebug("Tomographer::MHRWTasks::run()", "MHWalker object created.");
 
-    MHRandomWalk<Rng, MHWalkerType, OurStatsCollectors, LoggerType, CountIntType> rwalk(
+    MHRandomWalk<Rng, MHWalkerType, OurStatsCollectors, LoggerType, IterCountIntType> rwalk(
         // MH random walk parameters
         pcdata->mhrw_params,
         // the MHWalker
@@ -427,7 +427,7 @@ private:
 
     template<typename PointType, typename FnValueType, typename MHRandomWalk>
     inline void rawMove(
-        CountIntType k, bool is_thermalizing, bool, bool, double, const PointType &, FnValueType,
+        IterCountIntType k, bool is_thermalizing, bool, bool, double, const PointType &, FnValueType,
         const PointType &, FnValueType, MHRandomWalk & rw
         )
     {
@@ -436,9 +436,9 @@ private:
       // only check once per sweep, to speed up things
       if ((k % rw.nSweep() == 0) && tmgriface->statusReportRequested()) {
         // prepare & provide status report
-        CountIntType totiters = rw.nSweep()*(rw.nTherm()+rw.nRun());
+        IterCountIntType totiters = rw.nSweep()*(rw.nTherm()+rw.nRun());
         // k restarts at zero after thermalization, so account for that:
-        CountIntType kreal = is_thermalizing ? k : k + rw.nSweep()*rw.nTherm();
+        IterCountIntType kreal = is_thermalizing ? k : k + rw.nSweep()*rw.nTherm();
         double fdone = (double)kreal/totiters;
         double accept_ratio = std::numeric_limits<double>::quiet_NaN();
         bool warn_accept_ratio = false;
@@ -477,7 +477,7 @@ private:
     }
 
     template<typename PointType, typename FnValueType, typename MHRandomWalk>
-    inline void processSample(CountIntType, CountIntType, const PointType &, FnValueType, MHRandomWalk &)
+    inline void processSample(IterCountIntType, IterCountIntType, const PointType &, FnValueType, MHRandomWalk &)
     {
     }
   };

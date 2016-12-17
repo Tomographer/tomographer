@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_SUITE(cdatabase)
 
 BOOST_AUTO_TEST_CASE(constr)
 {
-  Tomographer::MHRWTasks::CDataBase<> cdata(Tomographer::MHRWParams<unsigned int, double>(0.1, 128, 50, 500), 100);
+  Tomographer::MHRWTasks::CDataBase<> cdata(Tomographer::MHRWParams<int, double>(0.1, 128, 50, 500), 100);
   BOOST_CHECK_EQUAL(cdata.base_seed, 100);
   MY_BOOST_CHECK_FLOATS_EQUAL(cdata.mhrw_params.step_size, 0.1, tol);
   BOOST_CHECK_EQUAL(cdata.mhrw_params.n_sweep, 128);
@@ -72,7 +72,7 @@ BOOST_AUTO_TEST_CASE(constr)
 
 BOOST_AUTO_TEST_CASE(get_task_inputs)
 {
-  const Tomographer::MHRWTasks::CDataBase<> cdata(Tomographer::MHRWParams<unsigned int, double>(0.1, 128, 50, 500), 100);
+  const Tomographer::MHRWTasks::CDataBase<> cdata(Tomographer::MHRWParams<int, double>(0.1, 128, 50, 500), 100);
 
   BOOST_MESSAGE( cdata.getBasicCDataMHRWInfo() );
 
