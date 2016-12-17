@@ -205,8 +205,8 @@ namespace Sequential {
 /** \brief Executes multiple tasks sequentially
  *
  * This task dispatcher is useful mainly for test cases, when testing tasks (and to see if
- * a set of classes adhere well to the task manager/dispatcher type interfaces, see
- * \ref pageTaskManagerDispatcher).
+ * a set of classes adhere well to the task dispatcher type interfaces, see \ref
+ * pageTaskManagerDispatcher).
  *
  * <ul>
  * <li> \a Task must be a \ref pageInterfaceTask compliant type 

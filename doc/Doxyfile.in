@@ -1181,6 +1181,7 @@ HTML_EXTRA_FILES       = @DOCROOT@/linux-libertine-fonts/LinLibertine_R.woff \
                          @DOCROOT@/linux-libertine-fonts/LinLibertine_RZI.woff \
                          @DOCROOT@/linux-libertine-fonts/LinBiolinum_R.woff \
                          @DOCROOT@/linux-libertine-fonts/LinBiolinum_RB.woff \
+                         @DOCROOT@/linux-libertine-fonts/LinBiolinum_RI.woff \
 			 @DOCROOT@/tomographer_script_setup.js
 
 
