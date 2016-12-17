@@ -1022,7 +1022,7 @@ struct CDataBase
   /** \brief Create the stats collector (without binning analysis)
    *
    * This method is provided in compliance with the \ref
-   * pageInterfaceMHRandomWalkTaskCData for \ref MHRWRandomWalkTask.
+   * pageInterfaceMHRandomWalkTaskCData for \ref MHRandomWalkTask.
    */
   template<typename LoggerType, TOMOGRAPHER_ENABLED_IF_TMPL(!UseBinningAnalysis)>
   inline ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>
@@ -1038,7 +1038,7 @@ struct CDataBase
   /** \brief Create the stats collector (with binning analysis)
    *
    * This method is provided in compliance with the \ref
-   * pageInterfaceMHRandomWalkTaskCData for \ref MHRWRandomWalkTask.
+   * pageInterfaceMHRandomWalkTaskCData for \ref MHRandomWalkTask.
    */
   template<typename LoggerType, TOMOGRAPHER_ENABLED_IF_TMPL(UseBinningAnalysis)>
   inline ValueHistogramWithBinningMHRWStatsCollector<

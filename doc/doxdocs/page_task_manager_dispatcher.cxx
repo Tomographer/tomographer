@@ -239,7 +239,7 @@
  * <h3>What the task dispatcher should do</h3>
  *
  * The task dispatcher is responsible for scheduling and running the tasks.  See \ref
- * MultiProc::Sequential::TaskDispatcher for a simple example.
+ * Tomographer::MultiProc::Sequential::TaskDispatcher for a simple example.
  *
  * It should be provided, or should otherwise have knowledge of:
  *
@@ -284,10 +284,10 @@
  *     explicitly from an external caller (e.g. a signal handler) with a call to this
  *     class' \a requestStatusReport(), then the \a TaskManagerIface provided to the
  *     task's \a run() function should inform the task to provide its status report (see
- *     \ref pageTaskInterface).
+ *     \ref pageInterfaceTask).
  *
  *     When a status report is requested, the tasks will submit their reports to the \a
- *     TaskManagerIface (see \ref pageTaskInterface). Once all the reports are received,
+ *     TaskManagerIface (see \ref pageInterfaceTask). Once all the reports are received,
  *     they should be combined into a full status report (\ref
  *     Tomographer::MultiProc::FullStatusReport), and the status report handler (set by \a
  *     setStatusReportHandler()) should be called.
@@ -308,7 +308,7 @@
  *       responsibility; not that of the tasks.  See \ref
  *       Tomographer::MultiProc::OMP::TaskDispatcher for an example; there, sections where
  *       data could be accessed simultaneously by different threads are protected by
- *       <code>#pragma omp critical</code> blocks.
+ *       <code>\#pragma omp critical</code> blocks.
  *
  *
  * <h3>The API exposed by the task dispatcher</h3>
@@ -340,6 +340,6 @@
  * The task dispatcher must also provide the following typedef:
  *
  * \par typedef ... TaskType;
- *   The \ref pageInterfaceTask-compliant type used to describe a task.
+ *   The \ref pageInterfaceTask -compliant type used to describe a task.
  *
  */
