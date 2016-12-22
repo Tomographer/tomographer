@@ -44,7 +44,7 @@
  *
  * These are basic tools and utilities:
  *
- * - most tools, e.g. C++ language utilities and other tools, are defined in the
+ * - Most tools, e.g. C++ language utilities and other tools, are defined in the
  *   namespace \ref Tomographer::Tools;
  *
  * - \ref Tomographer::MAT provides a set of routines to read data from MATLAB files

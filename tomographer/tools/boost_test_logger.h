@@ -28,6 +28,12 @@
 #ifndef TOMOGRAPHER_TOOLS_BOOST_TEST_LOGGER_H
 #define TOMOGRAPHER_TOOLS_BOOST_TEST_LOGGER_H
 
+/** \file boost_test_logger.h
+ *
+ * \brief Provide a logger class for when using the Boost Unit Test Framework (see \ref
+ *        Tomographer::Logger::BoostTestLogger).
+ */
+
 
 #include <tomographer/tools/loggers.h>
 

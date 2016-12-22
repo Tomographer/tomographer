@@ -102,7 +102,7 @@
  *     \c k is the iteration number (which is reset to zero after the thermalizing
  *     sweeps), \c is_thermalizing is \c true during the first part of the random walk
  *     during the thermalizing runs, \c is_live_iter is set to \c true only if a sample is
- *     taken at this point, i.e. if not thermalizing and after a full sweep. \c accepted
+ *     taken at this point, i.e. if not thermalizing and after each full sweep. \c accepted
  *     indicates whether this Metropolis-Hastings move was accepted or not and \c a gives
  *     the ratio of the function which was tested for the move. (Note that \c a might not
  *     be calculated and left to 1 if known to be greater than 1.) \c newpt and \c
@@ -150,8 +150,12 @@
  * state space. It takes care for example of providing candidate new points (jump
  * function), and calculating the probability ratio for the jump.
  *
- * \a MHWalker types are used in particular by:
- *   - \ref Tomographer::MHRandomWalk.
+ * In the following documentation, \f$ P(x) \f$ designates the positive function which
+ * drives the Metropolis-Hastings random walk.  The collected samples will
+ * (asymptotically) be distributed according to \f$ P(x) / \int P(x)\,dx \f$.
+ *
+ * For instance, the \ref Tomographer::MHRandomWalk class needs to be provided a \a
+ * MHWalker compliant type in order to carry out the random walk.
  *
  * A type implementing the \a MHWalker interface must provide the following types:
  *
@@ -173,47 +177,95 @@
  *
  * A \a MHWalker must provide the following constant enumeration values:
  *
- * \par enum { UseFnSyntaxType = ... }
+ * \par static constexpr int UseFnSyntaxType = ...
  *     Specifies how we calculate the function probability ratio of two points in the
  *     random walk. \c UseFnSyntaxType should be set to one of either \ref
- *     Tomographer::MHUseFnValue, \ref Tomographer::MHUseFnLogValue, or \ref
- *     Tomographer::MHUseFnRelativeValue. See \ref
- *     labelMHWalkerUseFnSyntaxType "Role of UseFnSyntaxType".
- *
+ *     Tomographer::MHUseFnValue (this class calculates the function value at each point),
+ *     \ref Tomographer::MHUseFnLogValue (this class calculates the natural logarithm of
+ *     the function at each point), or \ref Tomographer::MHUseFnRelativeValue (this class
+ *     calculates the ratio of the values at two points).  See below, "Role of
+ *     UseFnSyntaxType".
  *
  * And must provide the following members:
  *
  * \par MHWalker(MHWalker&& other)
- *     A MHWalker type must have a move constructor. (Of course, replace \a "MHWalker" by
- *     the name of your class).
- *
- * \par void init()
+ *     A MHWalker type must have a move constructor.
  *
  * \par PointType startPoint()
+ *     Should return the starting point for the random walk.  This function will be called
+ *     before \a init().
+ *
+ * \par void init()
+ *     Will be called when beginning the random walk, i.e. just before the first
+ *     thermalization iteration.
  *
  * \par void thermalizingDone()
+ *     This method is called after all the thermalization sweeps have finished, and before
+ *     starting with the live iterations.  Typically this function shouldn't do anything,
+ *     it's just provided for convenience.
  *
  * \par void done()
+ *     Called after the random walk has been completed and all samples collected.
  *
  * \par PointType jumpFn(const PointType & curpt, StepRealType step_size)
+ *     Provide the next point where the random walk should consider jumping to. This
+ *     function should return a new point depending on the current point \a curpt,
+ *     according to some symmetric proposal distribution.
  *
- * \par FnValueType fnVal(const PointType & curpt) &mdash; required only if UseFnSyntaxType == MHUseFnValue
+ *     The jump function may consider using the \a step_size to tune the "width" of the
+ *     proposal distribution.  However \a jumpFn() is free to disregard the \a step_size
+ *     argument.  The class carrying out the random walk (such as \ref
+ *     Tomographer::MHRandomWalk) typically passes here a value which was provided to
+ *     their constructor, simply for convenience.
  *
- * \par FnValueType fnLogVal(const PointType & curpt) &mdash; required only if UseFnSyntaxType == MHUseFnLogValue
+ * \par FnValueType fnVal(const PointType & curpt)
+ *     <em>[Required only if UseFnSyntaxType == MHUseFnValue.]</em>
+ *     If <em>UseFnSyntaxType==MHUseFnValue</em>, this function should return the value of
+ *     the function \f$ P(x) \f$ defining the random walk, evaluated at the point \a
+ *     curpt.  See below ("Role of UseFnSyntaxType").
  *
- * \par double fnRelVal(const PointType & newpt, const PointType & curpt) &mdash; required only if UseFnSyntaxType == MHUseFnRelativeValue
+ * \par FnValueType fnLogVal(const PointType & curpt)
+ *     <em>[Required only if UseFnSyntaxType == MHUseFnLogValue.]</em>
+ *     If <em>UseFnSyntaxType==MHUseFnLogValue</em>, this function should return the value
+ *     of the function \f$ \ln P(x) \f$ defining the random walk, evaluated at the point
+ *     \a curpt.  See below ("Role of UseFnSyntaxType").
  *
- * <br><br>
+ * \par double fnRelVal(const PointType & newpt, const PointType & curpt)
+ *     <em>[Required only if UseFnSyntaxType == MHUseFnRelativeValue.]</em>
+ *     If <em>UseFnSyntaxType==MHUseFnRelativeValue</em>, this function should return the
+ *     ratio \f$ P(\mathrm{newpt})/P(\mathrm{curpt}) \f$.  See below ("Role of
+ *     UseFnSyntaxType").
+ *
+ * <br>
  * 
  * \anchor labelMHWalkerUseFnSyntaxType
  * \par Role of \c UseFnSyntaxType:
+ *     In a Metropolis-Hastings random walk, the probability according to which one jumps
+ *     to the next proposed point is given by the ratio of the values of the function \f$
+ *     P(x) \f$.  There are three ways this class can provide this probability ratio.
  *
- *  - MHUseFnValue --> use MHWalker::fnVal(newpt)
- *  - MHUseFnLogValue --> use MHWalker::fnLogVal(newpt)
- *  - MHUseFnRelativeValue --> use MHWalker::fnRelVal(newpt, curpt)
+ * \par
+ *     1. You may provide the value \f$ P(x) \f$ itself.  In this case, set
+ *     <em>UseFnSyntaxTYPE = Tomographer::MHUseFnValue</em>.  The class must define the
+ *     member function \a fnVal() as described above.  It doesn't have to provide the
+ *     member functions \a fnLogVal() or \a fnRelVal().
  *
+ * \par
+ *     2. You may provide the natural logarithm of the function, \f$ \ln P(x) \f$.  Choose
+ *     this option if it is more natural to calculate \f$ \ln P(x) \f$ instead of \f$ P(x)
+ *     \f$ (for instance, if P(x) is a product of many terms).  The random walk class
+ *     (\ref Tomographer::MHRandomWalk) will not calculate the exponential of the value
+ *     you give, but rather the exponential of the difference of two values of \f$ \ln
+ *     P(x) \f$ at two points in order to directly optain the probability ratio.
+ *     In this case, set set <em>UseFnSyntaxTYPE = Tomographer::MHUseFnLogValue</em>.  The
+ *     class must define the member function \a fnLogVal() as described above.  It doesn't
+ *     have to provide the member functions \a fnVal() or \a fnRelVal().
  *
- * \todo WRITE DOC .........................
+ * \par
+ *    3. You may directly provide the ratio of values for two points \f$ P(x')/P(x) \f$.
+ *    in this case, set <em>UseFnSyntaxTYPE = Tomographer::MHUseRelativeValue</em>.  The
+ *    class must define the member function \a fnRelVal() as described above.  It doesn't
+ *    have to provide the member functions \a fnVal() or \a fnLogVal().
  *
  */
 

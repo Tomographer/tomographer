@@ -167,6 +167,8 @@ struct ThreadSanitizerLoggerHelper<BaseLogger, true>
  *
  * \todo Buffer log entries here to optimize performance and to limit the number of
  *       <code>\#pragma omp critical</code> blocks.
+ *       <b>---NO DON'T. It would make it complex to debug afterwards; if there is a crash,
+ *       some messages may not be displayed making debugging difficult.</b>
  *
  * \warning The runtime level of this logger is fixed to the level of the base logger at
  * the moment of instanciation. Any changes to the level of the base logger afterwards

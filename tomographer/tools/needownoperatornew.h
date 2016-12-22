@@ -45,10 +45,6 @@
 namespace Tomographer {
 namespace Tools {
 
-/** \todo Go over the need-own-allocator business for the \ref NeedOwnOperatorNew
- *        mechanism and clean it up.
- */
-
 
 /** \brief Provider for regular types which don't need any special operator-new
  *         implementation (see \ref NeedOwnOperatorNew)
@@ -105,11 +101,35 @@ struct need_own_op_new_prov_helper<true, T> {
  * be used automatically.
  *
  *
- * \par Defining special operator-new requirments for a specific type
+ * <h3>Defining special operator-new requirments for a specific type</h3>
  *
- *   If a specific type \a T needs a particular operator-new requirement (such as Eigen
- *   types), the first thing to do is define the corresponding \a OperatorNewProviderType.
- *   The latter type should adhere to the \ref pageInterfaceOperatorNewProviderType.
+ * If a specific type \a T needs a particular operator-new requirement (such as Eigen
+ * types), the first thing to do is define the requested <em>operator new</em> definitions
+ * inside a "provider type" class (see, for example, \ref
+ * EigenAlignedOperatorNewProvider).  This class should expose the correct <em>operator
+ * new</em> definition.
+ *
+ * \todo It should also define the appropriate allocator type.... TODO maybe clean up API?
+ *       and add documentation
+ * 
+ * Then, you should specialize the template class NeedOwnOperatorNew for your type, and
+ * expose a \a ProviderType typedef to your operator-new provider class.  Make sure you
+ * delete the default constructor as a safe-guard, to avoid unadvertently inheriting
+ * <code>NeedOwnOperatorNew<T></code> instead of
+ * <code>NeedOwnOperatorNew<T>::ProviderType</code>.  For instance:
+ * \code
+ *   template<>
+ *   struct NeedOwnOperatorNew<MyType>  {
+ *     typedef MyTypeOperatorNewProvider ProviderType;
+ *
+ *     // prevent inadvertently inheriting this class instead of
+ *     // EigenAlignedOperatorNewProvider:
+ *     NeedOwnOperatorNew() = delete;
+ *   };
+ * \endcode
+ * The template specialization may of course also have further template parameters, i.e.,
+ * partial specialization (see for example: \ref NeedOwnOperatorNew_for_eigen_Matrix_type
+ * "the specialization for Eigen Matrix types").
  */
 template<typename... Types>
 struct NeedOwnOperatorNew {
@@ -130,55 +150,6 @@ struct NeedOwnOperatorNew<T> {
 
   typedef typename ProviderType::template OperatorNewAllocatorType<T>::Type AllocatorType;
 };
-
-
-
-
-//
-// for Eigen types
-//
-
-/** \brief Provides correct operator-new implementation for Eigen types via the \ref
- *         NeedOwnOperatorNew mechanism
- */
-struct EigenAlignedOperatorNewProvider {
-public:
-  EIGEN_MAKE_ALIGNED_OPERATOR_NEW ;
-  typedef EigenAlignedOperatorNewProvider OperatorNewProviderType;
-
-  template<typename T> struct OperatorNewAllocatorType {
-    typedef Eigen::aligned_allocator<T> Type;
-  };
-
-#ifdef TOMOGRAPHER_TEST_TOOLS_NEEDOWNOPERATORNEW_DEBUG_MEMBERS
-  // DEBUG: provide something we can test that it is indeed eigen-aligned 
-  inline EigenAlignedOperatorNewProvider()
-    : EigenAlignedOperatorNewIsActive(true)
-  {
-  }
-  const bool EigenAlignedOperatorNewIsActive;
-#endif
-};
-
-
-struct NeedEigenAlignedOperatorNew {
-  typedef EigenAlignedOperatorNewProvider ProviderType;
-
-  // prevent inadvertently inheriting this class instead of
-  // EigenAlignedOperatorNewProvider:
-  NeedEigenAlignedOperatorNew() = delete;
-};
-
-
-template<typename Scalar, int FixedRows, int FixedCols, int Options, int MaxRows, int MaxCols>
-struct NeedOwnOperatorNew<Eigen::Matrix<Scalar,FixedRows,FixedCols,Options,MaxRows,MaxCols> >
-  : public NeedEigenAlignedOperatorNew { };
-
-template<typename Scalar, int FixedRows, int FixedCols, int Options, int MaxRows, int MaxCols>
-struct NeedOwnOperatorNew<Eigen::Array<Scalar,FixedRows,FixedCols,Options,MaxRows,MaxCols> >
-  : public NeedEigenAlignedOperatorNew { };
-
-
 
 
 //
@@ -245,6 +216,65 @@ struct NeedOwnOperatorNew<Type1, Type2, OtherTypes...>
     Type1, Type2, OtherTypes...
     > ProviderType;
 };
+
+
+
+
+
+
+
+
+//
+// for Eigen types
+//
+
+
+
+/** \brief Provides correct operator-new implementation for Eigen types via the \ref
+ *         NeedOwnOperatorNew mechanism
+ */
+struct EigenAlignedOperatorNewProvider {
+public:
+  EIGEN_MAKE_ALIGNED_OPERATOR_NEW ;
+  typedef EigenAlignedOperatorNewProvider OperatorNewProviderType;
+
+  template<typename T> struct OperatorNewAllocatorType {
+    typedef Eigen::aligned_allocator<T> Type;
+  };
+
+#ifdef TOMOGRAPHER_TEST_TOOLS_NEEDOWNOPERATORNEW_DEBUG_MEMBERS
+  // DEBUG: provide something we can test that it is indeed eigen-aligned 
+  inline EigenAlignedOperatorNewProvider()
+    : EigenAlignedOperatorNewIsActive(true)
+  {
+  }
+  const bool EigenAlignedOperatorNewIsActive;
+#endif
+};
+
+
+//! Helper to specialize NeedOwnOperatorNew for Eigen types
+struct NeedEigenAlignedOperatorNew {
+  typedef EigenAlignedOperatorNewProvider ProviderType;
+
+  // prevent inadvertently inheriting this class instead of
+  // EigenAlignedOperatorNewProvider:
+  NeedEigenAlignedOperatorNew() = delete;
+};
+
+
+/** \brief Specialize \ref NeedOwnOperatorNew for Eigen types
+ *
+ * \anchor NeedOwnOperatorNew_for_eigen_Matrix_type
+ */
+template<typename Scalar, int FixedRows, int FixedCols, int Options, int MaxRows, int MaxCols>
+struct NeedOwnOperatorNew<Eigen::Matrix<Scalar,FixedRows,FixedCols,Options,MaxRows,MaxCols> >
+  : public NeedEigenAlignedOperatorNew { };
+
+//! Specialize \ref NeedOwnOperatorNew for Eigen types
+template<typename Scalar, int FixedRows, int FixedCols, int Options, int MaxRows, int MaxCols>
+struct NeedOwnOperatorNew<Eigen::Array<Scalar,FixedRows,FixedCols,Options,MaxRows,MaxCols> >
+  : public NeedEigenAlignedOperatorNew { };
 
 
 

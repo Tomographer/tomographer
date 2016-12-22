@@ -43,7 +43,7 @@
  *
  * \note If you perform modifications which may be useful to others, please <b>fork the
  * repository on github</b>, perform your changes, and send me a pull request.  This way
- * your changes will be availble to other users who would like to use the Tomographer
+ * your changes will be availble to other users who would like to use the %Tomographer
  * project.  Please see <a
  * href="https://github.com/Tomographer/tomographer/blob/master/README.md#contributing">here</a>
  * for information on how to contribute.

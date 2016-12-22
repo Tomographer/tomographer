@@ -140,6 +140,12 @@
     font-style: normal;
     src: url("LinBiolinum_RB.woff") format("woff");
 }
+@font-face {
+    font-family: 'Lin-Biolinum';
+    font-weight: normal;
+    font-style: italic;
+    src: url("LinBiolinum_RI.woff") format("woff");
+}
 
 
 
@@ -202,14 +208,24 @@ h1 {
    font-weight: 100;
 }
 h2, h2.groupheader {
-   font-size: 1.8em;
-   line-height: 1.3em;
-   font-weight: 100;
+    font-family: "Lin-Biolinum", "Linux Biolinum", sans-serif;
+    font-size: 1.4em;
+    line-height: 1.3em;
+    font-weight: 100;
+}
+h2 {
+    margin-top: 1.5em;
+    border-bottom: 1px solid #d5eeee;
+}
+h2.groupheader {
+    color: #98611b;
+    border-bottom: 1px solid #e3c093; /*e3b172;*/
 }
 h3 {
-   font-size: 1.4em;
-   line-height: 1.2em;
-   font-weight: 100;
+    margin-top: 1.5em;
+    font-size: 1.1em;
+    line-height: 1.2em;
+    font-weight: bold;
 }
 
 /* specific font settings */
@@ -397,7 +413,7 @@ div.line {
 
 #innerprojectname {
    display: inline-block;
-   margin-right: .3em;
+   margin-right: .2em;
    cursor: pointer;
 }
 
@@ -460,6 +476,9 @@ div.line {
     background-image: none;
     background-color: #8ad4d4; /*#5ec8c8;*/
 }
+.sm-dox a {
+    color: #0c4545;
+}
 .sm-dox a:hover
 /*, .sm-dox a.highlighted */ {
     background-color: #0c8383;
@@ -494,8 +513,12 @@ span.arrow {
 }
 
 
+#nav-tree, div.header {
+    background-image: none;
+}
+
 div.header {
-   border-bottom: 1px solid #8ad4d4;
+    border-bottom: 1px solid #8ad4d4;
 }
 div.summary {
    display: none;
@@ -508,14 +531,6 @@ div.summary {
 .paramname {
    color: #98611b;
    vertical-align: top;
-}
-h2 {
-    font-family: "Lin-Biolinum", "Linux Biolinum", sans-serif;
-    border-bottom: 1px solid #d5eeee;
-}
-h2.groupheader {
-   color: #98611b;
-   border-bottom: 1px solid #e3c093; /*e3b172;*/
 }
 
 
@@ -591,6 +606,10 @@ div.line.glow {
 
 /* ------------------------------ LAYOUT ISSUES ------------------------------ */
 
+#doc-content .directory .levels {
+    font-size: 0.85em;
+}
+
 table.directory {
    width: 100%;
 }
@@ -610,8 +629,14 @@ table.directory {
 .directory td.entry a.el {
    font-weight: normal;
 }
+.directory td.desc {
+   font-size: 0.9em;
+}
 .icon {
    line-height: initial;
+}
+.icondoc, .iconfopen {
+    vertical-align: middle;
 }
 
 .mdescLeft, .memItemLeft, .memTemplItemLeft

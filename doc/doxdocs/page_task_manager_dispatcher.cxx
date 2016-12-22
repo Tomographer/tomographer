@@ -26,7 +26,7 @@
 
 
 
-/** \page pageTaskManagerDispatcher Task Manager/Dispatcher Interfaces
+/** \page pageTaskManagerDispatcher Multiprocessing Task Interfaces
  *
  * <em>The following describes &lsquo;type interfaces.&rsquo; See \ref pageTypeInterfaces
  * for more info on what that is.</em>
@@ -35,7 +35,8 @@
  * task, possibly reporting intermediate status, and collecting results in the end.
  *
  * Such interfaces are required, for example, to run parallel tasks with the OMP task
- * dispatcher, \ref Tomographer::MultiProc::OMP::TaskDispatcher.
+ * dispatcher, \ref Tomographer::MultiProc::OMP::TaskDispatcher, which is itself a \ref
+ * pageInterfaceTaskDispatcher compliant type.
  *
  * In the future, I hope we can also write an MPI implementation using the same
  * interfaces. (Hopefully everything works fine if \a ResultType and \a TaskCData
@@ -117,8 +118,7 @@
  *          Tomographer::Logger::LoggerBase). Note that the \a logger need NOT be the
  *          logger that may have been specified, e.g., to the task dispatcher: it could
  *          be, for example, an internal thread-safe wrapper to your original logger. To
- *          be sure, you should make this a template method with parameters \a LoggerType
- *          and \a TaskManagerIface.
+ *          be sure, you should make this a template method with a parameter \a LoggerType.
  *
  * \par void run(const TaskCData * pcdata, LoggerType & logger, TaskManagerIface * tmgriface)
  *          This method actually runs the task.
@@ -230,18 +230,95 @@
 
 /** \page pageInterfaceTaskDispatcher TaskDispatcher Interface
  *
- * The task manager/dispatcher takes care of running tasks.  It should handle tasks
- * provided by a \ref pageInterfaceTask compliant template parameter, should allow these
- * tasks to share data via a \ref pageInterfaceTaskCData compliant type also specified as
- * template parameter, and should allow the results to be collected by a \ref
+ * The task dispatcher takes care of running tasks.  It should handle tasks provided by a
+ * \ref pageInterfaceTask compliant template parameter, should allow these tasks to share
+ * data via a \ref pageInterfaceTaskCData compliant type also specified as template
+ * parameter, and should allow the results to be collected by a \ref
  * pageInterfaceResultsCollector.
+ *
+ * <h3>What the task dispatcher should do</h3>
+ *
+ * The task dispatcher is responsible for scheduling and running the tasks.  See \ref
+ * Tomographer::MultiProc::Sequential::TaskDispatcher for a simple example.
+ *
+ * It should be provided, or should otherwise have knowledge of:
+ *
+ *   - A task type (\a TaskType), which obeys the \ref pageInterfaceTask ;
+ *
+ *   - A constant shared data structure (which we later refer to as \a TaskCData), which
+ *     obeys the \ref pageInterfaceTaskCData and which provides the necessary input data
+ *     to carry out the tasks ;
+ *
+ *   - A results collector instance (of a type \a ResultsCollector), which should obey the
+ *     \ref pageInterfaceResultsCollector ;
+ *
+ *
+ * Upon execution, say within a \a run() method exposed by the task dispatcher, the task
+ * dispatcher is expected to do the following steps, in this order:
+ *
+ *   - Initialize the results collector by calling its \a init() method ;
+ *
+ *   - Schedule the tasks however they are meant to be run (in different threads, in
+ *     different processes, serially one at a time, etc.), and run each task following
+ *     these steps:
+ *
+ *     * Get the input to the new task from the \a TaskCData, by invoking its \a
+ *       getTaskInput() method;
+ *
+ *     * Instantiate a new \a TaskType instance, providing it the input, as well as a
+ *       suitable logger instance so that the task can log messages;
+ *
+ *     * Run the task, by calling its \a run() function. You must provide a pointer to an
+ *       object obeying the \ref pageInterfaceTaskManagerIface, which allows the task to
+ *       query whether status updates were requested.  This object may be for instance a
+ *       relevant private class or struct, it does not need to be public type.
+ *       Theoretically, it could also be the task dispatcher itself (if it exposes the
+ *       relevant methods), but this would mean having to publicly expose functions which
+ *       should really only be called by the tasks.  See \ref
+ *       Tomographer::MultiProc::Sequential::TaskDispatcher for an example.
+ *
+ *     * Recover the task's result using its \a getResult() method, and call the results
+ *       collector's \a collectResult() method.
+ *
+ *   - All the time during the above task execution, if the a status report is requested
+ *     explicitly from an external caller (e.g. a signal handler) with a call to this
+ *     class' \a requestStatusReport(), then the \a TaskManagerIface provided to the
+ *     task's \a run() function should inform the task to provide its status report (see
+ *     \ref pageInterfaceTask).
+ *
+ *     When a status report is requested, the tasks will submit their reports to the \a
+ *     TaskManagerIface (see \ref pageInterfaceTask). Once all the reports are received,
+ *     they should be combined into a full status report (\ref
+ *     Tomographer::MultiProc::FullStatusReport), and the status report handler (set by \a
+ *     setStatusReportHandler()) should be called.
+ *
+ *     The same holds if a status report is periodically due because a periodic status
+ *     report was enabled (e.g. with \a requestPeriodicStatusReport() called before tasks
+ *     were started).  In this case it is the TaskManagerIface which should tell the task
+ *     to submit a status report every so many milliseconds using the same interface.
+ *
+ *   - After all tasks have completed, call the results collectors' \a runsFinished()
+ *     method to finalize the results.
+ *
+ * \note The tasks, the results collector and the constant data structure do NOT know in
+ *       which kind of multiprocessing environment they will be run (they just express
+ *       some abstract task to be carried out).  Any data protection, data race
+ *       conditions, approprate thread locking, communication of results across processes,
+ *       or whatever other housekeeping is required is the task dispatcher's
+ *       responsibility; not that of the tasks.  See \ref
+ *       Tomographer::MultiProc::OMP::TaskDispatcher for an example; there, sections where
+ *       data could be accessed simultaneously by different threads are protected by
+ *       <code>\#pragma omp critical</code> blocks.
+ *
+ *
+ * <h3>The API exposed by the task dispatcher</h3>
  *
  * The exact APIs of how these tasks are specified, managed and run is not clearly
  * specified, but it is strongly advised to follow a model such as the simplistic \ref
  * Tomographer::MultiProc::Sequential::TaskDispatcher or the OpenMP-based \ref
  * Tomographer::MultiProc::OMP::TaskDispatcher.
  *
- * The task manager/dispatcher must, however, provide the following methods:
+ * The task dispatcher must, however, provide the following methods:
  *
  * \par void setStatusReportHandler(Fn fn)
  *   The argument should be a callable (e.g. lambda function) which accepts a single
@@ -260,27 +337,9 @@
  * \par void requestInterrupt()
  *   Interrupt all tasks as soon as possible.
  *
- * The task manager/dispatcher must also provide the following typedef:
+ * The task dispatcher must also provide the following typedef:
  *
  * \par typedef ... TaskType;
- *   The \ref pageInterfaceTask-compliant type used to describe a task.
- *
- *
- * \todo DESCRIBE WHAT THE TASK MANAGER/DISPATCHER MUST DO; WHICH FUNCTIONS IT MUST CALL !!
- *
- * Grosso modo (see \ref MultiProc::Sequential::TaskDispatcher for a simple example):
- *
- * - initialize the results collector ;
- * 
- * - instantiate tasks and run them, by getting input for each one of them and providing
- *   them a pointer to the shared data structure CData ;
- *
- * - provide a task-manager-interface object (\ref pageInterfaceTaskManagerIface) to allow
- *   querying for status reports ;
- *
- * - after the task has finished, collect its result and call the results collector's
- *   collectResult() method ;
- *
- * - finalize the resultscollector .
+ *   The \ref pageInterfaceTask -compliant type used to describe a task.
  *
  */

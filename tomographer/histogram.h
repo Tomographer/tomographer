@@ -100,7 +100,8 @@ struct UniformBinsHistogramParams
   {
     return std::isfinite(value) && value >= min && value < max;
   }
-  /** \brief Returns which bin this value should be counted in (index in \ref bins array)
+  /** \brief Returns which bin this value should be counted in (index in the histogram's
+   *         \a bins array)
    *
    * \note Raises \a std::out_of_range if the value is not in the range \f$
    * [\text{min},\text{max}[ \f$.
@@ -204,16 +205,8 @@ struct UniformBinsHistogramParams
  * bins, and keeps counts of how many samples fell in which bin.
  * 
  * Does not store any form of error bars. Complies with the \ref pageInterfaceHistogram.
- *
- * \todo Add a "normalized()" method which normalizes the histogram (allowing a type
- *       conversion to a new counting type, of course). Be careful that the weight stored
- *       in each bin is to be scaled by the width (=resolution) of the bin, but NOT the
- *       off_chart counts.
- *       
- *       This method MUST be reimplemented in the UniformBinsHistogramWithErrorBars
- *       subclass to normalize also the deltas.
  */
-template<typename Scalar_, typename CountType_ = unsigned int>
+template<typename Scalar_, typename CountType_ = int>
 class UniformBinsHistogram
   // inheriting from this has some advantages over EIGEN_MAKE_ALIGNED_OPERATOR_NEW, such
   // as not needing to explicitly declare the specialization
@@ -475,9 +468,6 @@ public:
  *
  * Builds on top of \ref UniformBinsHistogram<Scalar,CountType> to store error bars
  * corresponding to each bin.
- *
- * \todo Once he base subclass gets a new normalize() method, we must also reimplement
- *       that method here to normalize also the deltas.
  */
 template<typename Scalar_, typename CountType_ = double>
 class UniformBinsHistogramWithErrorBars
@@ -647,9 +637,9 @@ constexpr bool UniformBinsHistogramWithErrorBars<Scalar_,CountType_>::HasErrorBa
  *
  * This class itself complies with the \ref pageInterfaceHistogram.
  *
- * \warning Don't forget to call \ref finalize()! The bin counts \ref bins, off-chart
- *          count \ref off_chart and error bars \ref delta have UNDEFINED VALUES before
- *          calling \ref finalize().
+ * \warning Don't forget to call \ref finalize()! The bin counts in \ref
+ *          UniformBinsHistogram::bins "bins", off-chart count \ref off_chart and error
+ *          bars \ref delta have UNDEFINED VALUES before calling \ref finalize().
  *
  *
  * \tparam HistgoramType_ the type of the individual histograms that we are
@@ -737,8 +727,8 @@ public:
    * Add a new histogram to include into the final averaged histogram.  Call this function
    * repeatedly with different histograms you want to average together.  When you're
    * finished adding histograms, you must call \ref finalize() in order to finalize the
-   * averaging; until then the members \ref bins and \ref delta (as well as \ref count(),
-   * \ref errorBar() etc.) yield undefined values.
+   * averaging; until then the members \ref UniformBinsHistogram::bins "bins" and \ref
+   * delta (as well as \ref count(), \ref errorBar() etc.) yield undefined values.
    *
    * \note \a histogram must have the same range and number of bins as the params
    *       specified to the constructor of this class.
@@ -770,8 +760,8 @@ public:
    * you wanted to average together.
    *
    * Only after this function was called may you access the averaged histogram data (in
-   * \ref bins, \ref delta, \ref count() etc.).  Before calling finalize(), those methods
-   * return undefined results.
+   * \ref UniformBinsHistogram::bins "bins", \ref delta, \ref count() etc.).  Before
+   * calling finalize(), those methods return undefined results.
    *
    * Calling \ref addHistogram() after finalize() will yield undefined results.
    *
@@ -799,8 +789,8 @@ public:
    * Add a new histogram to include into the final averaged histogram.  Call this function
    * repeatedly with different histograms you want to average together.  When you're
    * finished adding histograms, you must call \ref finalize() in order to finalize the
-   * averaging; until then the members \ref bins and \ref delta (as well as \ref count(),
-   * \ref errorBar() etc.) yield undefined values.
+   * averaging; until then the members \ref UniformBinsHistogram::bins "bins" and \ref
+   * delta (as well as \ref count(), \ref errorBar() etc.) yield undefined values.
    *
    * \note \a histogram must have the same range and number of bins as the params
    *       specified to the constructor of this class.
@@ -832,8 +822,8 @@ public:
    * you wanted to average together.
    *
    * Only after this function was called may you access the averaged histogram data (in
-   * \ref bins, \ref delta, \ref count() etc.).  Before calling finalize(), those methods
-   * return undefined results.
+   * \ref UniformBinsHistogram::bins "bins", \ref delta, \ref count() etc.).  Before
+   * calling finalize(), those methods return undefined results.
    *
    * Calling \ref addHistogram() after finalize() will yield undefined results.
    *
