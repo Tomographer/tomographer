@@ -414,7 +414,10 @@ struct test_task_dispatcher_status_reporting_fixture {
 
     auto endtime = StdClockType::now();
 
-    BOOST_CHECK(tasks_interrupted);
+#pragma omp critical
+    {
+      BOOST_CHECK(tasks_interrupted);
+    }
    
     logger.debug("test case:interrupt_tasks_withthread", [&](std::ostream & stream) {
         stream << "Tasks (hopefully) interrupted after "
