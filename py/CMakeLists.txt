@@ -33,10 +33,10 @@ set(tomographerpy_SRCS
   cxx/pymultiproc.cxx
   cxx/pymhrwtasks.cxx
   cxx/pymhrw.cxx
-  cxx/pylogger.cxx
+  #cxx/pylogger.cxx # all definitions in pylogger.h
   cxx/tomographerpy.cxx
   )
-add_library(tomographerpy SHARED ${tomographerpy_SRCS})
+add_library(tomographerpy MODULE ${tomographerpy_SRCS})
 
 # Enable C++11
 set_property(TARGET tomographerpy PROPERTY CXX_STANDARD 11)

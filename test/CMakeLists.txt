@@ -35,10 +35,6 @@
 # Make sure we don't have -DNDEBUG in flags.  The last thing we want here is to remove the
 # assertion tests from the code.
 #
-# We won't remove it automatically because we don't want to be too "smart" and cause
-# trouble to the user.  In any case, we still have a #error in test_tomographer.h in case
-# -DNDEBUG is still defined.
-#
 # NOTE: overriding the variables CMAKE_CXX_FLAGS[_XXX] only has effect in this directory
 # (CHECK THIS?? the docs are terrible)
 #

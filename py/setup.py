@@ -178,7 +178,7 @@ files = [ os.path.join('cxx', x) for x in [
     "tomographerpy.cxx",
     "eigpyconv.cxx",
     "pyhistogram.cxx",
-    "pylogger.cxx",
+    #"pylogger.cxx", # no longer used -- all definitions are in pylogger.h
     "pymultiproc.cxx",
     "pymhrwtasks.cxx",
     "pymhrw.cxx",
