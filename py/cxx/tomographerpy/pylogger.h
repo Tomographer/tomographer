@@ -159,8 +159,11 @@ void PyLogger::emitLog(int level, const char * origin, const std::string & msg)
 
     boost::python::object pylevel = toPythonLevel(level);
 
+    std::string full_msg = std::string("<")+origin+"> "+msg;
+
     boost::python::dict extra;
     extra["origin"] = origin;
+    extra["msg_orig"] = msg;
     boost::python::dict kwargs;
     kwargs["extra"] = extra;
     auto logfn = py_logger.attr("log");
@@ -168,7 +171,7 @@ void PyLogger::emitLog(int level, const char * origin, const std::string & msg)
     if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
       throw boost::python::error_already_set();
     }
-    logfn(*boost::python::make_tuple(pylevel, msg), **kwargs);
+    logfn(*boost::python::make_tuple(pylevel, full_msg), **kwargs);
     if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
       throw boost::python::error_already_set();
     }
@@ -200,7 +203,7 @@ boost::python::object PyLogger::toPythonLevel(int level) const
     return py_logging.attr("DEBUG");
   case Tomographer::Logger::LONGDEBUG:
   default:
-    return py_logging.attr("NOTSET");
+    return py_logging.attr("NOTSET") + 1;
   }
 }
 

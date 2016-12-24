@@ -49,6 +49,8 @@ if(APPLE)
   set_property(TARGET tomographerpy PROPERTY SUFFIX ".so") # and not .dylib
   set_property(TARGET tomographerpy PROPERTY BUILD_WITH_INSTALL_RPATH 1)
   set_property(TARGET tomographerpy PROPERTY INSTALL_NAME_DIR "${CMAKE_CURRENT_BINARY_DIR}")
+  target_compile_options(tomographerpy PRIVATE "-dynamic")
+  target_link_libraries(tomographerpy "-undefined dynamic_lookup")
 endif()
 
 # depends in particular on tomographer_version.h
@@ -69,7 +71,6 @@ target_include_directories(tomographerpy  PUBLIC ${EIGEN3_INCLUDE_DIR})
 target_compile_definitions(tomographerpy PRIVATE -DEIGEN_DONT_PARALLELIZE)
 
 target_include_directories(tomographerpy  PUBLIC ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIRS})
-target_link_libraries(tomographerpy ${PYTHON_LIBRARY})
 target_include_directories(tomographerpy  PUBLIC ${Boost_INCLUDE_DIR})
 target_link_libraries(tomographerpy ${Boost_PYTHON_LIBRARY})
 

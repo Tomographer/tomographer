@@ -10,7 +10,10 @@
 #error "TomographerPy requires enabled Eigen assertions, otherwise `TomographerCxxError` won't be raised as documented."
 #endif
 
+// DEBUGGING ONLY: set TOMOGRAPHERPY_DEBUG_EIGEN_ASSERT_CAUSES_ABORT to cause eigen_assert() failures to abort() and dump core
+#ifndef TOMOGRAPHERPY_DEBUG_EIGEN_ASSERT_CAUSES_ABORT
 #define TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION
+#endif
 #include <tomographer/tools/eigen_assert_exception.h>
 
 

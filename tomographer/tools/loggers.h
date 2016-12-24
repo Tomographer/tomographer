@@ -1784,6 +1784,7 @@ public:
   LocalLogger(const std::string & origin_fn_name, BaseLoggerType & logger_)
     : Base_(), _origin_prefix(origin_fn_name), _glue("::"), _baselogger(logger_)
   {
+    this->longdebug("[begin]");
   }
   /** \brief Construct a local logger
    *
@@ -1794,6 +1795,7 @@ public:
   LocalLogger(const std::string & origin_prefix, const std::string & glue, BaseLoggerType & logger_)
     : Base_(), _origin_prefix(origin_prefix), _glue(glue), _baselogger(logger_)
   {
+    this->longdebug("[begin]");
   }
   /** \brief Construct a local logger
    *
@@ -1804,6 +1806,7 @@ public:
     : Base_(), _origin_prefix(spec.origin_prefix.to_string()+spec.origin_prefix_add.to_string()),
       _glue(spec.glue.to_string()), _baselogger(logger_)
   {
+    this->longdebug("[begin]");
   }
 
   /**
@@ -1813,12 +1816,19 @@ public:
     : Base_(), _origin_prefix(std::move(movecopy._origin_prefix)), _glue(std::move(movecopy._glue)),
       _baselogger(movecopy._baselogger)
   {
+    this->longdebug("[logger moved]");
   }
   //! Make the local-logger copyable -- there's nothing wrong with that
   LocalLogger(const LocalLogger & other)
     : Base_(), _origin_prefix(other._origin_prefix), _glue(other._glue),
       _baselogger(other._baselogger)
   {
+    this->longdebug("[logger copied]");
+  }
+
+  ~LocalLogger()
+  {
+    this->longdebug("[done]");
   }
 
   /** \brief The fixed origin specified at the constructor
