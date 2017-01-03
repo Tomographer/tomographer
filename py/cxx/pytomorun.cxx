@@ -184,7 +184,7 @@ boost::python::object py_tomorun(
   MatrixType rho_ref(dmt.initMatrixType());
   MatrixType A(dmt.initMatrixType());
 
-  if (fig_of_merit == "fidelity" || fig_of_merit == "trace-dist" || fig_of_merit == "purif-dist") {
+  if (fig_of_merit == "fidelity" || fig_of_merit == "tr-dist" || fig_of_merit == "purif-dist") {
 
     Eigen::SelfAdjointEigenSolver<MatrixType> eig(ref_state);
 
