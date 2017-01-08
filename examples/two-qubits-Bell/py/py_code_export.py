@@ -1,24 +1,20 @@
 
 # coding: utf-8
 
-#
-# Here is the contents of the Jupyter notebook, exported as Python code.  You can execute
-# this file as a script if you don't have Jupyter/IPython installed.
-#
-
-# In[1]:
+# In[3]:
 
 import itertools # product()
 import numpy as np
 import qutip
 import qutip.states
 import tomographer
+import tomographer.tools.densedm
 import tomographer.querrorbars
 import tomographer.jpyutil
 from IPython.display import display, Markdown
 
 
-# In[2]:
+# In[4]:
 
 rho_target_Bell = qutip.states.ket2dm(qutip.Qobj(np.array([0,1,1j,0]/np.sqrt(2))))
 display(Markdown('rho_target_Bell = '))
@@ -29,20 +25,10 @@ display(Markdown('rho_sim = '))
 display(rho_sim)
 
 
-# In[3]:
+# In[5]:
 
 # All POVM effects when measuring Pauli X, Y, or Z on a single qubit
-MeasEffects1Qubit = [ [
-        np.array([[.5, .5],[.5, .5]]),     # X, +1 outcome
-        np.array([[.5, -.5],[-.5, .5]]),   # X, -1 outcome
-    ], [
-        np.array([[.5, -.5j],[.5j, .5]]),  # Y, +1 outcome
-        np.array([[.5, .5j],[-.5j, .5]]),  # Y, -1 outcome
-    ], [
-        np.array([[1,0],[0,0]]),           # Z, +1 outcome
-        np.array([[0,0],[0,1]]),           # Z, -1 outcome
-    ]
-]
+MeasEffects1Qubit = tomographer.tools.densedm.PauliMeasEffectsQubit
 
 # Listing of all POVM effects of product Paulis on two qubits (with individual outcomes on each qubit)
 Emn = [ None ] * 36 # prepare 36 elements
@@ -69,7 +55,7 @@ Nm = np.array([
 ]);
 
 
-# In[4]:
+# In[6]:
 
 # An entanglement witness which is appropriate for our target state, as a qutip.Qobj
 EntglWitness = (- qutip.qeye(4)
@@ -80,13 +66,13 @@ EntglWitness = (- qutip.qeye(4)
 display(EntglWitness)
 
 
-# In[5]:
+# In[7]:
 
 # Value for rho_target_Bell maximally entangled state: +2
 display(qutip.expect(EntglWitness, rho_target_Bell))
 
 
-# In[6]:
+# In[8]:
 
 # but you can show that for any separable state this value is <= 0. For example:
 display(qutip.expect(EntglWitness, qutip.qeye(4)/4))
@@ -95,7 +81,7 @@ display(qutip.expect(EntglWitness, 0.5*qutip.ket2dm(qutip.Qobj(np.array([0,1,0,0
              + 0.5*qutip.ket2dm(qutip.Qobj(np.array([0,0,1,0])))))
 
 
-# In[7]:
+# In[9]:
 
 # Now, we're ready to run our tomography procedure. We'll be estimating
 # the expectation value of the entanglement witness.
@@ -122,13 +108,13 @@ with tomographer.jpyutil.RandWalkProgressBar() as prg:
     prg.displayFinalInfo(r['final_report_runs'])
 
 
-# In[8]:
+# In[11]:
 
 # Collect the histogram
 final_histogram = r['final_histogram']
 
 
-# In[9]:
+# In[12]:
 
 # Do the analysis and get the quantum error bars
 analysis = tomographer.querrorbars.HistogramAnalysis(final_histogram, ftox=(2,-1))
@@ -138,7 +124,7 @@ analysis.printQuantumErrorBars()
 analysis.plot()
 # log scale plot (adjust scale before showing plot)
 p = analysis.plot(log_scale=True, show_plot=False)
-p.ax.set_ylim([1e-12, 1])
+p.ax.set_ylim([1e-8, 50])
 p.show()
 
 
