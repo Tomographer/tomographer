@@ -52,9 +52,8 @@ matrix:
           packages:
             - gcc-4.6
             - g++-4.6
+            - gfortran-4.6
             - python-dev
-            - python-numpy
-            - python-scipy
             - python-matplotlib
             - python-tk
             - python-pip
@@ -73,6 +72,7 @@ matrix:
           packages:
             - gcc-5
             - g++-5
+            - gfortran-5
             - python-dev
             - python-numpy
             - python-scipy
@@ -93,6 +93,7 @@ matrix:
           packages:
             - gcc-6
             - g++-6
+            - gfortran-6
             - python3-dev
             - python3-numpy
             - python3-scipy
@@ -117,6 +118,7 @@ matrix:
             - python3-matplotlib
             - python3-tk
             - python3-pip
+            - gfortran-6
             - libatlas-dev
             - libatlas-base-dev
             - libboost-python-dev
