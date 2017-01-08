@@ -223,10 +223,17 @@ output of `setup.py` for more info.
 
 ### Using the Python Interface
 
-TODO: NEED TO WRITE DOCUMENTATION
+The python interface provides a convenient entry point to the C++ routines, with data
+provided as `NumPy` arrays.  There are also some additional tools, for example to simulate
+measurement outcomes, or to calculate the maximum likelihood estimate given some data.
 
-An example is provided in `examples/two-qubits-Bell/py/`, both in the form of a
-Jupyter notebook as well as a standalone Python script.
+A couple examples to get started are provided in the `examples/` subfolder.  We suggest
+the use of [jupyter notebooks](http://jupyter.org), as they provide a simple and
+convenient environment to run python code interactively.
+
+The full documentation of the Python interface can be generated via Sphinx, and
+is available [online
+here](https://tomographer.github.io/tomographer/api-doc/v3.0/html/py/).
 
 
 C++ Framework: API Documentation
