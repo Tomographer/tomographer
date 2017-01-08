@@ -42,6 +42,7 @@ class BasicStuff(unittest.TestCase):
 
 class Histograms(unittest.TestCase):
     def test_UniformBinsHistogramParams(self):
+        # constructors
         params = tomographer.UniformBinsHistogramParams(2.0, 3.0, 5)
         self.assertAlmostEqual(params.min, 2.0)
         self.assertAlmostEqual(params.max, 3.0)
@@ -49,6 +50,16 @@ class Histograms(unittest.TestCase):
         npt.assert_array_almost_equal(params.values_lower, np.array([2.0, 2.2, 2.4, 2.6, 2.8]))
         npt.assert_array_almost_equal(params.values_upper, np.array([2.2, 2.4, 2.6, 2.8, 3.0]))
         npt.assert_array_almost_equal(params.values_center, np.array([2.1, 2.3, 2.5, 2.7, 2.9]))
+        # default constructor
+        paramsdflt = tomographer.UniformBinsHistogramParams()
+        self.assertTrue(paramsdflt.min < paramsdflt.max and paramsdflt.num_bins > 0)
+        # w/ keyword arguments
+        params = tomographer.UniformBinsHistogramParams(min=2.0, max=3.0, num_bins=5)
+        self.assertAlmostEqual(params.min, 2.0)
+        self.assertAlmostEqual(params.max, 3.0)
+        self.assertEqual(params.num_bins, 5)
+
+
         # binCenterValue()
         self.assertAlmostEqual(params.binCenterValue(0), 2.1)
         self.assertAlmostEqual(params.binCenterValue(4), 2.9)
@@ -247,29 +258,136 @@ class Histograms(unittest.TestCase):
                 self.assertEqual(len(line), 120)
 
 
-               
+    def test_AveragedSimpleHistogram(self):
+        self.do_test_hist(tomographer.AveragedSimpleHistogram, float, True)
+        self.do_test_avghist(tomographer.AveragedSimpleHistogram,
+                             tomographer.UniformBinsHistogram, int, False)
 
-# param = tomographer.UniformBinsHistogramParams(0.0, 1.0, 10)
+    def test_AveragedSimpleRealHistogram(self):
+        self.do_test_hist(tomographer.AveragedSimpleRealHistogram, float, True)
+        self.do_test_avghist(tomographer.AveragedSimpleRealHistogram,
+                             tomographer.UniformBinsRealHistogram, float, False)
+
+    def test_AveragedErrorBarHistogram(self):
+        self.do_test_hist(tomographer.AveragedErrorBarHistogram, float, True)
+        self.do_test_avghist(tomographer.AveragedErrorBarHistogram,
+                             tomographer.UniformBinsHistogramWithErrorBars, int, True)
+
+    def do_test_avghist(self, AvgHCl, BaseHCl, cnttyp, base_has_error_bars):
+        #
+        # test that the AvgHCl can average histograms correctly.  Use the same test cases
+        # as in the C++ test.
+        #
+
+        param = tomographer.UniformBinsHistogramParams(0.0, 1.0, 4)
+
+        # constructor & histogram-related methods already tested in do_test_hist
+
+        avghist = AvgHCl(param)
+        self.assertEqual(avghist.num_histograms, 0)
+
+        if not base_has_error_bars:
+            OFF_IDX = 1
+            data = [
+                (np.array([15, 45, 42, 12]), 36),
+                (np.array([17, 43, 40, 18]), 32),
+                (np.array([20, 38, 47, 10]), 35),
+                (np.array([18, 44, 43, 13]), 32),
+            ]
+        else:
+            OFF_IDX = 2
+            data = [
+                (np.array([15, 45, 42, 12]), np.array([1, 1, 1, 1]), 36),
+                (np.array([17, 43, 40, 18]), np.array([2, 2, 5, 2]), 32),
+                (np.array([20, 38, 47, 10]), np.array([1, 2, 13, 4]), 35),
+                (np.array([18, 44, 43, 13]), np.array([2, 1, 24, 3]), 32),
+            ]
+
+        k = 0
+        for dat in data:
+            h = BaseHCl(param)
+            h.load(*dat)
+            avghist.addHistogram(h)
+            k += 1
+            self.assertEqual(avghist.num_histograms, k)
+
+        avghist.finalize()
+
+        avgdata = np.array([ sum([ float(data[k][0][n]) for k in range(len(data)) ]) / avghist.num_histograms
+                             for n in range(4) ])
+        if not base_has_error_bars:
+            avgerr = np.array([
+                np.sqrt(
+                    (sum([ float(data[k][0][n])**2 for k in range(len(data)) ])/avghist.num_histograms - (avgdata[n])**2)
+                    / (avghist.num_histograms - 1)
+                )
+                for n in range(4)
+            ])
+        else:
+            avgerr = np.array([ np.sqrt(sum([ float(data[k][1][n])**2 for k in range(len(data)) ]))
+                                / avghist.num_histograms
+                                for n in range(4) ])
+        avgoff = sum([ float(data[k][OFF_IDX]) for k in range(len(data)) ]) / avghist.num_histograms
+        npt.assert_array_almost_equal(avghist.bins, avgdata)
+        npt.assert_array_almost_equal(avghist.delta, avgerr)
+        self.assertAlmostEqual(avghist.off_chart, avgoff)
+        self.assertAlmostEqual(np.sum(avghist.bins) + avghist.off_chart, 150)
+
+        # check for reset(param)
+        param2 = tomographer.UniformBinsHistogramParams(1.0, 2.0, 20)
+        avghist.reset(param2)
+        self.assertEqual(avghist.num_histograms, 0)
+        npt.assert_array_almost_equal(avghist.bins, np.zeros(20))
+        self.assertAlmostEqual(avghist.off_chart, 0)
+        self.assertAlmostEqual(avghist.params.min, param2.min)
+        self.assertAlmostEqual(avghist.params.max, param2.max)
+        self.assertEqual(avghist.params.num_bins, param2.num_bins)
+
+        # dummy -- add a histogram again ...
+        h = BaseHCl(param2)
+        if not base_has_error_bars:
+            h.load(np.array(range(20)))
+        else:
+            h.load(np.array(range(20)), np.array(range(20))/10.0)
+        avghist.addHistogram(h)        
+
+        # ... and check for reset()
+        avghist.reset()
+        self.assertEqual(avghist.num_histograms, 0)
+        npt.assert_array_almost_equal(avghist.bins, np.zeros(20))
+        self.assertAlmostEqual(avghist.off_chart, 0)
+        # make sure that params have been kept
+        self.assertAlmostEqual(avghist.params.min, param2.min)
+        self.assertAlmostEqual(avghist.params.max, param2.max)
+        self.assertEqual(avghist.params.num_bins, param2.num_bins)
+        
 
 
-# basearray = np.array([0, 30, 80, 100, 200, 800, 1200, 600, 300, 50]);
 
-# def rand_histogram():
-#     u = tomographer.UniformBinsHistogram(param)
-#     u.load(basearray + np.random.randint(0, 500, (10,)))
-#     return u
+class MHRWStuff(unittest.TestCase):
+    def test_MHRWParams(self):
+        # default constructor
+        mhrw = tomographer.MHRWParams()
+        # constructor with parameters
+        mhrw = tomographer.MHRWParams(0.01, 100, 500, 32768)
+        # constructor with keyword arguments
+        mhrw = tomographer.MHRWParams(step_size=0.01, n_sweep=100, n_therm=500, n_run=32768)
 
-# a = tomographer.AveragedSimpleHistogram(param)
+        # make sure params are stored correctly
+        self.assertAlmostEqual(mhrw.step_size, 0.01)
+        self.assertEqual(mhrw.n_sweep, 100)
+        self.assertEqual(mhrw.n_therm, 500)
+        self.assertEqual(mhrw.n_run, 32768)
 
-# a.reset()
-# for x in range(10):
-#     a.addHistogram(rand_histogram())
-
-# a.finalize()
-
-# print(a.prettyPrint(80))
-
-# print("\n".join(['\t%.4g\t%.4g'%(k,v) for k,v in zip(a.values_center, a.bins)]))
+        # attributes should be writable
+        mhrw.step_size = 0.06
+        self.assertAlmostEqual(mhrw.step_size, 0.06)
+        mhrw.n_sweep = 200
+        self.assertEqual(mhrw.n_sweep, 200)
+        mhrw.n_therm = 1024
+        self.assertEqual(mhrw.n_therm, 1024)
+        mhrw.n_run = 8192
+        self.assertEqual(mhrw.n_run, 8192)
 
 
 

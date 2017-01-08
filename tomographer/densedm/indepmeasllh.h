@@ -286,7 +286,7 @@ public:
       // otherwise, we have to add all measurements one by one, and filter out the zero-count ones.
       resetMeas();
       for (IndexType i = 0; i < Exn_.rows(); ++i) {
-	addMeasEffect(Exn_.row(i), Nx_(i));
+	addMeasEffect(Exn_.row(i), Nx_(i), false);
       }
     }
     if (check_validity) {

@@ -11,10 +11,13 @@ void py_tomo_mhrw()
   auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
   logger.debug("py_tomo_mhrw() ...");
 
+  using boost::python::arg;
+
   logger.debug("MHRWParams ...");
   { typedef Py::MHRWParams Kl;
     boost::python::class_<Py::MHRWParams>(
-        "MHRWParams", Tomographer::Tools::fmts(
+        "MHRWParams",
+        Tomographer::Tools::fmts(
             "Parameters for a Metropolis-Hastings random walk.\n\n"
             ".. py:function:: MHRWParams(step_size, n_sweep, n_therm, n_run)\n\n"
             "    Construct a `MHRWParams` instance, initializing the read-only members `step_size`, `n_sweep`, "
@@ -37,7 +40,8 @@ void py_tomo_mhrw()
             ).c_str()
         )
       .def(boost::python::init<>())
-      .def(boost::python::init<RealType,CountIntType,CountIntType,CountIntType>())
+      .def(boost::python::init<RealType,CountIntType,CountIntType,CountIntType>(
+               (arg("step_size"), arg("n_sweep"), arg("n_therm"), arg("n_run"))))
       .add_property("step_size", +[](const Kl & p) { return p.step_size; },
                     +[](Kl & p, RealType step_size) { p.step_size = step_size; })
       .add_property("n_sweep", +[](const Kl & p) { return p.n_sweep; },

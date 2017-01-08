@@ -46,7 +46,7 @@ void py_tomo_multiproc()
           ".. py:attribute:: workers\n\n"
           "    A list of individual reports for each running worker.  The length of this list is the number of workers "
           "which can handle running tasks (e.g. parallel threads).  Each item of the list is either `None` if the "
-          "worker is idle, or a `WorkerStatusReport` providing the worker's current status report."
+          "worker is idle, or a :py:class:`WorkerStatusReport` instance providing the worker's current status report."
           "\n\n"
           )
         .add_property("num_completed", +[](const Kl& r) { return r.num_completed; })

@@ -16,6 +16,7 @@ void register_eigen_converter();
 
 void py_tomo_histogram();
 void py_tomo_multiproc();
+void py_tomo_densedm();
 void py_tomo_tomorun();
 void py_tomo_mhrw();
 void py_tomo_mhrwtasks();
@@ -76,6 +77,8 @@ BOOST_PYTHON_MODULE(_tomographer_cxx)
   py_tomo_mhrw();
 
   py_tomo_multiproc();
+
+  py_tomo_densedm();
 
   py_tomo_mhrwtasks();
 

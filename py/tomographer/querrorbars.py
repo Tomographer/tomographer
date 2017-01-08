@@ -255,7 +255,11 @@ class HistogramAnalysis(object):
         return q
 
 
-    def plot(self, log_scale=False, xlabel='Distribution of values', **kwopts):
+    def plot(self,
+             log_scale=False,
+             xlabel='Distribution of values',
+             plot_deskewed_gaussian=True,
+             **kwopts):
         """
         Plot the histogram data using `matplotlib`.
 
@@ -296,6 +300,12 @@ class HistogramAnalysis(object):
                   np.exp(self.fit_fn(self.ftox(np.linspace(np.min(f), np.max(f), 100)),
                                      *self.fit_params)),
                   c='r', label='fit')
+        if plot_deskewed_gaussian:
+            if self.custom_fit_fn:
+                raise RuntimeError("Cannot plot deskewed gaussian with a custom fit; use plot_deskewed_gaussian=False.")
+            (a, x0, y0) = deskew_logmu_curve(self.fit_params.a2, self.fit_params.a1, self.fit_params.m, self.fit_params.c)
+            f = np.linspace(np.min(f), np.max(f), 100)
+            d.ax.plot(f, np.exp(-a*(self.ftox(f)-x0)**2 + y0), c='g', label='deskewed Gaussian')
 
         if kwopts.get('show_plot', True):
             matplt.show()

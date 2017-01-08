@@ -43,9 +43,6 @@ namespace boost { namespace core {  using boost::units::detail::demangle; } }
 typedef double RealType;
 typedef int CountIntType;
 
-// the main exception object
-extern PyObject * TomographerCxxError;
-
 
 
 #endif

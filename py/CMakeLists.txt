@@ -29,11 +29,12 @@
 set(tomographerpy_SRCS
   cxx/eigpyconv.cxx
   cxx/pyhistogram.cxx
-  cxx/pytomorun.cxx
   cxx/pymultiproc.cxx
   cxx/pymhrwtasks.cxx
   cxx/pymhrw.cxx
   #cxx/pylogger.cxx # all definitions in pylogger.h
+  cxx/pydensedm.cxx
+  cxx/pytomorun.cxx
   cxx/tomographerpy.cxx
   )
 add_library(tomographerpy MODULE ${tomographerpy_SRCS})

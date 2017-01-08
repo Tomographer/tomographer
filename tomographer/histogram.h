@@ -693,6 +693,16 @@ public:
   {
   }
 
+  /** \brief Constructs an AveragedHistogram with the given histogram parameters.
+   *
+   * This overload is provided for convenience and has the same effect as the other
+   * constructor.
+   */
+  AveragedHistogram(Scalar min, Scalar max, std::size_t num_bins)
+    : Base_(min, max, num_bins), num_histograms(0)
+  {
+  }
+
   /** \brief Resets the data and sets new params.
    *
    * \warning the corresponding base class has NO virtual methods. So don't see this class

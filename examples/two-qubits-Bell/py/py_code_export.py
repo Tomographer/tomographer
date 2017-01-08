@@ -109,7 +109,7 @@ with tomographer.jpyutil.RandWalkProgressBar() as prg:
         # the tomography data
         Nm=Nm,
         Emn=Emn,
-        # Histogram: values in [1.8, 2.0] split into 50 bins
+        # Histogram: values in [1.6, 2.0] split into 50 bins
         hist_params=tomographer.UniformBinsHistogramParams(1.6,2,50),
         # Random Walk parameters: step size, sweep size, number of thermalization sweeps, number of live sweeps
         mhrw_params=tomographer.MHRWParams(0.009,120,500,32768),

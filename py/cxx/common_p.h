@@ -26,4 +26,8 @@ typedef decltype(tpy_logger) TPyLoggerType;
 
 
 
+// the main exception object
+extern PyObject * TomographerCxxError;
+
+
 #endif

@@ -58,7 +58,8 @@ void py_tomo_histogram()
            "\n\n"
            "\n\n", boost::core::demangle(typeid(RealType).name()).c_str(),
            Kl().min, Kl().max, (int)Kl().num_bins).c_str())
-      .def(boost::python::init<boost::python::optional<RealType,RealType,std::size_t> >())
+      .def(boost::python::init<RealType,RealType,std::size_t>(
+               (arg("min")=Kl().min, arg("max")=Kl().max, arg("num_bins")=Kl().num_bins)))
       //   , (arg("min")=Kl().min, arg("max")=Kl().max, arg("num_bins")=Kl().num_bins))
       .add_property("min", +[](const Kl & p) { return p.min; }, +[](Kl & p, RealType min) { p.min = min; })
       .add_property("max", +[](const Kl & p) { return p.max; }, +[](Kl & p, RealType max) { p.max = max; })
@@ -334,13 +335,32 @@ void py_tomo_histogram()
                               ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
                               "histogram data.  The data stored in the current "
                               "histogram object is UNDEFINED before having calling `finalize()`."
+                              "\n\n"
+                              ".. py:attribute:: num_histograms\n\n"
+                              "    The number of histograms currently stored (read-only). This property may be "
+                              "    accessed at any time, also before having called :py:meth:`finalize()`."
                                 )
       .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogramParams> >())
+      .def(boost::python::init<RealType, RealType, CountIntType>())
+      .add_property("num_histograms", +[](const Kl & h) { return h.num_histograms; })
       .def("addHistogram",
            +[](Kl & h, const Py::UniformBinsHistogram & o) { h.addHistogram(o); },
            (arg("histogram")),
            "addHistogram(histogram)\n\n"
            "Add a new histogram to the average with the others.")
+      .def("reset",
+           +[](Kl & h) { h.reset(); }
+          )
+      .def("reset",
+           +[](Kl & h, const Py::UniformBinsHistogramParams & param) { h.reset(param); },
+           "reset([param])\n\n"
+           "Clear all stored histograms and start a new averaging sequence. The "
+           "histogram parameters are changed to `param` if you specify `param`, otherwise "
+           "they are left unchanged. After calling this function, the averaged histogram class "
+           "is in the same state as a freshly constructed averaged histogram object: you may call "
+           ":py:meth:`addHistogram()` to add histograms to the average, after which you must call "
+           ":py:meth:`finalize()` to finalize the averaging procedure."
+           )
       .def("finalize", +[](Kl & h) { h.finalize(); },
            "finalize()\n\n"
            "Call this function after all the histograms have been added with calls to :py:meth:`addHistogram()`. Only "
@@ -365,13 +385,32 @@ void py_tomo_histogram()
                               ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
                               "histogram data.  The data stored in the current "
                               "histogram object is UNDEFINED before having calling `finalize()`."
+                              "\n\n"
+                              ".. py:attribute:: num_histograms\n\n"
+                              "    The number of histograms currently stored (read-only). This property may be "
+                              "    accessed at any time, also before having called :py:meth:`finalize()`."
                                 )
       .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogramParams> >())
+      .def(boost::python::init<RealType, RealType, CountIntType>())
+      .add_property("num_histograms", +[](const Kl & h) { return h.num_histograms; })
       .def("addHistogram",
            +[](Kl & h, const Py::UniformBinsRealHistogram & o) { h.addHistogram(o); },
            (arg("histogram")),
            "addHistogram(histogram)\n\n"
            "Add a new histogram to the average with the others.")
+      .def("reset",
+           +[](Kl & h) { h.reset(); }
+          )
+      .def("reset",
+           +[](Kl & h, const Py::UniformBinsHistogramParams & param) { h.reset(param); },
+           "reset([param])\n\n"
+           "Clear all stored histograms and start a new averaging sequence. The "
+           "histogram parameters are changed to `param` if you specify `param`, otherwise "
+           "they are left unchanged. After calling this function, the averaged histogram class "
+           "is in the same state as a freshly constructed averaged histogram object: you may call "
+           ":py:meth:`addHistogram()` to add histograms to the average, after which you must call "
+           ":py:meth:`finalize()` to finalize the averaging procedure."
+           )
       .def("finalize", +[](Kl & h) { h.finalize(); },
            "finalize()\n\n"
            "Call this function after all the histograms have been added with calls to :py:meth:`addHistogram()`. Only "
@@ -400,8 +439,14 @@ void py_tomo_histogram()
                               ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
                               "histogram data.  The data stored in the current "
                               "histogram object is UNDEFINED before having calling `finalize()`."
+                              "\n\n"
+                              ".. py:attribute:: num_histograms\n\n"
+                              "    The number of histograms currently stored (read-only). This property may be "
+                              "    accessed at any time, also before having called :py:meth:`finalize()`."
                                 )
       .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogramParams> >())
+      .def(boost::python::init<RealType, RealType, CountIntType>())
+      .add_property("num_histograms", +[](const Kl & h) { return h.num_histograms; })
       .def("addHistogram",
            +[](Kl & h, const Py::UniformBinsHistogramWithErrorBars & o) {
              h.addHistogram(o);
@@ -409,6 +454,19 @@ void py_tomo_histogram()
            (arg("histogram")),
            "addHistogram(histogram)\n\n"
            "Add a new histogram to the average with the others.")
+      .def("reset",
+           +[](Kl & h) { h.reset(); }
+          )
+      .def("reset",
+           +[](Kl & h, const Py::UniformBinsHistogramParams & param) { h.reset(param); },
+           "reset([param])\n\n"
+           "Clear all stored histograms and start a new averaging sequence. The "
+           "histogram parameters are changed to `param` if you specify `param`, otherwise "
+           "they are left unchanged. After calling this function, the averaged histogram class "
+           "is in the same state as a freshly constructed averaged histogram object: you may call "
+           ":py:meth:`addHistogram()` to add histograms to the average, after which you must call "
+           ":py:meth:`finalize()` to finalize the averaging procedure."
+           )
       .def("finalize", +[](Kl & h) { h.finalize(); },
            "finalize()\n\n"
            "Call this function after all the histograms have been added with calls to :py:meth:`addHistogram()`. Only "

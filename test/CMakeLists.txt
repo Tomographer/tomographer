@@ -267,7 +267,12 @@ if (BUILD_TOMOPY)
   endmacro()
 
   addTomographerPyTest(pytest_tomographer)
+  addTomographerPyTest(pytest_t_multiproc)
+  addTomographerPyTest(pytest_t_densedm)
+  addTomographerPyTest(pytest_t_mhrwtasks)
+  addTomographerPyTest(pytest_t_tomorun)
   addTomographerPyTest(pytest_t_querrorbars)
+  addTomographerPyTest(pytest_t_jpyutil)
 
 else() # BUILD_TOMOPY
 

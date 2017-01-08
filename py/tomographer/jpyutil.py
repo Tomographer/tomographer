@@ -100,10 +100,10 @@ class SimpleProgressBar(_SimpleProgressBar_base):
 
         with SimpleProgressBar("Working very hard ... ") as prg:
             for i in range(10000):
+                prg.progress(fraction_done=i/10000.0)
                 # do stuff that takes time
                 ...
-                # update the progress bar
-                prg.progress(fraction_done=i/10000.0)
+
 
     This class works both inside a Jupyter notebook, providing a nice graphical progress bar,
     as well as in any other context such as a simple python console script, in which case

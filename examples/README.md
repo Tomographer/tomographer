@@ -1,5 +1,6 @@
-# Examples for `tomorun`
+# Examples for using `Tomographer`
 
-In this directory, you'll find an example of how to use `tomorun`.
+In this directory, you'll find examples of how to use the `tomorun` executable and/or the
+python interface.
 
 More examples may come in the future!

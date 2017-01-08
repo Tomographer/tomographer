@@ -7,6 +7,7 @@
 #include <tomographerpy/common.h>
 
 #include <tomographer/mhrw.h>
+#include <tomographer/mhrw_bin_err.h>
 #include <tomographer/mhrwtasks.h>
 
 #include <tomographerpy/pyhistogram.h>
