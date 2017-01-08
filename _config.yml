@@ -3,7 +3,7 @@
 # Site settings
 #
 title: Tomographer Project
-email: pfaist@phys.ethz.ch
+email: phfaist@caltech.edu
 description: > # this means to ignore newlines until "baseurl:"
   Tomographer Project - reliable data analysis for quantum tomography
 baseurl: "/tomographer" # the subpath of your site, e.g. /blog/
@@ -16,14 +16,19 @@ github_username:  Tomographer
 #
 markdown: kramdown
 
+highlighter: rouge
+
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
 
 
 # ------------------------------------------
 # Tomographer available downloads & versions
 # ------------------------------------------
 
-tomographer_latest_version: v2.0
-tomographer_apidoc_version: v2.0
+tomographer_latest_version: v3.0
+tomographer_apidoc_version: v3.0
 tomographer_binaries:
   - version: 'v2.0'
     system: 'macosx'

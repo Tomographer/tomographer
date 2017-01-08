@@ -7,13 +7,23 @@ layout: default
 I've got experimental data to analyze.
 ======================================
 
-The Tomographer project provides the `tomorun` program which analyses data from a quantum
-tomography experiment. The theory is described in
-[{{site.paper_ref}}]({{site.paper_url}}){:target="_blank"}
-([{{site.paper_arxiv_ref}}]({{site.paper_arxiv_url}}){:target="_blank"}). Here are the
-steps to follow in order to get started:
+Please select your preferred option, perhaps the one that suits best your existing workflow:
 
-1. [Download and install]({{ site.baseurl }}/download) Tomographer.
+- [Tomographer routines run from command-line, data provided in MATLAB file format,
+  subsequent analysis performed using MATLAB](#command-line-tomorun-matlab); or
+
+- [Tomographer routines invoked via Python code, with data provided as NumPy arrays,
+  subsequent analysis performed via Python routines](#python-version).
+
+
+## <a name="command-line-tomorun-matlab"></a> Using the Command-Line and MATLAB
+
+
+The Tomographer project provides the `tomorun` program which analyses data from a quantum
+tomography experiment.
+
+1. [Download and install]({{ site.baseurl }}/download) Tomographer/tomorun.  If you are
+   building from source, you will not need to set up the Python interface.
 
 2. Get familiar with `tomorun`. Get an idea of what the program does and how to use it with:
 
@@ -93,3 +103,27 @@ steps to follow in order to get started:
    > 
    > 2. Philippe Faist. The Tomographer Project. Available at:
    >    https://github.com/Tomographer/tomographer/
+
+
+
+## <a name="python-version"></a> The Python Way
+
+Tomographer provides an interface for easy invocation from Python code.  Here are the
+steps to get started and analyze data from your experiment:
+
+1.  [Download and install]({{ site.baseurl }}/download) the Python interface tomographer.
+    If you are building from source, you do not need to use CMake or build the tomorun
+    executable.
+
+2.  Open your favorite Python environment (e.g. edit a Python script or open an IPython or
+    Jupyter notebook session), and start off with [this minimal example
+    script]({{ '/simple_tomorun_example.py' | prepend: site.baseurl }}).
+
+    Note: The script is designed to display well within a Jupyter notebook, including
+    real-time feedback on the progress of the random walk.
+
+2. Read the description of the [`tomographer.tomorun.tomorun()`]({{ site.baseurl
+   }}/api-doc/{{ site.tomographer_latest_version
+   }}/html/py/tomographer.tomorun.html#tomographer.tomorun.tomorun) Python function, which
+   is the main entry point to our procedure from Python code.
+
