@@ -9,6 +9,7 @@
    tomographer.tomorun
    tomographer.mhrwtasks
    tomographer.querrorbars
+   tomographer.tools
    tomographer.jpyutil
 
 
