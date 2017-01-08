@@ -52,8 +52,8 @@ matrix:
           packages:
             - gcc-4.6
             - g++-4.6
-            - gfortran-4.6
-            - gfortran-4.6-multilib
+            - gfortran
+            - gfortran-multilib
             - python-dev
             - python-matplotlib
             - python-tk
@@ -64,7 +64,7 @@ matrix:
             - libboost-all-dev
       env:
         - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-4.6 -DCMAKE_CXX_COMPILER=g++-4.6 -DPYTHON_LIBRARY=/usr/lib/libpython2.7.so -DPYTHON_INCLUDE_DIR=/usr/include/python2.7 -DPYTHON_EXECUTABLE=/usr/bin/python -DCMAKE_CXX11_STANDARD_COMPILE_OPTION=-std=c++0x -DCMAKE_CXX_FLAGS=-std=c++0x"
-        - PIP_EXTRAS="numpy==1.8 scipy==0.15 cvxpy==0.3.9"
+        - PIP_EXTRAS="numpy==1.8 scipy==0.15"
     - compiler: gcc
       addons:
         apt:
@@ -73,8 +73,8 @@ matrix:
           packages:
             - gcc-5
             - g++-5
-            - gfortran-5
-            - gfortran-5-multilib
+            - gfortran
+            - gfortran-multilib
             - python-dev
             - python-numpy
             - python-scipy
@@ -95,8 +95,8 @@ matrix:
           packages:
             - gcc-6
             - g++-6
-            - gfortran-6
-            - gfortran-6-multilib
+            - gfortran
+            - gfortran-multilib
             - python3-dev
             - python3-numpy
             - python3-scipy
@@ -121,7 +121,8 @@ matrix:
             - python3-matplotlib
             - python3-tk
             - python3-pip
-            - gfortran-6
+            - gfortran
+            - gfortran-multilib
             - libatlas-dev
             - libatlas-base-dev
             - libboost-python-dev
