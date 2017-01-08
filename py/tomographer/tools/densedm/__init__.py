@@ -1,6 +1,16 @@
 
 """
-todo: doc ...................
+This module collects utilities gravitating around some standard tasks you may need to
+perform when doing quantum tomography.
+
+A routine allows you to simulate measurement outcomes from a true quantum state and a set
+of measurement settings.  The standard Pauli measurement settings on a qubit are available
+in :py:const:`~tomographer.tools.densedm.PauliMeasEffectsQubit`.
+
+A separate submodule (:py:mod:`~tomographer.tools.densedm.mle`) determines the maximum
+likelihood estimate given experimental data.
+
+Further tools may be added to these modules in the future.
 """
 
 

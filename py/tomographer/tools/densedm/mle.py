@@ -1,7 +1,7 @@
 
 
 """
-Utility to find the MLE estimate, using `cvxpy <http://www.cvxpy.org/>`.
+Utility to find the MLE estimate, using `cvxpy <http://www.cvxpy.org/>`_.
 """
 
 
@@ -52,15 +52,15 @@ def find_mle(llh, solver_opts=None):
     - ``d.rho_MLE``: a copy of `rho_MLE`
 
     - ``d.rho_vars``: a two-tuple `(rho_R, rho_I,)` of the raw `cvxpy` variables used to
-      model the complex variable `rho`. (Cvxpy doesn't support complex variables, so we
-      need to declare two real matrices, corresponding to the real and imaginary parts of
-      the variable `rho`.)
+      represent the complex variable `rho`. (Cvxpy doesn't support complex variables, so
+      we need to declare two real matrix variables, corresponding to the real and
+      imaginary parts of the variable `rho`.)
 
     - ``d.objective``: the raw object object constructed for `cvxpy`
 
     - ``d.constraints``: the list of constraints specified to `cvxpy`
 
-    - ``d.problem``: the raw cvxpy problem object
+    - ``d.problem``: the raw `cvxpy` problem object
 
     The optional `solve_opts` argument is a dictionary of options that are directly passed
     on to `cvxpy`.  The keys specified in `solve_opts` override the default keys in
