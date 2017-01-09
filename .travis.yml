@@ -64,7 +64,7 @@ matrix:
             - libboost-all-dev
       env:
         - CMAKE_COMPILER_ARGS="-DCMAKE_C_COMPILER=gcc-4.6 -DCMAKE_CXX_COMPILER=g++-4.6 -DPYTHON_LIBRARY=/usr/lib/libpython2.7.so -DPYTHON_INCLUDE_DIR=/usr/include/python2.7 -DPYTHON_EXECUTABLE=/usr/bin/python -DCMAKE_CXX11_STANDARD_COMPILE_OPTION=-std=c++0x -DCMAKE_CXX_FLAGS=-std=c++0x"
-        - PIP_EXTRAS="numpy==1.8 scipy==0.15"
+        - PIP_EXTRAS="git+https://github.com/uqfoundation/multiprocess@93ac3f96eaa7f9865910f4572407e043eb2a5277  numpy==1.8 scipy==0.15 "
     - compiler: gcc
       addons:
         apt:
