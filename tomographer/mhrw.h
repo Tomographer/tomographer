@@ -188,6 +188,13 @@ namespace tomo_internal {
 };
 
 
+// note: const implies static linkage, see http://stackoverflow.com/q/2268749/1694896
+//
+/** \brief Minimal recommended acceptance ratio */
+const double MHRWAcceptanceRatioRecommendedMin = 0.2;
+/** \brief Maximal recommended acceptance ratio */
+const double MHRWAcceptanceRatioRecommendedMax = 0.4;
+
 
 /** \brief Specify the parameters of a Metropolis-Hastings random walk
  *

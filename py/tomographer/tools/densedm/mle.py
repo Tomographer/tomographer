@@ -7,6 +7,12 @@ Utility to find the MLE estimate, using `cvxpy <http://www.cvxpy.org/>`_.
 
 import numpy as np
 
+
+# see http://stackoverflow.com/a/22236012/1694896 -- attempt at fix:
+try:
+    from subprocess import _args_from_interpreter_flags
+except ImportError: pass
+#
 import cvxpy
 
 import scipy.sparse as sp

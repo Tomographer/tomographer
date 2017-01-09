@@ -93,8 +93,10 @@ void print_hist_short_bar_with_accept_info(std::ostream & str, int dig_w, int j,
                             hist,
                             Tomographer::Tools::fmts(" [accept ratio = %.2f]", acceptance_ratio),
                             false, columns);
-  if (acceptance_ratio > 0.35 || acceptance_ratio < 0.2) {
-    str << "    *** Accept ratio out of recommended bounds [0.20, 0.35] ! Adapt step size ***\n";
+  if (acceptance_ratio > MHRWAcceptanceRatioRecommendedMax ||
+      acceptance_ratio < MHRWAcceptanceRatioRecommendedMin) {
+    str << "    *** Accept ratio out of recommended bounds ["<<MHRWAcceptanceRatioRecommendedMin
+        <<", "<<MHRWAcceptanceRatioRecommendedMax<<"] ! Adapt step size ***\n";
   }
 }
 } // namespace tomo_internal

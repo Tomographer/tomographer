@@ -444,7 +444,8 @@ private:
         bool warn_accept_ratio = false;
         if (rw.hasAcceptanceRatio()) {
           accept_ratio = rw.acceptanceRatio();
-          warn_accept_ratio = (accept_ratio > 0.35 || accept_ratio < 0.2);
+          warn_accept_ratio = (accept_ratio > MHRWAcceptanceRatioRecommendedMax ||
+                               accept_ratio < MHRWAcceptanceRatioRecommendedMin);
         }
         std::string msg = Tools::fmts(
             "%s %lu/(%lu=%lu*(%lu+%lu)) : %5.2f%% done  [%saccept ratio=%.2f%s]",
