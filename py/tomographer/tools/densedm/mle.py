@@ -56,7 +56,7 @@ def find_mle(llh, solver_opts=None):
       we need to declare two real matrix variables, corresponding to the real and
       imaginary parts of the variable `rho`.)
 
-    - ``d.objective``: the raw object object constructed for `cvxpy`
+    - ``d.objective``: the raw optimization objective object constructed for `cvxpy`
 
     - ``d.constraints``: the list of constraints specified to `cvxpy`
 

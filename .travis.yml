@@ -121,6 +121,9 @@ matrix:
             - python3-matplotlib
             - python3-tk
             - python3-pip
+            # to compile cvxpy:
+            - gcc
+            - g++
             - gfortran
             - gfortran-multilib
             - libatlas-dev

@@ -125,7 +125,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
         print("test_errbar_convergence()")
 
         num_repeats = 2
-        hist_params = tomographer.UniformBinsHistogramParams(0.985, 1, 20)
+        hist_params = tomographer.UniformBinsHistogramParams(0.995, 1, 20)
 
         r = tomographer.tomorun.tomorun(
             dim=2,
@@ -147,10 +147,10 @@ class analytical_known_example_tomorun(unittest.TestCase):
         # inspect the task runs
         for k in range(num_repeats):
             runres = r['runs_results'][k]
-            # check that at most 15% of the error bars have not converged
+            # check that at most 10% of the error bars have not converged
             self.assertGreater( (runres.stats_collector_result.converged_status == 
                                  tomographer.BinningAnalysis.CONVERGED*np.ones([hist_params.num_bins], dtype=int)).sum(),
-                                0.85*hist_params.num_bins )
+                                0.9*hist_params.num_bins )
 
 
     def test_callback(self):
