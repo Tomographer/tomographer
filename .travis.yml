@@ -18,7 +18,7 @@ install:
   - export CMAKE_PATH=`pwd`/cmake-3.1.3-Linux-x86_64
   - if [ ! -f "$CMAKE_PATH/bin/cmake" ]; then curl -L -O https://cmake.org/files/v3.1/cmake-3.1.3-Linux-x86_64.tar.gz && tar xfz cmake-3.1.3-Linux-x86_64.tar.gz ; fi
   # Python dependencies -- install for both python2 and/or python3, whichever works, and use the default complier
-  - (CC="gcc" sudo -H /usr/bin/pip install $PIP_EXTRAS cvxpy ; CC="gcc" sudo -H /usr/bin/pip3 install $PIP_EXTRAS cvxpy) || true
+  - (CC="gcc" sudo -H /usr/bin/pip install $PIP_EXTRAS cvxpy >pip-output.txt 2>&1 || cat pip-output.txt ; CC="gcc" sudo -H /usr/bin/pip3 install $PIP_EXTRAS cvxpy >pip3-output.txt 2>&1 || cat pip3-output.txt) || true
 
 cache:
   pip: true
