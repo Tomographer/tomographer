@@ -224,7 +224,7 @@ public:
     : Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >(logger.level()),
     _baselogger(logger)
   {
-    // when you have to debug the log mechanism.... lol
+    // when you have to debug the debug log mechanism... lol
     //printf("ThreadSanitizerLogger(): object created\n");
     //_baselogger.debug("ThreadSanitizerLogger()", "log from constructor.");
     //emitLog(Logger::DEBUG, "ThreadSanitizerLogger!", "emitLog from constructor");

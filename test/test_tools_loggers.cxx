@@ -741,8 +741,6 @@ BOOST_AUTO_TEST_CASE(basic)
 		    "[test_locallogger_function()/some_callback[lambda]] [done]\n"
 		    "[test_locallogger_function()] [done]\n"
       );
-
-  // ............
 }
 
 

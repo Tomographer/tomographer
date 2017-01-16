@@ -25,15 +25,50 @@
  */
 
 
+#include <type_traits>
+#include <stdexcept>
+
 #include "test_tomographer.h"
 
 #include <tomographer/tools/cxxutil.h>
 
-#include <stdexcept>
+
+// utils & fixtures
+
+struct Dummy { };
+
+// tei=tomographer-enabled-if
+template<typename Type>
+struct teiA {
+  TOMOGRAPHER_ENABLED_IF(std::is_same<Type, int>::value)
+  static inline bool is_int() { return true; }
+  TOMOGRAPHER_ENABLED_IF(!std::is_same<Type, int>::value)
+  static inline bool is_int() { return false; }
+
+  template<typename Type2, TOMOGRAPHER_ENABLED_IF_TMPL(std::is_same<Type, Type2>::value)>
+  static inline bool is_same_as() { return true; }
+  template<typename Type2, TOMOGRAPHER_ENABLED_IF_TMPL(!std::is_same<Type, Type2>::value)>
+  static inline bool is_same_as() { return false; }
+};
 
 
+// test cases
 
 BOOST_AUTO_TEST_SUITE(test_tools_cxxutil)
+
+// test TOMOGRAPHER_ENABLED_IF[_TMPL]
+
+BOOST_AUTO_TEST_CASE(tomographer_enabled_if)
+{
+  BOOST_CHECK(teiA<int>::is_int());
+  BOOST_CHECK(!teiA<long>::is_int());
+  BOOST_CHECK(!teiA<Dummy>::is_int());
+  
+  BOOST_CHECK(teiA<int>::is_same_as<int>());
+  BOOST_CHECK(!teiA<long>::is_same_as<int>());
+  BOOST_CHECK(teiA<Dummy>::is_same_as<Dummy>());
+  BOOST_CHECK(!teiA<Dummy>::is_same_as<std::string>());
+}
 
 BOOST_AUTO_TEST_CASE(finally)
 {

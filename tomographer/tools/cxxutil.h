@@ -70,7 +70,7 @@
 
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
 // WARNING!!! CHECK OUT  http://stackoverflow.com/q/29363532/1694896
-// FOR VERY SUBTLE BUGS....... :( :(   -- TEST WITH INTEL ICC!!
+// FOR VERY SUBTLE BUGS :( :(   -- TEST WITH INTEL ICC!!
 #define TOMOGRAPHER_ENABLED_IF(...)					\
   template<bool _dummy__enabledif = false,				\
 	   typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
