@@ -108,6 +108,17 @@ if CC:
         print("WARNING: different compilers set in environment ("+envCC+") and in CMake "
               "cache file ("+CC+"); the former will be used.")
 
+CXX = ''
+try:
+    CXX = vv.get('CMAKE_CXX_COMPILER')
+except KeyError:
+    pass
+if CXX:
+    envCXX = os.environ.get('CXX', '')
+    if envCXX and envCXX != CXX:
+        # different compilers
+        print("WARNING: different C++ compilers set in environment ("+envCXX+") and in CMake "
+              "cache file ("+CXX+"); the former will be used.")
 
 
 print("""

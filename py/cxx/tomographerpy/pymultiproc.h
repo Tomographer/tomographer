@@ -71,7 +71,7 @@ inline Py::FullStatusReport preparePyTaskStatusReport(
     const auto& rr = report.workers_reports[k];
     Py::WorkerStatusReport wreport;
     // generic worker status report fields
-    wreport.worker_id = k;
+    wreport.worker_id = (int)k;
     wreport.fraction_done = rr.fraction_done;
     wreport.msg = rr.msg;
     // fields specific to MHRWValueHistogramTasks

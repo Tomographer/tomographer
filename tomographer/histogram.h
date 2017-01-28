@@ -1162,7 +1162,7 @@ inline std::string histogram_short_bar_fmt(const HistogramType & histogram, cons
     send += Tools::fmts(" [+%.1g off]", (double)histogram.off_chart);
   }
   
-  const int maxbarwidth = max_width - s.size() - send.size();
+  const int maxbarwidth = max_width - (int)s.size() - (int)send.size();
   const int numdiv = (int)(std::ceil((float)histogram.numBins() / maxbarwidth) + 0.5f);
   const int barwidth = (int)(std::ceil((float)histogram.numBins() / numdiv) + 0.5f);
 
@@ -1200,7 +1200,7 @@ inline std::string histogram_short_bar_fmt(const HistogramType & histogram, cons
     } else {
       int i = (int)(chars.size() * (veclog(k) - minlogval) / (maxlogval - minlogval));
       if (i < 0) { i = 0; }
-      if (i >= (int)chars.size()) { i = chars.size()-1; }
+      if (i >= (int)chars.size()) { i = (int)chars.size()-1; }
       s += chars[i];
     }
   }
@@ -1284,7 +1284,7 @@ inline int histogramShortBar(std::ostream & str, const HistogramType & histogram
   }
 
   str << s;
-  return max_width - s.size();
+  return max_width - (int)s.size();
 }
 /** \brief Format the histogram as a one-line bar.
  *
@@ -1336,7 +1336,7 @@ inline void histogramShortBarWithInfo(std::ostream & str,
 
   str << head;
   int w = histogramShortBar(str, hist, log_scale, full_max_width - head.size() - tail.size());
-  str << std::setw(w + tail.size()) << std::right << tail << "\n";
+  str << std::setw(w + (int)tail.size()) << std::right << tail << "\n";
 }
 
 /** \brief Format the histogram as a one-line bar, with some surrounding info

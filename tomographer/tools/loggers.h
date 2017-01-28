@@ -1435,7 +1435,7 @@ namespace tomo_internal {
  * Returns the largest integer \a k such that the substrings \c s[0:k] and \c pattern[0:k]
  * are equal.
  */
-inline int matched_length(const std::string & s, const std::string & pattern)
+inline std::size_t matched_length(const std::string & s, const std::string & pattern)
 {
   std::size_t k = 0;
   while (s[k] == pattern[k]) {
@@ -1569,7 +1569,7 @@ public:
     int loglevel = -1;
     int last_matched_length = 0;
     for (ConstIterator it = levels_set.begin(); it != levels_set.end(); ++it) {
-      const int mlen = tomo_internal::matched_length((*it).first, s);
+      const std::size_t mlen = tomo_internal::matched_length((*it).first, s);
       if (mlen > last_matched_length) {
 	loglevel = (*it).second;
 	last_matched_length = mlen;

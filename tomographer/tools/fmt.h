@@ -429,7 +429,7 @@ public:
     if ((int)x.size() > columns()) {
       return std::move(x) + "\n";
     }
-    const int r = columns() - x.size();
+    const int r = columns() - (int)x.size();
     const int rleft = r/2;
     const int rright = r - rleft; // may differ from r/2 if r is odd
     return std::string(rleft, ' ') + std::move(x) + std::string(rright, ' ') + "\n";
@@ -446,7 +446,7 @@ public:
     if ((int)x.size() > columns()) {
       return std::move(x) + "\n";
     }
-    const int r = columns() - x.size();
+    const int r = columns() - (int)x.size();
     return std::string(r, ' ') + std::move(x) + "\n";
   }
 
@@ -461,7 +461,7 @@ public:
     if ((int)x.size() > columns()) {
       return std::move(x) + "\n";
     }
-    const int r = columns() - x.size();
+    const int r = columns() - (int)x.size();
     return std::move(x) + std::string(r, ' ') + "\n";
   }
   
