@@ -18,7 +18,7 @@ install:
   - export CMAKE_PATH=`pwd`/cmake-3.1.3-Linux-x86_64
   - if [ ! -f "$CMAKE_PATH/bin/cmake" ]; then curl -L -O https://cmake.org/files/v3.1/cmake-3.1.3-Linux-x86_64.tar.gz && tar xfz cmake-3.1.3-Linux-x86_64.tar.gz ; fi
   # Python dependencies
-  - travis_wait CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} sudo -H $PIP install $PIP_EXTRAS cvxpy
+  - travis_wait bash -c "CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} sudo -H $PIP install $PIP_EXTRAS cvxpy"
 
 cache:
   pip: true
