@@ -5,6 +5,18 @@
 #include "common_p.h"
 
 
+struct MHRWParams_pickle_suite : boost::python::pickle_suite
+{
+  static boost::python::tuple getinitargs(const Py::MHRWParams & mhrw_params)
+  {
+    return boost::python::make_tuple(mhrw_params.step_size,
+                                     mhrw_params.n_sweep,
+                                     mhrw_params.n_therm,
+                                     mhrw_params.n_run);
+  }
+};
+
+
 
 void py_tomo_mhrw()
 {
@@ -22,6 +34,8 @@ void py_tomo_mhrw()
             ".. py:function:: MHRWParams(step_size, n_sweep, n_therm, n_run)\n\n"
             "    Construct a `MHRWParams` instance, initializing the read-only members `step_size`, `n_sweep`, "
             "`n_therm` and `n_run` to the values given to the constructor."
+            "\n\n"
+            "|picklable|"
             "\n\n"
             ".. seealso:: See the corresponding C++ class :tomocxx:`Tomographer::MHRWParams "
             "<struct_tomographer_1_1_m_h_r_w_params.html>` for more information about these parameters.  (The "
@@ -50,6 +64,7 @@ void py_tomo_mhrw()
                     +[](Kl & p, CountIntType n_therm) { p.n_therm = n_therm; })
       .add_property("n_run", +[](const Kl & p) { return p.n_run; },
                     +[](Kl & p, CountIntType n_run) { p.n_run = n_run; })
+      .def_pickle(MHRWParams_pickle_suite())
       ;
   }
 

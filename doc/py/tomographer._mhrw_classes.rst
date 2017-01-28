@@ -13,5 +13,6 @@ do, because C++ is *way* faster than Python for simple boring computing tasks.)
 
 
 .. automodule:: tomographer
-    :members: MHRWParams
+    :members: MHRWParams, ValueHistogramWithBinningMHRWStatsCollectorResult
     :show-inheritance:
+

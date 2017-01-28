@@ -484,7 +484,7 @@ void py_tomo_tomorun()
          "| [3] The root fidelity is defined as "
          ":math:`F(\\rho,\\sigma)=\\left\\Vert\\rho^{1/2}\\sigma^{1/2}\\right\\Vert_1`, "
          "as in Nielsen and Chuang, \"Quantum Computation and Quantum Information\".\n"
-         "| [4] Indeed, for pure rho_ref, "
+         "| [4] Indeed, for pure :math:`\\rho_\\mathrm{ref}`, "
          ":math:`F^2(\\rho,\\rho_\\mathrm{ref}) = \\mathrm{tr}(\\rho\\rho_\\mathrm{ref})`.\n"
          "| [5] The purified distance, also called \"infidelity\" in the literature, is "
          "defined as :math:`P(\\rho,\\sigma) = \\sqrt{1 - F^2(\\rho,\\sigma)}`.\n"

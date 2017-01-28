@@ -5,6 +5,158 @@
 #include "common_p.h"
 
 
+struct UniformBinsHistogramParams_pickle_suite : boost::python::pickle_suite
+{
+  static boost::python::tuple getinitargs(const Py::UniformBinsHistogramParams & hist_params)
+  {
+    return boost::python::make_tuple(hist_params.min, hist_params.max, hist_params.num_bins) ;
+  }
+};
+
+// inspired by http://www.boost.org/doc/libs/1_46_1/libs/python/test/pickle3.cpp
+
+template<typename HistogramType>
+struct histogram_pickle_suite_base : boost::python::pickle_suite
+{
+  // getinitargs()
+  static boost::python::tuple getinitargs(const HistogramType& histogram)
+  {
+    return boost::python::make_tuple(histogram.params);
+  }
+
+  // getstate()
+  static boost::python::tuple getstate(const boost::python::object & obj);
+
+  // getstate_manages_dict()
+  static bool getstate_manages_dict() { return true; }
+
+protected:
+  // helpers for setstate()
+  static inline void expect_state_num_args(boost::python::tuple state,  int numargs) {
+    if (boost::python::len(state) != numargs) {
+      PyErr_SetObject(PyExc_ValueError,
+                      ("expected %d-item tuple in call to __setstate__; got %r"
+                       % boost::python::make_tuple(numargs, state)).ptr()
+          );
+      boost::python::throw_error_already_set();
+    }
+  }
+  static inline void update_obj_dict(boost::python::object obj, boost::python::object dobj) {
+    // restore the object's __dict__
+    boost::python::dict d = boost::python::extract<boost::python::dict>(obj.attr("__dict__"))();
+    d.update(dobj);
+  }
+};
+
+template<typename HistogramType, bool IsAvgHistType = false, bool HasErrorBars = HistogramType::HasErrorBars>
+struct histogram_pickle_suite : histogram_pickle_suite_base<HistogramType>
+{
+  // nothing by default, only specializations
+};
+
+// IsAvgHistType=false, HasErrorBars=false
+template<typename HistogramType>
+struct histogram_pickle_suite<HistogramType, false, false> : histogram_pickle_suite_base<HistogramType>
+{
+  typedef histogram_pickle_suite_base<HistogramType> Base;
+  
+  static boost::python::tuple getstate(const boost::python::object & obj)
+  {
+    const HistogramType & histogram = boost::python::extract<const HistogramType&>(obj)();
+    return boost::python::make_tuple(obj.attr("__dict__"),
+                                     Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1>(histogram.bins),
+                                     histogram.off_chart) ;
+  }
+  static void setstate(boost::python::object obj, boost::python::tuple state)
+  {
+    Base::expect_state_num_args(state, 3);
+    HistogramType & histogram = boost::python::extract<HistogramType&>(obj)();
+
+    Base::update_obj_dict(obj, state[0]);
+
+    // restore bins & off_chart
+    histogram.bins = boost::python::extract<Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1> >(
+        state[1]
+        )();
+    histogram.off_chart = boost::python::extract<typename HistogramType::CountType>(
+        state[2]
+        )();
+  }
+};
+// IsAvgHistType=false, HasErrorBars=true
+template<typename HistogramType>
+struct histogram_pickle_suite<HistogramType, false, true> : histogram_pickle_suite_base<HistogramType>
+{
+  typedef histogram_pickle_suite_base<HistogramType> Base;
+
+  static boost::python::tuple getstate(const boost::python::object & obj)
+  {
+    const HistogramType & histogram = boost::python::extract<const HistogramType&>(obj)();
+    return boost::python::make_tuple(obj.attr("__dict__"),
+                                     Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1>(histogram.bins),
+                                     Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1>(histogram.delta),
+                                     histogram.off_chart) ;
+  }
+  static void setstate(boost::python::object obj, boost::python::tuple state)
+  {
+    Base::expect_state_num_args(state, 4);
+    HistogramType & histogram = boost::python::extract<HistogramType&>(obj)();
+
+    Base::update_obj_dict(obj, state[0]);
+
+    // restore bins, delta & off_chart
+    histogram.bins = boost::python::extract<Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1> >(
+        state[1]
+        )();
+    histogram.delta = boost::python::extract<Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1> >(
+        state[2]
+        )();
+    histogram.off_chart = boost::python::extract<typename HistogramType::CountType>(
+        state[3]
+        )();
+  }
+};
+// IsAvgHistType=true, HasErrorBars=true
+template<typename HistogramType>
+struct histogram_pickle_suite<HistogramType, true, true> : histogram_pickle_suite_base<HistogramType>
+{
+  typedef histogram_pickle_suite_base<HistogramType> Base;
+
+  static boost::python::tuple getstate(const boost::python::object & obj)
+  {
+    const HistogramType & histogram = boost::python::extract<const HistogramType&>(obj)();
+    return boost::python::make_tuple(obj.attr("__dict__"),
+                                     Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1>(histogram.bins),
+                                     Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1>(histogram.delta),
+                                     histogram.off_chart,
+                                     histogram.num_histograms) ;
+  }
+  static void setstate(boost::python::object obj, boost::python::tuple state)
+  {
+    Base::expect_state_num_args(state, 5);
+    HistogramType & histogram = boost::python::extract<HistogramType&>(obj)();
+
+    Base::update_obj_dict(obj, state[0]);
+
+    // restore bins, delta & off_chart
+    histogram.bins = boost::python::extract<Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1> >(
+        state[1]
+        )();
+    histogram.delta = boost::python::extract<Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1> >(
+        state[2]
+        )();
+    histogram.off_chart = boost::python::extract<typename HistogramType::CountType>(
+        state[3]
+        )();
+    histogram.num_histograms = boost::python::extract<int>(
+        state[4]
+        )();
+  }
+};
+
+
+
+
 void py_tomo_histogram()
 {
   auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
@@ -23,6 +175,8 @@ void py_tomo_histogram()
     boost::python::class_<Py::UniformBinsHistogramParams>("UniformBinsHistogramParams", Tomographer::Tools::fmts(
            "Specify histogram bins parameters: the minimum value, the maximum value, and the number "
            "of bins. The interval `[min,max[` is split into `num_bins` equally spaced bins."
+           "\n\n"
+           "|picklable|"
            "\n\n"
            ".. seealso:: This python class interfaces its corresponding "
            ":tomocxx:`C++ class Tomographer::UniformBinsHistogramParams "
@@ -65,9 +219,9 @@ void py_tomo_histogram()
       .add_property("max", +[](const Kl & p) { return p.max; }, +[](Kl & p, RealType max) { p.max = max; })
       .add_property("num_bins", +[](const Kl & p) { return p.num_bins; },
                     +[](Kl & p, std::size_t n) { p.num_bins = n; })
-      .add_property("values_center", +[](Kl & p) -> Eigen::VectorXd { return p.valuesCenter(); })
-      .add_property("values_lower", +[](Kl & p) -> Eigen::VectorXd { return p.valuesLower(); })
-      .add_property("values_upper", +[](Kl & p) -> Eigen::VectorXd { return p.valuesUpper(); })
+      .add_property("values_center", +[](Kl & p) -> Py::RealVectorType { return p.valuesCenter(); })
+      .add_property("values_lower", +[](Kl & p) -> Py::RealVectorType { return p.valuesLower(); })
+      .add_property("values_upper", +[](Kl & p) -> Py::RealVectorType { return p.valuesUpper(); })
       .def("isWithinBounds", &Kl::isWithinBounds, (arg("value")),
            "isWithinBounds(value)"
            "\n\n"
@@ -91,6 +245,7 @@ void py_tomo_histogram()
       .def("binResolution", &Kl::binResolution,
            "binResolution()\n\n"
            "Returns the width of a bin.  This is simply :math:`(\\mathit{max} - \\mathit{min})/\\mathit{num_bins}`.")
+      .def_pickle(UniformBinsHistogramParams_pickle_suite())
       ;
   }
 
@@ -103,6 +258,8 @@ void py_tomo_histogram()
         "UniformBinsHistogram",  Tomographer::Tools::fmts(
             "A histogram object.  An interval `[min,max]` is divided into `num_bins` bins, each of same width. "
             "Each time a new value is to be recorded, the corresponding bin's counter is incremented."
+            "\n\n"
+            "|picklable|"
             "\n\n"
             ".. seealso:: This python class interfaces the C++ class :tomocxx:`Tomographer::UniformBinsHistogramParams "
             "<class_tomographer_1_1_uniform_bins_histogram.html>`, with the template parameters "
@@ -138,11 +295,11 @@ void py_tomo_histogram()
       .def(boost::python::init<RealType, RealType, std::size_t>())
       .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
                                                            boost::python::return_internal_reference<>()))
-      .add_property("values_center", +[](Kl & p) -> Eigen::VectorXd { return p.params.valuesCenter(); })
-      .add_property("values_lower", +[](Kl & p) -> Eigen::VectorXd { return p.params.valuesLower(); })
-      .add_property("values_upper", +[](Kl & p) -> Eigen::VectorXd { return p.params.valuesUpper(); })
-      .add_property("bins", +[](Kl & h) -> Eigen::VectorXi { return h.bins.matrix(); },
-                    +[](Kl & h, const Eigen::VectorXi& v) { h.bins = v; })
+      .add_property("values_center", +[](Kl & p) -> Py::RealVectorType { return p.params.valuesCenter(); })
+      .add_property("values_lower", +[](Kl & p) -> Py::RealVectorType { return p.params.valuesLower(); })
+      .add_property("values_upper", +[](Kl & p) -> Py::RealVectorType { return p.params.valuesUpper(); })
+      .add_property("bins", +[](Kl & h) -> Py::CountIntVectorType { return h.bins.matrix(); },
+                    +[](Kl & h, const Py::CountIntVectorType& v) { h.bins = v; })
       .add_property("off_chart", +[](Kl & h) { return h.off_chart; },
                     +[](Kl & h, CountIntType o) { h.off_chart = o; })
       .add_static_property("HasErrorBars", +[]() { return false; })
@@ -150,13 +307,13 @@ void py_tomo_histogram()
            "reset()\n\n"
            "Clears the current histogram counts (including `off_chart` counts) to zero.  The histogram "
            "parameters in `params` are kept intact.")
-      .def("load", +[](Kl & h, const Eigen::VectorXi& x, CountIntType o) { h.load(x, o); },
+      .def("load", +[](Kl & h, const Py::CountIntVectorType& x, CountIntType o) { h.load(x, o); },
            (arg("bins"), arg("off_chart") = CountIntType(0)),
            "load(bins[, off_chart=0])\n\n"
            "Load bin values from the vector of values `bins`, which is expected to be a `NumPy` array. If "
            "`off_chart` is specified, the current `off_chart` count is also set to the given value; otherwise "
            "it is reset to zero.")
-      .def("add", +[](Kl & h, const Eigen::VectorXi& x, CountIntType o) { h.add(x.array(), o); },
+      .def("add", +[](Kl & h, const Py::CountIntVectorType& x, CountIntType o) { h.add(x.array(), o); },
            (arg("bins"), arg("off_chart") = CountIntType(0)),
            "add(bins[, off_chart=0])\n\n"
            "Add a number of counts to each bin, specifed by a vector of values `bins` which is expected to be "
@@ -192,6 +349,7 @@ void py_tomo_histogram()
            "suitable to be displayed in a terminal (for instance).  The formatted histogram is returned as a "
            "string.  If `max_width` is specified and nonzero, the output is designed to fit into a terminal "
            "display of the given number of characters wide, otherwise a default width is used.")
+      .def_pickle(histogram_pickle_suite<Kl>())
       ;
 
     //    logger.debug("(A)");
@@ -209,6 +367,8 @@ void py_tomo_histogram()
             "for example, the histogram to be normalized.) Every method documented in "
             ":py:class:`UniformBinsHistogram` is available to this class as well."
             "\n\n"
+            "|picklable|"
+            "\n\n"
             "The corresponding C++ class is also :tomocxx:`Tomographer::UniformBinsHistogram "
             "<class_tomographer_1_1_uniform_bins_histogram.html>`, although the `CountType` template parameter "
             "is set to `%s` instead of `%s`.", boost::core::demangle(typeid(RealType).name()).c_str(),
@@ -218,9 +378,9 @@ void py_tomo_histogram()
       .def(boost::python::init<boost::python::optional<Py::UniformBinsHistogramParams> >())
       .def(boost::python::init<RealType, RealType, std::size_t>())
       .def("reset", &Kl::reset)
-      .def("load", +[](Kl & h, const Eigen::VectorXd& x, RealType o) { h.load(x, o); },
+      .def("load", +[](Kl & h, const Py::RealVectorType& x, RealType o) { h.load(x, o); },
            (arg("bins"), arg("off_chart") = CountIntType(0)))
-      .def("add", +[](Kl & h, const Eigen::VectorXd& x, RealType o) { h.add(x.array(), o); },
+      .def("add", +[](Kl & h, const Py::RealVectorType& x, RealType o) { h.add(x.array(), o); },
            (arg("bins"), arg("off_chart") = CountIntType(0)))
       .def("numBins", &Kl::numBins)
       .def("count", &Kl::count, (arg("index")))
@@ -232,14 +392,15 @@ void py_tomo_histogram()
            (arg("max_width")=0))
       .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
                                                            boost::python::return_internal_reference<>()))
-      .add_property("values_center", +[](Kl & p) -> Eigen::VectorXd { return p.params.valuesCenter(); })
-      .add_property("values_lower", +[](Kl & p) -> Eigen::VectorXd { return p.params.valuesLower(); })
-      .add_property("values_upper", +[](Kl & p) -> Eigen::VectorXd { return p.params.valuesUpper(); })
-      .add_property("bins", +[](Kl & h) -> Eigen::VectorXd { return h.bins.matrix(); },
-                    +[](Kl & h, const Eigen::VectorXd& v) { h.bins = v; })
+      .add_property("values_center", +[](Kl & p) -> Py::RealVectorType { return p.params.valuesCenter(); })
+      .add_property("values_lower", +[](Kl & p) -> Py::RealVectorType { return p.params.valuesLower(); })
+      .add_property("values_upper", +[](Kl & p) -> Py::RealVectorType { return p.params.valuesUpper(); })
+      .add_property("bins", +[](Kl & h) -> Py::RealVectorType { return h.bins.matrix(); },
+                    +[](Kl & h, const Py::RealVectorType& v) { h.bins = v; })
       .add_property("off_chart", +[](Kl & h) { return h.off_chart; },
                     +[](Kl & h, RealType o) { h.off_chart = o; })
       .add_static_property("HasErrorBars", +[]() { return false; })
+      .def_pickle(histogram_pickle_suite<Kl>())
       ;
   }
   
@@ -260,6 +421,8 @@ void py_tomo_histogram()
           "error bar values, and the `normalized()` method returns a histogram with the appropriate error "
           " bars on the normalized histogram."
           "\n\n"
+          "|picklable|"
+          "\n\n"
           "In addition to the members inherited from :py:class:`UniformBinsRealHistogram`, the following "
           "members are available:"
           "\n\n"
@@ -272,7 +435,7 @@ void py_tomo_histogram()
       .def(boost::python::init<RealType, RealType, std::size_t>())
       .def("reset", &Kl::reset)
       .def("load",
-           +[](Kl & h, const Eigen::VectorXd& x, const Eigen::VectorXd& err, RealType o) {
+           +[](Kl & h, const Py::RealVectorType& x, const Py::RealVectorType& err, RealType o) {
              h.load(x, err, o);
            },
            (arg("d"), arg("derr"), arg("off_chart") = RealType(0)),
@@ -300,16 +463,17 @@ void py_tomo_histogram()
       .def("prettyPrint", &Kl::prettyPrint, (arg("max_width") = 0))
       .add_property("params", boost::python::make_function(+[](Kl & h) -> const Kl::Params& { return h.params; },
                                                            boost::python::return_internal_reference<>()))
-      .add_property("values_center", +[](Kl & p) -> Eigen::VectorXd { return p.params.valuesCenter(); })
-      .add_property("values_lower", +[](Kl & p) -> Eigen::VectorXd { return p.params.valuesLower(); })
-      .add_property("values_upper", +[](Kl & p) -> Eigen::VectorXd { return p.params.valuesUpper(); })
-      .add_property("bins", +[](Kl & h) -> Eigen::VectorXd { return h.bins.matrix(); },
-                    +[](Kl & h, const Eigen::VectorXd v) { h.bins = v; })
-      .add_property("delta", +[](Kl & h) -> Eigen::VectorXd { return h.delta.matrix(); },
-                    +[](Kl & h, const Eigen::VectorXd v) { h.delta = v; })
+      .add_property("values_center", +[](Kl & p) -> Py::RealVectorType { return p.params.valuesCenter(); })
+      .add_property("values_lower", +[](Kl & p) -> Py::RealVectorType { return p.params.valuesLower(); })
+      .add_property("values_upper", +[](Kl & p) -> Py::RealVectorType { return p.params.valuesUpper(); })
+      .add_property("bins", +[](Kl & h) -> Py::RealVectorType { return h.bins.matrix(); },
+                    +[](Kl & h, const Py::RealVectorType v) { h.bins = v; })
+      .add_property("delta", +[](Kl & h) -> Py::RealVectorType { return h.delta.matrix(); },
+                    +[](Kl & h, const Py::RealVectorType v) { h.delta = v; })
       .add_property("off_chart", +[](Kl & h) { return h.off_chart; },
                     +[](Kl & h, RealType o) { h.off_chart = o; })
       .add_static_property("HasErrorBars", +[]() { return true; })
+      .def_pickle(histogram_pickle_suite<Kl>())
       ;
   }
 
@@ -331,6 +495,8 @@ void py_tomo_histogram()
                               "\n\n"
                               "This histogram object inherits :py:class:`UniformBinsHistogramWithErrorBars`, so all the "
                               "methods exposed in that class are available to access the averaged histogram data."
+                              "\n\n"
+                              "|picklable|"
                               "\n\n"
                               ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
                               "histogram data.  The data stored in the current "
@@ -365,6 +531,7 @@ void py_tomo_histogram()
            "finalize()\n\n"
            "Call this function after all the histograms have been added with calls to :py:meth:`addHistogram()`. Only "
            "after calling this function may you access the averaged histogram in the current histogram object.")
+      .def_pickle(histogram_pickle_suite<Kl, true>())
       ;
   }
   logger.debug("AveragedSimpleRealHistogram...");
@@ -381,6 +548,8 @@ void py_tomo_histogram()
                               "This class is identical in functionality to :py:class:`AveragedSimpleHistogram`, except "
                               "that the histograms which are to be averaged are :py:class:`UniformBinsRealHistogram` "
                               "objects."
+                              "\n\n"
+                              "|picklable|"
                               "\n\n"
                               ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
                               "histogram data.  The data stored in the current "
@@ -415,6 +584,7 @@ void py_tomo_histogram()
            "finalize()\n\n"
            "Call this function after all the histograms have been added with calls to :py:meth:`addHistogram()`. Only "
            "after calling this function may you access the averaged histogram in the current histogram object.")
+      .def_pickle(histogram_pickle_suite<Kl, true>())
       ;
   }
   logger.debug("AveragedErrorBarHistogram...");
@@ -435,6 +605,8 @@ void py_tomo_histogram()
                               "objects, i.e. each histogram added already has information about error bars.  Those "
                               "error bars are then combined appropriately, as described in :tomocxx:`the theory about "
                               "how this class is implemented <page_theory_averaged_histogram.html>`."
+                              "\n\n"
+                              "|picklable|"
                               "\n\n"
                               ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
                               "histogram data.  The data stored in the current "
@@ -471,6 +643,7 @@ void py_tomo_histogram()
            "finalize()\n\n"
            "Call this function after all the histograms have been added with calls to :py:meth:`addHistogram()`. Only "
            "after calling this function may you access the averaged histogram in the current histogram object.")
+      .def_pickle(histogram_pickle_suite<Kl, true>())
       ;
   }
 

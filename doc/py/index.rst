@@ -7,7 +7,8 @@
 Tomographer Python Interface (|version|)
 ========================================
 
-The `tomographer` package: Practical, Reliable Error Bars in Quantum Tomography.
+The `tomographer` package provides tools for practical and reliable error bars
+in quantum tomography.
 
 These Python bindings provide an easy-to-use interface to the underlying C++
 routines.  If you are interested, :tomocxx:`here is the API documentation for
@@ -22,6 +23,12 @@ designed to allow a seamless integration of our tomography procedure into an
 existing experimental workflow.  Currently, there is only one "core task"
 implemented, :py:func:`tomographer.tomorun.tomorun()`, which is an alternative
 to the `tomorun` executable program.
+
+Observe that some classes may be loaded and dumped using the :py:mod:`pickle`
+module.  You may find this useful for caching intermediate results or for saving
+the result of a computation.  Classes which can be :py:mod:`pickle`\ d are
+documented as such.
+
 
 Modules and classes
 -------------------

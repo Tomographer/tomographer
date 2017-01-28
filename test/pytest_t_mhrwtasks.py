@@ -73,7 +73,39 @@ class MHRWTasksStuff(unittest.TestCase):
                               tomographer.BinningAnalysis.NOT_CONVERGED,
                               tomographer.BinningAnalysis.UNKNOWN_CONVERGENCE) )
 
+    def test_pickle(self):
+        hist = tomographer.AveragedErrorBarHistogram(0, 1, 4)
+        stats_collector_result = tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult(
+            hist,
+            np.array([ [ 1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12] ]),
+            np.array([tomographer.BinningAnalysis.CONVERGED,
+                      tomographer.BinningAnalysis.NOT_CONVERGED,
+                      tomographer.BinningAnalysis.UNKNOWN_CONVERGENCE])
+        )
+        mhrw_task_result = tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult(
+            stats_collector_result,
+            tomographer.MHRWParams(0.03, 37, 400, 65538),
+            0.27
+        )
+        import pickle
+        s = pickle.dumps(mhrw_task_result)
+        print("PICKLE:\n"+str(s))
+        mhrw_task_result2 = pickle.loads(s)
+        
+        m = mhrw_task_result
+        m2 = mhrw_task_result2
+        self.assertAlmostEqual(m.acceptance_ratio, m2.acceptance_ratio)
+        self.assertAlmostEqual(m.mhrw_params.step_size, m2.mhrw_params.step_size)
+        self.assertEqual(m.mhrw_params.n_sweep, m2.mhrw_params.n_sweep)
+        self.assertEqual(m.mhrw_params.n_therm, m2.mhrw_params.n_therm)
+        self.assertEqual(m.mhrw_params.n_run, m2.mhrw_params.n_run)
+        npt.assert_array_almost_equal(m.stats_collector_result.hist.bins, m2.stats_collector_result.hist.bins)
+        npt.assert_array_almost_equal(m.stats_collector_result.hist.delta, m2.stats_collector_result.hist.delta)
+        npt.assert_array_almost_equal(m.stats_collector_result.error_levels, m2.stats_collector_result.error_levels)
+        npt.assert_array_equal(m.stats_collector_result.converged_status, m2.stats_collector_result.converged_status)
+
 #
+
 
 
 # normally, this is not needed as we are being run via pyruntest.py, but it might be

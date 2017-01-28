@@ -257,6 +257,18 @@ class Histograms(unittest.TestCase):
             if line:
                 self.assertEqual(len(line), 120)
 
+        import pickle
+        h = HCl(2.0, 3.0, 5)
+        load_values_maybe_error_bars(h, np.array([10, 20, 30, 40, 50]), np.array([1, 2, 3, 4, 5]), 28)
+        s = pickle.dumps(h)
+        print("PICKLE:\n"+str(s))
+        h2 = pickle.loads(s)
+        self.assertAlmostEqual(h2.params.min, h.params.min)
+        self.assertAlmostEqual(h2.params.max, h.params.max)
+        self.assertEqual(h2.params.num_bins, h.params.num_bins)
+        npt.assert_array_almost_equal(h2.bins, h.bins)
+        if has_error_bars: npt.assert_array_almost_equal(h2.delta, h.delta)
+
 
     def test_AveragedSimpleHistogram(self):
         self.do_test_hist(tomographer.AveragedSimpleHistogram, float, True)
@@ -361,6 +373,32 @@ class Histograms(unittest.TestCase):
         self.assertAlmostEqual(avghist.params.max, param2.max)
         self.assertEqual(avghist.params.num_bins, param2.num_bins)
         
+        # test pickling
+        import pickle
+        avghist = AvgHCl(param2)
+        # add some histograms
+        h = BaseHCl(param2)
+        if not base_has_error_bars:
+            h.load(np.array(range(20)))
+        else:
+            h.load(np.array(range(20)), np.array(range(20))/10.0)
+        avghist.addHistogram(h)
+        h = BaseHCl(param2)
+        if not base_has_error_bars:
+            h.load(np.array(range(20)))
+        else:
+            h.load(np.array(range(20)), np.array(range(20))/10.0)
+        avghist.addHistogram(h)
+        # and now do the pickling
+        s = pickle.dumps(avghist)
+        avghist2 = pickle.loads(s)
+        self.assertAlmostEqual(avghist2.params.min, avghist.params.min)
+        self.assertAlmostEqual(avghist2.params.max, avghist.params.max)
+        self.assertEqual(avghist2.params.num_bins, avghist.params.num_bins)
+        npt.assert_array_almost_equal(avghist2.bins, avghist.bins)
+        npt.assert_array_almost_equal(avghist2.delta, avghist.delta)
+        self.assertEqual(avghist2.num_histograms, avghist.num_histograms)
+
 
 
 

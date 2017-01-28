@@ -73,9 +73,9 @@ class _SimpleProgressBar_ConsoleImpl(object):
         return self
 
     def progress(self, fraction_done, addinfo=None):
-        totw = 80 - 8;
+        totw = 80 - 9;
         w = int(fraction_done*totw)
-        print("|{}{}| {:5.2%}".format('*'*w, ' '*(totw-w), fraction_done))
+        print("|{}{}| {:5.2%}".format('>'*w, ' '*(totw-w), fraction_done))
         if addinfo:
             print(addinfo)
 

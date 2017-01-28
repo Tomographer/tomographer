@@ -154,24 +154,6 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, boost::python
 
 
 
-// namespace Py {
-
-// struct MHRandomWalkValueHistogramTaskResult
-// {
-//   MHRWParams mhrw_params;
-//   double acceptance_ratio;
-// };
-
-// }
-
-
-
-
-
-
-
-
-
 
 
 #endif

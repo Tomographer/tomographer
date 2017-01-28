@@ -390,6 +390,15 @@ struct ValueHistogramWithBinningMHRWStatsCollectorResult
   {
   }
 
+  //! Simple constructor with direct initialization of fields
+  template<typename EigenDerived1, typename EigenDerived2>
+  ValueHistogramWithBinningMHRWStatsCollectorResult(const HistogramType & hist_,
+                                                    const Eigen::DenseBase<EigenDerived1> & error_levels_,
+                                                    const Eigen::DenseBase<EigenDerived2> & converged_status_)
+    : hist(hist_), error_levels(error_levels_), converged_status(converged_status_)
+  {
+  }
+
   //! Constructor which initializes the fields from the histogram and binning analysis type.
   template<typename BinningAnalysisType>
   ValueHistogramWithBinningMHRWStatsCollectorResult(HistogramParams p, const BinningAnalysisType & b)

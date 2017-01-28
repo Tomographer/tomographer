@@ -43,6 +43,16 @@ namespace boost { namespace core {  using boost::units::detail::demangle; } }
 typedef double RealType;
 typedef int CountIntType;
 
+namespace Py {
+
+typedef Eigen::Matrix<RealType, Eigen::Dynamic, 1> RealVectorType;
+typedef Eigen::Matrix<RealType, Eigen::Dynamic, Eigen::Dynamic> RealMatrixType;
+typedef Eigen::Matrix<std::complex<RealType>, Eigen::Dynamic, 1> CplxVectorType;
+typedef Eigen::Matrix<std::complex<RealType>, Eigen::Dynamic, Eigen::Dynamic> CplxMatrixType;
+
+typedef Eigen::Matrix<CountIntType, Eigen::Dynamic, 1> CountIntVectorType;
+
+};
 
 
 #endif

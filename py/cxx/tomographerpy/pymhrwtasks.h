@@ -11,6 +11,7 @@
 #include <tomographer/mhrwtasks.h>
 
 #include <tomographerpy/pyhistogram.h>
+#include <tomographerpy/pymhrw.h>
 
 
 namespace Py {
