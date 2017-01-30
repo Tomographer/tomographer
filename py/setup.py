@@ -23,11 +23,10 @@ import numpy # numpy.get_include()
 # Boost_PYTHON_LIBRARY_RELEASE=/path/to/libboost_python-py35.so
 # EIGEN3_INCLUDE_DIR=/path/to/eigen/headers
 # OpenMP_CXX_FLAGS=-fopenmp=libomp
+# CMAKE_CXX11_STANDARD_COMPILE_OPTION=-std=c++11
 #
-# also handled by us: (cannot be found in cmake cache)
-# CXX11_STD_FLAGS=-std=c++11
-#
-# CMAKE_CACHE_FILE=path/to/CMakeCache.txt -- read the above variables from cache
+# To read the above variables from cache:
+# CMAKE_CACHE_FILE=path/to/CMakeCache.txt
 #
 
 
@@ -92,7 +91,7 @@ vv = Vars(cmake_cache_file, {
     'Boost_PYTHON_LIBRARY_RELEASE': '/usr/lib/libboost_python.so',
     'EIGEN3_INCLUDE_DIR': '/usr/include',
     'OpenMP_CXX_FLAGS': '-fopenmp',
-    'CXX11_STD_FLAGS': '-std=c++11',
+    'CMAKE_CXX11_STANDARD_COMPILE_OPTION': '-std=c++11',
 })
 
 
@@ -177,7 +176,7 @@ library_dirs = [
     os.path.dirname(vv.get("Boost_PYTHON_LIBRARY_RELEASE"))
 ]
 cflags = [
-    vv.get('CXX11_STD_FLAGS'),
+    vv.get('CMAKE_CXX11_STANDARD_COMPILE_OPTION'),
     vv.get("OpenMP_CXX_FLAGS"),
     '-DTOMOGRAPHER_VERSION=\"{}\"'.format(version),
 ]
