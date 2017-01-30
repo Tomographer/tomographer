@@ -21,7 +21,7 @@ install:
   # hack for preventing travis to interrupt after 10min of no output -- see
   # https://github.com/travis-ci/travis-ci/issues/6591
   - function write_visual_bells() { while true; do echo -en "\a"; sleep 10; done; }; write_visual_bells &
-  - CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} sudo -H $PIP install $PIP_EXTRAS cvxpy >pip_output.txt 2>&1 || cat pip_output.txt
+  - (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} sudo -H $PIP install $PIP_EXTRAS cvxpy >pip_output.txt 2>&1 || cat pip_output.txt )
 
 cache:
   pip: true
@@ -43,7 +43,7 @@ script:
   - $CMAKE_PATH/bin/cmake .. -DCMAKE_C_COMPILER=$CMAKE_C_COMPILER -DCMAKE_CXX_COMPILER=$CMAKE_CXX_COMPILER $CMAKE_COMPILER_ARGS -DBUILD_TOMOPY=on -DTOMOGRAPHER_ENABLE_TESTS=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH" -DMATIO_INCLUDE_DIR="$MATIO_PATH/_install/include" -DMATIO_LIBRARY="$MATIO_PATH/_install/lib/libmatio.so" -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE  || cat build/CMakeFiles/CMakeError.log
   - make VERBOSE=1
   - CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all $CMAKE_PATH/bin/ctest --timeout 300
-  - (cd ../py; CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPIELR CMAKE_CACHE_FILE=../build/CMakeCache.txt $PYTHON_EXECUTABLE setup.py build)
+  - (cd ../py; CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPILER CMAKE_CACHE_FILE=../build/CMakeCache.txt $PYTHON_EXECUTABLE setup.py build)
 
 matrix:
   include:
