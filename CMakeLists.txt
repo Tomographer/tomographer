@@ -275,6 +275,8 @@ if(TOMOGRAPHER_ENABLE_TESTS)
   # Enable testing for the project
   enable_testing()
 
+  option(TOMOGRAPHER_TEST_SETUPPY_BUILD "Add tests for python module built separately with setup.py bdist_egg" off)
+
   message(STATUS "Will build tomographer tests. Use `make test' or `ctest' to run the tests.")
   add_subdirectory(test)
   

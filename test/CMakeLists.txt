@@ -272,7 +272,7 @@ else()
   endmacro()
 endif() # BUILD_TOMOPY
 
-if(TOMOGRAPHER_TEST_WITH_SEPARATE_PYTHON_BUILD)
+if(TOMOGRAPHER_TEST_SETUPPY_BUILD)
   message(STATUS "Adding python tests for setup.py-built module; make sure you set \$TOMOGRAPHER_PYTHONPATH at runtime.")
   macro(addTomographerPyTest_setuppybuilt pymodule)
     add_test(NAME ${pymodule}_setuppybuilt
