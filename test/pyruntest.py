@@ -8,6 +8,7 @@ import argparse
 parser = argparse.ArgumentParser()
 parser.add_argument('--tomographer-cxx-lib', help='Location of the compiled _tomographer_cxx library.')
 parser.add_argument('--tomographer-source', help='Location of the tomographer sources (root directory).')
+parser.add_argument('--mode', action='store', dest='mode', default='cmake-built')
 parser.add_argument('--test', help='Name of test to run (python module name in test/ subdirectory).')
 
 print("\npyruntest: \n" + "\n".join( ["\t"+x for x in sys.argv] ) + "\n\n")
@@ -17,14 +18,23 @@ print("\npyruntest: \n" + "\n".join( ["\t"+x for x in sys.argv] ) + "\n\n")
 TomographerPyMod = args.tomographer_cxx_lib
 TomographerSourcePath = args.tomographer_source
 
-# add locations to sys.path
-sys.path = [
-    os.path.dirname(TomographerPyMod),
-    os.path.join(TomographerSourcePath, 'py'),
-    os.path.join(TomographerSourcePath, 'test')
-] + sys.path
+morepaths = []
+if args.mode == 'cmake-built':
+    morepaths = [
+        os.path.dirname(TomographerPyMod),
+        os.path.join(TomographerSourcePath, 'py'),
+        os.path.join(TomographerSourcePath, 'test')
+        ]
+elif args.mode == 'setup-py-built':
+    morepaths = [ os.path.abspath(os.environ.get('TOMOGRAPHER_PYTHONPATH', '')) ]
+else:
+    raise ValueError("Unknown python test run mode: %s"%(args.mode))
 
-#print(sys.path)
+
+# add locations to sys.path
+sys.path = morepaths + sys.path
+
+print(sys.path)
 
 
 #

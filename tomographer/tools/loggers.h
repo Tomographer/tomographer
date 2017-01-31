@@ -1567,7 +1567,7 @@ public:
     std::string s(origin);
 
     int loglevel = -1;
-    int last_matched_length = 0;
+    std::size_t last_matched_length = 0;
     for (ConstIterator it = levels_set.begin(); it != levels_set.end(); ++it) {
       const std::size_t mlen = tomo_internal::matched_length((*it).first, s);
       if (mlen > last_matched_length) {

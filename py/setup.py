@@ -1,7 +1,7 @@
 #setup.py
 
-from distutils.core import setup
-from distutils.extension import Extension
+from setuptools import setup
+from setuptools.extension import Extension
 
 import codecs
 import os.path
@@ -215,6 +215,8 @@ setup(name="tomographer",
       url='https://github.com/Tomographer/tomographer/',
       packages=[
           'tomographer',
+          'tomographer.tools',
+          'tomographer.tools.densedm',
       ],
       ext_modules=[
           Extension(name="_tomographer_cxx",

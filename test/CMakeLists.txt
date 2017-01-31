@@ -62,14 +62,14 @@ add_definitions(-DTOMOGRAPHER_TEST_DATA_DIR="${TOMOGRAPHER_TEST_DATA_DIR}")
 # Add the tests.
 # ==============================================================================
 
-set(LIST_OF_ALL_TESTS "")
+#set(LIST_OF_ALL_TESTS "")
 
 macro(addTomographerTest test_cxx NeedsList)
 
   # file name without extension (NAME_WE)
   get_filename_component(test_name ${test_cxx} NAME_WE)
         
-  set(LIST_OF_ALL_TESTS ${LIST_OF_ALL_TESTS} ${test_name})
+#  set(LIST_OF_ALL_TESTS ${LIST_OF_ALL_TESTS} ${test_name})
 
   # NEED lapack in order to run test suite---don't want tests silently not to run because
   # we didn't realize lapack wasn't found
@@ -257,32 +257,59 @@ else() # BUILD_TOMORUN
 endif()
 
 
-if (BUILD_TOMOPY)
+# Python tests.  Potentially prepare two versions -- one for cmake-built python module and
+# one for setup.py-built python module.
 
-  macro(addTomographerPyTest pymodule)
+if (BUILD_TOMOPY)
+  macro(addTomographerPyTest_cmake pymodule)
     add_test(NAME ${pymodule}
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/pyruntest.py" "--test=${pymodule}" "--tomographer-cxx-lib=$<TARGET_FILE:tomographerpy>" "--tomographer-source=${CMAKE_SOURCE_DIR}"
       )
   endmacro()
+else()
+  macro(addTomographerPyTest_cmake pymodule)
+  endmacro()
+endif() # BUILD_TOMOPY
 
-  addTomographerPyTest(pytest_tomographer)
-  addTomographerPyTest(pytest_t_multiproc)
-  addTomographerPyTest(pytest_t_densedm)
-  addTomographerPyTest(pytest_t_mhrwtasks)
-  addTomographerPyTest(pytest_t_tomorun)
-  addTomographerPyTest(pytest_t_querrorbars)
-  addTomographerPyTest(pytest_t_jpyutil)
-  addTomographerPyTest(pytest_t_tools_densedm)
+if(TOMOGRAPHER_TEST_WITH_SEPARATE_PYTHON_BUILD)
+  message(STATUS "Adding python tests for setup.py-built module; make sure you set \$TOMOGRAPHER_PYTHONPATH at runtime.")
+  macro(addTomographerPyTest_setuppybuilt pymodule)
+    add_test(NAME ${pymodule}_setuppybuilt
+      WORKING_DIRECTORY "${CMAKE_BINARY_DIR}" # other dir, make sure we don't pick up a cmake-built _tomographer_cxx.so
+      COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/pyruntest.py" "--test=${pymodule}" "--mode=setup-py-built" "--tomographer-source=${CMAKE_SOURCE_DIR}"
+      )
+  endmacro()
+else()
+  macro(addTomographerPyTest_setuppybuilt pymodule)
+  endmacro()
+endif() # TOMOGRAPHER_TEST_WITH_SEPARATE_PYTHON_BUILD
 
-else() # BUILD_TOMOPY
+macro(addTomographerPyTest pymodule)
+  addTomographerPyTest_cmake(${pymodule})
+  addTomographerPyTest_setuppybuilt(${pymodule})
+endmacro()
 
+# add failing test if neither cmake nor setup.py python is being tested
+if (NOT BUILD_TOMOPY AND NOT TOMOGRAPHER_TEST_WITH_SEPARATE_PYTHON_BUILD)
   add_test(NAME tomographerpy_NOT_BUILT
     COMMAND "false"
     )
-
 endif()
 
+
+addTomographerPyTest(pytest_tomographer)
+addTomographerPyTest(pytest_t_multiproc)
+addTomographerPyTest(pytest_t_densedm)
+addTomographerPyTest(pytest_t_mhrwtasks)
+addTomographerPyTest(pytest_t_tomorun)
+addTomographerPyTest(pytest_t_querrorbars)
+addTomographerPyTest(pytest_t_jpyutil)
+addTomographerPyTest(pytest_t_tools_densedm)
+
+
+
+# ------------------------------------------------
 
 
 message(STATUS "Added test targets")
