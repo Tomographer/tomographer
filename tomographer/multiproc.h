@@ -158,7 +158,7 @@ struct FullStatusReport
        << "  "
        << elapsed_s << "s elapsed"
        << "  -  "
-       << "Runs Completed: " << num_completed << "/" << num_total_runs
+       << num_completed << "/" << num_total_runs << " runs completed"
        << "  -  "
        << std::fixed << std::setw(5) << std::setprecision(2) << totalFractionDone() * 100.0 << "% total done"
        << "\n";
