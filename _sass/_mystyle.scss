@@ -113,6 +113,11 @@ h1, h2, h3, h4, h5, h6 {
     padding-bottom: 2em;
 }
 
+@media screen and (min-width: 940px) {
+    .site-wrapper-content {
+        padding-right: 20%;
+    }
+}
 
 //
 // Default style of content items.
@@ -184,12 +189,30 @@ h1, h2, h3, h4, h5, h6 {
         background-color: $pre-bg-color;
     }
 
-    pre {
+    pre, div.highlighter-rouge {
+        display: block;
+        padding: 9.5px;
+        margin: 0 0 10px;
+        line-height: 1.42857143;
+        color: #333;
+        word-break: break-all;
+        word-wrap: break-word;
+        background-color: #f5f5f5;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        font-size: 0.9em;
+        white-space: pre;
+    }
+    div.highlighter-rouge, code, kbd, pre, samp {
+        font-family: Menlo,Monaco,Consolas,"Courier New",monospace;
+    }
+
+    pre, div.highlighter-rouge {
         border-radius: 3px;
         color: $pre-text-color;
         background-color: $pre-bg-color;
         border: $pre-border;
-        font-size: inherit;
+        font-size: 0.9em;
         
         > code {
             padding: 0px;

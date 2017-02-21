@@ -57,9 +57,17 @@
     }
    
 
+    .home-main-container {
+        margin-top: 40px;
+        text-align: center;
+    }
+
     .home-main-ul {
-        width: 50%;
-        margin-left: 25%;
+        //width: 50%;
+        text-align: left;
+        padding-left: 0px;
+        display: inline-block; // get aligned in the center
+        //margin-left: 25%;
 
         li {
             list-style-type: none;

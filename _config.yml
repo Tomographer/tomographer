@@ -7,7 +7,7 @@ email: phfaist@caltech.edu
 description: > # this means to ignore newlines until "baseurl:"
   Tomographer Project - reliable data analysis for quantum tomography
 baseurl: "/tomographer" # the subpath of your site, e.g. /blog/
-url: "http://tomographer.github.io/" # the base hostname & protocol for your site
+url: "https://tomographer.github.io/" # the base hostname & protocol for your site
 twitter_username: fkdfnlkdasfldnsajf
 github_username:  Tomographer
 
@@ -20,7 +20,16 @@ highlighter: rouge
 
 kramdown:
   input: GFM
-  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    disable: true
+
+#
+# Files not to exclude
+#
+include:
+  # These dirs used by sphinx have an initial underscore and need to be explicitly included
+  - _static
+  - _sources
 
 
 # ------------------------------------------

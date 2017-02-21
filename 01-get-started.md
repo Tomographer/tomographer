@@ -116,14 +116,28 @@ steps to get started and analyze data from your experiment:
     executable.
 
 2.  Open your favorite Python environment (e.g. edit a Python script or open an IPython or
-    Jupyter notebook session), and start off with [this minimal example
-    script]({{ '/simple_tomorun_example.py' | prepend: site.baseurl }}).
+    Jupyter notebook session), and start off with [this one-qubit
+    example]({{site.github_blob_baseurl}}master/examples/simple-qubit/simple_example.py).
 
     Note: The script is designed to display well within a Jupyter notebook, including
     real-time feedback on the progress of the random walk.
 
-2. Read the description of the [`tomographer.tomorun.tomorun()`]({{ site.baseurl
-   }}/api-doc/{{ site.tomographer_latest_version
-   }}/html/py/tomographer.tomorun.html#tomographer.tomorun.tomorun) Python function, which
-   is the main entry point to our procedure from Python code.
+3.  Edit at wish to get a hang of how the Python call works.  Read the documentation of
+    the [`tomographer.tomorun.tomorun()`]({{ site.baseurl }}/api-doc/{{
+    site.tomographer_latest_version
+    }}/html/py/tomographer.tomorun.html#tomographer.tomorun.tomorun) Python function, the
+    main entry point to our procedure from Python code.
+
+4.  As in the example, the histogram fit, as well as the calculation of the quantum error
+    bars can be handled by [some provided python
+    routines]({{site.baseurl}}/api-doc/{{site.tomographer_latest_version}}/html/py/tomographer.querrorbars.html)
+
+5. Write up and publish paper. We will be very happy if you cite us :)
+
+   > 1. Philippe Faist and Renato Renner. Practical and Reliable Error Bars in
+   >    Quantum Tomography. Phys. Rev. Lett. 117:1, 010404 (2016).
+   >    arXiv:1509.06763
+   > 
+   > 2. Philippe Faist. The Tomographer Project. Available at:
+   >    https://github.com/Tomographer/tomographer/
 
