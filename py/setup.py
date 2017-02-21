@@ -218,10 +218,40 @@ if CXX:
 
 
 #
+# Figure out version info
+#
+
+version = None
+if os.path.exists(os.path.join(thisdir, '..', 'VERSION')):
+    with open('../VERSION') as f:
+        version = ensure_str(f.read()).strip()
+try:
+    version = ensure_str(subprocess.check_output([vv.get('GIT'), 'describe', '--tags', 'HEAD'])).strip()
+except Exception as e:
+    print("ERROR: Can't retrieve the current code version.")
+    raise
+# Normalize version string for PIP/setuptools
+pip_version = version
+# remove initial 'v' in 'v3.1'
+if pip_version[0] == 'v':
+    pip_version = pip_version[1:]
+# make PEP-440 compatible if it is a specific git-describe commit number
+m = re.match(r'^(?P<vtag>.*)-(?P<ncommits>\d+)-(?P<githash>g[a-fA-F0-9]+)$', pip_version)
+if m:
+    pip_version = "{vtag}+git{ncommits}.{githash}".format(**m.groupdict())
+
+
+
+
+#
 # Tell the user everything.
 #
 
 print("""
+  Welcome to the setup.py script for Tomographer {version} ({pip_version}).
+""".format(version=version, pip_version=pip_version))
+
+print("""\
   The `tomographer` python package requires some external C++ libraries and
   compiler features. You may need to specify their location with the use of
   environment variables. Current values (detected or specified manually) are:
@@ -240,19 +270,22 @@ else:
 
 if sys.platform == 'darwin':
     print("""
-  NOTE: Apple's default compiler on Mac OS X does not provide OpenMP. Remember
+  NOTE: Apple's default compiler on Mac OS X does not support OpenMP. Remember
   to install a custom LLVM or GCC if you want to dramatically speed up execution
   time. Specify the path to custom compilers with the environment variables "CC"
   and "CXX". To compile without OpenMP (and run tasks serially), set
   "OpenMP_CXX_FLAGS" to an empty string.
 
-  NOTE: If you're using homebrew, the following will get you started with all
-  dependencies and homebrew's python3:
+
+  NOTE: If you're using homebrew, the following commands will get you started
+  with homebrew's python3 along with all the required dependencies:
 
     > brew install llvm eigen python3 boost
     > brew install boost-python --with-python3
     > CC=/usr/local/opt/llvm/bin/clang CXX=/usr/local/opt/llvm/bin/clang++ \\
-      LDFLAGS='-L/usr/local/opt/llvm/lib' /usr/local/bin/python3 setup.py install
+        LDFLAGS='-L/usr/lib -L/usr/local/opt/llvm/lib' \\
+        /usr/local/bin/python3 setup.py install
+
 """)
 
 #print("DEBUG VARIABLE CACHE: ")
@@ -264,19 +297,8 @@ if sys.platform == 'darwin':
 
 
 #
-# Figure out version info
+# Utilities for passing on the options below
 #
-
-version = None
-if os.path.exists(os.path.join(thisdir, '..', 'VERSION')):
-    with open('../VERSION') as f:
-        version = ensure_str(f.read()).strip()
-try:
-    version = ensure_str(subprocess.check_output([vv.get('GIT'), 'describe', '--tags', 'HEAD'])).strip()
-except Exception as e:
-    print("ERROR: Can't retrieve the current code version.")
-    raise
-
 
 def libbasename(x):
     if x is None:
@@ -348,7 +370,7 @@ dep_headers = [ os.path.join('cxx', 'tomographerpy', x) for x in [
 #
 
 setup(name="tomographer",
-      version=version,
+      version=pip_version,
       description='Tomographer Python Interface',
       author='Philippe Faist',
       author_email='phfaist@caltech.edu',
