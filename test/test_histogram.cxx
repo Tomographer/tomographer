@@ -362,8 +362,10 @@ BOOST_AUTO_TEST_CASE(normalized)
                10 );
     auto hn = hist.normalized();
     auto n = hist.normalization();
-    TOMO_STATIC_ASSERT_EXPR(std::is_same<decltype(hn)::Scalar, decltype(hist)::Scalar>::value) ;
-    TOMO_STATIC_ASSERT_EXPR(std::is_same<decltype(hn)::CountType, decltype(float(1)+int(1))>::value) ;
+    typedef std::is_same<decltype(hn)::Scalar, decltype(hist)::Scalar> test1td;
+    TOMO_STATIC_ASSERT_EXPR(test1td::value) ;
+    typedef std::is_same<decltype(hn)::CountType, decltype(float(1)+int(1))> test2td;
+    TOMO_STATIC_ASSERT_EXPR(test2td::value) ;
     MY_BOOST_CHECK_EIGEN_EQUAL(hn.bins, inline_vector_4<float>(0, 3, 19, 24)/n, tol_f);
     MY_BOOST_CHECK_EIGEN_EQUAL(hn.delta, inline_vector_4<float>(0, 1, 4, 3)/n, tol_f);
     MY_BOOST_CHECK_FLOATS_EQUAL(hn.off_chart, 10.f/n, tol_f);
@@ -375,8 +377,10 @@ BOOST_AUTO_TEST_CASE(normalized)
                10 );
     auto hn = hist.normalized<double>();
     // the x-axis Scalar doesn't change, it's the count type that does.
-    TOMO_STATIC_ASSERT_EXPR(std::is_same<decltype(hn)::Scalar, decltype(hist)::Scalar>::value) ;
-    TOMO_STATIC_ASSERT_EXPR(std::is_same<decltype(hn)::CountType, double>::value) ;
+    typedef std::is_same<decltype(hn)::Scalar, decltype(hist)::Scalar> td1;
+    TOMO_STATIC_ASSERT_EXPR(td1::value) ;
+    typedef std::is_same<decltype(hn)::CountType, double> td2;
+    TOMO_STATIC_ASSERT_EXPR(td2::value) ;
     auto n = hist.normalization<double>();
     MY_BOOST_CHECK_EIGEN_EQUAL(hn.bins, inline_vector_4<double>(0, 3, 19, 24)/n, tol);
     MY_BOOST_CHECK_EIGEN_EQUAL(hn.delta, inline_vector_4<double>(0, 1, 4, 3)/n, tol);
