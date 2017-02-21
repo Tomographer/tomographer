@@ -84,6 +84,17 @@ elements of its standard library are used. Also, make sure it supports OpenMP or
 you won't benefit from parallelization. If you use LLVM/Clang++, you might need
 to install additional packages for OpenMP (e.g. `libomp`).
 
+NOTE: Apple's default compiler does not support OpenMP. To avoid tomographer
+from running tasks serially, you should install a recent version of LLVM/clang
+or g++ manually.
+
+Apple Mac OS X with [homebrew](https://brew.sh): the following commands will get
+you started with all the prerequisites and with homebrew's python3.
+
+    > brew tap homebrew/science
+    > brew install llvm eigen python3 libmatio boost
+    > brew install boost-python --with-python3
+
 Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
 
 
