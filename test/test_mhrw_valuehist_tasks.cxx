@@ -440,7 +440,7 @@ struct NormValueCalculator
   NormValueCalculator() { }
 
   template<typename PointType>
-  inline ValueType getValue(PointType && x) const { return x.norm(); }
+  inline ValueType getValue(PointType && x) const { return x.template cast<ValueType>().norm(); }
 };
 
 template<typename BaseCData>

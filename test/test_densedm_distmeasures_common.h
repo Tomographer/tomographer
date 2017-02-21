@@ -99,9 +99,9 @@ struct distmeasures_qubit_fixture
     case 4:
       return boost::math::constants::half_root_two<OtherRealScalar>();
     case 5:
-      return 0.2;
+      return OtherRealScalar(0.2);
     case 6:
-      return 0.5;
+      return OtherRealScalar(0.5);
     default:
       fprintf(stderr, "INVALID 'which' for test fixture trdist_with_1: %d", which);
       assert(false);
@@ -128,7 +128,10 @@ struct distmeasures_qudit4_fixture
   distmeasures_qudit4_fixture()
     : dmt()
   {
-    typedef typename DMTypes::ComplexScalar CD;
+    //typedef typename DMTypes::ComplexScalar CD;
+    auto CD = [](double re, double im) -> typename DMTypes::ComplexScalar {
+      return typename DMTypes::ComplexScalar(typename DMTypes::RealScalar(re), typename DMTypes::RealScalar(im));
+    };
     
     rho1 <<
       CD(1.895222898432606e-01,  + 0.000000000000000e+00),      CD(1.084025272341251e-01,  + 1.516096020672695e-02),
@@ -167,7 +170,7 @@ struct distmeasures_qudit4_fixture
     case 1:
       return 1;
     case 2:
-      return 7.611036198843356e-01;
+      return OtherRealScalar(7.611036198843356e-01);
     default:
       fprintf(stderr, "INVALID 'which' for test fixture fid_with_1: %d", which);
       assert(false);
@@ -180,7 +183,7 @@ struct distmeasures_qudit4_fixture
     case 1:
       return 0;
     case 2:
-      return 6.208689785356507e-01;
+      return OtherRealScalar(6.208689785356507e-01);
     default:
       fprintf(stderr, "INVALID 'which' for test fixture trdist_with_1: %d", which);
       assert(false);

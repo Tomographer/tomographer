@@ -78,14 +78,14 @@ def find_lib(libname, pkgname, libnamesuffixes=[]):
         for s in libdirsuffixes:
             if '{suffix' not in i:
                 i += '{suffix}'
-            print("i={!r}".format(i))
+            #print("find_lib:TRYING i={!r}".format(i))
             basedn = i.format(suffix=s)
             #
             for lnp in ['lib', '']: # lib-name-prefixes
                 for lns in libnamesuffixes + ['']: # lib-name-suffixes
                     for fns in ['.so', '.dylib', '.dll', '.a']: # file name suffixes for library
                         dn = os.path.join(basedn+s, lnp+libname+lns+fns)
-                        print("find_lib:TRYING dn={!r}".format(dn))
+                        #print("find_lib:TRYING dn={!r}".format(dn))
                         if os.path.isfile(dn):
                             return dn
     return None
@@ -224,7 +224,7 @@ if CXX:
 print("""
   The `tomographer` python package requires some external C++ libraries and
   compiler features. You may need to specify their location with the use of
-  environment variables. Current values are:
+  environment variables. Current values (detected or specified manually) are:
 
 {}""".format("\n".join([ "    {}={}".format(k,v) for k,v in vv.d.items() ])))
 

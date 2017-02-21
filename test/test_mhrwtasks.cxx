@@ -86,7 +86,7 @@ BOOST_AUTO_TEST_CASE(get_task_inputs)
   std::sort(inputs.begin(), inputs.end());
   auto last = std::unique(inputs.begin(), inputs.end());
   BOOST_CHECK(last == inputs.end());
-  BOOST_CHECK_EQUAL(inputs.size(), 1024);
+  BOOST_CHECK_EQUAL(inputs.size(), 1024u);
 }
 
 BOOST_AUTO_TEST_SUITE_END(); // cdatabase

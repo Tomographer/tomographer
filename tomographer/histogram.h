@@ -427,7 +427,7 @@ public:
    * \f]
    *
    */
-  template<typename NewCountType = Scalar>
+  template<typename NewCountType = decltype(Scalar(1) + CountType(1))>
   inline NewCountType normalization() const
   {
     // DON'T DO NewCountType(binResolution())*NewCountType(bins.sum()) as we may loose

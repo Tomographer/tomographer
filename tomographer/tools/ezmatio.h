@@ -1364,7 +1364,7 @@ private:
                                        !Tools::isComplex<MATType>::value)>
   static inline RetType get_value(const matvar_t * matvar_ptr, const std::string & )
   {
-    return (RetType) ((const MATType *) matvar_ptr->data)[0];
+    return RetType( ((const MATType *) matvar_ptr->data)[0] );
   }
   
   template<typename MATType,
@@ -1372,7 +1372,7 @@ private:
                                        !Tools::isComplex<MATType>::value)>
   static inline RetType get_value(const matvar_t * matvar_ptr, const std::string & )
   {
-    return RetType( ((const MATType *) matvar_ptr->data)[0],
+    return RetType( typename Tools::ComplexRealScalar<RetType>::type(((const MATType *) matvar_ptr->data)[0]),
                     0 );
   }
   
@@ -1392,8 +1392,8 @@ private:
     typedef typename Tools::ComplexRealScalar<MATType>::type MATRealType;
     const mat_complex_split_t * cdata = (mat_complex_split_t*) matvar_ptr->data;
 
-    return RetType( ((const MATRealType *) cdata->Re)[0],
-                    ((const MATRealType *) cdata->Im)[0] );
+    return RetType( typename Tools::ComplexRealScalar<RetType>::type( ((const MATRealType *) cdata->Re)[0] ),
+                    typename Tools::ComplexRealScalar<RetType>::type( ((const MATRealType *) cdata->Im)[0] ) );
   }
 
 };
@@ -1450,7 +1450,7 @@ public:
 
     // real value.
     std::size_t lin = linear_index(std::forward<IndexListType>(index));
-    return p_r_ptr[lin];
+    return (OutType)p_r_ptr[lin];
   }
   
   template<typename IndexListType,
@@ -1472,7 +1472,7 @@ public:
 
     // real value.
     std::size_t lin = linear_index(std::forward<IndexListType>(index));
-    return OutType( p_r_ptr[lin] , 0 );
+    return OutType( typename Eigen::NumTraits<OutType>::Real(p_r_ptr[lin]) , 0 );
   }
 
   template<typename IndexListType,
@@ -1486,7 +1486,8 @@ public:
 
     // complex value
     std::size_t lin = linear_index(std::forward<IndexListType>(index));
-    return OutType(p_cre_ptr[lin], p_cim_ptr[lin]);
+    return OutType( typename Eigen::NumTraits<OutType>::Real(p_cre_ptr[lin]),
+                    typename Eigen::NumTraits<OutType>::Real(p_cim_ptr[lin]) );
   }
 
 private:

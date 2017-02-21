@@ -466,8 +466,8 @@ BOOST_AUTO_TEST_CASE(minseverity)
   std::string recorded;
   DummyLoggerMinSeverity logger(Tomographer::Logger::DEBUG, &recorded);
   
-  BOOST_CHECK_EQUAL(Tomographer::Logger::LoggerTraits<DummyLoggerMinSeverity>::StaticMinimumSeverityLevel,
-                    Tomographer::Logger::WARNING); // what we declared above
+  BOOST_CHECK_EQUAL((int)Tomographer::Logger::LoggerTraits<DummyLoggerMinSeverity>::StaticMinimumSeverityLevel,
+                    (int)Tomographer::Logger::WARNING); // what we declared above
 
   BOOST_CHECK(DummyLoggerMinSeverity::staticallyEnabledFor<Tomographer::Logger::ERROR>());
   BOOST_CHECK(DummyLoggerMinSeverity::staticallyEnabledFor<Tomographer::Logger::WARNING>());
