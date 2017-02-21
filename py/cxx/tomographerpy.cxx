@@ -66,6 +66,22 @@ BOOST_PYTHON_MODULE(_tomographer_cxx)
 
   // the version of this library module
   boost::python::scope().attr("__version__") = TOMOGRAPHER_VERSION;
+  // add a version submodule with more precise version info
+  logger.debug("version module ... ");
+  boost::python::object versionmod(boost::python::borrowed(PyImport_AddModule("tomographer.version")));
+  boost::python::scope().attr("version") = versionmod;
+  {
+    // now inside submodule
+    boost::python::scope versionmodule(versionmod);
+    versionmod.attr("version_str") = TOMOGRAPHER_VERSION;
+    auto collections = boost::python::import("collections");
+    auto namedtuple = collections.attr("namedtuple");
+    boost::python::list verfields;
+    verfields.append("major"); 
+    verfields.append("minor");
+    auto VersionInfoTuple = namedtuple("VersionInfo", verfields);
+    versionmod.attr("version_info") = VersionInfoTuple(TOMOGRAPHER_VERSION_MAJ, TOMOGRAPHER_VERSION_MIN);
+  }
 
   // add info on how tomographer was compiled, so that other modules can use the same
   // tools

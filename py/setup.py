@@ -230,6 +230,12 @@ try:
 except Exception as e:
     print("ERROR: Can't retrieve the current code version.")
     raise
+
+# major/minor sections of version
+m = re.match(r'^v(?P<major>\d+)\.(?P<minor>\d+)', version)
+version_maj = int(m.group('major'))
+version_min = int(m.group('minor'))
+
 # Normalize version string for PIP/setuptools
 pip_version = version
 # remove initial 'v' in 'v3.1'
@@ -336,6 +342,8 @@ cflags = [
     vv.get('CMAKE_CXX11_STANDARD_COMPILE_OPTION'),
     vv.get("OpenMP_CXX_FLAGS"),
     '-DTOMOGRAPHER_VERSION=\"{}\"'.format(version),
+    '-DTOMOGRAPHER_VERSION_MAJ={}'.format(version_maj),
+    '-DTOMOGRAPHER_VERSION_MIN={}'.format(version_min),
 ]
 ldflags = [
     vv.get("OpenMP_CXX_FLAGS"),
