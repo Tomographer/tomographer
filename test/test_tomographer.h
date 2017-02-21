@@ -257,8 +257,12 @@ template<typename RealScalar>
 struct maybe_complex<true, RealScalar> { typedef std::complex<RealScalar> type; };
 
 
+template<typename ... Scalars>
+struct PromotedScalars {
+};
+// workaround for GCC 4.6: this needs to be a specialization -- see http://stackoverflow.com/a/2118537/1694896
 template<typename Scalar0, typename ... Scalars>
-struct PromotedScalars
+struct PromotedScalars<Scalar0, Scalars...>
 {
   typedef decltype( typename PromotedScalars<Scalar0>::RealScalar(1)
                     + typename PromotedScalars<Scalars...>::RealScalar(1) )  RealScalar;

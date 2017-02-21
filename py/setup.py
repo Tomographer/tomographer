@@ -401,5 +401,6 @@ setup(name="tomographer",
       # install headers in binary distribution
       package_data={
           'tomographer': ['cxx/tomographerpy/*.h'],
-      }
+      },
+      #include_package_data=True,
 )
