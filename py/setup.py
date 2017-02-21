@@ -1,5 +1,7 @@
 #setup.py
 
+from distutils.spawn import find_executable
+
 from setuptools import setup
 from setuptools.extension import Extension
 
@@ -11,8 +13,9 @@ import re
 
 import numpy # numpy.get_include()
 
+
 #
-# POSSIBLE ENVIRONMENT VARIABLES WHICH CAN BE SET:
+# POSSIBLE ENVIRONMENT VARIABLES WHICH CAN BE SET: -- doc printed on standard output anyway
 #
 # handled natively by setup.py:
 # CC=/path/to/compiler/gcc
@@ -30,9 +33,63 @@ import numpy # numpy.get_include()
 #
 
 
+
+
+
 thisdir = os.path.dirname(__file__)
 #print("This dir = {}".format(thisdir))
 
+
+
+
+def find_include_dir(hname, pkgname, testfn=os.path.isdir, return_with_suffix=None):
+    guesses = [
+        # homebrew version
+        os.path.join('/usr/local/opt', pkgname, 'include'),
+        # default paths
+        '/usr/local/include',
+        '/usr/include',
+        '/opt/include',
+        os.path.expanduser('~/.local/include'),
+    ]
+    for i in guesses:
+        dn = os.path.join(i, hname)
+        if testfn(dn): # found
+            if return_with_suffix:
+                return os.path.join(i, return_with_suffix)
+            return i
+
+    return None
+
+def find_lib(libname, pkgname, libnamesuffixes=[]):
+    guesses = [
+        # Homebrew version
+        os.path.join('/usr/local/opt', pkgname, 'lib'),
+        # default paths
+        '/usr/local/lib',
+        '/usr/lib',
+        '/opt/lib',
+        '/usr/lib{suffix}/x86_64-linux-gnu',
+        os.path.expanduser('~/.local/lib'),
+    ]
+    is_64bits = sys.maxsize > 2**32 # see https://docs.python.org/2/library/platform.html
+    libdirsuffixes = ['', '64' if is_64bits else '32']
+    for i in guesses:
+        for s in libdirsuffixes:
+            if '{suffix' not in i:
+                i += '{suffix}'
+            print("i={!r}".format(i))
+            basedn = i.format(suffix=s)
+            #
+            for lnp in ['lib', '']: # lib-name-prefixes
+                for lns in libnamesuffixes + ['']: # lib-name-suffixes
+                    for fns in ['.so', '.dylib', '.dll', '.a']: # file name suffixes for library
+                        dn = os.path.join(basedn+s, lnp+libname+lns+fns)
+                        print("find_lib:TRYING dn={!r}".format(dn))
+                        if os.path.isfile(dn):
+                            return dn
+    return None
+            
 
 def ensure_str(s):
     """
@@ -53,7 +110,7 @@ def ensure_str(s):
 #   - default value
 #
 class Vars(object):
-    def __init__(self, cachefile=None, defaults={}):
+    def __init__(self, cachefile=None, vars=[]):
         # self.d: values read & cached
         self.d = {}
 
@@ -61,13 +118,20 @@ class Vars(object):
         if cachefile:
             dc = self._readcache(cachefile)
 
-        for k, dfltval in defaults.items():
+        for k in vars:
             if k in os.environ:
                 self.d[k] = os.environ.get(k)
             elif k in dc:
                 self.d[k] = ensure_str(dc[k])
             else:
-                self.d[k] = ensure_str(dfltval)
+                self.d[k] = None
+
+    def setDefault(self, k, defvalue):
+        if k not in self.d or self.d.get(k, None) is None:
+            if callable(defvalue):
+                self.d[k] = defvalue()
+            else:
+                self.d[k] = defvalue
 
     def _readcache(self, cachefile):
         dc = {}
@@ -85,14 +149,47 @@ class Vars(object):
 
 
 cmake_cache_file = os.environ.get('CMAKE_CACHE_FILE', None)
-vv = Vars(cmake_cache_file, {
-    'GIT': '/usr/bin/git',
-    'Boost_INCLUDE_DIR': '/usr/include',
-    'Boost_PYTHON_LIBRARY_RELEASE': '/usr/lib/libboost_python.so',
-    'EIGEN3_INCLUDE_DIR': '/usr/include',
-    'OpenMP_CXX_FLAGS': '-fopenmp',
-    'CMAKE_CXX11_STANDARD_COMPILE_OPTION': '-std=c++11',
-})
+vv = Vars(cmake_cache_file, [
+    'GIT',
+    'Boost_INCLUDE_DIR',
+    'Boost_PYTHON_LIBRARY_RELEASE',
+    'EIGEN3_INCLUDE_DIR',
+    'OpenMP_CXX_FLAGS',
+    'CMAKE_CXX11_STANDARD_COMPILE_OPTION'
+])
+
+# Defaults: GIT
+vv.setDefault('GIT', lambda : find_executable('git'))
+
+# Defaults: Boost stuff
+vv.setDefault('Boost_INCLUDE_DIR', lambda : find_include_dir('boost', 'boost'))
+vv.setDefault('Boost_PYTHON_LIBRARY_RELEASE', lambda :
+              find_lib('boost_python', 'boost-python', [ # suffixes:
+                  str(sys.version_info.major)+'-mt', str(sys.version_info.major), '-mt',
+                  '-py{}{}'.format(sys.version_info.major,sys.version_info.minor),
+                  ''
+              ]))
+
+# Defaults: Eigen3
+vv.setDefault('EIGEN3_INCLUDE_DIR', lambda : find_include_dir('eigen3', 'eigen', return_with_suffix='eigen3'))
+
+# Defaults: OpenMP flags
+looks_like_clang = False
+if 'clang' in os.environ.get('CC',''):
+    looks_like_clang = True
+if sys.platform == 'darwin' and not os.environ.get('CC',''):
+    looks_like_clang = True
+vv.setDefault('OpenMP_CXX_FLAGS', lambda : '-fopenmp=libomp' if looks_like_clang else '-fopenmp')
+
+# Defaults: C++11 flags
+vv.setDefault('CMAKE_CXX11_STANDARD_COMPILE_OPTION', '-std=c++11')
+
+
+
+#
+# Check which compiler is used, and warn user if a different one is used than
+# recorded in the CMake cache file
+#
 
 
 CC = ''
@@ -105,7 +202,7 @@ if CC:
     if envCC and envCC != CC:
         # different compilers specified.
         print("WARNING: different compilers set in environment ("+envCC+") and in CMake "
-              "cache file ("+CC+"); the former will be used.")
+              "cache file ("+CC+"); the former will be used (please set \"CC="+CC+"\" to override).")
 
 CXX = ''
 try:
@@ -117,13 +214,17 @@ if CXX:
     if envCXX and envCXX != CXX:
         # different compilers
         print("WARNING: different C++ compilers set in environment ("+envCXX+") and in CMake "
-              "cache file ("+CXX+"); the former will be used.")
+              "cache file ("+CXX+"); the former will be used (please set \"CXX="+CXX+"\" to override).")
 
+
+#
+# Tell the user everything.
+#
 
 print("""
   The `tomographer` python package requires some external C++ libraries and
   compiler features. You may need to specify their location with the use of
-  environment variables. Current detected values are:
+  environment variables. Current values are:
 
 {}""".format("\n".join([ "    {}={}".format(k,v) for k,v in vv.d.items() ])))
 
@@ -137,14 +238,35 @@ else:
   (read cache file {})
 """.format(cmake_cache_file))
 
-#print("VARIABLE CACHE: ")
+if sys.platform == 'darwin':
+    print("""
+  NOTE: Apple's default compiler on Mac OS X does not provide OpenMP. Remember
+  to install a custom LLVM or GCC if you want to dramatically speed up execution
+  time. Specify the path to custom compilers with the environment variables "CC"
+  and "CXX". To compile without OpenMP (and run tasks serially), set
+  "OpenMP_CXX_FLAGS" to an empty string.
+
+  NOTE: If you're using homebrew, the following will get you started with all
+  dependencies and homebrew's python3:
+
+    > brew install llvm eigen python3 boost
+    > brew install boost-python --with-python3
+    > CC=/usr/local/opt/llvm/bin/clang CXX=/usr/local/opt/llvm/bin/clang++ \\
+      LDFLAGS='-L/usr/local/opt/llvm/lib' /usr/local/bin/python3 setup.py install
+""")
+
+#print("DEBUG VARIABLE CACHE: ")
 #for (k,v) in vv.d.items():
 #    print("    "+k+"="+v)
 
 
 
 
-# figure out version info
+
+#
+# Figure out version info
+#
+
 version = None
 if os.path.exists(os.path.join(thisdir, '..', 'VERSION')):
     with open('../VERSION') as f:
@@ -157,10 +279,23 @@ except Exception as e:
 
 
 def libbasename(x):
+    if x is None:
+        return None
     fn = os.path.splitext(os.path.basename(x))[0]
     if fn[:3] == 'lib':
         return fn[3:]
     return fn
+
+def dirname_or_none(x):
+    if x is None:
+        return None
+    return os.path.dirname(x)
+
+
+#
+# Set up the compilation options
+#
+
 
 include_dirs = [
     numpy.get_include(),
@@ -173,7 +308,7 @@ libraries = [
     libbasename(vv.get("Boost_PYTHON_LIBRARY_RELEASE"))
 ]
 library_dirs = [
-    os.path.dirname(vv.get("Boost_PYTHON_LIBRARY_RELEASE"))
+    dirname_or_none(vv.get("Boost_PYTHON_LIBRARY_RELEASE"))
 ]
 cflags = [
     vv.get('CMAKE_CXX11_STANDARD_COMPILE_OPTION'),
@@ -207,6 +342,11 @@ dep_headers = [ os.path.join('cxx', 'tomographerpy', x) for x in [
     "common.h"
 ] ]
 
+
+#
+# Set up the python package
+#
+
 setup(name="tomographer",
       version=version,
       description='Tomographer Python Interface',
@@ -227,5 +367,9 @@ setup(name="tomographer",
                     extra_compile_args=cflags,
                     extra_link_args=ldflags,
                     depends=dep_headers),
-      ]
+      ],
+      # install headers in binary distribution
+      package_data={
+          'tomographer': ['cxx/tomographerpy/*.h'],
+      }
 )

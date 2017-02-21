@@ -67,6 +67,9 @@ BOOST_PYTHON_MODULE(_tomographer_cxx)
   // the version of this library module
   boost::python::scope().attr("__version__") = TOMOGRAPHER_VERSION;
 
+  // add info on how tomographer was compiled, so that other modules can use the same
+  // tools
+
   // Eigen converters
   register_eigen_converter();
 

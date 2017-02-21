@@ -5,7 +5,11 @@
 #include <stdexcept>
 
 
+#ifdef _OPENMP
 #include <omp.h>
+#else
+inline static int omp_get_num_procs() { return 1; }
+#endif
 
 
 #include <tomographer/tools/loggers.h>

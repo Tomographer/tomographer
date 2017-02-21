@@ -3,3 +3,6 @@ include *.txt
 
 # Header files
 include cxx/tomographerpy/*.h
+# Sources
+include cxx/*.h
+include cxx/*.cxx
