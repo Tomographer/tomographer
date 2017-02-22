@@ -1,3 +1,30 @@
+/* This file is part of the Tomographer project, which is distributed under the
+ * terms of the MIT license.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2017 Caltech, Institute for Quantum Information and Matter, Philippe Faist
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
+
 
 #include "tomographerpy/common.h"
 #include "common_p.h"
@@ -66,6 +93,25 @@ BOOST_PYTHON_MODULE(_tomographer_cxx)
 
   // the version of this library module
   boost::python::scope().attr("__version__") = TOMOGRAPHER_VERSION;
+  // add a version submodule with more precise version info
+  logger.debug("version module ... ");
+  boost::python::object versionmod(boost::python::borrowed(PyImport_AddModule("tomographer.version")));
+  boost::python::scope().attr("version") = versionmod;
+  {
+    // now inside submodule
+    boost::python::scope versionmodule(versionmod);
+    versionmod.attr("version_str") = TOMOGRAPHER_VERSION;
+    auto collections = boost::python::import("collections");
+    auto namedtuple = collections.attr("namedtuple");
+    boost::python::list verfields;
+    verfields.append("major"); 
+    verfields.append("minor");
+    auto VersionInfoTuple = namedtuple("VersionInfo", verfields);
+    versionmod.attr("version_info") = VersionInfoTuple(TOMOGRAPHER_VERSION_MAJ, TOMOGRAPHER_VERSION_MIN);
+  }
+
+  // add info on how tomographer was compiled, so that other modules can use the same
+  // tools
 
   // Eigen converters
   register_eigen_converter();

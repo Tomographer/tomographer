@@ -3,7 +3,8 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2017 Caltech, Institute for Quantum Information and Matter, Philippe Faist
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -46,7 +47,7 @@ BOOST_AUTO_TEST_CASE(basic)
   typedef Tomographer::MAT::DimList DimList;
   DimList dims{{3, 4, 5}};
   const std::vector<int> ok{{3, 4, 5}};
-  BOOST_CHECK_EQUAL(dims.size(), 3);
+  BOOST_CHECK_EQUAL(dims.size(), 3u);
   BOOST_CHECK_EQUAL(dims.ndims(), 3);
   BOOST_CHECK_EQUAL(dims.numel(), 3*4*5);
   BOOST_CHECK(dims == ok);
@@ -160,7 +161,7 @@ BOOST_AUTO_TEST_CASE(IndexListIterator1)
 
   for (std::size_t j = 0; j < (std::size_t)it.numel(); ++j) {
     BOOST_CHECK(it.valid());
-    BOOST_CHECK_EQUAL(it.linearIndex(), j);
+    BOOST_CHECK_EQUAL((long)it.linearIndex(), (long)j);
 
     BOOST_MESSAGE("j = " << j << ", index=" << it) ;
 
@@ -190,7 +191,7 @@ BOOST_AUTO_TEST_CASE(IndexListIterator2)
 
   for (std::size_t j = 0; j < (std::size_t)it.numel(); ++j) {
     BOOST_CHECK(it.valid());
-    BOOST_CHECK_EQUAL(it.linearIndex(), j);
+    BOOST_CHECK_EQUAL((long)it.linearIndex(), (long)j);
 
     std::vector<int> indlist(dims.size());
     std::size_t jj = j;

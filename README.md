@@ -66,24 +66,34 @@ anything else.
 
 To compile `tomorun` from source, you'll need:
 
-  - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, LLVM/Clang++ >= 3.8)
-  - [CMake >= 3.1](http://www.cmake.org/)
-  - [Boost libraries >= 1.40](http://www.boost.org/)
-  - [Eigen3 library >= 3.3](http://eigen.tuxfamily.org/)
+  - a recent C++ compiler (g++ ≥ 4.6, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.8)
+  - [CMake ≥ 3.1](http://www.cmake.org/)
+  - [Boost libraries ≥ 1.40](http://www.boost.org/)
+  - [Eigen3 library ≥ 3.3](http://eigen.tuxfamily.org/)
   - [MatIO library](https://sourceforge.net/projects/matio/)
 
 To compile the python interface, you'll need:
 
-  - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, LLVM/Clang++ >= 3.8)
-  - [CMake >= 3.1](http://www.cmake.org/)
-  - [Boost libraries >= 1.40, which includes boost::python](http://www.boost.org/)
-  - [Python 2 or Python 3](http://www.python.org/)
-  - [Eigen3 library >= 3.3](http://eigen.tuxfamily.org/)
+  - a recent C++ compiler (g++ ≥ 4.6, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.8)
+  - [Boost libraries ≥ 1.40, which includes boost::python](http://www.boost.org/)
+  - [Python 2.7 or Python 3](http://www.python.org/)
+  - [Eigen3 library ≥ 3.3](http://eigen.tuxfamily.org/)
 
 In both cases a recent C++ compiler is required as some C++11 features and
 elements of its standard library are used. Also, make sure it supports OpenMP or
 you won't benefit from parallelization. If you use LLVM/Clang++, you might need
 to install additional packages for OpenMP (e.g. `libomp`).
+
+NOTE: Apple's default compiler does not support OpenMP. To avoid tomographer
+from running tasks serially, you should install a recent version of LLVM/clang
+or g++ manually.
+
+Apple Mac OS X with [homebrew](https://brew.sh): the following commands will get
+you started with all the prerequisites and with homebrew's python3.
+
+    > brew tap homebrew/science
+    > brew install llvm eigen python3 libmatio boost
+    > brew install boost-python --with-python3
 
 Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
 
@@ -97,7 +107,7 @@ It is then ready for use.
 The rest of this section concerns compiling Tomographer/Tomorun from source.
 
 The configuration, compilation and installation process is done using CMake.
-(You'll need CMake >= 3.1. Don't worry, it's easy [install a binary
+(You'll need CMake ≥ 3.1. Don't worry, it's easy [install a binary
 release](https://cmake.org/download/).)  Download an official release of
 Tomographer, unpack it, and enter the unpacked directory.  Then, issue the
 commands:
@@ -251,7 +261,7 @@ existing code as much as possible.
 
 The API documentation of the Tomographer C++ Framework can be found
 [here][tomographer_apidoc].  You can also build the API documentation of the
-Tomographer C++ Framework using [Doxygen >= 1.8][doxygen]. You'll also need
+Tomographer C++ Framework using [Doxygen ≥ 1.8][doxygen]. You'll also need
 `dot` (from the `graphviz` suite). To build the documentation, simply run
 
     tomographer-X.X/build> make doc
@@ -340,6 +350,7 @@ Authors, Copyright, License
 Author: Philippe Faist, phfaist@caltech.edu.
 
 Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
-Copyright (c) 2016 Caltech, Philippe Faist
+
+Copyright (c) 2017 Caltech, Institute for Quantum Information and Matter, Philippe Faist
 
 Released under the terms of the MIT License (see file LICENSE.txt)

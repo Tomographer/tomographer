@@ -1,3 +1,29 @@
+/* This file is part of the Tomographer project, which is distributed under the
+ * terms of the MIT license.
+ *
+ * The MIT License (MIT)
+ *
+ * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2017 Caltech, Institute for Quantum Information and Matter, Philippe Faist
+ *
+ * Permission is hereby granted, free of charge, to any person obtaining a copy
+ * of this software and associated documentation files (the "Software"), to deal
+ * in the Software without restriction, including without limitation the rights
+ * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+ * copies of the Software, and to permit persons to whom the Software is
+ * furnished to do so, subject to the following conditions:
+ *
+ * The above copyright notice and this permission notice shall be included in
+ * all copies or substantial portions of the Software.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+ * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+ * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+ * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+ * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+ * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+ * SOFTWARE.
+ */
 
 
 #include <unsupported/Eigen/MatrixFunctions>
@@ -99,9 +125,9 @@ struct distmeasures_qubit_fixture
     case 4:
       return boost::math::constants::half_root_two<OtherRealScalar>();
     case 5:
-      return 0.2;
+      return OtherRealScalar(0.2);
     case 6:
-      return 0.5;
+      return OtherRealScalar(0.5);
     default:
       fprintf(stderr, "INVALID 'which' for test fixture trdist_with_1: %d", which);
       assert(false);
@@ -128,7 +154,10 @@ struct distmeasures_qudit4_fixture
   distmeasures_qudit4_fixture()
     : dmt()
   {
-    typedef typename DMTypes::ComplexScalar CD;
+    //typedef typename DMTypes::ComplexScalar CD;
+    auto CD = [](double re, double im) -> typename DMTypes::ComplexScalar {
+      return typename DMTypes::ComplexScalar(typename DMTypes::RealScalar(re), typename DMTypes::RealScalar(im));
+    };
     
     rho1 <<
       CD(1.895222898432606e-01,  + 0.000000000000000e+00),      CD(1.084025272341251e-01,  + 1.516096020672695e-02),
@@ -167,7 +196,7 @@ struct distmeasures_qudit4_fixture
     case 1:
       return 1;
     case 2:
-      return 7.611036198843356e-01;
+      return OtherRealScalar(7.611036198843356e-01);
     default:
       fprintf(stderr, "INVALID 'which' for test fixture fid_with_1: %d", which);
       assert(false);
@@ -180,7 +209,7 @@ struct distmeasures_qudit4_fixture
     case 1:
       return 0;
     case 2:
-      return 6.208689785356507e-01;
+      return OtherRealScalar(6.208689785356507e-01);
     default:
       fprintf(stderr, "INVALID 'which' for test fixture trdist_with_1: %d", which);
       assert(false);

@@ -15,7 +15,7 @@
 #  NUMPY_INCLUDE_DIRS        - path to the NumPy include files
 
 #============================================================================
-# Copyright 2012 Continuum Analytics, Inc.
+# Copyright (c) 2012 Continuum Analytics, Inc.
 #
 # MIT License
 #

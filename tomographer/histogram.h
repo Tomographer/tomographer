@@ -3,7 +3,8 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2017 Caltech, Institute for Quantum Information and Matter, Philippe Faist
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -427,7 +428,7 @@ public:
    * \f]
    *
    */
-  template<typename NewCountType = Scalar>
+  template<typename NewCountType = decltype(Scalar(1) + CountType(1))>
   inline NewCountType normalization() const
   {
     // DON'T DO NewCountType(binResolution())*NewCountType(bins.sum()) as we may loose

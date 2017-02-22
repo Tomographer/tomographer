@@ -4,7 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
- * Copyright (c) 2016 Caltech
+ * Copyright (c) 2017 Caltech, Institute for Quantum Information and Matter, Philippe Faist
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -43,8 +43,8 @@ static const std::string prog_version_info_1 =
 
 static const std::string prog_version_info_2 =
   "by Philippe Faist, Institute for Quantum Information and Matter, Caltech\n"
-  "Copyright (c) 2016 ETH Zurich\n"
-  "Copyright (c) 2016 Caltech\n"
+  "Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist\n"
+  "Copyright (c) 2017 Caltech, Institute for Quantum Information and Matter, Philippe Faist\n"
   "Released under the terms of the MIT License (see LICENSE.txt)\n";
 
 static const std::string prog_version_info = prog_version_info_1 + prog_version_info_2;

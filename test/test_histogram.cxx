@@ -3,7 +3,8 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2017 Caltech, Institute for Quantum Information and Matter, Philippe Faist
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -58,17 +59,17 @@ BOOST_AUTO_TEST_SUITE(uniform_bins_histogram);
 BOOST_AUTO_TEST_CASE(basic)
 {
   Tomographer::UniformBinsHistogram<float, long> hist(0.0f, 1.0f, 10);
-  hist.record(0.42323);
-  hist.record(0.933);
-  hist.record(0.5);
-  hist.record(0.55555232);
-  hist.record(0.4999);
-  hist.record(0.52);
-  hist.record(1.2);
+  hist.record(0.42323f);
+  hist.record(0.933f);
+  hist.record(0.5f);
+  hist.record(0.55555232f);
+  hist.record(0.4999f);
+  hist.record(0.52f);
+  hist.record(1.2f);
 
-  BOOST_CHECK_EQUAL(hist.numBins(), 10);
+  BOOST_CHECK_EQUAL(hist.numBins(), 10u);
   BOOST_CHECK_SMALL(hist.params.min, tol_f);
-  BOOST_CHECK_CLOSE(hist.params.max, 1.0, tol_percent_f);
+  BOOST_CHECK_CLOSE(hist.params.max, 1.0f, tol_percent_f);
 
   BOOST_CHECK_EQUAL(hist.count(0), 0);
   BOOST_CHECK_EQUAL(hist.count(1), 0);
@@ -102,9 +103,9 @@ BOOST_AUTO_TEST_CASE(boundaries)
   BOOST_CHECK(!hist.isWithinBounds(std::numeric_limits<float>::infinity()));
   BOOST_CHECK(!hist.isWithinBounds(-std::numeric_limits<float>::infinity()));
 
-  BOOST_CHECK_EQUAL(hist.binIndex(0.13f), 1);
-  BOOST_CHECK_EQUAL(hist.binIndex(0.99f), 9);
-  BOOST_CHECK_EQUAL(hist.binIndex(0.34f), 3);
+  BOOST_CHECK_EQUAL(hist.binIndex(0.13f), 1u);
+  BOOST_CHECK_EQUAL(hist.binIndex(0.99f), 9u);
+  BOOST_CHECK_EQUAL(hist.binIndex(0.34f), 3u);
 
   BOOST_CHECK_SMALL(hist.binLowerValue(0), tol_f);
   BOOST_CHECK_CLOSE(hist.binLowerValue(1), 0.1f, tol_percent_f);
@@ -165,13 +166,13 @@ BOOST_AUTO_TEST_CASE(values)
 BOOST_AUTO_TEST_CASE(add_load_reset)
 {
   Tomographer::UniformBinsHistogram<float, long> hist(0.0f, 1.0f, 10);
-  hist.record(0.42323);
-  hist.record(0.933);
-  hist.record(0.5);
-  hist.record(0.55555232);
-  hist.record(0.4999);
-  hist.record(0.52);
-  hist.record(1.2);
+  hist.record(0.42323f);
+  hist.record(0.933f);
+  hist.record(0.5f);
+  hist.record(0.55555232f);
+  hist.record(0.4999f);
+  hist.record(0.52f);
+  hist.record(1.2f);
 
   Tomographer::UniformBinsHistogram<double, unsigned int> hist2(0.0, 1.0, 10);
   hist2.add(hist);
@@ -179,13 +180,13 @@ BOOST_AUTO_TEST_CASE(add_load_reset)
   int k;
 
   for (k = 0; k < 10; ++k) {
-    BOOST_CHECK_EQUAL(hist.count(k), hist2.count(k));
+    BOOST_CHECK_EQUAL(hist.count(k), (long)hist2.count(k));
   }
-  BOOST_CHECK_EQUAL(hist.off_chart, hist2.off_chart);
+  BOOST_CHECK_EQUAL(hist.off_chart, (long)hist2.off_chart);
 
   hist2.load(Eigen::Matrix<int,10,1>::Constant(80));
   for (k = 0; k < 10; ++k) {
-    BOOST_CHECK_EQUAL(hist2.count(k), 80);
+    BOOST_CHECK_EQUAL(hist2.count(k), 80u);
   }
 
   Eigen::Matrix<unsigned int,10,1> m;
@@ -195,7 +196,7 @@ BOOST_AUTO_TEST_CASE(add_load_reset)
   hist2.load(m, 42);
 
   MY_BOOST_CHECK_EIGEN_EQUAL(hist2.bins, m, tol);
-  BOOST_CHECK_EQUAL(hist2.off_chart, 42);
+  BOOST_CHECK_EQUAL(hist2.off_chart, 42u);
 
   Eigen::Matrix<unsigned int,10,1> m2;
   (m2 <<  0,  0,  0, 10, 10,
@@ -203,12 +204,12 @@ BOOST_AUTO_TEST_CASE(add_load_reset)
   hist2.add(m2.array());
 
   MY_BOOST_CHECK_EIGEN_EQUAL(hist2.bins, m+m2, tol);
-  BOOST_CHECK_EQUAL(hist2.off_chart, 42);
+  BOOST_CHECK_EQUAL(hist2.off_chart, 42u);
 
   hist2.reset();
   auto zeros = Eigen::Array<unsigned int,10,1>::Zero();
   MY_BOOST_CHECK_EIGEN_EQUAL(hist2.bins, zeros, tol);
-  BOOST_CHECK_EQUAL(hist2.off_chart, 0);
+  BOOST_CHECK_EQUAL(hist2.off_chart, 0u);
 }
 
 
@@ -264,7 +265,7 @@ BOOST_AUTO_TEST_CASE(normalized)
     auto n = hist.normalization<double>();
     MY_BOOST_CHECK_EIGEN_EQUAL(hn.bins, inline_vector_4<double>(0, 3, 19, 24)/n, tol);
     MY_BOOST_CHECK_FLOATS_EQUAL(hn.off_chart, 10.0/n, tol);
-    MY_BOOST_CHECK_FLOATS_EQUAL(hn.normalization(), 1.f, tol_f);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.normalization(), 1.0, tol);
   }
 }
 
@@ -354,6 +355,12 @@ BOOST_AUTO_TEST_CASE(load_reset)
   BOOST_CHECK_EQUAL(hist2.off_chart, 0);
 }
 
+#if __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
+#define IS_GCC_4_6 1
+#else
+#define IS_GCC_4_6 0
+#endif
+
 BOOST_AUTO_TEST_CASE(normalized)
 {
   { Tomographer::UniformBinsHistogramWithErrorBars<float, int> hist(0.0f, 4.0f, 4);
@@ -362,6 +369,12 @@ BOOST_AUTO_TEST_CASE(normalized)
                10 );
     auto hn = hist.normalized();
     auto n = hist.normalization();
+#if ! IS_GCC_4_6  // gcc 4.6 doesn't like decltype(...) it appears:
+    typedef std::is_same<decltype(hn)::Scalar, decltype(hist)::Scalar> test1td;
+    TOMO_STATIC_ASSERT_EXPR(test1td::value) ;
+    typedef std::is_same<decltype(hn)::CountType, decltype(float(1)+int(1))> test2td;
+    TOMO_STATIC_ASSERT_EXPR(test2td::value) ;
+#endif
     MY_BOOST_CHECK_EIGEN_EQUAL(hn.bins, inline_vector_4<float>(0, 3, 19, 24)/n, tol_f);
     MY_BOOST_CHECK_EIGEN_EQUAL(hn.delta, inline_vector_4<float>(0, 1, 4, 3)/n, tol_f);
     MY_BOOST_CHECK_FLOATS_EQUAL(hn.off_chart, 10.f/n, tol_f);
@@ -372,11 +385,18 @@ BOOST_AUTO_TEST_CASE(normalized)
                inline_vector_4<float>(0, 1, 4, 3),
                10 );
     auto hn = hist.normalized<double>();
+    // the x-axis Scalar doesn't change, it's the count type that does.
+#if ! IS_GCC_4_6  // gcc 4.6 doesn't like decltype(...) it appears:
+    typedef std::is_same<decltype(hn)::Scalar, decltype(hist)::Scalar> td1;
+    TOMO_STATIC_ASSERT_EXPR(td1::value) ;
+    typedef std::is_same<decltype(hn)::CountType, double> td2;
+    TOMO_STATIC_ASSERT_EXPR(td2::value) ;
+#endif
     auto n = hist.normalization<double>();
     MY_BOOST_CHECK_EIGEN_EQUAL(hn.bins, inline_vector_4<double>(0, 3, 19, 24)/n, tol);
-    MY_BOOST_CHECK_EIGEN_EQUAL(hn.delta, inline_vector_4<float>(0, 1, 4, 3)/n, tol_f);
+    MY_BOOST_CHECK_EIGEN_EQUAL(hn.delta, inline_vector_4<double>(0, 1, 4, 3)/n, tol);
     MY_BOOST_CHECK_FLOATS_EQUAL(hn.off_chart, 10.0/n, tol);
-    MY_BOOST_CHECK_FLOATS_EQUAL(hn.normalization(), 1.f, tol_f);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.normalization(), 1.0, tol);
   }
 }
 
@@ -401,7 +421,7 @@ BOOST_AUTO_TEST_CASE(no_underlying_error_bars)
 
   BOOST_CHECK_SMALL(avghist.params.min, tol);
   BOOST_CHECK_CLOSE(avghist.params.max, 1.0, tol_percent);
-  BOOST_CHECK_EQUAL(avghist.numBins(), 4);
+  BOOST_CHECK_EQUAL(avghist.numBins(), 4u);
 
   { SimpleHistogramType hist(p);
     hist.load( inline_vector_4<double>(15, 45, 42, 12) , 36 ); // sum=150
@@ -443,7 +463,7 @@ BOOST_AUTO_TEST_CASE(with_underlying_error_bars)
 
   BOOST_CHECK_SMALL(avghist.params.min, tol);
   BOOST_CHECK_CLOSE(avghist.params.max, 1.0, tol_percent);
-  BOOST_CHECK_EQUAL(avghist.numBins(), 4);
+  BOOST_CHECK_EQUAL(avghist.numBins(), 4u);
 
   { BaseHistogramType hist(p);
     hist.load( inline_vector_4<float>(15, 45, 42, 12) ,

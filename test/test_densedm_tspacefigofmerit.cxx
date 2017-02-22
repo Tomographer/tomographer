@@ -4,6 +4,7 @@
  * The MIT License (MIT)
  *
  * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2017 Caltech, Institute for Quantum Information and Matter, Philippe Faist
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -179,7 +180,11 @@ BOOST_FIXTURE_TEST_CASE(ObservableValueCalculator_2_d, distmeasures_qubit_fixtur
 }
 BOOST_FIXTURE_TEST_CASE(ObservableValueCalculator_2_f, distmeasures_qubit_fixture<float>)
 {
-  typedef DMTypes::ComplexScalar Cplx;
+  //  typedef DMTypes::ComplexScalar Cplx;
+  auto Cplx = [](double re, double im) -> typename DMTypes::ComplexScalar {
+    return typename DMTypes::ComplexScalar(typename DMTypes::RealScalar(re), typename DMTypes::RealScalar(im));
+  };
+  
   MatrixType A;
   A<<
     Cplx(5.769321416135639e-01, + 0.000000000000000e+00),      Cplx(3.720330764264117e-01, + 3.250735849487777e-01),
@@ -196,7 +201,11 @@ BOOST_FIXTURE_TEST_CASE(ObservableValueCalculator_2_f, distmeasures_qubit_fixtur
 }
 BOOST_FIXTURE_TEST_CASE(ObservableValueCalculator_4_f, distmeasures_qudit4_fixture<float>)
 {
-  typedef DMTypes::ComplexScalar Cplx;
+  // typedef DMTypes::ComplexScalar Cplx;
+  auto Cplx = [](double re, double im) -> typename DMTypes::ComplexScalar {
+    return typename DMTypes::ComplexScalar(typename DMTypes::RealScalar(re), typename DMTypes::RealScalar(im));
+  };
+  
   MatrixType A;
   A <<
     Cplx( 1.668309209270559e+00, - 2.775557561562891e-17),     Cplx(-7.439487529186134e-01, - 5.855920232909842e-02),

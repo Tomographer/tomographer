@@ -3,7 +3,8 @@
  *
  * The MIT License (MIT)
  *
- * Copyright (c) 2015 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
+ * Copyright (c) 2017 Caltech, Institute for Quantum Information and Matter, Philippe Faist
  *
  * Permission is hereby granted, free of charge, to any person obtaining a copy
  * of this software and associated documentation files (the "Software"), to deal
@@ -39,11 +40,11 @@
 
 #include <cmath>
 #include <cstdlib>
-#include <complex>
-#include <type_traits>
 
+#include <complex>
 #include <iostream>
 #include <iomanip>
+#include <type_traits>
 
 // define the exception class, but don't override eigen's eigen_assert() macro itself
 #include <tomographer/tools/eigen_assert_exception.h>
@@ -153,6 +154,26 @@ private:
 
 
 
+// internal -- useful when we compile with -Wconversion for picky debugging, but still
+// want to allow constants passed to FixCommaInitializer to not generate tons of warnings
+template<typename Scalar, typename Arg>
+struct conv_to_scalar {
+  static inline Scalar conv(const Arg& x) {
+    return (Scalar)(x);
+  }
+};
+template<typename RealScalar, typename Arg>
+struct conv_to_scalar<std::complex<RealScalar>, Arg> {
+  static inline std::complex<RealScalar> conv(const Arg& x) {
+    return std::complex<RealScalar>((RealScalar)x, 0);
+  }
+};
+template<typename RealScalar, typename RealArg>
+struct conv_to_scalar<std::complex<RealScalar>, std::complex<RealArg> > {
+  static inline std::complex<RealScalar> conv(const std::complex<RealArg>& x) {
+    return std::complex<RealScalar>((RealScalar)x.real(), (RealScalar)x.imag());
+  }
+};
 
 // more eigen magic ... override the CommaInitializer class to fix a bug where the
 // destructor could generate an assertion failure while handling a prior exception, which
@@ -164,10 +185,12 @@ struct FixCommaInitializer
 {
   typedef typename XprType::Scalar Scalar;
 
-  FixCommaInitializer(XprType& xpr, const Scalar& s)
+  
+  template<typename T>
+  FixCommaInitializer(XprType& xpr, const T& s)
     : m_xpr(xpr), m_row(0), m_col(1), m_currentBlockRows(1)
   {
-    m_xpr.coeffRef(0,0) = s;
+    m_xpr.coeffRef(0,0) = conv_to_scalar<Scalar,T>::conv(s);
   }
 
   FixCommaInitializer(FixCommaInitializer&& o)
@@ -179,7 +202,8 @@ struct FixCommaInitializer
   }
 
   /* inserts a scalar value in the target matrix */
-  FixCommaInitializer& operator,(const Scalar& s)
+  template<typename T>
+  FixCommaInitializer& operator,(const T& s)
   {
     if (m_col==m_xpr.cols())
     {
@@ -192,7 +216,7 @@ struct FixCommaInitializer
     eigen_assert(m_col<m_xpr.cols()
       && "Too many coefficients passed to comma initializer (operator<<)");
     eigen_assert(m_currentBlockRows==1);
-    m_xpr.coeffRef(m_row, m_col++) = s;
+    m_xpr.coeffRef(m_row, m_col++) = conv_to_scalar<Scalar,T>::conv(s);
     return *this;
   }
 
@@ -228,10 +252,40 @@ operator<<(Eigen::DenseBase<Derived> & m, const Scalar& s)
 }
 
 
+template<bool IsComplex, typename RealScalar>
+struct maybe_complex { typedef RealScalar type; };
+template<typename RealScalar>
+struct maybe_complex<true, RealScalar> { typedef std::complex<RealScalar> type; };
 
 
+template<typename ... Scalars>
+struct PromotedScalars {
+};
+// workaround for GCC 4.6: this needs to be a specialization -- see http://stackoverflow.com/a/2118537/1694896
+template<typename Scalar0, typename ... Scalars>
+struct PromotedScalars<Scalar0, Scalars...>
+{
+  typedef decltype( typename PromotedScalars<Scalar0>::RealScalar(1)
+                    + typename PromotedScalars<Scalars...>::RealScalar(1) )  RealScalar;
+  typedef std::complex<RealScalar>  ComplexScalar;
+  static constexpr bool IsComplex = PromotedScalars<Scalar0>::IsComplex || PromotedScalars<Scalars...>::IsComplex ;
 
-
+  typedef typename maybe_complex<IsComplex,RealScalar>::type  Scalar;
+};
+template<typename Scalar0>
+struct PromotedScalars<Scalar0>
+{
+  typedef Scalar0 RealScalar;
+  typedef std::complex<RealScalar> ComplexScalar;
+  static constexpr bool IsComplex = false;
+};
+template<typename RealScalar0>
+struct PromotedScalars<std::complex<RealScalar0> >
+{
+  typedef RealScalar0 RealScalar;
+  typedef std::complex<RealScalar0> ComplexScalar;
+  static constexpr bool IsComplex = true;
+};
 
 
 #include <boost/test/unit_test.hpp>
@@ -243,10 +297,10 @@ operator<<(Eigen::DenseBase<Derived> & m, const Scalar& s)
 #  define BOOST_CHECKPOINT(msg) BOOST_TEST_CHECKPOINT(msg)
 #endif
 
-template<typename Derived1, typename Derived2>
+template<typename Derived1, typename Derived2, typename TolType = double>
 boost::test_tools::predicate_result
 check_eigen_dense_equal(const Eigen::DenseBase<Derived1> & a, const Eigen::DenseBase<Derived2> & b,
-                        const double tol) // tol is absolute tolerance
+                        const TolType tol) // tol is absolute tolerance
 {
   BOOST_MESSAGE("Comparing two Eigen dense objects.");
 
@@ -267,12 +321,17 @@ check_eigen_dense_equal(const Eigen::DenseBase<Derived1> & a, const Eigen::Dense
   a_eval = a;
   b_eval = b;
 
-  typedef decltype(typename Derived1::Scalar(0) + typename Derived2::Scalar(0))  PromotedScalar;
+  // make sure it's at least 'double'
+  typedef PromotedScalars<typename Derived1::Scalar, typename Derived2::Scalar, TolType, double>
+    PromotedScalars;
+  typedef typename PromotedScalars::Scalar PromotedScalar;
 
   Eigen::Array<PromotedScalar, Eigen::Dynamic, Eigen::Dynamic> diff
     =  a_eval.template cast<PromotedScalar>() - b_eval.template cast<PromotedScalar>();
 
-  if (diff.isMuchSmallerThan(1.0f, tol)) {
+  typedef typename PromotedScalars::RealScalar PromotedRealScalar;
+
+  if (diff.isMuchSmallerThan(PromotedRealScalar(1), PromotedRealScalar(tol))) {
     return true;
   }
   boost::test_tools::predicate_result res(false);
