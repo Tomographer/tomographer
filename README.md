@@ -350,6 +350,7 @@ Authors, Copyright, License
 Author: Philippe Faist, phfaist@caltech.edu.
 
 Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
-Copyright (c) 2016 Caltech, Philippe Faist
+
+Copyright (c) 2017 Caltech, Institute for Quantum Information and Matter, Philippe Faist
 
 Released under the terms of the MIT License (see file LICENSE.txt)
