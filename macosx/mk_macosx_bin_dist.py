@@ -39,14 +39,14 @@ import sanitize_macosx_binary
 
 
 # where to find stuff on my system
-C_COMPILER = '/opt/gcc4.9/bin/gcc'
-CXX_COMPILER = '/opt/gcc4.9/bin/g++'
-EIGEN3_INCLUDE = '/usr/local/Cellar/eigen/3.2.5/include/eigen3'
-MATIO_INCLUDE = '/opt/my-local/include/'
-MATIO_LIB = '/opt/my-local/lib/libmatio.a'
+C_COMPILER = '/usr/local/opt/llvm/bin/clang'
+CXX_COMPILER = '/usr/local/opt/llvm/bin/clang++'
+EIGEN3_INCLUDE = '/usr/local/opt/eigen/include/eigen3'
+MATIO_INCLUDE = '/usr/local/opt/libmatio/include'
+MATIO_LIB = '/usr/local/opt/libmatio/lib/libmatio.a'
 ZLIB_LIB = '-lz'
-Boost_PROGRAM_OPTIONS_LIB = '/usr/local/Cellar/boost/1.57.0/lib/libboost_program_options.a'
-
+Boost_PROGRAM_OPTIONS_LIB = '/usr/local/opt/boost/lib/libboost_program_options.a'
+LDFLAGS="-L/usr/local/opt/llvm/lib"
 
 
 if (len(sys.argv) != 2):
@@ -54,8 +54,8 @@ if (len(sys.argv) != 2):
     sys.exit(1)
 
 gitversion = sys.argv[1]
-tomo_name_w_ver = "tomographer-"+gitversion
-install_name = tomo_name_w_ver+'-linux'
+tomo_name_w_ver = "tomographer-tomorun-"+gitversion
+install_name = tomo_name_w_ver+'-macosx'
 tomo_name_w_ver_a = {
     'tar.gz': install_name + ".tar.gz",
     }
@@ -72,7 +72,9 @@ if os.path.exists(tomo_name_w_ver) or any((os.path.exists(n) for n in tomo_name_
 print("Packaging Tomographer version", gitversion, "as", install_name)
 
 
-tomographer_url = "https://github.com/Tomographer/tomographer.git"
+tomographer_url = os.environ.get('TOMOGRAPHER_URL','')
+if not tomographer_url:
+    tomographer_url = "https://github.com/Tomographer/tomographer.git"
 
 
 class MyStore: pass
@@ -131,18 +133,19 @@ do_run([e.cmake, '..',
         '-DBoost_PROGRAM_OPTIONS_LIBRARY='+Boost_PROGRAM_OPTIONS_LIB,
         '-DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE='+Boost_PROGRAM_OPTIONS_LIB,
         # optimizations & architecture: don't include too many optimizations, so that the
-        # binary can run on other machines.
-        '-DTARGET_ARCHITECTURE=none',
-        #'-DUSE_SSE2=on', # but enable sse2 which is available virtually everywhere ## DOESN'T WORK -- WHY??
+        # binary can run on other machines. Intel Core 2 should be a good common ground.
+        '-DTARGET_ARCHITECTURE=core',
         # additional C++ compiler flags
-        '-DCMAKE_CXX_FLAGS_RELEASE=-O3 -msse2',
-        # linker flags: RPath stuff etc. ### THESE ARE NOT NECESSARY, WE OVERRIDE THE LINK COMMAND ANYWAY....
-#        '-DCMAKE_SKIP_BUILD_RPATH=true',
-#        '-DCMAKE_BUILD_WITH_INSTALL_RPATH=false',
-#        '-DCMAKE_INSTALL_RPATH=\$ORIGIN/../lib',
+        '-DCMAKE_CXX_FLAGS_RELEASE=-O3',
+        # OS X Deployment target:
+        # gets include dirs wrong:
+        #'-DCMAKE_OSX_DEPLOYMENT_TARGET=10.6',
+        #'-DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.6.sdk',
+        # linker flags
+        '-DCMAKE_EXE_LINKER_FLAGS=-L/usr/local/opt/llvm/lib',
         # Finally, our install prefix for packaging,
         '-DCMAKE_INSTALL_PREFIX='+fullinstallpath
-        ], cwd=fullbuildpath)
+        ], cwd=fullbuildpath, env=dict(os.environ, LDFLAGS=LDFLAGS))
 
 # compile. Since there is only 'tomorun' to make, no need for -j<#CPUs>
 do_run([e.make, 'VERBOSE=1'],
@@ -154,7 +157,12 @@ do_run([e.make, 'install/strip'],
        cwd=fullbuildpath)
 
 # import necessary libraries along with the executable
-sanitize_macosx_binary.fix_exe_object_lib_refs(os.path.join(fullinstallpath, 'bin', 'tomorun'))
+sanitize_macosx_binary.fix_exe_object_lib_refs(
+    os.path.join(fullinstallpath, 'bin', 'tomorun'),
+    # the only exceptions are the following:
+    is_system_lib=lambda x: x in ['/usr/lib/libSystem.B.dylib',
+                                  '/usr/lib/libz.1.dylib'],
+)
 
 # package
 do_run([e.tar, "cvfz", os.path.join(fullcwd, tomo_name_w_ver_a['tar.gz']), install_name],

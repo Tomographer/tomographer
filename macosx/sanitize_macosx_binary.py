@@ -21,8 +21,10 @@ system_paths = [
     '/lib'
     ]
 
+def in_system_paths(x):
+    return any([x.startswith(p) for p in system_paths])
 
-def fix_exe_object_lib_refs(exename):
+def fix_exe_object_lib_refs(exename, is_system_lib=in_system_paths):
     print("Fixing", exename, "...")
     output = subprocess.check_output([e.otool, "-L", exename])
     lines = output.split('\n')[1:] # all lines except first
@@ -34,8 +36,8 @@ def fix_exe_object_lib_refs(exename):
             print("Warning: Can't parse line: %r"%(l))
             continue
         libname = m.group('libname')
-        if any([libname.startswith(x) for x in system_paths]):
-            print("%s is in a system path, skipping..."%(libname))
+        if is_system_lib(libname):
+            print("%s is in a system library, skipping..."%(libname))
             continue
 
         if libname.startswith('@'):
