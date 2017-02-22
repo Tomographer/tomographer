@@ -267,15 +267,19 @@ if(TOMOGRAPHER_ENABLE_TESTS)
   find_package(LAPACK REQUIRED)
   #endif(NOT LAPACK_FOUND)
 
+
+  option(TOMOGRAPHER_TEST_SETUPPY_BUILD "Add tests for python module built separately with setup.py bdist_egg" off)
+
+
   EnsureCXX11StdThisThreadSleepForAvailable()
 
   # find the python executable -- used to run the tests for the python interface
-  find_package(PythonInterp REQUIRED)
+  if(BUILD_TOMOPY OR TOMOGRAPHER_TEST_SETUPPY_BUILD)
+    find_package(PythonInterp REQUIRED)
+  endif()
 
   # Enable testing for the project
   enable_testing()
-
-  option(TOMOGRAPHER_TEST_SETUPPY_BUILD "Add tests for python module built separately with setup.py bdist_egg" off)
 
   message(STATUS "Will build tomographer tests. Use `make test' or `ctest' to run the tests.")
   add_subdirectory(test)

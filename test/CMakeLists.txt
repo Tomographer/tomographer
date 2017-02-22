@@ -49,11 +49,12 @@ else()
 endif()
 
 # we need to access the expected output patterns. Trailing slash needed.
-set(TOMOGRAPHER_TEST_PATTERNS_DIR "${CMAKE_CURRENT_SOURCE_DIR}/patterns/"
+file(RELATIVE_PATH REL_TEST_SOURCE_DIR "${CMAKE_CURRENT_BINARY_DIR}/" "${CMAKE_CURRENT_SOURCE_DIR}/")
+set(TOMOGRAPHER_TEST_PATTERNS_DIR "${REL_TEST_SOURCE_DIR}/patterns/"
   CACHE STRING "path to the expected test results patterns")
 add_definitions(-DTOMOGRAPHER_TEST_PATTERNS_DIR="${TOMOGRAPHER_TEST_PATTERNS_DIR}")
 # we need to access some data. Trailing slash needed.
-set(TOMOGRAPHER_TEST_DATA_DIR "${CMAKE_CURRENT_SOURCE_DIR}/data/"
+set(TOMOGRAPHER_TEST_DATA_DIR "${REL_TEST_SOURCE_DIR}/data/"
   CACHE STRING "path to data files required by some tests")
 add_definitions(-DTOMOGRAPHER_TEST_DATA_DIR="${TOMOGRAPHER_TEST_DATA_DIR}")
 
