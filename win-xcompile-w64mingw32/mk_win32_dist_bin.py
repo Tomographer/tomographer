@@ -34,16 +34,24 @@ import sys
 import subprocess
 import shutil
 
+sandboxdir = '/media/sf_vmshare/mingw32-w64-sandbox/local/'
 
 # where to find stuff on my system
-C_COMPILER = '/usr/bin/gcc-6'
-CXX_COMPILER = '/usr/bin/g++-6'
+#C_COMPILER = '/usr/bin/i686-w64-mingw32-gcc'
+#CXX_COMPILER = '/usr/bin/i686-w64-mingw32-g++'
 EIGEN3_INCLUDE = '/opt/local/include/eigen3'
-MATIO_INCLUDE = '/opt/local/include'
-MATIO_LIB = '/opt/local/lib/libmatio.a'
-ZLIB_LIB = '/usr/lib/x86_64-linux-gnu/libz.a'
-Boost_PROGRAM_OPTIONS_LIB = '/usr/lib/x86_64-linux-gnu/libboost_program_options.a'
+MATIO_INCLUDE = os.path.join(sandboxdir, 'include')
+MATIO_LIB = os.path.join(sandboxdir, 'lib/libmatio.a')
+ZLIB_LIB = '/usr/i686-w64-mingw32/lib/libz.a'
+Boost_PROGRAM_OPTIONS_LIB = os.path.join(sandboxdir, 'lib/libboost_program_options.a')
 
+
+
+copy_libs = [
+    '/usr/lib/gcc/i686-w64-mingw32/6.2-win32/libgomp-1.dll',
+    '/usr/lib/gcc/i686-w64-mingw32/6.2-win32/libgcc_s_sjlj-1.dll',
+    '/usr/lib/gcc/i686-w64-mingw32/6.2-win32/libstdc++-6.dll',
+    ]
 
 
 if (len(sys.argv) != 2):
@@ -52,9 +60,9 @@ if (len(sys.argv) != 2):
 
 gitversion = sys.argv[1]
 tomo_name_w_ver = "tomographer-tomorun-"+gitversion
-install_name = tomo_name_w_ver+'-linux'
+install_name = tomo_name_w_ver+'-win-mingw32'
 tomo_name_w_ver_a = {
-    'tar.gz': install_name + ".tar.gz",
+    'zip': install_name + ".zip",
     }
 
 if os.path.exists(tomo_name_w_ver) or any((os.path.exists(n) for n in tomo_name_w_ver_a.values())):
@@ -77,7 +85,7 @@ if not tomographer_url:
 class MyStore: pass
 e = MyStore()
 e.git = os.environ.get('GIT', "git")
-e.tar = os.environ.get('TAR', "tar")
+#e.tar = os.environ.get('TAR', "tar")
 e.zip = os.environ.get('ZIP', "zip")
 e.cmake = os.environ.get('CMAKE', "cmake")
 e.make = os.environ.get('MAKE', "make")
@@ -91,6 +99,10 @@ def do_run(cmdargv, **opts):
 def do_rmtree(path):
     print("Removing %s ..."%(path))
     shutil.rmtree(path)
+
+def do_copy_file(src, dst):
+    print("Copying file from %s to %s ..."%(src, dst))
+    shutil.copy2(src, dst)
 
 
 # execute everything with lower priority
@@ -115,9 +127,8 @@ os.mkdir(os.path.join(tomo_name_w_ver, builddirname))
 
 # CMAKE COMMAND HERE
 do_run([e.cmake, '..',
-        # compilers
-        '-DCMAKE_C_COMPILER='+C_COMPILER,
-        '-DCMAKE_CXX_COMPILER='+CXX_COMPILER,
+        # toolchain/compilers
+        '-DCMAKE_TOOLCHAIN_FILE='+os.path.join(fullcwd, 'Toolchain-mingw32.cmake'),
         # build type
         '-DCMAKE_BUILD_TYPE=Release',
         # 3rd party libraries
@@ -125,20 +136,17 @@ do_run([e.cmake, '..',
         '-DMATIO_INCLUDE_DIR='+MATIO_INCLUDE,
         '-DMATIO_LIBRARY='+MATIO_LIB,
         #'-DMATIO_LIBRARY_RELEASE='+MATIO_LIB,
+        #'-DZLIB_INCLUDE_DIR='+...,
         '-DZLIB_LIBRARY='+ZLIB_LIB,
         '-DZLIB_LIBRARY_RELEASE='+ZLIB_LIB,
         '-DBoost_PROGRAM_OPTIONS_LIBRARY='+Boost_PROGRAM_OPTIONS_LIB,
         '-DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE='+Boost_PROGRAM_OPTIONS_LIB,
         # optimizations & architecture: don't include too many optimizations, so that the
         # binary can run on other machines.
-        '-DTARGET_ARCHITECTURE=none',
-        #'-DUSE_SSE2=on', # but enable sse2 which is available virtually everywhere ## DOESN'T WORK -- WHY??
+        '-DTARGET_ARCHITECTURE=core',
         # additional C++ compiler flags
-        '-DCMAKE_CXX_FLAGS_RELEASE=-O3 -msse2',
-        # linker flags: RPath stuff etc. ### THESE ARE NOT NECESSARY, WE OVERRIDE THE LINK COMMAND ANYWAY....
-#        '-DCMAKE_SKIP_BUILD_RPATH=true',
-#        '-DCMAKE_BUILD_WITH_INSTALL_RPATH=false',
-#        '-DCMAKE_INSTALL_RPATH=\$ORIGIN/../lib',
+        '-DCMAKE_CXX_FLAGS_RELEASE=-O3 -Wall -Wextra',
+        # Linker flags, if any
         # Finally, our install prefix for packaging,
         '-DCMAKE_INSTALL_PREFIX='+fullinstallpath
         ], cwd=fullbuildpath)
@@ -147,25 +155,18 @@ do_run([e.cmake, '..',
 do_run([e.make, 'VERBOSE=1'],
        cwd=fullbuildpath)
 
-do_run([CXX_COMPILER,
-        "-O3",
-        "-static", "-static-libgcc", "-static-libstdc++",
-        "-fopenmp",
-        "CMakeFiles/tomorun.dir/tomorun.cxx.o",
-        "-o", "tomorun",
-        MATIO_LIB,
-        ZLIB_LIB,
-        Boost_PROGRAM_OPTIONS_LIB],
-       cwd=os.path.join(fullbuildpath, 'tomorun')
-       );
-
-
 # install/strip
 do_run([e.make, 'install/strip'],
        cwd=fullbuildpath)
 
+
+# copy in the destination dir it all relevant libraries
+for libfn in copy_libs:
+    do_copy_file(libfn, os.path.join(fullinstallpath, 'bin'))
+
+
 # package
-do_run([e.tar, "cvfz", os.path.join(fullcwd, tomo_name_w_ver_a['tar.gz']), install_name],
+do_run([e.zip, "-r", os.path.join(fullcwd, tomo_name_w_ver_a['zip']), install_name],
        cwd=fullbuildpath)
 
 
