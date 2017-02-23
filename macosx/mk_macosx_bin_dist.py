@@ -136,11 +136,11 @@ do_run([e.cmake, '..',
         # binary can run on other machines. Intel Core 2 should be a good common ground.
         '-DTARGET_ARCHITECTURE=core',
         # additional C++ compiler flags
-        '-DCMAKE_CXX_FLAGS_RELEASE=-O3',
+        '-DCMAKE_CXX_FLAGS_RELEASE=-O3 -mmacosx-version-min=10.6 -stdlib=libc++',
         # OS X Deployment target:
         # gets include dirs wrong:
-        #'-DCMAKE_OSX_DEPLOYMENT_TARGET=10.6',
-        #'-DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.6.sdk',
+        #'-DCMAKE_OSX_DEPLOYMENT_TARGET=10.8',
+        #'-DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk',
         # linker flags
         '-DCMAKE_EXE_LINKER_FLAGS=-L/usr/local/opt/llvm/lib',
         # Finally, our install prefix for packaging,
