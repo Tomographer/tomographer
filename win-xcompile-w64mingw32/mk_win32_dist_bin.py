@@ -51,6 +51,7 @@ copy_libs = [
     '/usr/lib/gcc/i686-w64-mingw32/6.2-win32/libgomp-1.dll',
     '/usr/lib/gcc/i686-w64-mingw32/6.2-win32/libgcc_s_sjlj-1.dll',
     '/usr/lib/gcc/i686-w64-mingw32/6.2-win32/libstdc++-6.dll',
+    '/usr/i686-w64-mingw32/lib/libwinpthread-1.dll',
     ]
 
 
