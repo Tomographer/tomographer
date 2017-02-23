@@ -1,0 +1,173 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Utilities for Metropolis-Hastings random walk tasks (tomographer.mhrwtasks) &#8212; Tomographer Python Interface v3.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Computing the quantum error bars (tomographer.querrorbars)" href="tomographer.querrorbars.html" />
+    <link rel="prev" title="Tomorun, the main tomography routine (tomographer.tomorun)" href="tomographer.tomorun.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="utilities-for-metropolis-hastings-random-walk-tasks-tomographer-mhrwtasks">
+<h1>Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)<a class="headerlink" href="#utilities-for-metropolis-hastings-random-walk-tasks-tomographer-mhrwtasks" title="Permalink to this headline">¶</a></h1>
+<dl class="class">
+<dt id="tomographer.BinningAnalysis">
+<em class="property">class </em><code class="descclassname">tomographer.</code><code class="descname">BinningAnalysis</code><a class="headerlink" href="#tomographer.BinningAnalysis" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dummy class whose sole purpose is to expose the following constants to Python code.</p>
+<dl class="attribute">
+<dt id="BinningAnalysis.CONVERGED">
+<code class="descname">CONVERGED</code><a class="headerlink" href="#BinningAnalysis.CONVERGED" title="Permalink to this definition">¶</a></dt>
+<dd><p>The error bar has converged over the different binning levels, the error bar can be considered reliable.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="BinningAnalysis.NOT_CONVERGED">
+<code class="descname">NOT_CONVERGED</code><a class="headerlink" href="#BinningAnalysis.NOT_CONVERGED" title="Permalink to this definition">¶</a></dt>
+<dd><p>The error bar has not converged over the different binning levels, and it should not be considered as reliable.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="BinningAnalysis.UNKNOWN_CONVERGENCE">
+<code class="descname">UNKNOWN_CONVERGENCE</code><a class="headerlink" href="#BinningAnalysis.UNKNOWN_CONVERGENCE" title="Permalink to this definition">¶</a></dt>
+<dd><p>The convergence of the error bar over the different binning levels is uknown, or couldn&#8217;t be determined. It may or may not be reliable.</p>
+</dd></dl>
+
+</dd></dl>
+
+<span class="target" id="module-tomographer.mhrwtasks"></span><p>Utilities for tasks running Metropolis-Hastings random walks.  These classes shouldn&#8217;t be used directly; rather, corresponding instances are returned by, e.g., <a class="reference internal" href="tomographer.tomorun.html#tomographer.tomorun.tomorun" title="tomographer.tomorun.tomorun"><code class="xref py py-func docutils literal"><span class="pre">tomographer.tomorun.tomorun()</span></code></a>.</p>
+<dl class="class">
+<dt id="tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult">
+<em class="property">class </em><code class="descclassname">tomographer.mhrwtasks.</code><code class="descname">MHRandomWalkValueHistogramTaskResult</code><a class="headerlink" href="#tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">Boost.Python.instance</span></code></p>
+<p>The result of an executed Metropolis-Hastings random walk task.</p>
+<p>This class interfaces the corresponding C++ class <a class="reference external" href="../struct_tomographer_1_1_m_h_r_w_tasks_1_1_m_h_random_walk_task_result.html">Tomographer::MHRWTasks::MHRandomWalkTaskResult</a>, when specialized to the <a class="reference external" href="../class_tomographer_1_1_value_histogram_with_binning_m_h_r_w_stats_collector.html">Tomographer::ValueHistogramWithErrorBarsMHRWStatsCollector</a> stats collector type.</p>
+<p>This class is <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>able.</p>
+<dl class="attribute">
+<dt id="tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult.stats_collector_result">
+<code class="descname">stats_collector_result</code><a class="headerlink" href="#tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult.stats_collector_result" title="Permalink to this definition">¶</a></dt>
+<dd><p>An object of type <a class="reference internal" href="tomographer._mhrw_classes.html#tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult" title="tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult"><code class="xref py py-class docutils literal"><span class="pre">ValueHistogramWithBinningMHRWStatsCollectorResult</span></code></a> detailing the result of the stats collecting class which is responsible for determining the final histogram, and carrying out the binning analysis to come up with error bars.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult.mhrw_params">
+<code class="descname">mhrw_params</code><a class="headerlink" href="#tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult.mhrw_params" title="Permalink to this definition">¶</a></dt>
+<dd><p>The parameters of the executed random walk, as an <a class="reference internal" href="tomographer._mhrw_classes.html#tomographer.MHRWParams" title="tomographer.MHRWParams"><code class="xref py py-class docutils literal"><span class="pre">MHRWParams</span></code></a> instance.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult.acceptance_ratio">
+<code class="descname">acceptance_ratio</code><a class="headerlink" href="#tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult.acceptance_ratio" title="Permalink to this definition">¶</a></dt>
+<dd><p>The average acceptance ratio of the random walk (excluding the thermalization sweeps).</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Tomographer Python Interface</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tomographer._hist_classes.html">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.multiproc.html">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.densedm.html">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tomorun.html">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.querrorbars.html">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tools.html">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.jpyutil.html">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="tomographer.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="tomographer.tomorun.html" title="previous chapter">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+      <li>Next: <a href="tomographer.querrorbars.html" title="next chapter">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Philippe Faist.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/tomographer.mhrwtasks.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

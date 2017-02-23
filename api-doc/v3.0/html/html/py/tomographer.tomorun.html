@@ -1,0 +1,223 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Tomorun, the main tomography routine (tomographer.tomorun) &#8212; Tomographer Python Interface v3.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Utilities for Metropolis-Hastings random walk tasks (tomographer.mhrwtasks)" href="tomographer.mhrwtasks.html" />
+    <link rel="prev" title="Storing Tomography Data and Calculating the Likelihood Function (tomographer.densedm)" href="tomographer.densedm.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tomographer.tomorun">
+<span id="tomorun-the-main-tomography-routine-tomographer-tomorun"></span><h1>Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)<a class="headerlink" href="#module-tomographer.tomorun" title="Permalink to this headline">¶</a></h1>
+<p>Perform a random in the full state space of a quantum system according to our practical, reliable procedure, and collect a histogram of a specific figure of merit.</p>
+<dl class="exception">
+<dt id="tomographer.tomorun.TomorunInvalidInputError">
+<em class="property">exception </em><code class="descclassname">tomographer.tomorun.</code><code class="descname">TomorunInvalidInputError</code><a class="headerlink" href="#tomographer.tomorun.TomorunInvalidInputError" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/exceptions.html#RuntimeError" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">RuntimeError</span></code></a></p>
+<p>Exception which gets raised if invalid input is supplied to the <a class="reference internal" href="#tomographer.tomorun.tomorun" title="tomographer.tomorun.tomorun"><code class="xref py py-func docutils literal"><span class="pre">tomographer.tomorun.tomorun()</span></code></a> function.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomographer.tomorun.tomorun">
+<code class="descclassname">tomographer.tomorun.</code><code class="descname">tomorun</code><span class="sig-paren">(</span><em>dim</em>, <em>...</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.tomorun.tomorun" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produce a histogram of a figure of merit during a random walk in quantum state space according to the distribution <span class="math">\(\mu_{B^n}(\cdot)\)</span> defined in Ref. [1]. The likelihood function is specified with independent POVM effects (see below).</p>
+<p>This python function provides comparable functionality to the <cite>tomorun</cite> executable program, and allows for a better seamless interoperability with <cite>NumPy</cite>&#8212;all data matrices here are specified as <cite>NumPy</cite> arrays.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>dim</strong> &#8211; The dimension of the quantum system</li>
+<li><strong>Exn</strong> &#8211; The observed POVM effects, specified as a matrix in which each row is the
+X-parameterization of a POVM effect. You may want to specify <cite>Emn</cite> instead,
+which may be simpler.</li>
+<li><strong>Emn</strong> &#8211; The observed POVM effects, specified as a list of <span class="math">\(\textit{dim}\times\textit{dim}\)</span>
+matrices.</li>
+<li><strong>Nm</strong> &#8211; the list of observed frequency counts for each POVM effect in <cite>Emn</cite> or <cite>Exn</cite>.</li>
+<li><strong>fig_of_merit</strong> &#8211; The choice of the figure of merit to study.  This must be one of &#8216;obs-value&#8217;,
+&#8216;fidelity&#8217;, &#8216;tr-dist&#8217; or &#8216;purif-dist&#8217; (see below for more info).</li>
+<li><strong>ref_state</strong> &#8211; For figures of merit which compare to a reference state (&#8216;fidelity&#8217;, &#8216;tr-dist&#8217;,
+and &#8216;purif-dist&#8217;), this is the reference state to calculate the figure of merit with,
+specified as a density matrix.</li>
+<li><strong>observable</strong> &#8211; For the &#8216;obs-value&#8217; figure of merit, specify the observable here as a matrix.</li>
+<li><strong>hist_params</strong> &#8211; The requested range of values to look at when collecting a histogram of the
+figure of mert.  This should be a <a class="reference internal" href="tomographer._hist_classes.html#tomographer.UniformBinsHistogramParams" title="tomographer.UniformBinsHistogramParams"><code class="xref py py-class docutils literal"><span class="pre">tomographer.UniformBinsHistogramParams</span></code></a>
+instance.</li>
+<li><strong>mhrw_params</strong> &#8211; The parameters of the random walk, including the step size, the sweep size,
+the number of thermalization sweeps, and the number of live sweeps.  Specify a
+<a class="reference internal" href="tomographer._mhrw_classes.html#tomographer.MHRWParams" title="tomographer.MHRWParams"><code class="xref py py-class docutils literal"><span class="pre">tomographer.MHRWParams</span></code></a> instance here.:param binning_num_levels:  The number of levels in the binning analysis [2]. One should make sure
+that there are enough bins at the last level to estimate the standard
+deviation. This is done automatically by default (or if you specify the value <cite>-1</cite>),
+so in normal circumstances you won&#8217;t have to change the default value.</li>
+<li><strong>num_repeats</strong> &#8211; The number of independent random walks to run in parallel.  (The instances
+will run serially if <cite>tomographer</cite> was compiled without OpenMP.)</li>
+<li><strong>progress_fn</strong> &#8211; A python callback function to monitor progress.  The function should accept
+a single argument of type <a class="reference internal" href="tomographer.multiproc.html#tomographer.multiproc.FullStatusReport" title="tomographer.multiproc.FullStatusReport"><code class="xref py py-class docutils literal"><span class="pre">tomographer.multiproc.FullStatusReport</span></code></a>.  Check
+out <a class="reference internal" href="tomographer.jpyutil.html#tomographer.jpyutil.RandWalkProgressBar" title="tomographer.jpyutil.RandWalkProgressBar"><code class="xref py py-class docutils literal"><span class="pre">tomographer.jpyutil.RandWalkProgressBar</span></code></a> if you are using a
+Jupyter notebook.  See below for more information on status progress reporting.</li>
+<li><strong>progress_interval_ms</strong> &#8211; The approximate time interval in milliseconds between two progress reports.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p class="rubric">Figures of merit</p>
+<p>The value of the <cite>fig_of_merit</cite> argument should be one of the following:</p>
+<blockquote>
+<div><ul>
+<li><p class="first">&#8220;obs-value&#8221;: the expectation value of an observable. You should specify the argument <cite>observable</cite> as a 2-D <cite>NumPy</cite> array specifying the observable you are interested in.</p>
+</li>
+<li><p class="first">&#8220;tr-dist&#8221;: the trace distance to a reference state. You should specify the argument <cite>ref_state</cite> as a 2-D <cite>NumPy</cite> array specifying the density matrix of the state which should serve as reference state.</p>
+</li>
+<li><p class="first">&#8220;fidelity&#8221;: the (root) fidelity to a reference state [3]. You should specify the argument <cite>ref_state</cite> as a 2-D <cite>NumPy</cite> array specifying the density matrix of the state which should serve as reference state.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">For the squared fidelity to a pure state (usually preferred in experimental papers), you should use &#8220;obs-value&#8221; with the observable being the density matrix of the reference state [4].</p>
+</div>
+</li>
+<li><p class="first">&#8220;purif-dist&#8221;: the purified distance to a reference state [5]. You should specify the argument <cite>ref_state</cite> as a 2-D <cite>NumPy</cite> array specifying the density matrix of the state which should serve as reference state.</p>
+</li>
+</ul>
+</div></blockquote>
+<p class="rubric">Return value</p>
+<p>This function returns a Python dictionary with the following keys and values set:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">final_histogram</span></code>: a <a class="reference internal" href="tomographer._hist_classes.html#tomographer.AveragedErrorBarHistogram" title="tomographer.AveragedErrorBarHistogram"><code class="xref py py-class docutils literal"><span class="pre">AveragedErrorBarHistogram</span></code></a> instance with the final histogram data.  The histogram has the parameters specified in the <cite>hist_params</cite> argument. The histogram is NOT normalized to a probabilty density; you should call  <a class="reference internal" href="tomographer._hist_classes.html#tomographer.UniformBinsHistogramWithErrorBars.normalized" title="tomographer.UniformBinsHistogramWithErrorBars.normalized"><code class="xref py py-meth docutils literal"><span class="pre">normalized()</span></code></a> if you need a  normalized histogram.</li>
+<li><code class="docutils literal"><span class="pre">simple_final_histogram</span></code>: a <a class="reference internal" href="tomographer._hist_classes.html#tomographer.AveragedSimpleRealHistogram" title="tomographer.AveragedSimpleRealHistogram"><code class="xref py py-class docutils literal"><span class="pre">AveragedSimpleRealHistogram</span></code></a> obtained from averaging the raw histograms from each task run, ignoring their error bars from the binning analysis.  Under normal circumstances there is no reason you should ignore the binning analysis, so normally you should not be using this member.  This member is only useful if you want to test the error bars from the binning analysis against &#8220;naive&#8221; error bars</li>
+<li><code class="docutils literal"><span class="pre">elapsed_seconds</span></code>: the total time elapsed while running the random walks, in seconds.</li>
+<li><code class="docutils literal"><span class="pre">final_report_runs</span></code>: a human-readable summary report of each task run.  Allows the user to visually check that all error bars have converged in the binning analysis, and to get an approximate visual representation of what the histogram looks like for each run.</li>
+<li><code class="docutils literal"><span class="pre">final_report</span></code>: a human-readable summary of the whole procedure. This includes the final report of all the runs contained in <code class="docutils literal"><span class="pre">final_report_runs</span></code>, as well as a visual representation of the final averaged histogram.</li>
+<li><code class="docutils literal"><span class="pre">runs_results</span></code>: a list of all the raw results provided by each task run.  Each item of the list is an instance of <a class="reference internal" href="tomographer.mhrwtasks.html#tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult" title="tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult"><code class="xref py py-class docutils literal"><span class="pre">tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult</span></code></a>.</li>
+</ul>
+</div></blockquote>
+<p class="rubric">Status reporting</p>
+<p>You may receive periodic status reports via a custom Python callback, so that you can stay informed of the overall progress.  The callback specified to <cite>progress_fn</cite> will be called approximately every <cite>progress_interval_ms</cite> milliseconds with information on the overall progress given as a <a class="reference internal" href="tomographer.multiproc.html#tomographer.multiproc.FullStatusReport" title="tomographer.multiproc.FullStatusReport"><code class="xref py py-class docutils literal"><span class="pre">tomographer.multiproc.FullStatusReport</span></code></a> object.  The individual workers provide the following additional information, formatted within the <cite>data</cite> dictionary attribute of each <a class="reference internal" href="tomographer.multiproc.html#tomographer.multiproc.WorkerStatusReport" title="tomographer.multiproc.WorkerStatusReport"><code class="xref py py-class docutils literal"><span class="pre">WorkerStatusReport</span></code></a> object:</p>
+<blockquote>
+<div><ul class="simple">
+<li><code class="docutils literal"><span class="pre">data['mhrw_params']</span></code> &#8211; a <a class="reference internal" href="tomographer._mhrw_classes.html#tomographer.MHRWParams" title="tomographer.MHRWParams"><code class="xref py py-class docutils literal"><span class="pre">MHRWParams</span></code></a> instance with the current parameters of the random walk</li>
+<li><code class="docutils literal"><span class="pre">data['acceptance_ratio']</span></code> &#8211; the current acceptance ratio of the Metropolis-Hastings random walk, as a real value between zero and one. You should try to keep this value around ~0.25.  The acceptance ratio is not available during the thermalizing runs.</li>
+<li><code class="docutils literal"><span class="pre">data['kstep']</span></code> &#8211; the current iteration step number (an iteration corresponds to creating a jump proposal, and to jump with a certain probability)</li>
+<li><code class="docutils literal"><span class="pre">data['n_total_iters']</span></code> &#8211; the total number of iterations this random walk is going to complete. This is equal to <code class="docutils literal"><span class="pre">n_sweep*(n_therm</span> <span class="pre">+</span> <span class="pre">n_run)</span></code>.</li>
+</ul>
+</div></blockquote>
+<p class="rubric">Footnotes and references</p>
+<div class="line-block">
+<div class="line">[1] Christandl and Renner, Phys. Rev. Lett. 12:120403 (2012), arXiv:1108.5329</div>
+<div class="line">[2] Ambegaokar and Troyer, Am. J. Phys., 78(2):150 (2010), arXiv:0906.0943</div>
+<div class="line">[3] The root fidelity is defined as <span class="math">\(F(\rho,\sigma)=\left\Vert\rho^{1/2}\sigma^{1/2}\right\Vert_1\)</span>, as in Nielsen and Chuang, &#8220;Quantum Computation and Quantum Information&#8221;.</div>
+<div class="line">[4] Indeed, for pure <span class="math">\(\rho_\mathrm{ref}\)</span>, <span class="math">\(F^2(\rho,\rho_\mathrm{ref}) = \mathrm{tr}(\rho\rho_\mathrm{ref})\)</span>.</div>
+<div class="line">[5] The purified distance, also called &#8220;infidelity&#8221; in the literature, is defined as <span class="math">\(P(\rho,\sigma) = \sqrt{1 - F^2(\rho,\sigma)}\)</span>.</div>
+</div>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Tomographer Python Interface</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tomographer._hist_classes.html">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.multiproc.html">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.densedm.html">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.mhrwtasks.html">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.querrorbars.html">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tools.html">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.jpyutil.html">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="tomographer.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="tomographer.densedm.html" title="previous chapter">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+      <li>Next: <a href="tomographer.mhrwtasks.html" title="next chapter">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Philippe Faist.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/tomographer.tomorun.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

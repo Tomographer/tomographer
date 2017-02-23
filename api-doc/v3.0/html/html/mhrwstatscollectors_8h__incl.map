@@ -1,0 +1,10 @@
+<map id="tomographer/mhrwstatscollectors.h" name="tomographer/mhrwstatscollectors.h">
+<area shape="rect" id="node8" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="1406,325,1587,351"/>
+<area shape="rect" id="node16" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="396,165,583,191"/>
+<area shape="rect" id="node26" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="1308,165,1479,191"/>
+<area shape="rect" id="node38" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1642,79,1801,117"/>
+<area shape="rect" id="node14" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="512,399,702,424"/>
+<area shape="rect" id="node24" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="771,245,933,271"/>
+<area shape="rect" id="node31" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="2260,245,2453,271"/>
+<area shape="rect" id="node36" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="1741,245,2012,271"/>
+</map>

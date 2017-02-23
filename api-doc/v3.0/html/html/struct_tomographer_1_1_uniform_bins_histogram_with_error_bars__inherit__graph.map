@@ -1,0 +1,12 @@
+<map id="Tomographer::UniformBinsHistogramWithErrorBars&lt; Scalar_, CountType_ &gt;" name="Tomographer::UniformBinsHistogramWithErrorBars&lt; Scalar_, CountType_ &gt;">
+<area shape="rect" id="node4" href="$struct_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; HistogramType_::Scalar,\l RealAvgType \&gt;" alt="" coords="982,95,1162,160"/>
+<area shape="rect" id="node9" href="$struct_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; HistogramType ::Scalar,\l CountRealType \&gt;" alt="" coords="1464,245,1644,311"/>
+<area shape="rect" id="node10" href="$struct_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; NormalizedHistogramType\l ::Scalar, CountRealType \&gt;" alt="" coords="1206,11,1396,76"/>
+<area shape="rect" id="node11" href="$struct_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; SimpleNormalizedHistogramType\l ::Scalar, double \&gt;" alt="" coords="1186,171,1416,236"/>
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_uniform_bins_histogram.html" title="Stores a histogram. " alt="" coords="291,117,521,156"/>
+<area shape="rect" id="node3" href="$struct_tomographer_1_1_tools_1_1_eigen_aligned_operator_new_provider.html" title="Provides correct operator&#45;new implementation for Eigen types via the NeedOwnOperatorNew mechanism..." alt="" coords="5,152,242,191"/>
+<area shape="rect" id="node5" href="$struct_tomographer_1_1_averaged_histogram.html" title="Combines several histograms (with same parameters) into an averaged histogram. " alt="" coords="1440,88,1668,127"/>
+<area shape="rect" id="node6" href="$struct_tomographer_1_1_averaged_histogram.html" title="Tomographer::AveragedHistogram\l\&lt; NormalizedHistogramType,\l CountRealType \&gt;" alt="" coords="1905,5,2130,57"/>
+<area shape="rect" id="node7" href="$struct_tomographer_1_1_averaged_histogram.html" title="Tomographer::AveragedHistogram\l\&lt; SimpleNormalizedHistogramType,\l double \&gt;" alt="" coords="1901,97,2135,149"/>
+<area shape="rect" id="node8" href="$struct_tomographer_1_1_averaged_histogram.html" title="Tomographer::AveragedHistogram\l\&lt; HistogramType, CountRealType \&gt;" alt="" coords="1901,205,2134,244"/>
+</map>

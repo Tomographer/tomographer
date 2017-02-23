@@ -1,0 +1,490 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Histogram Classes (tomographer) &#8212; Tomographer Python Interface v3.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Metropolis-Hastings Random Walk related classes (tomographer)" href="tomographer._mhrw_classes.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="tomographer.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="histogram-classes-tomographer">
+<h1>Histogram Classes (<cite>tomographer</cite>)<a class="headerlink" href="#histogram-classes-tomographer" title="Permalink to this headline">¶</a></h1>
+<p>This collection of classes take care of recording, storing and manipulating a histogram.
+Typically such a class would be returned by a core task such as
+<a class="reference internal" href="tomographer.tomorun.html#tomographer.tomorun.tomorun" title="tomographer.tomorun.tomorun"><code class="xref py py-func docutils literal"><span class="pre">tomographer.tomorun.tomorun()</span></code></a>.</p>
+<span class="target" id="module-tomographer"></span><dl class="class">
+<dt id="tomographer.UniformBinsHistogramParams">
+<em class="property">class </em><code class="descclassname">tomographer.</code><code class="descname">UniformBinsHistogramParams</code><a class="headerlink" href="#tomographer.UniformBinsHistogramParams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">Boost.Python.instance</span></code></p>
+<p>Specify histogram bins parameters: the minimum value, the maximum value, and the number of bins. The interval <cite>[min,max[</cite> is split into <cite>num_bins</cite> equally spaced bins.</p>
+<p>This class is <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>able.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">This python class interfaces its corresponding <a class="reference external" href="../struct_tomographer_1_1_uniform_bins_histogram_params.html">C++ class Tomographer::UniformBinsHistogramParams</a>, with the template parameter <cite>Scalar=double</cite>.</p>
+</div>
+<dl class="function">
+<dt id="tomographer.UniformBinsHistogramParams.UniformBinsHistogramParams">
+<code class="descname">UniformBinsHistogramParams</code><span class="sig-paren">(</span><em>min=0.0</em>, <em>max=1.0</em>, <em>num_bins=50</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogramParams.UniformBinsHistogramParams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a histogram parameters configuration.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogramParams.min">
+<code class="descname">min</code><a class="headerlink" href="#tomographer.UniformBinsHistogramParams.min" title="Permalink to this definition">¶</a></dt>
+<dd><p>The lower bound on the range of values covered by the histogram. (Read-write attribute)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogramParams.max">
+<code class="descname">max</code><a class="headerlink" href="#tomographer.UniformBinsHistogramParams.max" title="Permalink to this definition">¶</a></dt>
+<dd><p>The (strict) upper bound on the range of values covered by the histogram. (Read-write attribute)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogramParams.num_bins">
+<code class="descname">num_bins</code><a class="headerlink" href="#tomographer.UniformBinsHistogramParams.num_bins" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of bins the range <cite>[min,max]</cite> is divided into, defining the bins. (Read-write attribute)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogramParams.values_center">
+<code class="descname">values_center</code><a class="headerlink" href="#tomographer.UniformBinsHistogramParams.values_center" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read-only attribute returning a vector (numpy array) of values corresponding to each bin center value.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogramParams.values_lower">
+<code class="descname">values_lower</code><a class="headerlink" href="#tomographer.UniformBinsHistogramParams.values_lower" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read-only attribute returning a vector (numpy array) of values corresponding to each bin lower value.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogramParams.values_upper">
+<code class="descname">values_upper</code><a class="headerlink" href="#tomographer.UniformBinsHistogramParams.values_upper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read-only attribute returning a vector (numpy array) of values corresponding to each bin upper value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogramParams.binCenterValue">
+<code class="descname">binCenterValue</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogramParams.binCenterValue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value which a given bin index represents (center bin value).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogramParams.binIndex">
+<code class="descname">binIndex</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogramParams.binIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the index of the bin in which the given value would be saved in. Indexes are of course zero-based.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogramParams.binLowerValue">
+<code class="descname">binLowerValue</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogramParams.binLowerValue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value which a given bin index represents (lower bin value limit).</p>
+<p>Raise a <a class="reference internal" href="tomographer._exc_classes.html#tomographer.TomographerCxxError" title="tomographer.TomographerCxxError"><code class="xref py py-exc docutils literal"><span class="pre">TomographerCxxError</span></code></a> if the index is invalid.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogramParams.binResolution">
+<code class="descname">binResolution</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogramParams.binResolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the width of a bin.  This is simply <span class="math">\((\mathit{max} - \mathit{min})/\mathit{num_bins}\)</span>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogramParams.binUpperValue">
+<code class="descname">binUpperValue</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogramParams.binUpperValue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value which a given bin index represents (upper bin value limit).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogramParams.isWithinBounds">
+<code class="descname">isWithinBounds</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogramParams.isWithinBounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether the given <cite>value</cite> is within the bounds of the histogram, that is, in the range <cite>[min, max[</cite>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.UniformBinsHistogram">
+<em class="property">class </em><code class="descclassname">tomographer.</code><code class="descname">UniformBinsHistogram</code><a class="headerlink" href="#tomographer.UniformBinsHistogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">Boost.Python.instance</span></code></p>
+<p>A histogram object.  An interval <cite>[min,max]</cite> is divided into <cite>num_bins</cite> bins, each of same width. Each time a new value is to be recorded, the corresponding bin&#8217;s counter is incremented.</p>
+<p>This class is <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>able.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">This python class interfaces the C++ class <a class="reference external" href="../class_tomographer_1_1_uniform_bins_histogram.html">Tomographer::UniformBinsHistogramParams</a>, with the template parameters <cite>Scalar=double</cite> and <cite>CountType=int</cite>.  See the C++ class documentation for more information.</p>
+</div>
+<dl class="function">
+<dt id="tomographer.UniformBinsHistogram.UniformBinsHistogram">
+<code class="descname">UniformBinsHistogram</code><span class="sig-paren">(</span><span class="optional">[</span><em>params=UniformBinsHistogramParams()</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogram.UniformBinsHistogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a new histogram object with the given histogram parameters.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">UniformBinsHistogram</code><span class="sig-paren">(</span><em>min</em>, <em>max</em>, <em>num_bins</em><span class="sig-paren">)</span></dt>
+<dd><p>Alternative call syntax; the effect is the same as the other constructor.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogram.params">
+<code class="descname">params</code><a class="headerlink" href="#tomographer.UniformBinsHistogram.params" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#tomographer.UniformBinsHistogramParams" title="tomographer.UniformBinsHistogramParams"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogramParams</span></code></a> object which stores the current histogram parameters.  This attribute is read-only.  The parameters are specified to the constructor, and cannot be changed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogram.values_center">
+<code class="descname">values_center</code><a class="headerlink" href="#tomographer.UniformBinsHistogram.values_center" title="Permalink to this definition">¶</a></dt>
+<dd><p>A shorthand for <cite>params.values_center</cite>. See <a class="reference internal" href="#tomographer.UniformBinsHistogramParams" title="tomographer.UniformBinsHistogramParams"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogramParams</span></code></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogram.values_lower">
+<code class="descname">values_lower</code><a class="headerlink" href="#tomographer.UniformBinsHistogram.values_lower" title="Permalink to this definition">¶</a></dt>
+<dd><p>A shorthand for <cite>params.values_lower</cite>. See <a class="reference internal" href="#tomographer.UniformBinsHistogramParams" title="tomographer.UniformBinsHistogramParams"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogramParams</span></code></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogram.values_upper">
+<code class="descname">values_upper</code><a class="headerlink" href="#tomographer.UniformBinsHistogram.values_upper" title="Permalink to this definition">¶</a></dt>
+<dd><p>A shorthand for <cite>params.values_upper</cite>. See <a class="reference internal" href="#tomographer.UniformBinsHistogramParams" title="tomographer.UniformBinsHistogramParams"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogramParams</span></code></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogram.bins">
+<code class="descname">bins</code><a class="headerlink" href="#tomographer.UniformBinsHistogram.bins" title="Permalink to this definition">¶</a></dt>
+<dd><p>The histogram bin counts, interfaced as a <cite>NumPy</cite> array object storing integers.  This attribute is readable and writable, although you may not change the size or type of the array.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogram.off_chart">
+<code class="descname">off_chart</code><a class="headerlink" href="#tomographer.UniformBinsHistogram.off_chart" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of recorded data points which were beyond the histogram range <cite>[params.min, params.max[</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogram.HasErrorBars">
+<code class="descname">HasErrorBars</code><a class="headerlink" href="#tomographer.UniformBinsHistogram.HasErrorBars" title="Permalink to this definition">¶</a></dt>
+<dd><p>This is a class attribute, i.e. is accessed as <cite>UniformBinsHistogram.HasErrorBars</cite>, and is set to the constant value <cite>False</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogram.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>bins</em><span class="optional">[</span>, <em>off_chart=0</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogram.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a number of counts to each bin, specifed by a vector of values <cite>bins</cite> which is expected to be a <cite>NumPy</cite> array. If <cite>off_chart</cite> is specified, the current <cite>off_chart</cite> count is increased by this number, otherwise it is left to its current value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogram.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogram.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of counts in the bin indexed by <cite>index</cite>.  Indexes start at zero.  Raises <a class="reference internal" href="tomographer._exc_classes.html#tomographer.TomographerCxxError" title="tomographer.TomographerCxxError"><code class="xref py py-exc docutils literal"><span class="pre">TomographerCxxError</span></code></a> if index is out of range.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogram.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>bins</em><span class="optional">[</span>, <em>off_chart=0</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogram.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load bin values from the vector of values <cite>bins</cite>, which is expected to be a <cite>NumPy</cite> array. If <cite>off_chart</cite> is specified, the current <cite>off_chart</cite> count is also set to the given value; otherwise it is reset to zero.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogram.normalization">
+<code class="descname">normalization</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogram.normalization" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the normalization factor for the histogram.  This corresponds to the total number of weight-1 data points, where the weight of a data point may be specified as a second argument to <a class="reference internal" href="#tomographer.UniformBinsHistogram.record" title="tomographer.UniformBinsHistogram.record"><code class="xref py py-meth docutils literal"><span class="pre">record()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogram.normalized">
+<code class="descname">normalized</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogram.normalized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a normalized version of this histogram. The bin counts as well as the off_chart counts are divided by <a class="reference internal" href="#tomographer.UniformBinsHistogram.normalization" title="tomographer.UniformBinsHistogram.normalization"><code class="xref py py-meth docutils literal"><span class="pre">normalization()</span></code></a>.  The returned object is a <a class="reference internal" href="#tomographer.UniformBinsRealHistogram" title="tomographer.UniformBinsRealHistogram"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsRealHistogram</span></code></a> instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogram.numBins">
+<code class="descname">numBins</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogram.numBins" title="Permalink to this definition">¶</a></dt>
+<dd><p>A shorthand for <cite>params.num_bins</cite>.  See <a class="reference internal" href="#tomographer.UniformBinsHistogramParams" title="tomographer.UniformBinsHistogramParams"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogramParams</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogram.prettyPrint">
+<code class="descname">prettyPrint</code><span class="sig-paren">(</span><span class="optional">[</span><em>max_width=0</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogram.prettyPrint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produce a human-readable representation of the histogram, with horizontal visual bars, which is suitable to be displayed in a terminal (for instance).  The formatted histogram is returned as a string.  If <cite>max_width</cite> is specified and nonzero, the output is designed to fit into a terminal display of the given number of characters wide, otherwise a default width is used.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogram.record">
+<code class="descname">record</code><span class="sig-paren">(</span><em>value</em><span class="optional">[</span>, <em>weight=1</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogram.record" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record a new data sample. This increases the corresponding bin count by one, or by <cite>weight</cite> if the latter argument is provided.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogram.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogram.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clears the current histogram counts (including <cite>off_chart</cite> counts) to zero.  The histogram parameters in <cite>params</cite> are kept intact.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.UniformBinsRealHistogram">
+<em class="property">class </em><code class="descclassname">tomographer.</code><code class="descname">UniformBinsRealHistogram</code><a class="headerlink" href="#tomographer.UniformBinsRealHistogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">Boost.Python.instance</span></code></p>
+<p>A histogram (with uniform bin size), with a real count type. This class is basically a copy of <a class="reference internal" href="#tomographer.UniformBinsHistogram" title="tomographer.UniformBinsHistogram"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogram</span></code></a>, except that each bin&#8217;s count is a real value.  (This allows, for example, the histogram to be normalized.) Every method documented in <a class="reference internal" href="#tomographer.UniformBinsHistogram" title="tomographer.UniformBinsHistogram"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogram</span></code></a> is available to this class as well.</p>
+<p>This class is <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>able.</p>
+<p>The corresponding C++ class is also <a class="reference external" href="../class_tomographer_1_1_uniform_bins_histogram.html">Tomographer::UniformBinsHistogram</a>, although the <cite>CountType</cite> template parameter is set to <cite>double</cite> instead of <cite>int</cite>.</p>
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.UniformBinsHistogramWithErrorBars">
+<em class="property">class </em><code class="descclassname">tomographer.</code><code class="descname">UniformBinsHistogramWithErrorBars</code><a class="headerlink" href="#tomographer.UniformBinsHistogramWithErrorBars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">Boost.Python.instance</span></code></p>
+<p>A histogram (with uniform bin size), with a real count type and with error bars associated to each bin.</p>
+<p>This class internally inherits <a class="reference internal" href="#tomographer.UniformBinsRealHistogram" title="tomographer.UniformBinsRealHistogram"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsRealHistogram</span></code></a>, and all those methods are exposed in this class, except for <cite>add()</cite>. In addition, the <cite>reset()</cite> method also clears the error bar values, and the <cite>normalized()</cite> method returns a histogram with the appropriate error  bars on the normalized histogram.</p>
+<p>This class is <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>able.</p>
+<p>In addition to the members inherited from <a class="reference internal" href="#tomographer.UniformBinsRealHistogram" title="tomographer.UniformBinsRealHistogram"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsRealHistogram</span></code></a>, the following members are available:</p>
+<dl class="attribute">
+<dt id="tomographer.UniformBinsHistogramWithErrorBars.delta">
+<code class="descname">delta</code><a class="headerlink" href="#tomographer.UniformBinsHistogramWithErrorBars.delta" title="Permalink to this definition">¶</a></dt>
+<dd><p>The error bar values on each of the histogram bin counts, interfaced as a <cite>NumPy</cite> array object storing real values.  This attribute is readable and writable, although you may not change the size or type of the array.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogramWithErrorBars.errorBar">
+<code class="descname">errorBar</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogramWithErrorBars.errorBar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the error bar value associated to the bin of the given <cite>index</cite>. Raises <a class="reference internal" href="tomographer._exc_classes.html#tomographer.TomographerCxxError" title="tomographer.TomographerCxxError"><code class="xref py py-exc docutils literal"><span class="pre">TomographerCxxError</span></code></a> if index is out of range.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogramWithErrorBars.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>d</em>, <em>derr</em><span class="optional">[</span>, <em>off_chart=0</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogramWithErrorBars.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load data into the histogram. The array <cite>d</cite> specifies the bin counts, and <cite>err</cite> specifies the error bars on those bin counts.  The off-chart counter is set to <cite>off_chart</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.UniformBinsHistogramWithErrorBars.normalized">
+<code class="descname">normalized</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.UniformBinsHistogramWithErrorBars.normalized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a normalized version of this histogram, including the error bars. The bin counts, the error bars and the off_chart counts are divided by <a class="reference internal" href="#tomographer.UniformBinsHistogram.normalization" title="tomographer.UniformBinsHistogram.normalization"><code class="xref py py-meth docutils literal"><span class="pre">normalization()</span></code></a>.  The returned object is again a <a class="reference internal" href="#tomographer.UniformBinsHistogramWithErrorBars" title="tomographer.UniformBinsHistogramWithErrorBars"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogramWithErrorBars</span></code></a> instance.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.AveragedSimpleHistogram">
+<em class="property">class </em><code class="descclassname">tomographer.</code><code class="descname">AveragedSimpleHistogram</code><a class="headerlink" href="#tomographer.AveragedSimpleHistogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tomographer.UniformBinsHistogramWithErrorBars" title="tomographer.UniformBinsHistogramWithErrorBars"><code class="xref py py-class docutils literal"><span class="pre">tomographer.UniformBinsHistogramWithErrorBars</span></code></a></p>
+<p>A <a class="reference internal" href="#tomographer.UniformBinsHistogramWithErrorBars" title="tomographer.UniformBinsHistogramWithErrorBars"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogramWithErrorBars</span></code></a> which results from the averaging of several <a class="reference internal" href="#tomographer.UniformBinsHistogram" title="tomographer.UniformBinsHistogram"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogram</span></code></a> histograms.</p>
+<p>Add histograms to average together using the <a class="reference internal" href="#tomographer.AveragedSimpleHistogram.addHistogram" title="tomographer.AveragedSimpleHistogram.addHistogram"><code class="xref py py-meth docutils literal"><span class="pre">addHistogram()</span></code></a> method, and then call <a class="reference internal" href="#tomographer.AveragedSimpleHistogram.finalize" title="tomographer.AveragedSimpleHistogram.finalize"><code class="xref py py-meth docutils literal"><span class="pre">finalize()</span></code></a>. Then, the data stored in the current object will correspond to the averaged histogram. (See <a class="reference external" href="../page_theory_averaged_histogram.html">here the theory about how this is implemented</a>.)</p>
+<p>This histogram object inherits <a class="reference internal" href="#tomographer.UniformBinsHistogramWithErrorBars" title="tomographer.UniformBinsHistogramWithErrorBars"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogramWithErrorBars</span></code></a>, so all the methods exposed in that class are available to access the averaged histogram data.</p>
+<p>This class is <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>able.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">You must not forget to call <cite>finalize()</cite> before accessing the averaged histogram data.  The data stored in the current histogram object is UNDEFINED before having calling <cite>finalize()</cite>.</p>
+</div>
+<dl class="attribute">
+<dt id="tomographer.AveragedSimpleHistogram.num_histograms">
+<code class="descname">num_histograms</code><a class="headerlink" href="#tomographer.AveragedSimpleHistogram.num_histograms" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of histograms currently stored (read-only). This property may be     accessed at any time, also before having called <a class="reference internal" href="#tomographer.AveragedSimpleHistogram.finalize" title="tomographer.AveragedSimpleHistogram.finalize"><code class="xref py py-meth docutils literal"><span class="pre">finalize()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.AveragedSimpleHistogram.addHistogram">
+<code class="descname">addHistogram</code><span class="sig-paren">(</span><em>histogram</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.AveragedSimpleHistogram.addHistogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a new histogram to the average with the others.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.AveragedSimpleHistogram.finalize">
+<code class="descname">finalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.AveragedSimpleHistogram.finalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call this function after all the histograms have been added with calls to <a class="reference internal" href="#tomographer.AveragedSimpleHistogram.addHistogram" title="tomographer.AveragedSimpleHistogram.addHistogram"><code class="xref py py-meth docutils literal"><span class="pre">addHistogram()</span></code></a>. Only after calling this function may you access the averaged histogram in the current histogram object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.AveragedSimpleHistogram.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="optional">[</span><em>param</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.AveragedSimpleHistogram.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear all stored histograms and start a new averaging sequence. The histogram parameters are changed to <cite>param</cite> if you specify <cite>param</cite>, otherwise they are left unchanged. After calling this function, the averaged histogram class is in the same state as a freshly constructed averaged histogram object: you may call <a class="reference internal" href="#tomographer.AveragedSimpleHistogram.addHistogram" title="tomographer.AveragedSimpleHistogram.addHistogram"><code class="xref py py-meth docutils literal"><span class="pre">addHistogram()</span></code></a> to add histograms to the average, after which you must call <a class="reference internal" href="#tomographer.AveragedSimpleHistogram.finalize" title="tomographer.AveragedSimpleHistogram.finalize"><code class="xref py py-meth docutils literal"><span class="pre">finalize()</span></code></a> to finalize the averaging procedure.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.AveragedSimpleRealHistogram">
+<em class="property">class </em><code class="descclassname">tomographer.</code><code class="descname">AveragedSimpleRealHistogram</code><a class="headerlink" href="#tomographer.AveragedSimpleRealHistogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tomographer.UniformBinsHistogramWithErrorBars" title="tomographer.UniformBinsHistogramWithErrorBars"><code class="xref py py-class docutils literal"><span class="pre">tomographer.UniformBinsHistogramWithErrorBars</span></code></a></p>
+<p>A <a class="reference internal" href="#tomographer.UniformBinsHistogramWithErrorBars" title="tomographer.UniformBinsHistogramWithErrorBars"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogramWithErrorBars</span></code></a> which results from the averaging of several <a class="reference internal" href="#tomographer.UniformBinsRealHistogram" title="tomographer.UniformBinsRealHistogram"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsRealHistogram</span></code></a> histograms.</p>
+<p>This class is identical in functionality to <a class="reference internal" href="#tomographer.AveragedSimpleHistogram" title="tomographer.AveragedSimpleHistogram"><code class="xref py py-class docutils literal"><span class="pre">AveragedSimpleHistogram</span></code></a>, except that the histograms which are to be averaged are <a class="reference internal" href="#tomographer.UniformBinsRealHistogram" title="tomographer.UniformBinsRealHistogram"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsRealHistogram</span></code></a> objects.</p>
+<p>This class is <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>able.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">You must not forget to call <cite>finalize()</cite> before accessing the averaged histogram data.  The data stored in the current histogram object is UNDEFINED before having calling <cite>finalize()</cite>.</p>
+</div>
+<dl class="attribute">
+<dt id="tomographer.AveragedSimpleRealHistogram.num_histograms">
+<code class="descname">num_histograms</code><a class="headerlink" href="#tomographer.AveragedSimpleRealHistogram.num_histograms" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of histograms currently stored (read-only). This property may be     accessed at any time, also before having called <a class="reference internal" href="#tomographer.AveragedSimpleRealHistogram.finalize" title="tomographer.AveragedSimpleRealHistogram.finalize"><code class="xref py py-meth docutils literal"><span class="pre">finalize()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.AveragedSimpleRealHistogram.addHistogram">
+<code class="descname">addHistogram</code><span class="sig-paren">(</span><em>histogram</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.AveragedSimpleRealHistogram.addHistogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a new histogram to the average with the others.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.AveragedSimpleRealHistogram.finalize">
+<code class="descname">finalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.AveragedSimpleRealHistogram.finalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call this function after all the histograms have been added with calls to <a class="reference internal" href="#tomographer.AveragedSimpleRealHistogram.addHistogram" title="tomographer.AveragedSimpleRealHistogram.addHistogram"><code class="xref py py-meth docutils literal"><span class="pre">addHistogram()</span></code></a>. Only after calling this function may you access the averaged histogram in the current histogram object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.AveragedSimpleRealHistogram.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="optional">[</span><em>param</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.AveragedSimpleRealHistogram.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear all stored histograms and start a new averaging sequence. The histogram parameters are changed to <cite>param</cite> if you specify <cite>param</cite>, otherwise they are left unchanged. After calling this function, the averaged histogram class is in the same state as a freshly constructed averaged histogram object: you may call <a class="reference internal" href="#tomographer.AveragedSimpleRealHistogram.addHistogram" title="tomographer.AveragedSimpleRealHistogram.addHistogram"><code class="xref py py-meth docutils literal"><span class="pre">addHistogram()</span></code></a> to add histograms to the average, after which you must call <a class="reference internal" href="#tomographer.AveragedSimpleRealHistogram.finalize" title="tomographer.AveragedSimpleRealHistogram.finalize"><code class="xref py py-meth docutils literal"><span class="pre">finalize()</span></code></a> to finalize the averaging procedure.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.AveragedErrorBarHistogram">
+<em class="property">class </em><code class="descclassname">tomographer.</code><code class="descname">AveragedErrorBarHistogram</code><a class="headerlink" href="#tomographer.AveragedErrorBarHistogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tomographer.UniformBinsHistogramWithErrorBars" title="tomographer.UniformBinsHistogramWithErrorBars"><code class="xref py py-class docutils literal"><span class="pre">tomographer.UniformBinsHistogramWithErrorBars</span></code></a></p>
+<p>A <a class="reference internal" href="#tomographer.UniformBinsHistogramWithErrorBars" title="tomographer.UniformBinsHistogramWithErrorBars"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogramWithErrorBars</span></code></a> which results from the averaging of several <a class="reference internal" href="#tomographer.UniformBinsHistogramWithErrorBars" title="tomographer.UniformBinsHistogramWithErrorBars"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogramWithErrorBars</span></code></a> histograms.</p>
+<p>This class is essentially identical in functionality to <a class="reference internal" href="#tomographer.AveragedSimpleHistogram" title="tomographer.AveragedSimpleHistogram"><code class="xref py py-class docutils literal"><span class="pre">AveragedSimpleHistogram</span></code></a> and <a class="reference internal" href="#tomographer.AveragedSimpleRealHistogram" title="tomographer.AveragedSimpleRealHistogram"><code class="xref py py-class docutils literal"><span class="pre">AveragedSimpleRealHistogram</span></code></a>, except that the histograms which are to be averaged are  <a class="reference internal" href="#tomographer.UniformBinsHistogramWithErrorBars" title="tomographer.UniformBinsHistogramWithErrorBars"><code class="xref py py-class docutils literal"><span class="pre">UniformBinsHistogramWithErrorBars</span></code></a> objects, i.e. each histogram added already has information about error bars.  Those error bars are then combined appropriately, as described in <a class="reference external" href="../page_theory_averaged_histogram.html">the theory about how this class is implemented</a>.</p>
+<p>This class is <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>able.</p>
+<div class="admonition warning">
+<p class="first admonition-title">Warning</p>
+<p class="last">You must not forget to call <cite>finalize()</cite> before accessing the averaged histogram data.  The data stored in the current histogram object is UNDEFINED before having calling <cite>finalize()</cite>.</p>
+</div>
+<dl class="attribute">
+<dt id="tomographer.AveragedErrorBarHistogram.num_histograms">
+<code class="descname">num_histograms</code><a class="headerlink" href="#tomographer.AveragedErrorBarHistogram.num_histograms" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of histograms currently stored (read-only). This property may be     accessed at any time, also before having called <a class="reference internal" href="#tomographer.AveragedErrorBarHistogram.finalize" title="tomographer.AveragedErrorBarHistogram.finalize"><code class="xref py py-meth docutils literal"><span class="pre">finalize()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.AveragedErrorBarHistogram.addHistogram">
+<code class="descname">addHistogram</code><span class="sig-paren">(</span><em>histogram</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.AveragedErrorBarHistogram.addHistogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a new histogram to the average with the others.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.AveragedErrorBarHistogram.finalize">
+<code class="descname">finalize</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.AveragedErrorBarHistogram.finalize" title="Permalink to this definition">¶</a></dt>
+<dd><p>Call this function after all the histograms have been added with calls to <a class="reference internal" href="#tomographer.AveragedErrorBarHistogram.addHistogram" title="tomographer.AveragedErrorBarHistogram.addHistogram"><code class="xref py py-meth docutils literal"><span class="pre">addHistogram()</span></code></a>. Only after calling this function may you access the averaged histogram in the current histogram object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.AveragedErrorBarHistogram.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="optional">[</span><em>param</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.AveragedErrorBarHistogram.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clear all stored histograms and start a new averaging sequence. The histogram parameters are changed to <cite>param</cite> if you specify <cite>param</cite>, otherwise they are left unchanged. After calling this function, the averaged histogram class is in the same state as a freshly constructed averaged histogram object: you may call <a class="reference internal" href="#tomographer.AveragedErrorBarHistogram.addHistogram" title="tomographer.AveragedErrorBarHistogram.addHistogram"><code class="xref py py-meth docutils literal"><span class="pre">addHistogram()</span></code></a> to add histograms to the average, after which you must call <a class="reference internal" href="#tomographer.AveragedErrorBarHistogram.finalize" title="tomographer.AveragedErrorBarHistogram.finalize"><code class="xref py py-meth docutils literal"><span class="pre">finalize()</span></code></a> to finalize the averaging procedure.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Tomographer Python Interface</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.multiproc.html">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.densedm.html">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tomorun.html">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.mhrwtasks.html">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.querrorbars.html">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tools.html">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.jpyutil.html">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="tomographer.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="tomographer.html" title="previous chapter">&lt;no title&gt;</a></li>
+      <li>Next: <a href="tomographer._mhrw_classes.html" title="next chapter">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Philippe Faist.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/tomographer._hist_classes.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,13 @@
+<map id="tomographer/mhrwtasks.h" name="tomographer/mhrwtasks.h">
+<area shape="rect" id="node6" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="587,319,749,344"/>
+<area shape="rect" id="node21" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="1500,319,1772,344"/>
+<area shape="rect" id="node23" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="912,79,1056,104"/>
+<area shape="rect" id="node36" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="1414,79,1642,104"/>
+<area shape="rect" id="node42" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="162,239,328,264"/>
+<area shape="rect" id="node12" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="1310,399,1490,424"/>
+<area shape="rect" id="node20" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="993,472,1183,497"/>
+<area shape="rect" id="node25" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="813,239,1000,264"/>
+<area shape="rect" id="node29" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1449,152,1607,191"/>
+<area shape="rect" id="node30" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="2211,319,2405,344"/>
+<area shape="rect" id="node39" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="2156,239,2326,264"/>
+</map>

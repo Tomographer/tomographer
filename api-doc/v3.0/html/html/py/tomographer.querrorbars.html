@@ -1,0 +1,301 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Computing the quantum error bars (tomographer.querrorbars) &#8212; Tomographer Python Interface v3.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v3.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Python Tools Related to Tomography (tomographer.tools)" href="tomographer.tools.html" />
+    <link rel="prev" title="Utilities for Metropolis-Hastings random walk tasks (tomographer.mhrwtasks)" href="tomographer.mhrwtasks.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tomographer.querrorbars">
+<span id="computing-the-quantum-error-bars-tomographer-querrorbars"></span><h1>Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)<a class="headerlink" href="#module-tomographer.querrorbars" title="Permalink to this headline">¶</a></h1>
+<p>Utilities for fitting the histogram data and computing the <em>quantum error bars</em>.</p>
+<dl class="class">
+<dt id="tomographer.querrorbars.HistogramAnalysis">
+<em class="property">class </em><code class="descclassname">tomographer.querrorbars.</code><code class="descname">HistogramAnalysis</code><span class="sig-paren">(</span><em>final_histogram</em>, <em>ftox=(0</em>, <em>1)</em>, <em>fit_fn=None</em>, <em>**kwopts</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.querrorbars.HistogramAnalysis" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>Take care of analyzing histogram data obtained from performing a random walk over
+state space according to the distribution <span class="math">\(\mu_{B^n}(\cdot)\)</span> defined by the
+tomography data, while collecting a histogram of a figure of merit.</p>
+<dl class="docutils">
+<dt>Arguments to the constructor:</dt>
+<dd><ul class="first last simple">
+<li><cite>final_histogram</cite>: the final histogram returned by the random walks
+procedure.  It is expected to be a
+<cite>tomographer.UniformBinsHistogramWithErrorBars</cite>.</li>
+<li><cite>ftox</cite>: Specify how to transform the figure of merit value <cite>f</cite> into
+the <cite>x</cite> coordinate for fit. Specify the transformation as a pair of
+values <cite>(h, s)</cite> in the relation <cite>x = s*(f-h)</cite> or <cite>f=s*x+h</cite>, where h
+can be any constant, and where <cite>s</cite> must be plus or minus one. By
+default there is no transformation (<cite>x=f</cite>, corresponding to
+<cite>ftox=(0,1)</cite>.  For the fidelity, you should use <cite>x = 1-f</cite>
+(<cite>ftox=(1,-1)</cite>). For an entanglement witness, you might use <cite>x = 2-f</cite>
+(<cite>ftox=(2,-1)</cite>) for example.</li>
+<li><cite>fit_fn</cite>: a function which serves as fit model (for the log of the data)</li>
+<li>additional named arguments in <cite>kwopts</cite> are passed on to <a class="reference internal" href="#tomographer.querrorbars.fit_histogram" title="tomographer.querrorbars.fit_histogram"><code class="xref py py-func docutils literal"><span class="pre">fit_histogram()</span></code></a>.</li>
+</ul>
+</dd>
+</dl>
+<dl class="method">
+<dt id="tomographer.querrorbars.HistogramAnalysis.fitParameters">
+<code class="descname">fitParameters</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.querrorbars.HistogramAnalysis.fitParameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the parameters of the fit.  The return value type is a named tuple whose fields
+are the argument names of the fit model <cite>fit_fn</cite> specified to the constructor.
+For example, for the default fit model <a class="reference internal" href="#tomographer.querrorbars.fit_fn_default" title="tomographer.querrorbars.fit_fn_default"><code class="xref py py-func docutils literal"><span class="pre">fit_fn_default()</span></code></a>, the fields are
+<cite>(a2, a1, m, c)</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.querrorbars.HistogramAnalysis.ftox">
+<code class="descname">ftox</code><span class="sig-paren">(</span><em>f</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.querrorbars.HistogramAnalysis.ftox" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an <cite>f</cite>-value (value of the figure of merit) to an <cite>x</cite>-value (natural variable
+of the fit model).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.querrorbars.HistogramAnalysis.plot">
+<code class="descname">plot</code><span class="sig-paren">(</span><em>log_scale=False</em>, <em>xlabel='Distribution of values'</em>, <em>plot_deskewed_gaussian=True</em>, <em>**kwopts</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.querrorbars.HistogramAnalysis.plot" title="Permalink to this definition">¶</a></dt>
+<dd><p>Plot the histogram data using <cite>matplotlib</cite>.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>log_scale</strong> &#8211; if <cite>True</cite>, then use a logarithmic scale for the y-axis.</li>
+<li><strong>xlabel</strong> &#8211; the label for the x axis (i.e., the figure of merit). Note this
+is the <cite>f</cite>-value, not the <cite>x</cite>-value.</li>
+<li><strong>show_plot</strong> &#8211; if <cite>True</cite> (the default), then the plot is displayed immediately.
+If <cite>False</cite>, then the returned object has an additional method <cite>show()</cite> which can
+be used to display the plot.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+<p>The return value is an object with the attributes <cite>fig</cite> (the <cite>matplotlib</cite> figure
+object) and <cite>ax</cite> (the <cite>matplotlib</cite> axes object) which you can use to set specific
+custom properties.  If you specified <cite>show_plot=False</cite>, then you should call the
+<cite>show()</cite> method on the returned object in order to show the plots (which is simply
+an alias for <cite>matplotlib.pyplot.show()</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.querrorbars.HistogramAnalysis.printFitParameters">
+<code class="descname">printFitParameters</code><span class="sig-paren">(</span><em>print_func=&lt;built-in function print&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.querrorbars.HistogramAnalysis.printFitParameters" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display the fit parameters.</p>
+<p>By default the values are displayed using <cite>print(...)</cite>. You may specify a custom
+print function if you want them displayed somewhere else.</p>
+<p>The fit parameters are returned in the same format as <a class="reference internal" href="#tomographer.querrorbars.HistogramAnalysis.fitParameters" title="tomographer.querrorbars.HistogramAnalysis.fitParameters"><code class="xref py py-meth docutils literal"><span class="pre">fitParameters()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.querrorbars.HistogramAnalysis.printQuantumErrorBars">
+<code class="descname">printQuantumErrorBars</code><span class="sig-paren">(</span><em>print_func=&lt;built-in function print&gt;</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.querrorbars.HistogramAnalysis.printQuantumErrorBars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculates and displays the values of the quantum error bars.</p>
+<p>The quantum error bars are returned, provided in the same format as
+<a class="reference internal" href="#tomographer.querrorbars.HistogramAnalysis.quantumErrorBars" title="tomographer.querrorbars.HistogramAnalysis.quantumErrorBars"><code class="xref py py-meth docutils literal"><span class="pre">quantumErrorBars()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.querrorbars.HistogramAnalysis.quantumErrorBars">
+<code class="descname">quantumErrorBars</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.querrorbars.HistogramAnalysis.quantumErrorBars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the quantum error bars.</p>
+<p>This function is only available if you use the default fit model (i.e., if you
+didn&#8217;t specify the <cite>fit_fn</cite> argument to the constructor).</p>
+<p>Returns a <a class="reference internal" href="#tomographer.querrorbars.QuantumErrorBars" title="tomographer.querrorbars.QuantumErrorBars"><code class="xref py py-class docutils literal"><span class="pre">QuantumErrorBars</span></code></a> named tuple.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.querrorbars.HistogramAnalysis.xtof">
+<code class="descname">xtof</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.querrorbars.HistogramAnalysis.xtof" title="Permalink to this definition">¶</a></dt>
+<dd><p>Convert an <cite>x</cite>-value (natural variable of the fit model) to the value of the figure of
+merit (<cite>f</cite>).</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.querrorbars.QuantumErrorBars">
+<em class="property">class </em><code class="descclassname">tomographer.querrorbars.</code><code class="descname">QuantumErrorBars</code><span class="sig-paren">(</span><em>f0</em>, <em>Delta</em>, <em>gamma</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.querrorbars.QuantumErrorBars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/stdtypes.html#tuple" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">tuple</span></code></a></p>
+<dl class="attribute">
+<dt id="tomographer.querrorbars.QuantumErrorBars.Delta">
+<code class="descname">Delta</code><a class="headerlink" href="#tomographer.querrorbars.QuantumErrorBars.Delta" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 1</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.querrorbars.QuantumErrorBars.f0">
+<code class="descname">f0</code><a class="headerlink" href="#tomographer.querrorbars.QuantumErrorBars.f0" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 0</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.querrorbars.QuantumErrorBars.gamma">
+<code class="descname">gamma</code><a class="headerlink" href="#tomographer.querrorbars.QuantumErrorBars.gamma" title="Permalink to this definition">¶</a></dt>
+<dd><p>Alias for field number 2</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="tomographer.querrorbars.deskew_logmu_curve">
+<code class="descclassname">tomographer.querrorbars.</code><code class="descname">deskew_logmu_curve</code><span class="sig-paren">(</span><em>a2</em>, <em>a1</em>, <em>m</em>, <em>c</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.querrorbars.deskew_logmu_curve" title="Permalink to this definition">¶</a></dt>
+<dd><p>De-skew the fit model to obtain a second order approximation at the peak maximum (see
+details of how to calculate the quantum error bars in our paper).</p>
+<p>Usage:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="p">(</span><span class="n">a</span><span class="p">,</span> <span class="n">x0</span><span class="p">,</span> <span class="n">y0</span><span class="p">)</span> <span class="o">=</span> <span class="n">deskew_logmu_curve</span><span class="p">(</span><span class="n">a2</span><span class="p">,</span> <span class="n">a1</span><span class="p">,</span> <span class="n">m</span><span class="p">,</span> <span class="n">c</span><span class="p">)</span>
+</pre></div>
+</div>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomographer.querrorbars.fit_fn_default">
+<code class="descclassname">tomographer.querrorbars.</code><code class="descname">fit_fn_default</code><span class="sig-paren">(</span><em>x</em>, <em>a2</em>, <em>a1</em>, <em>m</em>, <em>c</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.querrorbars.fit_fn_default" title="Permalink to this definition">¶</a></dt>
+<dd><p>The default fit model for the logarithm of the histogram data.  The <cite>x</cite>-values are not
+directly the figure of merit, but may be possibly transformed via a <cite>f</cite>-to-<cite>x</cite>
+transformation (see <a class="reference internal" href="#tomographer.querrorbars.HistogramAnalysis" title="tomographer.querrorbars.HistogramAnalysis"><code class="xref py py-class docutils literal"><span class="pre">HistogramAnalysis</span></code></a>).</p>
+<p>Returns the value <span class="math">\(-a_2\,x^2 - a_1\,x + m\log(x) + c\)</span>, which is the default
+fit model.  If a <cite>NumPy</cite> vector is specified as <cite>x</cite>, the function is evaluated for all
+the given values and the values are returned as a vector.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomographer.querrorbars.fit_histogram">
+<code class="descclassname">tomographer.querrorbars.</code><code class="descname">fit_histogram</code><span class="sig-paren">(</span><em>normalized_histogram</em>, <em>fit_fn</em>, <em>ftox</em>, <em>**kwopts</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.querrorbars.fit_histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Fit the histogram data to a model function.</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>normalized_histogram</strong> &#8211; the final histogram data, provided as a
+<a class="reference internal" href="tomographer._hist_classes.html#tomographer.UniformBinsHistogramWithErrorBars" title="tomographer.UniformBinsHistogramWithErrorBars"><code class="xref py py-class docutils literal"><span class="pre">tomographer.UniformBinsHistogramWithErrorBars</span></code></a> class (or a subclass
+thereof), and normalized to a proper probability density (see
+<a class="reference internal" href="tomographer._hist_classes.html#tomographer.UniformBinsHistogramWithErrorBars.normalized" title="tomographer.UniformBinsHistogramWithErrorBars.normalized"><code class="xref py py-meth docutils literal"><span class="pre">tomographer.UniformBinsHistogramWithErrorBars.normalized()</span></code></a>).</li>
+<li><strong>ftox</strong> &#8211; a function which transforms the figure of merit values (<cite>f</cite>-values) into
+the natural parameter for the fit function (<cite>x</cite>-values).  For example, for the
+fidelity, one should use <span class="math">\(x = 1 - f\)</span>.</li>
+<li><strong>threshold_fraction</strong> &#8211; a fraction (i.e. value between 0 and 1) of the maximum peak
+value over which the data points are kept; values below the threshold are ignored
+for the fit. (By default, <cite>threshold_fraction=0</cite> and all points are considered;
+since the error bars are taken into account this should be fine in most cases.)</li>
+<li><strong>kwopts</strong> &#8211; additional keyword options are passed on to
+<cite>scipy.optimize.curve_fit(...)</cite>.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Tomographer Python Interface</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tomographer._hist_classes.html">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.multiproc.html">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.densedm.html">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tomorun.html">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.mhrwtasks.html">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tools.html">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.jpyutil.html">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="tomographer.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="tomographer.mhrwtasks.html" title="previous chapter">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+      <li>Next: <a href="tomographer.tools.html" title="next chapter">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Philippe Faist.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/tomographer.querrorbars.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

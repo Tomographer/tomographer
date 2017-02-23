@@ -1,0 +1,4 @@
+<map id="Tomographer::Tools::NeedEigenAlignedOperatorNew" name="Tomographer::Tools::NeedEigenAlignedOperatorNew">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_tools_1_1_need_own_operator_new_3_01_eigen_1_1_array_3_01_scalar_00_01_fi27964185ced34fb5bd18fb7694a848ef.html" title="Specialize NeedOwnOperatorNew for Eigen types. " alt="" coords="272,5,491,84"/>
+<area shape="rect" id="node3" href="$struct_tomographer_1_1_tools_1_1_need_own_operator_new_3_01_eigen_1_1_matrix_3_01_scalar_00_01_f562600b42153070dc34daa2aedab201e.html" title="Specialize NeedOwnOperatorNew for Eigen types. " alt="" coords="272,108,491,187"/>
+</map>

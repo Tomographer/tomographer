@@ -1,0 +1,10 @@
+<map id="Tomographer::AveragedHistogram&lt; HistogramType_, RealAvgType &gt;" name="Tomographer::AveragedHistogram&lt; HistogramType_, RealAvgType &gt;">
+<area shape="rect" id="node7" href="$class_tomographer_1_1_averaged_histogram.html" title="Tomographer::AveragedHistogram\l\&lt; ScaledHistogramType, CountRealType \&gt;" alt="" coords="1816,5,2090,44"/>
+<area shape="rect" id="node8" href="$class_tomographer_1_1_averaged_histogram.html" title="Tomographer::AveragedHistogram\l\&lt; SimpleScaledHistogramType,\l double \&gt;" alt="" coords="1840,68,2065,120"/>
+<area shape="rect" id="node9" href="$class_tomographer_1_1_averaged_histogram.html" title="Tomographer::AveragedHistogram\l\&lt; HistogramType, CountRealType \&gt;" alt="" coords="1836,144,2070,183"/>
+<area shape="rect" id="node2" href="$class_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; HistogramType_::Scalar,\l RealAvgType \&gt;" alt="" coords="1121,61,1301,127"/>
+<area shape="rect" id="node3" href="$class_tomographer_1_1_uniform_bins_histogram.html" title="Tomographer::UniformBins\lHistogram\&lt; HistogramType\l_::Scalar, RealAvgType \&gt;" alt="" coords="729,68,912,120"/>
+<area shape="rect" id="node4" href="$struct_tomographer_1_1_tools_1_1_eigen_aligned_operator_new_provider.html" title="Provides correct operator&#45;new implementation for Eigen types via the NeedOwnOperatorNew mechanism..." alt="" coords="5,84,242,123"/>
+<area shape="rect" id="node5" href="$class_tomographer_1_1_uniform_bins_histogram.html" title="Stores a histogram. " alt="" coords="291,119,521,157"/>
+<area shape="rect" id="node6" href="$class_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Stores a histogram along with error bars. " alt="" coords="731,145,911,197"/>
+</map>

@@ -1,0 +1,7 @@
+<map id="Tomographer::BinningAnalysis&lt; Params, LoggerType_ &gt;" name="Tomographer::BinningAnalysis&lt; Params, LoggerType_ &gt;">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_tools_1_1_eigen_aligned_operator_new_provider.html" title="Provides correct operator&#45;new implementation for Eigen types via the NeedOwnOperatorNew mechanism..." alt="" coords="487,5,723,44"/>
+<area shape="rect" id="node3" href="$class_tomographer_1_1_tools_1_1_static_or_dynamic.html" title="Tomographer::Tools\l::StaticOrDynamic\&lt; int,\l(NumLevelsCTime==Eigen\l::Dynamic), NumLevelsCTime \&gt;" alt="" coords="500,68,709,133"/>
+<area shape="rect" id="node4" href="$class_tomographer_1_1_tools_1_1_static_or_dynamic.html" title="A type which stores a value possibly known at compile&#45;time. " alt="" coords="5,171,204,223"/>
+<area shape="rect" id="node5" href="$class_tomographer_1_1_tools_1_1_static_or_dynamic.html" title="Tomographer::Tools\l::StaticOrDynamic\&lt; int,\l(NumTrackValuesCTime=\l=Eigen::Dynamic), NumTrackValues\lCTime \&gt;" alt="" coords="487,157,722,236"/>
+<area shape="rect" id="node6" href="$class_tomographer_1_1_tools_1_1_static_or_dynamic.html" title="Tomographer::Tools\l::StaticOrDynamic\&lt; CountInt\lType,(SamplesSizeCTime=\l=Eigen::Dynamic), SamplesSizeCTime \&gt;" alt="" coords="473,260,736,325"/>
+</map>

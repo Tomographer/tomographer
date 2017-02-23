@@ -1,0 +1,14 @@
+<map id="tomographer/mhrw_valuehist_tasks.h" name="tomographer/mhrw_valuehist_tasks.h">
+<area shape="rect" id="node4" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="1954,325,2142,351"/>
+<area shape="rect" id="node16" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="1176,485,1357,511"/>
+<area shape="rect" id="node24" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="1316,405,1588,431"/>
+<area shape="rect" id="node26" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="962,165,1190,191"/>
+<area shape="rect" id="node40" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Multiprocessing Task Interfaces) for parallel Metropolis&#45;Hasting..." alt="" coords="2002,92,2177,117"/>
+<area shape="rect" id="node13" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="2390,405,2552,431"/>
+<area shape="rect" id="node23" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="1797,559,1987,584"/>
+<area shape="rect" id="node30" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="606,325,776,351"/>
+<area shape="rect" id="node39" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1265,239,1423,277"/>
+<area shape="rect" id="node34" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="753,405,946,431"/>
+<area shape="rect" id="node42" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="1875,165,2018,191"/>
+<area shape="rect" id="node43" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="2778,325,2944,351"/>
+</map>

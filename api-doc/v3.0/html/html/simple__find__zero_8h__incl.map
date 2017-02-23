@@ -1,0 +1,6 @@
+<map id="tomographer/mathtools/simple_find_zero.h" name="tomographer/mathtools/simple_find_zero.h">
+<area shape="rect" id="node5" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="636,92,824,117"/>
+<area shape="rect" id="node14" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="278,165,440,191"/>
+<area shape="rect" id="node24" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="895,312,1085,337"/>
+<area shape="rect" id="node17" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="409,239,590,264"/>
+</map>
