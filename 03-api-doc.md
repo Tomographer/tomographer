@@ -5,8 +5,6 @@ permalink: /api-doc/
 layout: default
 ---
 
-API Documentation
-
 **Latest Version**
 
   - [latest version ({{ site.tomographer_apidoc_version }})]({{ site.baseurl }}/api-doc/{{ site.tomographer_apidoc_version }}/html/){:target="_blank"}
