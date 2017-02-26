@@ -111,9 +111,9 @@ tomography experiment.
 Tomographer provides an interface for easy invocation from Python code.  Here are the
 steps to get started and analyze data from your experiment:
 
-1.  [Download and install]({{ site.baseurl }}/download) the Python interface tomographer.
-    If you are building from source, you do not need to use CMake or build the tomorun
-    executable.
+1.  [Download and install](https://github.com/Tomographer/tomographer/releases) a source
+    tarball of Tomographer.  Enter the `py/` directory, and run `python setup.py install`
+    or `python3 setup.py install`, and follow the instructions.
 
 2.  Open your favorite Python environment (e.g. edit a Python script or open an IPython or
     Jupyter notebook session), and start off with [this one-qubit
