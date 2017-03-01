@@ -56,8 +56,8 @@ namespace Tomographer { namespace Logger {
 class PyLogger : public Tomographer::Logger::LoggerBase<PyLogger>
 {
 private:
-  boost::python::object py_logging; // the Python "logging" module
-  boost::python::object py_logger; // the Python "logging.Logger" instance for our use
+  pybind11::object py_logging; // the Python "logging" module
+  pybind11::object py_logger; // the Python "logging.Logger" instance for our use
   bool _bypasspython;
 public:
   inline
@@ -73,10 +73,10 @@ public:
   void emitLog(int level, const char * origin, const std::string & msg);
 
   inline
-  boost::python::object toPythonLevel(int level) const;
+  py::object toPythonLevel(int level) const;
 
   inline
-  int fromPythonLevel(boost::python::object pylvl) const;
+  int fromPythonLevel(py::object pylvl) const;
 
 
   // Tools to bypass a Python call to logger and just write to stderr -- not used so far.
@@ -128,13 +128,13 @@ PyLogger::PyLogger()
 inline
 void PyLogger::initPythonLogger(std::string logger_name)
 {
-  py_logging = boost::python::import("logging");
-  py_logger = py_logging.attr("getLogger")(logger_name);
+  py_logging = py::module::import("logging");
+  py_logger = py::getattr(py_logging, "getLogger")(logger_name);
 
   // set the level at which messages will be actually seen -- any changes to the Python
   // logger's level configuration must be manually reported to us as well in order to have
   // the correct logging level.
-  int lvl = fromPythonLevel(py_logger.attr("getEffectiveLevel")());
+  int lvl = fromPythonLevel(py::getattr(py_logger, "getEffectiveLevel")());
   setLevel( lvl );
 
   this->debug("PyLogger::initPythonLogger", [lvl](std::ostream & stream) {
@@ -152,7 +152,7 @@ void PyLogger::setLevel(int level)
   if (level == Tomographer::Logger::LONGDEBUG) {
     if (!py_logger.is_none()) {
       // but only perform this check if py_logger is not None
-      int effective_level = fromPythonLevel(py_logger.attr("getEffectiveLevel")());
+      int effective_level = fromPythonLevel(py::getattr(py_logger, "getEffectiveLevel")());
       if (effective_level != Tomographer::Logger::LONGDEBUG) {
         this->warning("PyLogger::setLevel", [&](std::ostream & stream) {
             stream << "Log level LONGDEBUG set on C++ logger but Python logger only displays messages of "
@@ -183,25 +183,25 @@ void PyLogger::emitLog(int level, const char * origin, const std::string & msg)
   } else {
     //fprintf(stderr, "Emitting log ... (%s)\n", msg.c_str());
 
-    boost::python::object pylevel = toPythonLevel(level);
+    py::object pylevel = toPythonLevel(level);
 
     std::string full_msg = std::string("<")+origin+"> "+msg;
 
-    boost::python::dict extra;
+    py::dict extra;
     extra["origin"] = origin;
     extra["msg_orig"] = msg;
-    boost::python::dict kwargs;
+    py::dict kwargs;
     kwargs["extra"] = extra;
-    auto logfn = py_logger.attr("log");
+    auto logfn = py::getattr(py_logger, "log");
     //      try {
     if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
-      throw boost::python::error_already_set();
+      throw py::error_already_set();
     }
-    logfn(*boost::python::make_tuple(pylevel, full_msg), **kwargs);
+    logfn(*py::make_tuple(pylevel, full_msg), **kwargs);
     if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
-      throw boost::python::error_already_set();
+      throw py::error_already_set();
     }
-    // } catch (boost::python::error_already_set & e) {
+    // } catch (py::error_already_set & e) {
     //   //PyErr_Print();
     //   //fprintf(stderr, "Propagating exception in call to python logging function.\n");
     //   throw e;
@@ -212,42 +212,42 @@ void PyLogger::emitLog(int level, const char * origin, const std::string & msg)
 
 
 inline
-boost::python::object PyLogger::toPythonLevel(int level) const
+py::object PyLogger::toPythonLevel(int level) const
 {
   if (py_logging.is_none()) {
     fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGING MODULE NOT SET.\nIn attempt to call toPythonLevel().");
-    return boost::python::object();
+    return py::object();
   }
   switch (level) {
   case Tomographer::Logger::ERROR:
-    return py_logging.attr("ERROR");
+    return py::getattr(py_logging, "ERROR");
   case Tomographer::Logger::WARNING:
-    return py_logging.attr("WARNING");
+    return py::getattr(py_logging, "WARNING");
   case Tomographer::Logger::INFO:
-    return py_logging.attr("INFO");
+    return py::getattr(py_logging, "INFO");
   case Tomographer::Logger::DEBUG:
-    return py_logging.attr("DEBUG");
+    return py::getattr(py_logging, "DEBUG");
   case Tomographer::Logger::LONGDEBUG:
   default:
-    return py_logging.attr("NOTSET") + 1;
+    return py::getattr(py_logging, "NOTSET");
   }
 }
 
 inline
-int PyLogger::fromPythonLevel(boost::python::object pylvl) const
+int PyLogger::fromPythonLevel(py::object pylvl) const
 {
   if (py_logging.is_none()) {
     fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGING MODULE NOT SET.\nIn attempt to call fromPythonLevel().");
     return -1;
   }
 
-  if (pylvl < py_logging.attr("DEBUG")) {
+  if (pylvl.cast<int>() < py::getattr(py_logging, "DEBUG").cast<int>()) {
     return Tomographer::Logger::LONGDEBUG;
-  } else if (pylvl < py_logging.attr("INFO")) {
+  } else if (pylvl.cast<int>() < py::getattr(py_logging, "INFO").cast<int>()) {
     return Tomographer::Logger::DEBUG;
-  } else if (pylvl < py_logging.attr("WARNING")) {
+  } else if (pylvl.cast<int>() < py::getattr(py_logging, "WARNING").cast<int>()) {
     return Tomographer::Logger::INFO;
-  } else if (pylvl < py_logging.attr("ERROR")) {
+  } else if (pylvl.cast<int>() < py::getattr(py_logging, "ERROR").cast<int>()) {
     return Tomographer::Logger::WARNING;
   } else {
     return Tomographer::Logger::ERROR;

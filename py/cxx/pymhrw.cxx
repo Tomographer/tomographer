@@ -32,29 +32,16 @@
 #include "common_p.h"
 
 
-struct MHRWParams_pickle_suite : boost::python::pickle_suite
+
+void py_tomo_mhrw(py::module rootmodule)
 {
-  static boost::python::tuple getinitargs(const Py::MHRWParams & mhrw_params)
-  {
-    return boost::python::make_tuple(mhrw_params.step_size,
-                                     mhrw_params.n_sweep,
-                                     mhrw_params.n_therm,
-                                     mhrw_params.n_run);
-  }
-};
-
-
-
-void py_tomo_mhrw()
-{
-  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
+  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy::logger);
   logger.debug("py_tomo_mhrw() ...");
 
-  using boost::python::arg;
-
   logger.debug("MHRWParams ...");
-  { typedef Py::MHRWParams Kl;
-    boost::python::class_<Py::MHRWParams>(
+  { typedef tpy::MHRWParams Kl;
+    py::class_<tpy::MHRWParams>(
+        rootmodule,
         "MHRWParams",
         Tomographer::Tools::fmts(
             "Parameters for a Metropolis-Hastings random walk.\n\n"
@@ -80,19 +67,30 @@ void py_tomo_mhrw()
             boost::core::demangle(typeid(RealType).name()).c_str()
             ).c_str()
         )
-      .def(boost::python::init<>())
-      .def(boost::python::init<RealType,CountIntType,CountIntType,CountIntType>(
-               (arg("step_size"), arg("n_sweep"), arg("n_therm"), arg("n_run"))))
-      .add_property("step_size", +[](const Kl & p) { return p.step_size; },
-                    +[](Kl & p, RealType step_size) { p.step_size = step_size; })
-      .add_property("n_sweep", +[](const Kl & p) { return p.n_sweep; },
-                    +[](Kl & p, CountIntType n_sweep) { p.n_sweep = n_sweep; })
-      .add_property("n_therm", +[](const Kl & p) { return p.n_therm; },
-                    +[](Kl & p, CountIntType n_therm) { p.n_therm = n_therm; })
-      .add_property("n_run", +[](const Kl & p) { return p.n_run; },
-                    +[](Kl & p, CountIntType n_run) { p.n_run = n_run; })
-      .def_pickle(MHRWParams_pickle_suite())
-      ;
+      .def(py::init<>())
+      .def(py::init<RealType,CountIntType,CountIntType,CountIntType>(),
+           py::arg("step_size"), py::arg("n_sweep"), py::arg("n_therm"), py::arg("n_run"))
+      .def_readwrite("step_size", &Kl::step_size)
+      .def_readwrite("n_sweep", &Kl::n_sweep)
+      .def_readwrite("n_therm", &Kl::n_therm)
+      .def_readwrite("n_run", &Kl::n_run)
+      .def("__getstate__", [](const Kl& mhrw_params) {
+          return py::make_tuple(mhrw_params.step_size,
+                                mhrw_params.n_sweep,
+                                mhrw_params.n_therm,
+                                mhrw_params.n_run);
+        })
+      .def("__setstate__", [](Kl & p, py::tuple t) {
+          if (t.size() != 4) {
+            throw std::runtime_error("Invalid pickle state!");
+          }
+          // Invoke the in-place constructor. Note that this is needed even
+          // when the object just has a trivial default constructor
+          new (&p) Pickleable(t[0].cast<RealType>(),
+                              t[1].cast<CountIntType>(),
+                              t[2].cast<CountIntType>(),
+                              t[3].cast<CountIntType>());
+        });
+    ;
   }
-
 }

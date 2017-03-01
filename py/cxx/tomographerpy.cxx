@@ -39,42 +39,49 @@
 
 
 
-void register_eigen_converter();
+//void register_eigen_converter();
 
-void py_tomo_histogram();
-void py_tomo_multiproc();
-void py_tomo_densedm();
-void py_tomo_tomorun();
-void py_tomo_mhrw();
-void py_tomo_mhrwtasks();
-
-
+//void py_tomo_histogram();
+//void py_tomo_multiproc();
+//void py_tomo_densedm();
+//void py_tomo_tomorun();
+void py_tomo_mhrw(py::module rootmodule);
+//void py_tomo_mhrwtasks();
 
 
-PyLogger tpy_logger;
 
 
+namespace tpy
+{
+// common logger object
+PyLogger logger;
 
 // the main exception object
 PyObject * TomographerCxxError;
+}
 
 
-BOOST_PYTHON_MODULE(_tomographer_cxx)
+
+
+PYBIND11_PLUGIN(_tomographer_cxx)
 {
+  py::module rootmodule("tomographer", "Tomographer module");
   // hack module name so that classes, objects, etc. appear in the module "tomographer"
-  boost::python::scope().attr("__name__") = "tomographer";
+  //py::scope().attr("__name__") = "tomographer"; -- perhaps not needed with pybind11??
 
   // python logging
-  tpy_logger.initPythonLogger();
-  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
+  tpy::logger.initPythonLogger();
+  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy::logger);
 
   logger.debug("INIT TOMOGRAPHER");
 
-  boost::python::docstring_options doc_options(true, false, false);
+//  py::docstring_options doc_options(true, false, false); -- no longer with pybind11
 
   // our basic library exception class
-  TomographerCxxError = createExceptionClass(
-      "TomographerCxxError", PyExc_Exception,
+  tpy::TomographerCxxError = createExceptionClass(
+      rootmodule,
+      "TomographerCxxError",
+      PyExc_Exception,
       // doc:
       "Run-time error indicating an inappropriate usage or call of a method of the Python tomographer "
       "API. For example, an index may be out of range.\n\n"
@@ -83,52 +90,53 @@ BOOST_PYTHON_MODULE(_tomographer_cxx)
 
 
   // expose Python API for setting the C++ logger level
-  boost::python::class_<PyLogger>("PyLogger")
-    .add_property("level", +[](const PyLogger & l) { return l.level(); },
-                  +[](PyLogger & l, boost::python::object newlevel) {
+  py::class_<PyLogger>(rootmodule, "PyLogger")
+    .def_property("level",
+                  [](const PyLogger & l) { return l.level(); },
+                  [](PyLogger & l, py::object newlevel) {
                     l.setLevel(l.fromPythonLevel(newlevel));
                   });
   
-  boost::python::scope().attr("cxxlogger") = boost::ref(tpy_logger);
+  rootmodule.attr("cxxlogger") = tpy::logger;
+
 
   // the version of this library module
-  boost::python::scope().attr("__version__") = TOMOGRAPHER_VERSION;
+  rootmodule.attr("__version__") = TOMOGRAPHER_VERSION;
   // add a version submodule with more precise version info
   logger.debug("version module ... ");
-  boost::python::object versionmod(boost::python::borrowed(PyImport_AddModule("tomographer.version")));
-  boost::python::scope().attr("version") = versionmod;
+  py::module versionmodule = rootmodule.def_submodule("version", "Version information");
+  versionmodule.attr("version_str") = TOMOGRAPHER_VERSION;
   {
-    // now inside submodule
-    boost::python::scope versionmodule(versionmod);
-    versionmod.attr("version_str") = TOMOGRAPHER_VERSION;
-    auto collections = boost::python::import("collections");
+    auto collections = py::module::import("collections");
     auto namedtuple = collections.attr("namedtuple");
-    boost::python::list verfields;
+    py::list verfields;
     verfields.append("major"); 
     verfields.append("minor");
     auto VersionInfoTuple = namedtuple("VersionInfo", verfields);
-    versionmod.attr("version_info") = VersionInfoTuple(TOMOGRAPHER_VERSION_MAJ, TOMOGRAPHER_VERSION_MIN);
+    versionmodule.attr("version_info") = VersionInfoTuple(TOMOGRAPHER_VERSION_MAJ, TOMOGRAPHER_VERSION_MIN);
   }
 
   // add info on how tomographer was compiled, so that other modules can use the same
   // tools
 
   // Eigen converters
-  register_eigen_converter();
+//  register_eigen_converter();
 
   logger.debug("Registered eigen converters.");
 
-  py_tomo_histogram();
+//  py_tomo_histogram();
 
-  py_tomo_mhrw();
+  py_tomo_mhrw(rootmodule);
 
-  py_tomo_multiproc();
+//  py_tomo_multiproc();
 
-  py_tomo_densedm();
+//  py_tomo_densedm();
 
-  py_tomo_mhrwtasks();
+//  py_tomo_mhrwtasks();
 
-  py_tomo_tomorun();
+//  py_tomo_tomorun();
 
   logger.debug("TOMOGRAPHER INIT COMPLETE.");
+
+  return rootmodule.ptr();
 }

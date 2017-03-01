@@ -30,16 +30,18 @@
 
 #include <cstdio>
 
-#include <boost/python.hpp>
+#include <pybind11/pybind11.h>
+
+namespace py = pybind11;
 
 #ifdef EIGEN_NO_DEBUG
-#error "TomographerPy requires enabled Eigen assertions, otherwise `TomographerCxxError` won't be raised as documented."
+#  error "TomographerPy requires enabled Eigen assertions, otherwise `TomographerCxxError` won't be raised as documented."
 #endif
 
 // DEBUGGING ONLY: set TOMOGRAPHERPY_DEBUG_EIGEN_ASSERT_CAUSES_ABORT to cause eigen_assert() failures to abort() and dump core
 #ifndef TOMOGRAPHERPY_DEBUG_EIGEN_ASSERT_CAUSES_ABORT
-#define TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION
-#endif
+#  define TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION
+#  endif
 #include <tomographer/tools/eigen_assert_exception.h>
 
 
@@ -69,7 +71,7 @@ namespace boost { namespace core {  using boost::units::detail::demangle; } }
 typedef double RealType;
 typedef int CountIntType;
 
-namespace Py {
+namespace tpy {
 
 typedef Eigen::Matrix<RealType, Eigen::Dynamic, 1> RealVectorType;
 typedef Eigen::Matrix<RealType, Eigen::Dynamic, Eigen::Dynamic> RealMatrixType;

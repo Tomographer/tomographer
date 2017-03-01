@@ -33,10 +33,10 @@
 #include <tomographerpy/common.h>
 
 #include <tomographer/mhrw.h>
-#include <tomographer/mhrwtasks.h>
+//#include <tomographer/mhrwtasks.h>
 
 
-namespace Py {
+namespace tpy {
 
 typedef Tomographer::MHRWParams<CountIntType, RealType> MHRWParams;
 
