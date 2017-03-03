@@ -39,13 +39,12 @@ add_subdirectory(pybind11)
 
 
 set(tomographerpy_SRCS
-#  cxx/eigpyconv.cxx
-#  cxx/pyhistogram.cxx
-#  cxx/pymultiproc.cxx
-#  cxx/pymhrwtasks.cxx
+  cxx/pyhistogram.cxx
+  cxx/pymultiproc.cxx
+  cxx/pymhrwtasks.cxx
   cxx/pymhrw.cxx
-#  cxx/pydensedm.cxx
-#  cxx/pytomorun.cxx
+  cxx/pydensedm.cxx
+  cxx/pytomorun.cxx
   cxx/tomographerpy.cxx
   )
 #add_library(tomographerpy MODULE ${tomographerpy_SRCS})

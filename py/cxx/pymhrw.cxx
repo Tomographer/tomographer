@@ -33,6 +33,8 @@
 
 
 
+
+
 void py_tomo_mhrw(py::module rootmodule)
 {
   auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy::logger);
@@ -69,11 +71,15 @@ void py_tomo_mhrw(py::module rootmodule)
         )
       .def(py::init<>())
       .def(py::init<RealType,CountIntType,CountIntType,CountIntType>(),
-           py::arg("step_size"), py::arg("n_sweep"), py::arg("n_therm"), py::arg("n_run"))
+           "step_size"_a, "n_sweep"_a, "n_therm"_a, "n_run"_a)
       .def_readwrite("step_size", &Kl::step_size)
       .def_readwrite("n_sweep", &Kl::n_sweep)
       .def_readwrite("n_therm", &Kl::n_therm)
       .def_readwrite("n_run", &Kl::n_run)
+      .def("__repr__", [](const Kl& p) {
+          return streamstr("MHRWParams(step_size="<<std::setprecision(3)<<std::defaultfloat<<p.step_size
+                           <<",n_sweep="<<p.n_sweep<<",n_therm="<<p.n_therm<<",n_run="<<p.n_run<<")") ;
+        })
       .def("__getstate__", [](const Kl& mhrw_params) {
           return py::make_tuple(mhrw_params.step_size,
                                 mhrw_params.n_sweep,
@@ -81,15 +87,16 @@ void py_tomo_mhrw(py::module rootmodule)
                                 mhrw_params.n_run);
         })
       .def("__setstate__", [](Kl & p, py::tuple t) {
-          if (t.size() != 4) {
-            throw std::runtime_error("Invalid pickle state!");
-          }
-          // Invoke the in-place constructor. Note that this is needed even
-          // when the object just has a trivial default constructor
-          new (&p) Pickleable(t[0].cast<RealType>(),
-                              t[1].cast<CountIntType>(),
-                              t[2].cast<CountIntType>(),
-                              t[3].cast<CountIntType>());
+          tpy::internal::unpack_tuple_and_construct<Kl, RealType,CountIntType,CountIntType,CountIntType>(p, t);
+          // if (t.size() != 4) {
+          //   throw std::runtime_error("Invalid pickle state!");
+          // }
+          // // Invoke the in-place constructor. Note that this is needed even
+          // // when the object just has a trivial default constructor
+          // new (&p) Kl(t[0].cast<RealType>(),
+          //             t[1].cast<CountIntType>(),
+          //             t[2].cast<CountIntType>(),
+          //             t[3].cast<CountIntType>());
         });
     ;
   }

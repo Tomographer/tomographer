@@ -2,6 +2,6 @@ Exception Classes (`tomographer`)
 =================================
 
 .. automodule:: tomographer
-    :members: TomographerCxxError, TomographerNumpyConversionError
+    :members: TomographerCxxError, EigenAssertError
     :show-inheritance:
 

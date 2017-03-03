@@ -31,6 +31,7 @@
 
 
 #include <tomographerpy/common.h>
+#include <tomographerpy/exc.h> // TomographerCxxError
 #include <tomographerpy/pylogger.h>
 
 
@@ -43,9 +44,44 @@ namespace tpy
 extern PyLogger logger;
 
 // the main exception object
-extern PyObject * TomographerCxxError;
+extern py::object TomographerCxxErrorObj;
 
 }
+
+
+
+
+using namespace pybind11::literals; // _a for arg
+
+
+
+// http://stackoverflow.com/a/34930421/1694896
+namespace tpy { namespace internal {
+
+template <std::size_t... I> class index_sequence {};
+template <std::size_t N, std::size_t ...I> struct make_index_sequence : make_index_sequence<N-1, N-1,I...> {};
+template <std::size_t ...I> struct make_index_sequence<0,I...> : index_sequence<I...> {};
+
+template<typename Kl, typename ArgPack, std::size_t... I>
+void inplaceconstruct_from_tuple_args(Kl & p, py::tuple t, index_sequence<I...>)
+{
+  new (&p) Kl( t[I].cast<typename std::tuple_element<I, ArgPack>::type>()... ) ;
+}
+
+template<typename Kl, typename... Args>
+void unpack_tuple_and_construct(Kl & p, py::tuple t)
+{
+  if (t.size() != sizeof...(Args)) {
+    throw TomographerCxxError(streamstr("Invalid pickle state: expected "<<(sizeof...(Args))<<", got "
+                                        <<t.size()));
+  }
+  // Invoke the in-place constructor. Note that this is needed even when the object just
+  // has a trivial default constructor
+  inplaceconstruct_from_tuple_args<Kl, std::tuple<Args...> >(p, t, make_index_sequence<sizeof...(Args)>()) ;
+}
+
+} // internal
+} // tpy
 
 
 #endif

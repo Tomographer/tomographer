@@ -40,7 +40,7 @@
 #include <tomographerpy/pymhrw.h>
 
 
-namespace Py {
+namespace tpy {
 
 namespace tomo_internal {
 struct DummyValueCalculator {

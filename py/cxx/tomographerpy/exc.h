@@ -28,32 +28,62 @@
 #ifndef TOMOGRAPHERPY_EXC_H
 #define TOMOGRAPHERPY_EXC_H
 
+#include <exception>
+#include <stdexcept>
+
 #include <tomographerpy/common.h>
 
 
-// thanks http://stackoverflow.com/a/9690436/1694896
-inline PyObject* createExceptionClass(py::module m, const char* name, PyObject* baseTypeObj = PyExc_Exception,
-                                      std::string docstring = "Exception class")
-{
-  using std::string;
-  
-  string scopeName = py::getattr(m, "__name__").cast<string>();
-  string qualifiedName0 = scopeName + "." + name;
-  char* qualifiedName1 = const_cast<char*>(qualifiedName0.c_str());
-  
-  PyObject* typeObj = PyErr_NewExceptionWithDoc(qualifiedName1, const_cast<char*>(docstring.c_str()), baseTypeObj, 0);
-  if (typeObj == NULL) {
-    throw py::error_already_set();
+TOMOGRAPHER_DEFINE_MSG_EXCEPTION_BASE(TomographerCxxError, std::string(), std::runtime_error) ;
+
+
+
+// adapted from pybind11::exception<Type> in "pybind11/include/pybind11.h"
+//
+template<typename Type>
+class exception_with_docstring : public py::object {
+public:
+  exception_with_docstring(py::handle scope, const char *name, PyObject *baseTypeObj = PyExc_Exception,
+                           std::string docstring = std::string()) {
+    std::string full_name = scope.attr("__name__").cast<std::string>() +
+      std::string(".") + name;
+    m_ptr = PyErr_NewExceptionWithDoc(const_cast<char*>(full_name.c_str()),
+                                      const_cast<char*>(docstring.c_str()),
+                                      baseTypeObj,
+                                      NULL);
+    if (py::hasattr(scope, name)) {
+      py::pybind11_fail("Error during initialization: multiple incompatible "
+                        "definitions with name \"" + std::string(name) + "\"");
+    }
+    scope.attr(name) = *this;
   }
 
-  // add to current module
-  py::setattr(m, name, py::handle(typeObj));
-
-  return typeObj;
+  // Sets the current python exception to this exception object with the given message
+  void operator()(const char *message) {
+    PyErr_SetString(m_ptr, message);
+  }
+};
+//
+// adapted from pybind11::register_exception<Type> in "pybind11/include/pybind11.h"
+//
+template <typename CppException>
+exception_with_docstring<CppException> &register_exception_with_docstring(
+    py::handle scope,
+    const char *name,
+    PyObject *base = PyExc_Exception,
+    std::string docstring = std::string()
+    ) {
+  static exception_with_docstring<CppException> ex(scope, name, base, docstring);
+  py::register_exception_translator([](std::exception_ptr p) {
+      if (!p) return;
+      try {
+        std::rethrow_exception(p);
+      } catch (const CppException &e) {
+        ex(e.what());
+      }
+    });
+  return ex;
 }
-
-
-
 
 
 #endif

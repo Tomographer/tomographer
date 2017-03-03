@@ -34,7 +34,7 @@
 #include <tomographer/histogram.h>
 
 
-namespace Py {
+namespace tpy {
 
 typedef Tomographer::UniformBinsHistogramParams<RealType> UniformBinsHistogramParams;
 

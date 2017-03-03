@@ -37,7 +37,7 @@
 #include <tomographer/densedm/param_herm_x.h>
 
 
-namespace Py {
+namespace tpy {
 
 typedef Tomographer::DenseDM::DMTypes<Eigen::Dynamic, RealType> DMTypes;
 

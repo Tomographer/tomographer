@@ -31,6 +31,7 @@
 #include <cstdio>
 
 #include <pybind11/pybind11.h>
+#include <pybind11/eigen.h>
 
 namespace py = pybind11;
 
@@ -41,10 +42,10 @@ namespace py = pybind11;
 // DEBUGGING ONLY: set TOMOGRAPHERPY_DEBUG_EIGEN_ASSERT_CAUSES_ABORT to cause eigen_assert() failures to abort() and dump core
 #ifndef TOMOGRAPHERPY_DEBUG_EIGEN_ASSERT_CAUSES_ABORT
 #  define TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION
-#  endif
+#endif
 #include <tomographer/tools/eigen_assert_exception.h>
 
-
+// now taken care of automatically by pybind11 :-)
 //#include <tomographerpy/eigpyconv.h>
 
 #include <Eigen/Eigen>

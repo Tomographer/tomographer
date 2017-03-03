@@ -33,38 +33,21 @@
 #include "common_p.h"
 
 
-struct DummyBinningAnalysisClass { };
-
-
-struct ValueHistogramWithBinningMHRWStatsCollectorResult_pickle_suite : boost::python::pickle_suite
-{
-  static boost::python::tuple getinitargs(const Py::ValueHistogramWithBinningMHRWStatsCollectorResult & result)
-  {
-    return boost::python::make_tuple(result.hist,
-                                     Py::RealMatrixType(result.error_levels),
-                                     Eigen::VectorXi(result.converged_status));
-  }
-};
-
-struct MHRandomWalkValueHistogramTaskResult_pickle_suite : boost::python::pickle_suite
-{
-  static boost::python::tuple getinitargs(const Py::MHRandomWalkValueHistogramTaskResult & result)
-  {
-    return boost::python::make_tuple(result.stats_collector_result,
-                                     result.mhrw_params,
-                                     result.acceptance_ratio);
-  }
+class DummyBinningAnalysisClass {
+private:
+  DummyBinningAnalysisClass() { }
 };
 
 
-void py_tomo_mhrwtasks()
+void py_tomo_mhrwtasks(py::module rootmodule)
 {
-  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy_logger);
+  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy::logger);
   logger.debug("py_tomo_mhrwtasks() ...");
 
   logger.debug("tomographer.BinningAnalysis (dummy, just for convergence constants) ...");
   { typedef DummyBinningAnalysisClass Kl;
-    boost::python::class_<Kl>(
+    py::class_<Kl>(
+        rootmodule,
         "BinningAnalysis",
         "A dummy class whose sole purpose is to expose the following constants to Python code. "
         "\n\n"
@@ -77,20 +60,22 @@ void py_tomo_mhrwtasks()
         ".. py:attribute:: UNKNOWN_CONVERGENCE\n\n"
         "    The convergence of the error bar over the different binning levels "
         "is uknown, or couldn't be determined. It may or may not be reliable.\n\n"
-        , boost::python::no_init
+        ,
+        py::metaclass()
         )
-      .add_static_property("CONVERGED",
-                           +[]() -> int { return Tomographer::BinningAnalysisParams<double>::CONVERGED; })
-      .add_static_property("NOT_CONVERGED",
-                           +[]() -> int { return Tomographer::BinningAnalysisParams<double>::NOT_CONVERGED; })
-      .add_static_property("UNKNOWN_CONVERGENCE",
-                           +[]() -> int { return Tomographer::BinningAnalysisParams<double>::UNKNOWN_CONVERGENCE; })
+      .def_property_readonly_static("CONVERGED",
+                                    []() -> int { return Tomographer::BinningAnalysisParams<double>::CONVERGED; })
+      .def_property_readonly_static("NOT_CONVERGED",
+                                    []() -> int { return Tomographer::BinningAnalysisParams<double>::NOT_CONVERGED; })
+      .def_property_readonly_static("UNKNOWN_CONVERGENCE",
+                                    []() -> int { return Tomographer::BinningAnalysisParams<double>::UNKNOWN_CONVERGENCE; })
       ;
   }
 
   logger.debug("ValueHistogramWithBinningMHRWStatsCollectorResult ...");
-  { typedef Py::ValueHistogramWithBinningMHRWStatsCollectorResult Kl;
-    boost::python::class_<Py::ValueHistogramWithBinningMHRWStatsCollectorResult>(
+  { typedef tpy::ValueHistogramWithBinningMHRWStatsCollectorResult Kl;
+    py::class_<tpy::ValueHistogramWithBinningMHRWStatsCollectorResult>(
+        rootmodule,
         "ValueHistogramWithBinningMHRWStatsCollectorResult",
         "Interfaces the corresponding C++ class :tomocxx:`"
         "Tomographer::ValueHistogramWithBinningMHRWStatsCollectorResult"
@@ -121,61 +106,74 @@ void py_tomo_mhrwtasks()
         "or whether the convergence status is unknown or couldn't be determined "
         " (:py:const:`BinningAnalysis.UNKNOWN_CONVERGENCE <tomographer.BinningAnalysis>`)."
         )
-      .def(boost::python::init<Py::UniformBinsHistogramWithErrorBars,
-           Py::RealMatrixType,
-           Eigen::VectorXi>())
-      .add_property("hist", +[](const Kl & x) { return x.hist; })
-      .add_property("error_levels", +[](const Kl & x) -> Eigen::MatrixXd { return x.error_levels; })
-      .add_property("converged_status", +[](const Kl & x) -> Eigen::VectorXi { return x.converged_status; })
-      .def_pickle(ValueHistogramWithBinningMHRWStatsCollectorResult_pickle_suite())
+      .def(py::init<tpy::UniformBinsHistogramWithErrorBars,tpy::RealMatrixType,Eigen::VectorXi>(),
+           "hist"_a, "error_levels"_a, "converged_status"_a)
+      .def_readonly("hist", & Kl::hist )
+      .def_property_readonly("error_levels", [](const Kl & x) -> tpy::RealMatrixType { return x.error_levels; })
+      .def_property_readonly("converged_status", [](const Kl & x) -> Eigen::VectorXi { return x.converged_status; })
+      // .def("__repr__", [](const Kl& p) {
+      //     return streamstr("ValueHistogramWithBinningMHRWStatsCollectorResult("<<"..."<<")") ;
+      //   })
+      .def("__getstate__", [](py::object p) {
+          return py::make_tuple(p.attr("hist"), p.attr("error_levels"), p.attr("converged_status"));
+        })
+      .def("__setstate__", [](Kl & p, py::tuple t) {
+          tpy::internal::unpack_tuple_and_construct<Kl, tpy::UniformBinsHistogramWithErrorBars,
+                                                    tpy::RealMatrixType, Eigen::VectorXi>(p, t);
+        })
       ;
   }
 
-
   logger.debug("mhrwtasks module ... ");
 
-  boost::python::object mhrwtaskssubmod(boost::python::borrowed(PyImport_AddModule("tomographer.mhrwtasks")));
-  boost::python::scope().attr("mhrwtasks") = mhrwtaskssubmod;
-  {
-    // now inside submodule
-    boost::python::scope mhrwtasksmodule(mhrwtaskssubmod);
-
-    mhrwtasksmodule.attr("__doc__") = std::string(
-        "Utilities for tasks running Metropolis-Hastings random walks.  These classes shouldn't be used "
+  py::module mhrwtasksmodule = rootmodule.def_submodule(
+      "mhrwtasks",
+      ( "Utilities for tasks running Metropolis-Hastings random walks.  These classes shouldn't be used "
         "directly; rather, corresponding instances are returned by, e.g., "
-        ":py:func:`tomographer.tomorun.tomorun()`."
-        );
-
-    logger.debug("mhrwtasks.MHRandomWalkValueHistogramTaskResult ...");
-    { typedef Py::MHRandomWalkValueHistogramTaskResult Kl;
-      boost::python::class_<Py::MHRandomWalkValueHistogramTaskResult>(
-          "MHRandomWalkValueHistogramTaskResult",
-          "The result of an executed Metropolis-Hastings random walk task."
-          "\n\n"
-          "This class interfaces the corresponding C++ class :tomocxx:`"
-          "Tomographer::MHRWTasks::MHRandomWalkTaskResult"
-          " <struct_tomographer_1_1_m_h_r_w_tasks_1_1_m_h_random_walk_task_result.html>`, "
-          "when specialized to the :tomocxx:`"
-          "Tomographer::ValueHistogramWithErrorBarsMHRWStatsCollector"
-          " <class_tomographer_1_1_value_histogram_with_binning_m_h_r_w_stats_collector.html>` stats"
-          " collector type."
-          "\n\n"
-          "|picklable|"
-          "\n\n"
-          ".. py:attribute:: stats_collector_result\n\n"
-          "    An object of type :py:class:`~tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult` "
-          "detailing the result of the stats collecting class which is responsible for determining the final "
-          "histogram, and carrying out the binning analysis to come up with error bars.\n\n"
-          ".. py:attribute:: mhrw_params\n\n"
-          "    The parameters of the executed random walk, as an :py:class:`~tomographer.MHRWParams` instance.\n\n"
-          ".. py:attribute:: acceptance_ratio\n\n"
-          "    The average acceptance ratio of the random walk (excluding the thermalization sweeps).\n\n")
-        .def(boost::python::init<Py::ValueHistogramWithBinningMHRWStatsCollectorResult, Py::MHRWParams, double>())
-        .add_property("stats_collector_result", +[](const Kl & x) { return x.stats_collector_result; })
-        .add_property("mhrw_params", +[](const Kl & x) { return x.mhrw_params; })
-        .add_property("acceptance_ratio", +[](const Kl & x) { return x.acceptance_ratio; })
-        .def_pickle(MHRandomWalkValueHistogramTaskResult_pickle_suite())
-        ;
-    }
+        ":py:func:`tomographer.tomorun.tomorun()`." )
+      ) ;
+  
+  logger.debug("mhrwtasks.MHRandomWalkValueHistogramTaskResult ...");
+  { typedef tpy::MHRandomWalkValueHistogramTaskResult Kl;
+    py::class_<tpy::MHRandomWalkValueHistogramTaskResult>(
+        mhrwtasksmodule,
+        "MHRandomWalkValueHistogramTaskResult",
+        "The result of an executed Metropolis-Hastings random walk task."
+        "\n\n"
+        "This class interfaces the corresponding C++ class :tomocxx:`"
+        "Tomographer::MHRWTasks::MHRandomWalkTaskResult"
+        " <struct_tomographer_1_1_m_h_r_w_tasks_1_1_m_h_random_walk_task_result.html>`, "
+        "when specialized to the :tomocxx:`"
+        "Tomographer::ValueHistogramWithErrorBarsMHRWStatsCollector"
+        " <class_tomographer_1_1_value_histogram_with_binning_m_h_r_w_stats_collector.html>` stats"
+        " collector type."
+        "\n\n"
+        "|picklable|"
+        "\n\n"
+        ".. py:attribute:: stats_collector_result\n\n"
+        "    An object of type :py:class:`~tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult` "
+        "detailing the result of the stats collecting class which is responsible for determining the final "
+        "histogram, and carrying out the binning analysis to come up with error bars.\n\n"
+        ".. py:attribute:: mhrw_params\n\n"
+        "    The parameters of the executed random walk, as an :py:class:`~tomographer.MHRWParams` instance.\n\n"
+        ".. py:attribute:: acceptance_ratio\n\n"
+        "    The average acceptance ratio of the random walk (excluding the thermalization sweeps).\n\n")
+      .def(py::init<tpy::ValueHistogramWithBinningMHRWStatsCollectorResult, tpy::MHRWParams, double>(),
+           "stats_collector_result"_a, "mhrw_params"_a, "acceptance_ratio"_a)
+      .def_readonly("stats_collector_result", & Kl::stats_collector_result )
+      .def_readonly("mhrw_params", & Kl::mhrw_params )
+      .def_readonly("acceptance_ratio", & Kl::acceptance_ratio )
+      .def("__repr__", [](py::object p) {
+          return streamstr("<MHRandomWalkValueHistogramTaskResult with "
+                           << py::repr(p.attr("mhrw_params")).cast<std::string>() << ">") ;
+        })
+      .def("__getstate__", [](py::object p) {
+          return py::make_tuple(p.attr("stats_collector_result"), p.attr("mhrw_params"), p.attr("acceptance_ratio"));
+        })
+      .def("__setstate__", [](Kl & p, py::tuple t) {
+          tpy::internal::unpack_tuple_and_construct<Kl, tpy::ValueHistogramWithBinningMHRWStatsCollectorResult,
+                                                    tpy::MHRWParams, double>(p, t);
+        })
+      ;
   }
 }
