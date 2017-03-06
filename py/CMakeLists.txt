@@ -25,17 +25,25 @@
 # SOFTWARE.
 
 
+# # Turn this into an independent cmake project file -- temporarily  ### --- now done, use only with main project
+# cmake_minimum_required(VERSION 3.1)
 #
-# Turn this into an independent cmake project file -- temporarily
-cmake_minimum_required(VERSION 3.1)
+# project(tomographerpy)
+# set(EIGEN3_INCLUDE_DIR "/usr/local/opt/eigen/include/eigen3")
+# add_definitions(-DTOMOGRAPHER_VERSION="3.1" -DTOMOGRAPHER_VERSION_MAJ=3 -DTOMOGRAPHER_VERSION_MIN=1)
 
-project(tomographerpy)
-set(EIGEN3_INCLUDE_DIR "/usr/local/opt/eigen/include/eigen3")
-add_definitions(-DTOMOGRAPHER_VERSION="3.1" -DTOMOGRAPHER_VERSION_MAJ=3 -DTOMOGRAPHER_VERSION_MIN=1)
+
+#
+# need Eigen assertions to be live, remove any -NDEBUG flag
+#
+string(TOUPPER "${CMAKE_BUILD_TYPE}" cmake_build_type_upper)
+RemoveFlag(CMAKE_CXX_FLAGS_${cmake_build_type_upper} "${CMAKE_CXX_FLAGS_${cmake_build_type_upper}}" "-DNDEBUG")
+RemoveFlag(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "-DNDEBUG")
+
+
 
 
 add_subdirectory(pybind11)
-
 
 
 set(tomographerpy_SRCS
@@ -47,26 +55,10 @@ set(tomographerpy_SRCS
   cxx/pytomorun.cxx
   cxx/tomographerpy.cxx
   )
-#add_library(tomographerpy MODULE ${tomographerpy_SRCS})
 pybind11_add_module(_tomographer_cxx MODULE ${tomographerpy_SRCS})
 
-# Enable C++11
-#set_property(TARGET tomographerpy PROPERTY CXX_STANDARD 11)
-
-# create _tomographer_cxx.so for "import _tomographer_cxx" (internal to tomographer/__init__.py),
-# not libtomographerpy.so or libtomographerpy.dylib
-#set_property(TARGET tomographerpy PROPERTY OUTPUT_NAME "_tomographer_cxx")
-#set_property(TARGET tomographerpy PROPERTY PREFIX "")
-#if(APPLE)
-#  set_property(TARGET tomographerpy PROPERTY SUFFIX ".so") # and not .dylib
-#  set_property(TARGET tomographerpy PROPERTY BUILD_WITH_INSTALL_RPATH 1)
-#  set_property(TARGET tomographerpy PROPERTY INSTALL_NAME_DIR "${CMAKE_CURRENT_BINARY_DIR}")
-#  target_compile_options(tomographerpy PRIVATE "-dynamic")
-#  target_link_libraries(tomographerpy "-undefined dynamic_lookup")
-#endif()
-
 # depends in particular on tomographer_version.h
-#add_dependencies(_tomographer_cxx tomographer)
+add_dependencies(_tomographer_cxx tomographer)
 
 # tomographer/tomographer_version.h (not yet installed)
 target_include_directories(_tomographer_cxx PRIVATE "${CMAKE_BINARY_DIR}")
@@ -82,10 +74,10 @@ target_include_directories(_tomographer_cxx PUBLIC "cxx")
 target_include_directories(_tomographer_cxx  PUBLIC ${EIGEN3_INCLUDE_DIR})
 target_compile_definitions(_tomographer_cxx PRIVATE -DEIGEN_DONT_PARALLELIZE)
 
-#target_include_directories(_tomographer_cxx  PUBLIC ${PYTHON_INCLUDE_DIRS} ${NUMPY_INCLUDE_DIRS})
-#target_include_directories(_tomographer_cxx  PUBLIC ${Boost_INCLUDE_DIR})
-#target_link_libraries(_tomographer_cxx ${Boost_PYTHON_LIBRARY})
+# add OpenMP dependencies
+target_compile_options(_tomographer_cxx PRIVATE ${OpenMP_CXX_FLAGS})
+target_link_libraries(_tomographer_cxx PRIVATE ${OpenMP_CXX_FLAGS})
 
-#target_compile_options(_tomographer_cxx PRIVATE ${OpenMP_CXX_FLAGS})
-#target_link_libraries(_tomographer_cxx ${OpenMP_CXX_FLAGS})
 
+add_custom_target(tomographerpy)
+add_dependencies(tomographerpy _tomographer_cxx)

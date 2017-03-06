@@ -264,7 +264,7 @@ if (BUILD_TOMOPY)
   macro(addTomographerPyTest_cmake pymodule)
     add_test(NAME ${pymodule}
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-      COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/pyruntest.py" "--test=${pymodule}" "--tomographer-cxx-lib=$<TARGET_FILE:tomographerpy>" "--tomographer-source=${CMAKE_SOURCE_DIR}"
+      COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/pyruntest.py" "--test=${pymodule}" "--tomographer-cxx-lib=$<TARGET_FILE:_tomographer_cxx>" "--tomographer-source=${CMAKE_SOURCE_DIR}"
       )
   endmacro()
 else()

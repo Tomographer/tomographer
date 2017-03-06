@@ -222,9 +222,9 @@ void py_tomo_densedm(py::module rootmodule)
           // on rows), a 3-D numpy array (will iter on first dimension), as well as a
           // list of matrices (will iter on list).
           l.resetMeas();
-          int len = py::len(E);
+          const std::size_t len = py::len(E);
           tomographer_assert(len == py::len(Nx)) ;
-          for (int k = 0; k < len; ++k) {
+          for (std::size_t k = 0; k < len; ++k) {
 
             Eigen::MatrixXcd E_x_or_m = E.attr("__getitem__")(k).cast<Eigen::MatrixXcd>();
             // need to convert numpy.int64 to a Python integer:

@@ -187,7 +187,7 @@ py::object py_tomorun(
     }
   } else if (py::len(Emn)) {
     // use Emn
-    if (py::len(Emn) != Nm.rows()) {
+    if (py::len(Emn) != (std::size_t)Nm.rows()) {
       throw TomorunInvalidInputError("Mismatch in number of measurements: len(Emn)="
                                      + std::to_string(py::len(Emn)) +
                                      " but Nm.rows()=" + std::to_string(Nm.rows()));

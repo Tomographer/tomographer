@@ -215,12 +215,14 @@ endif()
 option(BUILD_TOMOPY "Build the tomographer Python interface" off)
 if (BUILD_TOMOPY)
 
-  # We need python and boost::python
-  find_package(PythonLibs REQUIRED)
-  find_package(Boost 1.40 COMPONENTS python REQUIRED)
-  
-  # We need NumPy also
-  find_package(NumPy 1.7 REQUIRED)
+  # All these dependencies will be found using pybind11's stuff.
+  #
+  # # We need python and boost::python
+  # find_package(PythonLibs REQUIRED)
+  # find_package(Boost 1.40 COMPONENTS python REQUIRED)
+  #
+  # # We need NumPy also
+  # find_package(NumPy 1.7 REQUIRED)
 
   EnsureCXX11StdThisThreadSleepForAvailable()
 

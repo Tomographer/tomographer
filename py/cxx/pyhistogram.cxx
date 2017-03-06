@@ -437,7 +437,7 @@ void py_tomo_histogram(py::module rootmodule)
            "Load data into the histogram. The array `y` specifies the bin counts, and `yerr` specifies "
            "the error bars on those bin counts.  The off-chart counter is set to `off_chart`."
           )
-      .def("add", [](Kl & h, py::args, py::kwargs) {
+      .def("add", [](Kl & , py::args, py::kwargs) {
           throw std::runtime_error("May not call add() on UniformBinsHistogramWithErrorBars");
         })
 // add() makes no sense, user should use AveragedHistogram for that.
@@ -470,34 +470,33 @@ void py_tomo_histogram(py::module rootmodule)
   // AveragedSimpleHistogram
   {
     typedef tpy::AveragedSimpleHistogram Kl;
-    py::scope cl =
-      py::class_<tpy::AveragedSimpleHistogram, tpy::UniformBinsHistogramWithErrorBars>(
-          rootmodule,
-          "AveragedSimpleHistogram",
-          "A :py:class:`UniformBinsHistogramWithErrorBars` which results from the "
-          "averaging of several :py:class:`UniformBinsHistogram` histograms."
-          "\n\n"
-          "Add histograms to average together using the :py:meth:`addHistogram()` method, and "
-          "then call :py:meth:`finalize()`. Then, the data stored in the current object will "
-          "correspond to the averaged histogram. (See :tomocxx:`here the theory about how this is "
-          "implemented <page_theory_averaged_histogram.html>`.)"
-          "\n\n"
-          "This histogram object inherits :py:class:`UniformBinsHistogramWithErrorBars`, so all the "
-          "methods exposed in that class are available to access the averaged histogram data."
-          "\n\n"
-          "|picklable|"
-          "\n\n"
-          ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
-          "histogram data.  The data stored in the current "
-          "histogram object is UNDEFINED before having calling `finalize()`."
-          "\n\n"
-          ".. py:attribute:: num_histograms\n\n"
-          "    The number of histograms currently stored (read-only). This property may be "
-          "    accessed at any time, also before having called :py:meth:`finalize()`."
-          )
+    py::class_<tpy::AveragedSimpleHistogram, tpy::UniformBinsHistogramWithErrorBars>(
+        rootmodule,
+        "AveragedSimpleHistogram",
+        "A :py:class:`UniformBinsHistogramWithErrorBars` which results from the "
+        "averaging of several :py:class:`UniformBinsHistogram` histograms."
+        "\n\n"
+        "Add histograms to average together using the :py:meth:`addHistogram()` method, and "
+        "then call :py:meth:`finalize()`. Then, the data stored in the current object will "
+        "correspond to the averaged histogram. (See :tomocxx:`here the theory about how this is "
+        "implemented <page_theory_averaged_histogram.html>`.)"
+        "\n\n"
+        "This histogram object inherits :py:class:`UniformBinsHistogramWithErrorBars`, so all the "
+        "methods exposed in that class are available to access the averaged histogram data."
+        "\n\n"
+        "|picklable|"
+        "\n\n"
+        ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
+        "histogram data.  The data stored in the current "
+        "histogram object is UNDEFINED before having calling `finalize()`."
+        "\n\n"
+        ".. py:attribute:: num_histograms\n\n"
+        "    The number of histograms currently stored (read-only). This property may be "
+        "    accessed at any time, also before having called :py:meth:`finalize()`."
+        )
       .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a = tpy::UniformBinsHistogramParams())
       .def(py::init<RealType, RealType, CountIntType>(),
-          "min"_a, "max"_a, "num_bins"_a)
+           "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("num_histograms", [](const Kl & h) { return h.num_histograms; })
       .def("addHistogram",
            [](Kl & h, const tpy::UniformBinsHistogram & o) { h.addHistogram(o); },
@@ -533,27 +532,26 @@ void py_tomo_histogram(py::module rootmodule)
   // AveragedSimpleRealHistogram
   {
     typedef tpy::AveragedSimpleRealHistogram Kl;
-    py::scope cl =
-      py::class_<tpy::AveragedSimpleRealHistogram,tpy::UniformBinsHistogramWithErrorBars>(
-          rootmodule,
-          "AveragedSimpleRealHistogram",
-          "A :py:class:`UniformBinsHistogramWithErrorBars` which results from the "
-          "averaging of several :py:class:`UniformBinsRealHistogram` histograms."
-          "\n\n"
-          "This class is identical in functionality to :py:class:`AveragedSimpleHistogram`, except "
-          "that the histograms which are to be averaged are :py:class:`UniformBinsRealHistogram` "
-          "objects."
-          "\n\n"
-          "|picklable|"
-          "\n\n"
-          ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
-          "histogram data.  The data stored in the current "
-          "histogram object is UNDEFINED before having calling `finalize()`."
-          "\n\n"
-          ".. py:attribute:: num_histograms\n\n"
-          "    The number of histograms currently stored (read-only). This property may be "
-          "    accessed at any time, also before having called :py:meth:`finalize()`."
-          )
+    py::class_<tpy::AveragedSimpleRealHistogram,tpy::UniformBinsHistogramWithErrorBars>(
+        rootmodule,
+        "AveragedSimpleRealHistogram",
+        "A :py:class:`UniformBinsHistogramWithErrorBars` which results from the "
+        "averaging of several :py:class:`UniformBinsRealHistogram` histograms."
+        "\n\n"
+        "This class is identical in functionality to :py:class:`AveragedSimpleHistogram`, except "
+        "that the histograms which are to be averaged are :py:class:`UniformBinsRealHistogram` "
+        "objects."
+        "\n\n"
+        "|picklable|"
+        "\n\n"
+        ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
+        "histogram data.  The data stored in the current "
+        "histogram object is UNDEFINED before having calling `finalize()`."
+        "\n\n"
+        ".. py:attribute:: num_histograms\n\n"
+        "    The number of histograms currently stored (read-only). This property may be "
+        "    accessed at any time, also before having called :py:meth:`finalize()`."
+        )
       .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a = tpy::UniformBinsHistogramParams())
       .def(py::init<RealType, RealType, CountIntType>(),
           "min"_a, "max"_a, "num_bins"_a)
@@ -592,31 +590,30 @@ void py_tomo_histogram(py::module rootmodule)
   // AveragedErrorBarHistogram
   {
     typedef tpy::AveragedErrorBarHistogram Kl;
-    py::scope cl =
-      py::class_<tpy::AveragedErrorBarHistogram,tpy::UniformBinsHistogramWithErrorBars>(
-          rootmodule,
-          "AveragedErrorBarHistogram",
-          "A :py:class:`UniformBinsHistogramWithErrorBars` which results from the "
-          "averaging of several :py:class:`UniformBinsHistogramWithErrorBars` histograms."
-          "\n\n"
-          "This class is essentially identical in functionality to "
-          ":py:class:`AveragedSimpleHistogram` and :py:class:`AveragedSimpleRealHistogram`, except "
-          "that the histograms which are to be averaged are "
-          " :py:class:`UniformBinsHistogramWithErrorBars` "
-          "objects, i.e. each histogram added already has information about error bars.  Those "
-          "error bars are then combined appropriately, as described in :tomocxx:`the theory about "
-          "how this class is implemented <page_theory_averaged_histogram.html>`."
-          "\n\n"
-          "|picklable|"
-          "\n\n"
-          ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
-          "histogram data.  The data stored in the current "
-          "histogram object is UNDEFINED before having calling `finalize()`."
-          "\n\n"
-          ".. py:attribute:: num_histograms\n\n"
-          "    The number of histograms currently stored (read-only). This property may be "
-          "    accessed at any time, also before having called :py:meth:`finalize()`."
-          )
+    py::class_<tpy::AveragedErrorBarHistogram,tpy::UniformBinsHistogramWithErrorBars>(
+        rootmodule,
+        "AveragedErrorBarHistogram",
+        "A :py:class:`UniformBinsHistogramWithErrorBars` which results from the "
+        "averaging of several :py:class:`UniformBinsHistogramWithErrorBars` histograms."
+        "\n\n"
+        "This class is essentially identical in functionality to "
+        ":py:class:`AveragedSimpleHistogram` and :py:class:`AveragedSimpleRealHistogram`, except "
+        "that the histograms which are to be averaged are "
+        " :py:class:`UniformBinsHistogramWithErrorBars` "
+        "objects, i.e. each histogram added already has information about error bars.  Those "
+        "error bars are then combined appropriately, as described in :tomocxx:`the theory about "
+        "how this class is implemented <page_theory_averaged_histogram.html>`."
+        "\n\n"
+        "|picklable|"
+        "\n\n"
+        ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
+        "histogram data.  The data stored in the current "
+        "histogram object is UNDEFINED before having calling `finalize()`."
+        "\n\n"
+        ".. py:attribute:: num_histograms\n\n"
+        "    The number of histograms currently stored (read-only). This property may be "
+        "    accessed at any time, also before having called :py:meth:`finalize()`."
+        )
       .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a = tpy::UniformBinsHistogramParams())
       .def(py::init<RealType, RealType, CountIntType>(),
           "min"_a, "max"_a, "num_bins"_a)
