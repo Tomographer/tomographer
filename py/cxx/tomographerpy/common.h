@@ -31,13 +31,8 @@
 #include <cstdio>
 
 #include <pybind11/pybind11.h>
-#include <pybind11/eigen.h>
 
 namespace py = pybind11;
-
-#ifdef EIGEN_NO_DEBUG
-#  error "TomographerPy requires enabled Eigen assertions, otherwise `TomographerCxxError` won't be raised as documented."
-#endif
 
 // DEBUGGING ONLY: set TOMOGRAPHERPY_DEBUG_EIGEN_ASSERT_CAUSES_ABORT to cause eigen_assert() failures to abort() and dump core
 #ifndef TOMOGRAPHERPY_DEBUG_EIGEN_ASSERT_CAUSES_ABORT
@@ -45,8 +40,12 @@ namespace py = pybind11;
 #endif
 #include <tomographer/tools/eigen_assert_exception.h>
 
-// now taken care of automatically by pybind11 :-)
-//#include <tomographerpy/eigpyconv.h>
+// include this AFTER eigen_assert_exception
+#include <pybind11/eigen.h>
+
+#ifdef EIGEN_NO_DEBUG
+#  error "TomographerPy requires enabled Eigen assertions, otherwise `TomographerCxxError` won't be raised as documented."
+#endif
 
 #include <Eigen/Eigen>
 

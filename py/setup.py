@@ -48,7 +48,6 @@ import numpy # numpy.get_include()
 # handled by us: (can be found in CMake cache)
 # GIT=/path/to/git
 # Boost_INCLUDE_DIR=/path/to/boost/headers
-# Boost_PYTHON_LIBRARY_RELEASE=/path/to/libboost_python-py35.so
 # EIGEN3_INCLUDE_DIR=/path/to/eigen/headers
 # OpenMP_CXX_FLAGS=-fopenmp=libomp
 # CMAKE_CXX11_STANDARD_COMPILE_OPTION=-std=c++11
@@ -177,7 +176,6 @@ cmake_cache_file = os.environ.get('CMAKE_CACHE_FILE', None)
 vv = Vars(cmake_cache_file, [
     'GIT',
     'Boost_INCLUDE_DIR',
-    'Boost_PYTHON_LIBRARY_RELEASE',
     'EIGEN3_INCLUDE_DIR',
     'OpenMP_CXX_FLAGS',
     'CMAKE_CXX11_STANDARD_COMPILE_OPTION'
@@ -188,12 +186,6 @@ vv.setDefault('GIT', lambda : find_executable('git'))
 
 # Defaults: Boost stuff
 vv.setDefault('Boost_INCLUDE_DIR', lambda : find_include_dir('boost', 'boost'))
-vv.setDefault('Boost_PYTHON_LIBRARY_RELEASE', lambda :
-              find_lib('boost_python', 'boost-python', [ # suffixes:
-                  str(sys.version_info.major)+'-mt', str(sys.version_info.major), '-mt',
-                  '-py{}{}'.format(sys.version_info.major,sys.version_info.minor),
-                  ''
-              ]))
 
 # Defaults: Eigen3
 vv.setDefault('EIGEN3_INCLUDE_DIR', lambda : find_include_dir('eigen3', 'eigen', return_with_suffix='eigen3'))
@@ -312,7 +304,6 @@ if sys.platform == 'darwin':
   with homebrew's python3 along with all the required dependencies:
 
     > brew install llvm eigen python3 boost
-    > brew install boost-python --with-python3
     > CC=/usr/local/opt/llvm/bin/clang CXX=/usr/local/opt/llvm/bin/clang++ \\
         LDFLAGS='-L/usr/lib -L/usr/local/opt/llvm/lib' \\
         /usr/local/bin/python3 setup.py install
@@ -356,12 +347,11 @@ include_dirs = [
     vv.get("EIGEN3_INCLUDE_DIR"),
     os.path.join(thisdir, ".."), # tomographer
     os.path.join(thisdir, "cxx"), # tomographerpy
+    os.path.join(thisdir, "pybind11/include"), # pybind11
 ]
 libraries = [
-    libbasename(vv.get("Boost_PYTHON_LIBRARY_RELEASE"))
 ]
 library_dirs = [
-    dirname_or_none(vv.get("Boost_PYTHON_LIBRARY_RELEASE"))
 ]
 cflags = [
     vv.get('CMAKE_CXX11_STANDARD_COMPILE_OPTION'),
@@ -369,6 +359,7 @@ cflags = [
     '-DTOMOGRAPHER_VERSION=\"{}\"'.format(version),
     '-DTOMOGRAPHER_VERSION_MAJ={}'.format(version_maj),
     '-DTOMOGRAPHER_VERSION_MIN={}'.format(version_min),
+    '-UNDEBUG',
 ]
 ldflags = [
     vv.get("OpenMP_CXX_FLAGS"),
@@ -376,7 +367,6 @@ ldflags = [
 
 files = [ os.path.join('cxx', x) for x in [
     "tomographerpy.cxx",
-    "eigpyconv.cxx",
     "pyhistogram.cxx",
     #"pylogger.cxx", # no longer used -- all definitions are in pylogger.h
     "pymultiproc.cxx",
@@ -387,7 +377,6 @@ files = [ os.path.join('cxx', x) for x in [
 ] ]
 
 dep_headers = [ os.path.join('cxx', 'tomographerpy', x) for x in [
-    "eigpyconv.h",
     "pyhistogram.h",
     "pymultiproc.h",
     "pymhrwtasks.h",
