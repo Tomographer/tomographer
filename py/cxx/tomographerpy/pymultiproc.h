@@ -29,6 +29,7 @@
 #define PYMULTIPROC_H
 
 #include <string>
+#include <thread> // DEBUG!!
 
 #include <tomographerpy/common.h>
 
@@ -116,27 +117,40 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, py::object pr
   typedef typename TaskDispatcher::TaskType TaskType;
   typedef typename TaskType::StatusReportType TaskStatusReportType;
 
-  typedef
-#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
-    std::chrono::monotonic_clock // for GCC/G++ 4.6
-#else
-    std::chrono::steady_clock
-#endif
-    StdClockType;
-
-  auto time_start = StdClockType::now();
+  //   typedef
+  // #if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
+  //     std::chrono::monotonic_clock // for GCC/G++ 4.6
+  // #else
+  //     std::chrono::steady_clock
+  // #endif
+  //     StdClockType;
+  //
+  //  auto time_start = StdClockType::now();
 
   tasks.setStatusReportHandler(
-      [progress_fn,time_start](const Tomographer::MultiProc::FullStatusReport<TaskStatusReportType> & report) {
+      [progress_fn/*,time_start*/](const Tomographer::MultiProc::FullStatusReport<TaskStatusReportType> & report) {
+
+fprintf(stderr, "DEBUG:: handler called, pid=%d, this_thread::get_id=%s\n", (int)getpid(), streamstr(std::this_thread::get_id()).c_str() ) ;
         // check to see if we got any KeyboardInterrupt
         // PyErr_CheckSignals() returns -1 if an exception was raised
         if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
+          fprintf(stderr, "DEBUG:: error set, throwing\n") ;
           throw py::error_already_set();
         }
         // call the python progress callback:
         if (!progress_fn.is_none()) {
           auto r = preparePyTaskStatusReport<TaskType>(report);
-          progress_fn(py::cast(r));
+fprintf(stderr, "DEBUG:: about to call py callback\n") ;
+          try {
+            progress_fn(py::cast(r));
+          } catch (std::exception & exc) {
+fprintf(stderr, "DEBUG:: EXCEPTION! %s", exc.what()) ;
+            throw;
+          } catch (...) {
+fprintf(stderr, "DEBUG:: EXCEPTION! (unknown)") ;
+            throw;
+          }
+fprintf(stderr, "DEBUG:: py callback done\n") ;
         }
         // borrowed from tomographer/tools/signal_status_handler.h: --->  FOR DEBUGGING::
         /*

@@ -2,12 +2,13 @@
 
 from __future__ import print_function
 
+import sys
 import re
 import numpy as np
 import numpy.testing as npt
 
 import logging
-#logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.NOTSET)
 
 import unittest
 
@@ -166,8 +167,9 @@ class analytical_known_example_tomorun(unittest.TestCase):
         glob.num_callback_calls = 0
 
         def progress_callback(fullstatusreport):
-            xyz()
             glob.num_callback_calls += 1
+            import sys
+            sys.stdout.write("CALLBACK: HELLO THERE!\n")
             print(fullstatusreport.getHumanReport())
 
         intvl_ms = 200

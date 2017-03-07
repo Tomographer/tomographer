@@ -32,12 +32,6 @@
 #include <stdexcept>
 
 
-#ifdef _OPENMP
-#include <omp.h>
-#else
-inline static int omp_get_num_procs() { return 1; }
-#endif
-
 
 #include <tomographer/tools/loggers.h>
 #include <tomographer/densedm/dmtypes.h>
@@ -47,7 +41,7 @@ inline static int omp_get_num_procs() { return 1; }
 #include <tomographer/mhrw.h>
 #include <tomographer/mhrwtasks.h>
 #include <tomographer/mhrw_valuehist_tasks.h>
-#include <tomographer/multiprocomp.h>
+#include <tomographer/multiprocthreads.h>
 #include <tomographer/valuecalculator.h>
 #include <tomographer/tools/signal_status_report.h>
 #include <tomographer/mathtools/pos_semidef_util.h>
@@ -274,22 +268,6 @@ py::object py_tomorun(
 
   OurResultsCollector results(logger.parentLogger());
 
-  auto tasks = Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
-      &taskcdat, // constant data
-      &results, // results collector
-      logger.parentLogger(), // the main logger object
-      num_repeats, // num_runs
-      1 // n_chunk
-      );
-
-// DEBUG: test callback
-        progress_fn(py::none());
-
-
-  setTasksStatusReportPyCallback(tasks, progress_fn, progress_interval_ms);
-
-  // and run our tomo process
-
   typedef
 #if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
     std::chrono::monotonic_clock // for GCC/G++ 4.6
@@ -297,27 +275,51 @@ py::object py_tomorun(
     std::chrono::steady_clock
 #endif
     StdClockType;
+  StdClockType::time_point time_start;
 
-  StdClockType::time_point time_start = StdClockType::now();
+  logger.debug([&](std::ostream & stream) {
+      stream << "about to create the task dispatcher.  this pid = " << getpid() << "; this thread id = " << std::this_thread::get_id();
+    }) ;
 
-  try {
-    tasks.run();
-  } catch (const Tomographer::MultiProc::TasksInterruptedException & e) {
-    if (PyErr_Occurred() != NULL) {
-      // tell pybind11 that the exception is already set
-      throw py::error_already_set();
+  {
+//    py::gil_scoped_release release_gil;
+
+    Tomographer::MultiProc::CxxThreads::TaskDispatcher<OurMHRandomWalkTask,OurCData,OurResultsCollector,PyLogger>
+      tasks(
+          &taskcdat, // constant data
+          &results, // results collector
+          logger.parentLogger(), // the main logger object
+          num_repeats // num_runs
+          );
+
+    setTasksStatusReportPyCallback(tasks, progress_fn, progress_interval_ms);
+
+    // and run our tomo process
+
+    time_start = StdClockType::now();
+
+    try {
+      tasks.run();
+    } catch (const Tomographer::MultiProc::TasksInterruptedException & e) {
+      logger.debug("Tasks interrupted.");
+      if (PyErr_Occurred() != NULL) {
+        // tell pybind11 that the exception is already set
+        throw py::error_already_set();
+      }
+      // no Python exception set?? -- set a RuntimeError via Boost
+      throw;
+    } catch (std::exception & e) {
+      logger.debug("Inner exception: %s", e.what());
+      //fprintf(stderr, "EXCEPTION: %s\n", e.what());
+      // another exception
+      if (PyErr_Occurred() != NULL) {
+        // an inner py::error_already_set() was caught & rethrown by MultiProc::CxxThreads
+        throw py::error_already_set();
+      }
+      throw; // error via pybind11
     }
-    // no Python exception set?? -- set a RuntimeError via Boost
-    throw;
-  } catch (std::exception & e) {
-    //fprintf(stderr, "EXCEPTION: %s\n", e.what());
-    // another exception
-    if (PyErr_Occurred() != NULL) {
-      // an inner py::error_already_set() was caught & rethrown by MultiProc::OMP
-      throw py::error_already_set();
-    }
-    throw; // error via pybind11
-  }
+
+  } // gil release scope
 
   auto time_end = StdClockType::now();
 
@@ -399,7 +401,7 @@ void py_tomo_tomorun(py::module rootmodule)
       "hist_params"_a = tpy::UniformBinsHistogramParams(),
       "mhrw_params"_a = tpy::MHRWParams(),
       "binning_num_levels"_a = -1,
-      "num_repeats"_a = omp_get_num_procs(),
+      "num_repeats"_a = std::thread::hardware_concurrency(),
       "progress_fn"_a = py::none(),
       "progress_interval_ms"_a = (int)500,
       // doc

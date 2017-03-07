@@ -75,12 +75,13 @@ target_link_libraries(tomorun ${Boost_PROGRAM_OPTIONS_LIBRARY})
 target_include_directories(tomorun  PRIVATE ${MATIO_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 target_link_libraries(tomorun ${MATIO_LIBRARIES} ${ZLIB_LIBRARIES})
 
-# compile with OpenMP
 if (OPENMP_FOUND)
+  # compile with OpenMP
+  message(STATUS "tomorun will be compiled with OpenMP multiprocessing")
   target_compile_options(tomorun PRIVATE ${OpenMP_CXX_FLAGS})
   target_link_libraries(tomorun ${OpenMP_CXX_FLAGS})
 else()
-  WarnTargetNoOpenMP("The tomorun executable")
+  message(STATUS "tomorun will be compiled with C++11 threads multiprocessing (OpenMP not found)")
 endif()
 
 

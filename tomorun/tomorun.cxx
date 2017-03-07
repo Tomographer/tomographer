@@ -60,9 +60,19 @@
 #include <tomographer/densedm/tspacefigofmerit.h>
 #include <tomographer/mhrw.h>
 #include <tomographer/mhrwtasks.h>
-#include <tomographer/multiprocomp.h>
+#include <tomographer/multiproc.h>
 #include <tomographer/densedm/tspacellhwalker.h>
 #include <tomographer/tomographer_version.h>
+
+#ifdef _OPENMP
+// use OpenMP if it is available.
+#include <tomographer/multiprocomp.h>
+#define TomorunMultiProcTaskDispatcher Tomographer::MultiProc::OMP::TaskDispatcher
+#else
+// and use C++11 threads otherwise
+#include <tomographer/multiprocthreads.h>
+#define TomorunMultiProcTaskDispatcher Tomographer::MultiProc::CxxThreads::TaskDispatcher
+#endif
 
 #include "tomorun_config.h"
 #include "tomorun_opts.h"

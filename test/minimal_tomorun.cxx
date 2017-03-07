@@ -35,7 +35,7 @@
 #include <tomographer/mhrw.h>
 #include <tomographer/mhrwtasks.h>
 #include <tomographer/mhrw_valuehist_tasks.h>
-#include <tomographer/multiprocomp.h>
+#include <tomographer/multiprocthreads.h>
 #include <tomographer/tools/signal_status_report.h>
 
 
@@ -262,13 +262,13 @@ int main()
   const int num_repeats = 4;
 
   // create the task manager/dispatcher, using the OpenMP implementation
-  auto tasks = Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
-      &taskcdat, // constant data
-      &results, // results collector
-      logger.parentLogger(), // the main logger object
-      num_repeats, // num_runs
-      1 // n_chunk
-      );
+  Tomographer::MultiProc::CxxThreads::TaskDispatcher<OurMHRandomWalkTask,OurCData,OurResultsCollector,BaseLoggerType>
+    tasks(
+        &taskcdat, // constant data
+        &results, // results collector
+        logger.parentLogger(), // the main logger object
+        num_repeats // num_runs
+        );
 
   // set up signal handling -- really easy we we'll do this.  Hit CTRL+C to get an instant
   // status report.

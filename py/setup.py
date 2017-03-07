@@ -49,7 +49,6 @@ import numpy # numpy.get_include()
 # GIT=/path/to/git
 # Boost_INCLUDE_DIR=/path/to/boost/headers
 # EIGEN3_INCLUDE_DIR=/path/to/eigen/headers
-# OpenMP_CXX_FLAGS=-fopenmp=libomp
 # CMAKE_CXX11_STANDARD_COMPILE_OPTION=-std=c++11
 #
 # To read the above variables from cache:
@@ -177,7 +176,6 @@ vv = Vars(cmake_cache_file, [
     'GIT',
     'Boost_INCLUDE_DIR',
     'EIGEN3_INCLUDE_DIR',
-    'OpenMP_CXX_FLAGS',
     'CMAKE_CXX11_STANDARD_COMPILE_OPTION'
 ])
 
@@ -189,14 +187,6 @@ vv.setDefault('Boost_INCLUDE_DIR', lambda : find_include_dir('boost', 'boost'))
 
 # Defaults: Eigen3
 vv.setDefault('EIGEN3_INCLUDE_DIR', lambda : find_include_dir('eigen3', 'eigen', return_with_suffix='eigen3'))
-
-# Defaults: OpenMP flags
-looks_like_clang = False
-if 'clang' in os.environ.get('CC',''):
-    looks_like_clang = True
-if sys.platform == 'darwin' and not os.environ.get('CC',''):
-    looks_like_clang = True
-vv.setDefault('OpenMP_CXX_FLAGS', lambda : '-fopenmp=libomp' if looks_like_clang else '-fopenmp')
 
 # Defaults: C++11 flags
 vv.setDefault('CMAKE_CXX11_STANDARD_COMPILE_OPTION', '-std=c++11')
@@ -291,24 +281,6 @@ else:
   (read cache file {})
 """.format(cmake_cache_file))
 
-if sys.platform == 'darwin':
-    print("""
-  NOTE: Apple's default compiler on Mac OS X does not support OpenMP. Remember
-  to install a custom LLVM or GCC if you want to dramatically speed up execution
-  time. Specify the path to custom compilers with the environment variables "CC"
-  and "CXX". To compile without OpenMP (and run tasks serially), set
-  "OpenMP_CXX_FLAGS" to an empty string.
-
-
-  NOTE: If you're using homebrew, the following commands will get you started
-  with homebrew's python3 along with all the required dependencies:
-
-    > brew install llvm eigen python3 boost
-    > CC=/usr/local/opt/llvm/bin/clang CXX=/usr/local/opt/llvm/bin/clang++ \\
-        LDFLAGS='-L/usr/lib -L/usr/local/opt/llvm/lib' \\
-        /usr/local/bin/python3 setup.py install
-
-""")
 
 #print("DEBUG VARIABLE CACHE: ")
 #for (k,v) in vv.d.items():
@@ -355,14 +327,12 @@ library_dirs = [
 ]
 cflags = [
     vv.get('CMAKE_CXX11_STANDARD_COMPILE_OPTION'),
-    vv.get("OpenMP_CXX_FLAGS"),
     '-DTOMOGRAPHER_VERSION=\"{}\"'.format(version),
     '-DTOMOGRAPHER_VERSION_MAJ={}'.format(version_maj),
     '-DTOMOGRAPHER_VERSION_MIN={}'.format(version_min),
     '-UNDEBUG',
 ]
 ldflags = [
-    vv.get("OpenMP_CXX_FLAGS"),
 ]
 
 files = [ os.path.join('cxx', x) for x in [

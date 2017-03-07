@@ -86,10 +86,5 @@ target_include_directories(_tomographer_cxx PUBLIC "cxx")
 target_include_directories(_tomographer_cxx  PUBLIC ${EIGEN3_INCLUDE_DIR})
 target_compile_definitions(_tomographer_cxx PRIVATE -DEIGEN_DONT_PARALLELIZE)
 
-# add OpenMP dependencies
-target_compile_options(_tomographer_cxx PRIVATE ${OpenMP_CXX_FLAGS})
-target_link_libraries(_tomographer_cxx PRIVATE ${OpenMP_CXX_FLAGS})
-
-
 add_custom_target(tomographerpy)
 add_dependencies(tomographerpy _tomographer_cxx)

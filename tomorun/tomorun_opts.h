@@ -372,7 +372,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     ("n-repeats", value<unsigned int>(& opt->Nrepeats)->default_value(opt->Nrepeats),
      "number of times to repeat the metropolis procedure")
     ("n-chunk", value<unsigned int>(& opt->Nchunk)->default_value(opt->Nchunk),
-     "chunk the number of repeats by this number per OMP thread")
+     "OBSOLETE OPTION -- has no effect")
     ("n-meas-amplify-factor", value<double>(& opt->NMeasAmplifyFactor)->default_value(opt->NMeasAmplifyFactor),
      "Specify an integer factor by which to multiply number of measurements. "
      "Don't use this. It's unphysical, and meant just for debugging Tomographer itself.")
@@ -730,7 +730,7 @@ void display_parameters(ProgOptions * opt, LoggerType & logger)
       "       sweep size :         %lu\n"
       "       # therm sweeps :     %lu\n"
       "       # run sweeps :       %lu\n"
-      "       # intgr. repeats :   %lu   (chunked by %lu/thread)\n"
+      "       # intgr. repeats :   %lu\n"
       "       write histogram to : %s\n"
       "\n"
       "       --> total no. of live samples = %lu  (%.2e)\n"
@@ -746,7 +746,6 @@ void display_parameters(ProgOptions * opt, LoggerType & logger)
       (unsigned long)opt->Ntherm,
       (unsigned long)opt->Nrun,
       (unsigned long)opt->Nrepeats,
-      (unsigned long)opt->Nchunk,
       (opt->write_histogram.size()
        ? opt->write_histogram + std::string("-histogram.csv")
        : std::string("<don't write histogram>")).c_str(),

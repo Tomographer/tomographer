@@ -430,12 +430,17 @@ private:
         // if we're the master thread, then also check if there is a status report ready
         // to be sent.
         if (shared_data->status_report.ready) {
+          logger.longdebug("Tomographer::MultiProc::CxxThreads::thread_private_data::statusReportRequested()",
+                           "Status report is ready.");
+
           // guard this block for status_report access
-          std::lock_guard<std::mutex> lockguard(shared_data->status_report.mutex);
+          std::lock(shared_data->status_report.mutex, shared_data->user_mutex);
+          std::lock_guard<std::mutex> lck1(shared_data->status_report.mutex, std::adopt_lock);
+          std::lock_guard<std::mutex> lck2(shared_data->user_mutex, std::adopt_lock);
 
           // call user-defined status report handler
           shared_data->status_report.user_fn(shared_data->status_report.full_report);
-          // all reports recieved: done --> reset our status_report_* flags
+          // all reports recieved: done --> reset our status_report flags
           shared_data->status_report.numreportsrecieved = 0;
           shared_data->status_report.underway = false;
           shared_data->status_report.initialized = false;
@@ -476,7 +481,9 @@ private:
           
       // access to the local logger is fine as a different mutex is used
       logger.longdebug("CxxThreads TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
-          stream << "status report received for thread #" << thread_id << ", treating it ...";
+          stream << "status report received for thread #" << thread_id << ", treating it ...  "
+                 << "numreportsrecieved=" << shared_data->status_report.numreportsrecieved
+                 << " num_active_working_threads=" << shared_data->schedule.num_active_working_threads ;
         });
 
       //
@@ -605,6 +612,10 @@ public:
       
       thread_private_data privdat(thread_id, & shared_data, threadsafelogger);
 
+      // not sure an std::ostream would be safe here threadwise...?
+      privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::run()",
+                               "Thread #%d: thread-safe logger and private thread data set up", thread_id);
+      
       {
         // active working region. This thread takes care of handling tasks.
         
@@ -627,7 +638,7 @@ public:
           // get new task to perform
           shared_data.with_lock(shared_data.schedule, [&privdat](Schedule & schedule) {
               if (schedule.num_launched == schedule.num_total_runs) {
-                privdat.task_id = -1; // all tasks already launched & nothing else to do
+                privdat.task_id = -1; // all tasks already launched -> nothing else to do
                 return;
               }
               privdat.task_id = schedule.num_launched;
@@ -635,7 +646,7 @@ public:
             }) ;
 
           if ( privdat.task_id < 0 ) {
-            // all tasks already launched & nothing else to do
+            // all tasks already launched -> nothing else to do
             break;
           }
 
@@ -696,7 +707,7 @@ public:
 
     // thread_id = 0 is reserved for ourselves.
     for (CountIntType thread_id = 1; thread_id < shared_data.schedule.num_threads; ++thread_id) {
-      threads.push_back( std::thread( [&]() {
+      threads.push_back( std::thread( [thread_id,worker_fn_id]() { // do NOT capture thread_id by reference!
             worker_fn_id(thread_id);
           } ) );
     }
@@ -735,10 +746,6 @@ private:
       return;
     }
 
-    // not sure an std::ostream would be safe here threadwise...?
-    privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()",
-                             "Run #%lu: thread-safe logger set up", (unsigned long)privdat.task_id);
-      
     // not sure an std::ostream would be safe here threadwise...?
     privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()",
                              "Run #%lu: querying CData for task input", (unsigned long)privdat.task_id);
@@ -823,7 +830,6 @@ public:
     //
 
     shared_data.status_report.counter = (shared_data.status_report.counter + 1) & 0x7f;
-
   }
 
   /** \brief Request a periodic status report

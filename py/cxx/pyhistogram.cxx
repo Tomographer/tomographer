@@ -26,6 +26,8 @@
  */
 
 
+#include <ios>
+
 #include "tomographerpy/common.h"
 #include "tomographerpy/pyhistogram.h"
 

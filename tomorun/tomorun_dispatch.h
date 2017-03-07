@@ -40,7 +40,6 @@
 #include <tomographer/mhrw.h>
 #include <tomographer/mhrwtasks.h>
 #include <tomographer/mhrw_valuehist_tasks.h>
-#include <tomographer/multiprocomp.h>
 #include <tomographer/densedm/tspacellhwalker.h>
 #include <tomographer/mathtools/pos_semidef_util.h>
 #include <tomographer/valuecalculator.h>
@@ -112,7 +111,7 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
 {
   Tomographer::Logger::LocalLogger<LoggerType> logger(TOMO_ORIGIN, baselogger);
   //
-  // create the OMP Task Manager and run.
+  // create the Task Dispatcher and run.
   //
 
   typedef TomorunCData<
@@ -136,12 +135,11 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
 
   OurResultsCollector results(logger.parentLogger());
 
-  auto tasks = Tomographer::MultiProc::OMP::makeTaskDispatcher<OurMHRandomWalkTask>(
+  TomorunMultiProcTaskDispatcher<OurMHRandomWalkTask, OurCData, OurResultsCollector, LoggerType> tasks(
       &taskcdat, // constant data
       &results, // results collector
       logger.parentLogger(), // the main logger object
-      opt->Nrepeats, // num_runs
-      opt->Nchunk // n_chunk
+      opt->Nrepeats // num_runs
       );
 
   // set up signal handling
