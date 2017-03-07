@@ -64,11 +64,17 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         py::metaclass()
         )
       .def_property_readonly_static("CONVERGED",
-                                    []() -> int { return Tomographer::BinningAnalysisParams<double>::CONVERGED; })
+                                    [](py::object) -> int {
+                                      return Tomographer::BinningAnalysisParams<double>::CONVERGED;
+                                    })
       .def_property_readonly_static("NOT_CONVERGED",
-                                    []() -> int { return Tomographer::BinningAnalysisParams<double>::NOT_CONVERGED; })
+                                    [](py::object) -> int {
+                                      return Tomographer::BinningAnalysisParams<double>::NOT_CONVERGED;
+                                    })
       .def_property_readonly_static("UNKNOWN_CONVERGENCE",
-                                    []() -> int { return Tomographer::BinningAnalysisParams<double>::UNKNOWN_CONVERGENCE; })
+                                    [](py::object) -> int {
+                                      return Tomographer::BinningAnalysisParams<double>::UNKNOWN_CONVERGENCE;
+                                    })
       ;
   }
 

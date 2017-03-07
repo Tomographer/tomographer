@@ -25,12 +25,25 @@
 # SOFTWARE.
 
 
-# # Turn this into an independent cmake project file -- temporarily  ### --- now done, use only with main project
-# cmake_minimum_required(VERSION 3.1)
-#
-# project(tomographerpy)
-# set(EIGEN3_INCLUDE_DIR "/usr/local/opt/eigen/include/eigen3")
-# add_definitions(-DTOMOGRAPHER_VERSION="3.1" -DTOMOGRAPHER_VERSION_MAJ=3 -DTOMOGRAPHER_VERSION_MIN=1)
+if(TOMOPY_SEPARATE_CMAKE_PROJECT)
+  # Turn this into an independent cmake project file -- temporarily  ### --- now done, use only with main project
+  cmake_minimum_required(VERSION 3.1)
+
+  project(tomographerpy)
+  set(EIGEN3_INCLUDE_DIR "/usr/local/opt/eigen/include/eigen3")
+  add_definitions(-DTOMOGRAPHER_VERSION="3.1" -DTOMOGRAPHER_VERSION_MAJ=3 -DTOMOGRAPHER_VERSION_MIN=1)
+  add_custom_target(tomographer) # dummy
+
+  set(CMAKE_MODULE_PATH
+    ${CMAKE_MODULE_PATH}
+    "${CMAKE_CURRENT_SOURCE_DIR}/../cmake"
+    "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/vc")
+  include(Util)
+  include(OptimizeForArchitecture)
+  OptimizeForArchitecture()
+  string(REPLACE ";" " " _vc_arch_flags_joined "${Vc_ARCHITECTURE_FLAGS}")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_vc_arch_flags_joined}")
+endif()
 
 
 #
@@ -41,8 +54,7 @@ RemoveFlag(CMAKE_CXX_FLAGS_${cmake_build_type_upper} "${CMAKE_CXX_FLAGS_${cmake_
 RemoveFlag(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "-DNDEBUG")
 
 
-
-
+# include pybind11 stuff
 add_subdirectory(pybind11)
 
 

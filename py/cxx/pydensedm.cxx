@@ -226,10 +226,8 @@ void py_tomo_densedm(py::module rootmodule)
           tomographer_assert(len == py::len(Nx)) ;
           for (std::size_t k = 0; k < len; ++k) {
 
-            Eigen::MatrixXcd E_x_or_m = E.attr("__getitem__")(k).cast<Eigen::MatrixXcd>();
-            // need to convert numpy.int64 to a Python integer:
-            py::dict tmp; tmp["x"] = Nx.attr("__getitem__")(k);
-            CountIntType Nk = py::eval<py::eval_expr>("int(x)", tmp).cast<CountIntType>();
+            Eigen::MatrixXcd E_x_or_m = E[py::cast(k)].cast<Eigen::MatrixXcd>();
+            CountIntType Nk = Nx[py::cast(k)].cast<CountIntType>();
             if (PyErr_Occurred() != NULL) {
               // tell pybind11 that the exception is already set
               throw py::error_already_set();

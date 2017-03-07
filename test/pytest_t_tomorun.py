@@ -166,6 +166,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
         glob.num_callback_calls = 0
 
         def progress_callback(fullstatusreport):
+            xyz()
             glob.num_callback_calls += 1
             print(fullstatusreport.getHumanReport())
 

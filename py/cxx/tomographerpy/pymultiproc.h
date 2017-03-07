@@ -136,7 +136,7 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, py::object pr
         // call the python progress callback:
         if (!progress_fn.is_none()) {
           auto r = preparePyTaskStatusReport<TaskType>(report);
-          progress_fn(r);
+          progress_fn(py::cast(r));
         }
         // borrowed from tomographer/tools/signal_status_handler.h: --->  FOR DEBUGGING::
         /*

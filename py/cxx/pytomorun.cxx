@@ -282,6 +282,10 @@ py::object py_tomorun(
       1 // n_chunk
       );
 
+// DEBUG: test callback
+        progress_fn(py::none());
+
+
   setTasksStatusReportPyCallback(tasks, progress_fn, progress_interval_ms);
 
   // and run our tomo process

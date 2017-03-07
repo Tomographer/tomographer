@@ -33,8 +33,8 @@ class BasicStuff(unittest.TestCase):
 
     def test_exception(self):
         # test that the C++ code is able to raise an exception
-        with self.assertRaises(tomographer.TomographerCxxError):
-            # wrong array shape & dimensions -- causes an eigen_assert() failure
+        with self.assertRaises(TypeError):
+            # wrong array shape & dimensions -- causes a pybind11 type conversion exception
             tomographer.UniformBinsHistogram().load(np.array([ [1, 2], [3, 4] ]))
 
 
