@@ -184,7 +184,7 @@ public:
 	);
     _startpt = T/T.norm(); // normalize to be on surface of the sphere
 
-    _log.debug("TSpace::LLHMHWalker", [&T](std::ostream & str) {
+    _log.debug("TSpace::LLHMHWalker", [&](std::ostream & str) {
 	str << "Chosen random start point T = \n" << _startpt;
       });
 
