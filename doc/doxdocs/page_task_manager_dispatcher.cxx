@@ -79,9 +79,9 @@
  * the higher-level Tomographer::MHRWTasks or Tomographer::MHRWTasks::ValueHistogramTasks, your
  * CData-type class should inherit the respective CData classes for those.
  *
- * \par InputType getTaskInput(unsigned int k) const
- *          Provide input to a new task. \c k is the task iteration number
- *          and \c pcdata is a pointer to the shared const data.
+ * \par InputType getTaskInput(unsigned int task_id) const
+ *          Provide input to a new task. \a task_id is the task iteration number (task
+ *          id).
  *
  * \par
  *          The return value may be any type. It will be passed directly to the first

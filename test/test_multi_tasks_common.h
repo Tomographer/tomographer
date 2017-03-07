@@ -148,7 +148,7 @@ struct TestResultsCollector {
     BOOST_CHECK_GE(task_no, 0); BOOST_CHECK_LT(task_no, (int)check_correct_results.size());
     BOOST_CHECK_EQUAL(taskresult.value, check_correct_results[task_no].value);
     BOOST_CHECK_EQUAL(pcdata, pcdata_) ;
-    BOOST_MESSAGE("Collected result from task " << task_no << ": " << taskresult.msg) ;
+    BOOST_TEST_MESSAGE("Collected result from task " << task_no << ": " << taskresult.msg) ;
     ++collectres_called;
   }
   void runsFinished(int num_total_runs, const TestBasicCData * pcdata_)

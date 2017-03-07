@@ -75,8 +75,9 @@ BOOST_AUTO_TEST_SUITE(CxxThreadsThreadSanitizerLogger)
 
 BOOST_AUTO_TEST_CASE(relays_logs)
 {
+  std::mutex iomutex;
   Tomographer::Logger::BufferLogger buflog(Tomographer::Logger::DEBUG);
-  Tomographer::MultiProc::CxxThreads::ThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
+  Tomographer::MultiProc::CxxThreads::ThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog, &iomutex);
   testtasklogger.longdebug("origin", "longdebug level");
   testtasklogger.debug("origin", "debug level");
   testtasklogger.info("origin", "info level");
@@ -96,7 +97,8 @@ BOOST_AUTO_TEST_CASE(fixes_level)
 {
   Tomographer::Logger::BufferLogger buflog(Tomographer::Logger::LONGDEBUG);
 
-  Tomographer::MultiProc::CxxThreads::ThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
+  std::mutex iomutex;
+  Tomographer::MultiProc::CxxThreads::ThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog, &iomutex);
 
   // this should NOT have any effect for testtasklogger, because CxxThreads::ThreadSanitizerLogger
   // should fix the level at construction time for thread-safety/consistency reasons.
@@ -119,10 +121,13 @@ BOOST_AUTO_TEST_CASE(parallel)
   
   std::vector<std::thread> tv;
 
+  std::mutex iomutex;
+
   const int nthreads = std::thread::hardware_concurrency();
   for (int k = 0; k < nthreads; ++k) {
-    tv.push_back( std::thread( [k,&buflog]() {
-          Tomographer::MultiProc::CxxThreads::ThreadSanitizerLogger<Tomographer::Logger::BufferLogger> testtasklogger(buflog);
+    tv.push_back( std::thread( [k,nthreads,&buflog,&iomutex]() {
+          Tomographer::MultiProc::CxxThreads::ThreadSanitizerLogger<Tomographer::Logger::BufferLogger>
+            testtasklogger(buflog, &iomutex);
           testtasklogger.longdebug("main()", "test task logger from core #%06d of %06d", k, nthreads);
         } ) );
   }
@@ -171,7 +176,7 @@ BOOST_FIXTURE_TEST_CASE(tasks_run, test_task_dispatcher_fixture)
   Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
   Tomographer::MultiProc::CxxThreads::TaskDispatcher<TestTask, TestBasicCData, TestResultsCollector,
                                                      Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
 
   BOOST_MESSAGE("About to run tasks");
 
@@ -180,22 +185,6 @@ BOOST_FIXTURE_TEST_CASE(tasks_run, test_task_dispatcher_fixture)
   BOOST_CHECK_EQUAL(resultsCollector.init_called, 1);
   BOOST_CHECK_EQUAL(resultsCollector.collectres_called, num_runs);
   BOOST_CHECK_EQUAL(resultsCollector.runsfinished_called, 1);
-}
-
-BOOST_FIXTURE_TEST_CASE(make_task_dispatcher, test_task_dispatcher_fixture)
-{
-  typedef Tomographer::MultiProc::CxxThreads::TaskDispatcher<TestTask, TestBasicCData, TestResultsCollector,
-                                                             Tomographer::Logger::BoostTestLogger, int>  TaskDispatcherType;
-
-  Tomographer::Logger::BoostTestLogger logger;
-
-  auto task_dispatcher = Tomographer::MultiProc::CxxThreads::makeTaskDispatcher<TestTask>(
-      &cData, &resultsCollector, logger,
-      num_runs, 1);
-
-  // just check that the type was properly deduced (including all template parameters)
-  BOOST_CHECK_EQUAL(std::string(typeid(task_dispatcher).name()),
-                    std::string(typeid(TaskDispatcherType).name()));
 }
 
 struct TestTaskCheckAlignedStack : public TestTask {
@@ -235,7 +224,7 @@ BOOST_FIXTURE_TEST_CASE(inner_code_stack_aligned, test_task_dispatcher_fixture)
   Tomographer::MultiProc::CxxThreads::TaskDispatcher<TestTaskCheckAlignedStack, TestBasicCData,
                                                      TestResultsCollector,
                                                      Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
 
   char blah_data[4] = {0}; // some random stuff -- not really needed, it's just here to clutter the code and memory
   char blah_data2[7] = {0}; // some random stuff -- not really needed, it's just here to clutter the code and memory
@@ -260,7 +249,7 @@ BOOST_AUTO_TEST_CASE(status_report_periodic)
   Tomographer::MultiProc::CxxThreads::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
                                                      StatusRepTestResultsCollector,
                                                      Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
 
   perform_test_status_report_periodic(task_dispatcher, logger) ;
 }
@@ -273,7 +262,7 @@ BOOST_AUTO_TEST_CASE(interrupt_tasks_withthread)
   Tomographer::MultiProc::CxxThreads::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
                                                      StatusRepTestResultsCollector,
                                                      Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
 
   perform_test_interrupt_tasks_withthread(task_dispatcher, logger) ;
 
@@ -285,7 +274,7 @@ BOOST_AUTO_TEST_CASE(status_report_withthread)
   Tomographer::MultiProc::CxxThreads::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
                                                      StatusRepTestResultsCollector,
                                                      Tomographer::Logger::BoostTestLogger, long>
-    task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+    task_dispatcher(&cData, &resultsCollector, logger, num_runs);
 
   perform_test_status_report_withthread(task_dispatcher, logger);
 }
@@ -301,7 +290,7 @@ BOOST_AUTO_TEST_CASE(status_report_withsigalrm)
   Tomographer::MultiProc::CxxThreads::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
                                                      StatusRepTestResultsCollector,
                                                      Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
 
   perform_test_status_report_withsigalrm(task_dispatcher, logger);
 }

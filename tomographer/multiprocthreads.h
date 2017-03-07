@@ -57,88 +57,6 @@ namespace Tomographer {
 namespace MultiProc {
 namespace CxxThreads {
 
-namespace tomo_internal {
-
-/** \brief Internal. Helper for \ref ThreadSanitizerLogger
- *
- * Emits the log to \c baselogger. This template is specialized for
- * <code>baseLoggerIsThreadSafe=true</code>, in which case the call to baselogger's
- * \ref emitLog() is not wrapped into a critical section.
- *
- * This helper is meant to be called as
- * \code
- *      ThreadSanitizerLoggerHelper<BaseLogger, Logger::LoggerTraits<BaseLogger>::IsThreadSafe>
- *        ::emit_log(
- *            baselogger, level, origin, msg
- *          );
- * \endcode
- */
-template<typename BaseLogger, bool baseLoggerIsThreadSafe>
-struct ThreadSanitizerLoggerHelper
-{
-  static inline void emitLog(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
-  {
-    bool got_exception = false;
-    std::string exception_str;
-#pragma omp critical
-    {
-      //fprintf(stderr, "ThreadSanitizerLoggerHelper::emitLog(%d, %s, %s) -- OMP CRITICAL\n", level, origin, msg.c_str());
-      try {
-        baselogger.emitLog(level, origin, msg);
-      } catch (...) {
-        got_exception = true;
-        exception_str = std::string("Caught exception in emitLog: ") + boost::current_exception_diagnostic_information();
-      }
-    }
-    if (got_exception) {
-      throw std::runtime_error(exception_str);
-    }
-  }
-  static inline bool filterByOrigin(BaseLogger & baselogger, int level, const char * origin)
-  {
-    bool got_exception = false;
-    std::string exception_str;
-
-    bool ok = true;
-#pragma omp critical
-    {
-      //fprintf(stderr, "ThreadSanitizerLoggerHelper::filterByOrigin(%d, %s) -- OMP CRITICAL\n", level, origin);
-      try {
-        ok = baselogger.filterByOrigin(level, origin);
-      } catch (...) {
-        got_exception = true;
-        exception_str = std::string("Caught exception in filterByOrigni: ")
-          + boost::current_exception_diagnostic_information();
-      }
-    }
-    if (got_exception) {
-      throw std::runtime_error(exception_str);
-    }
-    return ok;
-  }
-};
-
-//
-// specialize the helper for when logging to a thread-safe base logger. No critical
-// section needed because the logger is already thread-safe.
-//
-template<typename BaseLogger>
-struct ThreadSanitizerLoggerHelper<BaseLogger, true>
- {
-  static inline void emitLog(BaseLogger & baselogger, int level, const char * origin, const std::string & msg)
-  {
-    //fprintf(stderr, "ThreadSanitizerLoggerHelper::emitLog(%d, %s, %s) -- NORMAL\n", level, origin, msg.c_str());
-    baselogger.emitLog(level, origin, msg);
-  }
-  static inline bool filterByOrigin(BaseLogger & baselogger, int level, const char * origin)
-  {
-    //fprintf(stderr, "ThreadSanitizerLoggerHelper::filterByOrigin(%d, %s) -- NORMAL\n", level, origin);
-    return baselogger.filterByOrigin(level, origin);
-  }
-};
-
-} // namespace tomo_internal
-
 
 /** \brief Wrapper logger to call non-thread-safe loggers from a multithreaded environment.
  *
@@ -191,29 +109,25 @@ public:
 private:
   BaseLogger & _baselogger;
 
-  static Tools::StoreIfEnabled<std::mutex, !IsBaseLoggerThreadSafe> _mutex;
+  std::mutex * _mutex;
 public:
 
   /** \brief Constructor
    *
    * This constructor accepts arbitrary more arguments and ignores them.  The reason is
-   * because the OMP task dispatcher does not know for sure which type the task-logger
-   * is (you can specify your custom type), and will always invoke the constructor with
-   * additional parameters such as a pointer to the \a TaskCData.  Here we don't need
-   * those so we can just ignore any additional args.
+   * because the task dispatcher does not know for sure which type the task-logger is (you
+   * can specify your custom type), and will always invoke the constructor with additional
+   * parameters such as a pointer to the \a TaskCData.  Here we don't need those so we can
+   * just ignore any additional args.
    */
   template<typename... MoreArgs>
-  ThreadSanitizerLogger(BaseLogger & logger, MoreArgs&&...)
+  ThreadSanitizerLogger(BaseLogger & logger, std::mutex * mutex)
     // NOTE: pass the baselogger's level on here. The ThreadSanitizerLogger's level is
     // this one, and is fixed and cannot be changed while running.
     : Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >(logger.level()),
-    _baselogger(logger)
+    _baselogger(logger),
+    _mutex(mutex)
   {
-    // when you have to debug the debug log mechanism... lol
-    //printf("ThreadSanitizerLogger(): object created\n");
-    //_baselogger.debug("ThreadSanitizerLogger()", "log from constructor.");
-    //emitLog(Logger::DEBUG, "ThreadSanitizerLogger!", "emitLog from constructor");
-    //LoggerBase<ThreadSanitizerLogger<BaseLogger> >::debug("ThreadSanitizerLogger", "debug from constructor");
   }
     
   ~ThreadSanitizerLogger()
@@ -240,7 +154,7 @@ public:
   TOMOGRAPHER_ENABLED_IF(!IsBaseLoggerThreadSafe)
   inline void emitLog(int level, const char * origin, const std::string& msg)
   {
-    std::lock_guard<std::mutex> lock(_mutex.value);
+    std::lock_guard<std::mutex> lock(*_mutex);
     _baselogger.emitLog(level, origin, msg);
   }
 
@@ -249,15 +163,11 @@ public:
                          !IsBaseLoggerThreadSafe)
   bool filterByOrigin(int level, const char * origin) const
   {
-    std::lock_guard<std::mutex> lock(_mutex.value);
+    std::lock_guard<std::mutex> lock(*_mutex);
     return _baselogger.filterByOrigin(level, origin);
   }
 
 };
-// base-logger-specific static _mutex.
-template<typename BaseLogger>
-static Tools::StoreIfEnabled<std::mutex, !ThreadSanitizerLogger<BaseLogger>::IsBaseLoggerThreadSafe>
-  ThreadSanitizerLogger<BaseLogger>::_mutex;
 
 } // namespace CxxThreads
 } // namespace MultiProc
@@ -330,12 +240,13 @@ namespace CxxThreads {
  *      For each task, a new \a TaskLoggerType will be created. The constructor is expected
  *      to accept the following arguments:
  *      \code
- *         TaskLoggerType(LoggerType & baselogger, const TaskCData * pcdata, CountIntType k)
+ *         TaskLoggerType(LoggerType & baselogger, const TaskCData * pcdata, CountIntType thread_id)
  *      \endcode
  *      where \a baselogger is the logger given to the \a TaskDispatcher constructor,
  *      \a pcdata is the constant shared data pointer also given to the constructor, and
- *      \a k is the task number (which may range from 0 to the total number of tasks -
- *      1). The task logger is NOT constructed in a thread-safe code region.
+ *      \a k is the thread ID number (which may range from 0 to the total number of
+ *      threads minus one). The task logger is NOT constructed in a thread-safe code
+ *      region.
  *
  * <li> \a CountIntType should be a type to use to count the number of tasks. Usually
  *      there's no reason not to use an \c int.
@@ -344,8 +255,7 @@ namespace CxxThreads {
  *
  */
 template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
-         typename LoggerType_, typename CountIntType_ = int,
-         typename TaskLoggerType_ = ThreadSanitizerLogger<LoggerType_> >
+         typename LoggerType_, typename CountIntType_ = int>
 class TaskDispatcher
 {
 public:
@@ -362,7 +272,7 @@ public:
   //! Integer type used to count the number of tasks to run (or running)
   typedef CountIntType_ CountIntType;
   //! A thread-safe logger type which is passed on to the child tasks
-  typedef TaskLoggerType_ TaskLoggerType;
+  typedef ThreadSanitizerLogger<LoggerType_> TaskLoggerType;
   //! The type to use to generate a full status report of all running tasks
   typedef FullStatusReport<TaskStatusReportType> FullStatusReportType;
 
@@ -390,57 +300,62 @@ private:
     virtual ~TaskInterruptedInnerException() throw() { };
     const char * what() const throw() { return msg.c_str(); }
   };
-  // struct TaskInnerException : public std::exception {
-  //   std::string msg;
-  // public:
-  //   TaskInnerException(std::string msgexc) : msg("Task raised an exception: "+msgexc) { }
-  //   virtual ~TaskInnerException() throw() { };
-  //   const char * what() const throw() { return msg.c_str(); }
-  // };
+  struct TaskInnerException : public std::exception {
+    std::string msg;
+  public:
+    TaskInnerException(std::string msgexc) : msg("Task raised an exception: "+msgexc) { }
+    virtual ~TaskInnerException() throw() { };
+    const char * what() const throw() { return msg.c_str(); }
+  };
 
   //! thread-shared variables
   struct thread_shared_data {
     thread_shared_data(const TaskCData * pcdata_, ResultsCollector * results_, LoggerType & logger_,
-                       CountIntType num_total_runs_, CountIntType n_chunk_)
+                       CountIntType num_total_runs, CountIntType num_threads)
       : pcdata(pcdata_),
         results(results_),
         logger(logger_),
         time_start(),
-        status_report_underway(false),
-        status_report_initialized(false),
-        status_report_ready(false),
-        status_report_counter(0),
-        status_report_periodic_interval(-1),
-        status_report_numreportsrecieved(0),
-        status_report_full(),
-        status_report_user_fn(),
-        interrupt_requested(0),
-        num_total_runs(num_total_runs_), n_chunk(n_chunk_), num_completed(0),
-        num_active_working_threads(0)
+        schedule(num_total_runs, num_threads),
+        status_report()
     { }
 
     const TaskCData * pcdata;
+    std::mutex user_mutex; // mutex for IO, as well as interface user interaction (results collector etc.)
+
     ResultsCollector * results;
     LoggerType & logger;
 
     StdClockType::time_point time_start;
 
-    struct schedule_struct {
-      int num_threads;
-
-      CountIntType num_total_runs;
-      CountIntType n_chunk;
-      CountIntType num_completed;
+    struct Schedule {
+      const CountIntType num_threads;
       CountIntType num_active_working_threads;
 
+      const CountIntType num_total_runs;
+      CountIntType num_completed;
+      CountIntType num_launched;
+
       std::sig_atomic_t interrupt_requested;
+      std::string inner_exception;
 
       std::mutex mutex;
-      std::condition_variable cv;
-    };
-    schedule_struct schedule;
 
-    struct status_report_struct {
+      Schedule(CountIntType num_total_runs_, CountIntType num_threads_)
+        : num_threads(num_threads_),
+          num_active_working_threads(0),
+          num_total_runs(num_total_runs_),
+          num_completed(0),
+          num_launched(0),
+          interrupt_requested(0),
+          inner_exception(),
+          mutex()
+      {
+      }
+    };
+    Schedule schedule;
+
+    struct StatusReport {
       bool underway;
       bool initialized;
       bool ready;
@@ -452,21 +367,49 @@ private:
       std::sig_atomic_t counter;
 
       std::mutex mutex;
+
+      StatusReport()
+        : underway(false),
+          initialized(false),
+          ready(false),
+          periodic_interval(-1),
+          numreportsrecieved(0),
+          full_report(),
+          user_fn(),
+          counter(0),
+          mutex()
+      {
+      }
     };
-    status_report_struct status_report;
+    StatusReport status_report;
+
+    template<typename Struct, typename Fn>
+    void with_lock(Struct & s, Fn fn) {
+      std::lock_guard<std::mutex> lock(s.mutex);
+      fn(s);
+    }
   };
 
   //! thread-local variables and stuff &mdash; also serves as TaskManagerIface
   struct thread_private_data
   {
-    int thread_id;
+    const CountIntType thread_id;
 
     thread_shared_data * shared_data;
 
-    TaskLoggerType * logger;
+    TaskLoggerType & logger;
 
-    CountIntType kiter;
+    CountIntType task_id;
     CountIntType local_status_report_counter;
+
+    thread_private_data(CountIntType thread_id_, thread_shared_data * shared_data_, TaskLoggerType & logger_)
+      : thread_id(thread_id_),
+        shared_data(shared_data_),
+        logger(logger_),
+        task_id(-1),
+        local_status_report_counter(0)
+    {
+    }
 
     inline bool statusReportRequested() const
     {
@@ -491,7 +434,7 @@ private:
           std::lock_guard<std::mutex> lockguard(shared_data->status_report.mutex);
 
           // call user-defined status report handler
-          shared_data->status_report_user_fn(shared_data->status_report.full_report);
+          shared_data->status_report.user_fn(shared_data->status_report.full_report);
           // all reports recieved: done --> reset our status_report_* flags
           shared_data->status_report.numreportsrecieved = 0;
           shared_data->status_report.underway = false;
@@ -522,7 +465,7 @@ private:
     {
       if ((int)local_status_report_counter == (int)shared_data->status_report.counter) {
         // error: task submitted unsollicited report
-        logger->warning("CxxThreads TaskDispatcher/taskmanageriface", "Task submitted unsollicited status report");
+        logger.warning("CxxThreads TaskDispatcher/taskmanageriface", "Task submitted unsollicited status report");
         return;
       }
 
@@ -563,8 +506,8 @@ private:
               
         // initialize status report object & overall data
         shared_data->status_report.full_report = FullStatusReportType();
-        shared_data->status_report.full_report.num_completed = shared_data->num_completed;
-        shared_data->status_report.full_report.num_total_runs = shared_data->num_total_runs;
+        shared_data->status_report.full_report.num_completed = shared_data->schedule.num_completed;
+        shared_data->status_report.full_report.num_total_runs = shared_data->schedule.num_total_runs;
         shared_data->status_report.full_report.elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
             StdClockType::now() - shared_data->time_start
             ).count() * 1e-3;
@@ -581,9 +524,9 @@ private:
 
         logger.debug("CxxThreads TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
             stream << "vectors resized to workers_running.size()="
-                   << shared_data->status_report_full.workers_running.size()
+                   << shared_data->status_report.full_report.workers_running.size()
                    << " and workers_reports.size()="
-                   << shared_data->status_report_full.workers_reports.size()
+                   << shared_data->status_report.full_report.workers_reports.size()
                    << ".";
           });
       } // status_report.initialized
@@ -602,7 +545,7 @@ private:
 
       ++ shared_data->status_report.numreportsrecieved;
 
-      if (shared_data->status_report.numreportsrecieved == shared_data->num_active_working_threads) {
+      if (shared_data->status_report.numreportsrecieved == shared_data->schedule.num_active_working_threads) {
         //
         // the report is ready to be transmitted to the user: go!
         //
@@ -632,12 +575,11 @@ public:
    * \param num_total_runs_ The number of tasks to run in total.  Recall that the inputs
    *                 to the different task instances are provided by the TaskCData's
    *                 getTaskInput() method (see \ref pageInterfaceTaskCData).
-   *
-   * \param n_chunk_ How many tasks to chunk together into one thread.
    */
   TaskDispatcher(TaskCData * pcdata_, ResultsCollector * results_, LoggerType & logger_,
-                 CountIntType num_total_runs_, CountIntType n_chunk_)
-    : shared_data(pcdata_, results_, logger_, num_total_runs_, n_chunk_)
+                 CountIntType num_total_runs_,
+                 CountIntType num_threads_ = std::thread::hardware_concurrency())
+    : shared_data(pcdata_, results_, logger_, num_total_runs_, num_threads_)
   {
   }
 
@@ -650,168 +592,196 @@ public:
     shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "Let's go!");
     shared_data.time_start = StdClockType::now();
 
-    shared_data.results->init(shared_data.num_total_runs, shared_data.n_chunk, shared_data.pcdata);
+    shared_data.results->init(shared_data.schedule.num_total_runs, 1, shared_data.pcdata);
     
     shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "preparing for parallel runs");
 
-    const CountIntType num_total_runs = shared_data.num_total_runs;
-    const CountIntType n_chunk = shared_data.n_chunk;
+    typedef typename thread_shared_data::Schedule Schedule;
 
-    CountIntType k = 0;
-
-    auto worker_fn_id = [...](int thread_id) {
+    auto worker_fn_id = [&](const int thread_id) {
       
-      thread_private_data privdat;
-      privdat.thread_id = thread_id;
+      // construct a thread-safe logger we can use
+      TaskLoggerType threadsafelogger(shared_data.logger, & shared_data.user_mutex);
+      
+      thread_private_data privdat(thread_id, & shared_data, threadsafelogger);
 
-      ..... ...... .....
-
-    };
-
-......
-
-    shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "About to start parallel section");
-
-    int num_active_parallel = 0;
-
-    std::string inner_exception;
-
-#pragma omp parallel default(none) private(k, privdat) shared(shdat, num_total_runs, n_chunk, num_active_parallel, inner_exception)
-    {
-      privdat.shared_data = shdat;
-      privdat.kiter = 0;
-
-#pragma omp atomic
-      ++num_active_parallel;
-
-      //
-      // The main, parallel FOR loop:
-      //
-#pragma omp for schedule(dynamic,n_chunk) nowait
-      for (k = 0; k < num_total_runs; ++k) {
-
-        try {
-
-          // make separate function call, so that we can tell GCC to realign the stack on
-          // platforms which don't do that automatically (yes, MinGW, it's you I'm looking
-          // at)
-          _run_task(privdat, shdat, k);
-
-        } catch (...) {
-#pragma omp critical
-          {
-            shdat->interrupt_requested = 1;
-            inner_exception += std::string("Exception caught inside task: ")
-              + boost::current_exception_diagnostic_information() + "\n";
-          }
-        }
-          
-      } // omp for
-
-#pragma omp atomic
-      --num_active_parallel;
-
-#pragma omp master
       {
-        if (shdat->status_report_periodic_interval > 0) {
-          // master thread should continue providing regular status updates
-          while (num_active_parallel > 0) {
-            TOMOGRAPHER_SLEEP_FOR_MS(shdat->status_report_periodic_interval);
-            privdat._master_thread_update_status_report_periodic_interval_counter();
+        // active working region. This thread takes care of handling tasks.
+        
+        shared_data.with_lock(shared_data.schedule, [](Schedule & schedule) {
+            ++ schedule.num_active_working_threads;
+          });
+        auto _f0 = Tools::finally([&](){
+            shared_data.with_lock(shared_data.schedule, [](Schedule & schedule) {
+                -- schedule.num_active_working_threads;
+              });
+          });
+
+        for ( ;; ) {
+          // continue doing stuff until we stop
+
+          if (shared_data.schedule.interrupt_requested) {
+            break;
           }
+
+          // get new task to perform
+          shared_data.with_lock(shared_data.schedule, [&privdat](Schedule & schedule) {
+              if (schedule.num_launched == schedule.num_total_runs) {
+                privdat.task_id = -1; // all tasks already launched & nothing else to do
+                return;
+              }
+              privdat.task_id = schedule.num_launched;
+              ++ schedule.num_launched ;
+            }) ;
+
+          if ( privdat.task_id < 0 ) {
+            // all tasks already launched & nothing else to do
+            break;
+          }
+
+          // run this task.
+
+          {
+            std::lock_guard<std::mutex> lk2(shared_data.status_report.mutex);
+            privdat.local_status_report_counter = shared_data.status_report.counter;
+          }
+
+          try {
+
+            _run_task(privdat, shared_data) ;
+
+          } catch (TaskInterruptedInnerException & exc) {
+            std::lock_guard<std::mutex> lk(shared_data.schedule.mutex) ;
+            shared_data.schedule.interrupt_requested = true;
+            break;
+          } catch (std::exception_ptr exc) {
+            std::lock_guard<std::mutex> lk(shared_data.schedule.mutex) ;
+            shared_data.schedule.interrupt_requested = true;
+            shared_data.schedule.inner_exception += std::string("Exception caught inside task: ")
+              + boost::current_exception_diagnostic_information() + "\n";
+            break;
+          }
+
+          { std::lock_guard<std::mutex> lk(shared_data.schedule.mutex) ;
+            ++ shared_data.schedule.num_completed;
+          }
+
+        } // for(;;)
+
+      } // end of active working region, thread on longer serves to run tasks
+        // (--num_active_working_threads is executed at this point)
+
+      // only master thread should make sure it continues to serve status report requests
+      if (thread_id == 0 && !shared_data.schedule.interrupt_requested) {
+
+        const int sleep_val = std::max(shared_data.status_report.periodic_interval, 200);
+
+        while (shared_data.schedule.num_active_working_threads > 0) {
+
+          std::this_thread::sleep_for(std::chrono::milliseconds(sleep_val)) ;
+          privdat.statusReportRequested();
+
         }
       }
       
-    } // omp parallel
+    } ; // worker_fn_id
 
-    if (inner_exception.size()) {
-      // interrupt was requested because of an inner exception, not an explicit interrupt request
-      throw std::runtime_error(inner_exception);
+    //
+    // now, prepare & launch the workers
+    //
+
+    shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "About to launch threads");
+
+    std::vector<std::thread> threads;
+
+    // thread_id = 0 is reserved for ourselves.
+    for (CountIntType thread_id = 1; thread_id < shared_data.schedule.num_threads; ++thread_id) {
+      threads.push_back( std::thread( [&]() {
+            worker_fn_id(thread_id);
+          } ) );
     }
 
-    if (shared_data.interrupt_requested) {
+    // also run stuff as master thread
+    worker_fn_id(0);
+
+    std::for_each(threads.begin(), threads.end(), [](std::thread & thread) { thread.join(); }) ;
+
+    shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "Threads finished");
+
+    // if tasks were interrupted, throw the corresponding exception
+    if (shared_data.schedule.interrupt_requested) {
       throw TasksInterruptedException();
     }
+
+    if (shared_data.schedule.inner_exception.size()) {
+      // interrupt was requested because of an inner exception, not an explicit interrupt request
+      throw std::runtime_error(shared_data.schedule.inner_exception);
+    }
     
-    shared_data.results->runsFinished(num_total_runs, shared_data.pcdata);
-  }
+    shared_data.results->runsFinished(shared_data.schedule.num_total_runs, shared_data.pcdata);
+    
+    shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "Done.");
+  } // run()
+
+  
 
 private:
-  void _run_task(thread_private_data & privdat, thread_shared_data * shdat, CountIntType k)
+  void _run_task(thread_private_data & privdat, thread_shared_data & shared_data)
     TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
   {
 
     // do not execute task if an interrupt was requested.
-    if (shdat->interrupt_requested) {
+    if (shared_data.schedule.interrupt_requested) {
       return;
     }
 
-#pragma omp critical
-    {
-      ++ shdat->num_active_working_threads;
-      privdat.local_status_report_counter = shdat->status_report_counter;
-    }
-
-    // construct a thread-safe logger we can use
-    TaskLoggerType threadsafelogger(shdat->logger, shdat->pcdata, k);
+    // not sure an std::ostream would be safe here threadwise...?
+    privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()",
+                             "Run #%lu: thread-safe logger set up", (unsigned long)privdat.task_id);
       
     // not sure an std::ostream would be safe here threadwise...?
-    threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
-                               "Run #%lu: thread-safe logger set up", (unsigned long)k);
-      
-    // set up our thread-private data
-    privdat.kiter = k;
-    privdat.logger = &threadsafelogger;
-      
-    // not sure an std::ostream would be safe here threadwise...?
-    threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
-                               "Run #%lu: querying CData for task input", (unsigned long)k);
+    privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()",
+                             "Run #%lu: querying CData for task input", (unsigned long)privdat.task_id);
 
-    auto input = shdat->pcdata->getTaskInput(k);
+    // See OMP implementation: getTaskInput() is not thread protected
+    //
+    // const auto input = [](thread_shared_data & x, task_id) {
+    //   std::lock_guard<std::mutex> lck(x.user_mutex);
+    //   return x.pcdata->getTaskInput(task_id);
+    // } (shared_data, privdat.task_id);
+    const auto input = shared_data.pcdata->getTaskInput(privdat.task_id);
 
     // not sure an std::ostream would be safe here threadwise...?
-    threadsafelogger.debug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
-                           "Running task #%lu ...", (unsigned long)k);
+    privdat.logger.debug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()",
+                         "Running task #%lu ...", (unsigned long)privdat.task_id);
       
     // construct a new task instance
-    TaskType t(input, shdat->pcdata, threadsafelogger);
+    TaskType t(input, shared_data.pcdata, privdat.logger);
       
     // not sure an std::ostream would be safe here threadwise...?
-    threadsafelogger.longdebug("Tomographer::MultiProc::OMP::TaskDispatcher::_run_task()",
-                               "Task #%lu set up.", (unsigned long)k);
+    privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()",
+                             "Task #%lu set up.", (unsigned long)privdat.task_id);
       
     // and run it
-    try {
-      t.run(shdat->pcdata, threadsafelogger, &privdat);
-    } catch (const TaskInterruptedInnerException & ) {
-      return;
-    }
-      
-    bool got_exception = false;
-    std::string exception_str;
-#pragma omp critical
-    {
-      try {
-        shdat->results->collectResult(k, t.getResult(), shdat->pcdata);
-      } catch (...) {
-          got_exception = true;
-          exception_str = std::string("Caught exception while processing status report: ")
-            + boost::current_exception_diagnostic_information();
-      }
-        
-      if ((int)privdat.local_status_report_counter != (int)shdat->status_report_counter) {
-        // status report request missed by task... do as if we had provided a
-        // report, but don't provide report.
-        ++ shdat->status_report_numreportsrecieved;
-      }
-        
-      ++ shdat->num_completed;
-      -- shdat->num_active_working_threads;
-    } // omp critical
-    if (got_exception) {
-      throw std::runtime_error(exception_str);
-    }
+    t.run(shared_data.pcdata, privdat.logger, &privdat);
 
+    privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()",
+                             "Task #%lu finished, about to collect result.", (unsigned long)privdat.task_id);
+      
+    { std::lock_guard<std::mutex> lck(shared_data.user_mutex);
+      shared_data.results->collectResult(privdat.task_id, t.getResult(), shared_data.pcdata);
+    }
+    
+    // {
+    //   std::lock_guard<std::mutex> lck(shared_data.status_report.mutex) ;
+    //   if ((int)privdat.local_status_report_counter != (int)shared_data.status_report.counter) {
+    //     // status report request missed by task... do as if we had provided a
+    //     // report, but don't provide report.
+    //     ++ shared_data.status_report.numreportsrecieved;
+    //   }
+    // }
+
+    privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()", "task done") ;
   }
 
 public:
@@ -824,15 +794,12 @@ public:
    *
    * The callback, when invoked, will be called with a single parameter of type \ref
    * FullStatusReport "FullStatusReport<TaskStatusReportType>".  It is guaranteed to be
-   * called from within the main thread, that is, the one with <code>omp_get_thread_num()
-   * == 0</code>.
+   * called from within the main thread.
    */
   inline void setStatusReportHandler(FullStatusReportCallbackType fnstatus)
   {
-#pragma omp critical
-    {
-      shared_data.status_report_user_fn = fnstatus;
-    }
+    std::lock_guard<std::mutex> lck(shared_data.status_report.mutex) ;
+    shared_data.status_report.user_fn = fnstatus;
   }
 
   /** \brief Request a status report
@@ -850,13 +817,12 @@ public:
     //
     // This function can be called from a signal handler. We essentially can't do
     // anything here because the state of the program can be pretty much anything,
-    // including inside a malloc() or gomp lock. So can't call any function which needs
-    // malloc or a #pragma omp critical.
+    // including inside a malloc() or thread lock.
     //
     // So just increment an atomic int.
     //
 
-    shared_data.status_report_counter = (shared_data.status_report_counter + 1) & 0x7f;
+    shared_data.status_report.counter = (shared_data.status_report.counter + 1) & 0x7f;
 
   }
 
@@ -869,10 +835,8 @@ public:
    */
   inline void requestPeriodicStatusReport(int milliseconds)
   {
-#pragma omp critical
-    {
-      shared_data.status_report_periodic_interval = milliseconds;
-    }
+    std::lock_guard<std::mutex> lck(shared_data.status_report.mutex) ;
+    shared_data.status_report.periodic_interval = milliseconds;
   }
 
   /** \brief Request an immediate interruption of the tasks.
@@ -888,6 +852,7 @@ public:
    */
   inline void requestInterrupt()
   {
+    // set the atomic int
     shared_data.interrupt_requested = 1;
   }
 
@@ -895,26 +860,9 @@ public:
 }; // class TaskDispatcher
 
 
-/** \brief Create an OMP task dispatcher. Useful if you want C++'s template argument
- *         deduction mechanism
- */
-template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
-         typename LoggerType_, typename CountIntType_ = int>
-inline TaskDispatcher<TaskType_, TaskCData_, ResultsCollector_,
-                      LoggerType_, CountIntType_>
-makeTaskDispatcher(TaskCData_ * pcdata_, ResultsCollector_ * results_, LoggerType_ & logger_,
-                   CountIntType_ num_total_runs_, CountIntType_ n_chunk_)
-{
-  // RVO should be rather obvious to the compiler
-  return TaskDispatcher<TaskType_, TaskCData_, ResultsCollector_,
-                        LoggerType_, CountIntType_>(
-                            pcdata_, results_, logger_, num_total_runs_, n_chunk_
-                            );
-}
 
 
-
-} // namespace OMP
+} // namespace CxxThreads
 } // namespace MultiProc
 
 } // namespace Tomographer
