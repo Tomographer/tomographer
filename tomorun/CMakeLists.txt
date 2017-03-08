@@ -75,13 +75,23 @@ target_link_libraries(tomorun ${Boost_PROGRAM_OPTIONS_LIBRARY})
 target_include_directories(tomorun  PRIVATE ${MATIO_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 target_link_libraries(tomorun ${MATIO_LIBRARIES} ${ZLIB_LIBRARIES})
 
-if (OPENMP_FOUND)
+set(TOMORUN_MULTIPROC "cxxthreads" CACHE STRING "MultiProcessing scheme to use for `tomorun`: 'cxxthreads', 'openmp' or 'sequential'")
+
+if(TOMORUN_MULTIPROC STREQUAL "openmp")
   # compile with OpenMP
   message(STATUS "tomorun will be compiled with OpenMP multiprocessing")
   target_compile_options(tomorun PRIVATE ${OpenMP_CXX_FLAGS})
   target_link_libraries(tomorun ${OpenMP_CXX_FLAGS})
+  target_compile_definitions(tomorun PRIVATE -DTOMORUN_MULTIPROC_OPENMP)
+elseif(TOMORUN_MULTIPROC STREQUAL "cxxthreads")
+  message(STATUS "tomorun will be compiled with C++11 threads multiprocessing")
+  TargetLinkStdThread(tomorun)
+  target_compile_definitions(tomorun PRIVATE -DTOMORUN_MULTIPROC_CXXTHREADS)
+elseif(TOMORUN_MULTIPROC STREQUAL "sequential")
+  message(STATUS "tomorun will be compiled with sequential execution (no parallelization) -- this is slow!")
+  target_compile_definitions(tomorun PRIVATE -DTOMORUN_MULTIPROC_SEQUENTIAL)
 else()
-  message(STATUS "tomorun will be compiled with C++11 threads multiprocessing (OpenMP not found)")
+  message(FATAL_ERROR "Invalid value for TOMORUN_MULTIPROC: expected 'cxxthreads', 'openmp' or 'sequential'")
 endif()
 
 

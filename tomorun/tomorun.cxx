@@ -64,15 +64,33 @@
 #include <tomographer/densedm/tspacellhwalker.h>
 #include <tomographer/tomographer_version.h>
 
-#ifdef _OPENMP
+#if defined(TOMORUN_MULTIPROC_OPENMP)
+
 // use OpenMP if it is available.
-#include <tomographer/multiprocomp.h>
-#define TomorunMultiProcTaskDispatcher Tomographer::MultiProc::OMP::TaskDispatcher
-#else
-// and use C++11 threads otherwise
-#include <tomographer/multiprocthreads.h>
-#define TomorunMultiProcTaskDispatcher Tomographer::MultiProc::CxxThreads::TaskDispatcher
+#  if defined(_OPENMP)
+#    include <tomographer/multiprocomp.h>
+#    define TomorunMultiProcTaskDispatcher Tomographer::MultiProc::OMP::TaskDispatcher
+#    define TomorunMultiProcTaskDispatcherTitle "OpenMP"
+#  else
+#    error "OpenMP multiprocessing scheme requested, but OpenMP is not enabled"
+#  endif
+
+#elif defined(TOMORUN_MULTIPROC_SEQUENTIAL)
+
+// Don't parallelize.
+#  include <tomographer/multiproc.h>
+#  define TomorunMultiProcTaskDispatcher Tomographer::MultiProc::Sequential::TaskDispatcher
+#  define TomorunMultiProcTaskDispatcherTitle "Sequential (parallelization deactivated!)"
+
+#else // also if defined(TOMORUN_MULTIPROC_CXXTHREADS)
+
+// use C++11 threads otherwise
+#  include <tomographer/multiprocthreads.h>
+#  define TomorunMultiProcTaskDispatcher Tomographer::MultiProc::CxxThreads::TaskDispatcher
+#  define TomorunMultiProcTaskDispatcherTitle "C++11 Threads"
+
 #endif
+
 
 #include "tomorun_config.h"
 #include "tomorun_opts.h"

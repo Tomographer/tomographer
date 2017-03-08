@@ -65,13 +65,16 @@ static std::string prog_version_info_features()
     // Boost
     features_str += std::string("Boost headers ") + std::string(BOOST_LIB_VERSION) + std::string("\n");
 
+    // Parallelization
+    features_str += "MultiProc: " TomorunMultiProcTaskDispatcherTitle "\n";
+    // --replaces:
     // OpenMP
-    features_str +=
-#ifdef _OPENMP
-      "+OpenMP [Tomorun was compiled with OpenMP support.]\n"
-#else
-      "-OpenMP [Tomorun was compiled without OpenMP support.]\n"
-#endif
+    //     features_str +=
+    // #ifdef _OPENMP
+    //       "+OpenMP [Tomorun was compiled with OpenMP support.]\n"
+    // #else
+    //       "-OpenMP [Tomorun was compiled without OpenMP support.]\n"
+    // #endif
       ;
 
     // MatIO
