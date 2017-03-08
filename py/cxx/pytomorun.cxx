@@ -278,7 +278,8 @@ py::object py_tomorun(
   StdClockType::time_point time_start;
 
   logger.debug([&](std::ostream & stream) {
-      stream << "about to create the task dispatcher.  this pid = " << getpid() << "; this thread id = " << std::this_thread::get_id();
+      stream << "about to create the task dispatcher.  this pid = " << getpid() << "; this thread id = "
+             << std::this_thread::get_id();
     }) ;
 
   {

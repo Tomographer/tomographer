@@ -66,6 +66,8 @@ void py_tomo_multiproc(py::module rootmodule)
         "    The total number of task instances that we have to run\n\n"
         ".. py:attribute:: elapsed\n\n"
         "    How many seconds have elapsed since starting to run tasks\n\n"
+        ".. py:attribute:: total_fraction_done\n\n"
+        "    The total fraction of the tasks completed\n\n"
         ".. py:attribute:: workers\n\n"
         "    A list of individual reports for each running worker.  The length of this list is the number of workers "
         "which can handle running tasks (e.g. parallel threads).  Each item of the list is either `None` if the "

@@ -692,7 +692,7 @@ public:
    *                 target="_blank">this page</a>).
    */
   TaskDispatcher(TaskCData * pcdata_, ResultsCollector * results_, LoggerType & logger_,
-                 CountIntType num_total_runs_, CountIntType n_chunk_)
+                 CountIntType num_total_runs_, CountIntType n_chunk_ = 1)
     : shared_data(pcdata_, results_, logger_, num_total_runs_, n_chunk_)
   {
   }
@@ -958,7 +958,7 @@ template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
 inline TaskDispatcher<TaskType_, TaskCData_, ResultsCollector_,
                       LoggerType_, CountIntType_>
 makeTaskDispatcher(TaskCData_ * pcdata_, ResultsCollector_ * results_, LoggerType_ & logger_,
-                   CountIntType_ num_total_runs_, CountIntType_ n_chunk_)
+                   CountIntType_ num_total_runs_, CountIntType_ n_chunk_ = 1)
 {
   // RVO should be rather obvious to the compiler
   return TaskDispatcher<TaskType_, TaskCData_, ResultsCollector_,

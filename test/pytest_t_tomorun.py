@@ -2,13 +2,13 @@
 
 from __future__ import print_function
 
-import sys
+#import sys
 import re
 import numpy as np
 import numpy.testing as npt
 
 import logging
-logging.basicConfig(level=logging.NOTSET)
+logging.basicConfig(level=logging.DEBUG)
 
 import unittest
 
@@ -168,8 +168,6 @@ class analytical_known_example_tomorun(unittest.TestCase):
 
         def progress_callback(fullstatusreport):
             glob.num_callback_calls += 1
-            import sys
-            sys.stdout.write("CALLBACK: HELLO THERE!\n")
             print(fullstatusreport.getHumanReport())
 
         intvl_ms = 200
@@ -199,6 +197,39 @@ class analytical_known_example_tomorun(unittest.TestCase):
         self.assertGreaterEqual(glob.num_callback_calls, 1)
         self.assertLessEqual(glob.num_callback_calls, nc+2)
 
+    def test_error_in_callback(self):
+
+        print("test_error_in_callback()")
+
+        num_repeats = 2
+        hist_params = tomographer.UniformBinsHistogramParams(0.985, 1, 200)
+
+        class Ns: pass
+
+
+        def progress_callback(fullstatusreport):
+            error-xxx(xyz) # error -- raises a Python exception
+            print(fullstatusreport.getHumanReport())
+
+        intvl_ms = 200
+
+        with self.assertRaises(Exception):
+            r = tomographer.tomorun.tomorun(
+                dim=2,
+                Emn=self.Emn,
+                Nm=self.Nm,
+                fig_of_merit="obs-value",
+                observable=self.rho_ref,
+                num_repeats=num_repeats,
+                mhrw_params=tomographer.MHRWParams(
+                    step_size=0.04,
+                    n_sweep=25,
+                    n_run=4*32768,
+                    n_therm=500),
+                hist_params=hist_params,
+                progress_fn=progress_callback,
+                progress_interval_ms=intvl_ms,
+            )
 
 
 # normally, this is not needed as we are being run via pyruntest.py, but it might be

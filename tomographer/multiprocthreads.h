@@ -414,6 +414,8 @@ private:
     inline bool statusReportRequested() const
     {
       if (shared_data->schedule.interrupt_requested) {
+        logger.longdebug("CxxThreads::thread_private_data::statusReportRequested()",
+                         "tasks interrupt has been requested");
         throw TaskInterruptedInnerException();
       }
 
@@ -423,7 +425,7 @@ private:
       if (thread_id == 0) {
         // Update the status_report_counter according to whether
         // we should provoke a periodic status report
-        if (shared_data->status_report.periodic_interval > 0) {
+        if (shared_data->status_report.periodic_interval > 0 && shared_data->status_report.user_fn) {
           _master_thread_update_status_report_periodic_interval_counter();
         }
 
@@ -605,7 +607,7 @@ public:
 
     typedef typename thread_shared_data::Schedule Schedule;
 
-    auto worker_fn_id = [&](const int thread_id) {
+    auto worker_fn_id = [&](const int thread_id) noexcept(true) {
       
       // construct a thread-safe logger we can use
       TaskLoggerType threadsafelogger(shared_data.logger, & shared_data.user_mutex);
@@ -662,10 +664,12 @@ public:
             _run_task(privdat, shared_data) ;
 
           } catch (TaskInterruptedInnerException & exc) {
+            privdat.logger.debug("CxxThreads::run()/worker", "Tasks interrupted.") ;
             std::lock_guard<std::mutex> lk(shared_data.schedule.mutex) ;
             shared_data.schedule.interrupt_requested = true;
             break;
-          } catch (std::exception_ptr exc) {
+          } catch (...) {
+            privdat.logger.debug("CxxThreads::run()/worker", "Exception caught inside task!") ;
             std::lock_guard<std::mutex> lk(shared_data.schedule.mutex) ;
             shared_data.schedule.interrupt_requested = true;
             shared_data.schedule.inner_exception += std::string("Exception caught inside task: ")
@@ -690,7 +694,17 @@ public:
         while (shared_data.schedule.num_active_working_threads > 0) {
 
           std::this_thread::sleep_for(std::chrono::milliseconds(sleep_val)) ;
-          privdat.statusReportRequested();
+          try {
+            privdat.statusReportRequested();
+          } catch (...) {
+            privdat.logger.debug("CxxThreads::run()", "[master] Exception caught inside task!") ;
+            std::lock_guard<std::mutex> lk(shared_data.schedule.mutex) ;
+            shared_data.schedule.interrupt_requested = true;
+            shared_data.schedule.inner_exception += std::string("Exception caught inside task: ")
+              + boost::current_exception_diagnostic_information() + "\n";
+            privdat.logger.debug("CxxThreads::run()", "[master] Exception caught inside task -- handled.") ;
+            break;
+          }
 
         }
       }
