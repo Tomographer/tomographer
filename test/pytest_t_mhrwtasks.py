@@ -87,8 +87,12 @@ class MHRWTasksStuff(unittest.TestCase):
             tomographer.MHRWParams(0.03, 37, 400, 65538),
             0.27
         )
-        import pickle
-        s = pickle.dumps(mhrw_task_result)
+        # see http://pybind11.readthedocs.io/en/master/advanced/classes.html#pickling-support
+        try:
+            import cPickle as pickle
+        except:
+            import pickle
+        s = pickle.dumps(mhrw_task_result,2)
         print("PICKLE:\n"+str(s))
         mhrw_task_result2 = pickle.loads(s)
         

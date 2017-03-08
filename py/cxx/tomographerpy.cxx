@@ -65,9 +65,13 @@ py::object TomographerCxxErrorObj;
 
 PYBIND11_PLUGIN(_tomographer_cxx)
 {
-  py::module rootmodule("tomographer", "Tomographer module");
+#if PY_MAJOR_VERSION >= 3
+  py::module rootmodule("tomographer", "Tomographer module"); // works
+#else // 2.7
+  py::module rootmodule("_tomographer_cxx", "Tomographer module");
   // hack module name so that classes, objects, etc. appear in the module "tomographer"
-  //py::scope().attr("__name__") = "tomographer"; -- perhaps not needed with pybind11??
+  rootmodule.attr("__name__") = py::bytes(std::string("tomographer"));
+#endif
 
   // python logging
   tpy::logger.initPythonLogger();

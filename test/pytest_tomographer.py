@@ -257,10 +257,14 @@ class Histograms(unittest.TestCase):
             if line:
                 self.assertEqual(len(line), 120)
 
-        import pickle
+        # see http://pybind11.readthedocs.io/en/master/advanced/classes.html#pickling-support
+        try:
+            import cPickle as pickle
+        except:
+            import pickle
         h = HCl(2.0, 3.0, 5)
         load_values_maybe_error_bars(h, np.array([10, 20, 30, 40, 50]), np.array([1, 2, 3, 4, 5]), 28)
-        s = pickle.dumps(h)
+        s = pickle.dumps(h, 2)
         print("PICKLE:\n"+str(s))
         h2 = pickle.loads(s)
         self.assertAlmostEqual(h2.params.min, h.params.min)
@@ -374,7 +378,11 @@ class Histograms(unittest.TestCase):
         self.assertEqual(avghist.params.num_bins, param2.num_bins)
         
         # test pickling
-        import pickle
+        # see http://pybind11.readthedocs.io/en/master/advanced/classes.html#pickling-support
+        try:
+            import cPickle as pickle
+        except:
+            import pickle
         avghist = AvgHCl(param2)
         # add some histograms
         h = BaseHCl(param2)
@@ -390,7 +398,7 @@ class Histograms(unittest.TestCase):
             h.load(np.array(range(20)), np.array(range(20))/10.0)
         avghist.addHistogram(h)
         # and now do the pickling
-        s = pickle.dumps(avghist)
+        s = pickle.dumps(avghist,2)
         avghist2 = pickle.loads(s)
         self.assertAlmostEqual(avghist2.params.min, avghist.params.min)
         self.assertAlmostEqual(avghist2.params.max, avghist.params.max)

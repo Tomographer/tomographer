@@ -49,32 +49,34 @@ script:
 
 matrix:
   include:
-    - compiler: gcc
-      dist: precise
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - gcc-4.6
-            - g++-4.6
-            - gfortran
-            - gfortran-multilib
-            - python-dev
-            - python-matplotlib
-            - python-tk
-            - python-pip
-            - libatlas-dev
-            - libatlas-base-dev
-            - libboost-python-dev
-            - libboost-all-dev
-      env:
-        - CMAKE_C_COMPILER=gcc-4.6
-        - CMAKE_CXX_COMPILER=g++-4.6
-        - PYTHON_EXECUTABLE=/usr/bin/python
-        - CMAKE_COMPILER_ARGS="-DPYTHON_LIBRARY=/usr/lib/libpython2.7.so -DPYTHON_INCLUDE_DIR=/usr/include/python2.7 -DCMAKE_CXX11_STANDARD_COMPILE_OPTION=-std=c++0x -DCMAKE_CXX_FLAGS=-std=c++0x"
-        - PIP=/usr/bin/pip
-        - PIP_EXTRAS="git+https://github.com/uqfoundation/multiprocess@93ac3f96eaa7f9865910f4572407e043eb2a5277  numpy==1.8 scipy==0.15 "
+    # ### Dropping support for gcc 4.6 (especially for pybind11)
+    #
+    # - compiler: gcc
+    #   dist: precise
+    #   addons:
+    #     apt:
+    #       sources:
+    #         - ubuntu-toolchain-r-test
+    #       packages:
+    #         - gcc-4.6
+    #         - g++-4.6
+    #         - gfortran
+    #         - gfortran-multilib
+    #         - python-dev
+    #         - python-matplotlib
+    #         - python-tk
+    #         - python-pip
+    #         - libatlas-dev
+    #         - libatlas-base-dev
+    #         - libboost-python-dev
+    #         - libboost-all-dev
+    #   env:
+    #     - CMAKE_C_COMPILER=gcc-4.6
+    #     - CMAKE_CXX_COMPILER=g++-4.6
+    #     - PYTHON_EXECUTABLE=/usr/bin/python
+    #     - CMAKE_COMPILER_ARGS="-DPYTHON_LIBRARY=/usr/lib/libpython2.7.so -DPYTHON_INCLUDE_DIR=/usr/include/python2.7 -DCMAKE_CXX11_STANDARD_COMPILE_OPTION=-std=c++0x -DCMAKE_CXX_FLAGS=-std=c++0x"
+    #     - PIP=/usr/bin/pip
+    #     - PIP_EXTRAS="git+https://github.com/uqfoundation/multiprocess@93ac3f96eaa7f9865910f4572407e043eb2a5277  numpy==1.8 scipy==0.15 "
     - compiler: gcc
       addons:
         apt:
