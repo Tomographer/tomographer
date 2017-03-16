@@ -49,18 +49,6 @@
 // -----------------------------------------------------------------------------
 // test suites
 
-struct ABC { int a; };
-
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isComplex<int>::value);
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isComplex<double>::value);
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isComplex<float>::value);
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isComplex<std::string>::value);
-TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isComplex<ABC>::value);
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isComplex<std::complex<int> >::value);
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isComplex<std::complex<float> >::value);
-TOMO_STATIC_ASSERT_EXPR(Tomographer::Tools::isComplex<std::complex<double> >::value);
-
-
 
 BOOST_AUTO_TEST_SUITE(test_mathtools_eigenutil)
 

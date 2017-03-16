@@ -65,7 +65,7 @@ namespace SphCoords {
  *        the point to transform.
  */
 template<typename Der1, typename Der2>
-void cart_to_sph(Eigen::MatrixBase<Der2>& rtheta, const Eigen::MatrixBase<Der1>& cart)
+inline void cart_to_sph(Eigen::MatrixBase<Der2>& rtheta, const Eigen::MatrixBase<Der1>& cart)
 {
   { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(Der2); }
   typedef typename Eigen::MatrixBase<Der1>::Scalar Scalar;
@@ -176,7 +176,7 @@ inline void sphsurf_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBa
  *
  */
 template<typename Der1, typename Der2>
-void sph_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<Der1>& rtheta)
+inline void sph_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<Der1>& rtheta)
 {
   { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(Der2); }
   //  typedef typename Eigen::MatrixBase<Der1>::Scalar Scalar;
@@ -211,7 +211,7 @@ void sph_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<Der1>& r
  * 
  */
 template<typename Der1>
-typename Eigen::MatrixBase<Der1>::Scalar cart_to_sph_jacobian(const Eigen::MatrixBase<Der1>& rtheta)
+inline typename Eigen::MatrixBase<Der1>::Scalar cart_to_sph_jacobian(const Eigen::MatrixBase<Der1>& rtheta)
 {
   const size_t ds = rtheta.rows()-1; // dimension of the sphere
   typename Eigen::MatrixBase<Der1>::Scalar jac = pow(rtheta(0), (int)ds); // r^{n-1}
@@ -246,7 +246,7 @@ typename Eigen::MatrixBase<Der1>::Scalar cart_to_sph_jacobian(const Eigen::Matri
  *        \f$\theta_1\ldots\theta_{N-1}\f$.
  */
 template<typename Der1>
-typename Eigen::MatrixBase<Der1>::Scalar surf_sph_jacobian(const Eigen::MatrixBase<Der1>& theta)
+inline typename Eigen::MatrixBase<Der1>::Scalar surf_sph_jacobian(const Eigen::MatrixBase<Der1>& theta)
 {
   const size_t ds = theta.rows();
 
@@ -278,7 +278,7 @@ typename Eigen::MatrixBase<Der1>::Scalar surf_sph_jacobian(const Eigen::MatrixBa
  *
  */
 template<typename Der1, typename Der2>
-void sphsurf_diffjac(Eigen::ArrayBase<Der1> & dxdtheta, const Eigen::MatrixBase<Der2>& theta)
+inline void sphsurf_diffjac(Eigen::ArrayBase<Der1> & dxdtheta, const Eigen::MatrixBase<Der2>& theta)
 {
   //
   // For this calculation & the 2nd derivatives, see [Drafts&Calculations, Vol. V,
@@ -362,7 +362,7 @@ void sphsurf_diffjac(Eigen::ArrayBase<Der1> & dxdtheta, const Eigen::MatrixBase<
  * with <em>k = 1,...,N</em>, and <em>i,j = 1,..,N-1</em>.
  */
 template<typename Der1, typename Der2>
-void sphsurf_diffjac2(Eigen::ArrayBase<Der1> & ddxddtheta, const Eigen::MatrixBase<Der2>& theta)
+inline void sphsurf_diffjac2(Eigen::ArrayBase<Der1> & ddxddtheta, const Eigen::MatrixBase<Der2>& theta)
 {
   //
   // For this calculation & the 2nd derivatives, see [Drafts&Calculations, Vol. V,

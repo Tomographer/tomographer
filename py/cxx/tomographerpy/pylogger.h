@@ -53,7 +53,7 @@ namespace Tomographer { namespace Logger {
   };
 } } // namespaces
 
-class PyLogger : public Tomographer::Logger::LoggerBase<PyLogger>
+TOMOGRAPHER_EXPORT class PyLogger : public Tomographer::Logger::LoggerBase<PyLogger>
 {
 private:
   pybind11::object py_logging; // the Python "logging" module

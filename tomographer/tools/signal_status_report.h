@@ -50,7 +50,7 @@ namespace Tools
  *
  */
 template<typename TaskDispatcher, typename Logger>
-struct SigHandlerTaskDispatcherStatusReporter
+TOMOGRAPHER_EXPORT struct SigHandlerTaskDispatcherStatusReporter
   : public SignalHandler
 {
   typedef Tomographer::MultiProc::FullStatusReport<typename TaskDispatcher::TaskType::StatusReportType>
@@ -86,7 +86,7 @@ struct SigHandlerTaskDispatcherStatusReporter
 };
 
 template<typename TaskDispatcher, typename LoggerT>
-SigHandlerTaskDispatcherStatusReporter<TaskDispatcher, LoggerT>
+inline SigHandlerTaskDispatcherStatusReporter<TaskDispatcher, LoggerT>
 makeSigHandlerTaskDispatcherStatusReporter(TaskDispatcher * tasks, LoggerT & logger)
 {
   return SigHandlerTaskDispatcherStatusReporter<TaskDispatcher, LoggerT>(tasks, logger);

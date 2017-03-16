@@ -38,7 +38,7 @@
 
 void py_tomo_densedm(py::module rootmodule)
 {
-  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy::logger);
+  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
   logger.debug("py_tomo_densedm() ...");
 
   logger.debug("densedm module ... ");

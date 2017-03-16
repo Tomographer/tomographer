@@ -156,7 +156,7 @@ py::object py_tomorun(
     int progress_interval_ms
     )
 {
-  Tomographer::Logger::LocalLogger<PyLogger> logger(TOMO_ORIGIN, tpy::logger);
+  Tomographer::Logger::LocalLogger<PyLogger> logger(TOMO_ORIGIN, *tpy::logger);
 
   logger.debug("py_tomorun()");
 
@@ -373,7 +373,7 @@ PyObject * pyTomorunInvalidInputError = NULL;
 
 void py_tomo_tomorun(py::module rootmodule)
 {
-  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy::logger);
+  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
 
   logger.debug("py_tomo_tomorun() ...");
 

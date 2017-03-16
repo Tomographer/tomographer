@@ -86,6 +86,7 @@ struct histogram_types<CDataBaseType, true> {// version WITH binning analysis:
 
 namespace tomo_internal {
 template<typename HistogramType>
+TOMOGRAPHER_EXPORT
 void print_hist_short_bar_with_accept_info(std::ostream & str, int dig_w, int j, const HistogramType & hist,
                                            double acceptance_ratio, int columns)
 {
@@ -131,7 +132,7 @@ void print_hist_short_bar_with_accept_info(std::ostream & str, int dig_w, int j,
  * the type \a "CDataBase::ResultsCollectorType<..>::Type".
  */
 template<typename CDataBaseType_, typename LoggerType_>
-struct ResultsCollectorSimple
+TOMOGRAPHER_EXPORT struct ResultsCollectorSimple
   : public virtual Tools::NeedOwnOperatorNew<
       AveragedHistogram<UniformBinsHistogram<typename CDataBaseType_::HistogramType::Scalar,
                                              typename CDataBaseType_::CountRealType>,
@@ -475,7 +476,7 @@ public:
  * the type \a "CDataBase::ResultsCollectorType<..>::Type".
  */
 template<typename CDataBaseType_, typename LoggerType_>
-struct ResultsCollectorWithBinningAnalysis
+TOMOGRAPHER_EXPORT struct ResultsCollectorWithBinningAnalysis
   : public virtual Tools::NeedOwnOperatorNew<
       UniformBinsHistogram<typename CDataBaseType_::HistogramType::Scalar,
                            typename CDataBaseType_::CountRealType>
@@ -937,7 +938,7 @@ struct ResultsCollectorTypeHelper<CDataBaseType, LoggerType, true> {
 template<typename ValueCalculator_, bool UseBinningAnalysis_ = true,
 	 typename IterCountIntType_ = int, typename StepRealType_ = double,
 	 typename CountRealType_ = double, typename HistCountIntType_ = IterCountIntType_>
-struct CDataBase
+TOMOGRAPHER_EXPORT struct CDataBase
   : public MHRWTasks::CDataBase<IterCountIntType_, StepRealType_>,
     public virtual Tools::NeedOwnOperatorNew<ValueCalculator_>::ProviderType
 {

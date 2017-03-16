@@ -61,7 +61,7 @@ struct LoggerTraits<BoostTestLogger> : DefaultLoggerTraits
  *
  * Specify a logging level to the constructor, by default it is \c DEBUG.
  */
-class BoostTestLogger : public Tomographer::Logger::LoggerBase<BoostTestLogger>
+TOMOGRAPHER_EXPORT class BoostTestLogger : public Tomographer::Logger::LoggerBase<BoostTestLogger>
 {
 public:
   BoostTestLogger(int level = Tomographer::Logger::DEBUG)

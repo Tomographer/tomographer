@@ -205,7 +205,8 @@ struct ThreadSanitizerLoggerHelper<BaseLogger, true>
  * 
  */
 template<typename BaseLogger>
-class ThreadSanitizerLogger : public Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >
+TOMOGRAPHER_EXPORT class ThreadSanitizerLogger
+  : public Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >
 {
   BaseLogger & _baselogger;
 public:
@@ -349,7 +350,7 @@ namespace OMP {
 template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
          typename LoggerType_, typename CountIntType_ = int,
          typename TaskLoggerType_ = ThreadSanitizerLogger<LoggerType_> >
-class TaskDispatcher
+TOMOGRAPHER_EXPORT class TaskDispatcher
 {
 public:
   //! The task type

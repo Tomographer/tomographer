@@ -85,7 +85,7 @@ namespace Tomographer {
  *
  */
 template<typename... MHRWStatsCollectors>
-class MultipleMHRWStatsCollectors
+TOMOGRAPHER_EXPORT class MultipleMHRWStatsCollectors
 {
 public:
   typedef std::tuple<MHRWStatsCollectors&...> MHRWStatsCollectorsRefTupleType;
@@ -236,7 +236,7 @@ template<typename ValueCalculator_,
 	 typename LoggerType = Logger::VacuumLogger,
 	 typename HistogramType_ = UniformBinsHistogram<typename ValueCalculator_::ValueType>
 	 >
-class ValueHistogramMHRWStatsCollector
+TOMOGRAPHER_EXPORT class ValueHistogramMHRWStatsCollector
   : public virtual Tools::NeedOwnOperatorNew<ValueCalculator_, HistogramType_>::ProviderType,
     public virtual Tools::EigenAlignedOperatorNewProvider // DEBUG:: REDUNDANT???
 {
@@ -375,7 +375,7 @@ public:
  * levels, and information about the convergence of these error bars.
  */
 template<typename HistogramType_, typename BinningAnalysisParamsType_>
-struct ValueHistogramWithBinningMHRWStatsCollectorResult
+TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
   : public virtual Tools::NeedOwnOperatorNew<
   HistogramType_,
   typename BinningAnalysisParamsType_::BinSumSqArray
@@ -476,7 +476,7 @@ template<typename ValueCalculator_,
          int NumTrackValues_ = Eigen::Dynamic,
          int NumLevels_ = Eigen::Dynamic
 	 >
-struct ValueHistogramWithBinningMHRWStatsCollectorParams
+TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorParams
 {
   /** \brief The type of the \ref pageInterfaceValueCalculator which calculates the value
    * of which we're collecting a histogram. */
@@ -528,7 +528,7 @@ struct ValueHistogramWithBinningMHRWStatsCollectorParams
 template<typename Params,
 	 typename LoggerType_ = Logger::VacuumLogger
          >
-class ValueHistogramWithBinningMHRWStatsCollector
+TOMOGRAPHER_EXPORT class ValueHistogramWithBinningMHRWStatsCollector
   : public virtual Tools::NeedOwnOperatorNew<ValueHistogramMHRWStatsCollector<
                                                typename Params::ValueCalculator,
                                                LoggerType_,
@@ -712,7 +712,7 @@ public:
  * very basic overview, not a full-length report.
  */
 template<typename MHRWStatsCollector_>
-struct MHRWStatsCollectorStatus
+TOMOGRAPHER_EXPORT struct MHRWStatsCollectorStatus
 {
   typedef MHRWStatsCollector_ MHRWStatsCollector;
 
@@ -737,7 +737,7 @@ constexpr bool MHRWStatsCollectorStatus<MHRWStatsCollector_>::CanProvideStatus;
  *
  */
 template<typename... Args>
-struct MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >
+TOMOGRAPHER_EXPORT struct MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >
 {
   typedef MultipleMHRWStatsCollectors<Args... > MHRWStatsCollector;
 
@@ -781,7 +781,7 @@ template<typename ValueCalculator_,
 	 typename LoggerType_,
 	 typename HistogramType_
 	 >
-struct MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator_, LoggerType_, HistogramType_> >
+TOMOGRAPHER_EXPORT struct MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator_, LoggerType_, HistogramType_> >
 {
   typedef ValueHistogramMHRWStatsCollector<ValueCalculator_, LoggerType_, HistogramType_> MHRWStatsCollector;
   
@@ -811,7 +811,7 @@ MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator_, Logg
 template<typename Params_,
 	 typename LoggerType_
 	 >
-struct MHRWStatsCollectorStatus<ValueHistogramWithBinningMHRWStatsCollector<Params_, LoggerType_> >
+TOMOGRAPHER_EXPORT struct MHRWStatsCollectorStatus<ValueHistogramWithBinningMHRWStatsCollector<Params_, LoggerType_> >
 {
   typedef ValueHistogramWithBinningMHRWStatsCollector<Params_, LoggerType_> MHRWStatsCollector;
   

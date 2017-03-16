@@ -54,7 +54,7 @@ namespace Tools
  * Just override \ref handleSignal() to define the handler.  A \ref SignalHandler
  * instance can then be provided to \ref installSignalHandler().
  */
-struct SignalHandler
+TOMOGRAPHER_EXPORT struct SignalHandler
 {
   SignalHandler() { }
   virtual ~SignalHandler() { }
@@ -114,6 +114,7 @@ namespace tomo_internal {
  * If other handlers are alreay set for a different signal number, they are not
  * overridden.
  */
+TOMOGRAPHER_EXPORT
 void installSignalHandler(int signum, SignalHandler * sobj)
 {
   tomo_internal::signal_handler[signum] = sobj;

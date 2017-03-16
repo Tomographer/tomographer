@@ -97,7 +97,8 @@ namespace DenseDM {
  * function arguments.
  */
 template<int FixedDim_, typename RealScalar_ = double, int MaxFixedDim_ = FixedDim_>
-struct DMTypes {
+TOMOGRAPHER_EXPORT struct DMTypes
+{
 
   // assert: either FixedDim_ is dynamic (in which case MaxFixedDim_ can be anything, or
   // FixedDim_ is static, and has to be equal to MaxFixedDim_ (or less than is also ok but

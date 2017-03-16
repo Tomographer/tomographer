@@ -81,7 +81,7 @@ enum {
  *
  *
  */
-class InvalidMeasData : public std::exception
+TOMOGRAPHER_EXPORT class InvalidMeasData : public std::exception
 {
   std::string _msg;
   std::string _fullmsg;

@@ -196,16 +196,6 @@ TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(0x0001000100000000UL))
 TOMO_STATIC_ASSERT_EXPR(!Tomographer::Tools::isPowerOfTwo(0x0000ffff00000000UL));
 
 
-BOOST_AUTO_TEST_CASE(isComplex)
-{
-  BOOST_CHECK( ! Tomographer::Tools::isComplex<double>::value ) ;
-  BOOST_CHECK( ! Tomographer::Tools::isComplex<float>::value ) ;
-  BOOST_CHECK( ! Tomographer::Tools::isComplex<int>::value ) ;
-  BOOST_CHECK( Tomographer::Tools::isComplex<std::complex<double> >::value ) ;
-  BOOST_CHECK( Tomographer::Tools::isComplex<std::complex<float> >::value ) ;
-  BOOST_CHECK( Tomographer::Tools::isComplex<std::complex<long double> >::value ) ;
-}
-
 struct ABCZ {
   ABCZ() = delete;
   ABCZ(int, char, long, const char *) { }

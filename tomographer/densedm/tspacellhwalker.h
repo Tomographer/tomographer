@@ -69,7 +69,7 @@ namespace TSpace {
  * \tparam LoggerType a logger type (see \ref pageLoggers)
  */
 template<typename DenseLLH_, typename Rng, typename LoggerType>
-class LLHMHWalker
+TOMOGRAPHER_EXPORT class LLHMHWalker
   : public Tools::NeedOwnOperatorNew<typename DenseLLH_::DMTypes::MatrixType>::ProviderType
 {
 public:

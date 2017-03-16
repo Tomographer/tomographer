@@ -203,7 +203,7 @@ const double MHRWAcceptanceRatioRecommendedMax = 0.4;
  * runs, sweep size, number of live runs, step size).
  */
 template<typename CountIntType_ = int, typename StepRealType_ = double>
-struct MHRWParams
+TOMOGRAPHER_EXPORT struct MHRWParams
 {
   typedef CountIntType_ CountIntType;
   typedef StepRealType_ StepRealType;
@@ -287,7 +287,7 @@ std::ostream & operator<<(std::ostream & str, const MHRWParams<CountIntType,Step
  */
 template<typename Rng_, typename MHWalker_, typename MHRWStatsCollector_, typename LoggerType_,
          typename CountIntType_ = int>
-class MHRandomWalk
+TOMOGRAPHER_EXPORT class MHRandomWalk
   : public virtual Tools::NeedOwnOperatorNew<typename MHWalker_::PointType>::ProviderType
 {
 public:

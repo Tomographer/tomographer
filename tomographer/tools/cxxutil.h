@@ -38,62 +38,16 @@
 #include <cstddef>
 #include <cstdlib>
 
+#include <iostream>
+#include <complex>
 #include <type_traits>
 #include <exception>
 #include <stdexcept>
 
-#include <Eigen/Core> // NumTraits
-
+#include <tomographer/tools/cxxdefs.h>
 #include <tomographer/tools/conststr.h>
 
-
-
-// -----------------------------------------------------------------------------
-// Some C++ helpers
-// -----------------------------------------------------------------------------
-
-
-
-/** \brief Tool for static assertions without message.
- *
- * Simply use as message to C++11's \a static_assert() a stringified version of the
- * expression itself.
- */
-#define TOMO_STATIC_ASSERT_EXPR(...)				\
-  static_assert(__VA_ARGS__, #__VA_ARGS__)
-
-
-#ifndef tomographer_assert
-#define tomographer_assert(...) eigen_assert((__VA_ARGS__) && "assert: " #__VA_ARGS__)
-#endif
-
-
-
-#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
-// WARNING!!! CHECK OUT  http://stackoverflow.com/q/29363532/1694896
-// FOR VERY SUBTLE BUGS :( :(   -- TEST WITH INTEL ICC!!
-#define TOMOGRAPHER_ENABLED_IF(...)					\
-  template<bool _dummy__enabledif = false,				\
-	   typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
-                                                        _dummy__enabledif2 = false>
-#define TOMOGRAPHER_ENABLED_IF_TMPL(...)				\
-  bool _dummy__enabledif = false,				\
-  typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
-                                                 _dummy__enabledif2 = true
-
-/** \brief Altenative to \ref TOMOGRAPHER_ENABLED_IF_TMPL()
- *
- * Use this alternative to \ref TOMOGRAPHER_ENABLED_IF_TMPL() in case you get compiler
- * errors about "repeated default value for argument _dummy__enabledif" because of another
- * similar declaration just before.
- */
-#define TOMOGRAPHER_ENABLED_IF_TMPL_REPEAT(...)				\
-  bool _dummy__enabledif,						\
-  typename std::enable_if<_dummy__enabledif || (__VA_ARGS__), bool>::type \
-			  _dummy__enabledifAlt2 = true
-#endif
-
-
+#include <Eigen/Core>
 
 // -----------------------------------------------
 
@@ -156,7 +110,7 @@ inline tomo_internal::FinalAction<F> finally(F f)
  *
  */
 template<typename T_, bool IsDynamic_, T_ StaticValue_ = T_()>
-class StaticOrDynamic
+TOMOGRAPHER_EXPORT class StaticOrDynamic
 {
 
 public:
@@ -205,7 +159,7 @@ constexpr typename StaticOrDynamic<T_, IsDynamic_, StaticValue_>::T StaticOrDyna
  * Specialization for the case if the value is known only at runtime.
  */
 template<typename T_, T_ StaticValue_>
-class StaticOrDynamic<T_, true, StaticValue_>
+TOMOGRAPHER_EXPORT class StaticOrDynamic<T_, true, StaticValue_>
 {
 public:
 
@@ -253,7 +207,7 @@ constexpr bool StaticOrDynamic<T_, true, StaticValue_>::IsDynamic;
  *
  */
 template<typename T_, bool enabled>
-struct StoreIfEnabled
+TOMOGRAPHER_EXPORT struct StoreIfEnabled
 {
   //! The type we're storing
   typedef T_ T;
@@ -272,7 +226,7 @@ constexpr bool StoreIfEnabled<T_, enabled>::IsEnabled;
  *
  */
 template<typename T_>
-struct StoreIfEnabled<T_, true>
+TOMOGRAPHER_EXPORT struct StoreIfEnabled<T_, true>
 {
   //! The type we're storing
   typedef T_ T;
@@ -333,18 +287,6 @@ inline constexpr bool isPowerOfTwo(IntType N)
 
 
 // -----------------------------------------------------------------------------
-
-
-/** \brief statically determine whether a type is complex
- *
- * This class provides an enum memeber named \a value which is either set to \c 1 if
- * the type \a Scalar is of type \a std::complex<>, or else set to \c 0.
- */
-template<typename Scalar>
-struct isComplex {
-  // use Eigen's existing implementation
-  enum { value = Eigen::NumTraits<Scalar>::IsComplex };
-};
 
 
 /** \brief The Real scalar type corresponding to a std::complex type
@@ -633,7 +575,7 @@ constexpr inline conststr extractFuncName(const conststr & funcname)
  *
  */
 #define TOMOGRAPHER_DEFINE_MSG_EXCEPTION(ClassName, ErrPrefix)          \
-  class ClassName : public std::exception {                             \
+  TOMOGRAPHER_EXPORT class ClassName : public std::exception {          \
     std::string _msg;                                                   \
   public:                                                               \
     ClassName(std::string msg) : _msg(std::string(ErrPrefix) + std::move(msg)) { } \
@@ -651,7 +593,7 @@ constexpr inline conststr extractFuncName(const conststr & funcname)
  * There is also no \a msg() method provided.
  */
 #define TOMOGRAPHER_DEFINE_MSG_EXCEPTION_BASE(ClassName, ErrPrefix, BaseClass) \
-  class ClassName : public BaseClass {                                  \
+  TOMOGRAPHER_EXPORT class ClassName : public BaseClass {               \
   public:                                                               \
     ClassName(std::string msg) : BaseClass(std::string(ErrPrefix) + std::move(msg)) { } \
     virtual ~ClassName() throw() { }                                    \

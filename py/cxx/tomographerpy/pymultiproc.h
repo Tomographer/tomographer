@@ -39,14 +39,14 @@
 
 namespace tpy {
 
-struct WorkerStatusReport {
+TOMOGRAPHER_EXPORT struct WorkerStatusReport {
   int worker_id;
   double fraction_done;
   std::string msg;
   py::dict data;
 };
 
-struct FullStatusReport {
+TOMOGRAPHER_EXPORT struct FullStatusReport {
   FullStatusReport() : num_completed(-1), num_total_runs(-1), elapsed(0), workers(), total_fraction_done(), human_report() { }
   int num_completed;
   int num_total_runs;

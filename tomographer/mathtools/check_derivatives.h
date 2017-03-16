@@ -97,6 +97,7 @@ namespace MathTools {
  * tolerance, or \c false if a failure was detected.
  */
 template<typename Der1, typename Der2, typename fnType, typename ErrorStream>
+TOMOGRAPHER_EXPORT
 bool check_derivatives(const Eigen::ArrayBase<Der1> & derivatives, const Eigen::MatrixBase<Der2> & point,
                        fnType fn, std::size_t valdims,
                        const typename Eigen::MatrixBase<Der2>::Scalar delta = 1e-6,

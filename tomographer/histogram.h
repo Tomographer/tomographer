@@ -65,7 +65,7 @@ namespace Tomographer {
  * This is the \f$[\text{min},\text{max}]\f$ range along with the number of bins.
  */
 template<typename Scalar_ = double>
-struct UniformBinsHistogramParams
+TOMOGRAPHER_EXPORT struct UniformBinsHistogramParams
 {
   //! The scalar type used to specify the "value" (horizongal axis) of the histogram
   typedef Scalar_ Scalar;
@@ -208,7 +208,7 @@ struct UniformBinsHistogramParams
  * Does not store any form of error bars. Complies with the \ref pageInterfaceHistogram.
  */
 template<typename Scalar_, typename CountType_ = int>
-class UniformBinsHistogram
+TOMOGRAPHER_EXPORT class UniformBinsHistogram
   // inheriting from this has some advantages over EIGEN_MAKE_ALIGNED_OPERATOR_NEW, such
   // as not needing to explicitly declare the specialization
   // NeedOwnOperatorNew<UniformBinsHistogram>:
@@ -471,7 +471,7 @@ public:
  * corresponding to each bin.
  */
 template<typename Scalar_, typename CountType_ = double>
-class UniformBinsHistogramWithErrorBars
+TOMOGRAPHER_EXPORT class UniformBinsHistogramWithErrorBars
   : public UniformBinsHistogram<Scalar_, CountType_>,
     public virtual Tools::EigenAlignedOperatorNewProvider
 {
@@ -652,7 +652,7 @@ constexpr bool UniformBinsHistogramWithErrorBars<Scalar_,CountType_>::HasErrorBa
  *         for holding an average.
  */
 template<typename HistogramType_, typename RealAvgType = double>
-class AveragedHistogram
+TOMOGRAPHER_EXPORT class AveragedHistogram
   : public UniformBinsHistogramWithErrorBars<typename HistogramType_::Scalar, RealAvgType>
 {
 public:

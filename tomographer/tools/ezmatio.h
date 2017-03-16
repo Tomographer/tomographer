@@ -67,7 +67,7 @@ namespace MAT {
 
 /** \brief Base Exception class for errors within our MAT routines
  */
-class Exception : public std::exception
+TOMOGRAPHER_EXPORT class Exception : public std::exception
 {
   std::string p_heading;
   std::string p_message;
@@ -96,7 +96,7 @@ private:
 
 /** \brief Exception relating to a MATLAB variable in the data file 
  */
-class VarError : public Exception
+TOMOGRAPHER_EXPORT class VarError : public Exception
 {
 public:
   VarError(std::string msg) : Exception("", msg) { }
@@ -110,7 +110,7 @@ private:
 };
 
 //! Error while reading a variable from the MATLAB data file
-class VarReadError : public VarError
+TOMOGRAPHER_EXPORT class VarReadError : public VarError
 {
 public:
   VarReadError(const std::string varname)
@@ -121,7 +121,7 @@ public:
 };
 
 //! Type mismatch (wrong type requested) in a variable read from the MATLAB data file
-class VarTypeError : public VarError
+TOMOGRAPHER_EXPORT class VarTypeError : public VarError
 {
 public:
   VarTypeError(const std::string varname, const std::string msg)
@@ -132,7 +132,7 @@ public:
 };
 
 //! Unknown type of a variable present in the data file
-class VarMatTypeError : public VarError {
+TOMOGRAPHER_EXPORT class VarMatTypeError : public VarError {
 public:
   VarMatTypeError(const std::string msg)
     : VarError(msg)
@@ -146,7 +146,7 @@ public:
 };
 
 //! Error while opening a MATLAB file
-class FileOpenError : public Exception
+TOMOGRAPHER_EXPORT class FileOpenError : public Exception
 {
 public:
   FileOpenError(const std::string fname, const std::string errmsg = std::string())
@@ -165,7 +165,7 @@ private:
 
 
 //! Invalid index or index list provided to a routine
-class InvalidIndexError : public Exception {
+TOMOGRAPHER_EXPORT class InvalidIndexError : public Exception {
 public:
   InvalidIndexError(const std::string msg) : Exception("Invalid index: ", msg) { }
   virtual ~InvalidIndexError() noexcept { }
@@ -189,7 +189,7 @@ class Var;
  * \note This C++ class is not copyable. You may pass it by value everywhere though as if
  *       it were copyable, because of C++11 move semantics.
  */
-class File
+TOMOGRAPHER_EXPORT class File
 {
 public:
   /** \brief Open a data file for reading.
@@ -280,7 +280,7 @@ private:
  * sequence of elements. For an empty sequence (<em>begin==end</em>), the result is \c 1.
  */
 template<typename It, typename ValueType = typename std::iterator_traits<It>::value_type>
-ValueType getNumEl(It begin, It end)
+inline ValueType getNumEl(It begin, It end)
 {
   ValueType n = 1;
   for (It it = begin; it != end; ++it) {
@@ -303,7 +303,7 @@ ValueType getNumEl(It begin, It end)
  *
  *
  */
-class DimList : public std::vector<int>
+TOMOGRAPHER_EXPORT class DimList : public std::vector<int>
 {
 public:
   //! Initializes an empty dimension list
@@ -437,7 +437,7 @@ inline std::ostream& operator<<(std::ostream& out, const DimList& dlist)
  *       constructed.
  */
 template<bool IsRowMajor_ = false>
-class IndexList : public std::vector<int>
+TOMOGRAPHER_EXPORT class IndexList : public std::vector<int>
 {
 public:
   //! Is this class calculating and expecting row-major (\c true) or column-major (\c false) format 
@@ -624,7 +624,7 @@ inline std::ostream& operator<<(std::ostream& str, const IndexList<IsRowMajor> &
  *
  */
 template<bool IsRowMajor_ = false, typename IntType_ = int>
-class IndexListIterator
+TOMOGRAPHER_EXPORT class IndexListIterator
 {
 public:
   static constexpr bool IsRowMajor = IsRowMajor_;
@@ -799,7 +799,7 @@ inline std::ostream& operator<<(std::ostream& str, const IndexListIterator<IsRow
  * type, or whatever other additional info the decoding procedure may like to have.
  */
 template<typename T, typename Enabled = void>
-class VarValueDecoder
+TOMOGRAPHER_EXPORT class VarValueDecoder
 {
 public:
   /** \brief Type returned by \ref decodeValue()
@@ -856,6 +856,13 @@ namespace tomo_internal {
   {
     enum { value = 1 };
   };
+
+template<typename Scalar>
+struct isComplex { // use Eigen's existing implementation
+  enum { value = Eigen::NumTraits<Scalar>::IsComplex };
+};
+
+
 }; // namespace tomo_internal
 
 
@@ -908,7 +915,7 @@ inline typename VarValueDecoder<T>::RetType value(const Var& var,
  * To read the data, you should use the template method \ref value(). The type you can
  * request is any type for which a corresponding \ref VarValueDecoder has been defined.
  */
-class Var
+TOMOGRAPHER_EXPORT class Var
 {
 private:
   struct VarData {
@@ -1321,12 +1328,12 @@ template<>  struct MatType<MAT_T_UINT8> { typedef uint8_t Type; };
  *
  */
 template<typename T>
-class VarValueDecoder<T,
+TOMOGRAPHER_EXPORT class VarValueDecoder<T,
 #ifdef TOMOGRAPHER_PARSED_BY_DOXYGEN
                        _IS_NUMERIC_TYPE
 #else
                        typename std::enable_if<(std::numeric_limits<T>::is_specialized ||
-                                                Tools::isComplex<T>::value)>::type
+                                                tomo_internal::isComplex<T>::value)>::type
 #endif
                        >
 {
@@ -1337,7 +1344,7 @@ public:
   //! See \ref VarValueDecoder::checkShape()
   static inline void checkShape(const Var & var)
   {
-    if (var.isComplex() && !Tools::isComplex<T>::value) {
+    if (var.isComplex() && !tomo_internal::isComplex<T>::value) {
       throw VarTypeError(var.varName(),
                          streamstr("Can't store complex matrix in type " << typeid(T).name()));
     }
@@ -1361,16 +1368,16 @@ public:
 
 private:
   template<typename MATType,
-           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::isComplex<RetType>::value &&
-                                       !Tools::isComplex<MATType>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(!tomo_internal::isComplex<RetType>::value &&
+                                       !tomo_internal::isComplex<MATType>::value)>
   static inline RetType get_value(const matvar_t * matvar_ptr, const std::string & )
   {
     return RetType( ((const MATType *) matvar_ptr->data)[0] );
   }
   
   template<typename MATType,
-           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::isComplex<RetType>::value &&
-                                       !Tools::isComplex<MATType>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::isComplex<RetType>::value &&
+                                       !tomo_internal::isComplex<MATType>::value)>
   static inline RetType get_value(const matvar_t * matvar_ptr, const std::string & )
   {
     return RetType( typename Tools::ComplexRealScalar<RetType>::type(((const MATType *) matvar_ptr->data)[0]),
@@ -1378,16 +1385,16 @@ private:
   }
   
   template<typename MATType,
-           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::isComplex<RetType>::value &&
-                                       Tools::isComplex<MATType>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(!tomo_internal::isComplex<RetType>::value &&
+                                       tomo_internal::isComplex<MATType>::value)>
   static inline RetType get_value(const matvar_t * /*matvar_ptr*/, const std::string & varname)
   {
     throw VarTypeError(varname, "Expected real scalar, got complex type");
   }
   
   template<typename MATType,
-           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::isComplex<RetType>::value &&
-                                       Tools::isComplex<MATType>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::isComplex<RetType>::value &&
+                                       tomo_internal::isComplex<MATType>::value)>
   static inline RetType get_value(const matvar_t * matvar_ptr, const std::string & )
   {
     typedef typename Tools::ComplexRealScalar<MATType>::type MATRealType;
@@ -1443,8 +1450,8 @@ public:
 
   template<typename IndexListType,
 	   typename OutType__ = OutType, typename MatInnerT__ = MatInnerT,
-           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::isComplex<OutType__>::value &&
-                                       !Tools::isComplex<MatInnerT__>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(!tomo_internal::isComplex<OutType__>::value &&
+                                       !tomo_internal::isComplex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& index) const
   {
     tomographer_assert(p_r_ptr != NULL);
@@ -1456,8 +1463,8 @@ public:
   
   template<typename IndexListType,
 	   typename OutType__ = OutType, typename MatInnerT__ = MatInnerT,
-           TOMOGRAPHER_ENABLED_IF_TMPL(!Tools::isComplex<OutType__>::value &&
-                                       Tools::isComplex<MatInnerT__>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(!tomo_internal::isComplex<OutType__>::value &&
+                                       tomo_internal::isComplex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& ) const
   {
     throw VarTypeError(p_var.varName(), "Expected real type, got complex");
@@ -1465,8 +1472,8 @@ public:
 
   template<typename IndexListType,
 	   typename OutType__ = OutType, typename MatInnerT__ = MatInnerT,
-           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::isComplex<OutType__>::value &&
-                                       !Tools::isComplex<MatInnerT__>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::isComplex<OutType__>::value &&
+                                       !tomo_internal::isComplex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& index) const
   {
     tomographer_assert(p_r_ptr != NULL);
@@ -1478,8 +1485,8 @@ public:
 
   template<typename IndexListType,
 	   typename OutType__ = OutType, typename MatInnerT__ = MatInnerT,
-           TOMOGRAPHER_ENABLED_IF_TMPL(Tools::isComplex<OutType__>::value &&
-                                       Tools::isComplex<MatInnerT__>::value)>
+           TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::isComplex<OutType__>::value &&
+                                       tomo_internal::isComplex<MatInnerT__>::value)>
   inline OutType value(IndexListType&& index) const
   {
     tomographer_assert(p_cre_ptr != NULL);
@@ -1549,7 +1556,7 @@ private:
  * You may also stream a VarShape into an \ref std::ostream for formatting, as in the
  * example.
  */
-struct VarShape
+TOMOGRAPHER_EXPORT struct VarShape
 {
   /** \brief Whether the variable is or should be complex
    *
@@ -1722,14 +1729,14 @@ struct GetStdVector {
 
 //! Specialization of \ref VarValueDecoder to obtain an \ref std::vector with the matrix data. See \ref GetStdVector.
 template<typename T, bool IsRowMajor>
-class VarValueDecoder<GetStdVector<T, IsRowMajor> >
+TOMOGRAPHER_EXPORT class VarValueDecoder<GetStdVector<T, IsRowMajor> >
 {
 public:
   typedef std::vector<T> RetType;
 
   static inline void checkShape(const Var & var)
   {
-    if (var.isComplex() && !Tools::isComplex<T>::value) {
+    if (var.isComplex() && !tomo_internal::isComplex<T>::value) {
       throw VarTypeError(var.varName(),
                          std::string("can't store complex matrix in type ")
                          + typeid(T).name());
@@ -1790,8 +1797,8 @@ inline DimList dims_stackedcols(DimList vdims)
 template<typename MatrixType, typename MatType,
          TOMOGRAPHER_ENABLED_IF_TMPL(Eigen::NumTraits<typename MatrixType::Scalar>::IsComplex &&
                                      Eigen::NumTraits<MatType>::IsComplex)>
-void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
-                       const Var & var, const std::ptrdiff_t data_offset = 0)
+inline void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
+                              const Var & var, const std::ptrdiff_t data_offset = 0)
 {
   typedef typename MatrixType::Scalar Scalar;
   typedef typename Eigen::NumTraits<Scalar>::Real RealScalar;
@@ -1818,16 +1825,16 @@ void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
 template<typename MatrixType, typename MatRealType,
          TOMOGRAPHER_ENABLED_IF_TMPL(!Eigen::NumTraits<typename MatrixType::Scalar>::IsComplex &&
                                      Eigen::NumTraits<MatRealType>::IsComplex)>
-void init_eigen_matrix(MatrixType & /*matrix*/, const DimList & /*vdims*/,
-                       const Var & var, const std::ptrdiff_t /*data_offset*/ = 0)
+inline void init_eigen_matrix(MatrixType & /*matrix*/, const DimList & /*vdims*/,
+                              const Var & var, const std::ptrdiff_t /*data_offset*/ = 0)
 {
   throw VarTypeError(var.varName(), "Expected real type, but got complex.");
 }
 
 template<typename MatrixType, typename MatRealType,
          TOMOGRAPHER_ENABLED_IF_TMPL(!Eigen::NumTraits<MatRealType>::IsComplex)>
-void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
-                       const Var & var, const std::ptrdiff_t data_offset = 0)
+inline void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
+                              const Var & var, const std::ptrdiff_t data_offset = 0)
 {
   typedef typename MatrixType::Scalar Scalar;
 
@@ -1855,7 +1862,7 @@ void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
  *
  */
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
-class VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
+TOMOGRAPHER_EXPORT class VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
 {
 public:
 
@@ -1959,7 +1966,7 @@ public:
  * the \a std::vector index.
  */
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols, typename Alloc>
-class VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols>, Alloc> >
+TOMOGRAPHER_EXPORT class VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols>, Alloc> >
 {
 public:
 
@@ -2068,7 +2075,7 @@ template<typename EigenType> class VarValueDecoder<EigenPosSemidefMatrixWithSqrt
  * VarValueDecoder<EigenPosSmidefMatrixWithSqrt<EigenType> >.
  */
 template<typename EigenType_>
-class EigenPosSemidefMatrixWithSqrt
+TOMOGRAPHER_EXPORT class EigenPosSemidefMatrixWithSqrt
 {
 public:
   typedef EigenType_ EigenType;
@@ -2121,7 +2128,7 @@ private:
 };
 //! Specialization of \ref VarValueDecoder for extracting a positive semidefinite matrix along with sqrt
 template<typename EigenType_>
-class VarValueDecoder<EigenPosSemidefMatrixWithSqrt<EigenType_> >
+TOMOGRAPHER_EXPORT class VarValueDecoder<EigenPosSemidefMatrixWithSqrt<EigenType_> >
 {
 public:
   typedef EigenType_ EigenType;

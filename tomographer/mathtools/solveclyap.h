@@ -55,7 +55,7 @@ namespace SolveCLyap {
  *
  * See \ref solve().
  */
-class SolveError : public std::exception {
+TOMOGRAPHER_EXPORT class SolveError : public std::exception {
   std::string p_msg;
 public:
   SolveError(const std::string& msg)
@@ -126,6 +126,7 @@ namespace tomo_internal {
  * consistency checks are performed.
  */
 template<bool debug_perform_check = false, typename LoggerType>
+TOMOGRAPHER_EXPORT
 void solve(Eigen::Ref<Eigen::MatrixXcd> X, const Eigen::Ref<const Eigen::MatrixXcd> & A,
 	   const Eigen::Ref<const Eigen::MatrixXcd> & C,
 	   LoggerType & logger, const double tol = 1e-8)

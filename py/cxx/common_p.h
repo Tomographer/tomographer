@@ -29,6 +29,7 @@
 #ifndef TOMOPY_COMMON_P_H
 #define TOMOPY_COMMON_P_H
 
+#include <memory>
 
 #include <tomographerpy/common.h>
 #include <tomographerpy/exc.h> // TomographerCxxError
@@ -41,7 +42,7 @@ namespace tpy
 // Python/C++ logger
 //
 // The logger object instance is defined in tomographerpy.cxx
-extern PyLogger logger;
+extern std::shared_ptr<PyLogger> logger;
 
 // the main exception object
 extern py::object TomographerCxxErrorObj;

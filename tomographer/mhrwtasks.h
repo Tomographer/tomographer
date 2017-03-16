@@ -61,7 +61,7 @@ namespace MHRWTasks {
  *
  */
 template<typename IterCountIntType_ = int, typename StepRealType_ = double>
-struct CDataBase
+TOMOGRAPHER_EXPORT struct CDataBase
 {
   /** \brief Constructor.
    *
@@ -159,7 +159,7 @@ struct CDataBase
  *
  */
 template<typename MHRWStatsCollectorResultType_, typename IterCountIntType, typename StepRealType>
-struct MHRandomWalkTaskResult
+TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
   : public virtual Tools::NeedOwnOperatorNew<MHRWStatsCollectorResultType_>::ProviderType
 {
   /** \brief The specified result type of the MHRWStatsCollector the task will be looking at
@@ -235,7 +235,7 @@ struct MHRandomWalkTaskResult
  */
 template<typename MHRandomWalkTaskCData,
          typename Rng = std::mt19937>
-struct MHRandomWalkTask
+TOMOGRAPHER_EXPORT struct MHRandomWalkTask
 {
   //! The type used to count iterations (see \ref MHRWParams)
   typedef typename MHRandomWalkTaskCData::IterCountIntType IterCountIntType;

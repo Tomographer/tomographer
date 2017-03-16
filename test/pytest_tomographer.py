@@ -98,6 +98,7 @@ class Histograms(unittest.TestCase):
         self.do_test_hist(tomographer.UniformBinsHistogramWithErrorBars, float, True)
 
     def do_test_hist(self, HCl, cnttype, has_error_bars):
+        print("do_test_hist()")
         # constructor & params member
         self.assertAlmostEqual(HCl(2.0, 3.0, 5).params.min, 2.0)
         self.assertAlmostEqual(HCl(2.0, 3.0, 5).params.max, 3.0)
@@ -294,6 +295,7 @@ class Histograms(unittest.TestCase):
         # test that the AvgHCl can average histograms correctly.  Use the same test cases
         # as in the C++ test.
         #
+        print("do_test_avghist()")
 
         param = tomographer.UniformBinsHistogramParams(0.0, 1.0, 4)
 

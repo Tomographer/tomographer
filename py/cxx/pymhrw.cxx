@@ -37,7 +37,7 @@
 
 void py_tomo_mhrw(py::module rootmodule)
 {
-  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy::logger);
+  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
   logger.debug("py_tomo_mhrw() ...");
 
   logger.debug("MHRWParams ...");

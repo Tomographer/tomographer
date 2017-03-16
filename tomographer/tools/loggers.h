@@ -156,7 +156,7 @@ enum LogLevelCode
  * This class has also C++ i/ostream operators defined, which parse and write the level
  * name as a \ref std::string.
  */
-class LogLevel
+TOMOGRAPHER_EXPORT class LogLevel
 {
   int _level;
 public:
@@ -286,7 +286,7 @@ struct StaticIsAtLeastOfSeverity {
  * It's a good idea to inherit from \ref DefaultLoggerTraits, so that if additional traits
  * are added in the future, then your code will still compile.
  */
-struct DefaultLoggerTraits
+TOMOGRAPHER_EXPORT struct DefaultLoggerTraits
 {
   enum {
     /** \brief Whether a same logger instance may be called from different threads
@@ -425,7 +425,7 @@ public:
  *
  */
 template<typename Derived>
-class LoggerBase
+TOMOGRAPHER_EXPORT class LoggerBase
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
   : public tomo_internal::LoggerRuntimeLevel<LoggerTraits<Derived>::HasOwnGetLevel>
 #endif
@@ -1190,7 +1190,7 @@ struct LoggerTraits<FileLogger> : public DefaultLoggerTraits
  * \note This class is thread-safe AS LONG AS you DO NOT CHANGE the target \c fp file
  *       pointer AND YOU DO NOT CHANGE the log level with \ref setLevel()
  */
-class FileLogger : public LoggerBase<FileLogger>
+TOMOGRAPHER_EXPORT class FileLogger : public LoggerBase<FileLogger>
 {
 public:
   FileLogger(FILE * fp_, int level = INFO, bool display_origin_ = true)
@@ -1277,7 +1277,7 @@ struct LoggerTraits<VacuumLogger> : public DefaultLoggerTraits
  *
  * Use this logger if you don't want to log messages.
  */
-class VacuumLogger : public LoggerBase<VacuumLogger>
+TOMOGRAPHER_EXPORT class VacuumLogger : public LoggerBase<VacuumLogger>
 {
 public:
   inline void emitLog(int /*level*/, const char * /*origin*/, const std::string & /*msg*/)
@@ -1315,7 +1315,7 @@ struct LoggerTraits<BufferLogger> : public DefaultLoggerTraits
  * Logs messages into an internal string buffer. The contents of the buffer may be
  * retrieved with \ref getContents().
  */
-class BufferLogger : public LoggerBase<BufferLogger>
+TOMOGRAPHER_EXPORT class BufferLogger : public LoggerBase<BufferLogger>
 {
   std::ostringstream buffer;
 public:
@@ -1392,7 +1392,7 @@ struct LoggerTraits<MinimumSeverityLogger<BaseLogger,Level> > : public LoggerTra
  * If \a BaseLogger is thread-safe, then this logger is also thread-safe.
  */
 template<typename BaseLogger, int Level>
-class MinimumSeverityLogger : public LoggerBase<MinimumSeverityLogger<BaseLogger,Level> >
+TOMOGRAPHER_EXPORT class MinimumSeverityLogger : public LoggerBase<MinimumSeverityLogger<BaseLogger,Level> >
 {
   //! Keep reference to the base logger, to which we relay calls
   BaseLogger & baselogger;
@@ -1482,7 +1482,8 @@ struct LoggerTraits<OriginFilteredLogger<BaseLogger> > : public LoggerTraits<Bas
  * \endcode
  */
 template<typename BaseLogger>
-class OriginFilteredLogger : public Tomographer::Logger::LoggerBase<OriginFilteredLogger<BaseLogger> >
+TOMOGRAPHER_EXPORT class OriginFilteredLogger
+  : public Tomographer::Logger::LoggerBase<OriginFilteredLogger<BaseLogger> >
 {
   //! Reference to the base logger
   BaseLogger & baselogger;
@@ -1755,7 +1756,8 @@ struct LoggerTraits<LocalLogger<BaseLoggerType_> > : public LoggerTraits<BaseLog
  * \endcode
  */
 template<typename BaseLoggerType_>
-class LocalLogger : public LoggerBase<LocalLogger<BaseLoggerType_> >
+TOMOGRAPHER_EXPORT class LocalLogger
+  : public LoggerBase<LocalLogger<BaseLoggerType_> >
 {
 public:
   //! The base logger type (see class documentation)
@@ -2049,7 +2051,7 @@ public:
  * As in the example above, you may use \ref TOMO_ORIGIN as the origin argument.
  */
 template<typename BaseLoggerType>
-LocalLogger<BaseLoggerType> makeLocalLogger(const std::string & origin_fn_name, BaseLoggerType & baselogger)
+inline LocalLogger<BaseLoggerType> makeLocalLogger(const std::string & origin_fn_name, BaseLoggerType & baselogger)
 {
   return LocalLogger<BaseLoggerType>(origin_fn_name, baselogger);
 }
@@ -2060,7 +2062,7 @@ LocalLogger<BaseLoggerType> makeLocalLogger(const std::string & origin_fn_name, 
  * std::string&,BaseLoggerType&), but simply calls the other corresponding constructor.
  */
 template<typename BaseLoggerType>
-LocalLogger<BaseLoggerType> makeLocalLogger(const std::string & origin_prefix, const std::string & glue,
+inline LocalLogger<BaseLoggerType> makeLocalLogger(const std::string & origin_prefix, const std::string & glue,
 					    BaseLoggerType & baselogger)
 {
   return LocalLogger<BaseLoggerType>(origin_prefix, glue, baselogger);
@@ -2072,7 +2074,7 @@ LocalLogger<BaseLoggerType> makeLocalLogger(const std::string & origin_prefix, c
  * std::string&,BaseLoggerType&), but simply calls the other corresponding constructor.
  */
 template<typename BaseLoggerType>
-LocalLogger<BaseLoggerType> makeLocalLogger(const LocalLoggerOriginSpec & spec, BaseLoggerType & baselogger)
+inline LocalLogger<BaseLoggerType> makeLocalLogger(const LocalLoggerOriginSpec & spec, BaseLoggerType & baselogger)
 {
   return LocalLogger<BaseLoggerType>(spec, baselogger);
 }

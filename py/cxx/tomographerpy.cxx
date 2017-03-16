@@ -54,7 +54,7 @@ void py_tomo_mhrwtasks(py::module rootmodule);
 namespace tpy
 {
 // common logger object
-PyLogger logger;
+std::shared_ptr<PyLogger> logger;
 
 // the main exception object
 py::object TomographerCxxErrorObj;
@@ -73,9 +73,11 @@ PYBIND11_PLUGIN(_tomographer_cxx)
   rootmodule.attr("__name__") = py::bytes(std::string("tomographer"));
 #endif
 
+  tpy::logger = std::make_shared<PyLogger>();
+
   // python logging
-  tpy::logger.initPythonLogger();
-  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy::logger);
+  tpy::logger->initPythonLogger();
+  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
 
   logger.debug("INIT TOMOGRAPHER");
 
@@ -99,8 +101,8 @@ PYBIND11_PLUGIN(_tomographer_cxx)
       ) ;
 
 
-  // expose Python API for setting the C++ logger level
-  py::class_<PyLogger>(rootmodule, "PyLogger")
+  // expose Python API for setting the C++ logger level -- use shared_ptr as holder type
+  py::class_<PyLogger,std::shared_ptr<PyLogger>>(rootmodule, "PyLogger")
     .def_property("level",
                   [](const PyLogger & l) { return l.level(); },
                   [](PyLogger & l, py::object newlevel) {

@@ -41,7 +41,7 @@ private:
 
 void py_tomo_mhrwtasks(py::module rootmodule)
 {
-  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, tpy::logger);
+  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
   logger.debug("py_tomo_mhrwtasks() ...");
 
   logger.debug("tomographer.BinningAnalysis (dummy, just for convergence constants) ...");

@@ -102,7 +102,8 @@ namespace CxxThreads {
  * 
  */
 template<typename BaseLogger>
-class ThreadSanitizerLogger : public Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >
+TOMOGRAPHER_EXPORT class ThreadSanitizerLogger
+  : public Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >
 {
 public:
   static constexpr bool IsBaseLoggerThreadSafe = Logger::LoggerTraits<BaseLogger>::IsThreadSafe;
@@ -256,7 +257,7 @@ namespace CxxThreads {
  */
 template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
          typename LoggerType_, typename CountIntType_ = int>
-class TaskDispatcher
+TOMOGRAPHER_EXPORT class TaskDispatcher
 {
 public:
   //! The task type

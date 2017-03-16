@@ -62,7 +62,7 @@ namespace Tools {
  * This exception is raised when \ref fmts() or \ref vfmts() are called with a bad format
  * argument, causing \c vsnprintf() to return a negative number.
  */
-class BadFmtsFormat : public std::exception
+TOMOGRAPHER_EXPORT class BadFmtsFormat : public std::exception
 {
   std::string msg;
 public:
@@ -401,7 +401,7 @@ inline std::string fmtDuration(std::chrono::duration<Rep, Period> dt)
 /** \brief Minimal tool for formatting console stuff with fixed line width
  *
  */
-class ConsoleFormatterHelper
+TOMOGRAPHER_EXPORT class ConsoleFormatterHelper
 {
 public:
   /** \brief Constructor

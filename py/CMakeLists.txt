@@ -25,7 +25,7 @@
 # SOFTWARE.
 
 
-if(TOMOPY_SEPARATE_CMAKE_PROJECT)
+if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
   # Turn this into an independent cmake project file -- temporarily  ### --- now done, use only with main project
   cmake_minimum_required(VERSION 3.1)
 
@@ -53,6 +53,10 @@ string(TOUPPER "${CMAKE_BUILD_TYPE}" cmake_build_type_upper)
 RemoveFlag(CMAKE_CXX_FLAGS_${cmake_build_type_upper} "${CMAKE_CXX_FLAGS_${cmake_build_type_upper}}" "-DNDEBUG")
 RemoveFlag(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "-DNDEBUG")
 
+if(CMAKE_CXX_FLAGS MATCHES "-msse4.1")
+  message(WARNING "Beware--Too aggressive SIMD optimizations seem to create malloc errors in the python module (??)")
+endif()
+
 
 # include pybind11 stuff
 add_subdirectory(pybind11)
@@ -67,7 +71,10 @@ set(tomographerpy_SRCS
   cxx/pytomorun.cxx
   cxx/tomographerpy.cxx
   )
-pybind11_add_module(_tomographer_cxx MODULE ${tomographerpy_SRCS})
+pybind11_add_module(_tomographer_cxx MODULE NO_EXTRAS ${tomographerpy_SRCS})
+# needs to export symbols in binary lib
+target_compile_options(_tomographer_cxx PRIVATE "-fvisibility=default")
+
 
 # depends in particular on tomographer_version.h
 add_dependencies(_tomographer_cxx tomographer)

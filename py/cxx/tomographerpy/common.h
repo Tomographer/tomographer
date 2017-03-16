@@ -34,6 +34,20 @@
 
 namespace py = pybind11;
 
+
+
+#ifdef _WIN32
+#  ifdef _tomographer_cxx_EXPORTS
+#    define TOMOGRAPHER_EXPORT_TYPE __declspec(dllexport)
+#  else
+#    define TOMOGRAPHER_EXPORT_TYPE __declspec(dllimport)
+#  endif
+#else
+#  define TOMOGRAPHER_EXPORT_TYPE __attribute__ ((visibility("default")))
+#endif
+
+
+
 // DEBUGGING ONLY: set TOMOGRAPHERPY_DEBUG_EIGEN_ASSERT_CAUSES_ABORT to cause eigen_assert() failures to abort() and dump core
 #ifndef TOMOGRAPHERPY_DEBUG_EIGEN_ASSERT_CAUSES_ABORT
 #  define TOMOGRAPHER_EIGEN_ASSERT_EXCEPTION

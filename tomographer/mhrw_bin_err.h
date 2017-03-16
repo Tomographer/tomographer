@@ -107,7 +107,7 @@ struct helper_samples_size<NumLevels,true> {
  */
 template<typename ValueType_, int NumTrackValues_ = Eigen::Dynamic, int NumLevels_ = Eigen::Dynamic,
          bool StoreBinSums_ = true, typename CountIntType_ = int>
-struct BinningAnalysisParams
+TOMOGRAPHER_EXPORT struct BinningAnalysisParams
 {
   /** \brief Type of the value which we are calculating error bars for. Also the type of
    *         the error bars themselves. */
@@ -256,7 +256,7 @@ struct BinningAnalysisParams
  *
  */
 template<typename Params, typename LoggerType_>
-class BinningAnalysis
+TOMOGRAPHER_EXPORT class BinningAnalysis
   // inheriting from this has some advantages over EIGEN_MAKE_ALIGNED_OPERATOR_NEW, such
   // as not needing to explicitly declare the specialization
   // NeedOwnOperatorNew<BinningAnalysis<...> >

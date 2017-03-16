@@ -54,7 +54,8 @@ namespace DenseDM {
  *
  */
 template<typename DMTypes_>
-class ParamX {
+TOMOGRAPHER_EXPORT class ParamX
+{
 public:
   typedef DMTypes_ DMTypes;
   typedef typename DMTypes::MatrixType MatrixType;

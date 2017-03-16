@@ -45,6 +45,8 @@
 #include <string>
 #include <stdexcept>
 
+#include <tomographer/tools/cxxdefs.h>
+
 namespace Tomographer {
 namespace Tools {
 
@@ -56,7 +58,7 @@ namespace Tools {
  * its destructor, which in C++11 are automatically \c noexcept.  This causes warnings
  * under g++6, and the code will call terminate() at runtime if the assertion fails.
  */
-class EigenAssertException : public std::exception
+TOMOGRAPHER_EXPORT class EigenAssertException : public std::exception
 {
   std::string _msg;
 public:
