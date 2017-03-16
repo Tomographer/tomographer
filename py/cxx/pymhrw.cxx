@@ -29,6 +29,8 @@
 #include <tomographerpy/common.h>
 #include <tomographerpy/pymhrw.h>
 
+#include <tomographer/tools/fmt.h>
+
 #include "common_p.h"
 
 
@@ -77,7 +79,7 @@ void py_tomo_mhrw(py::module rootmodule)
       .def_readwrite("n_therm", &Kl::n_therm)
       .def_readwrite("n_run", &Kl::n_run)
       .def("__repr__", [](const Kl& p) {
-          return streamstr("MHRWParams(step_size="<<std::setprecision(3)<<std::defaultfloat<<p.step_size
+          return streamstr("MHRWParams(step_size="<<Tomographer::Tools::fmts("%.3g", (double)p.step_size)
                            <<",n_sweep="<<p.n_sweep<<",n_therm="<<p.n_therm<<",n_run="<<p.n_run<<")") ;
         })
       .def("__getstate__", [](const Kl& mhrw_params) {

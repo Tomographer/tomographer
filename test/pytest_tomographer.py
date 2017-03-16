@@ -59,7 +59,6 @@ class Histograms(unittest.TestCase):
         self.assertAlmostEqual(params.max, 3.0)
         self.assertEqual(params.num_bins, 5)
 
-
         # binCenterValue()
         self.assertAlmostEqual(params.binCenterValue(0), 2.1)
         self.assertAlmostEqual(params.binCenterValue(4), 2.9)
@@ -87,6 +86,9 @@ class Histograms(unittest.TestCase):
         self.assertTrue(params.isWithinBounds(2.2))
         self.assertFalse(params.isWithinBounds(3.0001))
         self.assertFalse(params.isWithinBounds(1.99))
+
+        # repr()
+        self.assertEqual(repr(params), 'UniformBinsHistogramParams(min=2,max=3,num_bins=5)')
         
     def test_UniformBinsHistogram(self):
         self.do_test_hist(tomographer.UniformBinsHistogram, int, False)

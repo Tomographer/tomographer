@@ -27,9 +27,12 @@
 
 
 #include <ios>
+#include <iomanip>
 
 #include "tomographerpy/common.h"
 #include "tomographerpy/pyhistogram.h"
+
+#include <tomographer/tools/fmt.h>
 
 #include "common_p.h"
 
@@ -126,6 +129,12 @@ struct avghistogram_pickle
 
 
 
+static inline std::string fmt_hist_param_float(RealType val)
+{
+  return Tomographer::Tools::fmts("%.3g", (double)val);
+}
+
+
 
 void py_tomo_histogram(py::module rootmodule)
 {
@@ -213,8 +222,9 @@ void py_tomo_histogram(py::module rootmodule)
            "binResolution()\n\n"
            "Returns the width of a bin.  This is simply :math:`(\\mathit{max} - \\mathit{min})/\\mathit{num_bins}`.")
       .def("__repr__", [](const Kl& p) {
-          return streamstr("UniformBinsHistogramParams(min=" << std::defaultfloat << std::setprecision(3)
-                           << p.min << ",max=" << p.max << ",num_bins=" << p.num_bins << ")");
+          return streamstr("UniformBinsHistogramParams(min="
+                           << fmt_hist_param_float(p.min) << ",max="
+                           << fmt_hist_param_float(p.max) << ",num_bins=" << p.num_bins << ")");
         })
       .def("__getstate__", [](const Kl& p) {
           return py::make_tuple(p.min, p.max, p.num_bins) ;
@@ -326,8 +336,9 @@ void py_tomo_histogram(py::module rootmodule)
            "string.  If `max_width` is specified and nonzero, the output is designed to fit into a terminal "
            "display of the given number of characters wide, otherwise a default width is used.")
       .def("__repr__", [](const Kl& p) {
-          return streamstr("UniformBinsHistogram(min=" << std::defaultfloat << std::setprecision(3)
-                           << p.params.min << ",max=" << p.params.max << ",num_bins=" << p.params.num_bins << ")");
+          return streamstr("UniformBinsHistogram(min="
+                           << fmt_hist_param_float(p.params.min) << ",max="
+                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
         })
       .def("__getstate__", histogram_pickle<Kl>::getstate)
       .def("__setstate__", histogram_pickle<Kl>::setstate)
@@ -381,8 +392,9 @@ void py_tomo_histogram(py::module rootmodule)
       .def("normalized", [](const Kl & h) -> tpy::UniformBinsRealHistogram { return h.normalized<RealType>(); })
       .def("prettyPrint", &Kl::prettyPrint, "max_width"_a=0)
       .def("__repr__", [](const Kl& p) {
-          return streamstr("UniformBinsRealHistogram(min=" << std::defaultfloat << std::setprecision(3)
-                           << p.params.min << ",max=" << p.params.max << ",num_bins=" << p.params.num_bins << ")");
+          return streamstr("UniformBinsRealHistogram(min="
+                           << fmt_hist_param_float(p.params.min) << ",max="
+                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
         })
       .def("__getstate__", histogram_pickle<Kl>::getstate)
       .def("__setstate__", histogram_pickle<Kl>::setstate)
@@ -460,8 +472,9 @@ void py_tomo_histogram(py::module rootmodule)
            " The returned object is again a :py:class:`UniformBinsHistogramWithErrorBars` instance.")
       .def("prettyPrint", & Kl::prettyPrint, "max_width"_a = 0)
       .def("__repr__", [](const Kl& p) {
-          return streamstr("UniformBinsHistogramWithErrorBars(min=" << std::defaultfloat << std::setprecision(3)
-                           << p.params.min << ",max=" << p.params.max << ",num_bins=" << p.params.num_bins << ")");
+          return streamstr("UniformBinsHistogramWithErrorBars(min="
+                           << fmt_hist_param_float(p.params.min) << ",max="
+                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
         })
       .def("__getstate__", histogram_pickle<Kl>::getstate)
       .def("__setstate__", histogram_pickle<Kl>::setstate)
@@ -523,8 +536,9 @@ void py_tomo_histogram(py::module rootmodule)
            "Call this function after all the histograms have been added with calls to :py:meth:`addHistogram()`. Only "
            "after calling this function may you access the averaged histogram in the current histogram object.")
       .def("__repr__", [](const Kl& p) {
-          return streamstr("AveragedSimpleHistogram(min=" << std::defaultfloat << std::setprecision(3)
-                           << p.params.min << ",max=" << p.params.max << ",num_bins=" << p.params.num_bins << ")");
+          return streamstr("AveragedSimpleHistogram(min="
+                           << fmt_hist_param_float(p.params.min) << ",max="
+                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
         })
       .def("__getstate__", avghistogram_pickle<Kl>::getstate)
       .def("__setstate__", avghistogram_pickle<Kl>::setstate)
@@ -581,8 +595,9 @@ void py_tomo_histogram(py::module rootmodule)
            "Call this function after all the histograms have been added with calls to :py:meth:`addHistogram()`. Only "
            "after calling this function may you access the averaged histogram in the current histogram object.")
       .def("__repr__", [](const Kl& p) {
-          return streamstr("AveragedSimpleRealHistogram(min=" << std::defaultfloat << std::setprecision(3)
-                           << p.params.min << ",max=" << p.params.max << ",num_bins=" << p.params.num_bins << ")");
+          return streamstr("AveragedSimpleRealHistogram(min="
+                           << fmt_hist_param_float(p.params.min) << ",max="
+                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
         })
       .def("__getstate__", avghistogram_pickle<Kl>::getstate)
       .def("__setstate__", avghistogram_pickle<Kl>::setstate)
@@ -645,8 +660,9 @@ void py_tomo_histogram(py::module rootmodule)
            "Call this function after all the histograms have been added with calls to :py:meth:`addHistogram()`. Only "
            "after calling this function may you access the averaged histogram in the current histogram object.")
       .def("__repr__", [](const Kl& p) {
-          return streamstr("AveragedErrorBarHistogram(min=" << std::defaultfloat << std::setprecision(3)
-                           << p.params.min << ",max=" << p.params.max << ",num_bins=" << p.params.num_bins << ")");
+          return streamstr("AveragedErrorBarHistogram(min="
+                           << fmt_hist_param_float(p.params.min) << ",max="
+                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
         })
       .def("__getstate__", avghistogram_pickle<Kl>::getstate)
       .def("__setstate__", avghistogram_pickle<Kl>::setstate)
