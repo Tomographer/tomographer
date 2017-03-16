@@ -69,26 +69,27 @@ target_compile_definitions(tomorun PRIVATE -DEIGEN_DONT_PARALLELIZE)
 
 # dependency: Boost headers, Boost program_options library
 target_include_directories(tomorun  PRIVATE ${Boost_INCLUDE_DIR})
-target_link_libraries(tomorun ${Boost_PROGRAM_OPTIONS_LIBRARY})
+target_link_libraries(tomorun PRIVATE ${Boost_PROGRAM_OPTIONS_LIBRARY})
 
 # dependency: MatIO (and MatIO's ZLIB dependency)
 target_include_directories(tomorun  PRIVATE ${MATIO_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
-target_link_libraries(tomorun ${MATIO_LIBRARIES} ${ZLIB_LIBRARIES})
+target_link_libraries(tomorun PRIVATE ${MATIO_LIBRARIES} ${ZLIB_LIBRARIES})
 
-set(TOMORUN_MULTIPROC "cxxthreads" CACHE STRING "MultiProcessing scheme to use for `tomorun`: 'cxxthreads', 'openmp' or 'sequential'")
+set(TOMORUN_MULTIPROC "cxxthreads" CACHE STRING
+  "MultiProcessing scheme to use for `tomorun`: 'cxxthreads', 'openmp' or 'sequential'")
 
 if(TOMORUN_MULTIPROC STREQUAL "openmp")
   # compile with OpenMP
   message(STATUS "tomorun will be compiled with OpenMP multiprocessing")
   target_compile_options(tomorun PRIVATE ${OpenMP_CXX_FLAGS})
-  target_link_libraries(tomorun ${OpenMP_CXX_FLAGS})
+  target_link_libraries(tomorun PRIVATE ${OpenMP_CXX_FLAGS})
   target_compile_definitions(tomorun PRIVATE -DTOMORUN_MULTIPROC_OPENMP)
 elseif(TOMORUN_MULTIPROC STREQUAL "cxxthreads")
   message(STATUS "tomorun will be compiled with C++11 threads multiprocessing")
-  TargetLinkStdThread(tomorun)
+  target_link_libraries(tomorun PRIVATE Threads::Threads)
   target_compile_definitions(tomorun PRIVATE -DTOMORUN_MULTIPROC_CXXTHREADS)
 elseif(TOMORUN_MULTIPROC STREQUAL "sequential")
-  message(STATUS "tomorun will be compiled with sequential execution (no parallelization) -- this is slow!")
+  message(WARNING "tomorun will be compiled with sequential execution only (no parallelization) -- this will be really slow!")
   target_compile_definitions(tomorun PRIVATE -DTOMORUN_MULTIPROC_SEQUENTIAL)
 else()
   message(FATAL_ERROR "Invalid value for TOMORUN_MULTIPROC: expected 'cxxthreads', 'openmp' or 'sequential'")

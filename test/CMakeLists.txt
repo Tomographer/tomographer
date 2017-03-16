@@ -108,10 +108,14 @@ macro(addTomographerTest test_cxx NeedsList)
     # compile & link with OpenMP
     if (OPENMP_FOUND)
       target_compile_options(${test_name} PRIVATE ${OpenMP_CXX_FLAGS})
-      target_link_libraries(${test_name} ${OpenMP_CXX_FLAGS})
+      target_link_libraries(${test_name} PRIVATE ${OpenMP_CXX_FLAGS})
     else()
       WarnTargetNoOpenMP("Test ${test_name}")
     endif()
+  endif()
+
+  if (";${NeedsList};" MATCHES ";cxxthreads;")
+    target_link_libraries(${test_name} PRIVATE Threads::Threads)
   endif()
 
   target_compile_definitions(${test_name} PRIVATE "-DBOOST_TEST_MODULE=${test_name}")
@@ -121,15 +125,15 @@ macro(addTomographerTest test_cxx NeedsList)
     target_link_libraries(${test_name}
       ${LAPACK_LINKER_FLAGS}
       )
-    target_link_libraries(${test_name} ${LAPACK_LIBRARIES})
+    target_link_libraries(${test_name} PRIVATE ${LAPACK_LIBRARIES})
   endif()
 
   # link with Boost.Test framework
-  target_link_libraries(${test_name} ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
+  target_link_libraries(${test_name} PRIVATE ${Boost_UNIT_TEST_FRAMEWORK_LIBRARY})
 
   if (";${NeedsList};" MATCHES ";matio;")
-    target_link_libraries(${test_name} ${MATIO_LIBRARIES})
-    target_link_libraries(${test_name} ${ZLIB_LIBRARIES})
+    target_link_libraries(${test_name} PRIVATE ${MATIO_LIBRARIES})
+    target_link_libraries(${test_name} PRIVATE ${ZLIB_LIBRARIES})
   endif()
 
   add_test(NAME ${test_name} 
@@ -175,7 +179,7 @@ addTomographerTest(test_mhrwtasks.cxx  "")
 addTomographerTest(test_valuecalculator.cxx  "")
 addTomographerTest(test_mhrw_bin_err.cxx  "")
 addTomographerTest(test_mhrw_valuehist_tasks.cxx  "")
-addTomographerTest(test_multiprocthreads.cxx  "")
+addTomographerTest(test_multiprocthreads.cxx  "cxxthreads")
 addTomographerTest(test_multiproc.cxx  "openmp") # openmp needed for testing the status report feature
 addTomographerTest(test_multiprocomp.cxx  "openmp")
 # only works with g++ because we do exact comparison of the output histogram data, and
@@ -197,12 +201,7 @@ target_include_directories(minimal_tomorun PRIVATE "..")
 # dependency: Eigen
 target_include_directories(minimal_tomorun  PRIVATE ${EIGEN3_INCLUDE_DIR})
 target_compile_definitions(minimal_tomorun PRIVATE -DEIGEN_DONT_PARALLELIZE)
-if (OPENMP_FOUND)
-  target_compile_options(minimal_tomorun PRIVATE ${OpenMP_CXX_FLAGS})
-  target_link_libraries(minimal_tomorun ${OpenMP_CXX_FLAGS})
-else()
-  WarnTargetNoOpenMP("The example minimal_tomorun executable")
-endif()
+target_link_libraries(minimal_tomorun PRIVATE Threads::Threads)
 target_include_directories(minimal_tomorun PRIVATE ${Boost_INCLUDE_DIR})
 
 add_test(NAME minimal_tomorun
@@ -212,7 +211,6 @@ add_test(NAME minimal_tomorun
 
 
 if (BUILD_TOMORUN)
-
   #
   # Add tests to check for tomorun's overall behavior
   #

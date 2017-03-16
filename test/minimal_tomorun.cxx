@@ -230,7 +230,7 @@ int main()
 
 
   //
-  // Data is ready, prepare & launch the random walks.  Use OpenMP parallelization.
+  // Data is ready, prepare & launch the random walks.  Use C++ Threads parallelization.
   //
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>  OurMHRandomWalkTask;
@@ -261,7 +261,7 @@ int main()
   // parallel depending on the number of CPUs available.
   const int num_repeats = 4;
 
-  // create the task manager/dispatcher, using the OpenMP implementation
+  // create the task manager/dispatcher, using the CxxThreads implementation
   Tomographer::MultiProc::CxxThreads::TaskDispatcher<OurMHRandomWalkTask,OurCData,OurResultsCollector,BaseLoggerType>
     tasks(
         &taskcdat, // constant data

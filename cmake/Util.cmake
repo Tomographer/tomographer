@@ -121,28 +121,3 @@ endmacro(EnsureCXX11StdThisThreadSleepForAvailable)
 
 
 
-macro(TargetLinkStdThread tgt)
-  set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS})
-  CHECK_CXX_SOURCE_COMPILES(
-    "#include <thread>
-void x() { }
-int main() { std::thread t(x); t.join(); }"
-    tomographer_have_std_thread
-    )
-  if (NOT tomographer_have_std_thread)
-    set(CMAKE_REQUIRED_DEFINITIONS ${CMAKE_REQUIRED_DEFINITIONS} -pthread)
-    CHECK_CXX_SOURCE_COMPILES(
-      "#include <thread>
-void x() { }
-int main() { std::thread t(x); t.join(); }"
-      tomographer_have_std_thread_with_pthread
-      )
-    if (tomographer_have_std_thread_with_pthread)
-      target_compile_options(tgt PRIVATE -pthread)
-      target_link_libraries(tgt PRIVATE -pthread)
-    else()
-      message(WARNING "Couldn't figure out necessary flags to use std::thread. If any are required, please specify them manually to CMAKE_CXX_FLAGS and CMAKE_EXE_LINKER_FLAGS.")
-    endif()
-  endif()
-
-endmacro()

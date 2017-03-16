@@ -93,7 +93,8 @@ target_include_directories(_tomographer_cxx PUBLIC "cxx")
 target_include_directories(_tomographer_cxx  PUBLIC ${EIGEN3_INCLUDE_DIR})
 target_compile_definitions(_tomographer_cxx PRIVATE -DEIGEN_DONT_PARALLELIZE)
 
-TargetLinkStdThread(_tomographer_cxx)
+# Uses C++ threads (need -pthread on gcc)
+target_link_libraries(_tomographer_cxx PRIVATE Threads::Threads)
 
 add_custom_target(tomographerpy)
 add_dependencies(tomographerpy _tomographer_cxx)

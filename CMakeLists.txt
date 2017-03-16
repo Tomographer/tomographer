@@ -64,6 +64,9 @@ find_package(Eigen3 3.3.0 REQUIRED)
 find_package(OpenMP)
 #endif(NOT OPENMP_FOUND)
 
+# Find system threads compiler flags (e.g. -pthread, in order to use std::thread on gcc)
+find_package(Threads)
+
 # Find boost headers (math, ...) 
 #if(NOT BOOST_FOUND)
 find_package(Boost 1.40 REQUIRED)
