@@ -2073,6 +2073,7 @@ PREDEFINED             = ENABLE_IF_Fn_CALLABLE_OSTREAM=void \
                          PRINTF2_ARGS_SAFE= \
                          PRINTF3_ARGS_SAFE= \
                          PRINTF4_ARGS_SAFE= \
+                         TOMOGRAPHER_EXPORT= \
                          TOMOGRAPHER_PARSED_BY_DOXYGEN=1 \
 			 TOMOGRAPHER_ENABLED_IF(x)=template<ENABLED_IF(x)> \
 			 TOMOGRAPHER_ENABLED_IF_TMPL(x)=ENABLED_IF(x) \

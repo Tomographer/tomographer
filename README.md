@@ -75,25 +75,21 @@ To compile `tomorun` from source, you'll need:
 To compile the python interface, you'll need:
 
   - a recent C++ compiler (g++ ≥ 4.6, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.8)
-  - [Boost libraries ≥ 1.40, which includes boost::python](http://www.boost.org/)
+  - [Boost headers ≥ 1.40](http://www.boost.org/)
   - [Python 2.7 or Python 3](http://www.python.org/)
   - [Eigen3 library ≥ 3.3](http://eigen.tuxfamily.org/)
 
 In both cases a recent C++ compiler is required as some C++11 features and
-elements of its standard library are used. Also, make sure it supports OpenMP or
-you won't benefit from parallelization. If you use LLVM/Clang++, you might need
-to install additional packages for OpenMP (e.g. `libomp`).
+elements of its standard library are used.
 
-NOTE: Apple's default compiler does not support OpenMP. To avoid tomographer
-from running tasks serially, you should install a recent version of LLVM/clang
-or g++ manually.
+NOTE: OpenMP is now no longer needed if your compiler supports C++ threads
+(std::thread).  This is the case for many compilers, including Apple's `clang`.
 
 Apple Mac OS X with [homebrew](https://brew.sh): the following commands will get
 you started with all the prerequisites and with homebrew's python3.
 
     > brew tap homebrew/science
-    > brew install llvm eigen python3 libmatio boost
-    > brew install boost-python --with-python3
+    > brew install eigen python3 libmatio boost
 
 Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
 
@@ -224,7 +220,7 @@ Installing and Using the Python Package
 The python `tomographer` package can be installed by entering the `py/` directory
 and running the `setup.py` script as for usual python packages:
 
-    tomographer/py> python setup.py install --user
+    tomographer/py> python setup.py install
 
 If tomographer's C++ library dependencies aren't installed in standard paths, you
 may need to specify them directly to the `setup.py` script in the form of

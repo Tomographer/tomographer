@@ -73,6 +73,9 @@ PYBIND11_PLUGIN(_tomographer_cxx)
   rootmodule.attr("__name__") = py::bytes(std::string("tomographer"));
 #endif
 
+  py::options options;
+  options.disable_function_signatures();
+
   tpy::logger = std::make_shared<PyLogger>();
 
   // python logging
