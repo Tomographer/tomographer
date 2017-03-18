@@ -1,12 +1,6 @@
-include MANIFEST.in
-include *.txt
-
-# Header files
-include cxx/tomographerpy/*.h
-# Sources
-include cxx/*.h
-include cxx/*.cxx
-
-# doesn't work
-# include ../tomographer/*/*.h
-# include ../tomographer/*.h
+include tomographer/include/tomographerpy/*.h
+include tomographer/include/tomographer/*.h
+include tomographer/include/tomographer/*/*.h
+include MANIFEST.in LICENSE.txt README.md
+include cxx/*.cxx cxx/*.h
+include setup.py

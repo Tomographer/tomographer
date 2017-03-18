@@ -81,7 +81,7 @@ target_include_directories(_tomographer_cxx PRIVATE "${CMAKE_BINARY_DIR}")
 target_include_directories(_tomographer_cxx PUBLIC "..")
 
 # our own _tomographer_cxx headers
-target_include_directories(_tomographer_cxx PUBLIC "cxx")
+target_include_directories(_tomographer_cxx PUBLIC "./tomographer/include")
 
 # NOTE: no SYSTEM includes, because it messes up the system include path order if the path
 # happens to be a system path such as /usr/include

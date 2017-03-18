@@ -7,3 +7,6 @@ __pycache__
 *.pyc
 *.pyo
 .DS_Store
+py/tomographer/include/tomographer/tomographer_version.h
+py/tomographer/include/tomographer
+py/LICENSE.txt

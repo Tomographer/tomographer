@@ -35,6 +35,8 @@ import os.path
 import sys
 import subprocess # for git
 import re
+import glob
+import shutil
 
 import numpy # numpy.get_include()
 
@@ -58,7 +60,7 @@ import numpy # numpy.get_include()
 
 
 
-thisdir = os.path.dirname(__file__)
+thisdir = os.path.dirname(os.path.realpath(__file__))
 #print("This dir = {}".format(thisdir))
 
 
@@ -175,7 +177,6 @@ vv = Vars(cmake_cache_file, [
     'GIT',
     'Boost_INCLUDE_DIR',
     'EIGEN3_INCLUDE_DIR',
-    'CMAKE_CXX11_STANDARD_COMPILE_OPTION'
 ])
 
 # Defaults: GIT
@@ -278,6 +279,14 @@ else:
 """.format(cmake_cache_file))
 
 
+if sys.platform == 'darwin':
+    print("""\
+  To get started on Mac OS X with homebrew, you may run for instance:
+
+    > brew install eigen3 boost
+""")
+
+
 #print("DEBUG VARIABLE CACHE: ")
 #for (k,v) in vv.d.items():
 #    print("    "+k+"="+v)
@@ -308,26 +317,12 @@ def dirname_or_none(x):
 # Set up the compilation options
 #
 
-
-include_dirs = [
-    numpy.get_include(),
-    vv.get("Boost_INCLUDE_DIR"),
-    vv.get("EIGEN3_INCLUDE_DIR"),
-    os.path.join(thisdir, ".."), # tomographer
-    os.path.join(thisdir, "cxx"), # tomographerpy
-    os.path.join(thisdir, "pybind11/include"), # pybind11
-]
-libraries = [
-]
-library_dirs = [
-]
-cflags = [
-    '-DTOMOGRAPHER_VERSION=\"{}\"'.format(version),
-    '-DTOMOGRAPHER_VERSION_MAJ={}'.format(version_maj),
-    '-DTOMOGRAPHER_VERSION_MIN={}'.format(version_min),
+glob_cflags = [
+    # no longer needed -- now we create tomographer_version.h
+    # '-DTOMOGRAPHER_VERSION=\"{}\"'.format(version),
+    # '-DTOMOGRAPHER_VERSION_MAJ={}'.format(version_maj),
+    # '-DTOMOGRAPHER_VERSION_MIN={}'.format(version_min),
     '-UNDEBUG',
-]
-ldflags = [
 ]
 
 cxxfiles = [ os.path.join('cxx', x) for x in [
@@ -340,7 +335,7 @@ cxxfiles = [ os.path.join('cxx', x) for x in [
     "pytomorun.cxx",
 ] ]
 
-dep_headers = [ os.path.join('cxx', 'tomographerpy', x) for x in [
+headers = [ os.path.join('tomographer/include', 'tomographerpy', x) for x in [
     "pyhistogram.h",
     "pymultiproc.h",
     "pymhrwtasks.h",
@@ -422,7 +417,7 @@ class BuildExt(build_ext):
         elif ct == 'msvc':
             opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
 
-        for cflg in cflags:
+        for cflg in glob_cflags:
             opts.append(cflg)
 
         for ext in self.extensions:
@@ -432,6 +427,26 @@ class BuildExt(build_ext):
 
 
 
+#
+# Copy all tomographer headers inside tomographer.include as package data
+#
+shutil.rmtree(os.path.join(thisdir, 'tomographer', 'include', 'tomographer'))
+shutil.copytree(os.path.join(thisdir, '..', 'tomographer'),
+                os.path.join(thisdir, 'tomographer', 'include', 'tomographer'),
+                ignore=lambda d, files: [f for f in files if not f.endswith('.h')])
+# create tomographer_version.h
+tomographer_version_t = None
+with open(os.path.join(thisdir, '..', 'tomographer', 'tomographer_version.h.in')) as f:
+    tomographer_version_t = f.read()
+
+repvars = {'TOMOGRAPHER_VERSION': version,
+           'TOMOGRAPHER_VERSION_MAJ': str(version_maj),
+           'TOMOGRAPHER_VERSION_MIN': str(version_min) }
+tomographer_version_f = re.sub(r'@(?P<var>[A-Za-z_0-9]+)@', lambda m: repvars[m.group('var')], tomographer_version_t)
+with open(os.path.join(thisdir, 'tomographer', 'include', 'tomographer', 'tomographer_version.h'), 'w') as f:
+    f.write(tomographer_version_f)
+# include license file in this directory
+shutil.copy2(os.path.join(thisdir, '..', 'LICENSE.txt'), thisdir)
 
 
 #
@@ -446,6 +461,7 @@ setup(name="tomographer",
       url='https://github.com/Tomographer/tomographer/',
       packages=[
           'tomographer',
+          'tomographer.include',
           'tomographer.tools',
           'tomographer.tools.densedm',
       ],
@@ -461,15 +477,15 @@ setup(name="tomographer",
                   vv.get("Boost_INCLUDE_DIR"),
                   vv.get("EIGEN3_INCLUDE_DIR"),
                   os.path.join(thisdir, ".."), # tomographer
-                  os.path.join(thisdir, "cxx"), # tomographerpy
+                  os.path.join(thisdir, "tomographer/include"), # tomographerpy
               ],
-              depends=dep_headers,
+              depends=headers,
               language='c++',
           ),
       ],
-      # install headers in binary distribution
+      # package data - headers
       package_data={
-          'tomographer': ['cxx/tomographerpy/*.h'],
+          'tomographer.include': ['tomographerpy/*.h', 'tomographer/*/*.h', 'tomographer/*.h'],
       },
       #include_package_data=True,
       install_requires=['pybind11>=2.0'],
