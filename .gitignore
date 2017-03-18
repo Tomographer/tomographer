@@ -10,3 +10,5 @@ __pycache__
 py/tomographer/include/tomographer/tomographer_version.h
 py/tomographer/include/tomographer
 py/LICENSE.txt
+py/VERSION
+py/dist

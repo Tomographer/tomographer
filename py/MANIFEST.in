@@ -1,6 +1,6 @@
 include tomographer/include/tomographerpy/*.h
 include tomographer/include/tomographer/*.h
 include tomographer/include/tomographer/*/*.h
-include MANIFEST.in LICENSE.txt README.md
+include MANIFEST.in LICENSE.txt README.rst VERSION
 include cxx/*.cxx cxx/*.h
 include setup.py
