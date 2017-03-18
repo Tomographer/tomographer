@@ -55,22 +55,16 @@ message(STATUS "CMake Build Type: ${CMAKE_BUILD_TYPE}")
 #
 
 # Find Eigen3 package
-#if(NOT EIGEN3_FOUND)
 find_package(Eigen3 3.3.0 REQUIRED)
-#endif(NOT EIGEN3_FOUND)
 
 # Find OpenMP
-#if(NOT OPENMP_FOUND)
 find_package(OpenMP)
-#endif(NOT OPENMP_FOUND)
 
 # Find system threads compiler flags (e.g. -pthread, in order to use std::thread on gcc)
 find_package(Threads)
 
 # Find boost headers (math, ...) 
-#if(NOT BOOST_FOUND)
 find_package(Boost 1.40 REQUIRED)
-#endif(NOT BOOST_FOUND)
 
 #
 # More find_package calls appear below, depending on which targets are being compiled

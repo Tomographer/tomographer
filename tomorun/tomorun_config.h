@@ -49,16 +49,11 @@
  *
  * Value: C++ clock class name (std::chrono::...)
  *
- * The C++ timer class to use.  high_resolution_clock is better (has high resolution), but
- * for some reason (I think for g++ 4.6 compatibility) we shall stick to system_clock. The
- * only effect of this is the precision for timing the run time of the program, and there
- * is no effect on the actual output of the quantum error bars.
  */
-//typedef std::chrono::high_resolution_clock TimerClock;
 #ifdef TOMORUN_TIMERCLOCK
 typedef TOMORUN_TIMERCLOCK TimerClock;
 #else
-typedef std::chrono::system_clock TimerClock;
+typedef std::chrono::high_resolution_clock TimerClock;
 #endif
 
 
@@ -93,8 +88,10 @@ typedef double TomorunReal;
 /* TOMORUN_CUSTOM_FIXED_DIM, TOMORUN_CUSTOM_FIXED_MAX_DIM, TOMORUN_CUSTOM_MAX_POVM_EFFECTS
  *
  * You may define these to fixed values to specialize the tomorun problem to a specific
- * fixed dimension and a specific maximum number of POVM effects.  Leave either to
- * "Eigen::Dynamic" to allow any value at run-time.
+ * fixed dimension and a specific maximum number of POVM effects.  You may set to
+ * "Eigen::Dynamic" to always use dynamic size matrices which may allow any size at
+ * run-time.  Leave these symbols undefined to have a selection of common values of
+ * fixed-size matrices with a fallback to dynamic-size.
  *
  * TOMORUN_CUSTOM_FIXED_DIM fixes the dimension of the system to a compile-time fixed
  * value which cannot be changed at run-time.  Leave the default common cases or use
@@ -117,11 +114,16 @@ typedef double TomorunReal;
  * Use the class MultiplexorValueCalculator and dynamically choose the figure of merit to
  * calculate, rather than using a fully templated tomorun<> function specialized to a
  * single figure of merit and replicated for each figure of merit. I'm not sure which is
- * faster, tests needed.
+ * faster, benchmarks needed.
  */
 #ifndef TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
 #define TOMORUN_USE_MULTIPLEXORVALUECALCULATOR true
 #endif
+
+
+
+
+
 
 
 
