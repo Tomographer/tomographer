@@ -76,6 +76,9 @@ public:
   py::object toPythonLevel(int level) const;
 
   inline
+  py::object toPythonLevelName(int level) const;
+
+  inline
   int fromPythonLevel(py::object pylvl) const;
 
 
@@ -216,7 +219,7 @@ py::object PyLogger::toPythonLevel(int level) const
 {
   if (py_logging.is_none()) {
     fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGING MODULE NOT SET.\nIn attempt to call toPythonLevel().");
-    return py::object();
+    return py::none();
   }
   switch (level) {
   case Tomographer::Logger::ERROR:
@@ -231,6 +234,16 @@ py::object PyLogger::toPythonLevel(int level) const
   default:
     return py::getattr(py_logging, "NOTSET");
   }
+}
+
+inline
+py::object PyLogger::toPythonLevelName(int level) const
+{
+  if (py_logging.is_none()) {
+    fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGING MODULE NOT SET.\nIn attempt to call toPythonLevel().");
+    return py::none();
+  }
+  return py_logging.attr("getLevelName")(toPythonLevel(level));
 }
 
 inline

@@ -42,7 +42,7 @@ namespace tpy
 // Python/C++ logger
 //
 // The logger object instance is defined in tomographerpy.cxx
-extern std::shared_ptr<PyLogger> logger;
+extern PyLogger * logger;
 
 // the main exception object
 extern py::object TomographerCxxErrorObj;

@@ -58,135 +58,34 @@ import numpy # numpy.get_include()
 
 
 
-
-
 thisdir = os.path.dirname(os.path.realpath(__file__))
 #print("This dir = {}".format(thisdir))
 
 
+sys.path.insert(0, os.path.join(thisdir, 'tomographer'))
+# tomographer.include:
+from include import find_include_dir, find_lib, Vars, ensure_str   # beurk!!
 
-
-def find_include_dir(hname, pkgname, testfn=os.path.isdir, return_with_suffix=None):
-    guesses = [
-        # homebrew version
-        os.path.join('/usr/local/opt', pkgname, 'include'),
-        # default paths
-        '/usr/local/include',
-        '/usr/include',
-        '/opt/include',
-        os.path.expanduser('~/.local/include'),
-    ]
-    for i in guesses:
-        dn = os.path.join(i, hname)
-        if testfn(dn): # found
-            if return_with_suffix:
-                return os.path.join(i, return_with_suffix)
-            return i
-
-    return None
-
-def find_lib(libname, pkgname, libnamesuffixes=[]):
-    guesses = [
-        # Homebrew version
-        os.path.join('/usr/local/opt', pkgname, 'lib'),
-        # default paths
-        '/usr/local/lib',
-        '/usr/lib',
-        '/opt/lib',
-        '/usr/lib{suffix}/x86_64-linux-gnu',
-        os.path.expanduser('~/.local/lib'),
-    ]
-    is_64bits = sys.maxsize > 2**32 # see https://docs.python.org/2/library/platform.html
-    libdirsuffixes = ['', '64' if is_64bits else '32']
-    for i in guesses:
-        for s in libdirsuffixes:
-            if '{suffix' not in i:
-                i += '{suffix}'
-            #print("find_lib:TRYING i={!r}".format(i))
-            basedn = i.format(suffix=s)
-            #
-            for lnp in ['lib', '']: # lib-name-prefixes
-                for lns in libnamesuffixes + ['']: # lib-name-suffixes
-                    for fns in ['.so', '.dylib', '.dll', '.a']: # file name suffixes for library
-                        dn = os.path.join(basedn+s, lnp+libname+lns+fns)
-                        #print("find_lib:TRYING dn={!r}".format(dn))
-                        if os.path.isfile(dn):
-                            return dn
-    return None
             
 
-def ensure_str(s):
-    """
-    Convert value `s` to a `str`, that is, a byte string on Python 2 and a unicode string
-    on Python 3.
-
-    Input is expected to be a byte-string in both Py2 or Py3.
-    """
-    if not isinstance(s, str):
-        return s.decode('utf-8')
-    return s
-
-
-#
-# Looks up the variables:
-#   - in the environment
-#   - in the CMake cache, if any
-#   - default value
-#
-class Vars(object):
-    def __init__(self, cachefile=None, vars=[]):
-        # self.d: values read & cached
-        self.d = {}
-
-        dc = {}
-        if cachefile:
-            dc = self._readcache(cachefile)
-
-        for k in vars:
-            if k in os.environ:
-                self.d[k] = os.environ.get(k)
-            elif k in dc:
-                self.d[k] = ensure_str(dc[k])
-            else:
-                self.d[k] = None
-
-    def setDefault(self, k, defvalue):
-        if k not in self.d or self.d.get(k, None) is None:
-            if callable(defvalue):
-                self.d[k] = defvalue()
-            else:
-                self.d[k] = defvalue
-
-    def _readcache(self, cachefile):
-        dc = {}
-        rx = re.compile(r'^(?P<name>[A-Za-z0-9_]+)(:(?P<type>[A-Za-z_]+))=(?P<value>.*)$')
-        with open(cachefile) as f:
-            for line in f:
-                m = rx.match(line)
-                if not m:
-                    continue
-                dc[m.group('name')] = ensure_str(m.group('value'))
-        return dc
-
-    def get(self, name):
-        return self.d.get(name)
 
 
 cmake_cache_file = os.environ.get('CMAKE_CACHE_FILE', None)
-vv = Vars(cmake_cache_file, [
+vv = Vars([
     'GIT',
     'Boost_INCLUDE_DIR',
     'EIGEN3_INCLUDE_DIR',
-])
+], cachefile=cmake_cache_file)
 
 # Defaults: GIT
 vv.setDefault('GIT', lambda : find_executable('git'))
 
 # Defaults: Boost stuff
-vv.setDefault('Boost_INCLUDE_DIR', lambda : find_include_dir('boost', 'boost'))
+vv.setDefault('Boost_INCLUDE_DIR', lambda : find_include_dir('boost', pkgnames=['boost']))
 
 # Defaults: Eigen3
-vv.setDefault('EIGEN3_INCLUDE_DIR', lambda : find_include_dir('eigen3', 'eigen', return_with_suffix='eigen3'))
+vv.setDefault('EIGEN3_INCLUDE_DIR', lambda : find_include_dir('eigen3', pkgnames=['eigen','eigen3'],
+                                                              return_with_suffix='eigen3'))
 
 
 

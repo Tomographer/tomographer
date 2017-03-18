@@ -54,7 +54,7 @@ void py_tomo_mhrwtasks(py::module rootmodule);
 namespace tpy
 {
 // common logger object
-std::shared_ptr<PyLogger> logger;
+PyLogger * logger;
 
 // the main exception object
 py::object TomographerCxxErrorObj;
@@ -76,7 +76,7 @@ PYBIND11_PLUGIN(_tomographer_cxx)
   py::options options;
   options.disable_function_signatures();
 
-  tpy::logger = std::make_shared<PyLogger>();
+  tpy::logger = new PyLogger;
 
   // python logging
   tpy::logger->initPythonLogger();
@@ -107,11 +107,19 @@ PYBIND11_PLUGIN(_tomographer_cxx)
   // expose Python API for setting the C++ logger level -- use shared_ptr as holder type
   py::class_<PyLogger,std::shared_ptr<PyLogger>>(rootmodule, "PyLogger")
     .def_property("level",
-                  [](const PyLogger & l) { return l.level(); },
+                  [](const PyLogger & l) { return l.toPythonLevel(l.level()); },
                   [](PyLogger & l, py::object newlevel) {
                     l.setLevel(l.fromPythonLevel(newlevel));
-                  });
+                  })
+    .def("__repr__",
+         [](const PyLogger & l) {
+           return std::string("<PyLogger level=logging.") + l.toPythonLevelName(l.level()).cast<std::string>()
+             + std::string(">");
+         }
+        )
+    ;
   
+  // PyBind11 will take over ownership of the object
   rootmodule.attr("cxxlogger") = tpy::logger;
 
 
@@ -131,14 +139,6 @@ PYBIND11_PLUGIN(_tomographer_cxx)
     auto VersionInfoTuple = namedtuple("VersionInfo", verfields);
     versionmodule.attr("version_info") = VersionInfoTuple(TOMOGRAPHER_VERSION_MAJ, TOMOGRAPHER_VERSION_MIN);
   }
-
-
-  // add info on how tomographer was compiled, so that other modules can use the same
-  // tools
-  // ...
-  // FIXME: WRITE ME!
-
-  //
 
   logger.debug("Registering components ...");
 

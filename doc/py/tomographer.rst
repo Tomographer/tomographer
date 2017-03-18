@@ -11,5 +11,4 @@
    tomographer.querrorbars
    tomographer.tools
    tomographer.jpyutil
-
-
+   tomographer.include
