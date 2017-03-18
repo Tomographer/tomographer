@@ -27,8 +27,8 @@
 
 from distutils.spawn import find_executable
 
-from setuptools import setup
-from setuptools.extension import Extension
+from setuptools import setup, Extension
+from setuptools.command.build_ext import build_ext
 
 import codecs
 import os.path
@@ -49,7 +49,6 @@ import numpy # numpy.get_include()
 # GIT=/path/to/git
 # Boost_INCLUDE_DIR=/path/to/boost/headers
 # EIGEN3_INCLUDE_DIR=/path/to/eigen/headers
-# CMAKE_CXX11_STANDARD_COMPILE_OPTION=-std=c++11
 #
 # To read the above variables from cache:
 # CMAKE_CACHE_FILE=path/to/CMakeCache.txt
@@ -188,9 +187,6 @@ vv.setDefault('Boost_INCLUDE_DIR', lambda : find_include_dir('boost', 'boost'))
 # Defaults: Eigen3
 vv.setDefault('EIGEN3_INCLUDE_DIR', lambda : find_include_dir('eigen3', 'eigen', return_with_suffix='eigen3'))
 
-# Defaults: C++11 flags
-vv.setDefault('CMAKE_CXX11_STANDARD_COMPILE_OPTION', '-std=c++11')
-
 
 
 #
@@ -326,7 +322,6 @@ libraries = [
 library_dirs = [
 ]
 cflags = [
-    vv.get('CMAKE_CXX11_STANDARD_COMPILE_OPTION'),
     '-DTOMOGRAPHER_VERSION=\"{}\"'.format(version),
     '-DTOMOGRAPHER_VERSION_MAJ={}'.format(version_maj),
     '-DTOMOGRAPHER_VERSION_MIN={}'.format(version_min),
@@ -335,10 +330,9 @@ cflags = [
 ldflags = [
 ]
 
-files = [ os.path.join('cxx', x) for x in [
+cxxfiles = [ os.path.join('cxx', x) for x in [
     "tomographerpy.cxx",
     "pyhistogram.cxx",
-    #"pylogger.cxx", # no longer used -- all definitions are in pylogger.h
     "pymultiproc.cxx",
     "pymhrwtasks.cxx",
     "pymhrw.cxx",
@@ -357,8 +351,91 @@ dep_headers = [ os.path.join('cxx', 'tomographerpy', x) for x in [
 ] ]
 
 
+
+
+
 #
-# Set up the python package
+# Some code taken from https://github.com/pybind/python_example
+#
+
+class get_pybind_include(object):
+    """Helper class to determine the pybind11 include path
+    The purpose of this class is to postpone importing pybind11
+    until it is actually installed, so that the ``get_include()``
+    method can be invoked. """
+
+    def __init__(self, user=False):
+        self.user = user
+
+    def __str__(self):
+        import pybind11
+        return pybind11.get_include(self.user)
+
+
+# As of Python 3.6, CCompiler has a `has_flag` method.
+# cf http://bugs.python.org/issue26689
+def has_flag(compiler, flagname):
+    """Return a boolean indicating whether a flag name is supported on
+    the specified compiler.
+    """
+    import tempfile
+    with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
+        f.write('int main (int argc, char **argv) { return 0; }')
+        try:
+            compiler.compile([f.name], extra_postargs=[flagname])
+        except setuptools.distutils.errors.CompileError:
+            return False
+    return True
+
+
+def cpp_flag(compiler):
+    """Return the -std=c++[11/14] compiler flag.
+    The c++14 is prefered over c++11 (when it is available).
+    """
+    if has_flag(compiler, '-std=c++14'):
+        return '-std=c++14'
+    elif has_flag(compiler, '-std=c++11'):
+        return '-std=c++11'
+    else:
+        raise RuntimeError('Unsupported compiler -- at least C++11 support '
+                           'is needed!')
+
+
+class BuildExt(build_ext):
+    """A custom build extension for adding compiler-specific options."""
+    c_opts = {
+        'msvc': ['/EHsc'],
+        'unix': [],
+    }
+
+    if sys.platform == 'darwin':
+        c_opts['unix'] += ['-stdlib=libc++', '-mmacosx-version-min=10.7']
+
+    def build_extensions(self):
+        ct = self.compiler.compiler_type
+        opts = self.c_opts.get(ct, [])
+        if ct == 'unix':
+            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
+            opts.append(cpp_flag(self.compiler))
+            #if has_flag(self.compiler, '-fvisibility=hidden'):
+            #    opts.append('-fvisibility=hidden')
+        elif ct == 'msvc':
+            opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
+
+        for cflg in cflags:
+            opts.append(cflg)
+
+        for ext in self.extensions:
+            ext.extra_compile_args = opts
+
+        build_ext.build_extensions(self)
+
+
+
+
+
+#
+# Set up the tomographer python package
 #
 
 setup(name="tomographer",
@@ -373,18 +450,29 @@ setup(name="tomographer",
           'tomographer.tools.densedm',
       ],
       ext_modules=[
-          Extension(name="_tomographer_cxx",
-                    sources=files,
-                    library_dirs=library_dirs,
-                    libraries=libraries,
-                    include_dirs=include_dirs,
-                    extra_compile_args=cflags,
-                    extra_link_args=ldflags,
-                    depends=dep_headers),
+          Extension(
+              '_tomographer_cxx',
+              sources=cxxfiles,
+              include_dirs=[
+                  # Path to pybind11 headers
+                  get_pybind_include(),
+                  get_pybind_include(user=True),
+                  numpy.get_include(),
+                  vv.get("Boost_INCLUDE_DIR"),
+                  vv.get("EIGEN3_INCLUDE_DIR"),
+                  os.path.join(thisdir, ".."), # tomographer
+                  os.path.join(thisdir, "cxx"), # tomographerpy
+              ],
+              depends=dep_headers,
+              language='c++',
+          ),
       ],
       # install headers in binary distribution
       package_data={
           'tomographer': ['cxx/tomographerpy/*.h'],
       },
       #include_package_data=True,
+      install_requires=['pybind11>=2.0'],
+      cmdclass={ 'build_ext': BuildExt },
+      zip_safe=False,
 )

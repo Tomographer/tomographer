@@ -58,10 +58,6 @@ if(CMAKE_CXX_FLAGS MATCHES "-msse4.1")
 endif()
 
 
-# include pybind11 stuff
-add_subdirectory(pybind11)
-
-
 set(tomographerpy_SRCS
   cxx/pyhistogram.cxx
   cxx/pymultiproc.cxx
