@@ -56,6 +56,33 @@
 #include "common_p.h"
 
 
+
+namespace tpy {
+
+class CallableValueCalculator
+{
+public:
+  typedef RealType ValueType;
+  
+  CallableValueCalculator(py::object fn_)
+    : fn(fn_)
+  {
+  }
+
+  RealType getValue(const Eigen::Ref<const tpy::CplxMatrixType> & T) const
+  {
+    return fn(py::cast(T)).cast<RealType>();
+  }
+
+
+private:
+  py::object fn;
+};
+
+}
+
+
+
 //
 // Data types for our quantum objects.  For the sake of the example, we just leave the
 // size to be dynamic, that is, fixed at run time and not at compile time.
@@ -80,7 +107,8 @@ typedef Tomographer::MultiplexorValueCalculator<
   Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, RealType>,
   Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, RealType>,
   Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, RealType>,
-  Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>
+  Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>,
+  tpy::CallableValueCalculator
   > ValueCalculator;
 
 
@@ -145,7 +173,7 @@ py::object py_tomorun(
     const Eigen::MatrixXd& Exn,
     const py::list& Emn,
     const Eigen::VectorXi& Nm,
-    std::string fig_of_merit,
+    py::object fig_of_merit,
     const Eigen::MatrixXcd& ref_state,
     const Eigen::MatrixXcd& observable,
     const tpy::UniformBinsHistogramParams& hist_params,
@@ -209,7 +237,16 @@ py::object py_tomorun(
   MatrixType rho_ref(dmt.initMatrixType());
   MatrixType A(dmt.initMatrixType());
 
-  if (fig_of_merit == "fidelity" || fig_of_merit == "tr-dist" || fig_of_merit == "purif-dist") {
+  bool fig_of_merit_callable = py::hasattr(fig_of_merit, "__call__");
+  std::string fig_of_merit_s;
+  if (fig_of_merit_callable) {
+    throw error ..... DEBUG problems with GIL lock!!!!
+    fig_of_merit_s = "<custom>";
+  } else {
+    fig_of_merit_s = fig_of_merit.cast<std::string>();
+  }
+
+  if (fig_of_merit_s == "fidelity" || fig_of_merit_s == "tr-dist" || fig_of_merit_s == "purif-dist") {
 
     Eigen::SelfAdjointEigenSolver<MatrixType> eig(ref_state);
 
@@ -225,28 +262,34 @@ py::object py_tomorun(
     rho_ref = U * d.asDiagonal() * U.adjoint();
     T_ref = U * d.cwiseSqrt().asDiagonal() * U.adjoint();
 
-  } else if (fig_of_merit == "obs-value") {
+  } else if (fig_of_merit_s == "obs-value") {
 
     // TODO: ensure that something was given
     A = observable;
     
+  } else if (fig_of_merit_callable) {
+
+    // custom callable
+
   } else {
-    throw TomorunInvalidInputError("Invalid figure of merit: `"+fig_of_merit+"'");
+    throw TomorunInvalidInputError(std::string("Invalid figure of merit: ")+py::repr(fig_of_merit).cast<std::string>());
   }
 
   ValueCalculator valcalc(
       // index of the valuecalculator to actually use:
-      (fig_of_merit == "fidelity" ? 0 :
-       (fig_of_merit == "purif-dist" ? 1 :
-        (fig_of_merit == "tr-dist" ? 2 :
-         (fig_of_merit == "obs-value" ? 3 :
-          throw TomorunInvalidInputError(streamstr("Invalid valtype: " << fig_of_merit))
-             )))),
+      (fig_of_merit_s == "fidelity" ? 0 :
+       (fig_of_merit_s == "purif-dist" ? 1 :
+        (fig_of_merit_s == "tr-dist" ? 2 :
+         (fig_of_merit_s == "obs-value" ? 3 :
+          (fig_of_merit_callable ? 4 :
+           throw TomorunInvalidInputError(std::string("Invalid valtype: ") + py::repr(fig_of_merit).cast<std::string>())
+              ))))),
         // the valuecalculator instances which are available:
         Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, RealType>(T_ref),
         Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, RealType>(T_ref),
         Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, RealType>(rho_ref),
-        Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>(dmt, A)
+        Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>(dmt, A),
+        tpy::CallableValueCalculator(fig_of_merit)
         );
 
 
@@ -396,7 +439,7 @@ void py_tomo_tomorun(py::module rootmodule)
       "Exn"_a = Eigen::MatrixXd(),
       "Emn"_a = py::list(),
       "Nm"_a = Eigen::VectorXi(),
-      "fig_of_merit"_a = std::string("obs-value"),
+      "fig_of_merit"_a = "obs-value"_s,
       "ref_state"_a = Eigen::MatrixXcd(),
       "observable"_a = Eigen::MatrixXcd(),
       "hist_params"_a = tpy::UniformBinsHistogramParams(),

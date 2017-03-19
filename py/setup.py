@@ -397,6 +397,11 @@ if os.path.exists(os.path.join(thisdir, '..', 'LICENSE.txt')):
     shutil.copy2(os.path.join(thisdir, '..', 'LICENSE.txt'), thisdir)
 
 
+def readfile(x):
+    with open(os.path.join(thisdir, x)) as f:
+        return f.read()
+
+
 #
 # Set up the tomographer python package
 #
@@ -404,14 +409,15 @@ if os.path.exists(os.path.join(thisdir, '..', 'LICENSE.txt')):
 setup(name="tomographer",
       version=pip_version,
       description='Tomographer Python Interface',
+      longdescription=readfile('README.rst'),
       author='Philippe Faist',
       author_email='phfaist@caltech.edu',
       url='https://github.com/Tomographer/tomographer/',
       packages=[
           'tomographer',
-          'tomographer.include',
           'tomographer.tools',
           'tomographer.tools.densedm',
+          'tomographer.include',
       ],
       ext_modules=[
           Extension(
