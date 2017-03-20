@@ -475,8 +475,8 @@ public:
  */
 template<typename Scalar_, typename CountType_ = double>
 TOMOGRAPHER_EXPORT class UniformBinsHistogramWithErrorBars
-  : public UniformBinsHistogram<Scalar_, CountType_>,
-    public virtual Tools::EigenAlignedOperatorNewProvider
+  : public UniformBinsHistogram<Scalar_, CountType_>
+  //    public virtual Tools::EigenAlignedOperatorNewProvider -- no need for dynamically-sized matrices
 {
 public:
   //! The Scalar (X-axis) Type. See UniformBinsHistogram::Scalar.
