@@ -289,13 +289,13 @@ struct NeedEigenAlignedOperatorNew<false> {
  */
 template<typename Scalar, int FixedRows, int FixedCols, int Options, int MaxRows, int MaxCols>
 struct NeedOwnOperatorNew<Eigen::Matrix<Scalar,FixedRows,FixedCols,Options,MaxRows,MaxCols> >
-  : public NeedEigenAlignedOperatorNew<(MaxRows == Eigen::Dynamic || MaxCols == Eigen::Dynamic)> { };
+  : public NeedEigenAlignedOperatorNew<!(MaxRows == Eigen::Dynamic || MaxCols == Eigen::Dynamic)> { };
 
 
 //! Specialize \ref NeedOwnOperatorNew for Eigen types
 template<typename Scalar, int FixedRows, int FixedCols, int Options, int MaxRows, int MaxCols>
 struct NeedOwnOperatorNew<Eigen::Array<Scalar,FixedRows,FixedCols,Options,MaxRows,MaxCols> >
-  : public NeedEigenAlignedOperatorNew<(MaxRows == Eigen::Dynamic || MaxCols == Eigen::Dynamic)> { };
+  : public NeedEigenAlignedOperatorNew<!(MaxRows == Eigen::Dynamic || MaxCols == Eigen::Dynamic)> { };
 
 
 
