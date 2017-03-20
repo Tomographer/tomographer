@@ -233,7 +233,9 @@ class analytical_known_example_tomorun(unittest.TestCase):
 
         class Ns: pass
 
-
+        #
+        # Make sure an error in the callback raises an Exception
+        #
         def progress_callback(fullstatusreport):
             error-xxx(xyz) # error -- raises a Python exception
             print(fullstatusreport.getHumanReport())

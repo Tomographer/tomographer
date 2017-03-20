@@ -345,18 +345,22 @@ py::object py_tomorun(
 
     try {
       tasks.run();
-    } catch (const Tomographer::MultiProc::TasksInterruptedException & e) {
+    } catch (Tomographer::MultiProc::TasksInterruptedException & e) {
+      // Tasks interrupted
       logger.debug("Tasks interrupted.");
+      // acquire GIL for PyErr_Occurred()
+      py::gil_scoped_acquire gil_acquire;
       if (PyErr_Occurred() != NULL) {
         // tell pybind11 that the exception is already set
         throw py::error_already_set();
       }
-      // no Python exception set?? -- set a RuntimeError via Boost
+      // no Python exception set?? -- set a RuntimeError via pybind11
       throw;
     } catch (std::exception & e) {
-      logger.debug("Inner exception: %s", e.what());
-      //fprintf(stderr, "EXCEPTION: %s\n", e.what());
       // another exception
+      logger.debug("Inner exception: %s", e.what());
+      // acquire GIL for PyErr_Occurred()
+      py::gil_scoped_acquire gil_acquire;
       if (PyErr_Occurred() != NULL) {
         // an inner py::error_already_set() was caught & rethrown by MultiProc::CxxThreads
         throw py::error_already_set();
