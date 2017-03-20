@@ -24,7 +24,7 @@ install:
   # hack for preventing travis to interrupt after 10min of no output -- see
   # https://github.com/travis-ci/travis-ci/issues/6591
   - function write_visual_bells() { while true; do echo -en "\a"; sleep 10; done; }; write_visual_bells &
-  - (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} sudo -H $PIP install $PIP_EXTRAS cvxpy pybind11 >pip_output.txt 2>&1 || cat pip_output.txt )
+  - (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} $PIP install --user $PIP_EXTRAS cvxpy pybind11 >pip_output.txt 2>&1 || cat pip_output.txt )
 
 cache:
   pip: true
@@ -158,7 +158,7 @@ matrix:
       env:
         - CMAKE_C_COMPILER=clang-3.4
         - CMAKE_CXX_COMPILER=clang++-3.4
-        - PYTHON_EXECUTABLE=/usr/bin/python3
+        - PYTHON_EXECUTABLE=/usr/bin/python
         - CMAKE_COMPILER_ARGS=""
         - PIP_CC=/usr/bin/gcc
         - PIP_CXX=/usr/bin/g++
@@ -193,7 +193,8 @@ matrix:
         - CMAKE_C_COMPILER=clang-3.8
         - CMAKE_CXX_COMPILER=clang++-3.8
         - PYTHON_EXECUTABLE=/usr/bin/python3
-        - CMAKE_COMPILER_ARGS="-DOpenMP_C_FLAGS='-fopenmp=libiomp5' -DOpenMP_CXX_FLAGS='-fopenmp=libiomp5' -DPYBIND11_CPP_STANDARD='-std=c++11'"
+        - CMAKE_COMPILER_ARGS="-DOpenMP_C_FLAGS='-fopenmp=libiomp5' -DOpenMP_CXX_FLAGS='-fopenmp=libiomp5' -DPYBIND11_CPP_STANDARD='-std=c++11' -DTOMORUN_MULTIPROC='openmp'"
+        - PYBIND11_CPP_STANDARD="-std=c++11" # for setup.py
         - PIP_CC=/usr/bin/gcc
         - PIP_CXX=/usr/bin/g++
         - PIP=/usr/bin/pip3

@@ -51,6 +51,7 @@ import numpy # numpy.get_include()
 # GIT=/path/to/git
 # Boost_INCLUDE_DIR=/path/to/boost/headers
 # EIGEN3_INCLUDE_DIR=/path/to/eigen/headers
+# PYBIND11_CPP_STANDARD=-std=c++14
 #
 # To read the above variables from cache:
 # CMAKE_CACHE_FILE=path/to/CMakeCache.txt
@@ -75,6 +76,7 @@ vv = Vars([
     'GIT',
     'Boost_INCLUDE_DIR',
     'EIGEN3_INCLUDE_DIR',
+    'PYBIND11_CPP_STANDARD',
 ], cachefile=cmake_cache_file)
 
 # Defaults: GIT
@@ -86,7 +88,6 @@ vv.setDefault('Boost_INCLUDE_DIR', lambda : find_include_dir('boost', pkgnames=[
 # Defaults: Eigen3
 vv.setDefault('EIGEN3_INCLUDE_DIR', lambda : find_include_dir('eigen3', pkgnames=['eigen','eigen3'],
                                                               return_with_suffix='eigen3'))
-
 
 
 #
@@ -321,7 +322,11 @@ class BuildExt(build_ext):
         opts = self.c_opts.get(ct, [])
         if ct == 'unix':
             opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
-            opts.append(cpp_flag(self.compiler))
+            stdcpp = vv.get('PYBIND11_CPP_STANDARD')
+            if stdcpp:
+                opts.append(stdcpp)
+            else:
+                opts.append(cpp_flag(self.compiler))
             #if has_flag(self.compiler, '-fvisibility=hidden'):
             #    opts.append('-fvisibility=hidden')
         elif ct == 'msvc':

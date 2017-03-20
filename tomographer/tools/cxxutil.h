@@ -62,7 +62,7 @@ namespace Tools
 namespace tomo_internal {
   template <typename F>
   struct FinalAction {
-    FinalAction(F f) : clean_{f} {}
+    FinalAction(F f) : clean_(f) {}
     ~FinalAction() { clean_(); }
     F clean_;
   };
