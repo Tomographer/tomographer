@@ -212,7 +212,10 @@ TOMOGRAPHER_EXPORT class UniformBinsHistogram
   // inheriting from this has some advantages over EIGEN_MAKE_ALIGNED_OPERATOR_NEW, such
   // as not needing to explicitly declare the specialization
   // NeedOwnOperatorNew<UniformBinsHistogram>:
-  : public virtual Tools::EigenAlignedOperatorNewProvider
+  //
+  // -- really not needed because the matrices are dynamically sized
+  //
+  //  : public virtual Tools::NeedOwnOperatorNew<Eigen::Array<CountType,Eigen::Dynamic,1> >::ProviderType
 {
 public:
   //! The scalar type of the "X"-axis of the histogram (usually \c double)

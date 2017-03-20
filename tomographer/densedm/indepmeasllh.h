@@ -62,7 +62,7 @@ template<typename DMTypes_, typename LLHValueType_ = typename DMTypes_::RealScal
          typename IntFreqType_ = int, int FixedMaxParamList_ = Eigen::Dynamic,
 	 bool UseNMeasAmplifyFactor_ = false>
 TOMOGRAPHER_EXPORT class IndepMeasLLH
-  : public Tools::NeedEigenAlignedOperatorNew::ProviderType
+// : public Tools::NeedEigenAlignedOperatorNew::ProviderType -- not needed, matrices are Eigen::Dynamic for now
 {
 public:
   //! The \ref DMTypes in use here

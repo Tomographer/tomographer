@@ -50,9 +50,18 @@ namespace Tools {
 /** \brief Provider for regular types which don't need any special operator-new
  *         implementation (see \ref NeedOwnOperatorNew)
  */
-struct NoSpecialOperatorNewProvider {
+TOMOGRAPHER_EXPORT struct NoSpecialOperatorNewProvider {
   template<typename T>
   struct OperatorNewAllocatorType { typedef std::allocator<T> Type; };
+};
+
+//! Helper for NoSpecialOperatorNewProvider
+TOMOGRAPHER_EXPORT struct NoSpecialOperatorNew {
+  typedef NoSpecialOperatorNewProvider ProviderType;
+
+  // prevent inadvertently inheriting this class instead of
+  // NoSpecialOperatorNewProvider:
+  NoSpecialOperatorNew() = delete;
 };
 
 
@@ -234,7 +243,7 @@ struct NeedOwnOperatorNew<Type1, Type2, OtherTypes...>
 /** \brief Provides correct operator-new implementation for Eigen types via the \ref
  *         NeedOwnOperatorNew mechanism
  */
-struct EigenAlignedOperatorNewProvider {
+TOMOGRAPHER_EXPORT struct EigenAlignedOperatorNewProvider {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW ;
   typedef EigenAlignedOperatorNewProvider OperatorNewProviderType;
@@ -255,6 +264,7 @@ public:
 
 
 //! Helper to specialize NeedOwnOperatorNew for Eigen types
+template<bool ReallyNeeded = true>
 struct NeedEigenAlignedOperatorNew {
   typedef EigenAlignedOperatorNewProvider ProviderType;
 
@@ -262,7 +272,16 @@ struct NeedEigenAlignedOperatorNew {
   // EigenAlignedOperatorNewProvider:
   NeedEigenAlignedOperatorNew() = delete;
 };
+// but if it's not really needed, for instance for dynamic-sized Eigen matrices which
+// anyway allocate the data on the heap internally using aligned allocators:
+template<>
+struct NeedEigenAlignedOperatorNew<false> {
+  typedef NoSpecialOperatorNewProvider ProviderType;
 
+  // prevent inadvertently inheriting this class instead of
+  // EigenAlignedOperatorNewProvider:
+  NeedEigenAlignedOperatorNew() = delete;
+};
 
 /** \brief Specialize \ref NeedOwnOperatorNew for Eigen types
  *
@@ -270,12 +289,13 @@ struct NeedEigenAlignedOperatorNew {
  */
 template<typename Scalar, int FixedRows, int FixedCols, int Options, int MaxRows, int MaxCols>
 struct NeedOwnOperatorNew<Eigen::Matrix<Scalar,FixedRows,FixedCols,Options,MaxRows,MaxCols> >
-  : public NeedEigenAlignedOperatorNew { };
+  : public NeedEigenAlignedOperatorNew<(MaxRows == Eigen::Dynamic || MaxCols == Eigen::Dynamic)> { };
+
 
 //! Specialize \ref NeedOwnOperatorNew for Eigen types
 template<typename Scalar, int FixedRows, int FixedCols, int Options, int MaxRows, int MaxCols>
 struct NeedOwnOperatorNew<Eigen::Array<Scalar,FixedRows,FixedCols,Options,MaxRows,MaxCols> >
-  : public NeedEigenAlignedOperatorNew { };
+  : public NeedEigenAlignedOperatorNew<(MaxRows == Eigen::Dynamic || MaxCols == Eigen::Dynamic)> { };
 
 
 
