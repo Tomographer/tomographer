@@ -74,11 +74,35 @@ matrix:
             - python-pip
             - libatlas-dev
             - libatlas-base-dev
-            - libboost-python-dev
             - libboost-all-dev
       env:
         - CMAKE_C_COMPILER=gcc-4.8
         - CMAKE_CXX_COMPILER=g++-4.8
+        - PYTHON_EXECUTABLE=/usr/bin/python
+        - CMAKE_COMPILER_ARGS="-DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython2.7.so -DPYTHON_INCLUDE_DIR=/usr/include/python2.7"
+        - PIP=/usr/bin/pip
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc-5
+            - g++-5
+            - gfortran
+            - gfortran-multilib
+            - python-dev
+            - python-numpy
+            - python-scipy
+            - python-matplotlib
+            - python-tk
+            - python-pip
+            - libatlas-dev
+            - libatlas-base-dev
+            - libboost-all-dev
+      env:
+        - CMAKE_C_COMPILER=gcc-5
+        - CMAKE_CXX_COMPILER=g++-5
         - PYTHON_EXECUTABLE=/usr/bin/python
         - CMAKE_COMPILER_ARGS="-DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython2.7.so -DPYTHON_INCLUDE_DIR=/usr/include/python2.7"
         - PIP=/usr/bin/pip
@@ -100,14 +124,45 @@ matrix:
             - python3-pip
             - libatlas-dev
             - libatlas-base-dev
-            - libboost-python-dev
             - libboost-all-dev
       env:
         - CMAKE_C_COMPILER=gcc-6
         - CMAKE_CXX_COMPILER=g++-6
         - PYTHON_EXECUTABLE=/usr/bin/python3
-        - CMAKE_COMPILER_ARGS="-DBoost_PYTHON_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_python-py34.so"
+        - CMAKE_COMPILER_ARGS=""
         - PIP=/usr/bin/pip3
+    - compiler: clang
+      addons:
+        apt:
+          packages:
+            - python-dev
+            - python-numpy
+            - python-scipy
+            - python-matplotlib
+            - python-tk
+            - python-pip
+            # to compile cvxpy:
+            - gcc
+            - g++
+            - gfortran
+            - gfortran-multilib
+            - libatlas-dev
+            - libatlas-base-dev
+            - libboost-all-dev
+      before_install:
+        - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
+        - sudo apt-add-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty main'
+        - sudo apt-add-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.3 main'
+        - sudo apt-get update
+        - sudo apt-get install clang-3.3 clang++-3.3
+      env:
+        - CMAKE_C_COMPILER=clang-3.3
+        - CMAKE_CXX_COMPILER=clang++-3.3
+        - PYTHON_EXECUTABLE=/usr/bin/python3
+        - CMAKE_COMPILER_ARGS=""
+        - PIP_CC=/usr/bin/gcc
+        - PIP_CXX=/usr/bin/g++
+        - PIP=/usr/bin/pip
     - compiler: clang
       addons:
         apt:
@@ -127,7 +182,6 @@ matrix:
             - gfortran-multilib
             - libatlas-dev
             - libatlas-base-dev
-            - libboost-python-dev
             - libboost-all-dev
       before_install:
         - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
@@ -139,7 +193,7 @@ matrix:
         - CMAKE_C_COMPILER=clang-3.8
         - CMAKE_CXX_COMPILER=clang++-3.8
         - PYTHON_EXECUTABLE=/usr/bin/python3
-        - CMAKE_COMPILER_ARGS="-DOpenMP_C_FLAGS='-fopenmp=libiomp5' -DOpenMP_CXX_FLAGS='-fopenmp=libiomp5' -DBoost_PYTHON_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_python-py34.so -DPYBIND11_CPP_STANDARD='-std=c++11'"
+        - CMAKE_COMPILER_ARGS="-DOpenMP_C_FLAGS='-fopenmp=libiomp5' -DOpenMP_CXX_FLAGS='-fopenmp=libiomp5' -DPYBIND11_CPP_STANDARD='-std=c++11'"
         - PIP_CC=/usr/bin/gcc
         - PIP_CXX=/usr/bin/g++
         - PIP=/usr/bin/pip3
