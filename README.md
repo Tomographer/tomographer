@@ -66,7 +66,7 @@ anything else.
 
 To compile `tomorun` from source, you'll need:
 
-  - a recent C++ compiler (g++ ≥ 4.6, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.8)
+  - a recent C++ compiler (g++ ≥ 4.6, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.3)
   - [CMake ≥ 3.1](http://www.cmake.org/)
   - [Boost libraries ≥ 1.40](http://www.boost.org/)
   - [Eigen3 library ≥ 3.3](http://eigen.tuxfamily.org/)
@@ -74,7 +74,7 @@ To compile `tomorun` from source, you'll need:
 
 To compile the python interface, you'll need:
 
-  - a recent C++ compiler (g++ ≥ 4.6, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.8)
+  - a recent C++ compiler (g++ ≥ 4.8, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.3)
   - [Boost headers ≥ 1.40](http://www.boost.org/)
   - [Python 2.7 or Python 3](http://www.python.org/)
   - [Eigen3 library ≥ 3.3](http://eigen.tuxfamily.org/)
@@ -82,16 +82,16 @@ To compile the python interface, you'll need:
 In both cases a recent C++ compiler is required as some C++11 features and
 elements of its standard library are used.
 
+Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
+
 NOTE: OpenMP is now no longer needed if your compiler supports C++ threads
 (std::thread).  This is the case for many compilers, including Apple's `clang`.
 
-Apple Mac OS X with [homebrew](https://brew.sh): the following commands will get
-you started with all the prerequisites and with homebrew's python3.
+Tip: On Apple Mac OS X with [homebrew](https://brew.sh), the following commands
+will get you started with all the prerequisites and with homebrew's python3.
 
     > brew tap homebrew/science
     > brew install eigen python3 libmatio boost
-
-Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
 
 
 Installing and Running `tomorun`
@@ -103,10 +103,10 @@ It is then ready for use.
 The rest of this section concerns compiling Tomographer/Tomorun from source.
 
 The configuration, compilation and installation process is done using CMake.
-(You'll need CMake ≥ 3.1. Don't worry, it's easy [install a binary
-release](https://cmake.org/download/).)  Download an official release of
-Tomographer, unpack it, and enter the unpacked directory.  Then, issue the
-commands:
+(You'll need CMake ≥ 3.1. Don't worry, it's easy to [install a binary
+release](https://cmake.org/download/).)  Download an [official
+release](https://github.com/Tomographer/tomographer/releases/) of Tomographer,
+unpack it, and enter the unpacked directory.  Then, issue the commands:
 
     tomographer-X.X> mkdir build
     tomographer-X.X> cd build
@@ -142,10 +142,10 @@ The heavy template meta-programming can cause GCC/G++ to use a LOT of memory
 while compiling.  If your system is limited on memory, you should consider
 tuning the [gcc flags](https://gcc.gnu.org/onlinedocs/gcc-3.3/gcc/Optimize-Options.html)
 `--param ggc-min-expand` and `--param ggc-min-heapsize`: I have found
-`--param ggc-min-expand=10 --param ggc-min-heapsize=32768` to work OK for 4GB of
-memory; if you want to be really conservative use `--param ggc-min-expand=0
---param ggc-min-heapsize=8192`.  These options should be specified to CMake as
-`-DCMAKE_CXX_FLAGS="--param ..."`.
+`--param ggc-min-expand=10 --param ggc-min-heapsize=32768` to work all right
+for 4GB of memory; if you want to be really conservative use
+ `--param ggc-min-expand=0 --param ggc-min-heapsize=8192`.  These options
+should be specified to CMake as `-DCMAKE_CXX_FLAGS="--param ..."`.
 
 
 ### Running `tomorun`

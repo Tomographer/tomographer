@@ -152,12 +152,12 @@ matrix:
       before_install:
         - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
         - sudo apt-add-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty main'
-        - sudo apt-add-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.3 main'
+        - sudo apt-add-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty-3.4 main'
         - sudo apt-get update
-        - sudo apt-get install clang-3.3 clang++-3.3
+        - sudo apt-get install clang-3.4 clang++-3.4
       env:
-        - CMAKE_C_COMPILER=clang-3.3
-        - CMAKE_CXX_COMPILER=clang++-3.3
+        - CMAKE_C_COMPILER=clang-3.4
+        - CMAKE_CXX_COMPILER=clang++-3.4
         - PYTHON_EXECUTABLE=/usr/bin/python3
         - CMAKE_COMPILER_ARGS=""
         - PIP_CC=/usr/bin/gcc
