@@ -53,10 +53,6 @@ string(TOUPPER "${CMAKE_BUILD_TYPE}" cmake_build_type_upper)
 RemoveFlag(CMAKE_CXX_FLAGS_${cmake_build_type_upper} "${CMAKE_CXX_FLAGS_${cmake_build_type_upper}}" "-DNDEBUG")
 RemoveFlag(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}" "-DNDEBUG")
 
-if(CMAKE_CXX_FLAGS MATCHES "-msse4.1")
-  message(WARNING "Beware--Too aggressive SIMD optimizations seem to create malloc errors in the python module (??)")
-endif()
-
 
 set(tomographerpy_SRCS
   cxx/pyhistogram.cxx

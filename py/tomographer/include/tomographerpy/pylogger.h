@@ -59,6 +59,7 @@ private:
   pybind11::object py_logging; // the Python "logging" module
   pybind11::object py_logger; // the Python "logging.Logger" instance for our use
   bool _bypasspython;
+  bool _requireGilAcquisition;
 public:
   inline
   PyLogger();
@@ -115,6 +116,41 @@ public:
   inline _BypassPython pushBypassPython() {
     return _BypassPython(this);
   }
+
+
+
+  // NOTE: GIL is acquired only for emitting logs, NOT for toPythonLevel() or other helpers
+  inline void requireGilAcquisition() {
+    _requireGilAcquisition = true;
+  }
+  inline void endRequireGilAcquisition() {
+    _requireGilAcquisition = false;
+  }
+  struct _RequireGilAcquisition {
+    PyLogger *pylogger;
+    _RequireGilAcquisition(PyLogger * l) : pylogger(l) {
+      pylogger->requireGilAcquisition();
+    }
+    _RequireGilAcquisition(const _RequireGilAcquisition & copy) = delete;
+    _RequireGilAcquisition(_RequireGilAcquisition && other) : pylogger(other.pylogger) { other.pylogger = NULL; }
+    ~_RequireGilAcquisition() {
+      if (pylogger != NULL) {
+        pylogger->endRequireGilAcquisition();
+      }
+    }
+  };
+  /**
+   * \code
+   *   {
+   *     auto dummy = pushRequireGilAcquisition();
+   *
+   *     ...
+   *   }
+   * \endcode
+   */
+  inline _RequireGilAcquisition pushRequireGilAcquisition() {
+    return _RequireGilAcquisition(this);
+  }
 };
 
 
@@ -123,7 +159,8 @@ PyLogger::PyLogger()
   : Tomographer::Logger::LoggerBase<PyLogger>(),
   py_logging(),
   py_logger(),
-  _bypasspython(false)
+  _bypasspython(false),
+  _requireGilAcquisition(false)
 {
 }
 
@@ -186,31 +223,34 @@ void PyLogger::emitLog(int level, const char * origin, const std::string & msg)
   } else {
     //fprintf(stderr, "Emitting log ... (%s)\n", msg.c_str());
 
-    py::object pylevel = toPythonLevel(level);
+    auto do_it = [&]() {
+      py::object pylevel = toPythonLevel(level);
 
-    std::string full_msg = std::string("<")+origin+"> "+msg;
+      std::string full_msg = std::string("<")+origin+"> "+msg;
 
-    py::dict extra;
-    extra["origin"] = origin;
-    extra["msg_orig"] = msg;
-    py::dict kwargs;
-    kwargs["extra"] = extra;
-    auto logfn = py::getattr(py_logger, "log");
-    //      try {
-    if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
-      throw py::error_already_set();
+      py::dict extra;
+      extra["origin"] = origin;
+      extra["msg_orig"] = msg;
+      py::dict kwargs;
+      kwargs["extra"] = extra;
+      auto logfn = py::getattr(py_logger, "log");
+      //      try {
+      if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
+        throw py::error_already_set();
+      }
+      logfn(*py::make_tuple(pylevel, full_msg), **kwargs);
+      if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
+        throw py::error_already_set();
+      }
+    };
+
+    if (_requireGilAcquisition) {
+      py::gil_scoped_acquire gil_acquire;
+      do_it();
+    } else {
+      do_it();
     }
-    logfn(*py::make_tuple(pylevel, full_msg), **kwargs);
-    if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
-      throw py::error_already_set();
-    }
-    // } catch (py::error_already_set & e) {
-    //   //PyErr_Print();
-    //   //fprintf(stderr, "Propagating exception in call to python logging function.\n");
-    //   throw e;
-    // }
   }
-  //fprintf(stderr, "HERE (Y)\n");
 }
 
 

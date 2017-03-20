@@ -670,7 +670,8 @@ public:
             shared_data.schedule.interrupt_requested = true;
             break;
           } catch (...) {
-            privdat.logger.debug("CxxThreads::run()/worker", "Exception caught inside task!") ;
+            privdat.logger.debug("CxxThreads::run()/worker", "Exception caught inside task! "
+                                 + boost::current_exception_diagnostic_information()) ;
             std::lock_guard<std::mutex> lk(shared_data.schedule.mutex) ;
             shared_data.schedule.interrupt_requested = true;
             shared_data.schedule.inner_exception += std::string("Exception caught inside task: ")
@@ -734,16 +735,16 @@ public:
 
     shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "Threads finished");
 
-    // if tasks were interrupted, throw the corresponding exception
-    if (shared_data.schedule.interrupt_requested) {
-      throw TasksInterruptedException();
-    }
-
     if (shared_data.schedule.inner_exception.size()) {
       // interrupt was requested because of an inner exception, not an explicit interrupt request
       throw std::runtime_error(shared_data.schedule.inner_exception);
     }
     
+    // if tasks were interrupted, throw the corresponding exception
+    if (shared_data.schedule.interrupt_requested) {
+      throw TasksInterruptedException();
+    }
+
     shared_data.results->runsFinished(shared_data.schedule.num_total_runs, shared_data.pcdata);
     
     shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "Done.");

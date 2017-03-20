@@ -231,6 +231,7 @@ glob_cflags = [
     # '-DTOMOGRAPHER_VERSION=\"{}\"'.format(version),
     # '-DTOMOGRAPHER_VERSION_MAJ={}'.format(version_maj),
     # '-DTOMOGRAPHER_VERSION_MIN={}'.format(version_min),
+    '-DEIGEN_DONT_PARALLELIZE',
     '-UNDEBUG',
 ]
 

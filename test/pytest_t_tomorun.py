@@ -5,6 +5,7 @@ from __future__ import print_function
 #import sys
 import re
 import numpy as np
+import numpy.linalg as npl
 import numpy.testing as npt
 
 import logging
@@ -153,6 +154,32 @@ class analytical_known_example_tomorun(unittest.TestCase):
                                  tomographer.BinningAnalysis.CONVERGED*np.ones([hist_params.num_bins], dtype=int)).sum(),
                                 0.75*hist_params.num_bins )
 
+
+    def test_custom_figofmerit(self):
+
+        print("test_custom_figofmerit()")
+
+        num_repeats = 2
+        hist_params = tomographer.UniformBinsHistogramParams(0.99, 1, 20)
+
+        r = tomographer.tomorun.tomorun(
+            dim=2,
+            Emn=self.Emn,
+            Nm=self.Nm,
+            fig_of_merit=lambda T: npl.norm(np.dot(T,T.T.conj())), # purity
+            ref_state=self.rho_ref,
+            num_repeats=num_repeats,
+            mhrw_params=tomographer.MHRWParams(
+                step_size=0.04,
+                n_sweep=25,
+                n_run=8192,
+                n_therm=500),
+            hist_params=hist_params,
+        )
+
+        print(r['final_report'])
+        # just make sure that less than 1% of points are out of [0.99,1]
+        self.assertLess(r['final_histogram'].off_chart, 0.01)
 
     def test_callback(self):
 

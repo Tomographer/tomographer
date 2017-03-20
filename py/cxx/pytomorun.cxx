@@ -71,6 +71,7 @@ public:
 
   RealType getValue(const Eigen::Ref<const tpy::CplxMatrixType> & T) const
   {
+    py::gil_scoped_acquire gil_acquire;
     return fn(py::cast(T)).cast<RealType>();
   }
 
@@ -240,7 +241,6 @@ py::object py_tomorun(
   bool fig_of_merit_callable = py::hasattr(fig_of_merit, "__call__");
   std::string fig_of_merit_s;
   if (fig_of_merit_callable) {
-    throw error ..... DEBUG problems with GIL lock!!!!
     fig_of_merit_s = "<custom>";
   } else {
     fig_of_merit_s = fig_of_merit.cast<std::string>();
@@ -326,7 +326,8 @@ py::object py_tomorun(
     }) ;
 
   {
-//    py::gil_scoped_release release_gil;
+    py::gil_scoped_release gil_release;
+    auto tmp_pylogger_gil_ = tpy::logger->pushRequireGilAcquisition();
 
     Tomographer::MultiProc::CxxThreads::TaskDispatcher<OurMHRandomWalkTask,OurCData,OurResultsCollector,PyLogger>
       tasks(
@@ -336,7 +337,7 @@ py::object py_tomorun(
           num_repeats // num_runs
           );
 
-    setTasksStatusReportPyCallback(tasks, progress_fn, progress_interval_ms);
+    setTasksStatusReportPyCallback(tasks, progress_fn, progress_interval_ms, true /* GIL */);
 
     // and run our tomo process
 
@@ -466,8 +467,12 @@ void py_tomo_tomorun(py::module rootmodule)
         ":param Emn: The observed POVM effects, specified as a list of :math:`\\textit{dim}\\times\\textit{dim}`\n"
         "            matrices.\n"
         ":param Nm:  the list of observed frequency counts for each POVM effect in `Emn` or `Exn`.\n"
-        ":param fig_of_merit:  The choice of the figure of merit to study.  This must be one of 'obs-value',\n"
-        "            'fidelity', 'tr-dist' or 'purif-dist' (see below for more info).\n"
+        ":param fig_of_merit:  The choice of the figure of merit to study.  This is either a Python string or a\n"
+        "            Python callable.  If it is a string, it must be one of 'obs-value',\n"
+        "            'fidelity', 'tr-dist' or 'purif-dist' (see below for more info).  If it is a callable, it\n"
+        "            should accept a single argument, the T-parameterization of the density matrix, and should\n"
+        "            calculate and return the figure of merit.  The T-parameterization is a matrix :math:`T`\n"
+        "            that :math:`\\rho=TT^\\dagger`.\n"
         ":param ref_state:  For figures of merit which compare to a reference state ('fidelity', 'tr-dist',\n"
         "            and 'purif-dist'), this is the reference state to calculate the figure of merit with,\n"
         "            specified as a density matrix.\n"
@@ -492,7 +497,8 @@ void py_tomo_tomorun(py::module rootmodule)
         "\n\n"
         ".. rubric:: Figures of merit"
         "\n\n"
-        "The value of the `fig_of_merit` argument should be one of the following:\n\n"
+        "The value of the `fig_of_merit` argument may be a Python string, in which case it should be one of "
+        "the following:\n\n"
         "  - \"obs-value\": the expectation value of an observable. You should specify the argument "
         "`observable` as a 2-D `NumPy` array specifying the observable you are interested in. "
         "\n\n"
@@ -510,11 +516,21 @@ void py_tomo_tomorun(py::module rootmodule)
         "\n\n"
         "  - \"purif-dist\": the purified distance to a reference state [5]. You should specify the argument "
         "`ref_state` as a 2-D `NumPy` array specifying the density matrix of the state which should serve "
-        "as reference state."
+        "as reference state.\n\n"
+        "The value of the `fig_of_merit` argument may also be a Python callable which directly calculates the "
+        "figure of merit.  It should accept a single argument, the T-parameterization of the density matrix given "
+        "as a `NumPy` array (defined such that :math:`\\rho=TT^\\dagger`), and should return the value of the figure "
+        "of merit.  For example, to calculate the purity of the state :math:`\\operatorname{tr}(\\rho^2)`::\n\n"
+        "        import numpy as np\n"
+        "        import numpy.linalg as npl\n"
+        "        ...\n"
+        "        r = tomographer.tomorun.tomorun(...,\n"
+        "                                        fig_of_merit=lambda T: npl.norm(np.dot(T,T.T.conj())),\n"
+        "                                        ...)\n"
         "\n\n"
         ".. rubric:: Return value"
         "\n\n"
-        "This function returns a Python dictionary with the following keys and values set:\n\n"
+        "The `tomorun()` function returns a Python dictionary with the following keys and values set:\n\n"
         "  - ``final_histogram``: a :py:class:`~tomographer.AveragedErrorBarHistogram` instance with the final "
         "histogram data.  The histogram has the parameters specified in the `hist_params` argument. "
         "The histogram is NOT normalized to a probabilty density; you should call "

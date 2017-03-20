@@ -113,7 +113,7 @@ inline tpy::FullStatusReport preparePyTaskStatusReport(
 
 template<typename TaskDispatcher>
 inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, py::object progress_fn,
-                                           int progress_interval_ms)
+                                           int progress_interval_ms, bool require_gil_acquisition = false)
 {
   typedef typename TaskDispatcher::TaskType TaskType;
   typedef typename TaskType::StatusReportType TaskStatusReportType;
@@ -123,68 +123,79 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, py::object pr
   // use this callback to e.g. check for keyboard interrupt signals.
   //
 
-  tasks.setStatusReportHandler(
-      [progress_fn/*,time_start*/](const Tomographer::MultiProc::FullStatusReport<TaskStatusReportType> & report) {
+  auto fn = [progress_fn/*,time_start*/](const Tomographer::MultiProc::FullStatusReport<TaskStatusReportType> & report) {
 
-        //fprintf(stderr, "DEBUG:: handler called, pid=%d, this_thread::get_id=%s\n", (int)getpid(), streamstr(std::this_thread::get_id()).c_str() ) ;
-        // check to see if we got any KeyboardInterrupt
-        // PyErr_CheckSignals() returns -1 if an exception was raised
-        if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
-          //fprintf(stderr, "DEBUG:: error set, throwing\n") ;
-          throw py::error_already_set();
-        }
-        // call the python progress callback:
-        if (!progress_fn.is_none()) {
-          auto r = preparePyTaskStatusReport<TaskType>(report);
-          //fprintf(stderr, "DEBUG:: about to call py callback\n") ;
-          //try {
-            progress_fn(py::cast(r));
-          // } catch (std::exception & exc) {
-          //   //fprintf(stderr, "DEBUG:: EXCEPTION! %s", exc.what()) ;
-          //   throw;
-          // } catch (...) {
-          //   //fprintf(stderr, "DEBUG:: EXCEPTION! (unknown)") ;
-          //   throw;
-          // }
-          if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
-            fprintf(stderr, "DEBUG:: error set, throwing\n") ;
-            throw py::error_already_set();
-          }
-          //fprintf(stderr, "DEBUG:: py callback done\n") ;
-        }
-        // borrowed from tomographer/tools/signal_status_handler.h: --->  FOR DEBUGGING::
-        /*
-          std::string elapsed = Tomographer::Tools::fmtDuration(StdClockType::now() - time_start);
-          fprintf(stderr,
-          "\n"
-          "=========================== Intermediate Progress Report ============================\n"
-          "  Total Completed Runs: %d/%d: %5.2f%%\n"
-          "  %s total elapsed\n",
-          report.num_completed, report.num_total_runs,
-          (double)report.num_completed/report.num_total_runs*100.0,
-          elapsed.c_str());
-          if (report.workers_running.size() == 1) {
-          if (report.workers_running[0]) {
-          fprintf(stderr, "--> %s\n", report.workers_reports[0].msg.c_str());
-          }
-          } else if (report.workers_running.size() > 1) {
-          fprintf(stderr,
-          "Current Run(s) information (workers working/spawned %d/%d):\n",
-          (int)std::count(report.workers_running.begin(), report.workers_running.end(), true),
-          (int)report.workers_running.size()
-          );
-          for (unsigned int k = 0; k < report.workers_running.size(); ++k) {
-          std::string msg = report.workers_running[k] ? report.workers_reports[k].msg : std::string("<idle>");
-          fprintf(stderr, "=== #%2u: %s\n", k, msg.c_str());
-          }
-          } else {
-          // no info. (workers_running.size() == 0)
-          }
-          fprintf(stderr,
-          "=====================================================================================\n\n");
-        */
-        // <----
-      });
+    //fprintf(stderr, "DEBUG:: handler called, pid=%d, this_thread::get_id=%s\n", (int)getpid(), streamstr(std::this_thread::get_id()).c_str() ) ;
+    // check to see if we got any KeyboardInterrupt
+    // PyErr_CheckSignals() returns -1 if an exception was raised
+    if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
+      //fprintf(stderr, "DEBUG:: error set, throwing\n") ;
+      throw py::error_already_set();
+    }
+    // call the python progress callback:
+    if (!progress_fn.is_none()) {
+      auto r = preparePyTaskStatusReport<TaskType>(report);
+      //fprintf(stderr, "DEBUG:: about to call py callback\n") ;
+      //try {
+      progress_fn(py::cast(r));
+      // } catch (std::exception & exc) {
+      //   //fprintf(stderr, "DEBUG:: EXCEPTION! %s", exc.what()) ;
+      //   throw;
+      // } catch (...) {
+      //   //fprintf(stderr, "DEBUG:: EXCEPTION! (unknown)") ;
+      //   throw;
+      // }
+      if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
+        fprintf(stderr, "DEBUG:: error set, throwing\n") ;
+        throw py::error_already_set();
+      }
+      //fprintf(stderr, "DEBUG:: py callback done\n") ;
+    }
+    // borrowed from tomographer/tools/signal_status_handler.h: --->  FOR DEBUGGING::
+    /*
+      std::string elapsed = Tomographer::Tools::fmtDuration(StdClockType::now() - time_start);
+      fprintf(stderr,
+      "\n"
+      "=========================== Intermediate Progress Report ============================\n"
+      "  Total Completed Runs: %d/%d: %5.2f%%\n"
+      "  %s total elapsed\n",
+      report.num_completed, report.num_total_runs,
+      (double)report.num_completed/report.num_total_runs*100.0,
+      elapsed.c_str());
+      if (report.workers_running.size() == 1) {
+      if (report.workers_running[0]) {
+      fprintf(stderr, "--> %s\n", report.workers_reports[0].msg.c_str());
+      }
+      } else if (report.workers_running.size() > 1) {
+      fprintf(stderr,
+      "Current Run(s) information (workers working/spawned %d/%d):\n",
+      (int)std::count(report.workers_running.begin(), report.workers_running.end(), true),
+      (int)report.workers_running.size()
+      );
+      for (unsigned int k = 0; k < report.workers_running.size(); ++k) {
+      std::string msg = report.workers_running[k] ? report.workers_reports[k].msg : std::string("<idle>");
+      fprintf(stderr, "=== #%2u: %s\n", k, msg.c_str());
+      }
+      } else {
+      // no info. (workers_running.size() == 0)
+      }
+      fprintf(stderr,
+      "=====================================================================================\n\n");
+    */
+    // <----
+  };
+
+  auto fn_with_gil = [fn](const Tomographer::MultiProc::FullStatusReport<TaskStatusReportType> & report) {
+    py::gil_scoped_acquire gil_acquire;
+    fn(report);
+  };
+
+
+  if (require_gil_acquisition) {
+    tasks.setStatusReportHandler(fn_with_gil);
+  } else {
+    tasks.setStatusReportHandler(fn);
+  }
   tasks.requestPeriodicStatusReport(progress_interval_ms);
 }
 
