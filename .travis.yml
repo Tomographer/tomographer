@@ -8,6 +8,7 @@ language: cpp
 # Install dependencies (Eigen3 >= 3.2.5, MatIO 1.5, CMake >= 3.1)
 install:
   - pwd
+  - export OUR_TRAVIS_PATH=`pwd`
   # Eigen3: need >= 3.3
   - export EIGEN_PATH=`pwd`/eigen-3.3.1
   - if [ ! -f "$EIGEN_PATH/Eigen/src/Core/util/Macros.h" ]; then curl -L https://bitbucket.org/eigen/eigen/get/3.3.1.tar.gz -o eigen-3.3.1.tar.gz && tar xfz eigen-3.3.1.tar.gz && mkdir -p eigen-3.3.1 && mv eigen-eigen-f562a193118d/* eigen-3.3.1 ; fi
@@ -24,15 +25,15 @@ install:
   # hack for preventing travis to interrupt after 10min of no output -- see
   # https://github.com/travis-ci/travis-ci/issues/6591
   - function write_visual_bells() { while true; do echo -en "\a"; sleep 10; done; }; write_visual_bells &
-  - (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} $PIP install --user $PIP_EXTRAS cvxpy pybind11 >pip_output.txt 2>&1 || cat pip_output.txt )
+  - (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} $PIP install --cache-dir=$OUR_TRAVIS_PATH/pip_cache/$PYTHON_EXECUTABLE --user $PIP_EXTRAS cvxpy pybind11 >pip_output.txt 2>&1 || cat pip_output.txt )
 
 cache:
-  pip: true
   directories:
     - eigen-3.3.1
     - matio-1.5.9/_install
     - pybind11-2.0.1/_install
     - cmake-3.1.3-Linux-x86_64
+    - pip_cache
 
 
 # Allow git-describe to find the right version string, otherwise the build fails
