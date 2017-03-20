@@ -410,10 +410,11 @@ def readfile(x):
 setup(name="tomographer",
       version=pip_version,
       description='Tomographer Python Interface',
-      longdescription=readfile('README.rst'),
+      long_description=readfile('README.rst'),
       author='Philippe Faist',
       author_email='phfaist@caltech.edu',
       url='https://github.com/Tomographer/tomographer/',
+      license='MIT',
       packages=[
           'tomographer',
           'tomographer.tools',

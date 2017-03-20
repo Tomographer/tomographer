@@ -44,7 +44,7 @@ git:
 script:
   - mkdir build
   - cd build
-  - $CMAKE_PATH/bin/cmake .. -DCMAKE_C_COMPILER=$CMAKE_C_COMPILER -DCMAKE_CXX_COMPILER=$CMAKE_CXX_COMPILER $CMAKE_COMPILER_ARGS -DBUILD_TOMOPY=on -DTOMOGRAPHER_ENABLE_TESTS=on -DTOMOGRAPHER_TEST_SETUPPY_BUILD=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH" -DMATIO_INCLUDE_DIR="$MATIO_PATH/_install/include" -DMATIO_LIBRARY="$MATIO_PATH/_install/lib/libmatio.so" -DPYBIND11_DIR="$PYBIND11_PATH/_install/share/cmake/pybind11" -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE  || cat build/CMakeFiles/CMakeError.log
+  - $CMAKE_PATH/bin/cmake .. -DCMAKE_C_COMPILER=$CMAKE_C_COMPILER -DCMAKE_CXX_COMPILER=$CMAKE_CXX_COMPILER $CMAKE_COMPILER_ARGS -DBUILD_TOMOPY=on -DTOMOGRAPHER_ENABLE_TESTS=on -DTOMOGRAPHER_TEST_SETUPPY_BUILD=on -DEIGEN3_INCLUDE_DIR="$EIGEN_PATH" -DMATIO_INCLUDE_DIR="$MATIO_PATH/_install/include" -DMATIO_LIBRARY="$MATIO_PATH/_install/lib/libmatio.so" -DCMAKE_FIND_ROOT_PATH="$PYBIND11_PATH/_install" -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE  || cat build/CMakeFiles/CMakeError.log
   - make VERBOSE=1
   # use python/setup.py to build the extension
   - (cd ../py; CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPILER CMAKE_CACHE_FILE=../build/CMakeCache.txt $PYTHON_EXECUTABLE setup.py sdist build bdist_egg)
@@ -55,40 +55,15 @@ matrix:
   include:
     # ### Dropping support for gcc 4.6 (especially for pybind11)
     #
-    # - compiler: gcc
-    #   dist: precise
-    #   addons:
-    #     apt:
-    #       sources:
-    #         - ubuntu-toolchain-r-test
-    #       packages:
-    #         - gcc-4.6
-    #         - g++-4.6
-    #         - gfortran
-    #         - gfortran-multilib
-    #         - python-dev
-    #         - python-matplotlib
-    #         - python-tk
-    #         - python-pip
-    #         - libatlas-dev
-    #         - libatlas-base-dev
-    #         - libboost-python-dev
-    #         - libboost-all-dev
-    #   env:
-    #     - CMAKE_C_COMPILER=gcc-4.6
-    #     - CMAKE_CXX_COMPILER=g++-4.6
-    #     - PYTHON_EXECUTABLE=/usr/bin/python
-    #     - CMAKE_COMPILER_ARGS="-DPYTHON_LIBRARY=/usr/lib/libpython2.7.so -DPYTHON_INCLUDE_DIR=/usr/include/python2.7 -DCMAKE_CXX11_STANDARD_COMPILE_OPTION=-std=c++0x -DCMAKE_CXX_FLAGS=-std=c++0x"
-    #     - PIP=/usr/bin/pip
-    #     - PIP_EXTRAS="git+https://github.com/uqfoundation/multiprocess@93ac3f96eaa7f9865910f4572407e043eb2a5277  numpy==1.8 scipy==0.15 "
+    # ### Still support g++ 4.8
     - compiler: gcc
       addons:
         apt:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - gcc-5
-            - g++-5
+            - gcc-4.8
+            - g++-4.8
             - gfortran
             - gfortran-multilib
             - python-dev
@@ -102,8 +77,8 @@ matrix:
             - libboost-python-dev
             - libboost-all-dev
       env:
-        - CMAKE_C_COMPILER=gcc-5
-        - CMAKE_CXX_COMPILER=g++-5
+        - CMAKE_C_COMPILER=gcc-4.8
+        - CMAKE_CXX_COMPILER=g++-4.8
         - PYTHON_EXECUTABLE=/usr/bin/python
         - CMAKE_COMPILER_ARGS="-DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython2.7.so -DPYTHON_INCLUDE_DIR=/usr/include/python2.7"
         - PIP=/usr/bin/pip
