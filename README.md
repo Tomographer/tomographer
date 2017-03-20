@@ -76,6 +76,7 @@ To compile the python interface, you'll need:
 
   - a recent C++ compiler (g++ ≥ 4.8, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.3)
   - [Boost headers ≥ 1.40](http://www.boost.org/)
+  - [PyBind11 ≥ 2.0](http://github.com/pybind/pybind11/)
   - [Python 2.7 or Python 3](http://www.python.org/)
   - [Eigen3 library ≥ 3.3](http://eigen.tuxfamily.org/)
 
@@ -91,7 +92,7 @@ Tip: On Apple Mac OS X with [homebrew](https://brew.sh), the following commands
 will get you started with all the prerequisites and with homebrew's python3.
 
     > brew tap homebrew/science
-    > brew install eigen python3 libmatio boost
+    > brew install python3 boost eigen libmatio pybind11
 
 
 Installing and Running `tomorun`

@@ -25,6 +25,7 @@ install:
   # hack for preventing travis to interrupt after 10min of no output -- see
   # https://github.com/travis-ci/travis-ci/issues/6591
   - function write_visual_bells() { while true; do echo -en "\a"; sleep 10; done; }; write_visual_bells &
+  - sudo -H pip install --upgrade pip
   - (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} $PIP install --cache-dir=$OUR_TRAVIS_PATH/pip_cache/$PYTHON_EXECUTABLE --user $PIP_EXTRAS cvxpy pybind11 >pip_output.txt 2>&1 || cat pip_output.txt )
 
 cache:
