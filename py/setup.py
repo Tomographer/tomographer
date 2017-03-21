@@ -421,7 +421,7 @@ setup(name="tomographer",
       url='https://github.com/Tomographer/tomographer/',
       download_url='https://github.com/Tomographer/tomographer/releases/download/{version}/tomographer-{version}.tar.gz'.format(version=version),
       license='MIT',
-      keywords='Quantum Tomography Confidence regions',
+      keywords='quantum tomography error bars',
       classifiers=[
           'Development Status :: 5 - Production/Stable',
           'Intended Audience :: Science/Research',
