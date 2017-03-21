@@ -198,8 +198,8 @@ matrix:
         - PYTHON_EXECUTABLE=/usr/bin/python3
         - CMAKE_COMPILER_ARGS="-DOpenMP_C_FLAGS='-fopenmp=libiomp5' -DOpenMP_CXX_FLAGS='-fopenmp=libiomp5' -DPYBIND11_CPP_STANDARD='-std=c++11' -DTOMORUN_MULTIPROC='openmp'"
         - PYBIND11_CPP_STANDARD="-std=c++11" # for setup.py
-        - ARCHITECTURE_FLAGS="-O3" # for setup.py -- get an obscure error otherwise:
-        #                            "'posix_memalign' is missing exception specification 'throw()'"
+        - ARCHITECTURE_FLAGS="" # for setup.py -- get an obscure error otherwise:
+        #                         "'posix_memalign' is missing exception specification 'throw()'"
         - PIP_CC=/usr/bin/gcc
         - PIP_CXX=/usr/bin/g++
         - PIP=/usr/bin/pip3

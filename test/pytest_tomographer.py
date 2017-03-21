@@ -26,6 +26,13 @@ class BasicStuff(unittest.TestCase):
         self.assertIsNotNone(m)
         print("Verision MAJ=", m.group('maj'), " MIN=", m.group('min'), " SUFFIX=", m.group('suffix'),
               " GITSUFFIX=", m.group('gitsuffix'))
+        self.assertTrue(m.group('maj') == str(tomographer.version.version_info.major))
+        self.assertTrue(m.group('min') == str(tomographer.version.version_info.minor))
+
+        print("CFLAGS = "+repr(tomographer.version.compile_info['cflags']))
+        self.assertTrue('cflags' in tomographer.version.compile_info)
+        self.assertTrue('eigen' in tomographer.version.compile_info)
+        self.assertTrue('boost' in tomographer.version.compile_info)
 
     def test_cxxlogger(self):
         # test that the cxxlogger object exists, and check we can set a log level.

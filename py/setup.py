@@ -73,7 +73,7 @@ print("Tomographer py dir = {}; cwd = {}".format(thisdir, os.getcwd()))
 
 sys.path.insert(0, os.path.join(thisdir, 'tomographer'))
 # tomographer.include:
-from include import find_include_dir, find_lib, Vars, ensure_str   # beurk!!
+from include import find_include_dir, find_lib, Vars, ensure_str, BOOST_DEPS_COMPONENTS   # beurk!!
 
             
 
@@ -327,23 +327,46 @@ class BuildExt(build_ext):
     def build_extensions(self):
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
-        if ct == 'unix':
-            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
-            stdcpp = vv.get('PYBIND11_CPP_STANDARD')
-            if stdcpp:
-                opts.append(stdcpp)
-            else:
-                opts.append(cpp_flag(self.compiler))
-            #if has_flag(self.compiler, '-fvisibility=hidden'):
-            #    opts.append('-fvisibility=hidden')
-        elif ct == 'msvc':
-            opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
+
+        stdcpp = vv.get('PYBIND11_CPP_STANDARD')
+        if stdcpp:
+            opts.append(stdcpp)
+        else:
+            opts.append(cpp_flag(self.compiler))
+
+        #if has_flag(self.compiler, '-fvisibility=hidden'):
+        #    opts.append('-fvisibility=hidden')
 
         for cflg in glob_cflags:
             opts.append(cflg)
 
         for cflg in vv.get('ARCHITECTURE_FLAGS').split():
             opts.append(cflg)
+
+        # create a header so that the C++ files have access to some setup.py info
+        if not os.path.exists(os.path.join(thisdir, 'tmp')): os.mkdir(os.path.join(thisdir,'tmp'))
+        with open(os.path.join(thisdir,'tmp','tomographerpy_compileinfo.h'), 'w') as f:
+            f.write("""
+#pragma once
+#include <vector>
+#include <string>
+
+static inline std::vector<std::string> tomographerpy_compileinfo_get_cflags() {
+    return { %(cflagslist)s } ;
+}
+""" % {
+    'cflagslist': ", ".join([ 'std::string("' + "".join([ '\\x%02x'%(x if isinstance(x,int) else ord(x)) for x in ensure_str(opt).encode('utf-8') ]) + '")'
+                              for opt in opts])
+}
+            )
+            opts.append("-DTOMOGRAPHERPY_HAVE_COMPILEINFO")
+            opts.append("-I"+os.path.join(thisdir,'tmp'))
+
+        # don't include VERSION_INFO in the compileinfo header file
+        if ct == 'unix':
+            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
+        elif ct == 'msvc':
+            opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
 
         for ext in self.extensions:
             ext.extra_compile_args = opts
@@ -382,9 +405,9 @@ if not os.path.realpath(vv.get('Boost_INCLUDE_DIR')).startswith(os.path.realpath
     if os.path.exists(target_tomographer_include_deps_boost):
         shutil.rmtree(target_tomographer_include_deps_boost)
     os.mkdir(target_tomographer_include_deps_boost)
-    subprocess.check_output([vv.get('BCP'), '--boost='+vv.get('Boost_INCLUDE_DIR'),
-                             'algorithm', 'math', 'core', 'exception',
-                             target_tomographer_include_deps_boost ])
+    subprocess.check_output([vv.get('BCP'), '--boost='+vv.get('Boost_INCLUDE_DIR'),] +
+                             BOOST_DEPS_COMPONENTS +
+                             [target_tomographer_include_deps_boost ])
 if not os.path.realpath(vv.get('EIGEN3_INCLUDE_DIR')).startswith(os.path.realpath(target_tomographer_include_deps)):
     target_tomographer_include_deps_eigen = os.path.join(target_tomographer_include_deps, 'eigen3')
     if os.path.exists(target_tomographer_include_deps_eigen):

@@ -6,11 +6,28 @@ The convenience module `tomographer.include` facilitates the development of new
 
 import os.path
 
+#
+# The included components are defined here -- this present list is also used by setup.py
+#
+BOOST_DEPS_COMPONENTS = ['algorithm', 'math', 'core', 'exception']
+"""
+Those components of boost which are included in the header dependencies directory of
+this package.
+"""
+
 
 def get_include(keys=False):
     """
     Return the directory(ies) to add to C++ include path in order to compile extensions using
     `tomographer`/`tomographerpy` headers.  The return value is a list of paths.
+
+    If `keys=False` (the default), then a list of include paths are returned.  If
+    `keys=True`, then a dictionary is returned with the keys `['tomographer',
+    'tomographerpy', 'boost', 'eigen']` and with corresponding values which are the
+    include paths for each component.
+
+    NOTE: only a subset of the boost headers are included (components 'algorithm', 'core',
+    'exception', and 'math').
 
     This function should be useful in your `setup.py` in order to compile your extension.
     """
@@ -20,10 +37,10 @@ def get_include(keys=False):
     if keys:
         return { 'tomographer': root_include,
                  'tomographerpy': root_include,
-                 'boost': os.path.join(root_include, 'boost'),
-                 'eigen': os.path.join(root_include, 'eigen3'), }
+                 'boost': os.path.join(root_include, 'deps', 'boost'),
+                 'eigen': os.path.join(root_include, 'deps', 'eigen3'), }
     
-    return set(get_include(keys=True).values())
+    return list(set(get_include(keys=True).values()))
 
 
 
@@ -221,8 +238,9 @@ class Vars(object):
         return self.d.get(k)
 
     def message(self, tight=False):
-        s = "Current variable values (detected or specified manually) are:\n\n"
+        s = "Configuration variables:\n\n"
         s += ("\n".join([ "    {}={}".format(k,v) for k,v in self.d.items() ]))
+        s += "\n\nYou may specify configuration variable values using environment variables."
 
         if hasattr(self, '_cachefile'):
             if not self._cachefile:
