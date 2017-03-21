@@ -7,17 +7,23 @@ The convenience module `tomographer.include` facilitates the development of new
 import os.path
 
 
-def get_include():
+def get_include(keys=False):
     """
     Return the directory(ies) to add to C++ include path in order to compile extensions using
     `tomographer`/`tomographerpy` headers.  The return value is a list of paths.
 
     This function should be useful in your `setup.py` in order to compile your extension.
     """
+
+    root_include = os.path.dirname(os.path.realpath(__file__))
+
+    if keys:
+        return { 'tomographer': root_include,
+                 'tomographerpy': root_include,
+                 'boost': os.path.join(root_include, 'boost'),
+                 'eigen': os.path.join(root_include, 'eigen3'), }
     
-    return [ os.path.dirname(os.path.realpath(__file__)) ]
-
-
+    return set(get_include(keys=True).values())
 
 
 

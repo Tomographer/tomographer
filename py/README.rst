@@ -6,3 +6,9 @@ quantum tomography in a Python environment.
 
 Documentation is provided [here](https://tomographer.github.io/tomographer/api-doc/current/py/index.html).
 
+
+License
+=======
+
+The Tomographer project is licensed under the MIT license, see LICENSE.txt.
+

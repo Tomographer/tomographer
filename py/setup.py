@@ -31,14 +31,13 @@ from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 
 import codecs
+import os
 import os.path
 import sys
 import subprocess # for git
 import re
 import glob
 import shutil
-
-import numpy # numpy.get_include()
 
 
 #
@@ -52,6 +51,9 @@ import numpy # numpy.get_include()
 # Boost_INCLUDE_DIR=/path/to/boost/headers
 # EIGEN3_INCLUDE_DIR=/path/to/eigen/headers
 # PYBIND11_CPP_STANDARD=-std=c++14
+#
+# handled by us (not in CMake cache):
+# BCP=/path/to/bcp  (Boost packaging tool)
 #
 # To read the above variables from cache:
 # CMAKE_CACHE_FILE=path/to/CMakeCache.txt
@@ -79,20 +81,26 @@ from include import find_include_dir, find_lib, Vars, ensure_str   # beurk!!
 cmake_cache_file = os.environ.get('CMAKE_CACHE_FILE', None)
 vv = Vars([
     'GIT',
+    'BCP',
     'Boost_INCLUDE_DIR',
     'EIGEN3_INCLUDE_DIR',
     'PYBIND11_CPP_STANDARD',
 ], cachefile=cmake_cache_file)
 
-# Defaults: GIT
+# Defaults: programs (git, bcp)
 vv.setDefault('GIT', lambda : find_executable('git'))
+vv.setDefault('BCP', lambda : find_executable('bcp'))
 
 # Defaults: Boost stuff
-vv.setDefault('Boost_INCLUDE_DIR', lambda : find_include_dir('boost', pkgnames=['boost']))
+vv.setDefault('Boost_INCLUDE_DIR',
+              lambda : find_include_dir('boost', pkgnames=['boost'],
+                                        add_paths=[os.path.join(thisdir,'tomographer','include','deps')]))
 
 # Defaults: Eigen3
-vv.setDefault('EIGEN3_INCLUDE_DIR', lambda : find_include_dir('eigen3', pkgnames=['eigen','eigen3'],
-                                                              return_with_suffix='eigen3'))
+vv.setDefault('EIGEN3_INCLUDE_DIR',
+              lambda : find_include_dir('eigen3', pkgnames=['eigen','eigen3'],
+                                        return_with_suffix='eigen3',
+                                        add_paths=[os.path.join(thisdir,'tomographer','include','deps')]))
 
 
 #
@@ -264,6 +272,14 @@ class get_pybind_include(object):
         return pybind11.get_include(self.user)
 
 
+class get_numpy_include(object):
+    """Same for numpy."""
+
+    def __str__(self):
+        import numpy
+        return numpy.get_include()
+
+
 # As of Python 3.6, CCompiler has a `has_flag` method.
 # cf http://bugs.python.org/issue26689
 def has_flag(compiler, flagname):
@@ -346,6 +362,40 @@ if os.path.exists(os.path.join(src_tomographer_include,
 elif not os.path.exists(target_tomographer_include):
     raise RuntimeError("Can't import tomographer headers in package, source doesn't exist!")
 
+
+def find_all_files(dirname, pred, prefixfn=lambda root, filename: os.path.join(root, filename)):
+    matches = []
+    for root, dirnames, filenames in os.walk(dirname):
+        matches += [ prefixfn(root, filename) for filename in filenames
+                     if pred(filename) ]
+    return matches
+
+#
+# Copy all dependency headers (boost, eigen)
+#
+target_tomographer_include_deps = os.path.join(target_tomographer_include, 'deps')
+if not os.path.exists(target_tomographer_include_deps):
+    os.mkdir(target_tomographer_include_deps)
+if not os.path.realpath(vv.get('Boost_INCLUDE_DIR')).startswith(os.path.realpath(target_tomographer_include_deps)):
+    target_tomographer_include_deps_boost = os.path.join(target_tomographer_include_deps, 'boost')
+    if os.path.exists(target_tomographer_include_deps_boost):
+        shutil.rmtree(target_tomographer_include_deps_boost)
+    os.mkdir(target_tomographer_include_deps_boost)
+    scan_headers = (
+        find_all_files(os.path.join(target_tomographer_include, 'tomographer'), lambda fn: fn.endswith('.h'))
+        + find_all_files(os.path.join(target_tomographer_include, 'tomographerpy'), lambda fn: fn.endswith('.h'))
+        )
+    subprocess.check_output([vv.get('BCP'), '--boost='+vv.get('Boost_INCLUDE_DIR'), '--scan' ] + scan_headers
+                            + [ target_tomographer_include_deps_boost ])
+if not os.path.realpath(vv.get('EIGEN3_INCLUDE_DIR')).startswith(os.path.realpath(target_tomographer_include_deps)):
+    target_tomographer_include_deps_eigen = os.path.join(target_tomographer_include_deps, 'eigen3')
+    if os.path.exists(target_tomographer_include_deps_eigen):
+        shutil.rmtree(target_tomographer_include_deps_eigen)
+    shutil.copytree(vv.get('EIGEN3_INCLUDE_DIR'),
+                    os.path.join(target_tomographer_include_deps_eigen))
+
+
+
 # create tomographer_version.h
 tomographer_version_h_content = """\
 /* This file is part of the Tomographer project, which is distributed under the
@@ -392,9 +442,50 @@ if os.path.exists(os.path.join(thisdir, '..', 'LICENSE.txt')):
     shutil.copy2(os.path.join(thisdir, '..', 'LICENSE.txt'), thisdir)
 
 
+
+#def make_glob_patterns(rootdir, prefixdir, patterns):
+#    l = []
+#    for root, dirnames, filenames in os.walk(os.path.join(rootdir, prefixdir)):
+#        l += [ os.path.join(os.path.relpath(root, rootdir), d, p)
+#               for p in patterns
+#               for d in dirnames ]
+#    return l
+
+tomographer_include_files = (
+#    make_glob_patterns(target_tomographer_include, 'tomographerpy', ['*.h']) +
+#    make_glob_patterns(target_tomographer_include, 'tomographer', ['*.h']) +
+#    make_glob_patterns(target_tomographer_include, 'deps/boost', ['*']) +
+#    make_glob_patterns(target_tomographer_include, 'deps/eigen3', ['*'])
+    find_all_files(os.path.join(target_tomographer_include, 'tomographerpy'),
+                   pred=lambda fn: fn.endswith('.h'),
+                   prefixfn=lambda root, fn: os.path.relpath(os.path.join(root, fn), target_tomographer_include)) +
+    find_all_files(os.path.join(target_tomographer_include, 'tomographer'),
+                   pred=lambda fn: True,
+                   prefixfn=lambda root, fn: os.path.relpath(os.path.join(root, fn), target_tomographer_include)) +
+    find_all_files(os.path.join(target_tomographer_include_deps, 'boost', 'boost'),
+                   pred=lambda fn: True,
+                   prefixfn=lambda root, fn: os.path.relpath(os.path.join(root, fn), target_tomographer_include)) +
+    find_all_files(os.path.join(target_tomographer_include_deps, 'eigen3'),
+                   pred=lambda fn: True,
+                   prefixfn=lambda root, fn: os.path.relpath(os.path.join(root, fn), target_tomographer_include))
+
+)
+
+print("ALL INCLUDE FILES = {}".format(tomographer_include_files))
+
+
 def readfile(x):
     with open(os.path.join(thisdir, x)) as f:
         return f.read()
+
+NOTE_PKG_DEPS = """
+
+NOTE: This package contain subsets of the `Boost library <https://boost.org/>`_
+(distributed under the `Boost software license
+<http://www.boost.org/users/license.html>`_ and `Eigen3 library
+<https://eigen.tuxfamily.org/>`_ (distributed under the `MPL license 2.0
+<https://www.mozilla.org/en-US/MPL/2.0/>`_).
+"""
 
 
 #
@@ -403,8 +494,8 @@ def readfile(x):
 
 setup(name="tomographer",
       version=version_for_pip,
-      description='Tomographer Python Interface',
-      long_description=readfile('README.rst'),
+      description=u'The Tomographer Project \u2014 Practical, Reliable Error Bars in Quantum Tomography',
+      long_description=readfile('README.rst') + NOTE_PKG_DEPS,
       author='Philippe Faist',
       author_email='phfaist@caltech.edu',
       url='https://github.com/Tomographer/tomographer/',
@@ -433,10 +524,10 @@ setup(name="tomographer",
                   # Path to pybind11 headers
                   get_pybind_include(),
                   get_pybind_include(user=True),
-                  numpy.get_include(),
-                  vv.get("Boost_INCLUDE_DIR"),
-                  vv.get("EIGEN3_INCLUDE_DIR"),
-                  os.path.join(thisdir, "tomographer/include"), # tomographer & tomographerpy
+                  get_numpy_include(),
+                  os.path.join(target_tomographer_include), # tomographer & tomographerpy
+                  os.path.join(target_tomographer_include_deps, 'boost'),
+                  os.path.join(target_tomographer_include_deps, 'eigen3'),
               ],
               depends=headers,
               language='c++',
@@ -444,10 +535,11 @@ setup(name="tomographer",
       ],
       # package data - headers
       package_data={
-          'tomographer.include': ['tomographerpy/*.h', 'tomographer/*/*.h', 'tomographer/*.h'],
+          'tomographer.include': tomographer_include_files,
       },
       #include_package_data=True,
-      install_requires=['pybind11>=2.0'],
+      setup_requires=['numpy>=1.8', 'pybind11>=2.0'],
+      install_requires=['numpy>=1.8'],
       cmdclass={ 'build_ext': BuildExt },
       zip_safe=False,
 )
