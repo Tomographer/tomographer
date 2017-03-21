@@ -132,7 +132,8 @@ if CXX:
 
 version = None
 try:
-    version = ensure_str(subprocess.check_output([vv.get('GIT'), 'describe', '--tags', 'HEAD'], cwd=thisdir)).strip()
+    version = ensure_str(subprocess.check_output([vv.get('GIT'), 'describe', '--tags', 'HEAD'],
+                                                 cwd=thisdir, stderr=subprocess.STDOUT)).strip()
 except Exception:
     pass
 if not version:
