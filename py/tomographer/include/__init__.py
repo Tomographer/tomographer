@@ -18,18 +18,24 @@ this package.
 
 def get_include(keys=False):
     """
-    Return the directory(ies) to add to C++ include path in order to compile extensions using
-    `tomographer`/`tomographerpy` headers.  The return value is a list of paths.
+    Return the directory(ies) to add to C++ include path in order to compile
+    extensions using `tomographer`/`tomographerpy` headers.  This function is
+    intended to be used in your `setup.py` in order to compile your extension.
 
-    If `keys=False` (the default), then a list of include paths are returned.  If
-    `keys=True`, then a dictionary is returned with the keys `['tomographer',
-    'tomographerpy', 'boost', 'eigen']` and with corresponding values which are the
-    include paths for each component.
+    Tomographer's dependencies, the Eigen and Boost headers, are included in the
+    package data so that you can easily compile other extensions using
+    Tomographer.  This function will also return the necessary include paths to
+    reach those dependencies.  (Note: Only a subset of the boost headers are
+    included, as defined by :py:data:`BOOST_DEPS_COMPONENTS`).
 
-    NOTE: only a subset of the boost headers are included (components 'algorithm', 'core',
-    'exception', and 'math').
+    If `keys=False` (the default), then a list of include paths are returned.
+    If `keys=True`, then a dictionary is returned with the keys `['tomographer',
+    'tomographerpy', 'boost', 'eigen']` and with corresponding values which are
+    the include paths for each component.
 
-    This function should be useful in your `setup.py` in order to compile your extension.
+    See also: Information about compile flags in
+    :py:data:`tomographer.version.compile_info['cflags']
+    <tomographer.version.compile_info>`.
     """
 
     root_include = os.path.dirname(os.path.realpath(__file__))

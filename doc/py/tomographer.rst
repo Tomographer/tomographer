@@ -12,3 +12,4 @@
    tomographer.tools
    tomographer.jpyutil
    tomographer.include
+   tomographer.version

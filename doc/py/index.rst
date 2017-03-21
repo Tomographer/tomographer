@@ -29,6 +29,11 @@ module.  You may find this useful for caching intermediate results or for saving
 the result of a computation.  Classes which can be :py:mod:`pickle`\ d are
 documented as such.
 
+If you are developing a new C++ extension module using Tomographer, then you
+might have a look at :py:func:`tomographer.include.get_include()` and
+:py:data:`tomographer.version.compile_info['cflags']
+<tomographer.version.compile_info>`.
+
 
 Modules and classes
 -------------------
