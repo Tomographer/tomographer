@@ -596,7 +596,7 @@ public:
                                               int num_levels,
                                               LoggerType & logger_)
     : value_histogram(histogram_params, vcalc, logger_),
-      binning_analysis(histogram_params.num_bins, num_levels, logger_),
+      binning_analysis((int)histogram_params.num_bins, num_levels, logger_),
       logger(logger_),
       result(histogram_params, binning_analysis)
   {

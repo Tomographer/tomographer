@@ -259,7 +259,7 @@ namespace tomo_internal {
 
     template<typename IndexType>
     inline const result_type operator() (IndexType a) const {
-      return std::ldexp(result_type(1), a);
+      return std::ldexp(result_type(1), (int)a);
     }
 
     // Don't expose an operator()(i,j) method, because otherwise Eigen might think that we

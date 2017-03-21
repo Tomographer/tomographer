@@ -1055,17 +1055,17 @@ struct histogram_pretty_printer
 	has_maxval = true;
       }
       if (k == 0 || (int)labels[k].size() > maxlabelwidth) {
-	maxlabelwidth = labels[k].size();
+	maxlabelwidth = (int)labels[k].size();
       }
       if (k == 0 || (int)svalues[k].size() > maxsvaluewidth) {
-	maxsvaluewidth = svalues[k].size();
+	maxsvaluewidth = (int)svalues[k].size();
       }
     }
     if (!has_maxval) {
       max_value = 1.0;
     }
 
-    max_bar_width = max_width - maxlabelwidth - maxsvaluewidth - lsep.size() - rsep.size();
+    max_bar_width = max_width - maxlabelwidth - maxsvaluewidth - (int)lsep.size() - (int)rsep.size();
     if (max_bar_width < 2) {
       max_bar_width = 2;
     }
@@ -1339,7 +1339,7 @@ inline void histogramShortBarWithInfo(std::ostream & str,
   full_max_width = Tools::getWidthForTerminalOutput(full_max_width);
 
   str << head;
-  int w = histogramShortBar(str, hist, log_scale, full_max_width - head.size() - tail.size());
+  const int w = histogramShortBar(str, hist, log_scale, full_max_width - (int)head.size() - (int)tail.size());
   str << std::setw(w + (int)tail.size()) << std::right << tail << "\n";
 }
 

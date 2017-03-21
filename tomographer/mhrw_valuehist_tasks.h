@@ -87,7 +87,7 @@ struct histogram_types<CDataBaseType, true> {// version WITH binning analysis:
 namespace tomo_internal {
 template<typename HistogramType>
 TOMOGRAPHER_EXPORT
-void print_hist_short_bar_with_accept_info(std::ostream & str, int dig_w, int j, const HistogramType & hist,
+void print_hist_short_bar_with_accept_info(std::ostream & str, int dig_w, std::size_t j, const HistogramType & hist,
                                            double acceptance_ratio, int columns)
 {
   histogramShortBarWithInfo(str,
@@ -720,18 +720,18 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorWithBinningAnalysis
                                                            collresults[j]->acceptance_ratio, h.columns());
 
       // error bars stats:
-      const int nbins = stats_coll_result.converged_status.size();
-      const int n_conv = stats_coll_result.converged_status
+      const auto nbins = stats_coll_result.converged_status.size();
+      const auto n_conv = stats_coll_result.converged_status
         .cwiseEqual(BinningAnalysisParamsType::CONVERGED).count();
       Eigen::ArrayXi unkn_arr = (stats_coll_result.converged_status
                                  .cwiseEqual(BinningAnalysisParamsType::UNKNOWN_CONVERGENCE))
         .template cast<int>();
       // little heuristic to see whether the "unknown" converged error bars are isolated or not
-      const int n_unknown = unkn_arr.count();
-      const int n_unknown_followingotherunknown
+      const auto n_unknown = unkn_arr.count();
+      const auto n_unknown_followingotherunknown
         = unkn_arr.segment(0,nbins-1).cwiseProduct(unkn_arr.segment(1,nbins-1)).count();
-      const int n_unknown_isolated = n_unknown - n_unknown_followingotherunknown;
-      const int n_notconv = stats_coll_result.converged_status
+      const auto n_unknown_isolated = n_unknown - n_unknown_followingotherunknown;
+      const auto n_notconv = stats_coll_result.converged_status
         .cwiseEqual(BinningAnalysisParamsType::NOT_CONVERGED).count();
       str << "    error bars: " << n_conv << " converged / "
           << n_unknown << " maybe (" << n_unknown_isolated << " isolated) / "

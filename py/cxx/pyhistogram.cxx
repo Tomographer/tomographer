@@ -37,10 +37,10 @@
 #include "common_p.h"
 
 
-static void check_pickle_tuple_size(int expect, int given)
+static void check_pickle_tuple_size(std::size_t expect, int given)
 {
   if (expect != given) {
-    throw std::runtime_error("Invalid pickle state: expected "+std::to_string(expect)+", got "
+    throw std::runtime_error(std::string("Invalid pickle state: expected ")+std::to_string(expect)+", got "
                              +std::to_string(given));
   }
 }

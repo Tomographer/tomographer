@@ -30,7 +30,7 @@
 
 #include <exception>
 #include <stdexcept>
-
+#include <limits>
 
 
 #include <tomographer/tools/loggers.h>
@@ -132,7 +132,7 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<
 	   HistogramParams hist_params, // histogram parameters
 	   int binning_num_levels, // number of binning levels in the binning analysis
 	   tpy::MHRWParams mhrw_params, // parameters of the random walk
-	   std::size_t base_seed) // a random seed to initialize the random number generator
+	   int base_seed) // a random seed to initialize the random number generator
     : CDataBase<ValueCalculator,true>(valcalc, hist_params, binning_num_levels, mhrw_params, base_seed),
       llh(llh_)
   {
@@ -307,7 +307,8 @@ py::object py_tomorun(
     binning_num_levels = (int)(std::floor(std::log(mhrw_params.n_run/128) / std::log(2)) + 1e-3) ;
   }
 
-  OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params, base_seed);
+  OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params,
+                    (int)(base_seed % std::numeric_limits<int>::max()));
 
   OurResultsCollector results(logger.parentLogger());
 

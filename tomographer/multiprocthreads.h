@@ -459,7 +459,7 @@ private:
     // internal use only:
     inline void _master_thread_update_status_report_periodic_interval_counter() const
     {
-      shared_data->status_report.counter = (
+      shared_data->status_report.counter = (uint32_t)(
           (std::chrono::duration_cast<std::chrono::milliseconds>(
               StdClockType::now().time_since_epoch()
               ).count()  /  shared_data->status_report.periodic_interval) & 0x00FFFFFF

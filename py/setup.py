@@ -151,14 +151,14 @@ version_maj = int(m.group('major'))
 version_min = int(m.group('minor'))
 
 # Normalize version string for PIP/setuptools
-pip_version = version
+version_for_pip = version
 # remove initial 'v' in 'v3.1'
-if pip_version[0] == 'v':
-    pip_version = pip_version[1:]
+if version_for_pip[0] == 'v':
+    version_for_pip = version_for_pip[1:]
 # make PEP-440 compatible if it is a specific git-describe commit number
-m = re.match(r'^(?P<vtag>.*)-(?P<ncommits>\d+)-(?P<githash>g[a-fA-F0-9]+)$', pip_version)
+m = re.match(r'^(?P<vtag>.*)-(?P<ncommits>\d+)-(?P<githash>g[a-fA-F0-9]+)$', version_for_pip)
 if m:
-    pip_version = "{vtag}+git{ncommits}.{githash}".format(**m.groupdict())
+    version_for_pip = "{vtag}+git{ncommits}.{githash}".format(**m.groupdict())
 
 
 
@@ -168,8 +168,8 @@ if m:
 #
 
 print("""
-  Welcome to the setup.py script for Tomographer {version} ({pip_version}).
-""".format(version=version, pip_version=pip_version))
+  Welcome to the setup.py script for Tomographer {version} ({version_for_pip}).
+""".format(version=version, version_for_pip=version_for_pip))
 
 print("""\
   The `tomographer` python package requires some external C++ libraries and
@@ -413,13 +413,23 @@ def readfile(x):
 #
 
 setup(name="tomographer",
-      version=pip_version,
+      version=version_for_pip,
       description='Tomographer Python Interface',
       long_description=readfile('README.rst'),
       author='Philippe Faist',
       author_email='phfaist@caltech.edu',
       url='https://github.com/Tomographer/tomographer/',
+      download_url='https://github.com/Tomographer/tomographer/releases/download/{version}/tomographer-{version}.tar.gz'.format(version=version),
       license='MIT',
+      keywords='Quantum Tomography Confidence regions',
+      classifiers=[
+          'Development Status :: 5 - Production/Stable',
+          'Intended Audience :: Science/Research',
+          'License :: OSI Approved :: MIT License',
+          'Programming Language :: C++',
+          'Programming Language :: Python',
+          'Topic :: Scientific/Engineering :: Physics',
+      ],
       packages=[
           'tomographer',
           'tomographer.tools',
