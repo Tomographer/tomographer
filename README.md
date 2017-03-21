@@ -66,7 +66,7 @@ anything else.
 
 To compile `tomorun` from source, you'll need:
 
-  - a recent C++ compiler (g++ ≥ 4.6, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.3)
+  - a recent C++ compiler (g++ ≥ 4.8, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.3)
   - [CMake ≥ 3.1](http://www.cmake.org/)
   - [Boost libraries ≥ 1.40](http://www.boost.org/)
   - [Eigen3 library ≥ 3.3](http://eigen.tuxfamily.org/)
