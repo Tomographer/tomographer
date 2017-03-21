@@ -59,8 +59,13 @@ import numpy # numpy.get_include()
 
 
 
-thisdir = os.path.dirname(os.path.realpath(__file__))
-#print("This dir = {}".format(thisdir))
+
+thisdir = os.path.dirname(os.path.realpath(os.path.abspath(__file__)))
+print("Tomographer py dir = {}".format(thisdir))
+
+# NOTE: We cannot assume we are being run from the correct directory (apparently pip runs
+# setup.py from another directory)
+
 
 
 sys.path.insert(0, os.path.join(thisdir, 'tomographer'))
@@ -127,7 +132,7 @@ if CXX:
 
 version = None
 try:
-    version = ensure_str(subprocess.check_output([vv.get('GIT'), 'describe', '--tags', 'HEAD'])).strip()
+    version = ensure_str(subprocess.check_output([vv.get('GIT'), 'describe', '--tags', 'HEAD'], cwd=thisdir)).strip()
 except Exception:
     pass
 if not version:
@@ -193,7 +198,7 @@ if sys.platform == 'darwin':
     print("""\
   To get started on Mac OS X with homebrew, you may run for instance:
 
-    > brew install eigen3 boost
+    > brew install eigen3 boost pybind11
 """)
 
 
@@ -203,24 +208,6 @@ if sys.platform == 'darwin':
 
 
 
-
-
-#
-# Utilities for passing on the options below
-#
-
-def libbasename(x):
-    if x is None:
-        return None
-    fn = os.path.splitext(os.path.basename(x))[0]
-    if fn[:3] == 'lib':
-        return fn[3:]
-    return fn
-
-def dirname_or_none(x):
-    if x is None:
-        return None
-    return os.path.dirname(x)
 
 
 #
@@ -255,8 +242,6 @@ headers = [ os.path.join('tomographer/include', 'tomographerpy', x) for x in [
     "pydensedm.h",
     "common.h"
 ] ]
-
-
 
 
 
@@ -350,10 +335,12 @@ target_tomographer_include = os.path.join(thisdir, 'tomographer', 'include')
 if os.path.exists(src_tomographer_include):
     if os.path.exists(os.path.join(target_tomographer_include, 'tomographer')):
         shutil.rmtree(os.path.join(target_tomographer_include, 'tomographer'))
+    def ignore(d, files):
+        return [f for f in files
+                if not os.path.isdir(os.path.join(thisdir,d,f)) and not f.endswith('.h')]
     shutil.copytree(src_tomographer_include,
                     os.path.join(target_tomographer_include, 'tomographer'),
-                    ignore=lambda d, files: [f for f in files
-                                             if not os.path.isdir(os.path.join(d,f)) and not f.endswith('.h')])
+                    ignore=ignore)
 elif not os.path.exists(target_tomographer_include):
     raise RuntimeError("Can't import tomographer headers in package, source doesn't exist!")
 
