@@ -118,7 +118,7 @@ unpack it, and enter the unpacked directory.  Then, issue the commands:
 And you'll have the `tomorun` installed on your system.
 
 You may also run CMake multiple times to adjust all the relevant options.  You
-can specify some standard CMake variables, such as CMAKE_INSTALL_PREFIX.  If you
+can specify some standard CMake variables, such as `CMAKE_INSTALL_PREFIX`.  If you
 installed a recent compiler manually, you'll need to point CMake to that
 compiler, e.g. with
 
