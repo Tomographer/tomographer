@@ -54,6 +54,7 @@ import shutil
 #
 # handled by us (not in CMake cache):
 # BCP=/path/to/bcp  (Boost packaging tool)
+# ARCHITECTURE_FLAGS=-march=native -O3  (compiler SIMD instruction sets & other optimizations)
 #
 # To read the above variables from cache:
 # CMAKE_CACHE_FILE=path/to/CMakeCache.txt
@@ -85,11 +86,15 @@ vv = Vars([
     'Boost_INCLUDE_DIR',
     'EIGEN3_INCLUDE_DIR',
     'PYBIND11_CPP_STANDARD',
+    'ARCHITECTURE_FLAGS',
 ], cachefile=cmake_cache_file)
 
 # Defaults: programs (git, bcp)
 vv.setDefault('GIT', lambda : find_executable('git'))
 vv.setDefault('BCP', lambda : find_executable('bcp'))
+
+# Defaults: flags
+vv.setDefault('ARCHITECTURE_FLAGS', '-march=native -O3')
 
 # Defaults: Boost stuff
 vv.setDefault('Boost_INCLUDE_DIR',
@@ -337,6 +342,9 @@ class BuildExt(build_ext):
         for cflg in glob_cflags:
             opts.append(cflg)
 
+        for cflg in vv.get('ARCHITECTURE_FLAGS').split():
+            opts.append(cflg)
+
         for ext in self.extensions:
             ext.extra_compile_args = opts
 
@@ -538,8 +546,7 @@ setup(name="tomographer",
           'tomographer.include': tomographer_include_files,
       },
       #include_package_data=True,
-      setup_requires=['numpy>=1.8', 'pybind11>=2.0'],
-      install_requires=['numpy>=1.8'],
+      install_requires=['numpy>=1.8', 'pybind11>=2.0'],
       cmdclass={ 'build_ext': BuildExt },
       zip_safe=False,
 )
