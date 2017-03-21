@@ -219,13 +219,13 @@ def setup_sources(thisdir, vv):
     # create the README file
     #
     NOTE_PKG_DEPS = """
-    NOTE: This package contains a subset of the
-    `Boost library <https://boost.org/>`_
-    (distributed under the `Boost software license <http://www.boost.org/users/license.html>`_)
-    and the `Eigen3 library <https://eigen.tuxfamily.org/>`_
-    (distributed under the `MPL license 2.0 <https://www.mozilla.org/en-US/MPL/2.0/>`_).
-    They are located in the source package directory ``tomographer/include/deps/``.
-    """
+Note: This package contains a subset of the
+`Boost library <https://boost.org/>`_
+(distributed under the `Boost software license <http://www.boost.org/users/license.html>`_)
+and the `Eigen3 library <https://eigen.tuxfamily.org/>`_
+(distributed under the `MPL license 2.0 <https://www.mozilla.org/en-US/MPL/2.0/>`_).
+They are located in the source package directory ``tomographer/include/deps/``.
+"""
 
     readme_content = ''
     with open(os.path.join(thisdir, 'README_.rst')) as f:
