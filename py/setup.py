@@ -66,14 +66,11 @@ import shutil
 thisdir = os.path.dirname(os.path.realpath(os.path.abspath(__file__)))
 print("Tomographer py dir = {}; cwd = {}".format(thisdir, os.getcwd()))
 
-# NOTE: We cannot assume we are being run from the correct directory (apparently pip runs
-# setup.py from another directory)
-
 
 
 sys.path.insert(0, os.path.join(thisdir, 'tomographer'))
 # tomographer.include:
-from include import find_include_dir, find_lib, Vars, ensure_str, BOOST_DEPS_COMPONENTS   # beurk!!
+from include import find_include_dir, find_lib, Vars, ensure_str   # beurk!!
 
             
 
@@ -98,87 +95,33 @@ vv.setDefault('ARCHITECTURE_FLAGS', '-march=native -O3')
 
 # Defaults: Boost stuff
 vv.setDefault('Boost_INCLUDE_DIR',
-              lambda : find_include_dir('boost', pkgnames=['boost'],
-                                        add_paths=[os.path.join(thisdir,'tomographer','include','deps')]))
+              lambda : find_include_dir('boost', pkgnames=['boost']))
 
 # Defaults: Eigen3
 vv.setDefault('EIGEN3_INCLUDE_DIR',
               lambda : find_include_dir('eigen3', pkgnames=['eigen','eigen3'],
-                                        return_with_suffix='eigen3',
-                                        add_paths=[os.path.join(thisdir,'tomographer','include','deps')]))
+                                        return_with_suffix='eigen3'))
+
+
 
 
 #
-# Check which compiler is used, and warn user if a different one is used than
-# recorded in the CMake cache file
+# PREPARE THE PYTHON SOURCES
 #
 
+import setup_sources
 
-CC = ''
-try:
-    CC = vv.get('CMAKE_C_COMPILER')
-except KeyError:
-    pass
-if CC:
-    envCC = os.environ.get('CC', '')
-    if envCC and envCC != CC:
-        # different compilers specified.
-        print("WARNING: different compilers set in environment ("+envCC+") and in CMake "
-              "cache file ("+CC+"); the former will be used (please set \"CC="+CC+"\" to override).")
+IsTomographerSources = setup_sources.setup_sources(thisdir, vv)
 
-CXX = ''
-try:
-    CXX = vv.get('CMAKE_CXX_COMPILER')
-except KeyError:
-    pass
-if CXX:
-    envCXX = os.environ.get('CXX', '')
-    if envCXX and envCXX != CXX:
-        # different compilers
-        print("WARNING: different C++ compilers set in environment ("+envCXX+") and in CMake "
-              "cache file ("+CXX+"); the former will be used (please set \"CXX="+CXX+"\" to override).")
-
+print("IsTomographerSources = {!r}".format(IsTomographerSources))
 
 #
-# Figure out version info
+# Read version info
 #
+with open(os.path.join(thisdir, 'VERSION')) as f:
+    version = ensure_str(f.read()).strip()
 
-version = None
-try:
-    version = ensure_str(subprocess.check_output([vv.get('GIT'), 'describe', '--tags', 'HEAD'],
-                                                 cwd=thisdir, stderr=subprocess.STDOUT)).strip()
-except Exception:
-    pass
-if not version:
-    if os.path.exists(os.path.join(thisdir, '..', 'VERSION')):
-        with open(os.path.join(thisdir, '..', 'VERSION')) as f:
-            version = ensure_str(f.read()).strip()
-    elif os.path.exists(os.path.join(thisdir, 'VERSION')):
-        with open(os.path.join(thisdir, 'VERSION')) as f:
-            version = ensure_str(f.read()).strip()
-if not version:
-    raise RuntimeError("Cannot determine Tomographer version (no git info and no VERSION file)")
-
-# create VERSION file here -- for sdist
-with open(os.path.join(thisdir, 'VERSION'), 'w') as f:
-    f.write(version + "\n")
-
-
-# major/minor sections of version
-m = re.match(r'^v(?P<major>\d+)\.(?P<minor>\d+)', version)
-version_maj = int(m.group('major'))
-version_min = int(m.group('minor'))
-
-# Normalize version string for PIP/setuptools
-version_for_pip = version
-# remove initial 'v' in 'v3.1'
-if version_for_pip[0] == 'v':
-    version_for_pip = version_for_pip[1:]
-# make PEP-440 compatible if it is a specific git-describe commit number
-m = re.match(r'^(?P<vtag>.*)-(?P<ncommits>\d+)-(?P<githash>g[a-fA-F0-9]+)$', version_for_pip)
-if m:
-    version_for_pip = "{vtag}+git{ncommits}.{githash}".format(**m.groupdict())
-
+(version_maj, version_min, version_for_pip) = setup_sources.get_version_info(version)
 
 
 
@@ -197,7 +140,7 @@ print("""\
 
 {}""".format("\n".join([ "    {}={}".format(k,v) for k,v in vv.d.items() ])))
 
-if not cmake_cache_file:
+if IsTomographerSources and not cmake_cache_file:
     print("""
   You may also read variables from a CMakeCache.txt file with
   CMAKE_CACHE_FILE=path/to/CMakeCache.txt
@@ -208,20 +151,12 @@ else:
 """.format(cmake_cache_file))
 
 
-if sys.platform == 'darwin':
+if IsTomographerSources and sys.platform == 'darwin':
     print("""\
   To get started on Mac OS X with homebrew, you may run for instance:
 
     > brew install eigen3 boost pybind11
 """)
-
-
-#print("DEBUG VARIABLE CACHE: ")
-#for (k,v) in vv.d.items():
-#    print("    "+k+"="+v)
-
-
-
 
 
 #
@@ -374,113 +309,6 @@ static inline std::vector<std::string> tomographerpy_compileinfo_get_cflags() {
         build_ext.build_extensions(self)
 
 
-
-#
-# Copy all tomographer headers inside tomographer.include as package data
-#
-src_tomographer_include = os.path.join(thisdir, '..', 'tomographer')
-target_tomographer_include = os.path.join(thisdir, 'tomographer', 'include')
-if os.path.exists(os.path.join(src_tomographer_include,
-                               'tomographer_version.h.in')): # make sure we've got the right 'tomographer' directory
-    if os.path.exists(os.path.join(target_tomographer_include, 'tomographer')):
-        shutil.rmtree(os.path.join(target_tomographer_include, 'tomographer'))
-    def ignore(d, files):
-        return [f for f in files
-                if not os.path.isdir(os.path.join(thisdir,d,f)) and not f.endswith('.h')]
-    shutil.copytree(src_tomographer_include,
-                    os.path.join(target_tomographer_include, 'tomographer'),
-                    ignore=ignore)
-elif not os.path.exists(target_tomographer_include):
-    raise RuntimeError("Can't import tomographer headers in package, source doesn't exist!")
-
-
-#
-# Copy all dependency headers (boost, eigen)
-#
-target_tomographer_include_deps = os.path.join(target_tomographer_include, 'deps')
-if not os.path.exists(target_tomographer_include_deps):
-    os.mkdir(target_tomographer_include_deps)
-if not os.path.realpath(vv.get('Boost_INCLUDE_DIR')).startswith(os.path.realpath(target_tomographer_include_deps)):
-    target_tomographer_include_deps_boost = os.path.join(target_tomographer_include_deps, 'boost')
-    if os.path.exists(target_tomographer_include_deps_boost):
-        shutil.rmtree(target_tomographer_include_deps_boost)
-    os.mkdir(target_tomographer_include_deps_boost)
-    subprocess.check_output([vv.get('BCP'), '--boost='+vv.get('Boost_INCLUDE_DIR'),] +
-                             BOOST_DEPS_COMPONENTS +
-                             [target_tomographer_include_deps_boost ])
-if not os.path.realpath(vv.get('EIGEN3_INCLUDE_DIR')).startswith(os.path.realpath(target_tomographer_include_deps)):
-    target_tomographer_include_deps_eigen = os.path.join(target_tomographer_include_deps, 'eigen3')
-    if os.path.exists(target_tomographer_include_deps_eigen):
-        shutil.rmtree(target_tomographer_include_deps_eigen)
-    shutil.copytree(vv.get('EIGEN3_INCLUDE_DIR'),
-                    os.path.join(target_tomographer_include_deps_eigen))
-
-
-
-# create tomographer_version.h
-tomographer_version_h_content = """\
-/* This file is part of the Tomographer project, which is distributed under the
- * terms of the MIT license.
- *
- * The MIT License (MIT)
- *
- * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
- * Copyright (c) 2017 Caltech, Institute for Quantum Information and Matter, Philippe Faist
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
-#ifndef zzzTOMOGRAPHER_VERSION_H_
-#define zzzTOMOGRAPHER_VERSION_H_
-
-#define TOMOGRAPHER_VERSION "{version}"
-#define TOMOGRAPHER_VERSION_MAJ {version_maj}
-#define TOMOGRAPHER_VERSION_MIN {version_min}
-
-#endif
-""".format(version=version,version_maj=version_maj,version_min=version_min)
-with open(os.path.join(thisdir, 'tomographer', 'include', 'tomographer', 'tomographer_version.h'), 'w') as f:
-    f.write(tomographer_version_h_content)
-
-# include license file in this directory
-if os.path.exists(os.path.join(thisdir, '..', 'LICENSE.txt')):
-    shutil.copy2(os.path.join(thisdir, '..', 'LICENSE.txt'), thisdir)
-
-NOTE_PKG_DEPS = """
-NOTE: This package contains a subset of the
-`Boost library <https://boost.org/>`_
-(distributed under the `Boost software license <http://www.boost.org/users/license.html>`_)
-and the `Eigen3 library <https://eigen.tuxfamily.org/>`_
-(distributed under the `MPL license 2.0 <https://www.mozilla.org/en-US/MPL/2.0/>`_).
-They are located in the source package directory ``tomographer/include/deps/``.
-"""
-
-# create the README file for the sdist
-if os.path.exists(os.path.join(thisdir, 'README_.rst')):
-    readme_content = ''
-    with open(os.path.join(thisdir, 'README_.rst')) as f:
-        readme_content = f.read()
-    with open(os.path.join(thisdir, 'README.rst'), 'w') as fw:
-        fw.write(readme_content)
-        fw.write(NOTE_PKG_DEPS)
-
-
 #def make_glob_patterns(rootdir, prefixdir, patterns):
 #    l = []
 #    for root, dirnames, filenames in os.walk(os.path.join(rootdir, prefixdir)):
@@ -497,6 +325,8 @@ def find_all_files(dirname, pred, prefixfn=lambda root, filename: os.path.join(r
     return matches
 
 
+target_tomographer_include = os.path.join(thisdir, 'tomographer', 'include')
+target_tomographer_include_deps = os.path.join(target_tomographer_include, 'deps')
 
 tomographer_include_files = (
 #    make_glob_patterns(target_tomographer_include, 'tomographerpy', ['*.h']) +
@@ -518,7 +348,7 @@ tomographer_include_files = (
 
 )
 
-print("ALL INCLUDE FILES = {}".format(tomographer_include_files))
+#print("ALL INCLUDE FILES = {}".format(tomographer_include_files))
 
 
 def readfile(x):
