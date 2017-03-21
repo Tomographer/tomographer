@@ -61,7 +61,7 @@ import numpy # numpy.get_include()
 
 
 thisdir = os.path.dirname(os.path.realpath(os.path.abspath(__file__)))
-print("Tomographer py dir = {}".format(thisdir))
+print("Tomographer py dir = {}; cwd = {}".format(thisdir, os.getcwd()))
 
 # NOTE: We cannot assume we are being run from the correct directory (apparently pip runs
 # setup.py from another directory)
@@ -177,9 +177,9 @@ print("""
 """.format(version=version, version_for_pip=version_for_pip))
 
 print("""\
-  The `tomographer` python package requires some external C++ libraries and
-  compiler features. You may need to specify their location with the use of
-  environment variables. Current values (detected or specified manually) are:
+  The `tomographer` python package requires some external C++ libraries. You may
+  need to specify their location with the use of environment variables. Current
+  values (detected or specified manually) are:
 
 {}""".format("\n".join([ "    {}={}".format(k,v) for k,v in vv.d.items() ])))
 
@@ -332,7 +332,8 @@ class BuildExt(build_ext):
 #
 src_tomographer_include = os.path.join(thisdir, '..', 'tomographer')
 target_tomographer_include = os.path.join(thisdir, 'tomographer', 'include')
-if os.path.exists(src_tomographer_include):
+if os.path.exists(os.path.join(src_tomographer_include,
+                               'tomographer_version.h.in')): # make sure we've got the right 'tomographer' directory
     if os.path.exists(os.path.join(target_tomographer_include, 'tomographer')):
         shutil.rmtree(os.path.join(target_tomographer_include, 'tomographer'))
     def ignore(d, files):
