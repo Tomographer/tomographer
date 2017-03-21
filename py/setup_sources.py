@@ -143,7 +143,17 @@ def setup_sources(thisdir, vv):
     if os.path.exists(target_tomographer_include_deps_boost):
         shutil.rmtree(target_tomographer_include_deps_boost)
     os.mkdir(target_tomographer_include_deps_boost)
-    subprocess.check_output([vv.get('BCP'), '--boost='+vv.get('Boost_INCLUDE_DIR'),] +
+    # Arrgh! "/usr/bin/bcp --boost=/usr/include ..." will copy all system files as well!!
+    # solution: create a symlink to '/usr/include/boost' in a sandboxed directory...
+    if not os.path.isdir(os.path.join(thisdir,'tmp')):
+        os.mkdir(os.path.join(thisdir,'tmp'))
+    if not os.path.isdir(os.path.join(thisdir,'tmp','boost_dir')):
+        os.mkdir(os.path.join(thisdir,'tmp','boost_dir'))
+    if not os.path.exists(os.path.join(thisdir,'tmp','boost_dir','boost')):
+        os.symlink(os.path.join(vv.get('Boost_INCLUDE_DIR'), 'boost'), # source
+                   os.path.join(thisdir,'tmp','boost_dir','boost')) # link_name
+
+    subprocess.check_output([vv.get('BCP'), '--boost='+os.path.join(thisdir,'tmp','boost_dir')] +
                              BOOST_DEPS_COMPONENTS +
                              [target_tomographer_include_deps_boost ])
 
