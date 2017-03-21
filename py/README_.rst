@@ -8,7 +8,6 @@ Documentation is provided [here](https://tomographer.github.io/tomographer/api-d
 
 
 License
-=======
+-------
 
 The Tomographer project is licensed under the MIT license, see LICENSE.txt.
-

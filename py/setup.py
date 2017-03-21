@@ -371,13 +371,6 @@ elif not os.path.exists(target_tomographer_include):
     raise RuntimeError("Can't import tomographer headers in package, source doesn't exist!")
 
 
-def find_all_files(dirname, pred, prefixfn=lambda root, filename: os.path.join(root, filename)):
-    matches = []
-    for root, dirnames, filenames in os.walk(dirname):
-        matches += [ prefixfn(root, filename) for filename in filenames
-                     if pred(filename) ]
-    return matches
-
 #
 # Copy all dependency headers (boost, eigen)
 #
@@ -389,12 +382,9 @@ if not os.path.realpath(vv.get('Boost_INCLUDE_DIR')).startswith(os.path.realpath
     if os.path.exists(target_tomographer_include_deps_boost):
         shutil.rmtree(target_tomographer_include_deps_boost)
     os.mkdir(target_tomographer_include_deps_boost)
-    scan_headers = (
-        find_all_files(os.path.join(target_tomographer_include, 'tomographer'), lambda fn: fn.endswith('.h'))
-        + find_all_files(os.path.join(target_tomographer_include, 'tomographerpy'), lambda fn: fn.endswith('.h'))
-        )
-    subprocess.check_output([vv.get('BCP'), '--boost='+vv.get('Boost_INCLUDE_DIR'), '--scan' ] + scan_headers
-                            + [ target_tomographer_include_deps_boost ])
+    subprocess.check_output([vv.get('BCP'), '--boost='+vv.get('Boost_INCLUDE_DIR'),
+                             'algorithm', 'math', 'core', 'exception',
+                             target_tomographer_include_deps_boost ])
 if not os.path.realpath(vv.get('EIGEN3_INCLUDE_DIR')).startswith(os.path.realpath(target_tomographer_include_deps)):
     target_tomographer_include_deps_eigen = os.path.join(target_tomographer_include_deps, 'eigen3')
     if os.path.exists(target_tomographer_include_deps_eigen):
@@ -449,6 +439,23 @@ with open(os.path.join(thisdir, 'tomographer', 'include', 'tomographer', 'tomogr
 if os.path.exists(os.path.join(thisdir, '..', 'LICENSE.txt')):
     shutil.copy2(os.path.join(thisdir, '..', 'LICENSE.txt'), thisdir)
 
+NOTE_PKG_DEPS = """
+NOTE: This package contains a subset of the
+`Boost library <https://boost.org/>`_
+(distributed under the `Boost software license <http://www.boost.org/users/license.html>`_)
+and the `Eigen3 library <https://eigen.tuxfamily.org/>`_
+(distributed under the `MPL license 2.0 <https://www.mozilla.org/en-US/MPL/2.0/>`_).
+They are located in the source package directory ``tomographer/include/deps/``.
+"""
+
+# create the README file for the sdist
+if os.path.exists(os.path.join(thisdir, 'README_.rst')):
+    readme_content = ''
+    with open(os.path.join(thisdir, 'README_.rst')) as f:
+        readme_content = f.read()
+    with open(os.path.join(thisdir, 'README.rst'), 'w') as fw:
+        fw.write(readme_content)
+        fw.write(NOTE_PKG_DEPS)
 
 
 #def make_glob_patterns(rootdir, prefixdir, patterns):
@@ -458,6 +465,15 @@ if os.path.exists(os.path.join(thisdir, '..', 'LICENSE.txt')):
 #               for p in patterns
 #               for d in dirnames ]
 #    return l
+
+def find_all_files(dirname, pred, prefixfn=lambda root, filename: os.path.join(root, filename)):
+    matches = []
+    for root, dirnames, filenames in os.walk(dirname):
+        matches += [ prefixfn(root, filename) for filename in filenames
+                     if pred(filename) ]
+    return matches
+
+
 
 tomographer_include_files = (
 #    make_glob_patterns(target_tomographer_include, 'tomographerpy', ['*.h']) +
@@ -486,16 +502,6 @@ def readfile(x):
     with open(os.path.join(thisdir, x)) as f:
         return f.read()
 
-NOTE_PKG_DEPS = """
-
-NOTE: This package contain subsets of the `Boost library <https://boost.org/>`_
-(distributed under the `Boost software license
-<http://www.boost.org/users/license.html>`_ and `Eigen3 library
-<https://eigen.tuxfamily.org/>`_ (distributed under the `MPL license 2.0
-<https://www.mozilla.org/en-US/MPL/2.0/>`_).
-"""
-
-
 #
 # Set up the tomographer python package
 #
@@ -503,7 +509,7 @@ NOTE: This package contain subsets of the `Boost library <https://boost.org/>`_
 setup(name="tomographer",
       version=version_for_pip,
       description=u'The Tomographer Project \u2014 Practical, Reliable Error Bars in Quantum Tomography',
-      long_description=readfile('README.rst') + NOTE_PKG_DEPS,
+      long_description=readfile('README.rst'),
       author='Philippe Faist',
       author_email='phfaist@caltech.edu',
       url='https://github.com/Tomographer/tomographer/',
