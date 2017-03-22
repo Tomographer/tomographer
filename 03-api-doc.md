@@ -7,7 +7,7 @@ layout: default
 
 **Latest Version**
 
-  - [latest version ({{ site.tomographer_apidoc_version }})]({{ site.baseurl }}/api-doc/{{ site.tomographer_apidoc_version }}/html/){:target="_blank"}
+  - [latest version]({{ site.baseurl }}/api-doc/current/html/){:target="_blank"}
 
 
 **All Versions**
