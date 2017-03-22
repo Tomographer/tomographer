@@ -129,6 +129,8 @@ do_run([e.cmake, '..',
         '-DZLIB_LIBRARY_RELEASE='+ZLIB_LIB,
         '-DBoost_PROGRAM_OPTIONS_LIBRARY='+Boost_PROGRAM_OPTIONS_LIB,
         '-DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE='+Boost_PROGRAM_OPTIONS_LIB,
+        # Tomorun: use OpenMP not C++ threads
+        '-DTOMORUN_MULTIPROC=openmp',
         # optimizations & architecture: don't include too many optimizations, so that the
         # binary can run on other machines.
         '-DTARGET_ARCHITECTURE=none',
