@@ -1,0 +1,21 @@
+<map id="Tomographer::Logger::LoggerBase&lt; Derived &gt;" name="Tomographer::Logger::LoggerBase&lt; Derived &gt;">
+<area shape="rect" id="node2" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; BoostTestLogger \&gt;" alt="" coords="416,37,640,76"/>
+<area shape="rect" id="node4" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; ThreadSanitizer\lLogger\&lt; BaseLogger \&gt; \&gt;" alt="" coords="425,131,631,183"/>
+<area shape="rect" id="node7" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; LocalLogger\l\&lt; BaseLoggerType_ \&gt; \&gt;" alt="" coords="435,207,621,259"/>
+<area shape="rect" id="node10" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; LocalLogger\l\&lt; LoggerType \&gt; \&gt;" alt="" coords="664,271,850,323"/>
+<area shape="rect" id="node11" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; MinimumSeverity\lLogger\&lt; BaseLogger, Level \&gt; \&gt;" alt="" coords="421,335,635,387"/>
+<area shape="rect" id="node13" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; VacuumLogger \&gt;" alt="" coords="422,411,635,449"/>
+<area shape="rect" id="node15" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; BufferLogger \&gt;" alt="" coords="428,473,628,512"/>
+<area shape="rect" id="node17" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; OriginFiltered\lLogger\&lt; BaseLogger \&gt; \&gt;" alt="" coords="432,536,624,588"/>
+<area shape="rect" id="node19" href="$class_tomographer_1_1_logger_1_1_logger_base.html" title="Tomographer::Logger\l::LoggerBase\&lt; FileLogger \&gt;" alt="" coords="435,612,622,651"/>
+<area shape="rect" id="node3" href="$class_tomographer_1_1_logger_1_1_boost_test_logger.html" title="A logger we can use in tests, which calls BOOST_TEST_MESSAGE() " alt="" coords="916,5,1065,44"/>
+<area shape="rect" id="node5" href="$class_tomographer_1_1_multi_proc_1_1_cxx_threads_1_1_thread_sanitizer_logger.html" title="Wrapper logger to call non&#45;thread&#45;safe loggers from a multithreaded environment. " alt="" coords="889,68,1091,120"/>
+<area shape="rect" id="node6" href="$class_tomographer_1_1_multi_proc_1_1_o_m_p_1_1_thread_sanitizer_logger.html" title="Wrapper logger to call non&#45;thread&#45;safe loggers from a multithreaded environment. " alt="" coords="889,144,1091,196"/>
+<area shape="rect" id="node8" href="$class_tomographer_1_1_logger_1_1_local_logger.html" title="Local logger: avoid having to repeat origin at each emitted message. " alt="" coords="874,220,1107,259"/>
+<area shape="rect" id="node9" href="$class_tomographer_1_1_logger_1_1_local_logger.html" title="Tomographer::Logger\l::LocalLogger\&lt; LoggerType \&gt;" alt="" coords="1252,252,1448,291"/>
+<area shape="rect" id="node12" href="$class_tomographer_1_1_logger_1_1_minimum_severity_logger.html" title="Logger which statically discards any messages less important than a fixed severity. " alt="" coords="904,335,1077,387"/>
+<area shape="rect" id="node14" href="$class_tomographer_1_1_logger_1_1_vacuum_logger.html" title="Logger that discards all messages. " alt="" coords="916,411,1065,449"/>
+<area shape="rect" id="node16" href="$class_tomographer_1_1_logger_1_1_buffer_logger.html" title="Log messages into an internal memory buffer. " alt="" coords="916,473,1065,512"/>
+<area shape="rect" id="node18" href="$class_tomographer_1_1_logger_1_1_origin_filtered_logger.html" title="A logger which filters entries according to where they originated from. " alt="" coords="915,536,1065,588"/>
+<area shape="rect" id="node20" href="$class_tomographer_1_1_logger_1_1_file_logger.html" title="Simple logger class which logs everything into a given FILE pointer. " alt="" coords="916,612,1065,651"/>
+</map>

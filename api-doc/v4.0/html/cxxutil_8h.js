@@ -1,0 +1,26 @@
+var cxxutil_8h =
+[
+    [ "StaticOrDynamic", "class_tomographer_1_1_tools_1_1_static_or_dynamic.html", "class_tomographer_1_1_tools_1_1_static_or_dynamic" ],
+    [ "StaticOrDynamic< T_, true, StaticValue_ >", "class_tomographer_1_1_tools_1_1_static_or_dynamic_3_01_t___00_01true_00_01_static_value___01_4.html", "class_tomographer_1_1_tools_1_1_static_or_dynamic_3_01_t___00_01true_00_01_static_value___01_4" ],
+    [ "StoreIfEnabled", "struct_tomographer_1_1_tools_1_1_store_if_enabled.html", "struct_tomographer_1_1_tools_1_1_store_if_enabled" ],
+    [ "StoreIfEnabled< T_, true >", "struct_tomographer_1_1_tools_1_1_store_if_enabled_3_01_t___00_01true_01_4.html", "struct_tomographer_1_1_tools_1_1_store_if_enabled_3_01_t___00_01true_01_4" ],
+    [ "ComplexRealScalar", "struct_tomographer_1_1_tools_1_1_complex_real_scalar.html", "struct_tomographer_1_1_tools_1_1_complex_real_scalar" ],
+    [ "ComplexRealScalar< std::complex< RealScalar > >", "struct_tomographer_1_1_tools_1_1_complex_real_scalar_3_01std_1_1complex_3_01_real_scalar_01_4_01_4.html", "struct_tomographer_1_1_tools_1_1_complex_real_scalar_3_01std_1_1complex_3_01_real_scalar_01_4_01_4" ],
+    [ "PRINTF1_ARGS_SAFE", "cxxutil_8h.html#a533aaba471b2ec970a21d2a89a252d8a", null ],
+    [ "PRINTF2_ARGS_SAFE", "cxxutil_8h.html#a460155e58a24b89b49cc0cc295c44cf5", null ],
+    [ "PRINTF3_ARGS_SAFE", "cxxutil_8h.html#a0f452ae1a14f6230c4cb329ae45bffd1", null ],
+    [ "PRINTF4_ARGS_SAFE", "cxxutil_8h.html#ae6c0fae380ad5b52da8bd0f565828ab1", null ],
+    [ "TOMO_FUNCTION", "cxxutil_8h.html#ac2605c8887300008653f9a50f1cd61a6", null ],
+    [ "TOMOGRAPHER_CXX_STACK_FORCE_REALIGN", "cxxutil_8h.html#aa5b31792aff363830750b211812b8018", null ],
+    [ "TOMOGRAPHER_DEFINE_MSG_EXCEPTION", "cxxutil_8h.html#adda217bb9dcd6fa80644d18d71e3fded", null ],
+    [ "TOMOGRAPHER_DEFINE_MSG_EXCEPTION_BASE", "cxxutil_8h.html#a9afc7ba37eeec37dfc90d5cb3262a08e", null ],
+    [ "extractFuncName", "cxxutil_8h.html#ad0292f6a13e165734dc1b5675fb17a3e", null ],
+    [ "finally", "cxxutil_8h.html#acea17d29089052e57edac98918ebc783", null ],
+    [ "getWidthForTerminalOutput", "cxxutil_8h.html#a0bb7c440b21b478de399fc468ae63499", null ],
+    [ "isPositive", "cxxutil_8h.html#a29796ace50d7c78242dadf449852c07f", null ],
+    [ "isPositive", "cxxutil_8h.html#a3c0c2b6b545925748bcfb2289f32c9ca", null ],
+    [ "isPowerOfTwo", "cxxutil_8h.html#ade3a117cf49a497552edae66c73bca94", null ],
+    [ "operator<<", "cxxutil_8h.html#a5eeb5ba1a24b66b927305b0482ae68b1", null ],
+    [ "operator<<", "cxxutil_8h.html#aa74cae36a2cf1ec8ff219ad8ae5fff0d", null ],
+    [ "tomographerEnsure", "cxxutil_8h.html#ab6f3982e7e885eb443df432a46217cbd", null ]
+];

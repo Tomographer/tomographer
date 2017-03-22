@@ -1,0 +1,14 @@
+<map id="tomographer/mhrwtasks.h" name="tomographer/mhrwtasks.h">
+<area shape="rect" id="node6" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="536,319,698,344"/>
+<area shape="rect" id="node23" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="1348,319,1620,344"/>
+<area shape="rect" id="node25" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="1070,79,1213,104"/>
+<area shape="rect" id="node37" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="1670,79,1898,104"/>
+<area shape="rect" id="node43" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="245,239,411,264"/>
+<area shape="rect" id="node12" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="1662,399,1842,424"/>
+<area shape="rect" id="node20" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="1658,472,1846,497"/>
+<area shape="rect" id="node21" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="715,472,904,497"/>
+<area shape="rect" id="node27" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="917,239,1104,264"/>
+<area shape="rect" id="node31" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1577,152,1735,191"/>
+<area shape="rect" id="node32" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="2162,319,2355,344"/>
+<area shape="rect" id="node40" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="2107,239,2277,264"/>
+</map>

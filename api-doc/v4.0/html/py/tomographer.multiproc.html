@@ -1,0 +1,207 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Multiprocessing related classes (tomographer.multiproc) &#8212; Tomographer Python Interface v4.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v4.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Storing Tomography Data and Calculating the Likelihood Function (tomographer.densedm)" href="tomographer.densedm.html" />
+    <link rel="prev" title="Exception Classes (tomographer)" href="tomographer._exc_classes.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tomographer.multiproc">
+<span id="multiprocessing-related-classes-tomographer-multiproc"></span><h1>Multiprocessing related classes (<cite>tomographer.multiproc</cite>)<a class="headerlink" href="#module-tomographer.multiproc" title="Permalink to this headline">¶</a></h1>
+<p>Classes and utilities for handling parallel tasks and for status reporting.</p>
+<dl class="class">
+<dt id="tomographer.multiproc.FullStatusReport">
+<em class="property">class </em><code class="descclassname">tomographer.multiproc.</code><code class="descname">FullStatusReport</code><a class="headerlink" href="#tomographer.multiproc.FullStatusReport" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>A full status report of running tasks.  This is typically passed on to a callback for displaying progressive status reports.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">This Python class interfaces <a class="reference external" href="../struct_tomographer_1_1_multi_proc_1_1_full_status_report.html">the C++ class Tomographer::MultiProc::FullStatusReport</a>.</p>
+</div>
+<p>There is a slight difference between the C++ and Python API&#8217;s on how the individual workers&#8217; running/idle  are reported: here, we don&#8217;t expose any <cite>workers_running</cite> list, rather, if a worker is idle, the corresponding object in <cite>workers</cite> is <cite>None</cite>.</p>
+<p>All attributes of this class are read-only.</p>
+<dl class="attribute">
+<dt id="tomographer.multiproc.FullStatusReport.num_completed">
+<code class="descname">num_completed</code><a class="headerlink" href="#tomographer.multiproc.FullStatusReport.num_completed" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of task instances that have already been entirely completed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.multiproc.FullStatusReport.num_total_runs">
+<code class="descname">num_total_runs</code><a class="headerlink" href="#tomographer.multiproc.FullStatusReport.num_total_runs" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total number of task instances that we have to run</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.multiproc.FullStatusReport.elapsed">
+<code class="descname">elapsed</code><a class="headerlink" href="#tomographer.multiproc.FullStatusReport.elapsed" title="Permalink to this definition">¶</a></dt>
+<dd><p>How many seconds have elapsed since starting to run tasks</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.multiproc.FullStatusReport.total_fraction_done">
+<code class="descname">total_fraction_done</code><a class="headerlink" href="#tomographer.multiproc.FullStatusReport.total_fraction_done" title="Permalink to this definition">¶</a></dt>
+<dd><p>The total fraction of the tasks completed</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.multiproc.FullStatusReport.workers">
+<code class="descname">workers</code><a class="headerlink" href="#tomographer.multiproc.FullStatusReport.workers" title="Permalink to this definition">¶</a></dt>
+<dd><p>A list of individual reports for each running worker.  The length of this list is the number of workers which can handle running tasks (e.g. parallel threads).  Each item of the list is either <cite>None</cite> if the worker is idle, or a <a class="reference internal" href="#tomographer.multiproc.WorkerStatusReport" title="tomographer.multiproc.WorkerStatusReport"><code class="xref py py-class docutils literal"><span class="pre">WorkerStatusReport</span></code></a> instance providing the worker&#8217;s current status report.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.multiproc.FullStatusReport.getHumanReport">
+<code class="descname">getHumanReport</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.multiproc.FullStatusReport.getHumanReport" title="Permalink to this definition">¶</a></dt>
+<dd><p>A convenience function which formats the data contained in this structure in a human-readable form, providing an overview of the current status of the tasks.  The report is suitable to be displayed in a terminal, for example.</p>
+<p>The formatted report is returned as a string.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.multiproc.WorkerStatusReport">
+<em class="property">class </em><code class="descclassname">tomographer.multiproc.</code><code class="descname">WorkerStatusReport</code><a class="headerlink" href="#tomographer.multiproc.WorkerStatusReport" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>Provides a summary of the current status of a worker processing a task.</p>
+<p>This Python class is a wrapper for a corresponding C++ subclass class of <a class="reference external" href="../struct_tomographer_1_1_multi_proc_1_1_task_status_report.html">Tomographer::MultiProc::TaskStatusReport</a>, for example <a class="reference external" href="../struct_tomographer_1_1_m_h_r_w_tasks_1_1_m_h_random_walk_task_1_1_status_report.html">Tomographer::MHRWTasks::MHRandomWalkTask::StatusReport</a>. Note that the data is rearranged from the C++ API; only the attributes <cite>fraction_done</cite> and <cite>msg</cite> are exposed directly; the remaining data is exposed via a general-purpose dictionary <cite>data</cite>.</p>
+<dl class="attribute">
+<dt id="tomographer.multiproc.WorkerStatusReport.worker_id">
+<code class="descname">worker_id</code><a class="headerlink" href="#tomographer.multiproc.WorkerStatusReport.worker_id" title="Permalink to this definition">¶</a></dt>
+<dd><p>The identification number for this worker, typically the thread number.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.multiproc.WorkerStatusReport.fraction_done">
+<code class="descname">fraction_done</code><a class="headerlink" href="#tomographer.multiproc.WorkerStatusReport.fraction_done" title="Permalink to this definition">¶</a></dt>
+<dd><p>The estimated fraction of the current task which is completed, given as a real number between 0 and 1.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.multiproc.WorkerStatusReport.msg">
+<code class="descname">msg</code><a class="headerlink" href="#tomographer.multiproc.WorkerStatusReport.msg" title="Permalink to this definition">¶</a></dt>
+<dd><p>A message (provided as a string) which summarizes the currents status of the task</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.multiproc.WorkerStatusReport.data">
+<code class="descname">data</code><a class="headerlink" href="#tomographer.multiproc.WorkerStatusReport.data" title="Permalink to this definition">¶</a></dt>
+<dd><p>Additional data which is available, depending on the task type.</p>
+<p>Functions which provide status reports using <a class="reference internal" href="#tomographer.multiproc.FullStatusReport" title="tomographer.multiproc.FullStatusReport"><code class="xref py py-class docutils literal"><span class="pre">FullStatusReport</span></code></a> and <a class="reference internal" href="#tomographer.multiproc.WorkerStatusReport" title="tomographer.multiproc.WorkerStatusReport"><code class="xref py py-class docutils literal"><span class="pre">WorkerStatusReport</span></code></a> should properly document which additional information is available in the <cite>data</cite> attribute. (See, for example, <a class="reference internal" href="tomographer.tomorun.html#tomographer.tomorun.tomorun" title="tomographer.tomorun.tomorun"><code class="xref py py-func docutils literal"><span class="pre">tomographer.tomorun.tomorun()</span></code></a>.)</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Tomographer Python Interface</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tomographer._hist_classes.html">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.densedm.html">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tomorun.html">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.mhrwtasks.html">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.querrorbars.html">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tools.html">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.jpyutil.html">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.include.html">Utilities for compiling other modules (<cite>tomographer.include</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.version.html">Version and compilation information (<cite>tomographer.version</cite>)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="tomographer.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="tomographer._exc_classes.html" title="previous chapter">Exception Classes (<cite>tomographer</cite>)</a></li>
+      <li>Next: <a href="tomographer.densedm.html" title="next chapter">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Philippe Faist.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/tomographer.multiproc.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

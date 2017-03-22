@@ -1,0 +1,9 @@
+<map id="Tomographer::AveragedHistogram&lt; HistogramType_, RealAvgType &gt;" name="Tomographer::AveragedHistogram&lt; HistogramType_, RealAvgType &gt;">
+<area shape="rect" id="node6" href="$class_tomographer_1_1_averaged_histogram.html" title="Tomographer::AveragedHistogram\l\&lt; ScaledHistogramType, CountRealType \&gt;" alt="" coords="1530,5,1804,44"/>
+<area shape="rect" id="node7" href="$class_tomographer_1_1_averaged_histogram.html" title="Tomographer::AveragedHistogram\l\&lt; SimpleScaledHistogramType,\l double \&gt;" alt="" coords="1555,68,1780,120"/>
+<area shape="rect" id="node8" href="$class_tomographer_1_1_averaged_histogram.html" title="Tomographer::AveragedHistogram\l\&lt; HistogramType, CountRealType \&gt;" alt="" coords="1551,144,1784,183"/>
+<area shape="rect" id="node2" href="$class_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; HistogramType_::Scalar,\l RealAvgType \&gt;" alt="" coords="835,61,1015,127"/>
+<area shape="rect" id="node3" href="$class_tomographer_1_1_uniform_bins_histogram.html" title="Tomographer::UniformBins\lHistogram\&lt; HistogramType\l_::Scalar, RealAvgType \&gt;" alt="" coords="443,29,627,81"/>
+<area shape="rect" id="node4" href="$class_tomographer_1_1_uniform_bins_histogram.html" title="Stores a histogram. " alt="" coords="5,71,235,109"/>
+<area shape="rect" id="node5" href="$class_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Stores a histogram along with error bars. " alt="" coords="445,105,625,157"/>
+</map>

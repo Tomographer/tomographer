@@ -1,0 +1,79 @@
+
+@font-face {
+    font-family: 'Lin-Libertine';
+    font-weight: normal;
+    font-style: normal;
+    src: url("LinLibertine_R.woff") format("woff");
+}
+@font-face {
+    font-family: 'Lin-Libertine';
+    font-weight: 600;
+    font-style: normal;
+    src: url("LinLibertine_RZ.woff") format("woff");
+}
+@font-face {
+    font-family: 'Lin-Libertine';
+    font-weight: normal;
+    font-style: italic;
+    src: url("LinLibertine_RI.woff") format("woff");
+}
+@font-face {
+    font-family: 'Lin-Libertine';
+    font-weight: 600;
+    font-style: italic;
+    src: url("LinLibertine_RZI.woff") format("woff");
+}
+@font-face {
+    font-family: 'Lin-Biolinum';
+    font-weight: normal;
+    font-style: normal;
+    src: url("LinBiolinum_R.woff") format("woff");
+}
+@font-face {
+    font-family: 'Lin-Biolinum';
+    font-weight: 600;
+    font-style: normal;
+    src: url("LinBiolinum_RB.woff") format("woff");
+}
+
+
+.logo {
+    padding-bottom: 0.75em;
+}
+div.sphinxsidebar .logo a {
+    border-bottom: none 0px;
+}
+
+div.body h1 {
+    margin-bottom: 0.5em;
+}
+div.body h2 {
+    margin-bottom: 0.5em;
+}
+
+pre {
+    background-color: inherit;
+    border-left: solid 1em rgba(0,0,80,0.1);
+    padding: 5px 1.5em;
+}
+dl pre, blockquote pre, li pre {
+    padding-left: 1.3em;
+}
+
+
+div.section > dl > dt {
+    margin-top: 1em;
+    padding: 0.1em 0px 1em;
+    border-top: solid 0.25em rgba(80,0,0,0.5);
+}
+
+
+
+.sphinxsidebar .toctree-l1 {
+    padding-bottom: 0.5em;
+    list-style: disc;
+}
+
+.genindextable {
+    font-size: 0.8em;
+}

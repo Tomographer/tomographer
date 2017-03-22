@@ -1,0 +1,7 @@
+<map id="tomographer/multiproc.h" name="tomographer/multiproc.h">
+<area shape="rect" id="node2" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Multiprocessing Task Interfaces) for parallel Metropolis&#45;Hasting..." alt="" coords="14,85,190,111"/>
+<area shape="rect" id="node4" href="$multiprocomp_8h.html" title="Multiprocessing with OpenMP parallel multithreading. " alt="" coords="214,85,406,111"/>
+<area shape="rect" id="node5" href="$multiprocthreads_8h.html" title="Multiprocessing with native C++11 threads. " alt="" coords="430,85,640,111"/>
+<area shape="rect" id="node6" href="$signal__status__report_8h.html" title="Basic common code for intercepting a signal to print status information of a task manager..." alt="" coords="665,79,832,117"/>
+<area shape="rect" id="node3" href="$mhrw__valuehist__tasks_8h.html" title="Tasks for collecting a histogram of values during a Metropolis&#45;Hastings random walk. " alt="" coords="5,165,199,204"/>
+</map>

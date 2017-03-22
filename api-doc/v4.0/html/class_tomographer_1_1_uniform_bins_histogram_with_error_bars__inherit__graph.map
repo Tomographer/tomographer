@@ -1,0 +1,11 @@
+<map id="Tomographer::UniformBinsHistogramWithErrorBars&lt; Scalar_, CountType_ &gt;" name="Tomographer::UniformBinsHistogramWithErrorBars&lt; Scalar_, CountType_ &gt;">
+<area shape="rect" id="node3" href="$class_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; HistogramType_::Scalar,\l RealAvgType \&gt;" alt="" coords="699,89,878,155"/>
+<area shape="rect" id="node8" href="$class_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; ScaledHistogramType \l::Scalar, CountRealType \&gt;" alt="" coords="915,5,1094,71"/>
+<area shape="rect" id="node9" href="$class_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; HistogramType ::Scalar,\l CountRealType \&gt;" alt="" coords="1154,240,1334,305"/>
+<area shape="rect" id="node10" href="$class_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; SimpleScaledHistogramType\l ::Scalar, double \&gt;" alt="" coords="902,165,1106,231"/>
+<area shape="rect" id="node2" href="$class_tomographer_1_1_uniform_bins_histogram.html" title="Stores a histogram. " alt="" coords="5,147,235,185"/>
+<area shape="rect" id="node4" href="$class_tomographer_1_1_averaged_histogram.html" title="Combines several histograms (with same parameters) into an averaged histogram. " alt="" coords="1130,83,1358,121"/>
+<area shape="rect" id="node5" href="$class_tomographer_1_1_averaged_histogram.html" title="Tomographer::AveragedHistogram\l\&lt; ScaledHistogramType, CountRealType \&gt;" alt="" coords="1596,9,1871,48"/>
+<area shape="rect" id="node6" href="$class_tomographer_1_1_averaged_histogram.html" title="Tomographer::AveragedHistogram\l\&lt; SimpleScaledHistogramType,\l double \&gt;" alt="" coords="1621,89,1846,141"/>
+<area shape="rect" id="node7" href="$class_tomographer_1_1_averaged_histogram.html" title="Tomographer::AveragedHistogram\l\&lt; HistogramType, CountRealType \&gt;" alt="" coords="1617,201,1850,240"/>
+</map>
