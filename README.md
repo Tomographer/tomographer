@@ -72,7 +72,12 @@ To compile `tomorun` from source, you'll need:
   - [Eigen3 library ≥ 3.3](http://eigen.tuxfamily.org/)
   - [MatIO library](https://sourceforge.net/projects/matio/)
 
-To compile the python interface, you'll need:
+To install the Python `tomographer` package, you'll need:
+
+  - `pip`, the Python package manager — you probably already have it
+  - a recent C++ compiler (g++ ≥ 4.8, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.3)
+  
+OR: you can compile from source, in which case you'll need:
 
   - a recent C++ compiler (g++ ≥ 4.8, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.3)
   - [Boost headers ≥ 1.40](http://www.boost.org/)
@@ -80,7 +85,7 @@ To compile the python interface, you'll need:
   - [Python 2.7 or Python 3](http://www.python.org/)
   - [Eigen3 library ≥ 3.3](http://eigen.tuxfamily.org/)
 
-In both cases a recent C++ compiler is required as some C++11 features and
+In any case a recent C++ compiler is required as some C++11 features and
 elements of its standard library are used.
 
 Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
@@ -89,7 +94,8 @@ NOTE: OpenMP is now no longer needed if your compiler supports C++ threads
 (std::thread).  This is the case for many compilers, including Apple's `clang`.
 
 Tip: On Apple Mac OS X with [homebrew](https://brew.sh), the following commands
-will get you started with all the prerequisites and with homebrew's python3.
+will get you started with all the prerequisites for `tomorun` and for the Python
+`tomographer` package, using homebrew's python3.
 
     > brew tap homebrew/science
     > brew install python3 boost eigen libmatio pybind11
@@ -215,11 +221,28 @@ For more information on how to run the histogram analyzer/fitter, run:
     >> analyze_tomorun_histogram('Help')
 
 
-Installing and Using the Python Package
----------------------------------------
+Installing the Python Package
+-----------------------------
 
-The python `tomographer` package can be installed by entering the `py/` directory
-and running the `setup.py` script as for usual python packages:
+### Using PIP — the easy way
+
+The simplest way to install the `tomographer` Python package is to use `pip`:
+
+    > sudo -H pip install tomographer
+
+Or, for a user installation which is not system-wide:
+    
+    > pip install tomographer --user
+
+When installing `tomographer` using `pip`, you don't need the Eigen and Boost
+prerequisites, as they are bundled along with the `tomographer` python package.
+Similarly, `pybind11` is automatically installed by `pip` as a dependency.
+
+### From source — advanced
+
+The python `tomographer` package can be installed by entering the `py/`
+directory and running the `setup.py` script as for usual manual installation of
+python packages:
 
     tomographer/py> python setup.py install
 
@@ -228,7 +251,9 @@ may need to specify them directly to the `setup.py` script in the form of
 environment variables (they can also be read from a CMake cache file). Check the
 output of `setup.py` for more info.
 
-### Using the Python Interface
+
+Using the Python Interface
+--------------------------
 
 The python interface provides a convenient entry point to the C++ routines, with data
 provided as `NumPy` arrays.  There are also some additional tools, for example to simulate
