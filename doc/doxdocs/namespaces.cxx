@@ -115,6 +115,11 @@
  *
  */
 
+/** \namespace Tomographer::MultiProc::CxxThreads
+ *
+ * \brief Definitions for multitasking using C++ Threads
+ *
+ */
 
 /** \namespace Tomographer::MultiProc::Sequential
  *
