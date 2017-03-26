@@ -10,10 +10,10 @@ I've got experimental data to analyze.
 Please select your preferred option, perhaps the one that suits best your existing workflow:
 
 - [Tomographer routines invoked via Python code, with data provided as NumPy arrays,
-  subsequent analysis performed via Python routines](#python-version).
+  subsequent analysis performed via Python routines](#python-version); or
 
 - [Tomographer routines run from command-line, data provided in MATLAB file format,
-  subsequent analysis performed using MATLAB](#command-line-tomorun-matlab); or
+  subsequent analysis performed using MATLAB](#command-line-tomorun-matlab).
 
 
 ## <a name="python-version"></a> The Python Way
