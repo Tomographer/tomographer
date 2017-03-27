@@ -23,13 +23,41 @@ except ImportError:
 
 class _Ns: pass
 
-def in_ipynb():
+def _in_html_ipynb():
+    #
+    # Return True if we are in IPython with HTML display (e.g. in a jupyter notebook) --
+    # required for progress bars
+    #
+    ipy = None
     try:
-        # if this is accessible, assume we're in IPython/Jupyter
-        cfg = get_ipython().config
-        return True
+        # get IPython InteractiveShell instance
+        ipy = get_ipython()
     except NameError:
         return False
+    #
+    # not sure which method is best (more future-proof). In any case, get the
+    # DisplayFormatter object and...
+    #
+    # ... check if 'text/html' is in active_formatters ...
+    try:
+        if 'text/html' in ipy.display_formatter.active_formatters:
+            return True
+    except AttributeError:
+        pass
+    # ... or check that the formatter for the MIME type 'text/html' is "enabled"
+    try:
+        if ( 'text/html' in ipy.display_formatter.formatters  and
+             ipy.display_formatter.formatters['text/html'].enabled ):
+            return True
+    except AttributeError:
+        pass
+
+    # by default, assume we're not in HTML-enabled IPython
+    return False
+
+
+
+
 
 
 class _SimpleProgressBar_JupyterImpl(object):
@@ -83,7 +111,7 @@ class _SimpleProgressBar_ConsoleImpl(object):
         pass
 
 
-if in_ipynb():
+if _in_html_ipynb():
     _SimpleProgressBar_base = _SimpleProgressBar_JupyterImpl
 else:
     # This also happens when parsed by Sphinx
