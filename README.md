@@ -105,9 +105,10 @@ Installing and Running `tomorun`
 --------------------------------
 
 If you found a binary release for your system, simply unpack it wherever you like.
-It is then ready for use.
+It is then ready for use—skip down to "Running `tomorun`".
 
-The rest of this section concerns compiling Tomographer/Tomorun from source.
+
+### Compiling Tomorun from source
 
 The configuration, compilation and installation process is done using CMake.
 (You'll need CMake ≥ 3.1. Don't worry, it's easy to [install a binary
@@ -157,6 +158,8 @@ should be specified to CMake as `-DCMAKE_CXX_FLAGS="--param ..."`.
 
 ### Running `tomorun`
 
+Check out the [online quick start
+page](https://tomographer.github.io/tomographer/get-started/#command-line-tomorun-matlab).
 In the binary distributions, `tomorun` is located in the `bin/` subdirectory.
 Detailed information about how to use & run `tomorun` is obtained by querying
 its help text:
@@ -221,10 +224,14 @@ For more information on how to run the histogram analyzer/fitter, run:
     >> analyze_tomorun_histogram('Help')
 
 
-Installing the Python Package
------------------------------
+Installing and Using the Python Package
+---------------------------------------
 
-### Using PIP — the easy way
+You may want to check out the [online quick start
+page](https://tomographer.github.io/tomographer/get-started/#python-version).
+Here is an overview:
+
+### Install using PIP — the easy way
 
 The simplest way to install the `tomographer` Python package is to use `pip`:
 
@@ -238,7 +245,7 @@ When installing `tomographer` using `pip`, you don't need the Eigen and Boost
 prerequisites, as they are bundled along with the `tomographer` python package.
 Similarly, `pybind11` is automatically installed by `pip` as a dependency.
 
-### From source — advanced
+### Install from source — advanced
 
 The python `tomographer` package can be installed by entering the `py/`
 directory and running the `setup.py` script as for usual manual installation of
@@ -252,8 +259,7 @@ environment variables (they can also be read from a CMake cache file). Check the
 output of `setup.py` for more info.
 
 
-Using the Python Interface
---------------------------
+### Using the Python Interface
 
 The python interface provides a convenient entry point to the C++ routines, with data
 provided as `NumPy` arrays.  There are also some additional tools, for example to simulate
