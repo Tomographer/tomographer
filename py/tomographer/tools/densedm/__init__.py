@@ -26,10 +26,10 @@ def simulate_measurements(rho, Mk, num_samples_per_setting):
     The "true state" `rho` should be a `numpy.array` object, as well as each POVM effect
     in `Mk`.
 
-    `Mk` should is a list of list of POVM effects, where ``Mk[k][i]`` is the POVM effect
+    `Mk` should be a list of lists of POVM effects, where ``Mk[k][i]`` is the POVM effect
     corresponding to outcome `i` of measurement setting `k`.  A POVM effect must be a
-    positive semidefinite matrix, and all effects of a measurement setting should sum up
-    to the identity matrix.
+    positive semidefinite matrix (given as a `NumPy` array), and all effects of a
+    measurement setting should sum up to the identity matrix.
     
     `num_samples_per_setting` specifies the number of repetitions of a measurement
     setting.  If it is an integer, then we simulate this number of measurement outcomes

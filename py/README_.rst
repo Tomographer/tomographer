@@ -5,7 +5,7 @@ The Python interface to Tomographer allows you to easily perform reliable
 quantum tomography in a Python environment.
 
 Documentation is provided `here
-<https://tomographer.github.io/tomographer/api-doc/current/py/index.html>`_.
+<https://tomographer.github.io/tomographer/api-doc/current/html/py/index.html>`_.
 
 
 Installation
