@@ -102,9 +102,16 @@ def setup_sources(thisdir, vv):
     #
 
 
-    def ignore_not_header(d, files):
-        return [f for f in files
-                if not os.path.isdir(os.path.join(thisdir,d,f)) and not f.endswith('.h') and not f.endswith('.hpp')]
+    class ignore_not_header(object):
+        def __init__(self, thisdir, but_keep=[]):
+            self.thisdir = thisdir
+            self.but_keep = but_keep
+
+        def __call__(self, d, files):
+            return [ f
+                     for f in files
+                     if (not os.path.isdir(os.path.join(self.thisdir,d,f)) and not f.endswith('.h') and not f.endswith('.hpp')
+                         and not f in self.but_keep) ]
 
     #
     # Copy all tomographer headers inside tomographer.include as package data
@@ -115,7 +122,7 @@ def setup_sources(thisdir, vv):
         shutil.rmtree(os.path.join(target_tomographer_include, 'tomographer'))
     shutil.copytree(src_tomographer_include,
                     os.path.join(target_tomographer_include, 'tomographer'),
-                    ignore=ignore_not_header)
+                    ignore=ignore_not_header(thisdir))
 
     #
     # Copy all tomographerpy headers inside tomographer.include as package data
@@ -126,7 +133,7 @@ def setup_sources(thisdir, vv):
         shutil.rmtree(os.path.join(target_tomographer_include_tomographerpy))
     shutil.copytree(src_tomographerpy_include,
                     os.path.join(target_tomographer_include_tomographerpy),
-                    ignore=ignore_not_header)
+                    ignore=ignore_not_header(thisdir))
 
     #
     # Copy all dependency headers (boost, eigen)
@@ -164,8 +171,15 @@ def setup_sources(thisdir, vv):
     target_tomographer_include_deps_eigen3 = os.path.join(target_tomographer_include_deps, 'eigen3')
     if os.path.exists(target_tomographer_include_deps_eigen3):
         shutil.rmtree(target_tomographer_include_deps_eigen3)
-    shutil.copytree(vv.get('EIGEN3_INCLUDE_DIR'),
-                    os.path.join(target_tomographer_include_deps_eigen3))
+    os.mkdir(target_tomographer_include_deps_eigen3)
+    shutil.copytree(os.path.join(vv.get('EIGEN3_INCLUDE_DIR'), 'Eigen'),
+                    os.path.join(target_tomographer_include_deps_eigen3, 'Eigen'),
+                    ignore=ignore_not_header(thisdir))
+    shutil.copytree(os.path.join(vv.get('EIGEN3_INCLUDE_DIR'), 'unsupported'),
+                    os.path.join(target_tomographer_include_deps_eigen3, 'unsupported'),
+                    ignore=ignore_not_header(thisdir))
+    shutil.copy2(os.path.join(vv.get('EIGEN3_INCLUDE_DIR'), 'signature_of_eigen3_matrix_library'),
+                 target_tomographer_include_deps_eigen3)
     
     #
     # create tomographer_version.h
