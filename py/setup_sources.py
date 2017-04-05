@@ -174,10 +174,10 @@ def setup_sources(thisdir, vv):
     os.mkdir(target_tomographer_include_deps_eigen3)
     shutil.copytree(os.path.join(vv.get('EIGEN3_INCLUDE_DIR'), 'Eigen'),
                     os.path.join(target_tomographer_include_deps_eigen3, 'Eigen'),
-                    ignore=ignore_not_header(thisdir))
+                    ) # no ignore! Public headers don't have an extension, e.g. "#include <Eigen/Core>"
     shutil.copytree(os.path.join(vv.get('EIGEN3_INCLUDE_DIR'), 'unsupported'),
                     os.path.join(target_tomographer_include_deps_eigen3, 'unsupported'),
-                    ignore=ignore_not_header(thisdir))
+                    ) # no ignore! Public headers don't have an extension, e.g. "#include <Eigen/Core>"
     shutil.copy2(os.path.join(vv.get('EIGEN3_INCLUDE_DIR'), 'signature_of_eigen3_matrix_library'),
                  target_tomographer_include_deps_eigen3)
     
