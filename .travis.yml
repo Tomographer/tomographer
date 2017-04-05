@@ -53,6 +53,9 @@ script:
   - (cd ../py; CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPILER CMAKE_CACHE_FILE=../build/CMakeCache.txt $PYTHON_EXECUTABLE setup.py sdist build bdist_egg)
   - export TOMOGRAPHER_PYTHONPATH=`ls ../py/dist/*.egg`
   - CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all $CMAKE_PATH/bin/ctest --timeout 300
+  # make sure that pip can install the sdist package.  Do this last so that we don't pick up
+  # this one while testing
+  - $PIP install --user ../py/dist/tomographer-*.tar.gz
 
 matrix:
   include:
