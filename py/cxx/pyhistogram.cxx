@@ -274,8 +274,9 @@ void py_tomo_histogram(py::module rootmodule)
             "    The number of recorded data points which were beyond the histogram range `[params.min, params.max[`.\n\n"
 //            ".. py:attribute:: UniformBinsHistogram.HasErrorBars\n\n"
 //            "    This is a class attribute, i.e. is accessed as `UniformBinsHistogram.HasErrorBars`, and is set to the "
-            "constant value `False`.\n\n"
-            ".. versionremoved:: Removed the ``HasErrorBars`` attribute from all Histogram classes in version 4.1\n\n",
+//            "constant value `False`.\n\n"
+            ".. versionchanged:: 4.1\n"
+            "   Removed the ``HasErrorBars`` attribute from all Histogram classes (pybind11 static properties issue).\n\n",
             boost::core::demangle(typeid(RealType).name()).c_str(),
             boost::core::demangle(typeid(CountIntType).name()).c_str()
             ).c_str()
