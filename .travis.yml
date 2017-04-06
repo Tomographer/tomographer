@@ -27,7 +27,7 @@ install:
   - function write_visual_bells() { while true; do echo -en "\a"; sleep 10; done; }; write_visual_bells &
   - sudo -H $PIP install urllib3[secure] # needed for pip upgrade, ...
   - $PIP install --user --upgrade pip # ... upgrade which is needed for --cache-dir :( ...
-  - (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} ~/.local/bin/pip install --cache-dir=$OUR_TRAVIS_PATH/pip_cache/$PYTHON_EXECUTABLE --user $PIP_EXTRAS cvxpy pybind11 >pip_output.txt 2>&1 || cat pip_output.txt )
+  - (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} ~/.local/bin/pip install --cache-dir=$OUR_TRAVIS_PATH/pip_cache/$PYTHON_EXECUTABLE --user $PIP_EXTRAS wheel cvxpy pybind11 >pip_output.txt 2>&1 || cat pip_output.txt )
 
 cache:
   directories:
