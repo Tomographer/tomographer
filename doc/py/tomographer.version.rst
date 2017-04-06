@@ -37,4 +37,9 @@ Version and compilation information (`tomographer.version`)
        `tomographer` Python extension module, and which is included in the package data
        (for example: ``"1_63"``).
 
+     - `compile_info['pybind11']`: the version of the PyBind11 headers used to compile the
+       `tomographer` Python extension module.
+
+       .. versionadded:: 4.1
+
      

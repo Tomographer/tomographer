@@ -272,13 +272,14 @@ void py_tomo_histogram(py::module rootmodule)
             "is readable and writable, although you may not change the size or type of the array.\n\n"
             ".. py:attribute:: off_chart\n\n"
             "    The number of recorded data points which were beyond the histogram range `[params.min, params.max[`.\n\n"
-            ".. py:attribute:: UniformBinsHistogram.HasErrorBars\n\n"
-            "    This is a class attribute, i.e. is accessed as `UniformBinsHistogram.HasErrorBars`, and is set to the "
-            "constant value `False`.\n\n",
+//            ".. py:attribute:: UniformBinsHistogram.HasErrorBars\n\n"
+//            "    This is a class attribute, i.e. is accessed as `UniformBinsHistogram.HasErrorBars`, and is set to the "
+            "constant value `False`.\n\n"
+            ".. versionremoved:: Removed the ``HasErrorBars`` attribute from all Histogram classes in version 4.1\n\n",
             boost::core::demangle(typeid(RealType).name()).c_str(),
             boost::core::demangle(typeid(CountIntType).name()).c_str()
             ).c_str()
-        // , py::metaclass()  -- deprecated and even harmful? as of pybind 2.1
+        // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a = tpy::UniformBinsHistogramParams())
       .def(py::init<RealType, RealType, std::size_t>(),
@@ -290,7 +291,7 @@ void py_tomo_histogram(py::module rootmodule)
       .def_property("bins", [](const Kl & h) -> tpy::CountIntVectorType { return h.bins.matrix(); },
                     [](Kl & h, const tpy::CountIntVectorType& v) { h.bins = v; })
       .def_readwrite("off_chart", & Kl::off_chart )
-      .def_property_readonly_static("HasErrorBars", [](py::object) { return false; })
+//      .def_property_readonly_static("HasErrorBars", [](py::object) { return false; })
       .def("reset", & Kl::reset,
            "reset()\n\n"
            "Clears the current histogram counts (including `off_chart` counts) to zero.  The histogram "
@@ -366,7 +367,7 @@ void py_tomo_histogram(py::module rootmodule)
             "is set to `%s` instead of `%s`.", boost::core::demangle(typeid(RealType).name()).c_str(),
             boost::core::demangle(typeid(CountIntType).name()).c_str()
             ).c_str()
-        // , py::metaclass()  -- deprecated and even harmful? as of pybind 2.1
+        // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a = tpy::UniformBinsHistogramParams())
       .def(py::init<RealType, RealType, std::size_t>(),
@@ -378,7 +379,7 @@ void py_tomo_histogram(py::module rootmodule)
       .def_property("bins", [](const Kl & h) -> tpy::RealVectorType { return h.bins.matrix(); },
                     [](Kl & h, const tpy::RealVectorType& v) { h.bins = v; })
       .def_readwrite("off_chart", & Kl::off_chart)
-      .def_property_readonly_static("HasErrorBars", [](py::object) { return false; })
+//      .def_property_readonly_static("HasErrorBars", [](py::object) { return false; })
       .def("reset", & Kl::reset)
       .def("load", [](Kl & h, const tpy::RealVectorType& x, RealType o) { h.load(x, o); },
            "bins"_a, "off_chart"_a = CountIntType(0))
@@ -426,7 +427,7 @@ void py_tomo_histogram(py::module rootmodule)
         "    The error bar values on each of the histogram bin counts, interfaced as a `NumPy` array object "
         "storing real values.  This attribute is readable and writable, although you may not change the "
         "size or type of the array.\n\n"
-        // , py::metaclass()  -- deprecated and even harmful? as of pybind 2.1
+        // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a=tpy::UniformBinsHistogramParams())
       .def(py::init<RealType, RealType, std::size_t>())
@@ -439,7 +440,7 @@ void py_tomo_histogram(py::module rootmodule)
       .def_property("delta", [](const Kl & h) -> tpy::RealVectorType { return h.delta.matrix(); },
                     [](Kl & h, const tpy::RealVectorType v) { h.delta = v; })
       .def_readwrite("off_chart", & Kl::off_chart)
-      .def_property_readonly_static("HasErrorBars", [](py::object) { return true; })
+//      .def_property_readonly_static("HasErrorBars", [](py::object) { return true; })
       .def("reset", & Kl::reset)
       .def("load",
            [](Kl & h, const tpy::RealVectorType& x, const tpy::RealVectorType& err, RealType o) {
@@ -478,7 +479,7 @@ void py_tomo_histogram(py::module rootmodule)
         })
       .def("__getstate__", histogram_pickle<Kl>::getstate)
       .def("__setstate__", histogram_pickle<Kl>::setstate)
-      ;
+       ;
   }
 
   logger.debug("AveragedSimpleHistogram...");

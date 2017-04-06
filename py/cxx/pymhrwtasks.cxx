@@ -60,7 +60,7 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         ".. py:attribute:: UNKNOWN_CONVERGENCE\n\n"
         "    The convergence of the error bar over the different binning levels "
         "is uknown, or couldn't be determined. It may or may not be reliable.\n\n"
-        // , py::metaclass()  -- deprecated (and even harmful?) as of pybind 2.1
+        // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def_property_readonly_static("CONVERGED",
                                     [](py::object) -> int {

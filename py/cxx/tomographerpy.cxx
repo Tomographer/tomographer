@@ -157,6 +157,14 @@ PYBIND11_PLUGIN(_tomographer_cxx)
                                                        EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
                                                        Eigen::SimdInstructionSetsInUse()) ;
     compile_info["boost"_s] = std::string(BOOST_LIB_VERSION);
+
+// this needs to be in 2 steps or else we get "PYBIND11_VERSION_MAJOR.PYBIND11_VERSION_MINOR.PYBIND11_VERSION_PATCH"
+#define VERSION_CAT(x,y,z) #x "." #y "." #z
+#define FULL_PYBIND11_VERSION_STR(x,y,z) VERSION_CAT(x,y,z)
+    compile_info["pybind11"_s] = std::string( FULL_PYBIND11_VERSION_STR(PYBIND11_VERSION_MAJOR,
+                                                                        PYBIND11_VERSION_MINOR,
+                                                                        PYBIND11_VERSION_PATCH) ) ;
+
     versionmodule.attr("compile_info") = compile_info;
   }
 

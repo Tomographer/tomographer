@@ -26,12 +26,14 @@ if args.mode == 'cmake-built':
         os.path.join(TomographerSourcePath, 'test')
         ]
 elif args.mode == 'setup-py-built':
-    morepaths = [ os.path.abspath(os.environ.get('TOMOGRAPHER_PYTHONPATH', '')) ]
+    if TOMOGRAPHER_PYTHONPATH in os.environ:
+        morepaths = [ os.path.abspath(os.environ.get('TOMOGRAPHER_PYTHONPATH')) ]
 else:
     raise ValueError("Unknown python test run mode: %s"%(args.mode))
 
 
-# add locations to sys.path
+# add locations to sys.path -- before all system paths in order to override any installed
+# tomographer package
 sys.path = morepaths + sys.path
 
 print(sys.path)
