@@ -277,8 +277,8 @@ void py_tomo_histogram(py::module rootmodule)
             "constant value `False`.\n\n",
             boost::core::demangle(typeid(RealType).name()).c_str(),
             boost::core::demangle(typeid(CountIntType).name()).c_str()
-            ).c_str(),
-        py::metaclass()
+            ).c_str()
+        // , py::metaclass()  -- deprecated and even harmful? as of pybind 2.1
         )
       .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a = tpy::UniformBinsHistogramParams())
       .def(py::init<RealType, RealType, std::size_t>(),
@@ -365,8 +365,8 @@ void py_tomo_histogram(py::module rootmodule)
             "<class_tomographer_1_1_uniform_bins_histogram.html>`, although the `CountType` template parameter "
             "is set to `%s` instead of `%s`.", boost::core::demangle(typeid(RealType).name()).c_str(),
             boost::core::demangle(typeid(CountIntType).name()).c_str()
-            ).c_str(),
-        py::metaclass()
+            ).c_str()
+        // , py::metaclass()  -- deprecated and even harmful? as of pybind 2.1
         )
       .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a = tpy::UniformBinsHistogramParams())
       .def(py::init<RealType, RealType, std::size_t>(),
@@ -425,8 +425,8 @@ void py_tomo_histogram(py::module rootmodule)
         ".. py:attribute:: delta\n\n"
         "    The error bar values on each of the histogram bin counts, interfaced as a `NumPy` array object "
         "storing real values.  This attribute is readable and writable, although you may not change the "
-        "size or type of the array.\n\n",
-        py::metaclass()
+        "size or type of the array.\n\n"
+        // , py::metaclass()  -- deprecated and even harmful? as of pybind 2.1
         )
       .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a=tpy::UniformBinsHistogramParams())
       .def(py::init<RealType, RealType, std::size_t>())
