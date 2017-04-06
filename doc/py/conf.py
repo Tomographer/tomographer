@@ -157,11 +157,12 @@ todo_include_todos = True
 
 
 nitpick_ignore = [
-    ('py:class', 'Boost.Python.instance'),
-    ('py:class', 'object'),
-    ('py:class', 'tuple'),
-    ('py:class', 'Exception'), # in inheritance
-    ('py:class', 'RuntimeError'), # in inheritance
+    ('py:class', 'pybind11_builtins.pybind11_object_48'),
+    ('py:class', 'tomographer.jpyutil._SimpleProgressBar_ConsoleImpl'),
+#    ('py:class', 'object'),
+#    ('py:class', 'tuple'),
+#    ('py:class', 'Exception'), # in inheritance
+#    ('py:class', 'RuntimeError'), # in inheritance
     ]
 
 

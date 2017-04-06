@@ -26,7 +26,7 @@ if args.mode == 'cmake-built':
         os.path.join(TomographerSourcePath, 'test')
         ]
 elif args.mode == 'setup-py-built':
-    if TOMOGRAPHER_PYTHONPATH in os.environ:
+    if 'TOMOGRAPHER_PYTHONPATH' in os.environ:
         morepaths = [ os.path.abspath(os.environ.get('TOMOGRAPHER_PYTHONPATH')) ]
 else:
     raise ValueError("Unknown python test run mode: %s"%(args.mode))

@@ -253,6 +253,12 @@ void py_tomo_histogram(py::module rootmodule)
             "<class_tomographer_1_1_uniform_bins_histogram.html>`, with the template parameters "
             "`Scalar=%s` and `CountType=%s`.  See the C++ class documentation for more information."
             "\n\n"
+            ".. versionchanged:: 4.1\n"
+            "   Removed the ``HasErrorBars`` attribute from all histogram classes (originally because of an issue in"
+            " pybind11 when overriding static properties); anyway this attribute was not Pythonic -- there should be"
+            " no context in which code needs to branch depending on if the histogram has error bars, and even if so,"
+            " one should probably better use duck typing."
+            "\n\n"
             ".. py:function:: UniformBinsHistogram([params=UniformBinsHistogramParams()])\n\n"
             "    Construct a new histogram object with the given histogram parameters.\n\n"
             ".. py:function:: UniformBinsHistogram(min, max, num_bins)\n\n"
@@ -275,8 +281,7 @@ void py_tomo_histogram(py::module rootmodule)
 //            ".. py:attribute:: UniformBinsHistogram.HasErrorBars\n\n"
 //            "    This is a class attribute, i.e. is accessed as `UniformBinsHistogram.HasErrorBars`, and is set to the "
 //            "constant value `False`.\n\n"
-            ".. versionchanged:: 4.1\n"
-            "   Removed the ``HasErrorBars`` attribute from all Histogram classes (pybind11 static properties issue).\n\n",
+            ,
             boost::core::demangle(typeid(RealType).name()).c_str(),
             boost::core::demangle(typeid(CountIntType).name()).c_str()
             ).c_str()

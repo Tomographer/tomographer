@@ -135,8 +135,8 @@ class Histograms(unittest.TestCase):
         self.assertAlmostEqual(h.off_chart, 0) # almost-equal in case cnttype=float
         if has_error_bars: npt.assert_array_almost_equal(h.delta, np.zeros(h.numBins()))
 
-        # HasErrorBars is correct
-        self.assertTrue(HCl.HasErrorBars == has_error_bars)
+        # HasErrorBars is correct -- since 4.1: Removed attribute "HasErrorBars"
+        #self.assertTrue(HCl.HasErrorBars == has_error_bars)
 
         # numBins()
         h = HCl(2.0, 3.0, 5)
