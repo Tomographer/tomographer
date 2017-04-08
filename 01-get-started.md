@@ -23,12 +23,18 @@ steps to get started and analyze data from your experiment:
 
 1.  Install `tomographer` by running (system-wide installation):
     
+        > sudo -H pip install numpy pybind11
         > sudo -H pip install tomographer
 
     For a user-wide installation, for instance if you don't have administrator
     priviledges:
     
+        > pip install numpy pybind11 --user
         > pip install tomographer --user
+
+    *Note: You have to install the `numpy` and `pybind11` dependencies manually
+    before installing `tomographer`.  This is because `pip` apparently doesn't
+    know how to correctly handle build-time dependencies.*
 
 2.  Open your favorite Python environment (e.g. edit a Python script or open an IPython or
     Jupyter notebook session), and start off with [this one-qubit
