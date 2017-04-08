@@ -12,14 +12,14 @@ Download Options
 ================
 
 If you'd like to use the Python `tomographer` package, then you don't need to
-download anything.  Just run `pip install tomographer` (see
-[this page]({{ site.baseurl }}/get-started)).
+download anything.  Just use `pip` [as described
+here]({{site.baseurl}}/get-started)).
 
-If you would like to use the `tomorun` executable, then download the binary
-version corresponding to your system (see below).
+If you would like to use the `tomorun` executable, then it is recommended to
+download the binary version corresponding to your system (see below).
 
-In order to compile from source, scroll down and follow the corresponding
-instructions.
+If you'd like to compile `tomorun` or the Python interface from source, scroll
+down and follow the corresponding instructions.
 
 
 Downloading & Installing Tomorun Binary

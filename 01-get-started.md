@@ -71,8 +71,8 @@ steps to get started and analyze data from your experiment:
 The Tomographer project provides the `tomorun` program which analyses data from a quantum
 tomography experiment.
 
-1. [Download and install]({{ site.baseurl }}/download) Tomographer/tomorun.  If you are
-   building from source, you will not need to set up the Python interface.
+1. [Download and install]({{ site.baseurl }}/download) Tomographer/tomorun.  You
+   do not need to set up the Python interface.
 
 2. Get familiar with `tomorun`. Get an idea of what the program does and how to use it with:
 
@@ -126,7 +126,7 @@ tomography experiment.
 
    Hit `Ctrl-C` to get an intermediate progress report, and to see if the parameters of
    the random walk are appropriate. You should have an acceptance ratio roughly in between
-   0.25 and 0.4. Hit `Ctrl-C` twice in short succession to abort, for instance if you want
+   0.2 and 0.4. Hit `Ctrl-C` twice in short succession to abort, for instance if you want
    to change the parameters of the random walk and start again.
 
    The output consists in a tab-separated table of values as documented in `tomorun
