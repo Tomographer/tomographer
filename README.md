@@ -27,8 +27,9 @@ distribution relevant for a reliable error analysis as described in [Faist &
 Renner, Practical and Reliable Error Bars in Quantum Tomography, Phys. Rev.
 Lett. 117, 010404 (2016)](http://dx.doi.org/10.1103/PhysRevLett.117.010404)
 ([arXiv:1509.06763](http://arxiv.org/abs/1509.06763)).  The python interface
-provides an interface to the same functionality as `tomorun` from python/numpy
-code.
+provides an interface to the essentially the same functionality as `tomorun`
+from python/numpy code (plus the possibility for calculating a custom figure
+of merit).
 
 The C++ framework is a set of abstract and generic classes which you can combine
 in your preferred way to implement this random walk for even more general
@@ -74,7 +75,7 @@ To compile `tomorun` from source, you'll need:
 
 To install the Python `tomographer` package, you'll need:
 
-  - `pip`, the Python package manager — you probably already have it
+  - `pip`, the Python package manager — you probably already have it (≥ 7.1)
   - a recent C++ compiler (g++ ≥ 4.8, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.3)
   
 OR: you can compile from source, in which case you'll need:
@@ -90,12 +91,12 @@ elements of its standard library are used.
 
 Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
 
-NOTE: OpenMP is now no longer needed if your compiler supports C++ threads
+Note: OpenMP is now no longer needed if your compiler supports C++ threads
 (std::thread).  This is the case for many compilers, including Apple's `clang`.
 
 Tip: On Apple Mac OS X with [homebrew](https://brew.sh), the following commands
-will get you started with all the prerequisites for `tomorun` and for the Python
-`tomographer` package, using homebrew's python3.
+will get you started with all the prerequisites for compiling both `tomorun` and
+the Python `tomographer` package, using Homebrew's python3.
 
     > brew tap homebrew/science
     > brew install python3 boost eigen libmatio pybind11
@@ -235,15 +236,21 @@ Here is an overview:
 
 The simplest way to install the `tomographer` Python package is to use `pip`:
 
+    > sudo -H pip install numpy pybind11
     > sudo -H pip install tomographer
 
 Or, for a user installation which is not system-wide:
     
+    > pip install numpy pybind11 --user
     > pip install tomographer --user
 
 When installing `tomographer` using `pip`, you don't need the Eigen and Boost
 prerequisites, as they are bundled along with the `tomographer` python package.
-Similarly, `pybind11` is automatically installed by `pip` as a dependency.
+
+*Note: You do have to install the `numpy` and `pybind11` dependencies manually
+before installing `tomographer`.  This is because `pip` apparently doesn't know
+how to correctly handle build-time dependencies.*
+
 
 ### Install from source — advanced
 
