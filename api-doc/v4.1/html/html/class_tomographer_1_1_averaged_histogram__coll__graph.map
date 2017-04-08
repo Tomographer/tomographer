@@ -1,0 +1,14 @@
+<map id="Tomographer::AveragedHistogram&lt; HistogramType_, RealAvgType &gt;" name="Tomographer::AveragedHistogram&lt; HistogramType_, RealAvgType &gt;">
+<area shape="rect" id="node2" href="$class_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Tomographer::UniformBins\lHistogramWithErrorBars\l\&lt; HistogramType_::Scalar,\l RealAvgType \&gt;" alt="" coords="2384,174,2564,239"/>
+<area shape="rect" id="node3" href="$class_tomographer_1_1_uniform_bins_histogram.html" title="Tomographer::UniformBins\lHistogram\&lt; HistogramType\l_::Scalar, RealAvgType \&gt;" alt="" coords="1993,90,2176,142"/>
+<area shape="rect" id="node4" href="$struct_tomographer_1_1_uniform_bins_histogram_params.html" title="Tomographer::UniformBins\lHistogramParams\&lt; HistogramType\l_::Scalar \&gt;" alt="" coords="1555,10,1784,62"/>
+<area shape="rect" id="node5" href="/Users/philippe/Research/projects/tomographer/doc/cppreference-doxygen-web.tag.xml$cpp/types/size_t.html" title="std::size_t" alt="" coords="846,6,927,31"/>
+<area shape="rect" id="node6" href="$struct_tomographer_1_1_uniform_bins_histogram_params.html" title="The parameters of a UniformBinsHistogram. " alt="" coords="1141,50,1338,89"/>
+<area shape="rect" id="node8" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1Array.html" title="Eigen::Array\&lt; CountType,\l Eigen::Dynamic, 1 \&gt;" alt="" coords="1152,201,1327,239"/>
+<area shape="rect" id="node13" href="$class_tomographer_1_1_uniform_bins_histogram.html" title="Stores a histogram. " alt="" coords="1555,149,1784,187"/>
+<area shape="rect" id="node15" href="$class_tomographer_1_1_uniform_bins_histogram_with_error_bars.html" title="Stores a histogram along with error bars. " alt="" coords="1994,181,2174,233"/>
+<area shape="rect" id="node9" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Array\&lt; CountType, Eigen\l::Dynamic, 1, _Options, \l_MaxRows, _MaxCols \&gt; \&gt;" alt="" coords="595,194,776,259"/>
+<area shape="rect" id="node10" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Derived \&gt;" alt="" coords="5,166,167,205"/>
+<area shape="rect" id="node12" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Array\&lt; _Scalar, _Rows,\l _Cols, _Options, _MaxRows,\l _MaxCols \&gt; \&gt;" alt="" coords="374,117,571,182"/>
+<area shape="rect" id="node11" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1Array.html" title="Eigen::Array\&lt; _Scalar,\l _Rows, _Cols, _Options,\l _MaxRows, _MaxCols \&gt;" alt="" coords="800,133,972,185"/>
+</map>

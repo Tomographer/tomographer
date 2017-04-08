@@ -1,0 +1,208 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Python Tools Related to Tomography (tomographer.tools) &#8212; Tomographer Python Interface v4.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v4.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Utilities for Jupyter notebooks (tomographer.jpyutil)" href="tomographer.jpyutil.html" />
+    <link rel="prev" title="Computing the quantum error bars (tomographer.querrorbars)" href="tomographer.querrorbars.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="python-tools-related-to-tomography-tomographer-tools">
+<h1>Python Tools Related to Tomography (<cite>tomographer.tools</cite>)<a class="headerlink" href="#python-tools-related-to-tomography-tomographer-tools" title="Permalink to this headline">¶</a></h1>
+<p>The tools collected in these modules are separated from the other modules, because in
+contrast to the other modules (except for <cite>jpyutil</cite> and <cite>querrorbars</cite>), these do not
+interface any C++ code and are written in pure Python.</p>
+<div class="section" id="module-tomographer.tools.densedm">
+<span id="simulating-measurements-and-more-tomographer-tools-densedm"></span><h2>Simulating Measurements, and More (<cite>tomographer.tools.densedm</cite>)<a class="headerlink" href="#module-tomographer.tools.densedm" title="Permalink to this headline">¶</a></h2>
+<p>This module collects utilities gravitating around some standard tasks you may need to
+perform when doing quantum tomography.</p>
+<p>A routine allows you to simulate measurement outcomes from a true quantum state and a set
+of measurement settings.  The standard Pauli measurement settings on a qubit are available
+in <a class="reference internal" href="#tomographer.tools.densedm.PauliMeasEffectsQubit" title="tomographer.tools.densedm.PauliMeasEffectsQubit"><code class="xref py py-const docutils literal"><span class="pre">PauliMeasEffectsQubit</span></code></a>.</p>
+<p>A separate submodule (<a class="reference internal" href="#module-tomographer.tools.densedm.mle" title="tomographer.tools.densedm.mle"><code class="xref py py-mod docutils literal"><span class="pre">mle</span></code></a>) determines the maximum
+likelihood estimate given experimental data.</p>
+<p>Further tools may be added to these modules in the future.</p>
+<dl class="data">
+<dt id="tomographer.tools.densedm.PauliMeasEffectsQubit">
+<code class="descclassname">tomographer.tools.densedm.</code><code class="descname">PauliMeasEffectsQubit</code><em class="property"> = [[array([[ 0.5,  0.5],        [ 0.5,  0.5]]), array([[ 0.5, -0.5],        [-0.5,  0.5]])], [array([[ 0.5+0.j , -0.0-0.5j],        [ 0.0+0.5j,  0.5+0.j ]]), array([[ 0.5+0.j ,  0.0+0.5j],        [-0.0-0.5j,  0.5+0.j ]])], [array([[1, 0],        [0, 0]]), array([[0, 0],        [0, 1]])]]</em><a class="headerlink" href="#tomographer.tools.densedm.PauliMeasEffectsQubit" title="Permalink to this definition">¶</a></dt>
+<dd><p>List of POVMs corresponding to measuring Pauli operators on a single qubit.
+<code class="docutils literal"><span class="pre">PauliMeasEffectQubit[i][s]</span></code> is the POVM effect corresponding to measuring the outcome
+indexed by <cite>s</cite> of the Pauli operator indexed by <cite>i</cite>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomographer.tools.densedm.simulate_measurements">
+<code class="descclassname">tomographer.tools.densedm.</code><code class="descname">simulate_measurements</code><span class="sig-paren">(</span><em>rho</em>, <em>Mk</em>, <em>num_samples_per_setting</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.tools.densedm.simulate_measurements" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simulate measurements for quantum tomography.</p>
+<p>The &#8220;true state&#8221; <cite>rho</cite> should be a <cite>numpy.array</cite> object, as well as each POVM effect
+in <cite>Mk</cite>.</p>
+<p><cite>Mk</cite> should be a list of lists of POVM effects, where <code class="docutils literal"><span class="pre">Mk[k][i]</span></code> is the POVM effect
+corresponding to outcome <cite>i</cite> of measurement setting <cite>k</cite>.  A POVM effect must be a
+positive semidefinite matrix (given as a <cite>NumPy</cite> array), and all effects of a
+measurement setting should sum up to the identity matrix.</p>
+<p><cite>num_samples_per_setting</cite> specifies the number of repetitions of a measurement
+setting.  If it is an integer, then we simulate this number of measurement outcomes
+for each measurement setting in <cite>Mk</cite>.  If it is a list (or a <cite>numpy.array</cite>), then it
+should have the same length as there are settings in <cite>Mk</cite> (i.e. <code class="docutils literal"><span class="pre">len(Mk)</span> <span class="pre">==</span>
+<span class="pre">len(num_samples_per_setting)</span></code>), and for the <cite>k</cite>-th measurement setting in <cite>Mk</cite> we
+will simulate <code class="docutils literal"><span class="pre">num_samples_per_setting[k]</span></code> number of outcomes.</p>
+<p>Returns: an object <cite>d</cite> with properties <cite>d.Emn</cite> and <cite>d.Nm</cite>, representing the POVM
+effects and simulated frequency counts.  They are in a format suitable for input to
+<a class="reference internal" href="tomographer.tomorun.html#tomographer.tomorun.tomorun" title="tomographer.tomorun.tomorun"><code class="xref py py-func docutils literal"><span class="pre">tomographer.tomorun.tomorun()</span></code></a> or
+<a class="reference internal" href="tomographer.densedm.html#tomographer.densedm.IndepMeasLLH" title="tomographer.densedm.IndepMeasLLH"><code class="xref py py-class docutils literal"><span class="pre">tomographer.densedm.IndepMeasLLH</span></code></a>.</p>
+</dd></dl>
+
+</div>
+<div class="section" id="module-tomographer.tools.densedm.mle">
+<span id="maximum-likelihood-estimation-tomographer-tools-densedm-mle"></span><h2>Maximum Likelihood Estimation (<cite>tomographer.tools.densedm.mle</cite>)<a class="headerlink" href="#module-tomographer.tools.densedm.mle" title="Permalink to this headline">¶</a></h2>
+<p>Utility to find the MLE estimate, using <a class="reference external" href="http://www.cvxpy.org/">cvxpy</a>.</p>
+<dl class="data">
+<dt id="tomographer.tools.densedm.mle.DEFAULT_SOLVER_OPTS">
+<code class="descclassname">tomographer.tools.densedm.mle.</code><code class="descname">DEFAULT_SOLVER_OPTS</code><em class="property"> = {'solver': 'SCS', 'eps': 1e-06, 'max_iters': 5000, 'verbose': True}</em><a class="headerlink" href="#tomographer.tools.densedm.mle.DEFAULT_SOLVER_OPTS" title="Permalink to this definition">¶</a></dt>
+<dd><p>The default solver options used by <a class="reference internal" href="#tomographer.tools.densedm.mle.find_mle" title="tomographer.tools.densedm.mle.find_mle"><code class="xref py py-func docutils literal"><span class="pre">find_mle()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomographer.tools.densedm.mle.find_mle">
+<code class="descclassname">tomographer.tools.densedm.mle.</code><code class="descname">find_mle</code><span class="sig-paren">(</span><em>llh</em>, <em>solver_opts=None</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.tools.densedm.mle.find_mle" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find the Maximum Likelihood Estimate state.  The measurement data is specified in the
+<cite>llh</cite> argument as a <a class="reference internal" href="tomographer.densedm.html#tomographer.densedm.IndepMeasLLH" title="tomographer.densedm.IndepMeasLLH"><code class="xref py py-class docutils literal"><span class="pre">tomographer.densedm.IndepMeasLLH</span></code></a> instance.</p>
+<p>This function creates and solves a <cite>cvxpy</cite> problem solving the following:</p>
+<div class="math">
+\[ \begin{align}\begin{aligned}\text{maximize:}\quad &amp;\sum_k N_k \ln\operatorname{tr}(E_k\cdot\rho)\\\text{subject to:}\quad &amp;\rho \geqslant 0\\                   &amp;\operatorname{tr}\rho = 1\end{aligned}\end{align} \]</div>
+<p>The return value of this function is an two-tuple <cite>(rho_MLE, d)</cite>, where <cite>rho_MLE</cite> is a
+<cite>numpy.array</cite> representing the maximum likelihood estimate, and where <cite>d</cite> is an object
+with the following attributes set:</p>
+<ul class="simple">
+<li><code class="docutils literal"><span class="pre">d.result</span></code>: the raw return value of <cite>cvxpy.solve()</cite></li>
+<li><code class="docutils literal"><span class="pre">d.rho_MLE</span></code>: a copy of <cite>rho_MLE</cite></li>
+<li><code class="docutils literal"><span class="pre">d.rho_vars</span></code>: a two-tuple <cite>(rho_R, rho_I,)</cite> of the raw <cite>cvxpy</cite> variables used to
+represent the complex variable <cite>rho</cite>. (Cvxpy doesn&#8217;t support complex variables, so
+we need to declare two real matrix variables, corresponding to the real and
+imaginary parts of the variable <cite>rho</cite>.)</li>
+<li><code class="docutils literal"><span class="pre">d.objective</span></code>: the raw optimization objective object constructed for <cite>cvxpy</cite></li>
+<li><code class="docutils literal"><span class="pre">d.constraints</span></code>: the list of constraints specified to <cite>cvxpy</cite></li>
+<li><code class="docutils literal"><span class="pre">d.problem</span></code>: the raw <cite>cvxpy</cite> problem object</li>
+</ul>
+<p>The optional <cite>solve_opts</cite> argument is a dictionary of options that are directly passed
+on to <cite>cvxpy</cite>.  The keys specified in <cite>solve_opts</cite> override the default keys in
+<a class="reference internal" href="#tomographer.tools.densedm.mle.DEFAULT_SOLVER_OPTS" title="tomographer.tools.densedm.mle.DEFAULT_SOLVER_OPTS"><code class="xref py py-const docutils literal"><span class="pre">DEFAULT_SOLVER_OPTS</span></code></a>.</p>
+</dd></dl>
+
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Tomographer Python Interface</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tomographer._hist_classes.html">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.multiproc.html">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.densedm.html">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tomorun.html">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.mhrwtasks.html">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.querrorbars.html">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#module-tomographer.tools.densedm">Simulating Measurements, and More (<cite>tomographer.tools.densedm</cite>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#module-tomographer.tools.densedm.mle">Maximum Likelihood Estimation (<cite>tomographer.tools.densedm.mle</cite>)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.jpyutil.html">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.include.html">Utilities for compiling other modules (<cite>tomographer.include</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.version.html">Version and compilation information (<cite>tomographer.version</cite>)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="tomographer.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="tomographer.querrorbars.html" title="previous chapter">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+      <li>Next: <a href="tomographer.jpyutil.html" title="next chapter">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Philippe Faist.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/tomographer.tools.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

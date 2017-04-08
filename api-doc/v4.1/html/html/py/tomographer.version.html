@@ -1,0 +1,169 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Version and compilation information (tomographer.version) &#8212; Tomographer Python Interface v4.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v4.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Utilities for compiling other modules (tomographer.include)" href="tomographer.include.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="version-and-compilation-information-tomographer-version">
+<h1>Version and compilation information (<cite>tomographer.version</cite>)<a class="headerlink" href="#version-and-compilation-information-tomographer-version" title="Permalink to this headline">¶</a></h1>
+<dl class="data">
+<dt id="tomographer.version.version_str">
+<code class="descclassname">tomographer.version.</code><code class="descname">version_str</code><a class="headerlink" href="#tomographer.version.version_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>The full Tomographer version, as a string (for example <code class="docutils literal"><span class="pre">&quot;v4.0&quot;</span></code>, or for pre-releases,
+<code class="docutils literal"><span class="pre">&quot;v4.0a7-1-g7b32960&quot;</span></code>).</p>
+<p>The same version string is available simply as <code class="docutils literal"><span class="pre">tomographer.__version__</span></code>.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="tomographer.version.version_info">
+<code class="descclassname">tomographer.version.</code><code class="descname">version_info</code><a class="headerlink" href="#tomographer.version.version_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>A named tuple with fields <cite>(major,minor)</cite> with the major and minor version of
+Tomographer.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="tomographer.version.compile_info">
+<code class="descclassname">tomographer.version.</code><code class="descname">compile_info</code><a class="headerlink" href="#tomographer.version.compile_info" title="Permalink to this definition">¶</a></dt>
+<dd><p>A dictionary giving information on how the Python interface to Tomographer was
+compiled.  Currently the following fields are provided:</p>
+<blockquote>
+<div><ul>
+<li><p class="first"><cite>compile_info[&#8216;cflags&#8217;]</cite>: the extra compilation flags specified in order to compile
+the C++ module.  This includes setting the C++11 or C++14 standard, as well as any
+further vectorization / optimization flags.</p>
+<p>These flags are suitable to pass to <cite>Extension(extra_compile_options=...)</cite> if you
+are compiling your own extension with setuptools which uses the <cite>tomographer</cite>
+Python interface.</p>
+</li>
+<li><p class="first"><cite>compile_info[&#8216;eigen&#8217;]</cite>: the version of Eigen used to compile the <cite>tomographer</cite>
+Python extension module, and which is included in the package data.  This is a
+string which includes information about the enabled vectorization instructions (for
+instance: <code class="docutils literal"><span class="pre">&quot;Eigen</span> <span class="pre">3.3.1</span> <span class="pre">(SIMD:</span> <span class="pre">AVX</span> <span class="pre">SSE,</span> <span class="pre">SSE2,</span> <span class="pre">SSE3,</span> <span class="pre">SSSE3,</span> <span class="pre">SSE4.1,</span> <span class="pre">SSE4.2)&quot;</span></code>).</p>
+</li>
+<li><p class="first"><cite>compile_info[&#8216;boost&#8217;]</cite>: the version of the Boost headers used to compile the
+<cite>tomographer</cite> Python extension module, and which is included in the package data
+(for example: <code class="docutils literal"><span class="pre">&quot;1_63&quot;</span></code>).</p>
+</li>
+<li><p class="first"><cite>compile_info[&#8216;pybind11&#8217;]</cite>: the version of the PyBind11 headers used to compile the
+<cite>tomographer</cite> Python extension module.</p>
+<div class="versionadded">
+<p><span class="versionmodified">New in version 4.1.</span></p>
+</div>
+</li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Tomographer Python Interface</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tomographer._hist_classes.html">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.multiproc.html">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.densedm.html">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tomorun.html">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.mhrwtasks.html">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.querrorbars.html">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tools.html">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.jpyutil.html">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.include.html">Utilities for compiling other modules (<cite>tomographer.include</cite>)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Version and compilation information (<cite>tomographer.version</cite>)</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="tomographer.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="tomographer.include.html" title="previous chapter">Utilities for compiling other modules (<cite>tomographer.include</cite>)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Philippe Faist.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/tomographer.version.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

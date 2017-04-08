@@ -1,0 +1,11 @@
+<map id="Tomographer::MHRWTasks::ValueHistogramTasks::ResultsCollectorSimple&lt; CDataBaseType_, LoggerType_ &gt;::RunTaskResult" name="Tomographer::MHRWTasks::ValueHistogramTasks::ResultsCollectorSimple&lt; CDataBaseType_, LoggerType_ &gt;::RunTaskResult">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_m_h_r_w_tasks_1_1_m_h_random_walk_task_result.html" title="Tomographer::MHRWTasks\l::MHRandomWalkTaskResult\l\&lt; MHRWStatsCollectorResultType,\l IterCountIntType, StepRealType \&gt;" alt="" coords="1679,81,1908,147"/>
+<area shape="rect" id="node4" href="$struct_tomographer_1_1_m_h_r_w_params.html" title="Specify the parameters of a Metropolis&#45;Hastings random walk. " alt="" coords="808,161,1038,200"/>
+<area shape="rect" id="node7" href="$struct_tomographer_1_1_m_h_r_w_tasks_1_1_m_h_random_walk_task_result.html" title="Result of a task run. " alt="" coords="1214,81,1452,147"/>
+<area shape="rect" id="node10" href="$class_tomographer_1_1_uniform_bins_histogram.html" title="Stores a histogram. " alt="" coords="1678,247,1908,285"/>
+<area shape="rect" id="node12" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1Array.html" title="Eigen::Array\&lt; CountType,\l Eigen::Dynamic, 1 \&gt;" alt="" coords="1246,287,1420,325"/>
+<area shape="rect" id="node13" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Array\&lt; CountType, Eigen\l::Dynamic, 1, _Options, \l_MaxRows, _MaxCols \&gt; \&gt;" alt="" coords="595,220,776,285"/>
+<area shape="rect" id="node14" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Derived \&gt;" alt="" coords="5,268,167,307"/>
+<area shape="rect" id="node16" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Array\&lt; _Scalar, _Rows,\l _Cols, _Options, _MaxRows,\l _MaxCols \&gt; \&gt;" alt="" coords="374,289,571,355"/>
+<area shape="rect" id="node15" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1Array.html" title="Eigen::Array\&lt; _Scalar,\l _Rows, _Cols, _Options,\l _MaxRows, _MaxCols \&gt;" alt="" coords="837,295,1009,347"/>
+</map>

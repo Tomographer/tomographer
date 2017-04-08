@@ -1,0 +1,6 @@
+<map id="tomographer/valuecalculator.h" name="tomographer/valuecalculator.h">
+<area shape="rect" id="node2" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="385,152,566,177"/>
+<area shape="rect" id="node15" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="513,79,784,104"/>
+<area shape="rect" id="node11" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="585,225,774,251"/>
+<area shape="rect" id="node12" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="849,225,1038,251"/>
+</map>

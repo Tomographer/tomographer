@@ -1,0 +1,8 @@
+<map id="Tomographer::MHRWTasks::MHRandomWalkTask&lt; MHRandomWalkTaskCData, Rng &gt;::StatusReport" name="Tomographer::MHRWTasks::MHRandomWalkTask&lt; MHRandomWalkTaskCData, Rng &gt;::StatusReport">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_multi_proc_1_1_task_status_report.html" title="Basic status report class. " alt="" coords="877,5,1039,44"/>
+<area shape="rect" id="node3" href="/Users/philippe/Research/projects/tomographer/doc/cppreference-doxygen-web.tag.xml$cpp/string/basic_string.html" title="STL class. " alt="" coords="540,12,619,37"/>
+<area shape="rect" id="node4" href="/Users/philippe/Research/projects/tomographer/doc/cppreference-doxygen-web.tag.xml$cpp/string/basic_string.html" title="std::basic_string\&lt;\l char \&gt;" alt="" coords="231,5,357,44"/>
+<area shape="rect" id="node5" href="/Users/philippe/Research/projects/tomographer/doc/cppreference-doxygen-web.tag.xml$cpp/string/basic_string.html" title="STL class. " alt="" coords="5,5,131,44"/>
+<area shape="rect" id="node6" href="$struct_tomographer_1_1_m_h_r_w_params.html" title="Tomographer::MHRWParams\l\&lt; IterCountIntType, StepReal\lType \&gt;" alt="" coords="860,68,1056,120"/>
+<area shape="rect" id="node7" href="$struct_tomographer_1_1_m_h_r_w_params.html" title="Specify the parameters of a Metropolis&#45;Hastings random walk. " alt="" coords="465,75,695,113"/>
+</map>

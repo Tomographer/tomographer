@@ -1,0 +1,6 @@
+<map id="Tomographer::Tools::StaticOrDynamic&lt; T_, IsDynamic_, StaticValue_ &gt;" name="Tomographer::Tools::StaticOrDynamic&lt; T_, IsDynamic_, StaticValue_ &gt;">
+<area shape="rect" id="node2" href="$class_tomographer_1_1_tools_1_1_static_or_dynamic.html" title="Tomographer::Tools\l::StaticOrDynamic\&lt; CountInt\lType,(SamplesSizeCTime=\l=Eigen::Dynamic), SamplesSizeCTime \&gt;" alt="" coords="473,5,736,71"/>
+<area shape="rect" id="node3" href="$class_tomographer_1_1_tools_1_1_static_or_dynamic.html" title="Tomographer::Tools\l::StaticOrDynamic\&lt; std\l::size_t, IsDynamicDim,\l(std::size_t) FixedDim \&gt;" alt="" coords="524,95,686,160"/>
+<area shape="rect" id="node4" href="$class_tomographer_1_1_tools_1_1_static_or_dynamic.html" title="Tomographer::Tools\l::StaticOrDynamic\&lt; int,\l(NumTrackValuesCTime=\l=Eigen::Dynamic), NumTrackValues\lCTime \&gt;" alt="" coords="487,184,722,263"/>
+<area shape="rect" id="node5" href="$class_tomographer_1_1_tools_1_1_static_or_dynamic.html" title="Tomographer::Tools\l::StaticOrDynamic\&lt; int,\l(NumLevelsCTime==Eigen\l::Dynamic), NumLevelsCTime \&gt;" alt="" coords="500,287,709,352"/>
+</map>

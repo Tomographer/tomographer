@@ -1,0 +1,4 @@
+var struct_tomographer_1_1_logger_1_1_logger_traits_3_01_local_logger_3_01_base_logger_type___01_4_01_4 =
+[
+    [ "HasOwnGetLevel", "struct_tomographer_1_1_logger_1_1_logger_traits_3_01_local_logger_3_01_base_logger_type___01_4_01_4.html#ac0c4dc0e3053772927a37c9c546b62afad7e645544706719dc89b1a90a85ff81f", null ]
+];
