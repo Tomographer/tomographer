@@ -20,8 +20,8 @@ The easiest way to install `tomographer` is using `pip`::
     pip install tomographer
 
 
-**NOTE**: PIP cannot (apparently) install build-time requirements, so you have to install
-`numpy` and `pybind11` manually, before installing `tomographer`.
+*NOTE: `pip` cannot (apparently) install build-time requirements, so you have to install
+`numpy` and `pybind11` manually, before installing `tomographer`.*
 
 
 License
