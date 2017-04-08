@@ -254,10 +254,7 @@ void py_tomo_histogram(py::module rootmodule)
             "`Scalar=%s` and `CountType=%s`.  See the C++ class documentation for more information."
             "\n\n"
             ".. versionchanged:: 4.1\n"
-            "   Removed the ``HasErrorBars`` attribute from all histogram classes (originally because of an issue in"
-            " pybind11 when overriding static properties); anyway this attribute was not Pythonic -- there should be"
-            " no context in which code needs to branch depending on if the histogram has error bars, and even if so,"
-            " one should probably better use duck typing."
+            "    Replaced the class static attribute `HasErrorBars` by the property `has_error_bars`."
             "\n\n"
             ".. py:function:: UniformBinsHistogram([params=UniformBinsHistogramParams()])\n\n"
             "    Construct a new histogram object with the given histogram parameters.\n\n"
@@ -278,9 +275,10 @@ void py_tomo_histogram(py::module rootmodule)
             "is readable and writable, although you may not change the size or type of the array.\n\n"
             ".. py:attribute:: off_chart\n\n"
             "    The number of recorded data points which were beyond the histogram range `[params.min, params.max[`.\n\n"
-//            ".. py:attribute:: UniformBinsHistogram.HasErrorBars\n\n"
-//            "    This is a class attribute, i.e. is accessed as `UniformBinsHistogram.HasErrorBars`, and is set to the "
-//            "constant value `False`.\n\n"
+            ".. py:attribute:: has_error_bars\n\n"
+            "    The constant `False`.  Note that, by contrast to the correpsonding C++ class, this is "
+            "an instance property and not a class property.  (This is because in Python, you don't usually "
+            "have natural direct access to the type, only to the instance.)\n\n"
             ,
             boost::core::demangle(typeid(RealType).name()).c_str(),
             boost::core::demangle(typeid(CountIntType).name()).c_str()
@@ -297,7 +295,7 @@ void py_tomo_histogram(py::module rootmodule)
       .def_property("bins", [](const Kl & h) -> tpy::CountIntVectorType { return h.bins.matrix(); },
                     [](Kl & h, const tpy::CountIntVectorType& v) { h.bins = v; })
       .def_readwrite("off_chart", & Kl::off_chart )
-//      .def_property_readonly_static("HasErrorBars", [](py::object) { return false; })
+      .def_property_readonly("has_error_bars", [](py::object) { return false; })
       .def("reset", & Kl::reset,
            "reset()\n\n"
            "Clears the current histogram counts (including `off_chart` counts) to zero.  The histogram "
@@ -385,7 +383,7 @@ void py_tomo_histogram(py::module rootmodule)
       .def_property("bins", [](const Kl & h) -> tpy::RealVectorType { return h.bins.matrix(); },
                     [](Kl & h, const tpy::RealVectorType& v) { h.bins = v; })
       .def_readwrite("off_chart", & Kl::off_chart)
-//      .def_property_readonly_static("HasErrorBars", [](py::object) { return false; })
+      .def_property_readonly("has_error_bars", [](py::object) { return false; })
       .def("reset", & Kl::reset)
       .def("load", [](Kl & h, const tpy::RealVectorType& x, RealType o) { h.load(x, o); },
            "bins"_a, "off_chart"_a = CountIntType(0))
@@ -426,6 +424,9 @@ void py_tomo_histogram(py::module rootmodule)
         "\n\n"
         "|picklable|"
         "\n\n"
+        ".. versionchanged:: 4.1\n"
+        "    Replaced the class static attribute `HasErrorBars` by the property `has_error_bars`."
+        "\n\n"
         "In addition to the members inherited from :py:class:`UniformBinsRealHistogram`, the following "
         "members are available:"
         "\n\n"
@@ -433,6 +434,10 @@ void py_tomo_histogram(py::module rootmodule)
         "    The error bar values on each of the histogram bin counts, interfaced as a `NumPy` array object "
         "storing real values.  This attribute is readable and writable, although you may not change the "
         "size or type of the array.\n\n"
+        ".. py:attribute:: has_error_bars\n\n"
+        "    The constant `True`.  Note that, by contrast to the correpsonding C++ class, this is "
+        "an instance property and not a class property.  (This is because in Python, you don't usually "
+        "have natural direct access to the type, only to the instance.)\n\n"
         // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a=tpy::UniformBinsHistogramParams())
@@ -446,7 +451,7 @@ void py_tomo_histogram(py::module rootmodule)
       .def_property("delta", [](const Kl & h) -> tpy::RealVectorType { return h.delta.matrix(); },
                     [](Kl & h, const tpy::RealVectorType v) { h.delta = v; })
       .def_readwrite("off_chart", & Kl::off_chart)
-//      .def_property_readonly_static("HasErrorBars", [](py::object) { return true; })
+      .def_property_readonly("has_error_bars", [](py::object) { return true; })
       .def("reset", & Kl::reset)
       .def("load",
            [](Kl & h, const tpy::RealVectorType& x, const tpy::RealVectorType& err, RealType o) {

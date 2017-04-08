@@ -213,6 +213,9 @@ option(BUILD_TOMOPY "Build the tomographer Python interface" off)
 if (BUILD_TOMOPY)
 
   # Use pybind11
+  #
+  # Need >=2.1 for auto metaclass
+  #
   find_package(pybind11 2.1 REQUIRED)
 
   # All these dependencies will be found using pybind11's stuff.

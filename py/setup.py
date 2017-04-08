@@ -404,9 +404,14 @@ setup(name="tomographer",
       package_data={
           'tomographer.include': tomographer_include_files,
       },
-      #include_package_data=True,
-      install_requires=['pip>=7.1', 'numpy>=1.8', 'pybind11>=2.1'],
-      setup_requires=['pip>=7.1', 'numpy>=1.8', 'pybind11>=2.1'],
+      #
+      install_requires = ['pip>=7.1',
+                          'numpy>=1.8',
+                          'pybind11>=2.1'],  # >=2.1 for auto metaclass
+      setup_requires =   ['pip>=7.1',
+                          'numpy>=1.8',
+                          'pybind11>=2.1'],
+      #
       cmdclass={ 'build_ext': BuildExt },
       zip_safe=False,
 )
