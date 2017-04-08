@@ -13,7 +13,7 @@ Please select your preferred option, perhaps the one that suits best your existi
   subsequent analysis performed via Python routines](#python-version); or
 
 - [Tomographer routines run from command-line, data provided in MATLAB file format,
-  subsequent analysis performed using MATLAB](#command-line-tomorun-matlab).
+  subsequent analysis performed separately with e.g. MATLAB](#command-line-tomorun-matlab).
 
 
 ## <a name="python-version"></a> The Python Way
@@ -65,7 +65,7 @@ steps to get started and analyze data from your experiment:
 
 
 
-## <a name="command-line-tomorun-matlab"></a> Using the Command-Line and MATLAB
+## <a name="command-line-tomorun-matlab"></a> Using the Command-Line Program `tomorun`
 
 
 The Tomographer project provides the `tomorun` program which analyses data from a quantum
