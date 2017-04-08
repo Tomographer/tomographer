@@ -14,6 +14,15 @@ Installation
 In order to install this Python extension, you need a relatively recent C++ compiler
 (supporting C++11), such as `g++` ≥ 4.8 or `llvm/clang` ≥ 3.3.
 
+The easiest way to install `tomographer` is using `pip`::
+
+    pip install numpy pybind11
+    pip install tomographer
+
+
+**NOTE**: PIP cannot (apparently) install build-time requirements, so you have to install
+`numpy` and `pybind11` manually, before installing `tomographer`.
+
 
 License
 -------

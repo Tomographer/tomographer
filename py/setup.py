@@ -26,6 +26,7 @@
 
 
 from distutils.spawn import find_executable
+from distutils.version import LooseVersion
 
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
@@ -38,6 +39,28 @@ import subprocess # for git
 import re
 import glob
 import shutil
+
+# build-time requirements -- Apparently, PIP cannot install these automatically -- so make
+# sure we get a hard failure if they aren't present
+import numpy
+import pybind11
+
+def require_mod_version(mod, modver, minver, fix=None):
+    if LooseVersion(modver) < LooseVersion(minver):
+        msg = "Minimum required {mod} version is {minver}".format(mod=mod,minver=minver)
+        if fix:
+            msg += "; try {}".format(fix)
+        raise RuntimeError(msg)
+
+
+# Not too old NumPy
+require_mod_version("NumPy", numpy.__version__, "1.8",
+                    fix='running "pip install numpy --upgrade"')
+
+# Very recent Pybind11, need >= 2.1 for automatic py::metaclass()
+require_mod_version("PyBind11", pybind11.__version__, "2.1",
+                    fix='running "pip install pybind11 --upgrade"')
+
 
 
 #
@@ -198,26 +221,15 @@ headers = [ os.path.join('tomographer/include', 'tomographerpy', x) for x in [
 # Some code taken from https://github.com/pybind/python_example
 #
 
-class get_pybind_include(object):
-    """Helper class to determine the pybind11 include path
-    The purpose of this class is to postpone importing pybind11
-    until it is actually installed, so that the ``get_include()``
-    method can be invoked. """
-
-    def __init__(self, user=False):
-        self.user = user
-
-    def __str__(self):
-        import pybind11
-        return pybind11.get_include(self.user)
+pybind_includes = [
+    pybind11.get_include(False),
+    pybind11.get_include(True),
+]
+numpy_includes = [
+    numpy.get_include()
+]
 
 
-class get_numpy_include(object):
-    """Same for numpy."""
-
-    def __str__(self):
-        import numpy
-        return numpy.get_include()
 
 
 # As of Python 3.6, CCompiler has a `has_flag` method.
@@ -309,14 +321,6 @@ static inline std::vector<std::string> tomographerpy_compileinfo_get_cflags() {
         build_ext.build_extensions(self)
 
 
-#def make_glob_patterns(rootdir, prefixdir, patterns):
-#    l = []
-#    for root, dirnames, filenames in os.walk(os.path.join(rootdir, prefixdir)):
-#        l += [ os.path.join(os.path.relpath(root, rootdir), d, p)
-#               for p in patterns
-#               for d in dirnames ]
-#    return l
-
 def find_all_files(dirname, pred, prefixfn=lambda root, filename: os.path.join(root, filename)):
     matches = []
     for root, dirnames, filenames in os.walk(dirname):
@@ -329,10 +333,6 @@ target_tomographer_include = os.path.join(thisdir, 'tomographer', 'include')
 target_tomographer_include_deps = os.path.join(target_tomographer_include, 'deps')
 
 tomographer_include_files = (
-#    make_glob_patterns(target_tomographer_include, 'tomographerpy', ['*.h']) +
-#    make_glob_patterns(target_tomographer_include, 'tomographer', ['*.h']) +
-#    make_glob_patterns(target_tomographer_include, 'deps/boost', ['*']) +
-#    make_glob_patterns(target_tomographer_include, 'deps/eigen3', ['*'])
     find_all_files(os.path.join(target_tomographer_include, 'tomographerpy'),
                    pred=lambda fn: fn.endswith('.h'),
                    prefixfn=lambda root, fn: os.path.relpath(os.path.join(root, fn), target_tomographer_include)) +
@@ -351,67 +351,121 @@ tomographer_include_files = (
 #print("ALL INCLUDE FILES = {}".format(tomographer_include_files))
 
 
+
+
 def readfile(x):
     with open(os.path.join(thisdir, x)) as f:
         return f.read()
+
+
+#
+# Build & installation requirements
+#
+REQUIREMENTS = [
+    # recent PIP is required (get errors otherwise)
+    'pip >= 7.1',
+    'numpy >= 1.8',
+    'pybind11 >= 2.1',
+],
+
 
 #
 # Set up the tomographer python package
 #
 
-setup(name="tomographer",
-      version=version_for_pip,
-      description=u'The Tomographer Project \u2014 Practical, Reliable Error Bars in Quantum Tomography',
-      long_description=readfile('README.rst'),
-      author='Philippe Faist',
-      author_email='phfaist@caltech.edu',
-      url='https://github.com/Tomographer/tomographer/',
-      download_url='https://github.com/Tomographer/tomographer/releases/download/{version}/tomographer-{version}.tar.gz'.format(version=version),
-      license='MIT',
-      keywords='quantum tomography error bars',
-      classifiers=[
-          'Development Status :: 5 - Production/Stable',
-          'Intended Audience :: Science/Research',
-          'License :: OSI Approved :: MIT License',
-          'Programming Language :: C++',
-          'Programming Language :: Python',
-          'Topic :: Scientific/Engineering :: Physics',
-      ],
-      packages=[
-          'tomographer',
-          'tomographer.tools',
-          'tomographer.tools.densedm',
-          'tomographer.include',
-      ],
-      ext_modules=[
-          Extension(
-              '_tomographer_cxx',
-              sources=cxxfiles,
-              include_dirs=[
-                  # Path to pybind11 headers
-                  get_pybind_include(),
-                  get_pybind_include(user=True),
-                  get_numpy_include(),
-                  os.path.join(target_tomographer_include), # tomographer & tomographerpy
-                  os.path.join(target_tomographer_include_deps, 'boost'),
-                  os.path.join(target_tomographer_include_deps, 'eigen3'),
-              ],
-              depends=headers,
-              language='c++',
-          ),
-      ],
-      # package data - headers
-      package_data={
-          'tomographer.include': tomographer_include_files,
-      },
-      #
-      install_requires = ['pip>=7.1',
-                          'numpy>=1.8',
-                          'pybind11>=2.1'],  # >=2.1 for auto metaclass
-      setup_requires =   ['pip>=7.1',
-                          'numpy>=1.8',
-                          'pybind11>=2.1'],
-      #
-      cmdclass={ 'build_ext': BuildExt },
-      zip_safe=False,
+url = 'https://github.com/Tomographer/tomographer/'
+download_url = ('https://github.com/Tomographer/tomographer/releases/download/'
+                '{version}/tomographer-{version}.tar.gz').format(version=version)
+
+setup(
+    #
+    # Essential meta-information
+    #
+    name="tomographer",
+    version=version_for_pip,
+    description=u'The Tomographer Project \u2014 Practical, Reliable Error Bars in Quantum Tomography',
+    long_description=readfile('README.rst'),
+    author='Philippe Faist',
+    author_email='phfaist@caltech.edu',
+    license='MIT',
+    url=url,
+    download_url=download_url,
+    keywords='quantum tomography error bars',
+    classifiers=[
+        'Development Status :: 5 - Production/Stable',
+        'Intended Audience :: Science/Research',
+        'License :: OSI Approved :: MIT License',
+        'Programming Language :: C++',
+        'Programming Language :: Python',
+        'Topic :: Scientific/Engineering :: Physics',
+    ],
+
+    #
+    # Included pure-Python tomographer packages
+    #
+    packages=[
+        'tomographer',
+        'tomographer.tools',
+        'tomographer.tools.densedm',
+        'tomographer.include',
+    ],
+
+    #
+    # Our C++/PyBind11 extension module.
+    #
+    ext_modules=[
+        Extension(
+            '_tomographer_cxx',
+            sources=cxxfiles,
+            include_dirs=(
+                # Path to pybind11 headers
+                pybind_includes + 
+                numpy_includes +
+                # our own internal header dependencies
+                [
+                os.path.join(target_tomographer_include), # tomographer & tomographerpy
+                os.path.join(target_tomographer_include_deps, 'boost'),
+                os.path.join(target_tomographer_include_deps, 'eigen3'),
+                ]),
+            depends=headers,
+            language='c++',
+        ),
+    ],
+    
+    #
+    # package data - include our headers inside the package, so that other extensions
+    # can depend easily on the tomographer header library (along with Eigen & Boost
+    # dependencies)
+    #
+    package_data={
+        'tomographer.include': tomographer_include_files,
+    },
+    
+    #
+    # Installation requirements
+    #
+    install_requires = REQUIREMENTS,
+    #
+    # Beware of setup_requires --
+    # https://pip.pypa.io/en/stable/reference/pip_install/#controlling-setup-requires
+    #
+    # But setup_requires would apparently be the only solution for us, as PIP won't
+    # install the install_requires dependencies before building the wheel :( -- but still
+    # doesn't work, not sure why :( :(  -- Arrhgggh!!!
+    #
+    # Just document dependencies.  Apparently PIP doesn't support doing this
+    # automatically.
+    #
+    #setup_requires = REQUIREMENTS,
+    
+    #
+    # Our customized build procedure
+    #
+    cmdclass={ 'build_ext': BuildExt },
+    
+    #
+    # Not safe for keeping in a ZIP file (because of our extension)
+    #
+    zip_safe=False,
+
 )
