@@ -36,14 +36,22 @@ execute_process(
 
 # Install our headers in the standard header location of the system
 install(DIRECTORY .
-  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/tomographer-${TOMOGRAPHER_VERSION}/tomographer"
+  DESTINATION "${TOMOGRAPHER_HEADERS_INSTALL_PATH}/tomographer"
   FILES_MATCHING
   PATTERN "*.h"
   )
 # Install version header
 install(FILES "${CMAKE_CURRENT_BINARY_DIR}/tomographer_version.h"
-  DESTINATION "${CMAKE_INSTALL_INCLUDEDIR}/tomographer-${TOMOGRAPHER_VERSION}/tomographer"
+  DESTINATION "${TOMOGRAPHER_HEADERS_INSTALL_PATH}/tomographer"
   )
+
+# install the CMake export target
+add_library(Tomographer INTERFACE)
+set_target_properties(Tomographer PROPERTIES EXPORT_NAME Tomographer)
+target_include_directories(Tomographer
+  INTERFACE "${CMAKE_INSTALL_PREFIX}/${TOMOGRAPHER_HEADERS_INSTALL_PATH}")
+install(TARGETS Tomographer EXPORT TomographerConfig)
+
 
 if(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION)
   # set up a hook to update the header every time the output of `git describe --tags`

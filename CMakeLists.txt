@@ -33,7 +33,9 @@ set(CMAKE_MODULE_PATH
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake"
   "${CMAKE_CURRENT_SOURCE_DIR}/cmake/vc")
 
+# set TOMOGRAPHER_VERSION and PROJECT_VERSION
 include(TomographerVersion)
+
 include(Util)
 
 # default to release build with debugging info
@@ -143,6 +145,24 @@ endif()
 
 include(GNUInstallDirs)
 
+message(STATUS "Installation prefix is ${CMAKE_INSTALL_PREFIX} (CMAKE_INSTALL_PREFIX)")
+
+# Where to install stuff -- may be overridden by user by setting the corresponding
+# variable in the cache
+#
+# Headers
+if(NOT TOMOGRAPHER_HEADERS_INSTALL_PATH)
+  set(TOMOGRAPHER_HEADERS_INSTALL_PATH
+    "${CMAKE_INSTALL_INCLUDEDIR}/tomographer-${TOMOGRAPHER_VERSION}")
+endif()
+#
+# TomographerConfig.cmake  for imported targets
+if(NOT TOMOGRAPHER_CMAKEPACKAGE_INSTALL_PATH)
+  set(TOMOGRAPHER_CMAKEPACKAGE_INSTALL_PATH
+    "${CMAKE_INSTALL_DATADIR}/Tomographer/cmake")
+endif()
+
+
 # Set up uninstall target
 configure_file(
     "${CMAKE_CURRENT_SOURCE_DIR}/cmake/cmake_uninstall.cmake.in"
@@ -156,6 +176,28 @@ add_custom_target(uninstall
 install(FILES README.md README.txt LICENSE.txt
   DESTINATION "${CMAKE_INSTALL_DOCDIR}"
   )
+
+# Exported targets
+include(CMakePackageConfigHelpers)
+install(EXPORT TomographerConfig
+  NAMESPACE Tomographer::
+  DESTINATION "${TOMOGRAPHER_CMAKEPACKAGE_INSTALL_PATH}"
+  )
+# taken from CMakeLists.txt in Eigen's sources: ---
+#
+# Remove CMAKE_SIZEOF_VOID_P from ***ConfigVersion.cmake since we do not depend
+# on architecture specific settings or libraries. More specifically, an
+# ***Config.cmake generated from a 64 bit target can be used for 32 bit targets
+# as well (and vice versa).
+set(_Tomographer_CMAKE_SIZEOF_VOID_P ${CMAKE_SIZEOF_VOID_P})
+unset(CMAKE_SIZEOF_VOID_P)
+write_basic_package_version_file(TomographerConfigVersion.cmake
+  COMPATIBILITY SameMajorVersion)
+set(CMAKE_SIZEOF_VOID_P ${_Tomographer_CMAKE_SIZEOF_VOID_P})
+
+install(FILES
+  "${CMAKE_CURRENT_BINARY_DIR}/TomographerConfigVersion.cmake"
+  DESTINATION "${TOMOGRAPHER_CMAKEPACKAGE_INSTALL_PATH}")
 
 
 # ==============================================================================

@@ -96,3 +96,18 @@ endif(EXISTS "${TomographerVersionFile}")
 
 set(TOMOGRAPHER_SET_HOOK_GIT_UPDATE_VERSION "${_set_git_version_update_hook}"
   CACHE BOOL "[For Developers] Whether to automatically update version information from git-describe at each compilation or not.")
+
+
+################################################################################
+
+# parse TOMOGRAPHER_VERSION
+
+if(TOMOGRAPHER_VERSION MATCHES "^v([0-9]+)[.]([0-9]+)(.*)$")
+  set(TOMOGRAPHER_VERSION_MAJOR "${CMAKE_MATCH_1}")
+  set(TOMOGRAPHER_VERSION_MINOR "${CMAKE_MATCH_2}")
+  set(TOMOGRAPHER_VERSION_SUFFIX "${CMAKE_MATCH_3}")
+else()
+  message(FATAL_ERROR "Invalid TOMOGRAPHER_VERSION: ${TOMOGRAPHER_VERSION}")
+endif()
+
+set(PROJECT_VERSION "${TOMOGRAPHER_VERSION_MAJOR}.${TOMOGRAPHER_VERSION_MINOR}")
