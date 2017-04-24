@@ -39,14 +39,16 @@ import sanitize_macosx_binary
 
 
 # where to find stuff on my system
-C_COMPILER = '/usr/local/opt/llvm/bin/clang'
-CXX_COMPILER = '/usr/local/opt/llvm/bin/clang++'
+#
+# Use g++-6 instead of clang, seems significantly faster ? (after some cheap benchmarks)
+C_COMPILER = '/usr/local/opt/gcc/bin/gcc-6'
+CXX_COMPILER = '/usr/local/opt/gcc/bin/g++-6'
 EIGEN3_INCLUDE = '/usr/local/opt/eigen/include/eigen3'
 MATIO_INCLUDE = '/usr/local/opt/libmatio/include'
 MATIO_LIB = '/usr/local/opt/libmatio/lib/libmatio.a'
 ZLIB_LIB = '-lz'
-Boost_PROGRAM_OPTIONS_LIB = '/usr/local/opt/boost/lib/libboost_program_options.a'
-LDFLAGS="-L/usr/local/opt/llvm/lib"
+Boost_PROGRAM_OPTIONS_LIB = '/opt/boost-1_64_0-gcc6/lib/libboost_program_options.a'
+#LDFLAGS="-L/usr/local/opt/llvm/lib"
 
 
 if (len(sys.argv) != 2):
@@ -132,20 +134,25 @@ do_run([e.cmake, '..',
         '-DZLIB_LIBRARY_RELEASE='+ZLIB_LIB,
         '-DBoost_PROGRAM_OPTIONS_LIBRARY='+Boost_PROGRAM_OPTIONS_LIB,
         '-DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE='+Boost_PROGRAM_OPTIONS_LIB,
+        # Tomorun: use OpenMP not C++ threads
+        '-DTOMORUN_MULTIPROC=openmp',
         # optimizations & architecture: don't include too many optimizations, so that the
         # binary can run on other machines. Intel Core 2 should be a good common ground.
         '-DTARGET_ARCHITECTURE=core',
         # additional C++ compiler flags
-        '-DCMAKE_CXX_FLAGS_RELEASE=-O3 -mmacosx-version-min=10.6 -stdlib=libc++',
+        '-DCMAKE_CXX_FLAGS_RELEASE=-O3 -mmacosx-version-min=10.6 -UNDEBUG', # *keep* assertions
         # OS X Deployment target:
         # gets include dirs wrong:
         #'-DCMAKE_OSX_DEPLOYMENT_TARGET=10.8',
         #'-DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk',
         # linker flags
-        '-DCMAKE_EXE_LINKER_FLAGS=-L/usr/local/opt/llvm/lib',
+        #'-DCMAKE_EXE_LINKER_FLAGS=-L/usr/local/opt/llvm/lib',
         # Finally, our install prefix for packaging,
         '-DCMAKE_INSTALL_PREFIX='+fullinstallpath
-        ], cwd=fullbuildpath, env=dict(os.environ, LDFLAGS=LDFLAGS))
+        ],
+       cwd=fullbuildpath,
+       env=dict(os.environ), #env=dict(os.environ, LDFLAGS=LDFLAGS)
+       )
 
 # compile. Since there is only 'tomorun' to make, no need for -j<#CPUs>
 do_run([e.make, 'VERBOSE=1'],
