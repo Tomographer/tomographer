@@ -52,36 +52,117 @@ static const std::string prog_version_info = prog_version_info_1 + prog_version_
 
 static std::string prog_version_info_features()
 {
-  static std::string features_str = std::string();
+  std::string features_str = std::string();
 
-  if (features_str.size() == 0) {
-    // detect the program features. 
+  // detect the program features. 
 
-    // Eigen
-    features_str += Tomographer::Tools::fmts("Eigen %d.%d.%d (SIMD: %s)\n", EIGEN_WORLD_VERSION,
-					     EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
-					     Eigen::SimdInstructionSetsInUse());
+  // Eigen
+  features_str += Tomographer::Tools::fmts("Eigen %d.%d.%d (SIMD: %s)\n", EIGEN_WORLD_VERSION,
+                                           EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
+                                           Eigen::SimdInstructionSetsInUse());
 
-    // Boost
-    features_str += std::string("Boost headers ") + std::string(BOOST_LIB_VERSION) + std::string("\n");
+  // Boost
+  features_str += std::string("Boost headers ") + std::string(BOOST_LIB_VERSION) + std::string("\n");
 
-    // Parallelization
-    features_str += "MultiProc: " TomorunMultiProcTaskDispatcherTitle "\n";
-    // --replaces:
-    // OpenMP
-    //     features_str +=
-    // #ifdef _OPENMP
-    //       "+OpenMP [Tomorun was compiled with OpenMP support.]\n"
-    // #else
-    //       "-OpenMP [Tomorun was compiled without OpenMP support.]\n"
-    // #endif
-      ;
+  // Parallelization
+  features_str += "MultiProc: " TomorunMultiProcTaskDispatcherTitle "\n";
+  // --replaces:
+  // OpenMP
+  //     features_str +=
+  // #ifdef _OPENMP
+  //       "+OpenMP [Tomorun was compiled with OpenMP support.]\n"
+  // #else
+  //       "-OpenMP [Tomorun was compiled without OpenMP support.]\n"
+  // #endif
+  ;
 
-    // MatIO
-    int major, minor, release;
-    Mat_GetLibraryVersion(&major,&minor,&release);
-    features_str += Tomographer::Tools::fmts("MatIO %d.%d.%d\n", major, minor, release);
+  // MatIO
+  int major, minor, release;
+  Mat_GetLibraryVersion(&major,&minor,&release);
+  features_str += Tomographer::Tools::fmts("MatIO %d.%d.%d\n", major, minor, release);
+
+  //
+  // Compiler
+  //
+  features_str += "Compiler: ";
+#if defined(__clang__)
+
+#  ifdef __apple_build_version__
+  features_str += Tomographer::Tools::fmts("Apple LLVM/clang++ %s", __clang_version__);
+#  else
+  features_str += Tomographer::Tools::fmts("LLVM/clang++ %s", __clang_version__);
+#  endif
+
+#elif defined(__INTEL_COMPILER)
+
+  features_str += Tomographer::Tools::fmts("Intel %d", __INTEL_COMPILER);
+#  ifdef __INTEL_COMPILER_BUILD_DATE
+  features_str += Tomographer::Tools::fmts(" (%d)", __INTEL_COMPILER_BUILD_DATE);
+#  endif
+
+#elif defined(__GNUC__)
+
+#  ifdef __MINGW32__
+  features_str += Tomographer::Tools::fmts("MinGW gcc %d.%d.%d",
+                                           __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+#  else
+  features_str += Tomographer::Tools::fmts("gcc %d.%d.%d",
+                                           __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
+#  endif
+
+#elif defined(__VERISON__)
+
+  features_str += __VERSION__;
+
+#else
+
+  features_str += Tomographer::Tools::fmts("<unknown>");
+
+#endif
+  features_str += "\n";
+
+  //
+  // features: assertions, fixed TOMORUN_* sizes etc., ...
+  //
+  std::vector<std::string> featconfig;
+  // assertions
+#ifdef EIGEN_NO_DEBUG
+  featconfig.push_back("no assertions");
+#else
+  featconfig.push_back("with assertions");
+#endif
+  // tomorun-specifics
+#define IDENT_TO_STRING(x) #x
+#ifdef TOMORUN_INT
+  featconfig.push_back(Tomographer::Tools::fmts("int_type=%s", IDENT_TO_STRING(TOMORUN_INT)));
+#endif
+#ifdef TOMORUN_REAL
+  featconfig.push_back(Tomographer::Tools::fmts("real_type=%s", IDENT_TO_STRING(TOMORUN_REAL)));
+#endif
+#ifdef TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS
+  featconfig.push_back("with povm_consistency_checks");
+#endif
+#ifdef TOMORUN_CUSTOM_FIXED_DIM
+  featconfig.push_back(Tomographer::Tools::fmts("custom_fixed_dim=%d", TOMORUN_CUSTOM_FIXED_DIM));
+#endif
+#ifdef TOMORUN_CUSTOM_FIXED_MAX_DIM
+  featconfig.push_back(Tomographer::Tools::fmts("custom_fixed_max_dim=%d", TOMORUN_CUSTOM_FIXED_DIM));
+#endif
+#ifdef TOMORUN_CUSTOM_MAX_POVM_EFFECTS
+  featconfig.push_back(Tomographer::Tools::fmts("custom_max_povm_effects=%d", TOMORUN_CUSTOM_MAX_POVM_EFFECTS));
+#endif
+#ifdef TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
+  featconfig.push_back("with multiplexor-value-calculator");
+#else
+  featconfig.push_back("no multiplexor-value-calculator");
+#endif
+  // join feature items together into a config string
+  features_str += "Config: ";
+  for (std::size_t k = 0; k < featconfig.size(); ++k) {
+    if (k != 0) { features_str += ", "; }
+    features_str += featconfig[k];
   }
+  features_str += "\n";
 
   return features_str;
 }
