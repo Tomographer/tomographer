@@ -407,6 +407,51 @@ BOOST_FIXTURE_TEST_CASE(simple, TestStatsCollectorFixture)
   //                Eigen::ArrayXi::Constant(4, MyStatsCollector::BinningAnalysisParamsType::UNKNOWN_CONVERGENCE)).all() ) ;
 }
 
+BOOST_AUTO_TEST_CASE(convergence_summary)
+{
+  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<MyMinimalistValueCalculator> VHWBParams;
+
+  const auto CONVERGED = VHWBParams::BinningAnalysisParamsType::CONVERGED;
+  const auto UNKNOWN_CONVERGENCE = VHWBParams::BinningAnalysisParamsType::UNKNOWN_CONVERGENCE;
+  const auto NOT_CONVERGED = VHWBParams::BinningAnalysisParamsType::NOT_CONVERGED;
+
+  // some artificial converged_status vector
+  VHWBParams::Result r;
+  r.converged_status = Eigen::ArrayXi(16);
+  r.converged_status << 
+    CONVERGED,
+    NOT_CONVERGED,
+    CONVERGED,
+    UNKNOWN_CONVERGENCE,
+    UNKNOWN_CONVERGENCE,
+    CONVERGED,
+    UNKNOWN_CONVERGENCE,
+    CONVERGED,
+    UNKNOWN_CONVERGENCE,
+    NOT_CONVERGED,
+    CONVERGED,
+    CONVERGED,
+    UNKNOWN_CONVERGENCE,
+    CONVERGED,
+    CONVERGED,
+    UNKNOWN_CONVERGENCE ;
+
+  // Summary of convergence status
+  VHWBParams::Result::ErrorBarConvergenceSummary summary = r.errorBarConvergenceSummary();
+  BOOST_MESSAGE( "summary of error bar convergence:  " << summary.n_converged << " converged / "
+                 << summary.n_unknown << " maybe (" << summary.n_unknown_isolated << " isolated) / "
+                 << summary.n_not_converged << " not converged" );
+
+  BOOST_CHECK_EQUAL(summary.n_converged + summary.n_unknown + summary.n_not_converged, summary.n_bins);
+  BOOST_CHECK_LE(summary.n_unknown_isolated, summary.n_unknown);
+
+  BOOST_CHECK_EQUAL(summary.n_bins, 16);
+  BOOST_CHECK_EQUAL(summary.n_converged, 8);
+  BOOST_CHECK_EQUAL(summary.n_unknown, 6);
+  BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 3);
+  BOOST_CHECK_EQUAL(summary.n_not_converged, 2);
+}
+
 BOOST_AUTO_TEST_SUITE_END();
 
 // =============================================================================

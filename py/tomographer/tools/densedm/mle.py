@@ -100,8 +100,8 @@ def find_mle(llh, solver_opts=None):
         EmnR.append(Emn.real)
         EmnI.append(Emn.imag)
 
-    print("DEBUG: EmnR = ", EmnR)
-    print("DEBUG: EmnI = ", EmnI)
+    #print("DEBUG: EmnR = ", EmnR)
+    #print("DEBUG: EmnI = ", EmnI)
 
     objective = cvxpy.Maximize( sum( [
         Nm[k] *
@@ -127,8 +127,10 @@ def find_mle(llh, solver_opts=None):
     d.constraints = constraints
     d.problem = problem
 
-    if (problem.status != 'optimal'):
-        d.rho_MLE = None
-        print("Error: couldn't solve the MLE problem. Status = ", problem.status)
+    rho_MLE = d.rho_MLE
 
-    return (d.rho_MLE, d)
+    if (problem.status != 'optimal'):
+        rho_MLE = None
+        logging.getLogger(__name__).warning("Error: couldn't solve the MLE problem. Status = "+str(problem.status))
+
+    return (rho_MLE, d)

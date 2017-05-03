@@ -719,23 +719,11 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorWithBinningAnalysis
       tomo_internal::print_hist_short_bar_with_accept_info(str, dig_w, j, stats_coll_result.hist,
                                                            collresults[j]->acceptance_ratio, h.columns());
 
-      // error bars stats:
-      const auto nbins = stats_coll_result.converged_status.size();
-      const auto n_conv = stats_coll_result.converged_status
-        .cwiseEqual(BinningAnalysisParamsType::CONVERGED).count();
-      Eigen::ArrayXi unkn_arr = (stats_coll_result.converged_status
-                                 .cwiseEqual(BinningAnalysisParamsType::UNKNOWN_CONVERGENCE))
-        .template cast<int>();
-      // little heuristic to see whether the "unknown" converged error bars are isolated or not
-      const auto n_unknown = unkn_arr.count();
-      const auto n_unknown_followingotherunknown
-        = unkn_arr.segment(0,nbins-1).cwiseProduct(unkn_arr.segment(1,nbins-1)).count();
-      const auto n_unknown_isolated = n_unknown - n_unknown_followingotherunknown;
-      const auto n_notconv = stats_coll_result.converged_status
-        .cwiseEqual(BinningAnalysisParamsType::NOT_CONVERGED).count();
-      str << "    error bars: " << n_conv << " converged / "
-          << n_unknown << " maybe (" << n_unknown_isolated << " isolated) / "
-          << n_notconv << " not converged\n";
+      const auto summary = stats_coll_result.errorBarConvergenceSummary();
+
+      str << "    error bars: " << summary.n_converged << " converged / "
+          << summary.n_unknown << " maybe (" << summary.n_unknown_isolated << " isolated) / "
+          << summary.n_not_converged << " not converged\n";
     }
     str << h.hrule()
         << "\n";

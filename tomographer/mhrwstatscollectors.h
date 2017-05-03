@@ -428,8 +428,63 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
    * BinningAnalysisParamsType::CONVERGED)
    */
   Eigen::ArrayXi converged_status;
+
+  /** \brief Brief summary of convergence of error bars
+   *
+   * This brief summary stores the total number of bins (\c n_bins), the number of bins
+   * with converged error bars (\c n_converged), the number of bins with unknown
+   * convergence (\c n_unknown), how many of the latter are isolated (\c
+   * n_unknown_isolated), and how many bins have error bars which have not converged (\c
+   * n_not_converged).
+   *
+   * One always has <code>n_converged + n_unknown + n_not_converged == n_bins</code> and
+   * <code>n_unkonwn_isolated <= n_unknown</code>.
+   */
+  struct ErrorBarConvergenceSummary {
+    ErrorBarConvergenceSummary(int n_bins_ = -1, int n_converged_ = -1, int n_unknown_ = -1,
+                               int n_unknown_isolated_ = -1, int n_not_converged_ = -1)
+      : n_bins(n_bins_),
+        n_converged(n_converged_),
+        n_unknown(n_unknown_),
+        n_unknown_isolated(n_unknown_isolated_),
+        n_not_converged(n_not_converged_)
+    { }
+    int n_bins;
+    int n_converged;
+    int n_unknown;
+    int n_unknown_isolated;
+    int n_not_converged;
+  };
+
+  //! Get a summary of the bin error bars convergence. See \ref Summary.
+  inline ErrorBarConvergenceSummary errorBarConvergenceSummary() const
+  {
+    const auto n_bins = converged_status.size();
+
+    const Eigen::ArrayXi unkn_arr = 
+      converged_status.cwiseEqual(BinningAnalysisParamsType::UNKNOWN_CONVERGENCE).template cast<int>();
+    const Eigen::ArrayXi conv_arr =
+      converged_status.cwiseEqual(BinningAnalysisParamsType::CONVERGED).template cast<int>();
+
+    const auto n_unknown = unkn_arr.count();
+    const auto n_converged = conv_arr.count();
+    const auto n_not_converged = converged_status.cwiseEqual(BinningAnalysisParamsType::NOT_CONVERGED).count();
+
+    // Little heuristic to see whether the "unknown" converged error bars are isolated or
+    // not. Use conv_arr shifted by one in each direction as a mask -- an unconverged
+    // error bar is isolated if it is surrounded by converged error bars
+    const auto n_unknown_isol = (
+        unkn_arr.segment(1,n_bins-2)
+        .cwiseProduct(conv_arr.segment(0,n_bins-2))
+        .cwiseProduct(conv_arr.segment(2,n_bins-2))
+        ).count()
+      // edges
+      + unkn_arr(0)*conv_arr(1) + unkn_arr(n_bins-1)*conv_arr(n_bins-2);
+
+    return ErrorBarConvergenceSummary(n_bins, n_converged, n_unknown, n_unknown_isol, n_not_converged);
+  }
   
-  //! Dump values, error bars and convergence status in human-readable form into ostream
+  //! Dump values, error bars and convergence status in debug-human-readable form into ostream
   inline void dumpConvergenceAnalysis(std::ostream & str) const
   {
     for (int k = 0; k < converged_status.size(); ++k) {
@@ -449,7 +504,7 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
     }
   }
 
-  //! Dump values, error bars and convergence status in human-readable form as string
+  //! Dump values, error bars and convergence status in debug-human-readable form as string
   inline std::string dumpConvergenceAnalysis() const
   {
     std::stringstream ss;
