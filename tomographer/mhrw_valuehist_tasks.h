@@ -148,7 +148,7 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorSimple
   //! The integer type which serves to count the number of iterations (see \ref MHRWParams)
   typedef typename CDataBaseType::IterCountIntType IterCountIntType;
   //! The real type which serves to describe the step size of the random walk (typically \c double)
-  typedef typename CDataBaseType::StepRealType StepRealType;
+  typedef typename CDataBaseType::MHWalkerParams MHWalkerParams;
   //! The logger type we can send messages to
   typedef LoggerType_ LoggerType;
   
@@ -188,10 +188,10 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorSimple
    *
    */
   struct RunTaskResult
-    : public MHRandomWalkTaskResult<MHRWStatsCollectorResultType,IterCountIntType,StepRealType>,
+    : public MHRandomWalkTaskResult<MHRWStatsCollectorResultType,IterCountIntType,MHWalkerParams>,
       public virtual Tools::NeedOwnOperatorNew<ScaledHistogramType>::ProviderType
   {
-    typedef MHRandomWalkTaskResult<MHRWStatsCollectorResultType,IterCountIntType,StepRealType> Base;
+    typedef MHRandomWalkTaskResult<MHRWStatsCollectorResultType,IterCountIntType,MHWalkerParams> Base;
 
     RunTaskResult()
       : Base(), histogram()
@@ -491,7 +491,7 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorWithBinningAnalysis
   //! The integer type which serves to count the number of iterations (see \ref MHRWParams)
   typedef typename CDataBaseType::IterCountIntType IterCountIntType;
   //! The real type which serves to describe the step size of the random walk (typically \c double)
-  typedef typename CDataBaseType::StepRealType StepRealType;
+  typedef typename CDataBaseType::MHWalkerParams MHWalkerParams;
   //! The logger type we can send messages to
   typedef LoggerType_ LoggerType;
   
@@ -548,7 +548,7 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorWithBinningAnalysis
    * MHRandomWalkTaskResult.
    *
    */
-  typedef MHRandomWalkTaskResult<MHRWStatsCollectorResultType,IterCountIntType,StepRealType> RunTaskResult;
+  typedef MHRandomWalkTaskResult<MHRWStatsCollectorResultType,IterCountIntType,MHWalkerParams> RunTaskResult;
   //! A list which will store the result of each task
   typedef std::vector<RunTaskResult*> RunTaskResultList;
 
@@ -885,7 +885,7 @@ struct ResultsCollectorTypeHelper<CDataBaseType, LoggerType, true> {
  *
  * \tparam IterCountIntType the integer type to use for counting iterations.
  *
- * \tparam StepRealType the real type to use for representing a step size in the random walk.
+ * \tparam MHWalkerParams the real type to use for representing a step size in the random walk.
  *
  * \tparam CountRealType the real type to use when calculating the scaled histogram with
  *         error bars.
@@ -924,19 +924,19 @@ struct ResultsCollectorTypeHelper<CDataBaseType, LoggerType, true> {
  * \endcode
  */
 template<typename ValueCalculator_, bool UseBinningAnalysis_ = true,
-	 typename IterCountIntType_ = int, typename StepRealType_ = double,
+	 typename IterCountIntType_ = int, typename MHWalkerParams_ = double,
 	 typename CountRealType_ = double, typename HistCountIntType_ = IterCountIntType_>
 TOMOGRAPHER_EXPORT struct CDataBase
-  : public MHRWTasks::CDataBase<IterCountIntType_, StepRealType_>,
+  : public MHRWTasks::CDataBase<IterCountIntType_, MHWalkerParams_>,
     public virtual Tools::NeedOwnOperatorNew<ValueCalculator_>::ProviderType
 {
   //! The MHRWTasks::CDataBase base class
-  typedef MHRWTasks::CDataBase<IterCountIntType_, StepRealType_> Base;
+  typedef MHRWTasks::CDataBase<IterCountIntType_, MHWalkerParams_> Base;
 
   //! The integer type which serves to count the number of iterations (see \ref MHRWParams)
   typedef typename Base::IterCountIntType IterCountIntType;
   //! The real type which serves to describe the step size of the random walk (typically \c double)
-  typedef typename Base::StepRealType StepRealType;
+  typedef typename Base::MHWalkerParams MHWalkerParams;
 
   //! The integer counting type in our underlying raw histogram type
   typedef HistCountIntType_ HistCountIntType;
@@ -982,7 +982,7 @@ TOMOGRAPHER_EXPORT struct CDataBase
   typedef typename tomo_internal::histogram_types<CDataBase,UseBinningAnalysis>::HistogramParams HistogramParams;
 
   //! Type for the parameters of the random walk.
-  typedef MHRWParams<IterCountIntType, StepRealType> MHRWParamsType;
+  typedef MHRWParams<IterCountIntType, MHWalkerParams> MHRWParamsType;
  
 
   //! Constructor (only for without binning analysis)
@@ -1069,7 +1069,7 @@ TOMOGRAPHER_EXPORT struct CDataBase
     typedef
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
     typename
-    tomo_internal::ResultsCollectorTypeHelper<CDataBase<ValueCalculator,UseBinningAnalysis,IterCountIntType,StepRealType,CountRealType,HistCountIntType>,
+    tomo_internal::ResultsCollectorTypeHelper<CDataBase<ValueCalculator,UseBinningAnalysis,IterCountIntType,MHWalkerParams,CountRealType,HistCountIntType>,
 					      LoggerType, UseBinningAnalysis>::type
 #else
     [...] // parsed by doxygen -- make this more readable
@@ -1081,9 +1081,9 @@ TOMOGRAPHER_EXPORT struct CDataBase
 };
 // define static members:
 template<typename ValueCalculator_, bool UseBinningAnalysis_,
-	 typename IterCountIntType_, typename StepRealType_,
+	 typename IterCountIntType_, typename MHWalkerParams_,
 	 typename CountRealType_, typename HistCountIntType_>
-constexpr bool CDataBase<ValueCalculator_,UseBinningAnalysis_,IterCountIntType_,StepRealType_,CountRealType_,HistCountIntType_>::UseBinningAnalysis;
+constexpr bool CDataBase<ValueCalculator_,UseBinningAnalysis_,IterCountIntType_,MHWalkerParams_,CountRealType_,HistCountIntType_>::UseBinningAnalysis;
 
 
 

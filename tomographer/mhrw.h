@@ -54,9 +54,6 @@ namespace Tomographer {
 
 
 
-
-
-
 enum {
   /** \brief Provides the MH function value at each point (see \ref
    * labelMHWalkerUseFnSyntaxType "Role of UseFnSyntaxType")
@@ -74,120 +71,6 @@ enum {
 };
 
 
-namespace tomo_internal {
-
-  /** \internal
-   * \brief Helper class for \ref MHRandomWalk
-   *
-   * Helps out \ref MHRandomWalk decide how to calculate the Metropolis-Hastings function
-   * value ratio statically, without having to resort to a run-time \c if or \c switch
-   * construct.
-   */
-  template<typename MHWalker, int UseFnSyntaxType>
-  struct MHRandomWalk_helper_decide_jump
-  {
-    /** \internal
-     * \brief Type of a point in the random walk
-     */
-    typedef typename MHWalker::PointType PointType;
-    /** \internal
-     * \brief Type of the function value returned by the \c MHWalker object
-     */
-    typedef typename MHWalker::FnValueType FnValueType;
-
-    /** \internal
-     * \brief get a value for the given point
-     *
-     * Depending on the \c UseFnSyntaxType template parameter, this is either the function
-     * value, its logarithm, or a dummy value.
-     */
-    static inline FnValueType get_ptval(MHWalker & mhwalker, const PointType & curpt)
-    {
-      (void)mhwalker; (void)curpt;
-      tomographer_assert(0 && "UNKNOWN UseFnSyntaxType: Not implemented");
-    }
-    /** \internal
-     * \brief calculate the MH function ratio between two points
-     *
-     * This function calculates and returns the \f$ a \f$ parameter which is the ratio of
-     * the function value between the new, proposal point and the current point. Recall,
-     * if \f$ a < 1 \f$ then the new point should be accepted with probability \f$ a \f$,
-     * else the new point should always be accepted.
-     *
-     * \note this function may return simply 1 if we are sure that \f$ a > 1 \f$.
-     *
-     * The returnd value of \f$ a \f$ is calculated differently depending on the value of
-     * the \c UseFnSyntaxType template parameter.
-     */
-    static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, FnValueType /*newptval*/,
-                                     const PointType & /*curpt*/, FnValueType /*curptval*/)
-    {
-      tomographer_assert(0 && "UNKNOWN UseFnSyntaxType: Not implemented");
-      return 0;
-    }
-  };
-
-  /** \internal
-   * Template specialization of \ref MHRandomWalk_helper_decide_jump.
-   */
-  template<typename MHWalker>
-  struct MHRandomWalk_helper_decide_jump<MHWalker, MHUseFnValue>
-  {
-    typedef typename MHWalker::PointType PointType;
-    typedef typename MHWalker::FnValueType FnValueType;
-
-    static inline FnValueType get_ptval(MHWalker & mhwalker, const PointType & curpt)
-    {
-      return mhwalker.fnVal(curpt);
-    }
-    static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, double newptval,
-                                     const PointType & /*curpt*/, double curptval)
-    {
-      return (newptval / curptval);
-    }
-  };
-
-  /** \internal
-   * Template specialization of \ref MHRandomWalk_helper_decide_jump.
-   */
-  template<typename MHWalker>
-  struct MHRandomWalk_helper_decide_jump<MHWalker, MHUseFnLogValue>
-  {
-    typedef typename MHWalker::PointType PointType;
-    typedef typename MHWalker::FnValueType FnValueType;
-
-    static inline FnValueType get_ptval(MHWalker & mhwalker, const PointType & curpt)
-    {
-      return mhwalker.fnLogVal(curpt);
-    }
-    static inline double get_a_value(MHWalker & /*mhwalker*/, const PointType & /*newpt*/, FnValueType newptval,
-                                     const PointType & /*curpt*/, FnValueType curptval)
-    {
-      return (newptval > curptval) ? 1.0 : exp(newptval - curptval);
-    }
-  };
-
-  /** \internal
-   * Template specialization of \ref MHRandomWalk_helper_decide_jump.
-   */
-  template<typename MHWalker>
-  struct MHRandomWalk_helper_decide_jump<MHWalker, MHUseFnRelativeValue>
-  {
-    typedef typename MHWalker::PointType PointType;
-    typedef int FnValueType; // dummy FnValueType
-
-    static inline FnValueType get_ptval(MHWalker & /*mhwalker*/, const PointType & /*curpt*/)
-    {
-      return 0;
-    }
-    static inline double get_a_value(MHWalker & mhwalker, const PointType & newpt, FnValueType /*newptval*/,
-                                     const PointType & curpt, FnValueType /*curptval*/)
-    {
-      return mhwalker.fnRelVal(newpt, curpt);
-    }
-  };
-};
-
 
 // note: const implies static linkage, see http://stackoverflow.com/q/2268749/1694896
 //
@@ -202,24 +85,24 @@ const double MHRWAcceptanceRatioRecommendedMax = 0.4;
  * Specifies the parameters of a Metropolis-Hastings random walk (number of thermalization
  * runs, sweep size, number of live runs, step size).
  */
-template<typename CountIntType_ = int, typename StepRealType_ = double>
+template<typename CountIntType_ = int, typename MHWalkerParams_ = double>
 TOMOGRAPHER_EXPORT struct MHRWParams
 {
   typedef CountIntType_ CountIntType;
-  typedef StepRealType_ StepRealType;
+  typedef MHWalkerParams_ MHWalkerParams;
 
   explicit MHRWParams()
-    : step_size(0), n_sweep(0), n_therm(0), n_run(0)
+    : mhwalker_params(), n_sweep(0), n_therm(0), n_run(0)
   {
   }
-  MHRWParams(StepRealType step_size_, CountIntType n_sweep_, CountIntType n_therm_, CountIntType n_run_)
-    : step_size(step_size_), n_sweep(n_sweep_), n_therm(n_therm_), n_run(n_run_)
+  MHRWParams(MHWalkerParams mhwalker_params_, CountIntType n_sweep_, CountIntType n_therm_, CountIntType n_run_)
+    : mhwalker_params(mhwalker_params_), n_sweep(n_sweep_), n_therm(n_therm_), n_run(n_run_)
   {
   }
 
-  /** \brief The step size of the random walk
+  /** \brief The parameters of the mh-walker, typically just the step size of the random walk
    */
-  StepRealType step_size;
+  MHWalkerParams mhwalker_params;
 
   /** \brief The number of individual updates to collect together in a "sweep"
    */
@@ -236,14 +119,73 @@ TOMOGRAPHER_EXPORT struct MHRWParams
 
 
 
-template<typename CountIntType, typename StepRealType>
-std::ostream & operator<<(std::ostream & str, const MHRWParams<CountIntType,StepRealType> & p)
+template<typename CountIntType, typename MHWalkerParams>
+std::ostream & operator<<(std::ostream & str, const MHRWParams<CountIntType,MHWalkerParams> & p)
 {
-  str << "MHRWParams(step_size=" << p.step_size << ",n_sweep=" << p.n_sweep
+  str << "MHRWParams(mhwalker_params=" << p.mhwalker_params << ",n_sweep=" << p.n_sweep
       << ",n_therm=" << p.n_therm << ",n_run=" << p.n_run << ")";
   return str;
 }
 
+
+
+/** .....
+* \todo DOC !!!!!!!!
+*/
+enum {
+  MHWalkerParamsDoNotAdjust = 0,
+
+  MHWalkerParamsAdjustWhileThermalizing = 0x01,
+  MHWalkerParamsAdjustWhileRunning = 0x02,
+  MHWalkerParamsAdjustWhileThermalizingAndRunning =
+    MHWalkerParamsAdjustWhileThermalizing | MHWalkerParamsAdjustWhileRunning,
+
+  MHWalkerParamsAdjustEveryIteration = 0x10,
+  MHWalkerParamsAdjustEverySample = 0x20,
+
+  MHWalkerParamsAdjustAllTheTime =
+    MHWalkerParamsAdjustEveryIteration | MHWalkerParamsAdjustWhileThermalizingAndRunning
+};
+
+/** ......
+ *\todo DOC!!!!!!!!!!!!!
+ */
+class MHWalkerNoParamsAdjustments
+{
+public:
+  enum { AdjustmentStrategy = MHWalkerParamsDoNotAdjust };
+
+  MHWalkerNoParamsAdjustments() { }
+
+  template<bool IsThermalizing, bool IsAfterSample, typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+  inline void adjustParams(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
+                           int /* iter_k */, const MHRandomWalkType & /* mhrw */) const
+  {
+  }
+};
+
+
+namespace tomo_internal {
+// const_type_helper: a single typedef member, 'type', which is declared as 'T' or 'const
+// T' depending on whether use_const=false or true
+template<typename T, bool use_const>
+struct const_type_helper {
+  typedef T type;
+};
+template<typename T>
+struct const_type_helper<T, true> {
+  typedef const T type;
+};
+
+template<typename MHWalker, bool has_FnValueType>
+struct helper_FnValueType_or_dummy {
+  typedef typename MHWalker::FnValueType type;
+};
+template<typename MHWalker>
+struct helper_FnValueType_or_dummy<MHWalker,false> {
+  typedef int type; // dummy
+};
+} // namespace tomo_internal
 
 
 /** \brief A Metropolis-Hastings Random Walk
@@ -286,7 +228,7 @@ std::ostream & operator<<(std::ostream & str, const MHRWParams<CountIntType,Step
  *
  */
 template<typename Rng_, typename MHWalker_, typename MHRWStatsCollector_, typename LoggerType_,
-         typename CountIntType_ = int>
+         typename CountIntType_ = int, typename MHWalkerParamsAdjuster_ = MHWalkerNoParamsAdjustments>
 TOMOGRAPHER_EXPORT class MHRandomWalk
   : public virtual Tools::NeedOwnOperatorNew<typename MHWalker_::PointType>::ProviderType
 {
@@ -305,15 +247,19 @@ public:
 
   //! The type of a point in the random walk
   typedef typename MHWalker::PointType PointType;
-  //! The type of a step size of the random walk
-  typedef typename MHWalker::StepRealType StepRealType;
+  //! The parameters type of the MHWalker implememtation, typically just a double storing the step size of the random walk
+  typedef typename MHWalker::WalkerParams MHWalkerParams;
 
   //! The struct which can hold the parameters of this random walk
-  typedef MHRWParams<CountIntType, StepRealType> MHRWParamsType;
+  typedef MHRWParams<CountIntType, MHWalkerParams> MHRWParamsType;
+
+  //! The type which will take care of dynamically adjusting the parameters of the random walk
+  typedef MHWalkerParamsAdjuster_ MHWalkerParamsAdjuster;
+  enum { MHWalkerParamsAdjusterStrategy = MHWalkerParamsAdjuster::AdjustmentStrategy };
 
   //! The type of the Metropolis-Hastings function value. (See class documentation)
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
-  typedef typename tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,MHWalker::UseFnSyntaxType>::FnValueType
+  typedef typename tomo_internal::helper_FnValueType_or_dummy<MHWalker,MHWalker::UseFnSyntaxType!=MHUseFnRelativeValue>::type
       FnValueType;
 #else
   typedef _FnValueType FnValueType;
@@ -325,7 +271,9 @@ public:
   };
 
 private:
-  const MHRWParamsType _n;
+  // declare const if no adjustments are to be made. This expands to "MHRWParamsType _n;"
+  // or "const MHRWParamsType _n;"
+  typename tomo_internal::const_type_helper<MHRWParamsType,MHWalkerParamsAdjusterStrategy==MHWalkerParamsDoNotAdjust>::type _n;
 
   Rng & _rng;
   MHWalker & _mhwalker;
@@ -349,13 +297,17 @@ private:
    */
   CountIntType num_live_points;
 
+
+  MHWalkerParamsAdjuster _mhwalker_params_adjuster;
+
+
 public:
 
   //! Simple constructor, initializes the given fields
-  MHRandomWalk(StepRealType step_size, CountIntType n_sweep, CountIntType n_therm, CountIntType n_run,
+  MHRandomWalk(MHWalkerParams mhwalker_params, CountIntType n_sweep, CountIntType n_therm, CountIntType n_run,
 	       MHWalker & mhwalker, MHRWStatsCollector & stats,
-               Rng & rng, LoggerType & logger_)
-    : _n(step_size, n_sweep, n_therm, n_run),
+               Rng & rng, LoggerType & logger_, MHWalkerParamsAdjuster mhwalker_params_adjuster = MHWalkerParamsAdjuster())
+    : _n(mhwalker_params, n_sweep, n_therm, n_run),
       _rng(rng),
       _mhwalker(mhwalker),
       _stats(stats),
@@ -363,10 +315,11 @@ public:
       curpt(),
       curptval(),
       num_accepted(0),
-      num_live_points(0)
+      num_live_points(0),
+      _mhwalker_params_adjuster(mhwalker_params_adjuster)
   {
     _logger.debug([&](std::ostream & stream) {
-	stream << "constructor(). n_sweep=" << n_sweep << ", step_size=" << step_size
+	stream << "constructor(). n_sweep=" << n_sweep << ", mhwalker_params=" << mhwalker_params
 	       << "n_therm=" << n_therm << ", n_run=" << n_run;
       });
   }
@@ -374,7 +327,7 @@ public:
   template<typename MHRWParamsType>
   MHRandomWalk(MHRWParamsType&& n_rw,
 	       MHWalker & mhwalker, MHRWStatsCollector & stats,
-               Rng & rng, LoggerType & logger_)
+               Rng & rng, LoggerType & logger_, MHWalkerParamsAdjuster mhwalker_params_adjuster = MHWalkerParamsAdjuster())
     : _n(std::forward<MHRWParamsType>(n_rw)),
       _rng(rng),
       _mhwalker(mhwalker),
@@ -383,7 +336,8 @@ public:
       curpt(),
       curptval(),
       num_accepted(0),
-      num_live_points(0)
+      num_live_points(0),
+      _mhwalker_params_adjuster(mhwalker_params_adjuster)
   {
     _logger.debug([&](std::ostream & s) { s << "constructor(). mhrw parameters = " << _n; });
   }
@@ -394,8 +348,8 @@ public:
   //! The parameters of the random walk.
   inline MHRWParamsType mhrwParams() const { return _n; }
 
-  //! Get the step size of the random walk.
-  inline StepRealType stepSize() const { return _n.step_size; }
+  //! Get the MHWalker parameters
+  inline MHWalkerParams mhWalkerParams() const { return _n.mhwalker_params; }
 
   //! Number of iterations in a sweep.
   inline CountIntType nSweep() const { return _n.n_sweep; }
@@ -451,7 +405,7 @@ public:
   inline void setCurrentPoint(const PointType& pt)
   {
     curpt = pt;
-    curptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, curpt);
+    curptval = _get_ptval(curpt);
     _logger.longdebug([&](std::ostream & s) {
 	s << "setCurrentPoint: set internal state. Value = " << curptval << "; Point =\n" << pt << "\n";
       });
@@ -469,7 +423,7 @@ private:
 
     // starting point
     curpt = _mhwalker.startPoint();
-    curptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, curpt);
+    curptval = _get_ptval(curpt);
 
     _mhwalker.init();
     _stats.init();
@@ -499,43 +453,37 @@ private:
    * a value is calculated according to the documentation in \ref
    * labelMHWalkerUseFnSyntaxType "Role of UseFnSyntaxType".
    */
-  inline void _move(CountIntType k, bool is_thermalizing, bool is_live_iter)
+  template<bool IsThermalizing>
+  inline void _move(CountIntType k, bool is_live_iter)
   {
     _logger.longdebug("_move()");
-    // The reason `step_size` is passed to jump_fn instead of leaving jump_fn itself
+    // The reason `mhwalker_params` is passed to jump_fn instead of leaving jump_fn itself
     // handle the step size, is that we might in the future want to dynamically adapt the
     // step size according to the acceptance ratio. That would have to be done in this
     // class.
-    PointType newpt = _mhwalker.jumpFn(curpt, _n.step_size);
+    const PointType newpt = _mhwalker.jumpFn(curpt, _n.mhwalker_params);
 
-    FnValueType newptval;
+    const FnValueType newptval = _get_ptval(newpt);
 
-    newptval = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_ptval(_mhwalker, newpt);
-
-    double a = tomo_internal::MHRandomWalk_helper_decide_jump<MHWalker,UseFnSyntaxType>::get_a_value(
-        _mhwalker, newpt, newptval, curpt, curptval
-        );
+    const double a = _get_a_value(newpt, newptval, curpt, curptval);
 
     // accept move?
-    bool accept = true;
-    if (a < 1.0) {
-      accept = bool( _rng()-_rng.min() <= a*(_rng.max()-_rng.min()) );
-    }
+    bool accept = ( a >= 1.0 ? true : bool( _rng()-_rng.min() <= a*(_rng.max()-_rng.min()) ) ) ;
 
     // track acceptance ratio, except if we are thermalizing
-    if (!is_thermalizing) {
+    if (!IsThermalizing) {
       num_accepted += accept ? 1 : 0;
       ++num_live_points;
     }
 
-    _stats.rawMove(k, is_thermalizing, is_live_iter, accept, a, newpt, newptval, curpt, curptval, *this);
+    _stats.rawMove(k, IsThermalizing, is_live_iter, accept, a, newpt, newptval, curpt, curptval, *this);
 
     _logger.longdebug([&](std::ostream & stream) {
-	stream << (is_thermalizing?"T":"#") << std::setw(3) << k << ": " << (accept?"AC":"RJ") << " "
+	stream << (IsThermalizing?"T":"#") << std::setw(3) << k << ": " << (accept?"AC":"RJ") << " "
 	       << std::setprecision(4)
 	       << "a=" << std::setw(5) << a << ", newptval=" << std::setw(5) << newptval
 	       << ", curptval=" << std::setw(5) << curptval << ", accept_ratio="
-	       << (!is_thermalizing ? Tools::fmts("%.2g", this->acceptanceRatio()) : std::string("N/A"))
+	       << (!IsThermalizing ? Tools::fmts("%.2g", this->acceptanceRatio()) : std::string("N/A"))
 	       << Tools::streamIfPossible(curpt, "\ncurpt = ", "", "");
       });
 
@@ -558,6 +506,95 @@ private:
   }
 
 
+  //
+  // utilities for getting the fn value at a specific point, and comparing & getting the
+  // "a"-value for the jump
+  //
+
+#ifdef TOMOGRAPHER_PARSED_BY_DOXYGEN
+  /** \internal
+   * \brief get a value for the given point
+   *
+   * Depending on the \c UseFnSyntaxType template parameter, this is either the function
+   * value, its logarithm, or a dummy value.
+   */
+  inline FnValueType _get_ptval(PointType curpt) const { }
+  /** \internal
+   * \brief calculate the MH function ratio between two points
+   *
+   * This function calculates and returns the \f$ a \f$ parameter which is the ratio of
+   * the function value between the new, proposal point and the current point. Recall,
+   * if \f$ a < 1 \f$ then the new point should be accepted with probability \f$ a \f$,
+   * else the new point should always be accepted.
+   *
+   * \note this function may return simply 1 if we are sure that \f$ a > 1 \f$.
+   *
+   * The returnd value of \f$ a \f$ is calculated differently depending on the value of
+   * the \c UseFnSyntaxType template parameter.
+   */
+  inline double _get_a_value(PointType newpt, FnValueType newptval,
+                             PointType curpt, FnValueType curptval) const { }
+#else
+  // the actual implementation:
+
+  // Case UseFnSyntaxType==MHUseFnValue
+  template<typename PtType, TOMOGRAPHER_ENABLED_IF_TMPL(UseFnSyntaxType == MHUseFnValue)>
+  inline FnValueType _get_ptval(PtType && curpt) const
+  {
+    return _mhwalker.fnVal(curpt);
+  }
+  template<typename PtType1, typename PtType2, TOMOGRAPHER_ENABLED_IF_TMPL(UseFnSyntaxType == MHUseFnValue)>
+  inline double _get_a_value(PtType1 && /*newpt*/, FnValueType newptval,
+                             PtType2 && /*curpt*/, FnValueType curptval) const
+  {
+    return ((double)newptval) / curptval;
+  }
+
+  // Case UseFnSyntaxType==MHUseFnLogValue
+  template<typename PtType, TOMOGRAPHER_ENABLED_IF_TMPL(UseFnSyntaxType == MHUseFnLogValue)>
+  inline FnValueType _get_ptval(PtType && curpt) const
+  {
+    return _mhwalker.fnLogVal(curpt);
+  }
+  template<typename PtType1, typename PtType2, TOMOGRAPHER_ENABLED_IF_TMPL(UseFnSyntaxType == MHUseFnLogValue)>
+  inline double _get_a_value(PtType1 && /*newpt*/, FnValueType newptval,
+                             PtType2 && /*curpt*/, FnValueType curptval) const
+  {
+    using namespace std;
+    return (newptval > curptval) ? 1.0 : exp(newptval - curptval);
+  }
+
+  // case UseFnSyntaxType==MHUseFnRelativeValue
+  template<typename PtType, TOMOGRAPHER_ENABLED_IF_TMPL(UseFnSyntaxType == MHUseFnRelativeValue)>
+  inline FnValueType _get_ptval(PtType && /*curpt*/) const
+  {
+    return 0;
+  }
+  template<typename PtType1, typename PtType2, TOMOGRAPHER_ENABLED_IF_TMPL(UseFnSyntaxType == MHUseFnRelativeValue)>
+  inline double _get_a_value(PtType1 && newpt, FnValueType /*newptval*/,
+                             PtType2 && curpt, FnValueType /*curptval*/) const
+  {
+    using namespace std;
+    return _mhwalker.fnRelVal(std::forward<PtType1>(newpt), std::forward<PtType2>(curpt));
+  }
+
+#endif
+
+
+  // adjustments
+  template<bool IsThermalizing>
+  void _adjustparams_afteriter(int iter_k)
+  {
+    _mhwalker_params_adjuster.template adjustParams<IsThermalizing, false>(_n, _mhwalker, iter_k, *this);
+  }
+  void _adjustparams_aftersample(int iter_k)
+  {
+    _mhwalker_params_adjuster.template adjustParams<false, true>(_n, _mhwalker, iter_k, *this);
+  }
+
+
+
+
 public:
 
   /** \brief Run the random walk. (pun intended)
@@ -573,7 +610,7 @@ public:
     CountIntType k;
 
     _logger.longdebug([&](std::ostream & s) {
-	s << "Starting random walk, sweep size = " << _n.n_sweep << ", step size = " << _n.step_size
+	s << "Starting random walk, sweep size = " << _n.n_sweep << ", mhwalker params = " << _n.mhwalker_params
 	  << ", # therm sweeps = " << _n.n_therm << ", # live sweeps = " << _n.n_run;
       });
 
@@ -581,7 +618,8 @@ public:
 
     for (k = 0; k < num_thermalize; ++k) {
       // calculate a candidate jump point and see if we accept the move
-      _move(k, true, false);
+      _move<true>(k, false);
+      _adjustparams_afteriter<true>(k);
     }
 
     _thermalizing_done();
@@ -597,11 +635,13 @@ public:
       bool is_live_iter = ((k+1) % _n.n_sweep == 0);
       
       // calculate a candidate jump point and see if we accept the move
-      _move(k, false, is_live_iter);
+      _move<false>(k, is_live_iter);
+      _adjustparams_afteriter<false>(k);
 
       if (is_live_iter) {
         _process_sample(k, n);
         ++n;
+        _adjustparams_aftersample(k);
       }
 
     }

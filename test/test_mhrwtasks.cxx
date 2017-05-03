@@ -65,7 +65,7 @@ BOOST_AUTO_TEST_CASE(constr)
 {
   Tomographer::MHRWTasks::CDataBase<> cdata(Tomographer::MHRWParams<int, double>(0.1, 128, 50, 500), 100);
   BOOST_CHECK_EQUAL(cdata.base_seed, 100);
-  MY_BOOST_CHECK_FLOATS_EQUAL(cdata.mhrw_params.step_size, 0.1, tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(cdata.mhrw_params.mhwalker_params, 0.1, tol);
   BOOST_CHECK_EQUAL(cdata.mhrw_params.n_sweep, 128);
   BOOST_CHECK_EQUAL(cdata.mhrw_params.n_therm, 50);
   BOOST_CHECK_EQUAL(cdata.mhrw_params.n_run, 500);
@@ -105,14 +105,14 @@ typedef Tomographer::MHRWParams<int,double> MHRWParamsType;
 BOOST_AUTO_TEST_CASE(instantiate_1)
 {
   Tomographer::MHRWTasks::MHRandomWalkTaskResult<MyStatsResultType,MHRWParamsType::CountIntType,
-                                                 MHRWParamsType::StepRealType> r(
+                                                 MHRWParamsType::MHWalkerParams> r(
       MyStatsResultType(),
       MHRWParamsType(0.1, 10, 100, 1000),
       0.85
       );
   BOOST_CHECK_EQUAL(r.stats_collector_result.a, MyStatsResultType().a);
   BOOST_CHECK_EQUAL(r.stats_collector_result.b, MyStatsResultType().b);
-  MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.step_size, 0.1, tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.mhwalker_params, 0.1, tol);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_sweep, 10);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_therm, 100);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_run, 1000);
@@ -122,14 +122,14 @@ BOOST_AUTO_TEST_CASE(instantiate_1b)
 {
   const MyStatsResultType xx;
   Tomographer::MHRWTasks::MHRandomWalkTaskResult<MyStatsResultType,MHRWParamsType::CountIntType,
-                                                 MHRWParamsType::StepRealType> r(
+                                                 MHRWParamsType::MHWalkerParams> r(
       xx,
       MHRWParamsType(0.1, 10, 100, 1000),
       0.85
       );
   BOOST_CHECK_EQUAL(r.stats_collector_result.a, MyStatsResultType().a);
   BOOST_CHECK_EQUAL(r.stats_collector_result.b, MyStatsResultType().b);
-  MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.step_size, 0.1, tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.mhwalker_params, 0.1, tol);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_sweep, 10);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_therm, 100);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_run, 1000);
@@ -159,13 +159,13 @@ BOOST_AUTO_TEST_CASE(instantiate_2)
   // the thing we actually want to test:
   Tomographer::MHRWTasks::MHRandomWalkTaskResult<MyStatsResultType,
                                                  MHRWParamsType::CountIntType,
-                                                 MHRWParamsType::StepRealType> r(
+                                                 MHRWParamsType::MHWalkerParams> r(
       MyStatsResultType(),
       rw
       );
   BOOST_CHECK_EQUAL(r.stats_collector_result.a, MyStatsResultType().a);
   BOOST_CHECK_EQUAL(r.stats_collector_result.b, MyStatsResultType().b);
-  MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.step_size, 2, tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.mhwalker_params, 2, tol);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_sweep, 10);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_therm, 100);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_run, 1000);
@@ -202,7 +202,7 @@ struct MyCData
 
   struct TestMHWalker2 : public TestMHWalker
   {
-    typedef int StepRealType; // override, not sure why we had double in base class, but I dont dare change that
+    typedef int WalkerParams; // override, not sure why we had double in base class, but I dont dare change that
 
     template<typename... Args>
     TestMHWalker2(Args&&... x)
@@ -231,7 +231,7 @@ struct MyTestResultsCollector {
   {
     BOOST_MESSAGE("Task: #" << task_no << ": result = " << std::boolalpha << taskresult.stats_collector_result );
     BOOST_CHECK(taskresult.acceptance_ratio >= 0 && taskresult.acceptance_ratio <= 1);
-    BOOST_CHECK_EQUAL(taskresult.mhrw_params.step_size, pcdata->mhrw_params.step_size);
+    BOOST_CHECK_EQUAL(taskresult.mhrw_params.mhwalker_params, pcdata->mhrw_params.mhwalker_params);
     BOOST_CHECK_EQUAL(taskresult.mhrw_params.n_sweep, pcdata->mhrw_params.n_sweep);
     BOOST_CHECK_EQUAL(taskresult.mhrw_params.n_therm, pcdata->mhrw_params.n_therm);
     BOOST_CHECK_EQUAL(taskresult.mhrw_params.n_run, pcdata->mhrw_params.n_run);
@@ -248,12 +248,12 @@ BOOST_AUTO_TEST_CASE(base)
 {
   Tomographer::Logger::BoostTestLogger logger;
 
-  const int step_size = 2;
+  const int mhwalker_params = 2;
   const int nsweep = 10;
   const int ntherm = 50;
   const int nrun = 100;
 
-  MyCData cdata(Tomographer::MHRWParams<int,int>(step_size, nsweep, ntherm, nrun));
+  MyCData cdata(Tomographer::MHRWParams<int,int>(mhwalker_params, nsweep, ntherm, nrun));
 
   MyTestResultsCollector results;
 

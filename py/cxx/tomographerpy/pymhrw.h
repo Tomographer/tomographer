@@ -38,7 +38,7 @@
 
 namespace tpy {
 
-typedef Tomographer::MHRWParams<CountIntType, RealType> MHRWParams;
+typedef Tomographer::MHRWParams<CountIntType, py::object>  MHRWParams;
 
 } // namespace Py
 

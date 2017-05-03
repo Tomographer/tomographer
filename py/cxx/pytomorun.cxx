@@ -124,16 +124,23 @@ typedef Tomographer::MultiplexorValueCalculator<
 //
 struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<
   ValueCalculator, // our value calculator
-  true // use binning analysis
+  true, // use binning analysis
+  CountIntType, // IterCountIntType
+  RealType // MHWalkerParams (previously StepRealType)
   >
 {
+  typedef Tomographer::MHRWParams<CountIntType, RealType> CxxMHRWParamsType;
+
   OurCData(const DenseLLH & llh_, // data from the the tomography experiment
 	   ValueCalculator valcalc, // the figure-of-merit calculator
 	   HistogramParams hist_params, // histogram parameters
 	   int binning_num_levels, // number of binning levels in the binning analysis
 	   tpy::MHRWParams mhrw_params, // parameters of the random walk
 	   int base_seed) // a random seed to initialize the random number generator
-    : CDataBase<ValueCalculator,true>(valcalc, hist_params, binning_num_levels, mhrw_params, base_seed),
+    : CDataBase<ValueCalculator,true>(valcalc, hist_params, binning_num_levels,
+                                      CxxMHRWParamsType(mhrw_params.mhwalker_params.cast<RealType>(),
+                                                        mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run),
+                                      base_seed),
       llh(llh_)
   {
   }
@@ -389,7 +396,14 @@ py::object py_tomorun(
   py::list runs_results;
   for (std::size_t k = 0; k < results.numTasks(); ++k) {
     const auto & run_result = *results.collectedRunTaskResult(k);
-    runs_results.append(run_result);
+    runs_results.append(
+        tpy::MHRandomWalkValueHistogramTaskResult(run_result.stats_collector_result,
+                                                  tpy::MHRWParams(py::cast(run_result.mhrw_params.mhwalker_params),
+                                                                  run_result.mhrw_params.n_sweep,
+                                                                  run_result.mhrw_params.n_therm,
+                                                                  run_result.mhrw_params.n_run),
+                                                  run_result.acceptance_ratio)
+        );
   }
   res["runs_results"] = runs_results;
 

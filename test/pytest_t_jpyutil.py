@@ -24,7 +24,7 @@ class ProgressBarsTest(unittest.TestCase):
         with tomographer.jpyutil.RandWalkProgressBar("random walk in progress") as prg:
             # just run tomorun on some arbitrary data to get some stuff to check
             mhrw_params = tomographer.MHRWParams(
-                step_size=0.04,
+                mhwalker_params=0.04,
                 n_sweep=25,
                 n_run=8192,
                 n_therm=500)

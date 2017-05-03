@@ -45,7 +45,7 @@ template<typename ScalarType, typename Rng, typename LoggerType = Tomographer::L
 struct TestLatticeMHRWBase
 {
   typedef Eigen::Matrix<ScalarType,Eigen::Dynamic,1> PointType;
-  typedef double StepRealType; // needed for MHWalker interface
+  typedef double WalkerParams; // needed for MHWalker interface
   
   const Eigen::Array<int,Eigen::Dynamic,1> latticeDims;
   Rng & rng;
@@ -235,7 +235,7 @@ struct TestMHWalker : public TestLatticeMHRWGaussPeak<int> {
   }
     
   template<typename PT>
-  inline PointType jumpFn(PT&& curpt, const StepRealType step_size)
+  inline PointType jumpFn(PT&& curpt, const WalkerParams step_size)
   {
     ++count_jump;
     return Base::jumpFn(std::forward<PointType>(curpt), step_size);

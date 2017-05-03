@@ -160,15 +160,20 @@
  *
  * A type implementing the \a MHWalker interface must provide the following types:
  *
+ * \since Tomographer 5.0: Introduced the \a WalkerParams member type and obsoleted \a
+ *     StepRealType.
+ *
  * \par typedef ... PointType
  *     The type needed to represent a point in state space in which we are performing a
  *     random walk. An object of such type is never default-constructed, but always
  *     copy-constructed from another \a PointType. One should also be able to assign a \a
  *     PointType to another \c PointType (e.g. <code>curpt = other_point</code>).
  *
- * \par typedef ... StepRealType
- *     The type needed to represent a step size. This will most likely be a \c double
- *     or some floating-point type.
+ * \par typedef ... WalkerParams
+ *     A user type describing parameters of the random walk jump process, such as the step
+ *     size.  This is likely to be a \c double or some floating-point type to store just
+ *     the step size.  This type should be streamable using C++ streams, this is used for
+ *     logging & debugging.
  *
  * \par typedef ... FnValueType &mdash; required only if UseFnSyntaxType != MHUseFnRelativeValue
  *     The return value type of the function evaluated at each point during the
@@ -208,16 +213,17 @@
  * \par void done()
  *     Called after the random walk has been completed and all samples collected.
  *
- * \par PointType jumpFn(const PointType & curpt, StepRealType step_size)
+ * \par PointType jumpFn(const PointType & curpt, const WalkerParams& walker_params)
  *     Provide the next point where the random walk should consider jumping to. This
  *     function should return a new point depending on the current point \a curpt,
  *     according to some symmetric proposal distribution.
  *
- *     The jump function may consider using the \a step_size to tune the "width" of the
- *     proposal distribution.  However \a jumpFn() is free to disregard the \a step_size
- *     argument.  The class carrying out the random walk (such as \ref
- *     Tomographer::MHRandomWalk) typically passes here a value which was provided to
- *     their constructor, simply for convenience.
+ * \par
+ *     This jump function should honor the specified \a walker_params, which is the value
+ *     passed to the constructor of the \ref Tomographer::MHRWParams class.  In the
+ *     future, we may be able to dynamically adjust the parameters, so \a MHWalker
+ *     implementations should typically not assume that the parameters won't change from
+ *     one call of jumpFn() to another.
  *
  * \par FnValueType fnVal(const PointType & curpt)
  *     <em>[Required only if UseFnSyntaxType == MHUseFnValue.]</em>

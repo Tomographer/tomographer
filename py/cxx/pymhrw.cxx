@@ -49,17 +49,17 @@ void py_tomo_mhrw(py::module rootmodule)
         "MHRWParams",
         Tomographer::Tools::fmts(
             "Parameters for a Metropolis-Hastings random walk.\n\n"
-            ".. py:function:: MHRWParams(step_size, n_sweep, n_therm, n_run)\n\n"
-            "    Construct a `MHRWParams` instance, initializing the read-only members `step_size`, `n_sweep`, "
-            "`n_therm` and `n_run` to the values given to the constructor."
+            ".. py:function:: MHRWParams(mhwalker_params, n_sweep, n_therm, n_run)\n\n"
+            "    Construct a `MHRWParams` instance, initializing the read-only members `mhwalker_params`, "
+            "`n_sweep`, `n_therm` and `n_run` to the values given to the constructor."
             "\n\n"
             "|picklable|"
             "\n\n"
             ".. seealso:: See the corresponding C++ class :tomocxx:`Tomographer::MHRWParams "
             "<struct_tomographer_1_1_m_h_r_w_params.html>` for more information about these parameters.  (The "
-            "interfaced class uses the template parameters `CountIntType=%s` and `StepRealType=%s`.)"
+            "interfaced class uses the template parameters `CountIntType=%s` and `StepRealType=py::object`.)"
             "\n\n"
-            ".. py:attribute:: step_size\n\n"
+            ".. py:attribute:: mhwalker_params\n\n"
             "    See :tomocxx:`Tomographer::MHRWParams <struct_tomographer_1_1_m_h_r_w_params.html>`.\n\n"
             ".. py:attribute:: n_sweep\n\n"
             "    See :tomocxx:`Tomographer::MHRWParams <struct_tomographer_1_1_m_h_r_w_params.html>`.\n\n"
@@ -67,29 +67,28 @@ void py_tomo_mhrw(py::module rootmodule)
             "    See :tomocxx:`Tomographer::MHRWParams <struct_tomographer_1_1_m_h_r_w_params.html>`.\n\n"
             ".. py:attribute:: n_run\n\n"
             "    See :tomocxx:`Tomographer::MHRWParams <struct_tomographer_1_1_m_h_r_w_params.html>`.\n\n",
-            boost::core::demangle(typeid(CountIntType).name()).c_str(),
-            boost::core::demangle(typeid(RealType).name()).c_str()
+            boost::core::demangle(typeid(CountIntType).name()).c_str()
             ).c_str()
         )
       .def(py::init<>())
-      .def(py::init<RealType,CountIntType,CountIntType,CountIntType>(),
-           "step_size"_a, "n_sweep"_a, "n_therm"_a, "n_run"_a)
-      .def_readwrite("step_size", &Kl::step_size)
+      .def(py::init<py::object,CountIntType,CountIntType,CountIntType>(),
+           "mhwalker_params"_a, "n_sweep"_a, "n_therm"_a, "n_run"_a)
+      .def_readwrite("mhwalker_params", &Kl::mhwalker_params)
       .def_readwrite("n_sweep", &Kl::n_sweep)
       .def_readwrite("n_therm", &Kl::n_therm)
       .def_readwrite("n_run", &Kl::n_run)
       .def("__repr__", [](const Kl& p) {
-          return streamstr("MHRWParams(step_size="<<Tomographer::Tools::fmts("%.3g", (double)p.step_size)
+          return streamstr("MHRWParams(mhwalker_params="<<py::str(p.mhwalker_params).cast<std::string>()
                            <<",n_sweep="<<p.n_sweep<<",n_therm="<<p.n_therm<<",n_run="<<p.n_run<<")") ;
         })
       .def("__getstate__", [](const Kl& mhrw_params) {
-          return py::make_tuple(mhrw_params.step_size,
+          return py::make_tuple(mhrw_params.mhwalker_params,
                                 mhrw_params.n_sweep,
                                 mhrw_params.n_therm,
                                 mhrw_params.n_run);
         })
       .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl, RealType,CountIntType,CountIntType,CountIntType>(p, t);
+          tpy::internal::unpack_tuple_and_construct<Kl, py::object,CountIntType,CountIntType,CountIntType>(p, t);
           // if (t.size() != 4) {
           //   throw std::runtime_error("Invalid pickle state!");
           // }

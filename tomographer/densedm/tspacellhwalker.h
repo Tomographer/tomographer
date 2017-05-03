@@ -88,10 +88,10 @@ public:
   //! The complex real scalar corresponding to our data types. Usually a \c std::complex<double>.
   typedef typename DMTypes::ComplexScalar ComplexScalar;
 
-  /** \brief The real scalar type for the step size &mdash; this is our scalar type (see
-   *         \ref pageInterfaceMHWalker)
+  /** \brief The real scalar type for the step size &mdash; this scalar type is the only
+   *         parameter we need (see \ref pageInterfaceMHWalker)
    */
-  typedef RealScalar StepRealType;
+  typedef RealScalar WalkerParams;
 
   //! Provided for MHRandomWalk. A point in our random walk = a density matrix
   typedef MatrixType PointType;

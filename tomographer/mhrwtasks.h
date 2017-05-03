@@ -60,7 +60,7 @@ namespace MHRWTasks {
  * Stores the parameters to the random walk.
  *
  */
-template<typename IterCountIntType_ = int, typename StepRealType_ = double>
+template<typename IterCountIntType_ = int, typename MHWalkerParams_ = double>
 TOMOGRAPHER_EXPORT struct CDataBase
 {
   /** \brief Constructor.
@@ -78,21 +78,21 @@ TOMOGRAPHER_EXPORT struct CDataBase
   //! Type used to count the number of iterations
   typedef IterCountIntType_ IterCountIntType;
   //! Type used to specify the step size
-  typedef StepRealType_ StepRealType;
+  typedef MHWalkerParams_ MHWalkerParams;
 
   /** \brief Type to store the parameters of the Metropolis-Hastings random walk (number of
    *         runs, sweep size, etc.)
    *
-   * See \ref MHRWParams<IterCountIntType,StepRealType>
+   * See \ref MHRWParams<IterCountIntType,MHWalkerParams>
    */
-  typedef MHRWParams<IterCountIntType, StepRealType> MHRWParamsType;
+  typedef MHRWParams<IterCountIntType, MHWalkerParams> MHRWParamsType;
 
   /** \brief Parameters of the random walk
    *
    * Stores the number of iterations per sweep, the number of thermalizing sweeps, the
    * number of "live" sweeps, and the step size of the random walk.
    *
-   * See \ref MHRWParams<IterCountIntType,StepRealType>
+   * See \ref MHRWParams<IterCountIntType,MHWalkerParams>
    */
   const MHRWParamsType mhrw_params;
 
@@ -131,7 +131,7 @@ TOMOGRAPHER_EXPORT struct CDataBase
    */
   inline void printBasicCDataMHRWInfo(std::ostream & str) const
   {
-    str << "\tstep size       = " << std::setprecision(4) << mhrw_params.step_size << "\n"
+    str << "\tstep size       = " << std::setprecision(4) << mhrw_params.mhwalker_params << "\n"
         << "\t# iter. / sweep = " << mhrw_params.n_sweep << "\n"
         << "\t# therm. sweeps = " << mhrw_params.n_therm << "\n"
         << "\t# run sweeps    = " << mhrw_params.n_run << "\n";
@@ -155,10 +155,10 @@ TOMOGRAPHER_EXPORT struct CDataBase
  * \tparam MHRWStatsCollectorResultType_ the result type of the MHRWStatsCollector which
  *         the task will be running.
  * \tparam IterCountIntType the integer type used for counting iterations in the MHRW task.
- * \tparam StepRealType the real type used to describe the step size.
+ * \tparam MHWalkerParams the real type used to describe the step size.
  *
  */
-template<typename MHRWStatsCollectorResultType_, typename IterCountIntType, typename StepRealType>
+template<typename MHRWStatsCollectorResultType_, typename IterCountIntType, typename MHWalkerParams>
 TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
   : public virtual Tools::NeedOwnOperatorNew<MHRWStatsCollectorResultType_>::ProviderType
 {
@@ -168,7 +168,7 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
     
   /** \brief The type to use to store the parameters of the random walk
    */
-  typedef MHRWParams<IterCountIntType, StepRealType> MHRWParamsType;
+  typedef MHRWParams<IterCountIntType, MHWalkerParams> MHRWParamsType;
     
   /** \brief Construct an empty task result
    *
@@ -216,7 +216,7 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
   //! The result furnished by the stats collector itself
   const MHRWStatsCollectorResultType stats_collector_result;
     
-  //! The parameters of the random walk (see \ref MHRWParams<IterCountIntType,StepRealType>)
+  //! The parameters of the random walk (see \ref MHRWParams<IterCountIntType,MHWalkerParams>)
   const MHRWParamsType mhrw_params;
 
   //! The acceptance ratio of the Metropolis-Hastings random walk
@@ -240,17 +240,17 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTask
   //! The type used to count iterations (see \ref MHRWParams)
   typedef typename MHRandomWalkTaskCData::IterCountIntType IterCountIntType;
   //! The type used to describe a step size (see \ref MHRWParams)
-  typedef typename MHRandomWalkTaskCData::StepRealType StepRealType;
+  typedef typename MHRandomWalkTaskCData::MHWalkerParams MHWalkerParams;
 
   //! Type to stores the parameters of the random walk 
-  typedef MHRWParams<IterCountIntType, StepRealType> MHRWParamsType;
+  typedef MHRWParams<IterCountIntType, MHWalkerParams> MHRWParamsType;
 
   /** \brief Result type of a single task run.
    *
    * See \ref MHRandomWalkTaskResult.
    */    
   typedef MHRandomWalkTaskResult<typename MHRandomWalkTaskCData::MHRWStatsCollectorResultType,
-                                 IterCountIntType, StepRealType> ResultType;
+                                 IterCountIntType, MHWalkerParams> ResultType;
 
   /** \brief Status Report for a \ref MHRandomWalkTask
    *
@@ -281,7 +281,7 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTask
      *
      * Stores the number of iterations that form a sweep (\a n_sweep), the total number
      * of thermalization sweeps (\a n_therm), the total number of live run sweeps (\a
-     * n_run) as well as the step size of the random walk (\a step_size).
+     * n_run) as well as the step size of the random walk (\a mhwalker_params).
      *
      * See also \ref MHRandomWalk
      */
@@ -374,7 +374,7 @@ public:
     logger.longdebug("Tomographer::MHRWTasks::run()", "about to create MH walker object.");
 
     auto mhwalker = pcdata->createMHWalker(rng, logger);
-    typedef decltype(pcdata->createMHWalker(rng, logger)) MHWalkerType;
+    typedef decltype(mhwalker) MHWalkerType;
 
     logger.longdebug("Tomographer::MHRWTasks::run()", "MHWalker object created.");
 

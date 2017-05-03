@@ -36,6 +36,8 @@
 #include <tomographer/mhrw.h>
 #include <tomographer/mhrwtasks.h>
 
+#include <tomographerpy/pymhrw.h>
+
 
 namespace tpy {
 
@@ -71,7 +73,10 @@ struct PyStatusReportAddWorkerDataFields< Tomographer::MHRWTasks::MHRandomWalkTa
 {
   typedef typename Tomographer::MHRWTasks::MHRandomWalkTask<CData, Rng>::StatusReportType TaskStatusReportType;
   static inline void addDataFields(py::dict & d, const TaskStatusReportType & wr) {
-    d["mhrw_params"] = wr.mhrw_params;
+    d["mhrw_params"] = tpy::MHRWParams(py::cast(wr.mhrw_params.mhwalker_params),
+                                       wr.mhrw_params.n_sweep,
+                                       wr.mhrw_params.n_therm,
+                                       wr.mhrw_params.n_run);
     d["acceptance_ratio"] = wr.acceptance_ratio;
     d["kstep"] = wr.kstep;
     d["n_total_iters"] = wr.n_total_iters;

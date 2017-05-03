@@ -23,7 +23,7 @@ class MHRWTasksStuff(unittest.TestCase):
 
         # just run tomorun on some arbitrary data to get some stuff to check
         mhrw_params = tomographer.MHRWParams(
-            step_size=0.04,
+            mhwalker_params=0.04,
             n_sweep=25,
             n_run=8192,
             n_therm=500)
@@ -50,7 +50,7 @@ class MHRWTasksStuff(unittest.TestCase):
         # check that all fields are there and display meaningful values
         
         runres = r['runs_results'][0]
-        self.assertAlmostEqual(runres.mhrw_params.step_size, mhrw_params.step_size)
+        self.assertAlmostEqual(runres.mhrw_params.mhwalker_params, mhrw_params.mhwalker_params)
         self.assertEqual(runres.mhrw_params.n_sweep, mhrw_params.n_sweep)
         self.assertEqual(runres.mhrw_params.n_therm, mhrw_params.n_therm)
         self.assertEqual(runres.mhrw_params.n_run, mhrw_params.n_run)
@@ -99,7 +99,7 @@ class MHRWTasksStuff(unittest.TestCase):
         m = mhrw_task_result
         m2 = mhrw_task_result2
         self.assertAlmostEqual(m.acceptance_ratio, m2.acceptance_ratio)
-        self.assertAlmostEqual(m.mhrw_params.step_size, m2.mhrw_params.step_size)
+        self.assertAlmostEqual(m.mhrw_params.mhwalker_params, m2.mhrw_params.mhwalker_params)
         self.assertEqual(m.mhrw_params.n_sweep, m2.mhrw_params.n_sweep)
         self.assertEqual(m.mhrw_params.n_therm, m2.mhrw_params.n_therm)
         self.assertEqual(m.mhrw_params.n_run, m2.mhrw_params.n_run)
