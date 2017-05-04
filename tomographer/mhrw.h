@@ -80,12 +80,36 @@ const double MHRWAcceptanceRatioRecommendedMin = 0.2;
 const double MHRWAcceptanceRatioRecommendedMax = 0.4;
 
 
+/** \brief An MHWalkerParams type which just stores a step size
+ *
+ * This type is a simple struct which stores a step size. It should be used as the \a
+ * WalkerParams typedef of a \ref pageInterfaceMHWalker compliant type which only needs a
+ * step size as parameter.
+ */
+template<typename StepRealType_ = double>
+TOMOGRAPHER_EXPORT struct MHWalkerParamsStepSize
+{
+  typedef StepRealType_ StepRealType;
+
+  MHWalkerParamsStepSize() : step_size() { }
+  MHWalkerParamsStepSize(StepRealType step_size_) : step_size(step_size_) { }
+
+  StepRealType step_size;
+};
+
+template<typename StepRealType>
+std::ostream & operator<<(std::ostream & stream, MHWalkerParamsStepSize<StepRealType> p)
+{
+  return stream << "step_size=" << p.step_size;
+}
+
+
 /** \brief Specify the parameters of a Metropolis-Hastings random walk
  *
  * Specifies the parameters of a Metropolis-Hastings random walk (number of thermalization
  * runs, sweep size, number of live runs, step size).
  */
-template<typename CountIntType_ = int, typename MHWalkerParams_ = double>
+template<typename CountIntType_ = int, typename MHWalkerParams_ = MHWalkerParamsStepSize<double> >
 TOMOGRAPHER_EXPORT struct MHRWParams
 {
   typedef CountIntType_ CountIntType;
@@ -122,44 +146,74 @@ TOMOGRAPHER_EXPORT struct MHRWParams
 template<typename CountIntType, typename MHWalkerParams>
 std::ostream & operator<<(std::ostream & str, const MHRWParams<CountIntType,MHWalkerParams> & p)
 {
-  str << "MHRWParams(mhwalker_params=" << p.mhwalker_params << ",n_sweep=" << p.n_sweep
+  str << "MHRWParams(" << p.mhwalker_params << ",n_sweep=" << p.n_sweep
       << ",n_therm=" << p.n_therm << ",n_run=" << p.n_run << ")";
   return str;
 }
 
 
 
-/** .....
-* \todo DOC !!!!!!!!
-*/
-enum {
+/** \brief Describe how frequently the parameters of the random walk should be dynamically adjusted
+ *
+ * The value of an AdjustmentStrategy may be a binary OR value of several bits.  The
+ * strategy needs to specify:
+ *
+ *   - Whether the adjustments are to be enabled only during thermalization sweeps, only
+ *     during live run sweeps, or during both
+ *
+ *   - Whether the adjustments are to be performed after an individual iteration (a single
+ *     move in the random walk), or only after processing a live sample (only during live
+ *     runs)
+ */
+enum MHWalkerParamsAdjustmentStrategy {
+  //! Never adjust the parameters of the random walk
   MHWalkerParamsDoNotAdjust = 0,
 
+  //! Adjustments are enabled during thermalization sweeps
   MHWalkerParamsAdjustWhileThermalizing = 0x01,
+  //! Adjustments are enabled during live (running) sweeps
   MHWalkerParamsAdjustWhileRunning = 0x02,
+  //! Adjustments are enabled during both thermalization and live (running) sweeps
   MHWalkerParamsAdjustWhileThermalizingAndRunning =
     MHWalkerParamsAdjustWhileThermalizing | MHWalkerParamsAdjustWhileRunning,
 
+  //! Adjustemnts should be performed after each individual iteration
   MHWalkerParamsAdjustEveryIteration = 0x10,
+  //! Adjustemnts should be performed after a sample is taken (during live runs only)
   MHWalkerParamsAdjustEverySample = 0x20,
 
+  //! Adjustemnts should be performed only while thermalizing, after each individual iteration
+  MHWalkerParamsAdjustEveryIterationWhileThermalizing =
+    MHWalkerParamsAdjustEveryIteration | MHWalkerParamsAdjustWhileThermalizing,
+
+  //! Adjustemnts should be performed all the time, after each individual iteration
   MHWalkerParamsAdjustAllTheTime =
     MHWalkerParamsAdjustEveryIteration | MHWalkerParamsAdjustWhileThermalizingAndRunning
 };
 
-/** ......
- *\todo DOC!!!!!!!!!!!!!
+/** \brief A \ref pageInterfaceMHWalkerParamsAdjuster which does not adjust anything
+ *
+ * No adjustments are performed whatsoever. The MHWalkerParams may be of any type.
  */
-class MHWalkerNoParamsAdjustments
+class MHWalkerParamsNoAdjuster
 {
 public:
   enum { AdjustmentStrategy = MHWalkerParamsDoNotAdjust };
 
-  MHWalkerNoParamsAdjustments() { }
+  MHWalkerParamsNoAdjuster() { }
 
-  template<bool IsThermalizing, bool IsAfterSample, typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+  inline void initParams(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
+                         const MHRandomWalkType & /* mhrw */) const { }
+
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+  inline void thermalizingDone(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
+                               const MHRandomWalkType & /* mhrw */) const { }
+
+  template<bool IsThermalizing, bool IsAfterSample, typename MHRWParamsType, typename CountIntType,
+           typename MHWalker, typename MHRandomWalkType>
   inline void adjustParams(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
-                           int /* iter_k */, const MHRandomWalkType & /* mhrw */) const
+                           CountIntType /* iter_k */, const MHRandomWalkType & /* mhrw */) const
   {
   }
 };
@@ -228,7 +282,7 @@ struct helper_FnValueType_or_dummy<MHWalker,false> {
  *
  */
 template<typename Rng_, typename MHWalker_, typename MHRWStatsCollector_, typename LoggerType_,
-         typename CountIntType_ = int, typename MHWalkerParamsAdjuster_ = MHWalkerNoParamsAdjustments>
+         typename CountIntType_ = int, typename MHWalkerParamsAdjuster_ = MHWalkerParamsNoAdjuster>
 TOMOGRAPHER_EXPORT class MHRandomWalk
   : public virtual Tools::NeedOwnOperatorNew<typename MHWalker_::PointType>::ProviderType
 {
@@ -259,8 +313,9 @@ public:
 
   //! The type of the Metropolis-Hastings function value. (See class documentation)
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
-  typedef typename tomo_internal::helper_FnValueType_or_dummy<MHWalker,MHWalker::UseFnSyntaxType!=MHUseFnRelativeValue>::type
-      FnValueType;
+  typedef typename tomo_internal::helper_FnValueType_or_dummy<
+    MHWalker,(int)MHWalker::UseFnSyntaxType!=(int)MHUseFnRelativeValue
+    >::type  FnValueType;
 #else
   typedef _FnValueType FnValueType;
 #endif
@@ -273,7 +328,7 @@ public:
 private:
   // declare const if no adjustments are to be made. This expands to "MHRWParamsType _n;"
   // or "const MHRWParamsType _n;"
-  typename tomo_internal::const_type_helper<MHRWParamsType,MHWalkerParamsAdjusterStrategy==MHWalkerParamsDoNotAdjust>::type _n;
+  typename tomo_internal::const_type_helper<MHRWParamsType,(int)MHWalkerParamsAdjusterStrategy==(int)MHWalkerParamsDoNotAdjust>::type _n;
 
   Rng & _rng;
   MHWalker & _mhwalker;
@@ -427,6 +482,9 @@ private:
 
     _mhwalker.init();
     _stats.init();
+
+    _mhwalker_params_adjuster.initParams(_n, _mhwalker, *this);
+
     _logger.longdebug("_init() done.");
   }
   /** \brief Relays to the MHWalker and the MHRWStatsCollector.
@@ -435,6 +493,9 @@ private:
   {
     _mhwalker.thermalizingDone();
     _stats.thermalizingDone();
+
+    _mhwalker_params_adjuster.thermalizingDone(_n, _mhwalker, *this);
+
     _logger.longdebug("_thermalizing_done() done.");
   }
   /** \brief Relays to the MHWalker and the MHRWStatsCollector.
@@ -583,11 +644,11 @@ private:
 
   // adjustments
   template<bool IsThermalizing>
-  void _adjustparams_afteriter(int iter_k)
+  void _adjustparams_afteriter(CountIntType iter_k)
   {
     _mhwalker_params_adjuster.template adjustParams<IsThermalizing, false>(_n, _mhwalker, iter_k, *this);
   }
-  void _adjustparams_aftersample(int iter_k)
+  void _adjustparams_aftersample(CountIntType iter_k)
   {
     _mhwalker_params_adjuster.template adjustParams<false, true>(_n, _mhwalker, iter_k, *this);
   }

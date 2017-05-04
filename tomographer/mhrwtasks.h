@@ -224,6 +224,45 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
 };
 
 
+namespace tomo_internal {
+
+template<typename MHRandomWalkTaskCData, typename Rng, typename MHWalkerType, typename OurStatsCollectors,
+         typename LoggerType, typename IterCountIntType, typename dummy = void>
+struct mhrandomwalk_type_helper {
+  typedef MHWalkerParamsNoAdjuster MHWalkerParamsAdjusterType;
+  typedef MHRandomWalk<Rng,MHWalkerType,OurStatsCollectors,LoggerType,IterCountIntType> MHRandomWalkType;
+  static constexpr bool has_adjuster = false;
+  template<typename MHWalkerType>
+  static inline MHWalkerParamsAdjusterType && createMHWalkerParams(MHRandomWalkTaskCData * pcdata, MHWalkerType & mhwalker)
+  {
+    return MHWalkerParamsAdjusterType();
+  }
+};
+struct Dummy {};
+template<typename MHRandomWalkTaskCData, typename Rng, typename MHWalkerType, typename OurStatsCollectors,
+         typename LoggerType, typename IterCountIntType>
+struct mhrandomwalk_type_helper<MHRandomWalkTaskCData, Rng, MHWalkerType, OurStatsCollectors,
+                                LoggerType, IterCountIntType,
+                                typename std::enable_if<!std::is_same<decltype(&MHRandomWalkTaskCData::createMHWalkerParamsAdjuster), Dummy>::value, void>::type
+                                > {
+  typedef decltype(((MHRandomWalkTaskCData*)0)->createMHWalkerParamsAdjuster()) MHWalkerParamsAdjusterType;
+  typedef MHRandomWalk<Rng,MHWalkerType,OurStatsCollectors,LoggerType,IterCountIntType,MHWalkerParamsAdjusterType>
+    MHRandomWalkType;
+  static constexpr bool has_adjuster = true;
+
+  template<typename MHWalkerType>
+  static inline MHWalkerParamsAdjusterType && createMHWalkerParams(MHRandomWalkTaskCData * pcdata, MHWalkerType & mhwalker)
+  {
+    return pcdata->createMHWalkerParams(mhwalker);
+  }
+
+};
+
+
+}
+
+
+
 /** \brief Random Walk task, collecting statistics
  *
  * This class can be used with \ref MultiProc::OMP::TaskDispatcher, for example.
@@ -318,6 +357,7 @@ private:
    */
   ResultType * result;
 
+
 public:
 
   /** \brief Constructs the MHRandomWalkTask
@@ -378,7 +418,17 @@ public:
 
     logger.longdebug("Tomographer::MHRWTasks::run()", "MHWalker object created.");
 
-    MHRandomWalk<Rng, MHWalkerType, OurStatsCollectors, LoggerType, IterCountIntType> rwalk(
+    typedef mhrandomwalktype_helper<MHRandomWalkTaskCData, Rng, MHWalkerType, OurStatsCollectors, LoggerType, IterCountIntType>
+      mhrandomwalktypehelper;
+    typedef mhrandomwalktypehelper::MHWalkerParamsAdjusterType MHWalkerParamsAdjusterType;
+
+    MHWalkerParamsAdjusterType mhwalkerparamsadjuster = mhrandomwalktypehelper::createMHWalkerParams(pcdata, mhwalker);
+
+    logger.longdebug("Tomographer::MHRWTasks::run()", "MHWalkerParamsAdjuster created [if necessary]");
+
+    typedef mhrandomwalktypehelper::MHRandomWalkType MHRandomWalkType;
+
+    MHRandomWalkType rwalk(
         // MH random walk parameters
         pcdata->mhrw_params,
         // the MHWalker
@@ -388,7 +438,9 @@ public:
         // a random number generator
         rng,
         // and a logger
-        logger
+        logger,
+        // the params adjuster (possibly a dummy)
+        mhwalkerparamsadjuster
         );
       
     logger.longdebug("Tomographer::MHRWTasks::run()", "MHRandomWalk object created, running...");

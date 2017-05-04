@@ -39,6 +39,7 @@ import subprocess # for git
 import re
 import glob
 import shutil
+import shlex
 
 # build-time requirements -- Apparently, PIP cannot install these automatically -- so make
 # sure we get a hard failure if they aren't present
@@ -74,10 +75,11 @@ require_mod_version("PyBind11", pybind11.__version__, "2.1",
 # Boost_INCLUDE_DIR=/path/to/boost/headers
 # EIGEN3_INCLUDE_DIR=/path/to/eigen/headers
 # PYBIND11_CPP_STANDARD=-std=c++14
+# MACOSX_CXX_FLAGS=-stdlib=libc++ -mmacosx-version-min=10.7
 #
 # handled by us (not in CMake cache):
 # BCP=/path/to/bcp  (Boost packaging tool)
-# ARCHITECTURE_FLAGS=-march=native -O3  (compiler SIMD instruction sets & other optimizations)
+# OPTIMIZATION_CXX_FLAGS=-UNDEBUG -march=native -O3  (compiler SIMD instruction sets & other optimizations)
 #
 # To read the above variables from cache:
 # CMAKE_CACHE_FILE=path/to/CMakeCache.txt
@@ -106,7 +108,8 @@ vv = Vars([
     'Boost_INCLUDE_DIR',
     'EIGEN3_INCLUDE_DIR',
     'PYBIND11_CPP_STANDARD',
-    'ARCHITECTURE_FLAGS',
+    'OPTIMIZATION_CXX_FLAGS',
+    'MACOSX_CXX_FLAGS',
 ], cachefile=cmake_cache_file)
 
 # Defaults: programs (git, bcp)
@@ -114,7 +117,7 @@ vv.setDefault('GIT', lambda : find_executable('git'))
 vv.setDefault('BCP', lambda : find_executable('bcp'))
 
 # Defaults: flags
-vv.setDefault('ARCHITECTURE_FLAGS', '-march=native -O3')
+vv.setDefault('OPTIMIZATION_CXX_FLAGS', '-UNDEBUG -march=native -O3')
 
 # Defaults: Boost stuff
 vv.setDefault('Boost_INCLUDE_DIR',
@@ -125,6 +128,8 @@ vv.setDefault('EIGEN3_INCLUDE_DIR',
               lambda : find_include_dir('eigen3', pkgnames=['eigen','eigen3'],
                                         return_with_suffix='eigen3'))
 
+# Defaults: Mac OS X C++ flags
+vv.setDefault('MACOSX_CXX_FLAGS', '-stdlib=libc++ -mmacosx-version-min=10.7')
 
 
 
@@ -192,7 +197,6 @@ glob_cflags = [
     # '-DTOMOGRAPHER_VERSION_MAJ={}'.format(version_maj),
     # '-DTOMOGRAPHER_VERSION_MIN={}'.format(version_min),
     '-DEIGEN_DONT_PARALLELIZE',
-    '-UNDEBUG',
 ]
 
 cxxfiles = [ os.path.join('cxx', x) for x in [
@@ -261,6 +265,18 @@ def cpp_flag(compiler):
                            'is needed!')
 
 
+def escape_c_utf8_str(s):
+    _rx_notok = re.compile(r"""[^a-zA-Z_0-9.-/<>?~!@#$%^&*\[\]()_+={};':" -]""")
+    def esc_char(x):
+        if not isinstance(x, int):
+            x = ord(x)
+        if not _rx_notok.match(chr(x)):
+            return chr(x)
+        return '\\x%02x'%(x)
+    return ('"' +
+            "".join([ esc_char(x) for x in ensure_str(s).encode('utf-8') ])
+            + '"')
+
 class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
     c_opts = {
@@ -269,7 +285,7 @@ class BuildExt(build_ext):
     }
 
     if sys.platform == 'darwin':
-        c_opts['unix'] += ['-stdlib=libc++', '-mmacosx-version-min=10.7']
+        c_opts['unix'] += shlex.split(vv.get('MACOSX_CXX_FLAGS'))
 
     def build_extensions(self):
         ct = self.compiler.compiler_type
@@ -287,7 +303,7 @@ class BuildExt(build_ext):
         for cflg in glob_cflags:
             opts.append(cflg)
 
-        for cflg in vv.get('ARCHITECTURE_FLAGS').split():
+        for cflg in shlex.split(vv.get('OPTIMIZATION_CXX_FLAGS')):
             opts.append(cflg)
 
         # create a header so that the C++ files have access to some setup.py info
@@ -301,9 +317,22 @@ class BuildExt(build_ext):
 static inline std::vector<std::string> tomographerpy_compileinfo_get_cflags() {
     return { %(cflagslist)s } ;
 }
+
+static inline py::dict tomographerpy_compileinfo_get_compiler() {
+    py::dict d;
+    d["type"_s] = std::string(%(compiler_type)s);
+    d["path"_s] = std::string(%(compiler_path)s);
+    d["link_path"_s] = std::string(%(compiler_link_path)s);
+    return d;
+}
 """ % {
-    'cflagslist': ", ".join([ 'std::string("' + "".join([ '\\x%02x'%(x if isinstance(x,int) else ord(x)) for x in ensure_str(opt).encode('utf-8') ]) + '")'
-                              for opt in opts])
+    'cflagslist': ", ".join([ 
+        'std::string(' + escape_c_utf8_str(opt) + ')'
+        for opt in opts
+    ]),
+    'compiler_type': escape_c_utf8_str(self.compiler.compiler_type),
+    'compiler_path': escape_c_utf8_str(self.compiler.compiler_so[0]),
+    'compiler_link_path': escape_c_utf8_str(self.compiler.linker_so[0]),
 }
             )
             opts.append("-DTOMOGRAPHERPY_HAVE_COMPILEINFO")

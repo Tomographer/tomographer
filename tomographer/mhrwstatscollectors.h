@@ -39,6 +39,7 @@
 
 #include <tomographer/tools/cxxutil.h>
 #include <tomographer/tools/loggers.h>
+#include <tomographer/tools/statusprovider.h>
 #include <tomographer/histogram.h>
 #include <tomographer/mhrw_bin_err.h>
 
@@ -210,6 +211,89 @@ public:
  *
  */
 typedef MultipleMHRWStatsCollectors<> TrivialMHRWStatsCollector;
+
+
+
+
+// -----------------
+
+template<typename CountIntType_ = int>
+TOMOGRAPHER_EXPORT class MHRWMovingAverageAcceptanceRatioStatsCollector
+{
+public:
+  typedef CountIntType_ CountIntType;
+
+private:
+  Eigen::ArrayXi accept_buffer;
+  CountIntType pos;
+
+public:
+
+  inline MHRWMovingAverageAcceptanceRatioStatsCollector(int num_samples_ = 64)
+    : accept_buffer(Eigen::ArrayXi::Zero(num_samples_)), pos(0)
+  {
+  }
+
+  inline Eigen::Index bufferSize() const {
+    return accept_buffer.size();
+  }
+
+  //! Returns the average acceptance ratio as stored in the buffer
+  inline double movingAverageAcceptanceRatio() const {
+    return (double)accept_buffer.count() / accept_buffer.size();
+  }
+
+  //! Returns true after enough samples have been collected to fill the internal buffer
+  inline bool hasMovingAverageAcceptanceRatio() const {
+    return ( pos >= accept_buffer.size() );
+  }
+
+
+  // init() callback
+
+  inline void init()
+  {
+  }
+
+  // thermalizingDone() callback
+  inline void thermalizingDone()
+  {
+  }
+
+  // done() callback
+  inline void done()
+  {
+  }
+
+
+  // rawMove() callback
+
+  template<typename CountIntType, typename PointType, typename FnValueType, typename PointType2, typename MHRandomWalk>
+  inline void rawMove(
+      CountIntType /*k*/, bool /*is_thermalizing*/, bool /*is_live_iter*/, bool accepted,
+      double /*a*/, PointType && /*newpt*/, FnValueType /*newptval*/,
+      PointType2 && /*curpt*/, FnValueType /*curptval*/,
+      MHRandomWalk && /* rw */
+      )
+  {
+    // Strategy: update the item in the array at position pos%num_samples, and increment
+    // pos. This way we remove the oldest samples and replace them by the new ones.
+
+    accept_buffer[ pos % accept_buffer.size() ] = accepted;
+    ++pos;
+  }
+
+
+  // processSample() callback
+
+  template<typename CountIntType, typename PointType, typename FnValueType, typename MHRandomWalk>
+  inline void processSample(
+      CountIntType /*k*/, CountIntType /*n*/, PointType && /*curpt*/, FnValueType /*curptval*/, MHRandomWalk && /*rw*/
+      )
+  {
+  }
+
+};
 
 
 
@@ -454,6 +538,14 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
     int n_unknown;
     int n_unknown_isolated;
     int n_not_converged;
+
+    std::ostream & printInfoTo(std::ostream & stream) const
+    {
+      stream << n_converged << " converged / "
+             << n_unknown << " maybe (" << n_unknown_isolated << " isolated) / "
+             << n_not_converged << " not converged";
+      return stream;
+    }
   };
 
   //! Get a summary of the bin error bars convergence. See \ref Summary.
@@ -757,63 +849,40 @@ public:
 
 
 
+//
+// Specialize Tomographer::Tools::StatusProvider  for our stats collector classes
+//
 
 
-/** \brief Template, specializable class to get status reports from stats collectors.
- *
- * Specialize this class for your stats collector to be able to provide a short status
- * report. Just provide 2-3 lines with the most important information enough to provide a
- * very basic overview, not a full-length report.
- */
-template<typename MHRWStatsCollector_>
-TOMOGRAPHER_EXPORT struct MHRWStatsCollectorStatus
-{
-  typedef MHRWStatsCollector_ MHRWStatsCollector;
-
-  static constexpr bool CanProvideStatus = false;
-
-  /** \brief Prepare a string which reports the status of the given stats collector
-   *
-   * Don't end your string with a newline, it will be added automatically.
-   */
-  static inline std::string getStatus(const MHRWStatsCollector * /*stats*/)
-  {
-    return std::string();
-  }
-};
-// static members:
-template<typename MHRWStatsCollector_>
-constexpr bool MHRWStatsCollectorStatus<MHRWStatsCollector_>::CanProvideStatus;
-
-
+namespace Tools {
 
 /** \brief Provide status reporting for a MultipleMHRWStatsCollectors
  *
  */
 template<typename... Args>
-TOMOGRAPHER_EXPORT struct MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >
+TOMOGRAPHER_EXPORT struct StatusProvider<MultipleMHRWStatsCollectors<Args... > >
 {
   typedef MultipleMHRWStatsCollectors<Args... > MHRWStatsCollector;
 
   static constexpr int NumStatColl = MHRWStatsCollector::NumStatColl;
   
-  static constexpr bool CanProvideStatus = true;
+  static constexpr bool CanProvideStatusLine = true;
 
   template<int I = 0, typename std::enable_if<(I < NumStatColl), bool>::type dummy = true>
-  static inline std::string getStatus(const MHRWStatsCollector * stats)
+  static inline std::string getStatusLine(const MHRWStatsCollector * stats)
   {
     typedef typename std::tuple_element<I, typename MHRWStatsCollector::MHRWStatsCollectorsTupleType>::type
       ThisStatsCollector;
     return
-      (MHRWStatsCollectorStatus<ThisStatsCollector>::CanProvideStatus
-       ? (MHRWStatsCollectorStatus<ThisStatsCollector>::getStatus(& stats->template getStatsCollector<I>())
+      (StatusQuery<ThisStatsCollector>::CanProvideStatusLine
+       ? (StatusQuery<ThisStatsCollector>::getStatusLine(& stats->template getStatsCollector<I>())
 	  + ((I < (NumStatColl-1)) ? std::string("\n") : std::string()))
        : std::string())
-      + getStatus<I+1>(stats);
+      + getStatusLine<I+1>(stats);
   };
 
   template<int I = 0, typename std::enable_if<(I == NumStatColl), bool>::type dummy = true>
-  static inline std::string getStatus(const MHRWStatsCollector * stats)
+  static inline std::string getStatusLine(const MHRWStatsCollector * stats)
   {
     (void)stats;
     return std::string();
@@ -822,9 +891,9 @@ TOMOGRAPHER_EXPORT struct MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<A
 };
 // static members:
 template<typename... Args>
-constexpr int MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >::NumStatColl;
+constexpr int StatusProvider<MultipleMHRWStatsCollectors<Args... > >::NumStatColl;
 template<typename... Args>
-constexpr bool MHRWStatsCollectorStatus<MultipleMHRWStatsCollectors<Args... > >::CanProvideStatus;
+constexpr bool StatusProvider<MultipleMHRWStatsCollectors<Args... > >::CanProvideStatusLine;
 
 
 
@@ -835,13 +904,13 @@ template<typename ValueCalculator_,
 	 typename LoggerType_,
 	 typename HistogramType_
 	 >
-TOMOGRAPHER_EXPORT struct MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator_, LoggerType_, HistogramType_> >
+TOMOGRAPHER_EXPORT struct StatusProvider<ValueHistogramMHRWStatsCollector<ValueCalculator_, LoggerType_, HistogramType_> >
 {
   typedef ValueHistogramMHRWStatsCollector<ValueCalculator_, LoggerType_, HistogramType_> MHRWStatsCollector;
   
-  static constexpr bool CanProvideStatus = true;
+  static constexpr bool CanProvideStatusLine = true;
 
-  static inline std::string getStatus(const MHRWStatsCollector * stats)
+  static inline std::string getStatusLine(const MHRWStatsCollector * stats)
   {
     const int maxbarwidth = 50;
 
@@ -856,7 +925,7 @@ template<typename ValueCalculator_,
 	 typename HistogramType_
 	 >
 constexpr bool
-MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator_, LoggerType_, HistogramType_> >::CanProvideStatus;
+StatusProvider<ValueHistogramMHRWStatsCollector<ValueCalculator_, LoggerType_, HistogramType_> >::CanProvideStatusLine;
 
 
 /** \brief Provide status reporting for a ValueHistogramWithBinningMHRWStatsCollector
@@ -865,13 +934,13 @@ MHRWStatsCollectorStatus<ValueHistogramMHRWStatsCollector<ValueCalculator_, Logg
 template<typename Params_,
 	 typename LoggerType_
 	 >
-TOMOGRAPHER_EXPORT struct MHRWStatsCollectorStatus<ValueHistogramWithBinningMHRWStatsCollector<Params_, LoggerType_> >
+TOMOGRAPHER_EXPORT struct StatusProvider<ValueHistogramWithBinningMHRWStatsCollector<Params_, LoggerType_> >
 {
   typedef ValueHistogramWithBinningMHRWStatsCollector<Params_, LoggerType_> MHRWStatsCollector;
   
-  static constexpr bool CanProvideStatus = true;
+  static constexpr bool CanProvideStatusLine = true;
 
-  static inline std::string getStatus(const MHRWStatsCollector * stats)
+  static inline std::string getStatusLine(const MHRWStatsCollector * stats)
   {
     const int maxbarwidth = 50;
 
@@ -912,8 +981,10 @@ template<typename Params_,
 	 typename LoggerType_
 	 >
 constexpr bool
-MHRWStatsCollectorStatus<ValueHistogramWithBinningMHRWStatsCollector<Params_, LoggerType_> >::CanProvideStatus;
+StatusProvider<ValueHistogramWithBinningMHRWStatsCollector<Params_, LoggerType_> >::CanProvideStatusLine;
 
+
+} // namespace Tools
 
 } // namespace Tomographer
 

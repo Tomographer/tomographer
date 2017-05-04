@@ -720,10 +720,12 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorWithBinningAnalysis
                                                            collresults[j]->acceptance_ratio, h.columns());
 
       const auto summary = stats_coll_result.errorBarConvergenceSummary();
-
-      str << "    error bars: " << summary.n_converged << " converged / "
-          << summary.n_unknown << " maybe (" << summary.n_unknown_isolated << " isolated) / "
-          << summary.n_not_converged << " not converged\n";
+      str << "    error bars: ";
+      summary.printInfoTo(str);
+      str << "\n";
+      // str << "    error bars: " << summary.n_converged << " converged / "
+      //     << summary.n_unknown << " maybe (" << summary.n_unknown_isolated << " isolated) / "
+      //     << summary.n_not_converged << " not converged\n";
     }
     str << h.hrule()
         << "\n";

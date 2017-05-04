@@ -148,9 +148,11 @@ PYBIND11_PLUGIN(_tomographer_cxx)
 
 #ifdef TOMOGRAPHERPY_HAVE_COMPILEINFO
     std::vector<std::string> compile_cflags = tomographerpy_compileinfo_get_cflags();
-    compile_info["cflags"_s] = compile_cflags;
+    compile_info["cflags"_s] = py::cast(compile_cflags);
+    compile_info["compiler"_s] = tomographerpy_compileinfo_get_compiler();
 #else
     compile_info["cflags"_s] = py::none();
+    compile_info["compiler"_s] = py::none();
 #endif
 
     compile_info["eigen"_s] = Tomographer::Tools::fmts("Eigen %d.%d.%d (SIMD: %s)\n", EIGEN_WORLD_VERSION,

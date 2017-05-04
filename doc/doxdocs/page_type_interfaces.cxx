@@ -160,8 +160,7 @@
  *
  * A type implementing the \a MHWalker interface must provide the following types:
  *
- * \since Tomographer 5.0: Introduced the \a WalkerParams member type and obsoleted \a
- *     StepRealType.
+ * \since Changed in %Tomographer 5.0: Added the \a WalkerParams member type and obsoleted \a StepRealType.
  *
  * \par typedef ... PointType
  *     The type needed to represent a point in state space in which we are performing a
@@ -253,7 +252,7 @@
  *
  * \par
  *     1. You may provide the value \f$ P(x) \f$ itself.  In this case, set
- *     <em>UseFnSyntaxTYPE = Tomographer::MHUseFnValue</em>.  The class must define the
+ *     <em>UseFnSyntaxType = Tomographer::MHUseFnValue</em>.  The class must define the
  *     member function \a fnVal() as described above.  It doesn't have to provide the
  *     member functions \a fnLogVal() or \a fnRelVal().
  *
@@ -264,18 +263,82 @@
  *     (\ref Tomographer::MHRandomWalk) will not calculate the exponential of the value
  *     you give, but rather the exponential of the difference of two values of \f$ \ln
  *     P(x) \f$ at two points in order to directly optain the probability ratio.
- *     In this case, set set <em>UseFnSyntaxTYPE = Tomographer::MHUseFnLogValue</em>.  The
+ *     In this case, set set <em>UseFnSyntaxType = Tomographer::MHUseFnLogValue</em>.  The
  *     class must define the member function \a fnLogVal() as described above.  It doesn't
  *     have to provide the member functions \a fnVal() or \a fnRelVal().
  *
  * \par
  *    3. You may directly provide the ratio of values for two points \f$ P(x')/P(x) \f$.
- *    in this case, set <em>UseFnSyntaxTYPE = Tomographer::MHUseRelativeValue</em>.  The
- *    class must define the member function \a fnRelVal() as described above.  It doesn't
- *    have to provide the member functions \a fnVal() or \a fnLogVal().
+ *    in this case, set <em>UseFnSyntaxType = Tomographer::MHUseRelativeValue</em>.  The
+ *    class must define the member function \a fnRelVal() as described above.  It does not
+ *    have to provide the member functions \a fnVal() or \a fnLogVal(), nor does it have to
+ *    provide the type \a FnValueType.
  *
  */
 
+
+
+// =============================================================================
+// MHWalkerParamsAdjuster Interface
+// =============================================================================
+
+/** \page pageInterfaceMHWalkerParamsAdjuster MHWalkerParamsAdjuster Interface
+ *
+ * This type is responsible for dynamically adjusting the parameters of a
+ * Metropolis-Hastings random walk carried out by a \ref Tomographer::MHRandomWalk
+ * instance.
+ *
+ * You can use \ref Tomographer::MHWalkerParamsNoAdjuster if you don't need to dynamically
+ * adjust the parameters of the random walk.
+ *
+ * A \a MHWalkerParamsAdjuster compliant type should provide the following constant public
+ * member value (e.g., as an enum):
+ *
+ * \par enum { AdjustmentStrategy = ... }
+ *    Specify how often the parameters of the random walk should be adjusted.  The value
+ *    should be a value in the \ref Tomographer::MHWalkerParamsAdjustmentStrategy enum.
+ *
+ * One should also provide the following member functions:
+ *
+ * \par void initParams(MHRWParamsType & params, const MHWalker & mhwalker, const MHRandomWalkType & mhrw)
+ *    Called before starting the random walk. The \a params may be modified if desired.
+ *    References to the \ref pageInterfaceMHWalker (\a mhwalker) and to the \ref
+ *    Tomographer::MHRandomWalk instance (\a mhrw) are provided.
+ *
+ * \par void thermalizingDone(MHRWParamsType & params, const MHWalker & mhwalker, const MHRandomWalkType & mhrw)
+ *    Called after the thermalization has finished. The \a params may be modified if
+ *    desired.  References to the \ref pageInterfaceMHWalker (\a mhwalker) and to the \ref
+ *    Tomographer::MHRandomWalk instance (\a mhrw) are provided.
+ *
+ * \par template<bool IsThermalizing, bool IsAfterSample> inline void adjustParams(MHRWParamsType & params, const MHWalker & mhwalker, CountIntType iter_k, const MHRandomWalkType & mhrw)
+ *    This function is responsible for adjusting the random walk paramters (see \ref
+ *    pageInterfaceMHWalker) stored in \a params (it should update the params in place).
+ *    As convenience a reference to the \ref pageInterfaceMHWalker (\a mhwalker) and to
+ *    the \ref Tomographer::MHRandomWalk instance (\a mhrw), as well as the iteration
+ *    number \a iter_k, are provided.
+ *
+ * \par
+ *    The template parameter \a IsThermalizing is set to \a true during the thermalization
+ *    sweeps.  The parameter \a IsAfterSample is set to \a true if this function is called
+ *    upon processing a live sample.  If <em>IsAfterSample==true</em>, then necessarily
+ *    <em>IsThermalizing==false</em>.
+ *
+ * \par
+ *    If the \a AdjustmentStrategy includes both the \a
+ *    MHWalkerParamsAdjustEveryIteration and \a MHWalkerParamsAdjustEverySample bits, then
+ *    while running, the callback \a adjustParams(...) will be called twice for the points
+ *    that correspond to live samples: once after the iteration move, and once after
+ *    processing the sample.
+ *
+ * \par
+ *    More involved informaton (accept events, current point, etc.) are not provided here.
+ *    If the parameters are to be adjusted based on some statistics taken on the random
+ *    walk (which is usually the case), you should use a MHRWStatsCollector and point your
+ *    adjuster to that stats collector to get its information.  For example, look at \ref
+ *    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector and \ref
+ *    Tomographer::MHRWStepSizeAdjuster.
+ *
+ */
 
 
 // =============================================================================
