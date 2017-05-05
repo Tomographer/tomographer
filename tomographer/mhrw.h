@@ -37,6 +37,8 @@
 #include <tomographer/tools/loggers.h>
 #include <tomographer/tools/fmt.h>
 #include <tomographer/tools/cxxutil.h>
+#include <tomographer/tools/statusprovider.h>
+#include <tomographer/multiproc.h>
 #include <tomographer/mhrw_bin_err.h>
 #include <tomographer/tools/needownoperatornew.h>
 
@@ -108,12 +110,16 @@ std::ostream & operator<<(std::ostream & stream, MHWalkerParamsStepSize<StepReal
  *
  * Specifies the parameters of a Metropolis-Hastings random walk (number of thermalization
  * runs, sweep size, number of live runs, step size).
+ *
+ * \since
+ * Changed in Tomographer 5.0: This class now stores an arbitrary type for the parameters
+ * of the MHWalker type. Note the new template parameter order!!
  */
-template<typename CountIntType_ = int, typename MHWalkerParams_ = MHWalkerParamsStepSize<double> >
+template<typename MHWalkerParams_ = MHWalkerParamsStepSize<double>, typename CountIntType_ = int >
 TOMOGRAPHER_EXPORT struct MHRWParams
 {
-  typedef CountIntType_ CountIntType;
   typedef MHWalkerParams_ MHWalkerParams;
+  typedef CountIntType_ CountIntType;
 
   explicit MHRWParams()
     : mhwalker_params(), n_sweep(0), n_therm(0), n_run(0)
@@ -144,9 +150,9 @@ TOMOGRAPHER_EXPORT struct MHRWParams
 
 
 template<typename CountIntType, typename MHWalkerParams>
-std::ostream & operator<<(std::ostream & str, const MHRWParams<CountIntType,MHWalkerParams> & p)
+std::ostream & operator<<(std::ostream & str, const MHRWParams<MHWalkerParams,CountIntType> & p)
 {
-  str << "MHRWParams(" << p.mhwalker_params << ",n_sweep=" << p.n_sweep
+  str << "MHRWParams(" << p.mhwalker_params << ";n_sweep=" << p.n_sweep
       << ",n_therm=" << p.n_therm << ",n_run=" << p.n_run << ")";
   return str;
 }
@@ -263,6 +269,8 @@ struct helper_FnValueType_or_dummy<MHWalker,false> {
  * After the thermalizing runs, a number of <em>run</em> sweeps are performed, in which a
  * <em>live</em> sample is taken at the last iteration of each sweep.
  *
+ * \since Since Tomographer 5.0: added \a MHWalkerParamsAdjuster.
+ *
  * \tparam Rng is a C++ random number generator (for example, \ref std::mt19937)
  *
  * \tparam MHWalker is responsible for dealing with the state space, providing a new
@@ -273,6 +281,11 @@ struct helper_FnValueType_or_dummy<MHWalker,false> {
  *         walk. It should be a type implementing a \a MHRWStatsCollector interface, see
  *         \ref pageInterfaceMHRWStatsCollector.
  *
+ * \tparam MHWalkerParamsAdjuster a \ref pageInterfaceMHWalkerParamsAdjuster compliant
+ *         type which may dynamically adjust the parameters of the random walker.  Just
+ *         specify \ref MHWalkerParamsNoAdjuster if you don't need the parameters to be
+ *         dynamically adjusted.
+ *
  * \tparam LoggerType is a logger type to which log messages can be generated (see \ref
  *         pageLoggers)
  *
@@ -281,8 +294,10 @@ struct helper_FnValueType_or_dummy<MHWalker,false> {
  *         random walks.
  *
  */
-template<typename Rng_, typename MHWalker_, typename MHRWStatsCollector_, typename LoggerType_,
-         typename CountIntType_ = int, typename MHWalkerParamsAdjuster_ = MHWalkerParamsNoAdjuster>
+template<typename Rng_, typename MHWalker_, typename MHRWStatsCollector_,
+         typename MHWalkerParamsAdjuster_ = MHWalkerParamsNoAdjuster,
+         typename LoggerType_ = Logger::VacuumLogger,
+         typename CountIntType_ = int>
 TOMOGRAPHER_EXPORT class MHRandomWalk
   : public virtual Tools::NeedOwnOperatorNew<typename MHWalker_::PointType>::ProviderType
 {
@@ -305,7 +320,7 @@ public:
   typedef typename MHWalker::WalkerParams MHWalkerParams;
 
   //! The struct which can hold the parameters of this random walk
-  typedef MHRWParams<CountIntType, MHWalkerParams> MHRWParamsType;
+  typedef MHRWParams<MHWalkerParams, CountIntType> MHRWParamsType;
 
   //! The type which will take care of dynamically adjusting the parameters of the random walk
   typedef MHWalkerParamsAdjuster_ MHWalkerParamsAdjuster;
@@ -379,11 +394,11 @@ public:
       });
   }
   //! Simple constructor, initializes the given fields
-  template<typename MHRWParamsType>
-  MHRandomWalk(MHRWParamsType&& n_rw,
+  template<typename MHRWParamsTypeInit>
+  MHRandomWalk(MHRWParamsTypeInit&& n_rw,
 	       MHWalker & mhwalker, MHRWStatsCollector & stats,
                Rng & rng, LoggerType & logger_, MHWalkerParamsAdjuster mhwalker_params_adjuster = MHWalkerParamsAdjuster())
-    : _n(std::forward<MHRWParamsType>(n_rw)),
+    : _n(std::forward<MHRWParamsTypeInit>(n_rw)),
       _rng(rng),
       _mhwalker(mhwalker),
       _stats(stats),
@@ -400,6 +415,13 @@ public:
   MHRandomWalk(const MHRandomWalk & other) = delete;
 
 
+  //! Access the stats collector
+  inline const MHRWStatsCollector & statsCollector() const { return _stats; }
+
+  //! Access the mhwalker_params adjuster
+  inline const MHWalkerParamsAdjuster & mhWalkerParamsAdjuster() const { return _mhwalker_params_adjuster; }
+
+
   //! The parameters of the random walk.
   inline MHRWParamsType mhrwParams() const { return _n; }
 
@@ -412,7 +434,6 @@ public:
   inline CountIntType nTherm() const { return _n.n_therm; }
   //! Number of live run sweeps.
   inline CountIntType nRun() const { return _n.n_run; }
-
 
 
   /** \brief Query whether we have any statistics about acceptance ratio. This is \c
@@ -671,13 +692,13 @@ public:
     CountIntType k;
 
     _logger.longdebug([&](std::ostream & s) {
-	s << "Starting random walk, sweep size = " << _n.n_sweep << ", mhwalker params = " << _n.mhwalker_params
-	  << ", # therm sweeps = " << _n.n_therm << ", # live sweeps = " << _n.n_run;
+	s << "Starting random walk, parameters are = " << _n;
       });
 
-    const CountIntType num_thermalize = _n.n_sweep * _n.n_therm;
-
-    for (k = 0; k < num_thermalize; ++k) {
+    // keep the this expression explicit in the condition, because it may be updated by
+    // the adjuster. (The compiler should optimize the const value anyway if no adjuster
+    // is set because _n is declared const in that case.)
+    for (k = 0; k < (_n.n_sweep * _n.n_therm); ++k) {
       // calculate a candidate jump point and see if we accept the move
       _move<true>(k, false);
       _adjustparams_afteriter<true>(k);
@@ -687,11 +708,12 @@ public:
 
     _logger.longdebug("Thermalizing done, starting live runs.");
 
-    const CountIntType num_run = _n.n_sweep * _n.n_run;
-
     CountIntType n = 0; // number of live samples
 
-    for (k = 0; k < num_run; ++k) {
+    // keep the this expression explicit in the condition, because it may be updated by
+    // the adjuster. (The compiler should optimize the const value anyway if no adjuster
+    // is set because _n is declared const in that case.)
+    for (k = 0; k < (_n.n_sweep * _n.n_run); ++k) {
 
       bool is_live_iter = ((k+1) % _n.n_sweep == 0);
       
@@ -714,6 +736,139 @@ public:
     return;
   }
 };
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/** \brief Status Report structure representing the status of a \ref MHRandomWalk
+ *
+ * This struct can store information about the current status of a \ref MHRandomWalk while
+ * it is running.
+ *
+ * This is particularly useful when multiprocessing tasks, for example, with \ref
+ * MultiProc::OMP::TaskDispatcher and requesting status reports as with \ref
+ * MultiProc::OMP::TaskDispatcher::requestStatusReport().
+ */
+template<typename MHRWParamsType>
+struct MHRWStatusReport : public MultiProc::TaskStatusReport
+{
+  typedef typename MHRWParamsType::CountIntType IterCountIntType;
+
+  /** \brief Constructor which initializes all fields */
+  MHRWStatusReport(double fdone = 0.0, const std::string & msg = std::string(),
+                   IterCountIntType kstep_ = 0, MHRWParamsType mhrw_params_ = MHRWParamsType(),
+                   double acceptance_ratio_ = 0.0)
+    : MultiProc::TaskStatusReport(fdone, msg),
+    kstep(kstep_),
+    mhrw_params(mhrw_params_),
+    acceptance_ratio(acceptance_ratio_),
+    n_total_iters(mhrw_params.n_sweep*(mhrw_params.n_therm + mhrw_params.n_run))
+  {
+  }
+
+  /** \brief the current iteration number */
+  IterCountIntType kstep;
+
+  /** \brief the parameters of the random walk
+   *
+   * Stores the number of iterations that form a sweep (\a n_sweep), the total number
+   * of thermalization sweeps (\a n_therm), the total number of live run sweeps (\a
+   * n_run) as well as the step size of the random walk (\a mhwalker_params).
+   *
+   * See also \ref MHRandomWalk
+   */
+  MHRWParamsType mhrw_params;
+
+  /** \brief the current acceptance ratio of the random walk (see
+   *    \ref Tomographer::MHRandomWalk::acceptanceRatio()
+   * ) */
+  double acceptance_ratio;
+
+  /** \brief the total number of iterations required for this random walk
+   *
+   * This is calculated as \f$
+   *  \textit{nTotalIters} = \textit{nSweep} \times \left( \textit{nTherm} + \textit{nRun} \right)
+   * \f$.
+   */
+  IterCountIntType n_total_iters;
+
+  template<typename MHRandomWalkType, typename MHRWStatsCollectorType, typename MHWalkerParamsAdjusterType>
+  static inline MHRWStatusReport
+  createFromRandWalkStatInfo(IterCountIntType k, bool is_thermalizing,
+                             const MHRandomWalkType & rw,
+                             const MHRWStatsCollectorType & stats_collector,
+                             const MHWalkerParamsAdjusterType & mhwalker_params_adjuster) {
+    // prepare & provide status report
+    IterCountIntType totiters = rw.nSweep()*(rw.nTherm()+rw.nRun());
+    // k restarts at zero after thermalization, so account for that:
+    IterCountIntType kreal = is_thermalizing ? k : k + rw.nSweep()*rw.nTherm();
+    double fdone = (double)kreal/totiters;
+    double accept_ratio = std::numeric_limits<double>::quiet_NaN();
+    bool warn_accept_ratio = false;
+    std::string accept_ratio_msg;
+    if (rw.hasAcceptanceRatio()) {
+      accept_ratio = rw.acceptanceRatio();
+      warn_accept_ratio = (accept_ratio > MHRWAcceptanceRatioRecommendedMax ||
+                           accept_ratio < MHRWAcceptanceRatioRecommendedMin);
+      accept_ratio_msg = std::string("[") + (warn_accept_ratio ? "!!** " : "") +
+        std::string("accept ratio=") + Tools::fmts("%.2f", accept_ratio) +
+        (warn_accept_ratio ? " **!!" : "") + "]";
+    }
+    std::string msg = Tools::fmts(
+        "%s %lu/(%lu=%lu*(%lu+%lu)) : %5.2f%% done  %s",
+        ( ! is_thermalizing
+          ? "iteration"
+          : "[therm.] "),
+        (unsigned long)kreal, (unsigned long)totiters, (unsigned long)rw.nSweep(),
+        (unsigned long)rw.nTherm(), (unsigned long)rw.nRun(),
+        fdone*100.0,
+        accept_ratio_msg.c_str()
+        );
+    if (Tools::StatusQuery<MHRWStatsCollectorType>::CanProvideStatusLine) {
+      std::string nlindent = "\n    ";
+      msg += nlindent;
+      std::string s = Tools::StatusQuery<MHRWStatsCollectorType>::getStatusLine(&stats_collector);
+      for (std::size_t j = 0; j < s.size(); ++j) {
+        if (s[j] == '\n') {
+          msg += nlindent;
+        } else {
+          msg += s[j];
+        }
+      }
+    }
+    if (Tools::StatusQuery<MHWalkerParamsAdjusterType>::CanProvideStatusLine) {
+      std::string nlindent = "\n    ";
+      msg += nlindent;
+      std::string s = Tools::StatusQuery<MHWalkerParamsAdjusterType>::getStatusLine(&mhwalker_params_adjuster);
+      for (std::size_t j = 0; j < s.size(); ++j) {
+        if (s[j] == '\n') {
+          msg += nlindent;
+        } else {
+          msg += s[j];
+        }
+      }
+    }
+    return MHRWStatusReport(fdone, msg, kreal, rw.mhrwParams(), accept_ratio);
+  }
+
+};
+
+
+
+
+
+
+
 
 
 

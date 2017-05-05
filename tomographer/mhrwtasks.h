@@ -85,7 +85,7 @@ TOMOGRAPHER_EXPORT struct CDataBase
    *
    * See \ref MHRWParams<IterCountIntType,MHWalkerParams>
    */
-  typedef MHRWParams<IterCountIntType, MHWalkerParams> MHRWParamsType;
+  typedef MHRWParams<MHWalkerParams, IterCountIntType> MHRWParamsType;
 
   /** \brief Parameters of the random walk
    *
@@ -168,7 +168,7 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
     
   /** \brief The type to use to store the parameters of the random walk
    */
-  typedef MHRWParams<IterCountIntType, MHWalkerParams> MHRWParamsType;
+  typedef MHRWParams<MHWalkerParams, IterCountIntType> MHRWParamsType;
     
   /** \brief Construct an empty task result
    *
@@ -226,40 +226,43 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
 
 namespace tomo_internal {
 
-template<typename MHRandomWalkTaskCData, typename Rng, typename MHWalkerType, typename OurStatsCollectors,
+template<typename MHRandomWalkTaskCData, typename Rng, typename MHWalkerType,
          typename LoggerType, typename IterCountIntType, typename dummy = void>
 struct mhrandomwalk_type_helper {
   typedef MHWalkerParamsNoAdjuster MHWalkerParamsAdjusterType;
-  typedef MHRandomWalk<Rng,MHWalkerType,OurStatsCollectors,LoggerType,IterCountIntType> MHRandomWalkType;
+  template<typename StatsCollector>
+  struct MHRandomWalkType { 
+    typedef MHRandomWalk<Rng,MHWalkerType,StatsCollector,MHWalkerParamsNoAdjuster,LoggerType,IterCountIntType> type;
+  };
   static constexpr bool has_adjuster = false;
-  template<typename MHWalkerType>
-  static inline MHWalkerParamsAdjusterType && createMHWalkerParams(MHRandomWalkTaskCData * pcdata, MHWalkerType & mhwalker)
+  static inline MHWalkerParamsAdjusterType createMHWalkerParams(MHRandomWalkTaskCData *, MHWalkerType &)
   {
     return MHWalkerParamsAdjusterType();
   }
 };
 struct Dummy {};
-template<typename MHRandomWalkTaskCData, typename Rng, typename MHWalkerType, typename OurStatsCollectors,
+template<typename MHRandomWalkTaskCData, typename Rng, typename MHWalkerType,
          typename LoggerType, typename IterCountIntType>
-struct mhrandomwalk_type_helper<MHRandomWalkTaskCData, Rng, MHWalkerType, OurStatsCollectors,
-                                LoggerType, IterCountIntType,
-                                typename std::enable_if<!std::is_same<decltype(&MHRandomWalkTaskCData::createMHWalkerParamsAdjuster), Dummy>::value, void>::type
-                                > {
+struct
+mhrandomwalk_type_helper<MHRandomWalkTaskCData, Rng, MHWalkerType, LoggerType, IterCountIntType,
+                         typename std::enable_if<!std::is_same<decltype(&MHRandomWalkTaskCData::createMHWalkerParamsAdjuster),
+                                                               Dummy>::value, void>::type
+                         > {
   typedef decltype(((MHRandomWalkTaskCData*)0)->createMHWalkerParamsAdjuster()) MHWalkerParamsAdjusterType;
-  typedef MHRandomWalk<Rng,MHWalkerType,OurStatsCollectors,LoggerType,IterCountIntType,MHWalkerParamsAdjusterType>
-    MHRandomWalkType;
+  template<typename StatsCollector>
+  struct MHRandomWalkType { 
+    typedef MHRandomWalk<Rng,MHWalkerType,StatsCollector,MHWalkerParamsAdjusterType,LoggerType,IterCountIntType> type;
+  };
   static constexpr bool has_adjuster = true;
-
-  template<typename MHWalkerType>
   static inline MHWalkerParamsAdjusterType && createMHWalkerParams(MHRandomWalkTaskCData * pcdata, MHWalkerType & mhwalker)
   {
     return pcdata->createMHWalkerParams(mhwalker);
   }
 
 };
+} // namespace tomo_internal
 
 
-}
 
 
 
@@ -282,7 +285,7 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTask
   typedef typename MHRandomWalkTaskCData::MHWalkerParams MHWalkerParams;
 
   //! Type to stores the parameters of the random walk 
-  typedef MHRWParams<IterCountIntType, MHWalkerParams> MHRWParamsType;
+  typedef MHRWParams<MHWalkerParams, IterCountIntType> MHRWParamsType;
 
   /** \brief Result type of a single task run.
    *
@@ -291,58 +294,10 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTask
   typedef MHRandomWalkTaskResult<typename MHRandomWalkTaskCData::MHRWStatsCollectorResultType,
                                  IterCountIntType, MHWalkerParams> ResultType;
 
-  /** \brief Status Report for a \ref MHRandomWalkTask
-   *
-   * This struct can store information about the current status of a \ref
-   * MHRandomWalkTask while it is running.
-   *
-   * This is for use with, for example, \ref
-   * MultiProc::OMP::TaskDispatcher::requestStatusReport().
-   */
-  struct StatusReport : public MultiProc::TaskStatusReport
-  {
-    /** \brief Constructor which initializes all fields */
-    StatusReport(double fdone = 0.0, const std::string & msg = std::string(),
-                 IterCountIntType kstep_ = 0, MHRWParamsType mhrw_params_ = MHRWParamsType(),
-                 double acceptance_ratio_ = 0.0)
-      : MultiProc::TaskStatusReport(fdone, msg),
-        kstep(kstep_),
-        mhrw_params(mhrw_params_),
-        acceptance_ratio(acceptance_ratio_),
-        n_total_iters(mhrw_params.n_sweep*(mhrw_params.n_therm + mhrw_params.n_run))
-    {
-    }
-
-    /** \brief the current iteration number */
-    IterCountIntType kstep;
-
-    /** \brief the parameters of the random walk
-     *
-     * Stores the number of iterations that form a sweep (\a n_sweep), the total number
-     * of thermalization sweeps (\a n_therm), the total number of live run sweeps (\a
-     * n_run) as well as the step size of the random walk (\a mhwalker_params).
-     *
-     * See also \ref MHRandomWalk
-     */
-    MHRWParamsType mhrw_params;
-
-    /** \brief the current acceptance ratio of the random walk (see
-     *    \ref Tomographer::MHRandomWalk::acceptanceRatio()
-     * ) */
-    double acceptance_ratio;
-
-    /** \brief the total number of iterations required for this random walk
-     *
-     * This is calculated as \f$
-     *  \textit{nTotalIters} = \textit{nSweep} \times \left( \textit{nTherm} + \textit{nRun} \right)
-     * \f$.
-     */
-    IterCountIntType n_total_iters;
-  };
-  /** \brief Typedef for \ref StatusReport. This is needed by, e.g. \ref
+  /** \brief Typedef for \ref MHRWStatusReport. This is needed by, e.g. \ref
    *         MultiProc::OMP::TaskDispatcher.
    */
-  typedef StatusReport StatusReportType;
+  typedef MHRWStatusReport<MHRWParamsType> StatusReportType;
 
 private:
   /** \brief how to seed the random number generator for this particular task (input) */
@@ -403,14 +358,6 @@ public:
 
     logger.longdebug("Tomographer::MHRWTasks::run()", "stats collector constructed.");
 
-    // our own "stats collector" which checks if we need to send a status report back
-    typedef StatusReportCheck<TaskManagerIface, MHRWStatsCollectorType> OurStatusReportCheck;
-    OurStatusReportCheck statreportcheck(this, &stats, tmgriface);
-      
-    typedef MultipleMHRWStatsCollectors<MHRWStatsCollectorType, OurStatusReportCheck>
-      OurStatsCollectors;
-    OurStatsCollectors ourstatscollectors(stats, statreportcheck);
-
     logger.longdebug("Tomographer::MHRWTasks::run()", "about to create MH walker object.");
 
     auto mhwalker = pcdata->createMHWalker(rng, logger);
@@ -418,15 +365,31 @@ public:
 
     logger.longdebug("Tomographer::MHRWTasks::run()", "MHWalker object created.");
 
-    typedef mhrandomwalktype_helper<MHRandomWalkTaskCData, Rng, MHWalkerType, OurStatsCollectors, LoggerType, IterCountIntType>
+    typedef tomo_internal::mhrandomwalk_type_helper<MHRandomWalkTaskCData, Rng, MHWalkerType,
+                                                   LoggerType, IterCountIntType>
       mhrandomwalktypehelper;
-    typedef mhrandomwalktypehelper::MHWalkerParamsAdjusterType MHWalkerParamsAdjusterType;
+    typedef typename mhrandomwalktypehelper::MHWalkerParamsAdjusterType MHWalkerParamsAdjusterType;
 
     MHWalkerParamsAdjusterType mhwalkerparamsadjuster = mhrandomwalktypehelper::createMHWalkerParams(pcdata, mhwalker);
 
     logger.longdebug("Tomographer::MHRWTasks::run()", "MHWalkerParamsAdjuster created [if necessary]");
 
-    typedef mhrandomwalktypehelper::MHRandomWalkType MHRandomWalkType;
+    // our own "stats collector" which checks if we need to send a status report back
+    typedef MHRWPredStatusReportStatsCollector<MHRWParamsType> OurStatusReportCheck;
+    OurStatusReportCheck statreportcheck(
+        // predicate
+        [tmgriface]() { return tmgriface->statusReportRequested(); },
+        // send-status-function
+        [tmgriface](StatusReportType report) { tmgriface->submitStatusReport(report); }
+        );
+      
+    typedef MultipleMHRWStatsCollectors<MHRWStatsCollectorType, OurStatusReportCheck>
+      OurStatsCollectors;
+    OurStatsCollectors ourstatscollectors(stats, statreportcheck);
+
+    logger.longdebug("Tomographer::MHRWTasks::run()", "About to creat MHRandomWalk instance");
+
+    typedef typename mhrandomwalktypehelper::template MHRandomWalkType<OurStatsCollectors>::type MHRandomWalkType;
 
     MHRandomWalkType rwalk(
         // MH random walk parameters
@@ -457,84 +420,6 @@ public:
     return *result;
   }
 
-private:
-  /** \internal
-   * \brief helper to provide status report
-   *
-   * This is in fact a StatsCollector.
-   */
-  template<typename TaskManagerIface, typename MHRWStatsCollectorType>
-  struct StatusReportCheck
-  {
-    StatusReportCheck(MHRandomWalkTask * mhrwtask_, MHRWStatsCollectorType * stats_, TaskManagerIface *tmgriface_)
-      : mhrwtask(mhrwtask_), stats(stats_), tmgriface(tmgriface_)
-    { }
-
-    MHRandomWalkTask *mhrwtask;
-    MHRWStatsCollectorType *stats;
-    TaskManagerIface *tmgriface;
-
-    inline void init() { }
-    inline void thermalizingDone() { }
-    inline void done() { }
-
-    template<typename PointType, typename FnValueType, typename MHRandomWalk>
-    inline void rawMove(
-        IterCountIntType k, bool is_thermalizing, bool, bool, double, const PointType &, FnValueType,
-        const PointType &, FnValueType, MHRandomWalk & rw
-        )
-    {
-      // see if we should provide a status report
-      //        fprintf(stderr, "StatusReportCheck::rawMove(): testing for status report requested!\n");
-      // only check once per sweep, to speed up things
-      if ((k % rw.nSweep() == 0) && tmgriface->statusReportRequested()) {
-        // prepare & provide status report
-        IterCountIntType totiters = rw.nSweep()*(rw.nTherm()+rw.nRun());
-        // k restarts at zero after thermalization, so account for that:
-        IterCountIntType kreal = is_thermalizing ? k : k + rw.nSweep()*rw.nTherm();
-        double fdone = (double)kreal/totiters;
-        double accept_ratio = std::numeric_limits<double>::quiet_NaN();
-        bool warn_accept_ratio = false;
-        if (rw.hasAcceptanceRatio()) {
-          accept_ratio = rw.acceptanceRatio();
-          warn_accept_ratio = (accept_ratio > MHRWAcceptanceRatioRecommendedMax ||
-                               accept_ratio < MHRWAcceptanceRatioRecommendedMin);
-        }
-        std::string msg = Tools::fmts(
-            "%s %lu/(%lu=%lu*(%lu+%lu)) : %5.2f%% done  [%saccept ratio=%.2f%s]",
-            ( ! is_thermalizing
-              ? "iteration"
-              : "[therm.] "),
-            (unsigned long)kreal, (unsigned long)totiters, (unsigned long)rw.nSweep(),
-            (unsigned long)rw.nTherm(), (unsigned long)rw.nRun(),
-            fdone*100.0,
-            warn_accept_ratio ? "!!** " : "",
-            accept_ratio,
-            warn_accept_ratio ? " **!!" : ""
-            );
-        typedef MHRWStatsCollectorStatus<MHRWStatsCollectorType> MHRWStatsCollectorStatusType;
-        if (MHRWStatsCollectorStatusType::CanProvideStatus) {
-          std::string nlindent = "\n    ";
-          msg += nlindent;
-          std::string s = MHRWStatsCollectorStatusType::getStatus(stats);
-          for (std::size_t j = 0; j < s.size(); ++j) {
-            if (s[j] == '\n') {
-              msg += nlindent;
-            } else {
-              msg += s[j];
-            }
-          }
-        }
-        tmgriface->submitStatusReport(StatusReport(fdone, msg, kreal, rw.mhrwParams(), accept_ratio));
-      }
-      //        fprintf(stderr, "StatusReportCheck::rawMove(): done\n");
-    }
-
-    template<typename PointType, typename FnValueType, typename MHRandomWalk>
-    inline void processSample(IterCountIntType, IterCountIntType, const PointType &, FnValueType, MHRandomWalk &)
-    {
-    }
-  };
 };
 
 

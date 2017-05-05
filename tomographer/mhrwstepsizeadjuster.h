@@ -29,7 +29,10 @@
 #define _TOMOGRAPHER_MHRWSTEPSIZEADJUSTER_H
 
 #include <cstddef>
+#include <cmath>
+#include <cstdlib>
 
+#include <algorithm> // std::max
 #include <limits>
 #include <random>
 #include <iomanip>
@@ -39,7 +42,7 @@
 #include <tomographer/tools/cxxutil.h>
 #include <tomographer/tools/needownoperatornew.h>
 #include <tomographer/mhrw.h>
-#include <tomographer/mhrwstatscollector.h>
+#include <tomographer/mhrwstatscollectors.h>
 
 
 /** \file mhrwstepsizeadjuster.h
@@ -51,145 +54,289 @@
 namespace Tomographer {
 
 
-
-template<int EmpiricalDataBufferSize = 4, typedef StepRealType = double, typedef CountIntType = int>
-class MHRWStepSizeAdjuster
+/** \brief A \ref pageInterfaceMHWalkerParamsAdjuster dynamically adjusting the step size to keep a good acceptance ratio
+ *
+ */
+template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
+         int EmpiricalDataBufferSize = 4,
+         typename BaseLoggerType = Logger::VacuumLogger,
+         typename StepRealType = double,
+         typename CountIntType = int>
+TOMOGRAPHER_EXPORT class MHRWStepSizeAdjuster
+  : public Tools::EigenAlignedOperatorNewProvider
 {
+public:
+  enum { AdjustmentStrategy = MHWalkerParamsAdjustEveryIterationWhileThermalizing };
+  
+  typedef MHRWMovingAverageAcceptanceRatioStatsCollectorType_
+    MHRWMovingAverageAcceptanceRatioStatsCollectorType;
+
 private:
-
-  const MHRWMovingAverageAcceptanceRatioStatsCollector & accept_ratio_stats_collector;
-
-  Eigen::Array<double,EmpiricalDataBufferSize,2> stepsizes_acceptratios_empirical_data;
+  const MHRWMovingAverageAcceptanceRatioStatsCollectorType & accept_ratio_stats_collector;
+  
+  typedef Eigen::Array<double,EmpiricalDataBufferSize,2> EmpiricalDataArrayType;
+  EmpiricalDataArrayType stepsizes_acceptratios_empirical_data;
   int n_empirical_data;
-
+  
   double desired_accept_ratio_min;
   double desired_accept_ratio_max;
-
+  
   CountIntType last_corrected_iter_k;
   StepRealType last_set_step_size;
   CountIntType orig_n_therm;
   StepRealType orig_step_times_sweep;
-
+  
   /** \brief Ensure that at least this fraction of the original \a n_therm sweeps are
    *         performed at constant (converged) parameters before completing the
    *         thermalization runs
    */
   double ensure_n_therm_fixed_params_fraction;
+  
+  Logger::LocalLogger<BaseLoggerType> llogger;
 
 public:
-  enum { AdjustmentStrategy = MHWalkerParamsAdjustEveryIterationWhileThermalizing };
-
-  MHRWStepSizeAdjuster(
-      const MHRWMovingAverageAcceptanceRatioStatsCollector & accept_ratio_stats_collector_,
-      double desired_accept_ratio_min_ = (0.75*MHRWAcceptanceRatioRecommendedMin + 0.25*MHRWAcceptanceRatioRecommendedMax),
-      double desired_accept_ratio_max_ = (0.5*MHRWAcceptanceRatioRecommendedMin + 0.5*MHRWAcceptanceRatioRecommendedMax),
-      double ensure_n_therm_fixed_params_fraction_ = 0.3
-      )
-    : accept_ratio_stats_collector(accept_ratio_stats_collector_),
-      stepsizes_acceptratios_empirical_data(Eigen::Array<double,EmpiricalDataBufferSize,2>::Zeros()),
-      n_empirical_data(0),
-      desired_accept_ratio_min(desired_accept_ratio_min_),
-      desired_accept_ratio_max(desired_accept_ratio_max_),
-      last_corrected_iter_k(0),
-      last_set_step_size(0),
-      orig_n_therm(0),
-      orig_step_times_sweep(0),
-  { }
-
-
+  MHRWStepSizeAdjuster(const MHRWMovingAverageAcceptanceRatioStatsCollectorType & accept_ratio_stats_collector_,
+                       BaseLoggerType & baselogger_,
+                       double desired_accept_ratio_min_ = (0.75*MHRWAcceptanceRatioRecommendedMin +
+                                                           0.25*MHRWAcceptanceRatioRecommendedMax),
+                       double desired_accept_ratio_max_ = (0.5*MHRWAcceptanceRatioRecommendedMin +
+                                                           0.5*MHRWAcceptanceRatioRecommendedMax),
+                       double ensure_n_therm_fixed_params_fraction_ = 0.5)
+  : accept_ratio_stats_collector(accept_ratio_stats_collector_),
+    stepsizes_acceptratios_empirical_data(Eigen::Array<double,EmpiricalDataBufferSize,2>::Zero()),
+    n_empirical_data(0),
+    desired_accept_ratio_min(desired_accept_ratio_min_),
+    desired_accept_ratio_max(desired_accept_ratio_max_),
+    last_corrected_iter_k(0),
+    last_set_step_size(0),
+    orig_n_therm(0),
+    orig_step_times_sweep(0),
+    ensure_n_therm_fixed_params_fraction(ensure_n_therm_fixed_params_fraction_),
+    llogger("Tomographer::MHRWStepSizeAdjuster", baselogger_)
+  {
+  }
+      
+  
   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
   inline void initParams(MHRWParamsType & params, const MHWalker & /*mhwalker*/, const MHRandomWalkType & /*mhrw*/)
   {
     orig_n_therm = params.n_therm;
     orig_step_times_sweep = params.n_sweep * params.mhwalker_params.step_size;
+
+    // ensure enough thermalization steps that we'll at least have a change to adjust the parameters once
+    auto min_n_therm = 2 * std::max((CountIntType)params.n_sweep,
+                                    (CountIntType)accept_ratio_stats_collector.bufferSize());
+    if (params.n_therm < min_n_therm) {
+      params.n_therm = min_n_therm;
+    }
   }
 
   template<bool IsThermalizing, bool IsAfterSample,
-           typename MHRWParamsType, typename MHWalker, typename CountIntType, typename MHRandomWalkType,
-           TOMOGRAPHER_ENALBED_IF_TMPL(IsThermalizing)> // Only while thermalizing
+           typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType,
+           TOMOGRAPHER_ENABLED_IF_TMPL(IsThermalizing)> // Only while thermalizing
   inline void adjustParams(MHRWParamsType & params, const MHWalker & /*mhwalker*/,
                            CountIntType iter_k, const MHRandomWalkType & /*mhrw*/)
   {
+    auto logger = llogger.subLogger(TOMO_ORIGIN) ;
+
+    logger.longdebug([&](std::ostream & stream) {
+        stream << "cur params = " << params << " and accept_ratio = "
+               << accept_ratio_stats_collector.movingAverageAcceptanceRatio();
+      });
+
     // only adjust every max(sweep,moving-avg-accept-ratio-buffer-size)
     if ( ! accept_ratio_stats_collector.hasMovingAverageAcceptanceRatio() ||
-         (iter_k % std::max(params.n_sweep, accept_ratio_stats_collector.bufferSize())) != 0 ) {
+         (iter_k % std::max((CountIntType)params.n_sweep,
+                            (CountIntType)accept_ratio_stats_collector.bufferSize())) != 0 ) {
       return;
     }
 
+    logger.longdebug([&](std::ostream & stream) {
+        stream << "will consider correction.  n_empirical_data = " << n_empirical_data <<
+          ", last_corrected_iter_k = " << last_corrected_iter_k;
+      });
+
     const double accept_ratio = accept_ratio_stats_collector.movingAverageAcceptanceRatio();
-      
+
     if (accept_ratio >= desired_accept_ratio_min && accept_ratio <= desired_accept_ratio_max) {
       return;
     }
 
+    logger.longdebug([&](std::ostream & stream) {
+        stream << "will adjust.";
+      });
+
     last_corrected_iter_k = iter_k;
 
-    // analyze acceptance ratio stats and correct step size
-    stepsizes_acceptratios_empirical_data[n_empirical_data % stepsizes_acceptratios_empirical_data.size()] = accept_ratio;
-    ++n_empirical_data;
+    const auto cur_step_size = params.mhwalker_params.step_size;
 
-    if (n_empirical_data < stepsizes_acceptratios_empirical_data.size()) {
+    // analyze acceptance ratio stats and correct step size
+    Eigen::Index ind;
+    // // stored value which is closest to the current point
+    // auto delta = (stepsizes_acceptratios_empirical_data.col(0)
+    //               - Eigen::Array<StepRealType,EmpiricalDataBufferSize,1>::Constant(cur_step_size)).abs().minCoeff(&ind);
+    // if (delta < 0.05*cur_step_size) {
+    //   // we already have a data point for a step_size which is very close to this one, so
+    //   // don't store another point; rather, update this one.
+    //   //
+    //   // ind is already set.
+    //   logger.longdebug([&](std::ostream & stream) {
+    //       stream << "found existing point which is close to the current one, delta = " << delta
+    //              << ". Storing at index " << ind;
+    //     });
+    // } else {
+      // add a new point, overwriting the last data point taken
+      ind = n_empirical_data % stepsizes_acceptratios_empirical_data.rows();
+      ++n_empirical_data;
+//    }
+    // store the point    
+    stepsizes_acceptratios_empirical_data(ind, 0) = cur_step_size;
+    stepsizes_acceptratios_empirical_data(ind, 1) = accept_ratio;
+
+    logger.longdebug([&](std::ostream & stream) {
+        stream << "stored current empirical data point; ind = "
+               << ind
+               //<< ", delta = " << delta
+               << ", cur data = \n"
+               << stepsizes_acceptratios_empirical_data;
+      });
+
+
+//    if (n_empirical_data < stepsizes_acceptratios_empirical_data.rows()) {
 
       // first gather data by moving using guesses
       
       // new step size -- guess a slight increase or decrease depending on too high or too low
 
       // accept ratio too high -- increase step size
+      StepRealType new_step_size =  params.mhwalker_params.step_size;
       if (accept_ratio >= 2*desired_accept_ratio_max) {
-        params.mhwalker_params.step_size *= 1.5;
+        new_step_size *= 1.5;
+      } else if (accept_ratio >= 1.3*desired_accept_ratio_max) {
+        new_step_size *= 1.2;
       } else if (accept_ratio >= desired_accept_ratio_max) {
-        params.mhwalker_params.step_size *= 1.2;
+        new_step_size *= 1.05;
       } else if (accept_ratio <= 0.5*desired_accept_ratio_min) {
-        params.mhwalker_params.step_size *= 0.5;
+        new_step_size *= 0.5;
+      } else if (accept_ratio <= 0.75*desired_accept_ratio_min) {
+        new_step_size *= 0.8;
       } else {// if (accept_ratio <= desired_accept_ratio_min
-        params.mhwalker_params.step_size *= 0.8;
+        new_step_size *= 0.95;
       }
 
-      last_set_step_size = params.mhwalker_params.step_size;
+      logger.longdebug([&](std::ostream & stream) {
+          stream << "blind guess corrected step_size to " << new_step_size;
+        });
 
-    } else {
+      _adjust_step_size(iter_k, params, new_step_size);
 
-      // rough linear fit through our data points.
-      // See http://mathworld.wolfram.com/LeastSquaresFitting.html
+    // } else {
 
-      const auto & D = stepsizes_acceptratios_empirical_data.template cast<StepRealType>();
+    //   // rough linear fit through our data points.
+    //   // See http://mathworld.wolfram.com/LeastSquaresFitting.html
 
-      StepRealType sx = D.col(0).sum();
-      StepRealType sy = D.col(1).sum();
-      StepRealType sxy = D.col(0).transpose()*D.col(1);
-      StepRealType sx2 = D.col(0).norm();
+    //   const auto D = stepsizes_acceptratios_empirical_data.template cast<StepRealType>();
 
-      // fit is y = a + b*x, with y = acceptance ratio and x = step size
+    //   logger.longdebug([&](std::ostream & stream) {
+    //       stream << "about to perform fit, D = \n" << D;
+    //     });
 
-      StepRealType denom = (n*sx2 - sx*sx);
-      StepRealType a = (sy*sx2 - sx*sxy) / denom;
-      StepRealType b = (n*sxy - sx*sy) / denom;
+    //   StepRealType sx = D.col(0).sum();
+    //   StepRealType sy = D.col(1).sum();
+    //   StepRealType sxy = (D.col(0) * D.col(1)).sum(); // "*" does element-wise product on arrays
+    //   StepRealType sx2 = D.col(0).matrix().squaredNorm();
 
-      // find x0 such that y0==target-accept-ratio
-      StepRealType target_accept_ratio = (desired_accept_ratio_max+desired_accept_ratio_min)/2;
-      StepRealType new_step_size = (target_accept_ratio - a) / b;
+    //   // fit is y = a + b*x, with y = acceptance ratio and x = step size
 
-      // set this as new step size
-      params.mhwalker_params.step_size = new_step_size;
-      // and adapt sweep size
-      params.n_sweep = orig_step_times_sweep / new_step_size;
+    //   constexpr int n = EmpiricalDataBufferSize;
+    //   StepRealType denom = (n*sx2 - sx*sx);
+    //   StepRealType b = (n*sxy - sx*sy) / denom;
+    //   StepRealType a = (sy*sx2 - sx*sxy) / denom;
 
-      last_set_step_size = params.mhwalker_params.step_size;
-    }
+    //   if (std::abs(b)*0.1*cur_step_size < 0.01) {
+    //     // b is too small, finding the x-intercept will be unreliable.  Instead, resort to
+    //     // "dumb" guess
+    //   }
+
+
+    //   // find x0 such that y0==target-accept-ratio
+    //   StepRealType target_accept_ratio = (desired_accept_ratio_max+desired_accept_ratio_min)/2;
+    //   StepRealType new_step_size = (target_accept_ratio - a) / b;
+
+    //   // set this as new step size
+    //   _adjust_step_size(iter_k, params, new_step_size);
+
+    //   logger.longdebug([&](std::ostream & stream) {
+    //       stream << "after fit, corrected step_size to " << params.mhwalker_params.step_size;
+    //     });
+    // }
 
   }
+
+private:
+
+  template<typename MHRWParamsType>
+  void _adjust_step_size(CountIntType iter_k, MHRWParamsType & params, StepRealType new_step_size)
+  {
+    auto logger = llogger.subLogger(TOMO_ORIGIN);
+
+    // only allow the new step size to be within a certain range of the previous one
+    const auto cur_step_size = params.mhwalker_params.step_size;
+    if (new_step_size < 0.7*cur_step_size) { new_step_size = 0.7*cur_step_size; }
+    if (new_step_size > 1.5*cur_step_size) { new_step_size = 1.5*cur_step_size; }
+
+    params.mhwalker_params.step_size = new_step_size;
+
+    // store last set step size
+    last_set_step_size = new_step_size;
+
+    // adapt sweep size
+    params.n_sweep = orig_step_times_sweep / new_step_size;
+
+    // update n_therm to make sure we have enough thermalization sweeps
+    _ensure_enough_thermalization_sweeps(iter_k, params);
+
+    logger.longdebug([&](std::ostream & stream) {
+        stream << "New params = " << params;
+      });
+  }
+
+  template<typename MHRWParamsType>
+  void _ensure_enough_thermalization_sweeps(CountIntType iter_k, MHRWParamsType & params)
+  {
+    auto logger = llogger.subLogger(TOMO_ORIGIN);
+
+    const auto n_therm_min = (iter_k/params.n_sweep) + 1 + (ensure_n_therm_fixed_params_fraction * orig_n_therm);
+    if (params.n_therm < n_therm_min) {
+      logger.longdebug([&](std::ostream & stream) {
+          stream << "There aren't enough thermalization sweeps. I'm setting n_therm = " << n_therm_min;
+        });
+      params.n_therm = n_therm_min;
+    }
+  }
+
+
+public:
 
   inline StepRealType getLastSetStepSize() const { return last_set_step_size; }
-  inline double getLastAcceptRatio() const
-  {
-    return stepsizes_acceptratios_empirical_data[ (n_empirical_data-1) % stepsizes_acceptratios_empirical_data.size()];
-  }
+  // inline double getLastAcceptRatio() const
+  // {
+  //   // if (n_empirical_data < 1) {
+  //   //   return std::numeric_limits<double>::quiet_NaN();
+  //   // }
+  //   // return stepsizes_acceptratios_empirical_data((n_empirical_data-1) % stepsizes_acceptratios_empirical_data.rows(), 1);
+  // }
 
   template<bool IsThermalizing, bool IsAfterSample,
            typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType,
-           TOMOGRAPHER_ENALBED_IF_TMPL(!IsThermalizing)> // After thermalizing, keep parameters fixed
-  inline void adjustParams(MHRWParamsType & params, const MHWalker & /*mhwalker*/,
+           TOMOGRAPHER_ENABLED_IF_TMPL(!IsThermalizing)> // After thermalizing, keep parameters fixed
+  inline void adjustParams(MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
                            int /*iter_k*/, const MHRandomWalkType & /*mhrw*/) const
+  {
+  }
+
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+  inline void thermalizingDone(MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/, const MHRandomWalkType & /*mhrw*/) const
   {
   }
 };
@@ -198,15 +345,17 @@ public:
 
 namespace Tools {
 
-template<int EmpiricalDataBufferSize, typedef CountIntType>
-struct StatusProvider<MHRWStepSizeAdjuster<EmpiricalDataBufferSize, CountIntType> >
+template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType,
+         int EmpiricalDataBufferSize, typename CountIntType>
+struct StatusProvider<MHRWStepSizeAdjuster<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
+                                           EmpiricalDataBufferSize, CountIntType> >
 {
-  typedef MHRWStepSizeAdjuster<EmpiricalDataBufferSize, CountIntType> StatusableObject;
+  typedef MHRWStepSizeAdjuster<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
+                               EmpiricalDataBufferSize, CountIntType> StatusableObject;
 
   static constexpr bool CanProvideStatusLine = true;
   static inline std::string getStatusLine(const StatusableObject * obj) {
-    return Tomographer::Tools::fmts("accept ratio = %.3g  ->  step size = %.3g",
-                                    obj->getLastAcceptRatio(), (double)obj->getLastSetStepSize());
+    return Tomographer::Tools::fmts("set step size = %.3g", (double)obj->getLastSetStepSize());
   }
 };
 

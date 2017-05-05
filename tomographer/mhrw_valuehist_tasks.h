@@ -984,7 +984,7 @@ TOMOGRAPHER_EXPORT struct CDataBase
   typedef typename tomo_internal::histogram_types<CDataBase,UseBinningAnalysis>::HistogramParams HistogramParams;
 
   //! Type for the parameters of the random walk.
-  typedef MHRWParams<IterCountIntType, MHWalkerParams> MHRWParamsType;
+  typedef MHRWParams<MHWalkerParams, IterCountIntType> MHRWParamsType;
  
 
   //! Constructor (only for without binning analysis)

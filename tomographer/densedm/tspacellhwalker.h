@@ -91,7 +91,7 @@ public:
   /** \brief The real scalar type for the step size &mdash; this scalar type is the only
    *         parameter we need (see \ref pageInterfaceMHWalker)
    */
-  typedef RealScalar WalkerParams;
+  typedef MHWalkerParamsStepSize<RealScalar> WalkerParams;
 
   //! Provided for MHRandomWalk. A point in our random walk = a density matrix
   typedef MatrixType PointType;
@@ -236,13 +236,13 @@ public:
 
 
   //! Decides of a new point to jump to for the random walk
-  inline MatrixType jumpFn(const MatrixType& cur_T, RealScalar step_size)
+  inline MatrixType jumpFn(const MatrixType& cur_T, WalkerParams params)
   {
     MatrixType DeltaT(Tools::denseRandom<MatrixType>(
                           _rng, _normal_distr_rnd, _llh.dmt.dim(), _llh.dmt.dim()
                           ));
 
-    MatrixType new_T(cur_T + step_size * DeltaT);
+    MatrixType new_T(cur_T + params.step_size * DeltaT);
 
     // renormalize to "project" onto the large T-space sphere
     new_T /= new_T.norm(); //Matrix<>.norm() is Frobenius norm.

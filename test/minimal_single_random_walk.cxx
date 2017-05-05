@@ -33,6 +33,7 @@
 #include <tomographer/densedm/tspacellhwalker.h>
 #include <tomographer/densedm/tspacefigofmerit.h>
 #include <tomographer/mhrw.h>
+#include <tomographer/mhrwstepsizeadjuster.h>
 #include <tomographer/mhrwtasks.h>
 #include <tomographer/mhrw_valuehist_tasks.h>
 
@@ -68,7 +69,7 @@ typedef Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes> ValueCa
 // Tomographer::Logger::ERROR.
 //
 typedef Tomographer::Logger::FileLogger BaseLoggerType;
-BaseLoggerType rootlogger(stdout, Tomographer::Logger::DEBUG);
+BaseLoggerType rootlogger(stdout, Tomographer::Logger::LONGDEBUG);
 
 
 int main()
@@ -178,36 +179,36 @@ int main()
   // compute at run-time, then we should use a MultiplexorValueCalculator.]
   ValueCalculator valcalc(dmt, phiplus);
 
+  typedef Tomographer::UniformBinsHistogramWithErrorBars<double> HistogramType;
+
   // parameters of the histogram of the figure of merit: cover the range [0.75, 1.0] by
   // dividing it into 50 bins
-  const OurCData::HistogramParams hist_params(0.75, 1.0, 50);
+  typedef HistogramType::Params HistogramParams;
+  const HistogramParams hist_params(0.75, 1.0, 50);
 
-
-  //
-  // Data is ready, prepare & launch the random walks.  Use C++ Threads parallelization.
-  //
-
-  typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>  OurMHRandomWalkTask;
-
-  typedef typename OurCData::ResultsCollectorType<BaseLoggerType>::Type OurResultsCollector;
 
   // parameters of the random walk
-  const OurCData::MHRWParamsType mhrw_params(
-      MHRWParamsStepSize(0.2), // step size -- will be automatically adjusted during thermalization sweeps
-      50, // sweep size -- will be automaticall adjusted during thermalization sweeps
+  typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<>,int> MHRWParamsType;
+  const MHRWParamsType mhrw_params(
+      0.5, // step size -- will be automatically adjusted during thermalization sweeps
+      2, // sweep size -- will be automaticall adjusted during thermalization sweeps
       500, // # of thermalization sweeps
       32768 // # of live sweeps in which samples are collected
       );
 
   // seed for random number generator -- just use the current time
   int base_seed = (int)std::chrono::system_clock::now().time_since_epoch().count();
-  std::mt19937 rng(base_seed);
+  typedef std::mt19937 Rng;
+  Rng rng(base_seed);
 
-  Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType> mhwalker(
+  typedef BaseLoggerType LoggerType;
+
+  typedef Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType> MHWalkerType;
+  MHWalkerType mhwalker(
       llh.dmt.initMatrixType(),
       llh,
       rng,
-      logger
+      logger.parentLogger()
       );
 
   // 
@@ -221,32 +222,54 @@ int main()
     HistogramStatsCollector;
 
   HistogramStatsCollector histstatscollector(
-	histogram_params,
+	hist_params,
 	valcalc,
         binning_num_levels,
-	logger
+	logger.parentLogger()
 	);
 
   Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<> avgacceptstatscollector;
 
-  Tomographer::MultipleMHRWStatsCollector<HistogramStatsCollector, Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<> >
+
+  typedef Tomographer::MHRWPeriodicStatusReportStatsCollector<MHRWParamsType> OurStatusReportCheck;
+  OurStatusReportCheck statreportcheck(
+      // frequency interval -- every this many milliseconds
+      std::chrono::milliseconds(100),
+      // send-status-function
+      [](Tomographer::MHRWStatusReport<MHRWParamsType> report) {
+        // simply print out the report
+        std::cerr << report.msg << "\n";
+      }
+      );
+
+  typedef 
+    Tomographer::MultipleMHRWStatsCollectors<HistogramStatsCollector,
+                                             Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<>,
+                                             OurStatusReportCheck>
     StatsCollectors;
 
-  StatsCollectors full_stats_coll(histstatscollector, avgacceptstatscollector);
+  StatsCollectors full_stats_coll(histstatscollector, avgacceptstatscollector, statreportcheck);
 
-  //  MHRWStepSizeAdjuster<4> .....
+  typedef Tomographer::MHRWStepSizeAdjuster<Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<>,
+                                            4, LoggerType>
+    MHWalkerAdjusterType;
+  MHWalkerAdjusterType mhwalker_params_adjuster(avgacceptstatscollector, logger.parentLogger());
+
+  typedef Tomographer::MHRandomWalk<Rng,MHWalkerType,StatsCollectors,MHWalkerAdjusterType,LoggerType,int> MHRandomWalkType;
 
   MHRandomWalkType rwalk(
       // MH random walk parameters
-      pcdata->mhrw_params,
+      mhrw_params,
       // the MHWalker
       mhwalker,
       // our stats collectors
-      ourstatscollectors,
+      full_stats_coll,
       // a random number generator
       rng,
       // and a logger
-      logger,
+      logger.parentLogger(),
+      // dynamic params adjuster
+      mhwalker_params_adjuster
       );
 
 
@@ -263,14 +286,7 @@ int main()
   // delta-time, formatted in hours, minutes, seconds and fraction of seconds
   std::string elapsed_s = Tomographer::Tools::fmtDuration(time_end - time_start);
 
-  //
-  // The 'results' object contains all the interesting results.  It is a
-  // ResultsCollectorWithBinningAnalysis object located in the namespace
-  // Tomographer::MHRWTasks::ValueHistogramTasks (check out the API documentation).
-  //
-  // The most interesting methods are probably finalHistogram() and
-  // collectedRunTaskResults().
-  //
+  // the result collected directly, fresh from our stats collector
   auto result = histstatscollector.getResult();
   auto histogram = result.hist;
 

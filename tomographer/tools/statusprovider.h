@@ -69,23 +69,23 @@ TOMOGRAPHER_EXPORT struct StatusProvider
 
 
 namespace tomo_internal {
-template<StObj, typename canprovideline = void>
+template<typename StObj, typename canprovideline = void>
 struct status_can_provide_line {
-  constexpr bool val = false;
+  static constexpr bool val = false;
 };
-template<StObj>
+template<typename StObj>
 struct status_can_provide_line<StObj,
                                typename std::enable_if<StatusProvider<StObj>::CanProvideStatusLine,void>::type> {
-  constexpr bool val = true;
+  static constexpr bool val = true;
 };
-template<StObj, typename canprovidefullmessage = void>
+template<typename StObj, typename canprovidefullmessage = void>
 struct status_can_provide_fullmessage {
-  constexpr bool val = false;
+  static constexpr bool val = false;
 };
-template<StObj>
+template<typename StObj>
 struct status_can_provide_fullmessage<StObj,
                                       typename std::enable_if<StatusProvider<StObj>::CanProvideStatusFullMessage,void>::type> {
-  constexpr bool val = true;
+  static constexpr bool val = true;
 };
 }
 

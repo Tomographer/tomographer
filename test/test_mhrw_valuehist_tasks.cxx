@@ -492,7 +492,7 @@ BOOST_AUTO_TEST_CASE(interfaces_simple)
 
   typedef MyCDataX<BaseCData_simple> MyCData;
 
-  MyCData cdata(Tomographer::MHRWParams<int,double>(step_size, nsweep, ntherm, nrun));
+  MyCData cdata(Tomographer::MHRWParams<double,int>(step_size, nsweep, ntherm, nrun));
 
   typedef typename MyCData::ResultsCollectorType<Tomographer::Logger::BoostTestLogger>::Type OurResultsCollector;
 
@@ -535,7 +535,7 @@ BOOST_AUTO_TEST_CASE(interfaces_binning)
 
   typedef MyCDataX<BaseCData_binning> MyCData;
 
-  MyCData cdata(Tomographer::MHRWParams<int,double>(step_size, nsweep, ntherm, nrun));
+  MyCData cdata(Tomographer::MHRWParams<double,int>(step_size, nsweep, ntherm, nrun));
 
   typedef typename MyCData::ResultsCollectorType<Tomographer::Logger::BoostTestLogger>::Type OurResultsCollector;
 

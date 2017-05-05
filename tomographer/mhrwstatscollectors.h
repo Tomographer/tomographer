@@ -229,7 +229,7 @@ private:
 
 public:
 
-  inline MHRWMovingAverageAcceptanceRatioStatsCollector(int num_samples_ = 64)
+  inline MHRWMovingAverageAcceptanceRatioStatsCollector(int num_samples_ = 2048)
     : accept_buffer(Eigen::ArrayXi::Zero(num_samples_)), pos(0)
   {
   }
@@ -279,7 +279,7 @@ public:
     // Strategy: update the item in the array at position pos%num_samples, and increment
     // pos. This way we remove the oldest samples and replace them by the new ones.
 
-    accept_buffer[ pos % accept_buffer.size() ] = accepted;
+    accept_buffer[ pos % accept_buffer.size() ] = (int)accepted;
     ++pos;
   }
 
@@ -849,6 +849,132 @@ public:
 
 
 
+
+/** \brief A "stats collector" which produces status reports whenever a predicate evaluates to true
+ *
+ */
+template<typename MHRWParamsType_>
+TOMOGRAPHER_EXPORT class MHRWPredStatusReportStatsCollector
+{
+public:
+  typedef MHRWParamsType_ MHRWParamsType;
+  typedef MHRWStatusReport<MHRWParamsType> MHRWStatusReportType;
+
+private:
+  std::function<bool()> pred_fn;
+  std::function<void(MHRWStatusReportType)> send_status_fn;
+
+public:
+  template<typename PredicateFn, typename SendStatusFn>
+  MHRWPredStatusReportStatsCollector(PredicateFn && pred_fn_, SendStatusFn && send_status_fn_)
+    : pred_fn(pred_fn_), send_status_fn(send_status_fn_)
+  { }
+
+  inline void init() { }
+  inline void thermalizingDone() { }
+  inline void done() { }
+
+  template<typename IterCountIntType, typename PointType, typename FnValueType, typename MHRandomWalk>
+  inline void rawMove(
+      IterCountIntType k, bool is_thermalizing, bool, bool, double, const PointType &, FnValueType,
+      const PointType &, FnValueType, MHRandomWalk & rw
+      )
+  {
+    // see if we should provide a status report
+    //        fprintf(stderr, "StatusReportCheck::rawMove(): testing for status report requested!\n");
+    // only check once per sweep, to speed up things
+    if ((k % rw.nSweep() == 0) && pred_fn()) {
+      send_status_fn(
+          MHRWStatusReportType::createFromRandWalkStatInfo(k, is_thermalizing, rw,
+                                                           rw.statsCollector(),
+                                                           rw.mhWalkerParamsAdjuster())
+          );
+    }
+    //        fprintf(stderr, "StatusReportCheck::rawMove(): done\n");
+  }
+
+  template<typename IterCountIntType, typename PointType, typename FnValueType, typename MHRandomWalk>
+  inline void processSample(IterCountIntType, IterCountIntType, PointType&&, FnValueType, MHRandomWalk &)
+  {
+  }
+};
+
+
+/** \brief A "stats collector" which produces status reports periodically
+ *
+ */
+template<typename MHRWParamsType_, typename ClockType_ =
+         // exception for gcc/g++ 4.6, which doesn't have steady_clock but has monotonic_clock instead
+#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
+                                                         std::chrono::monotonic_clock
+#else
+                                                         std::chrono::steady_clock
+#endif
+                                                         >
+TOMOGRAPHER_EXPORT class MHRWPeriodicStatusReportStatsCollector
+{
+public:
+  typedef MHRWParamsType_ MHRWParamsType;
+  typedef MHRWStatusReport<MHRWParamsType> MHRWStatusReportType;
+
+  typedef ClockType_ ClockType;
+  typedef typename ClockType::time_point TimePoint;
+  typedef typename ClockType::duration DurationType;
+
+private:
+  TimePoint last_status_report;
+  DurationType interval;
+  std::function<void(MHRWStatusReportType)> send_status_fn;
+
+public:
+  template<typename DurationInit, typename SendStatusFn>
+  MHRWPeriodicStatusReportStatsCollector(DurationInit && interval_, SendStatusFn && send_status_fn_)
+    : interval(interval_), send_status_fn(send_status_fn_)
+  { }
+
+  inline void init() { }
+  inline void thermalizingDone() { }
+  inline void done() { }
+
+  template<typename IterCountIntType, typename PointType, typename FnValueType, typename MHRandomWalk>
+  inline void rawMove(
+      IterCountIntType k, bool is_thermalizing, bool, bool, double, const PointType &, FnValueType,
+      const PointType &, FnValueType, MHRandomWalk & rw
+      )
+  {
+    // only check once per sweep, to speed up things
+    if ((k % rw.nSweep() == 0)) {
+      
+      auto now = ClockType::now();
+
+      if ( interval.count() > 0  &&  (now - (last_status_report + interval)).count() > 0 ) {
+        // send in a status report
+        send_status_fn(
+            MHRWStatusReportType::createFromRandWalkStatInfo(k, is_thermalizing, rw,
+                                                             rw.statsCollector(),
+                                                             rw.mhWalkerParamsAdjuster())
+            );
+        last_status_report = now;
+      }
+
+    }
+    //        fprintf(stderr, "StatusReportCheck::rawMove(): done\n");
+  }
+
+  template<typename IterCountIntType, typename PointType, typename FnValueType, typename MHRandomWalk>
+  inline void processSample(IterCountIntType, IterCountIntType, PointType&&, FnValueType, MHRandomWalk &)
+  {
+  }
+};
+
+
+
+
+
+
+
+
+
 //
 // Specialize Tomographer::Tools::StatusProvider  for our stats collector classes
 //
@@ -972,7 +1098,7 @@ TOMOGRAPHER_EXPORT struct StatusProvider<ValueHistogramWithBinningMHRWStatsColle
       }
     }
 
-    return tomo_internal::histogram_short_bar_fmt<BaseHistogramType>(histogram, "", maxbarwidth)
+    return Tomographer::tomo_internal::histogram_short_bar_fmt<BaseHistogramType>(histogram, "", maxbarwidth)
       + Tools::fmts("   err: (cnvg/?/fail) %d/%d/%d", n_cnvg, n_unknown, n_not_cnvg);
   }
 };
@@ -982,6 +1108,27 @@ template<typename Params_,
 	 >
 constexpr bool
 StatusProvider<ValueHistogramWithBinningMHRWStatsCollector<Params_, LoggerType_> >::CanProvideStatusLine;
+
+
+/** \brief Provide status reporting for a \ref MHRWMovingAverageAcceptanceRatioStatsCollector
+ *
+ */
+template<typename CountIntType_>
+TOMOGRAPHER_EXPORT struct StatusProvider<MHRWMovingAverageAcceptanceRatioStatsCollector<CountIntType_> >
+{
+  static constexpr bool CanProvideStatusLine = true;
+
+  static inline std::string getStatusLine(const MHRWMovingAverageAcceptanceRatioStatsCollector<CountIntType_> * obj)
+  {
+    if (obj->hasMovingAverageAcceptanceRatio()) {
+      return Tools::fmts("acceptance ratio = %.2g (over last %d samples)",
+                         (double)obj->movingAverageAcceptanceRatio(),
+                         (int)obj->bufferSize());
+    }
+    return std::string();
+  }
+};
+
 
 
 } // namespace Tools
