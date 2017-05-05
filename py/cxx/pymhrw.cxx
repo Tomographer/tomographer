@@ -36,7 +36,6 @@
 
 
 
-
 void py_tomo_mhrw(py::module rootmodule)
 {
   auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
@@ -49,7 +48,7 @@ void py_tomo_mhrw(py::module rootmodule)
         "MHRWParams",
         Tomographer::Tools::fmts(
             "Parameters for a Metropolis-Hastings random walk.\n\n"
-            ".. py:function:: MHRWParams(mhwalker_params, n_sweep, n_therm, n_run)\n\n"
+            ".. py:function:: MHRWParams(mhrw_params=, n_sweep, n_therm, n_run, **kwargs)\n\n"
             "    Construct a `MHRWParams` instance, initializing the read-only members `mhwalker_params`, "
             "`n_sweep`, `n_therm` and `n_run` to the values given to the constructor."
             "\n\n"
@@ -57,7 +56,7 @@ void py_tomo_mhrw(py::module rootmodule)
             "\n\n"
             ".. seealso:: See the corresponding C++ class :tomocxx:`Tomographer::MHRWParams "
             "<struct_tomographer_1_1_m_h_r_w_params.html>` for more information about these parameters.  (The "
-            "interfaced class uses the template parameters `CountIntType=%s` and `StepRealType=py::object`.)"
+            "interfaced class uses the template parameters `MHWalkerParams=py::object` and `CountIntType=%s`.)"
             "\n\n"
             ".. py:attribute:: mhwalker_params\n\n"
             "    See :tomocxx:`Tomographer::MHRWParams <struct_tomographer_1_1_m_h_r_w_params.html>`.\n\n"
@@ -70,9 +69,35 @@ void py_tomo_mhrw(py::module rootmodule)
             boost::core::demangle(typeid(CountIntType).name()).c_str()
             ).c_str()
         )
-      .def(py::init<>())
-      .def(py::init<py::object,CountIntType,CountIntType,CountIntType>(),
-           "mhwalker_params"_a, "n_sweep"_a, "n_therm"_a, "n_run"_a)
+      .def("__init__", [](Kl & instance, py::args args, py::kwargs kwargs) {
+          py::object mhwalker_params = py::none();
+          CountIntType n_sweep = 0, n_therm = 0, n_run = 0;
+          if (py::len(args) && py::len(kwargs)) {
+            throw TomographerCxxError("Can't specify positional arguments along with keyword arguments for MHRWParams(...)");
+          }
+          if (py::len(args)) {
+            if (py::len(args) != 4) {
+              throw TomographerCxxError("Expected exactly four arguments in call to "
+                                        "MHRWParams(mhwalker_params, n_sweep, n_therm, n_run)");
+            }
+            // exactly 4 args given: they are, in order, (mhwalker_params, n_sweep, n_therm, n_run)
+            mhwalker_params = args[0];
+            n_sweep = args[1].cast<CountIntType>();
+            n_therm = args[2].cast<CountIntType>();
+            n_run = args[3].cast<CountIntType>();
+          } else if (py::len(kwargs)) {
+            n_sweep = kwargs.attr("pop")("n_sweep"_s, 0).cast<CountIntType>();
+            n_therm = kwargs.attr("pop")("n_therm"_s, 0).cast<CountIntType>();
+            n_run = kwargs.attr("pop")("n_run"_s, 0).cast<CountIntType>();
+            mhwalker_params = kwargs;
+          } else { // no arguments at all -- default constructor
+            mhwalker_params = py::dict();
+            n_sweep = 0;
+            n_therm = 0;
+            n_run = 0;
+          }
+          new (&instance) Kl(mhwalker_params, n_sweep, n_therm, n_run);
+          })
       .def_readwrite("mhwalker_params", &Kl::mhwalker_params)
       .def_readwrite("n_sweep", &Kl::n_sweep)
       .def_readwrite("n_therm", &Kl::n_therm)

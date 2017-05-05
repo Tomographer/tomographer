@@ -36,6 +36,17 @@
 
 #include <Eigen/Core>
 
+
+struct StepSizeType {
+  StepSizeType(double x = 0) : stepsize(x) { }
+  double stepsize;
+};
+
+std::ostream & operator<<(std::ostream & stream, StepSizeType x) {
+  stream << "howdy y'all your step size will be " << x.stepsize;
+  return stream;
+}
+
 //
 // Necessary utilities to perform a random walk on a lattice. just to perform test cases
 // with integers so that we're sure we have deterministic results (e.g. from different
@@ -45,7 +56,7 @@ template<typename ScalarType, typename Rng, typename LoggerType = Tomographer::L
 struct TestLatticeMHRWBase
 {
   typedef Eigen::Matrix<ScalarType,Eigen::Dynamic,1> PointType;
-  typedef double WalkerParams; // needed for MHWalker interface
+  typedef StepSizeType WalkerParams; // needed for MHWalker interface
   
   const Eigen::Array<int,Eigen::Dynamic,1> latticeDims;
   Rng & rng;
@@ -77,9 +88,9 @@ struct TestLatticeMHRWBase
 
   inline void done() { }
 
-  template<typename RealType>
-  inline PointType jumpFn(const PointType & curpt, const RealType step_size)
+  inline PointType jumpFn(const PointType & curpt, const WalkerParams wp)
   {
+    const auto step_size = wp.stepsize;
     auto rnddist = _get_step_rnddist(step_size);
 
     _logger.longdebug([&](std::ostream & stream) {
@@ -235,10 +246,10 @@ struct TestMHWalker : public TestLatticeMHRWGaussPeak<int> {
   }
     
   template<typename PT>
-  inline PointType jumpFn(PT&& curpt, const WalkerParams step_size)
+  inline PointType jumpFn(PT&& curpt, const WalkerParams wp)
   {
     ++count_jump;
-    return Base::jumpFn(std::forward<PointType>(curpt), step_size);
+    return Base::jumpFn(std::forward<PointType>(curpt), wp.stepsize);
   }
 };
 

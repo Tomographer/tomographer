@@ -25,23 +25,43 @@
  * SOFTWARE.
  */
 
-#ifndef TOMOGRAPHERPY_MHRW_H
-#define TOMOGRAPHERPY_MHRW_H
+#include <cmath>
 
 #include <string>
+#include <iostream>
+#include <random>
 
-#include <tomographerpy/common.h>
+#include <boost/math/constants/constants.hpp>
 
-#include <tomographer/mhrw.h>
-//#include <tomographer/mhrwtasks.h>
+// definitions for Tomographer test framework -- this must be included before any
+// <Eigen/...> or <tomographer/...> header
+#include "test_tomographer.h"
 
-
-namespace tpy {
-
-typedef Tomographer::MHRWParams<py::object, CountIntType>  MHRWParams;
-
-} // namespace Py
+#include <tomographer/mhrwstepsizeadjuster.h>
 
 
 
-#endif
+// -----------------------------------------------------------------------------
+// fixture(s)
+
+
+struct HEADER_fixture {
+  HEADER_fixture() { }
+  ~HEADER_fixture() { }
+  void method() { }
+};
+
+
+// -----------------------------------------------------------------------------
+// test suites
+
+
+BOOST_FIXTURE_TEST_SUITE(test_HEADER, HEADER_fixture)
+
+BOOST_AUTO_TEST_CASE(test_cases_not_written)
+{
+  BOOST_CHECK( false ) ;
+}
+
+BOOST_AUTO_TEST_SUITE_END()
+

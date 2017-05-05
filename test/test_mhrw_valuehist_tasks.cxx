@@ -120,7 +120,7 @@ BOOST_AUTO_TEST_CASE(collects_histograms)
   };
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTaskResult<
-    ResultsCollectorSimple::MHRWStatsCollectorResultType, int, double
+    ResultsCollectorSimple::MHRWStatsCollectorResultType, int, Tomographer::MHWalkerParamsStepSize<double>
     >  TaskResultType;
 
   CDataType::HistogramType h0(hp);
@@ -241,7 +241,8 @@ BOOST_AUTO_TEST_CASE(collects_histograms)
   };
 
   typedef ResultsCollectorBinning::MHRWStatsCollectorResultType VhResType;
-  typedef Tomographer::MHRWTasks::MHRandomWalkTaskResult<VhResType, int, double>  TaskResultType;
+  typedef Tomographer::MHRWTasks::MHRandomWalkTaskResult<VhResType, int, Tomographer::MHWalkerParamsStepSize<double> >
+    TaskResultType;
 
   auto ALL_CONV = Eigen::ArrayXi::Constant(10, ResultsCollectorBinning::BinningAnalysisParamsType::CONVERGED);
 
@@ -477,8 +478,10 @@ struct MyCDataX : public BaseCData
 
 };
 
-typedef Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<NormValueCalculator, false> BaseCData_simple;
-typedef Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<NormValueCalculator, true>  BaseCData_binning;
+typedef TestMHWalker::WalkerParams MHWalkerParamsType;
+
+typedef Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<NormValueCalculator, false, MHWalkerParamsType> BaseCData_simple;
+typedef Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<NormValueCalculator, true, MHWalkerParamsType>  BaseCData_binning;
 
 
 BOOST_AUTO_TEST_CASE(interfaces_simple)
@@ -492,7 +495,7 @@ BOOST_AUTO_TEST_CASE(interfaces_simple)
 
   typedef MyCDataX<BaseCData_simple> MyCData;
 
-  MyCData cdata(Tomographer::MHRWParams<double,int>(step_size, nsweep, ntherm, nrun));
+  MyCData cdata(Tomographer::MHRWParams<MHWalkerParamsType,int>(step_size, nsweep, ntherm, nrun));
 
   typedef typename MyCData::ResultsCollectorType<Tomographer::Logger::BoostTestLogger>::Type OurResultsCollector;
 
@@ -535,7 +538,7 @@ BOOST_AUTO_TEST_CASE(interfaces_binning)
 
   typedef MyCDataX<BaseCData_binning> MyCData;
 
-  MyCData cdata(Tomographer::MHRWParams<double,int>(step_size, nsweep, ntherm, nrun));
+  MyCData cdata(Tomographer::MHRWParams<MHWalkerParamsType,int>(step_size, nsweep, ntherm, nrun));
 
   typedef typename MyCData::ResultsCollectorType<Tomographer::Logger::BoostTestLogger>::Type OurResultsCollector;
 

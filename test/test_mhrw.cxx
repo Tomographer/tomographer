@@ -49,7 +49,7 @@ BOOST_AUTO_TEST_CASE(mhrandomwalksetup)
   typedef std::mt19937 Rng;
   Rng rng(3040); // fixed seed
 
-  typedef Tomographer::MHRandomWalk<Rng, TestMHWalker, TestMHRWStatsCollector, MHWalkerParamsNoAdjuster,
+  typedef Tomographer::MHRandomWalk<Rng, TestMHWalker, TestMHRWStatsCollector, Tomographer::MHWalkerParamsNoAdjuster,
                                     LoggerType, int>
     MHRandomWalkType;
 
@@ -62,7 +62,7 @@ BOOST_AUTO_TEST_CASE(mhrandomwalksetup)
 
   TestMHWalker mhwalker(nsweep, ntherm, nrun, rng2);
   TestMHRWStatsCollector stats(nsweep, ntherm, nrun);
-  MHRandomWalkType rw(Tomographer::MHRWParams<int,double>(2, nsweep, ntherm, nrun), mhwalker, stats, rng, logger);
+  MHRandomWalkType rw(Tomographer::MHRWParams<StepSizeType,int>(2, nsweep, ntherm, nrun), mhwalker, stats, rng, logger);
 
   BOOST_CHECK_EQUAL(rw.nSweep(), nsweep);
   BOOST_CHECK_EQUAL(rw.nTherm(), ntherm);
@@ -107,6 +107,18 @@ BOOST_AUTO_TEST_CASE(mhrandomwalk)
 
   BOOST_CHECK(rw.hasAcceptanceRatio());
   BOOST_MESSAGE("Accept ratio = " << rw.acceptanceRatio());
+}
+
+
+BOOST_AUTO_TEST_CASE(mhrandomwalk_adjuster_iface)
+{
+  BOOST_CHECK( false ) ; // test cases not yet written
+}
+
+
+BOOST_AUTO_TEST_CASE(mhrw_status_report)
+{
+  BOOST_CHECK( false ) ; // test cases not yet written -- import them as appropriate from mhrwtasks
 }
 
 // -----------------------------------------------------------------------------

@@ -95,7 +95,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
             ref_state=self.rho_ref,
             num_repeats=num_repeats,
             mhrw_params=tomographer.MHRWParams(
-                mhwalker_params=0.04,
+                step_size=0.04,
                 n_sweep=25,
                 n_run=8192,
                 n_therm=500),
@@ -137,7 +137,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
             ref_state=self.rho_ref,
             num_repeats=num_repeats,
             mhrw_params=tomographer.MHRWParams(
-                mhwalker_params=0.04,
+                step_size=0.04,
                 n_sweep=25,
                 n_run=16*32768,
                 n_therm=500),
@@ -170,7 +170,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
             ref_state=self.rho_ref,
             num_repeats=num_repeats,
             mhrw_params=tomographer.MHRWParams(
-                mhwalker_params=0.04,
+                step_size=0.04,
                 n_sweep=25,
                 n_run=8192,
                 n_therm=500),
@@ -207,7 +207,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
             observable=self.rho_ref,
             num_repeats=num_repeats,
             mhrw_params=tomographer.MHRWParams(
-                mhwalker_params=0.04,
+                step_size=0.04,
                 n_sweep=25,
                 n_run=4*32768,
                 n_therm=500),
@@ -251,7 +251,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
                 observable=self.rho_ref,
                 num_repeats=num_repeats,
                 mhrw_params=tomographer.MHRWParams(
-                    mhwalker_params=0.04,
+                    step_size=0.04,
                     n_sweep=25,
                     n_run=4*32768,
                     n_therm=500),

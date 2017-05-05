@@ -23,7 +23,7 @@ class MHRWTasksStuff(unittest.TestCase):
 
         # just run tomorun on some arbitrary data to get some stuff to check
         mhrw_params = tomographer.MHRWParams(
-            mhwalker_params=0.04,
+            step_size=0.04,
             n_sweep=25,
             n_run=8192,
             n_therm=500)
@@ -50,7 +50,7 @@ class MHRWTasksStuff(unittest.TestCase):
         # check that all fields are there and display meaningful values
         
         runres = r['runs_results'][0]
-        self.assertAlmostEqual(runres.mhrw_params.mhwalker_params, mhrw_params.mhwalker_params)
+        self.assertAlmostEqual(runres.mhrw_params.mhwalker_params["step_size"], mhrw_params.mhwalker_params["step_size"])
         self.assertEqual(runres.mhrw_params.n_sweep, mhrw_params.n_sweep)
         self.assertEqual(runres.mhrw_params.n_therm, mhrw_params.n_therm)
         self.assertEqual(runres.mhrw_params.n_run, mhrw_params.n_run)

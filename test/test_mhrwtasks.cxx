@@ -100,7 +100,7 @@ struct MyStatsResultType {
   MyStatsResultType() : a(0), b(1) { }
   int a, b;
 };
-typedef Tomographer::MHRWParams<double,int> MHRWParamsType;
+typedef Tomographer::MHRWParams<StepSizeType,int> MHRWParamsType;
 
 BOOST_AUTO_TEST_CASE(instantiate_1)
 {
@@ -112,7 +112,7 @@ BOOST_AUTO_TEST_CASE(instantiate_1)
       );
   BOOST_CHECK_EQUAL(r.stats_collector_result.a, MyStatsResultType().a);
   BOOST_CHECK_EQUAL(r.stats_collector_result.b, MyStatsResultType().b);
-  MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.mhwalker_params, 0.1, tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.mhwalker_params.stepsize, 0.1, tol);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_sweep, 10);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_therm, 100);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_run, 1000);
@@ -129,7 +129,7 @@ BOOST_AUTO_TEST_CASE(instantiate_1b)
       );
   BOOST_CHECK_EQUAL(r.stats_collector_result.a, MyStatsResultType().a);
   BOOST_CHECK_EQUAL(r.stats_collector_result.b, MyStatsResultType().b);
-  MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.mhwalker_params, 0.1, tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.mhwalker_params.stepsize, 0.1, tol);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_sweep, 10);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_therm, 100);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_run, 1000);
@@ -155,7 +155,7 @@ BOOST_AUTO_TEST_CASE(instantiate_2)
 	  (Eigen::Vector2i() << 40, 50).finished(),
 	  rng
       );
-  MHRandomWalkType rw(MHRWParamsType(2, 10, 100, 1000), mhwalker, stats, rng, logger);
+  MHRandomWalkType rw(MHRWParamsType(StepSizeType(2), 10, 100, 1000), mhwalker, stats, rng, logger);
 
   // the thing we actually want to test:
   Tomographer::MHRWTasks::MHRandomWalkTaskResult<MyStatsResultType,
@@ -166,7 +166,7 @@ BOOST_AUTO_TEST_CASE(instantiate_2)
       );
   BOOST_CHECK_EQUAL(r.stats_collector_result.a, MyStatsResultType().a);
   BOOST_CHECK_EQUAL(r.stats_collector_result.b, MyStatsResultType().b);
-  MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.mhwalker_params, 2, tol);
+  MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.mhwalker_params.stepsize, 2, tol);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_sweep, 10);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_therm, 100);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_run, 1000);

@@ -161,9 +161,9 @@ namespace Tomographer { namespace Tools {
 template<>
 struct StatusProvider<SimpleDummyStatsCollector>
 {
-  static constexpr bool CanProvideStatus = true;
+  static constexpr bool CanProvideStatusLine = true;
 
-  static inline std::string getStatus(const SimpleDummyStatsCollector * stats)
+  static inline std::string getStatusLine(const SimpleDummyStatsCollector * stats)
   {
     return stats->dummy_status_message;
   }
@@ -462,6 +462,7 @@ BOOST_AUTO_TEST_CASE(base_multi_status)
   MultiStatsColl msc(sc1, sc2);
 
   TOMO_STATIC_ASSERT_EXPR( Tomographer::Tools::StatusQuery<MultiStatsColl>::CanProvideStatusLine );
+
   BOOST_CHECK_EQUAL( Tomographer::Tools::StatusQuery<MultiStatsColl>::getStatusLine(&msc) , "status - 1\nstatus - 2" );
 }
 
@@ -478,9 +479,9 @@ BOOST_FIXTURE_TEST_CASE(status_for_valuehistogram, TestStatsCollectorFixture)
   run_dummy_rw(statcoll);
 
   TOMO_STATIC_ASSERT_EXPR(
-      Tomographer::MHRWStatsCollectorStatus<MyValueHistogramMHRWStatsCollector>::CanProvideStatusLine
+      Tomographer::Tools::StatusQuery<MyValueHistogramMHRWStatsCollector>::CanProvideStatusLine
       );
-  BOOST_CHECK_EQUAL( Tomographer::MHRWStatsCollectorStatus<MyValueHistogramMHRWStatsCollector>::getStatusLine(&statcoll),
+  BOOST_CHECK_EQUAL( Tomographer::Tools::StatusQuery<MyValueHistogramMHRWStatsCollector>::getStatusLine(&statcoll),
       "Histogram: 0|.x# |4");
 }
 
@@ -500,9 +501,9 @@ BOOST_FIXTURE_TEST_CASE(status_for_valuehistogrambinning, TestStatsCollectorFixt
   run_dummy_rw(statcoll);
 
   TOMO_STATIC_ASSERT_EXPR(
-      Tomographer::MHRWStatsCollectorStatus<MyStatsCollector>::CanProvideStatusLine
+      Tomographer::Tools::StatusQuery<MyStatsCollector>::CanProvideStatusLine
       );
-  BOOST_CHECK_EQUAL( Tomographer::MHRWStatsCollectorStatus<MyStatsCollector>::getStatusLine(&statcoll),
+  BOOST_CHECK_EQUAL( Tomographer::Tools::StatusQuery<MyStatsCollector>::getStatusLine(&statcoll),
       "0|.x# |4   err: (cnvg/?/fail) 0/4/0");
 }
 

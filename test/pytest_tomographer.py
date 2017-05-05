@@ -427,19 +427,19 @@ class MHRWStuff(unittest.TestCase):
         # default constructor
         mhrw = tomographer.MHRWParams()
         # constructor with parameters
-        mhrw = tomographer.MHRWParams(0.01, 100, 500, 32768)
+        mhrw = tomographer.MHRWParams({'step_size': 0.01}, 100, 500, 32768)
         # constructor with keyword arguments
-        mhrw = tomographer.MHRWParams(mhwalker_params=0.01, n_sweep=100, n_therm=500, n_run=32768)
+        mhrw = tomographer.MHRWParams(step_size=0.01, n_sweep=100, n_therm=500, n_run=32768)
 
         # make sure params are stored correctly
-        self.assertAlmostEqual(mhrw.mhwalker_params, 0.01)
+        self.assertAlmostEqual(mhrw.mhwalker_params["step_size"], 0.01)
         self.assertEqual(mhrw.n_sweep, 100)
         self.assertEqual(mhrw.n_therm, 500)
         self.assertEqual(mhrw.n_run, 32768)
 
         # attributes should be writable
-        mhrw.mhwalker_params = 0.06
-        self.assertAlmostEqual(mhrw.mhwalker_params, 0.06)
+        mhrw.mhwalker_params = {'step_size': 0.06}
+        self.assertAlmostEqual(mhrw.mhwalker_params["step_size"], 0.06)
         mhrw.n_sweep = 200
         self.assertEqual(mhrw.n_sweep, 200)
         mhrw.n_therm = 1024

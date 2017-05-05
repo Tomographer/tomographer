@@ -41,6 +41,8 @@
 
 namespace tpy {
 
+
+
 TOMOGRAPHER_EXPORT struct WorkerStatusReport {
   int worker_id;
   double fraction_done;
@@ -73,7 +75,7 @@ struct PyStatusReportAddWorkerDataFields< Tomographer::MHRWTasks::MHRandomWalkTa
 {
   typedef typename Tomographer::MHRWTasks::MHRandomWalkTask<CData, Rng>::StatusReportType TaskStatusReportType;
   static inline void addDataFields(py::dict & d, const TaskStatusReportType & wr) {
-    d["mhrw_params"] = tpy::MHRWParams(py::cast(wr.mhrw_params.mhwalker_params),
+    d["mhrw_params"] = tpy::MHRWParams(py::dict(py::arg("step_size")=wr.mhrw_params.mhwalker_params.step_size),
                                        wr.mhrw_params.n_sweep,
                                        wr.mhrw_params.n_therm,
                                        wr.mhrw_params.n_run);
