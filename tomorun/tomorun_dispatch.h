@@ -119,9 +119,10 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
     Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<
       ValueCalculator,
       UseBinningAnalysisErrorBars,
-      TomorunInt, // CountIntType
-      TomorunReal, // StepRealType
-      TomorunReal> // CountRealType
+      Tomographer::MHWalkerParamsStepSize<TomorunReal>,
+      TomorunInt, // IterCountIntType
+      TomorunReal, // CountRealType
+      TomorunInt> // HistCountIntType
     > OurCData;
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>  OurMHRandomWalkTask;
