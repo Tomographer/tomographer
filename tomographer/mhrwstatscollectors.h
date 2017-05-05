@@ -41,6 +41,7 @@
 #include <tomographer/tools/loggers.h>
 #include <tomographer/tools/statusprovider.h>
 #include <tomographer/histogram.h>
+#include <tomographer/mhrw.h> // MHRWStatusReport
 #include <tomographer/mhrw_bin_err.h>
 
 /** \file mhrwstatscollectors.h

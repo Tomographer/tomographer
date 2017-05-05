@@ -212,23 +212,23 @@ add_test(NAME minimal_tomorun
 #
 # check "minimal tomorun with dyn adjustments" example program compiles and runs
 #
-add_executable(minimal_tomorun_adjusted
-  minimal_tomorun_adjusted.cxx
-  )
+#add_executable(minimal_tomorun_adjusted
+#  minimal_tomorun_adjusted.cxx
+#  )
 # Enable C++11
-set_property(TARGET minimal_tomorun_adjusted PROPERTY CXX_STANDARD 11)
+#set_property(TARGET minimal_tomorun_adjusted PROPERTY CXX_STANDARD 11)
 # tomographer headers
-target_include_directories(minimal_tomorun_adjusted PRIVATE "..")
+#target_include_directories(minimal_tomorun_adjusted PRIVATE "..")
 # dependency: Eigen
-target_include_directories(minimal_tomorun_adjusted  PRIVATE ${EIGEN3_INCLUDE_DIR})
-target_compile_definitions(minimal_tomorun_adjusted  PRIVATE -DEIGEN_DONT_PARALLELIZE)
-target_link_libraries(minimal_tomorun_adjusted  PRIVATE Threads::Threads)
-target_include_directories(minimal_tomorun_adjusted  PRIVATE ${Boost_INCLUDE_DIR})
-
-add_test(NAME minimal_tomorun_adjusted
-  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-  COMMAND "$<TARGET_FILE:minimal_tomorun>"
-  )
+#target_include_directories(minimal_tomorun_adjusted  PRIVATE ${EIGEN3_INCLUDE_DIR})
+#target_compile_definitions(minimal_tomorun_adjusted  PRIVATE -DEIGEN_DONT_PARALLELIZE)
+#target_link_libraries(minimal_tomorun_adjusted  PRIVATE Threads::Threads)
+#target_include_directories(minimal_tomorun_adjusted  PRIVATE ${Boost_INCLUDE_DIR})
+#
+#add_test(NAME minimal_tomorun_adjusted
+#  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+#  COMMAND "$<TARGET_FILE:minimal_tomorun>"
+#  )
 
 #
 # check "minimal single random walk" example program compiles and runs

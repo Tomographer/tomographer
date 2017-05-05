@@ -60,7 +60,7 @@ namespace MHRWTasks {
  * Stores the parameters to the random walk.
  *
  */
-template<typename IterCountIntType_ = int, typename MHWalkerParams_ = double>
+template<typename MHWalkerParams_, typename IterCountIntType_ = int>
 TOMOGRAPHER_EXPORT struct CDataBase
 {
   /** \brief Constructor.
@@ -131,7 +131,7 @@ TOMOGRAPHER_EXPORT struct CDataBase
    */
   inline void printBasicCDataMHRWInfo(std::ostream & str) const
   {
-    str << "\tstep size       = " << std::setprecision(4) << mhrw_params.mhwalker_params << "\n"
+    str << "\tstep            : " << std::setprecision(4) << mhrw_params.mhwalker_params << "\n"
         << "\t# iter. / sweep = " << mhrw_params.n_sweep << "\n"
         << "\t# therm. sweeps = " << mhrw_params.n_therm << "\n"
         << "\t# run sweeps    = " << mhrw_params.n_run << "\n";
@@ -235,7 +235,7 @@ struct mhrandomwalk_type_helper {
     typedef MHRandomWalk<Rng,MHWalkerType,StatsCollector,MHWalkerParamsNoAdjuster,LoggerType,IterCountIntType> type;
   };
   static constexpr bool has_adjuster = false;
-  static inline MHWalkerParamsAdjusterType createMHWalkerParams(MHRandomWalkTaskCData *, MHWalkerType &)
+  static inline MHWalkerParamsAdjusterType createMHWalkerParams(const MHRandomWalkTaskCData *, MHWalkerType &)
   {
     return MHWalkerParamsAdjusterType();
   }
@@ -254,7 +254,8 @@ mhrandomwalk_type_helper<MHRandomWalkTaskCData, Rng, MHWalkerType, LoggerType, I
     typedef MHRandomWalk<Rng,MHWalkerType,StatsCollector,MHWalkerParamsAdjusterType,LoggerType,IterCountIntType> type;
   };
   static constexpr bool has_adjuster = true;
-  static inline MHWalkerParamsAdjusterType && createMHWalkerParams(MHRandomWalkTaskCData * pcdata, MHWalkerType & mhwalker)
+  static inline MHWalkerParamsAdjusterType && createMHWalkerParams(const MHRandomWalkTaskCData * pcdata,
+                                                                   MHWalkerType & mhwalker)
   {
     return pcdata->createMHWalkerParams(mhwalker);
   }

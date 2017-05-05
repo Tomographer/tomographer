@@ -879,15 +879,18 @@ struct ResultsCollectorTypeHelper<CDataBaseType, LoggerType, true> {
  * We provide some useful typedefs, as well as the \ref createStatsCollector() required by
  * the \ref pageInterfaceMHRandomWalkTaskCData.
  *
+ * \since Changed in %Tomographer 5.0: Removed \a StepRealType template parameter, added
+ *        \a MHWalkerParams, beware the new order!
+ *
  * \tparam ValueCalculator the value calculator type you wish to use; defining which value
  *         you are interested in collecting a histogram of during the random walk;
  *
  * \tparam UseBinningAnalysis whether or not to use a binning analysis to obtain reliable
  *         error bars during the random walk.
  *
- * \tparam IterCountIntType the integer type to use for counting iterations.
- *
  * \tparam MHWalkerParams the real type to use for representing a step size in the random walk.
+ *
+ * \tparam IterCountIntType the integer type to use for counting iterations.
  *
  * \tparam CountRealType the real type to use when calculating the scaled histogram with
  *         error bars.
@@ -926,14 +929,14 @@ struct ResultsCollectorTypeHelper<CDataBaseType, LoggerType, true> {
  * \endcode
  */
 template<typename ValueCalculator_, bool UseBinningAnalysis_ = true,
-	 typename IterCountIntType_ = int, typename MHWalkerParams_ = double,
+         typename MHWalkerParams_ = MHWalkerParamsStepSize<double>, typename IterCountIntType_ = int,
 	 typename CountRealType_ = double, typename HistCountIntType_ = IterCountIntType_>
 TOMOGRAPHER_EXPORT struct CDataBase
-  : public MHRWTasks::CDataBase<IterCountIntType_, MHWalkerParams_>,
+  : public MHRWTasks::CDataBase<MHWalkerParams_, IterCountIntType_>,
     public virtual Tools::NeedOwnOperatorNew<ValueCalculator_>::ProviderType
 {
   //! The MHRWTasks::CDataBase base class
-  typedef MHRWTasks::CDataBase<IterCountIntType_, MHWalkerParams_> Base;
+  typedef MHRWTasks::CDataBase<MHWalkerParams_, IterCountIntType_> Base;
 
   //! The integer type which serves to count the number of iterations (see \ref MHRWParams)
   typedef typename Base::IterCountIntType IterCountIntType;
@@ -1071,7 +1074,7 @@ TOMOGRAPHER_EXPORT struct CDataBase
     typedef
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
     typename
-    tomo_internal::ResultsCollectorTypeHelper<CDataBase<ValueCalculator,UseBinningAnalysis,IterCountIntType,MHWalkerParams,CountRealType,HistCountIntType>,
+    tomo_internal::ResultsCollectorTypeHelper<CDataBase<ValueCalculator,UseBinningAnalysis,MHWalkerParams,IterCountIntType,CountRealType,HistCountIntType>,
 					      LoggerType, UseBinningAnalysis>::type
 #else
     [...] // parsed by doxygen -- make this more readable
@@ -1083,9 +1086,9 @@ TOMOGRAPHER_EXPORT struct CDataBase
 };
 // define static members:
 template<typename ValueCalculator_, bool UseBinningAnalysis_,
-	 typename IterCountIntType_, typename MHWalkerParams_,
+         typename MHWalkerParams_, typename IterCountIntType_,
 	 typename CountRealType_, typename HistCountIntType_>
-constexpr bool CDataBase<ValueCalculator_,UseBinningAnalysis_,IterCountIntType_,MHWalkerParams_,CountRealType_,HistCountIntType_>::UseBinningAnalysis;
+constexpr bool CDataBase<ValueCalculator_,UseBinningAnalysis_,MHWalkerParams_,IterCountIntType_,CountRealType_,HistCountIntType_>::UseBinningAnalysis;
 
 
 
