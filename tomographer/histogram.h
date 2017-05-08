@@ -60,27 +60,27 @@ namespace Tomographer {
 
 
 
-/** \brief The parameters of a \ref UniformBinsHistogram
+/** \brief The parameters of a \ref Histogram
  *
  * This is the \f$[\text{min},\text{max}]\f$ range along with the number of bins.
  */
 template<typename Scalar_ = double>
-TOMOGRAPHER_EXPORT struct UniformBinsHistogramParams
+TOMOGRAPHER_EXPORT struct HistogramParams
 {
   //! The scalar type used to specify the "value" (horizongal axis) of the histogram
   typedef Scalar_ Scalar;
 
   //! The obvious constructor
-  UniformBinsHistogramParams(Scalar min_ = 0.0, Scalar max_ = 1.0, std::size_t num_bins_ = 50)
+  HistogramParams(Scalar min_ = 0.0, Scalar max_ = 1.0, std::size_t num_bins_ = 50)
     : min(min_), max(max_), num_bins(num_bins_)
   {
   }
-  //! Copy constructor, from any other UniformBinsHistogram::Params type.
+  //! Copy constructor, from any other Histogram::Params type.
   template<typename Params2,
            // enforce Params-like type by checking that properties 'min','max','num_bins' exist:
            decltype((int)std::declval<const Params2>().min + (int)std::declval<const Params2>().max
                     + std::declval<Params2>().num_bins) dummyval = 0>
-  UniformBinsHistogramParams(const Params2& other)
+  HistogramParams(const Params2& other)
     : min(other.min), max(other.max), num_bins(other.num_bins)
   {
   }
@@ -110,7 +110,7 @@ TOMOGRAPHER_EXPORT struct UniformBinsHistogramParams
   inline std::size_t binIndex(Scalar value) const
   {
     if ( !isWithinBounds(value) ) {
-      throw std::out_of_range(streamstr("UniformBinsHistogramParams: Value "<<value
+      throw std::out_of_range(streamstr("HistogramParams: Value "<<value
                                         <<" out of range ["<<min<<","<<max<<"["));
     }
     return binIndexUnsafe(value);
@@ -208,10 +208,10 @@ TOMOGRAPHER_EXPORT struct UniformBinsHistogramParams
  * Does not store any form of error bars. Complies with the \ref pageInterfaceHistogram.
  */
 template<typename Scalar_, typename CountType_ = int>
-TOMOGRAPHER_EXPORT class UniformBinsHistogram
+TOMOGRAPHER_EXPORT class Histogram
   // inheriting from this has some advantages over EIGEN_MAKE_ALIGNED_OPERATOR_NEW, such
   // as not needing to explicitly declare the specialization
-  // NeedOwnOperatorNew<UniformBinsHistogram>:
+  // NeedOwnOperatorNew<Histogram>:
   //
   // -- really not needed because the matrices are dynamically sized
   //
@@ -228,7 +228,7 @@ public:
   static constexpr bool HasErrorBars = false;
 
   //! The type for specifying parameters of this histogram (limits, number of bins)
-  typedef UniformBinsHistogramParams<Scalar_> Params;
+  typedef HistogramParams<Scalar_> Params;
 
   //! Parameters of this histogram (range and # of bins)
   Params params;
@@ -242,14 +242,14 @@ public:
            // enforce Params-like type by checking that properties 'min','max','num_bins' exist:
            decltype((int)std::declval<const Params2>().min + (int)std::declval<const Params2>().max
                     + std::declval<Params2>().num_bins) dummyval = 0>
-  UniformBinsHistogram(Params2 p = Params())
+  Histogram(Params2 p = Params())
     : params(p), bins(Eigen::Array<CountType,Eigen::Dynamic,1>::Zero(p.num_bins)),
       off_chart(0)
   {
   }
 
   //! Constructor: stores the parameters and initializes the histogram to zero counts everywhere
-  UniformBinsHistogram(Scalar min_, Scalar max_, std::size_t num_bins)
+  Histogram(Scalar min_, Scalar max_, std::size_t num_bins)
     : params(min_, max_, num_bins), bins(Eigen::Array<CountType,Eigen::Dynamic,1>::Zero(num_bins)),
       off_chart(0)
   {
@@ -258,7 +258,7 @@ public:
   //! Constructor: copy another histogram type
   template<typename HistogramType,// and enforce it's indeed a histogram type by testing its 'HasErrorBars' property:
            TOMOGRAPHER_ENABLED_IF_TMPL(HistogramType::HasErrorBars == 0 || HistogramType::HasErrorBars == 1)>
-  UniformBinsHistogram(const HistogramType & other)
+  Histogram(const HistogramType & other)
     : params(other.params), bins(other.params.num_bins), off_chart(other.off_chart)
   {
     bins = other.bins.template cast<CountType>();
@@ -319,7 +319,7 @@ public:
    * assertion check is performed that this is the case (up to some small tolerance).
    */
   template<typename OtherScalar, typename OtherCountType>
-  inline void add(const UniformBinsHistogram<OtherScalar,OtherCountType> & x)
+  inline void add(const Histogram<OtherScalar,OtherCountType> & x)
   {
     tomographer_assert(x.bins.cols() == 1);
     tomographer_assert((std::size_t)x.bins.rows() == params.num_bins);
@@ -446,9 +446,9 @@ public:
    *
    */
   template<typename NewCountType = Scalar>
-  inline UniformBinsHistogram<Scalar, NewCountType> normalized() const
+  inline Histogram<Scalar, NewCountType> normalized() const
   {
-    UniformBinsHistogram<Scalar, NewCountType> h(params);
+    Histogram<Scalar, NewCountType> h(params);
     const NewCountType f = normalization<NewCountType>();
     h.load(bins.template cast<NewCountType>() / f, NewCountType(off_chart) / f);
     return h;
@@ -470,24 +470,24 @@ public:
 
 /** \brief Stores a histogram along with error bars
  *
- * Builds on top of \ref UniformBinsHistogram<Scalar,CountType> to store error bars
+ * Builds on top of \ref Histogram<Scalar,CountType> to store error bars
  * corresponding to each bin.
  */
 template<typename Scalar_, typename CountType_ = double>
-TOMOGRAPHER_EXPORT class UniformBinsHistogramWithErrorBars
-  : public UniformBinsHistogram<Scalar_, CountType_>
+TOMOGRAPHER_EXPORT class HistogramWithErrorBars
+  : public Histogram<Scalar_, CountType_>
   //    public virtual Tools::EigenAlignedOperatorNewProvider -- no need for dynamically-sized matrices
 {
 public:
-  //! The Scalar (X-axis) Type. See UniformBinsHistogram::Scalar.
+  //! The Scalar (X-axis) Type. See Histogram::Scalar.
   typedef Scalar_ Scalar;
-  //! The Type used to keep track of counts. See UniformBinsHistogram::CountType.
+  //! The Type used to keep track of counts. See Histogram::CountType.
   typedef CountType_ CountType;
 
   //! Shortcut for our base class type.
-  typedef UniformBinsHistogram<Scalar_, CountType_> Base_;
+  typedef Histogram<Scalar_, CountType_> Base_;
   /** \brief Shortcut for our base class' histogram parameters. See
-   *         UniformBinsHistogram::Params.
+   *         Histogram::Params.
    */
   typedef typename Base_::Params Params;
   
@@ -508,7 +508,7 @@ public:
    * Constructs an empty histogram with the given parameters. All bin counts, off-chart
    * counts and \ref delta error bars are initialized to zero.
    */
-  UniformBinsHistogramWithErrorBars(Params params = Params())
+  HistogramWithErrorBars(Params params = Params())
     : Base_(params), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero(params.num_bins))
   {
   }
@@ -518,7 +518,7 @@ public:
    * Constructs an empty histogram with the given parameters. All bin counts, off-chart
    * counts and \ref delta error bars are initialized to zero.
    */
-  UniformBinsHistogramWithErrorBars(Scalar min, Scalar max, std::size_t num_bins)
+  HistogramWithErrorBars(Scalar min, Scalar max, std::size_t num_bins)
     : Base_(min, max, num_bins), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero(num_bins))
   {
   }
@@ -577,9 +577,9 @@ public:
    *
    */
   template<typename NewCountType = Scalar>
-  inline UniformBinsHistogramWithErrorBars<Scalar, NewCountType> normalized() const
+  inline HistogramWithErrorBars<Scalar, NewCountType> normalized() const
   {
-    UniformBinsHistogramWithErrorBars<Scalar, NewCountType> h(params);
+    HistogramWithErrorBars<Scalar, NewCountType> h(params);
     const NewCountType f = Base_::template normalization<NewCountType>();
     h.load(bins.template cast<NewCountType>() / f,
            delta.template cast<NewCountType>() / f,
@@ -614,7 +614,7 @@ public:
 };
 // static members:
 template<typename Scalar_, typename CountType_>
-constexpr bool UniformBinsHistogramWithErrorBars<Scalar_,CountType_>::HasErrorBars;
+constexpr bool HistogramWithErrorBars<Scalar_,CountType_>::HasErrorBars;
 
 
 
@@ -631,7 +631,7 @@ constexpr bool UniformBinsHistogramWithErrorBars<Scalar_,CountType_>::HasErrorBa
  *
  * You should add histograms to average with repeated calls to \ref addHistogram().  Then,
  * you should call \ref finalize().  Then this object, which inherits \ref
- * UniformBinsHistogramWithErrorBars, will be properly initialized with average counts and
+ * HistogramWithErrorBars, will be properly initialized with average counts and
  * error bars.
  *
  * \warning All the histograms added with \ref addHistogram() MUST have the same params,
@@ -642,7 +642,7 @@ constexpr bool UniformBinsHistogramWithErrorBars<Scalar_,CountType_>::HasErrorBa
  * This class itself complies with the \ref pageInterfaceHistogram.
  *
  * \warning Don't forget to call \ref finalize()! The bin counts in \ref
- *          UniformBinsHistogram::bins "bins", off-chart count \ref off_chart and error
+ *          Histogram::bins "bins", off-chart count \ref off_chart and error
  *          bars \ref delta have UNDEFINED VALUES before calling \ref finalize().
  *
  *
@@ -656,7 +656,7 @@ constexpr bool UniformBinsHistogramWithErrorBars<Scalar_,CountType_>::HasErrorBa
  */
 template<typename HistogramType_, typename RealAvgType = double>
 TOMOGRAPHER_EXPORT class AveragedHistogram
-  : public UniformBinsHistogramWithErrorBars<typename HistogramType_::Scalar, RealAvgType>
+  : public HistogramWithErrorBars<typename HistogramType_::Scalar, RealAvgType>
 {
 public:
   /** \brief Type of the individual histograms we are averaging.
@@ -666,11 +666,11 @@ public:
    */
   typedef HistogramType_ HistogramType;
   //! Shortcut for our base class' type.
-  typedef UniformBinsHistogramWithErrorBars<typename HistogramType_::Scalar, RealAvgType> Base_;
+  typedef HistogramWithErrorBars<typename HistogramType_::Scalar, RealAvgType> Base_;
 
-  //! The histogram parameters' type. See \ref UniformBinsHistogramWithErrorBars::Params
+  //! The histogram parameters' type. See \ref HistogramWithErrorBars::Params
   typedef typename Base_::Params Params;
-  //! The histogram's X-axis scalar type. See \ref UniformBinsHistogramWithErrorBars::Scalar
+  //! The histogram's X-axis scalar type. See \ref HistogramWithErrorBars::Scalar
   typedef typename Base_::Scalar Scalar;
   //! The histogram' count type. This is exactly the same as \a RealAvgType.
   typedef typename Base_::CountType CountType;
@@ -688,7 +688,7 @@ public:
 
   /** \brief Constructs an AveragedHistogram with the given histogram parameters.
    *
-   * The \a params are the histogram parameters (see \ref UniformBinsHistogram::Params) of
+   * The \a params are the histogram parameters (see \ref Histogram::Params) of
    * the individual histograms which will be averaged. Note that all those histograms must
    * have the same params.
    */
@@ -741,7 +741,7 @@ public:
    * Add a new histogram to include into the final averaged histogram.  Call this function
    * repeatedly with different histograms you want to average together.  When you're
    * finished adding histograms, you must call \ref finalize() in order to finalize the
-   * averaging; until then the members \ref UniformBinsHistogram::bins "bins" and \ref
+   * averaging; until then the members \ref Histogram::bins "bins" and \ref
    * delta (as well as \ref count(), \ref errorBar() etc.) yield undefined values.
    *
    * \note \a histogram must have the same range and number of bins as the params
@@ -774,7 +774,7 @@ public:
    * you wanted to average together.
    *
    * Only after this function was called may you access the averaged histogram data (in
-   * \ref UniformBinsHistogram::bins "bins", \ref delta, \ref count() etc.).  Before
+   * \ref Histogram::bins "bins", \ref delta, \ref count() etc.).  Before
    * calling finalize(), those methods return undefined results.
    *
    * Calling \ref addHistogram() after finalize() will yield undefined results.
@@ -803,7 +803,7 @@ public:
    * Add a new histogram to include into the final averaged histogram.  Call this function
    * repeatedly with different histograms you want to average together.  When you're
    * finished adding histograms, you must call \ref finalize() in order to finalize the
-   * averaging; until then the members \ref UniformBinsHistogram::bins "bins" and \ref
+   * averaging; until then the members \ref Histogram::bins "bins" and \ref
    * delta (as well as \ref count(), \ref errorBar() etc.) yield undefined values.
    *
    * \note \a histogram must have the same range and number of bins as the params
@@ -836,7 +836,7 @@ public:
    * you wanted to average together.
    *
    * Only after this function was called may you access the averaged histogram data (in
-   * \ref UniformBinsHistogram::bins "bins", \ref delta, \ref count() etc.).  Before
+   * \ref Histogram::bins "bins", \ref delta, \ref count() etc.).  Before
    * calling finalize(), those methods return undefined results.
    *
    * Calling \ref addHistogram() after finalize() will yield undefined results.
@@ -904,7 +904,7 @@ struct histogram_pretty_print_label
   }
 };
 // get labels left of histogram (for the family of histograms with 'Params':
-// UniformBinsHistogram, UniformBinsHistogramWithErrorBars etc.)
+// Histogram, HistogramWithErrorBars etc.)
 //
 // common code for several specializations of histogram_pretty_print_label
 template<typename HistogramType>
@@ -925,9 +925,9 @@ inline void histogram_get_labels_for_hist_params(std::vector<std::string> & labe
 }
 // specialize histogram pretty-print labels using the code above
 template<typename Scalar_, typename CountType_>
-struct histogram_pretty_print_label<UniformBinsHistogram<Scalar_, CountType_> >
+struct histogram_pretty_print_label<Histogram<Scalar_, CountType_> >
 {
-  typedef UniformBinsHistogram<Scalar_, CountType_> HistogramType;
+  typedef Histogram<Scalar_, CountType_> HistogramType;
   static inline void getLabels(std::vector<std::string> & labels, const HistogramType & hist)
   {
     histogram_get_labels_for_hist_params<HistogramType>(labels, hist);
@@ -935,9 +935,9 @@ struct histogram_pretty_print_label<UniformBinsHistogram<Scalar_, CountType_> >
 };
 // specialize histogram pretty-print labels using the code above
 template<typename Scalar_, typename CountType_>
-struct histogram_pretty_print_label<UniformBinsHistogramWithErrorBars<Scalar_, CountType_> >
+struct histogram_pretty_print_label<HistogramWithErrorBars<Scalar_, CountType_> >
 {
-  typedef UniformBinsHistogramWithErrorBars<Scalar_, CountType_> HistogramType;
+  typedef HistogramWithErrorBars<Scalar_, CountType_> HistogramType;
   static inline void getLabels(std::vector<std::string> & labels, const HistogramType & hist)
   {
     histogram_get_labels_for_hist_params<HistogramType>(labels, hist);
@@ -1372,6 +1372,14 @@ inline std::string histogramShortBarWithInfo(std::string head,
 
 
 
+
+// compatibility with Tomographer <= 4
+template<typename Scalar_ = double>
+TOMOGRAPHER_DEPRECATED_USING(UniformBinsHistogramParams, HistogramParams<Scalar_>);
+template<typename Scalar_, typename CountType_ = int>
+TOMOGRAPHER_DEPRECATED_USING(UniformBinsHistogram, Histogram<Scalar_,CountType_>);
+template<typename Scalar_, typename CountType_ = double>
+TOMOGRAPHER_DEPRECATED_USING(UniformBinsHistogramWithErrorBars, HistogramWithErrorBars<Scalar_,CountType_>);
 
 
 

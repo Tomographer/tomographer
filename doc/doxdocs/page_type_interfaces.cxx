@@ -52,11 +52,11 @@
  *  - \subpage pageInterfaceValueCalculator
  *  - \subpage pageInterfaceMHRandomWalkTaskCData
  *  - \subpage pageTaskManagerDispatcher
- *  - \subpage pageInterfaceHistogram
  *  - \subpage pageDenseDMTypeInterfaces
  */
 
 // no longer: *  - \subpage pageInterfaceRandomWalk
+// no longer: *  - \subpage pageInterfaceHistogram
 
 
 // =============================================================================
@@ -413,41 +413,41 @@
  */
 
 
-// =============================================================================
-// Histogram
-// =============================================================================
+// // =============================================================================
+// // Histogram
+// // =============================================================================
 
-/** \page pageInterfaceHistogram Histogram Interface
- *
- * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
- * for more info on what that is.</em>
- *
- * \par typedef .. Scalar
- *      Type used to quantify the quantity which is binned into separate bins
- * 
- * \par typedef .. CountType
- *      Type used to count the number of hits in each bin
- *
- * \par static constexpr bool HasErrorBars = ..
- *      Whether this Histogram type can provide error bars (e.g. obtained e.g. through
- *      binning analysis, or by averaging several histograms)
- *
- * In the following, we use \a std::size_t as indexing type, but it can be replaced by any
- * other integral type. You should use \a std::size_t if you store your histogram as a
- * dense object (that's the type which can hold the size of the largest possible object
- * which can be stored in memory).
- *
- * \par std::size_t numBins() const
- *      The number of bins in this histogram.
- *
- * \par CountType count(std::size_t i) const
- *      Number of counts in the bin number i
- *
- * \par CountType errorBar(std::size_t i) const
- *      <em>(Only if <code>HasErrorBars = true</code>)</em> Error bar (standard deviation)
- *      associated to the bin number i.
- * 
- */
+// /* * ***\page pageInterfaceHistogram Histogram Interface*** // removed
+//  *
+//  * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
+//  * for more info on what that is.</em>
+//  *
+//  * \par typedef .. Scalar
+//  *      Type used to quantify the quantity which is binned into separate bins
+//  * 
+//  * \par typedef .. CountType
+//  *      Type used to count the number of hits in each bin
+//  *
+//  * \par static constexpr bool HasErrorBars = ..
+//  *      Whether this Histogram type can provide error bars (e.g. obtained e.g. through
+//  *      binning analysis, or by averaging several histograms)
+//  *
+//  * In the following, we use \a std::size_t as indexing type, but it can be replaced by any
+//  * other integral type. You should use \a std::size_t if you store your histogram as a
+//  * dense object (that's the type which can hold the size of the largest possible object
+//  * which can be stored in memory).
+//  *
+//  * \par std::size_t numBins() const
+//  *      The number of bins in this histogram.
+//  *
+//  * \par CountType count(std::size_t i) const
+//  *      Number of counts in the bin number i
+//  *
+//  * \par CountType errorBar(std::size_t i) const
+//  *      <em>(Only if <code>HasErrorBars = true</code>)</em> Error bar (standard deviation)
+//  *      associated to the bin number i.
+//  * 
+//  */
 
 
 // =============================================================================

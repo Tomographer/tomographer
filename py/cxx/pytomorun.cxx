@@ -189,7 +189,7 @@ py::object py_tomorun(
     py::object fig_of_merit,
     const Eigen::MatrixXcd& ref_state,
     const Eigen::MatrixXcd& observable,
-    const tpy::UniformBinsHistogramParams& hist_params,
+    const tpy::HistogramParams& hist_params,
     const tpy::MHRWParams& mhrw_params,
     int binning_num_levels,
     int num_repeats,
@@ -468,7 +468,7 @@ void py_tomo_tomorun(py::module rootmodule)
       "fig_of_merit"_a = "obs-value"_s,
       "ref_state"_a = Eigen::MatrixXcd(),
       "observable"_a = Eigen::MatrixXcd(),
-      "hist_params"_a = tpy::UniformBinsHistogramParams(),
+      "hist_params"_a = tpy::HistogramParams(),
       "mhrw_params"_a = tpy::MHRWParams(),
       "binning_num_levels"_a = -1,
       "num_repeats"_a = std::thread::hardware_concurrency(),
@@ -503,7 +503,7 @@ void py_tomo_tomorun(py::module rootmodule)
         "            specified as a density matrix.\n"
         ":param observable:  For the 'obs-value' figure of merit, specify the observable here as a matrix.\n"
         ":param hist_params:  The requested range of values to look at when collecting a histogram of the\n"
-        "            figure of mert.  This should be a :py:class:`tomographer.UniformBinsHistogramParams`\n"
+        "            figure of mert.  This should be a :py:class:`tomographer.HistogramParams`\n"
         "            instance.\n"
         ":param mhrw_params:  The parameters of the random walk, including the step size, the sweep size,\n"
         "            the number of thermalization sweeps, and the number of live sweeps.  Specify a\n"
@@ -559,7 +559,7 @@ void py_tomo_tomorun(py::module rootmodule)
         "  - ``final_histogram``: a :py:class:`~tomographer.AveragedErrorBarHistogram` instance with the final "
         "histogram data.  The histogram has the parameters specified in the `hist_params` argument. "
         "The histogram is NOT normalized to a probabilty density; you should call "
-        " :py:meth:`~tomographer.UniformBinsHistogramWithErrorBars.normalized()` if you need a "
+        " :py:meth:`~tomographer.HistogramWithErrorBars.normalized()` if you need a "
         " normalized histogram.\n\n"
         "  - ``simple_final_histogram``: a :py:class:`~tomographer.AveragedSimpleRealHistogram` obtained "
         "from averaging the raw histograms from each task run, ignoring their error bars from"

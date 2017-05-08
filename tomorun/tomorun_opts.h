@@ -84,42 +84,7 @@ static std::string prog_version_info_features()
   //
   // Compiler
   //
-  features_str += "Compiler: ";
-#if defined(__clang__)
-
-#  ifdef __apple_build_version__
-  features_str += Tomographer::Tools::fmts("Apple LLVM/clang++ %s", __clang_version__);
-#  else
-  features_str += Tomographer::Tools::fmts("LLVM/clang++ %s", __clang_version__);
-#  endif
-
-#elif defined(__INTEL_COMPILER)
-
-  features_str += Tomographer::Tools::fmts("Intel %d", __INTEL_COMPILER);
-#  ifdef __INTEL_COMPILER_BUILD_DATE
-  features_str += Tomographer::Tools::fmts(" (%d)", __INTEL_COMPILER_BUILD_DATE);
-#  endif
-
-#elif defined(__GNUC__)
-
-#  ifdef __MINGW32__
-  features_str += Tomographer::Tools::fmts("MinGW gcc %d.%d.%d",
-                                           __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
-#  else
-  features_str += Tomographer::Tools::fmts("gcc %d.%d.%d",
-                                           __GNUC__, __GNUC_MINOR__, __GNUC_PATCHLEVEL__);
-#  endif
-
-#elif defined(__VERISON__)
-
-  features_str += __VERSION__;
-
-#else
-
-  features_str += Tomographer::Tools::fmts("<unknown>");
-
-#endif
-  features_str += "\n";
+  features_str += std::string("Compiler: ") + TOMOGRAPHER_COMPILER_INFO_STR + "\n";
 
   //
   // features: assertions, fixed TOMORUN_* sizes etc., ...

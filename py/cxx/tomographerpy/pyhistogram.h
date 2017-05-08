@@ -36,22 +36,21 @@
 
 namespace tpy {
 
-typedef Tomographer::UniformBinsHistogramParams<RealType> UniformBinsHistogramParams;
+typedef Tomographer::HistogramParams<RealType> HistogramParams;
 
-typedef Tomographer::UniformBinsHistogram<RealType, CountIntType> UniformBinsHistogram;
+typedef Tomographer::Histogram<RealType, CountIntType> Histogram;
 
-typedef Tomographer::UniformBinsHistogram<RealType, RealType> UniformBinsRealHistogram;
+typedef Tomographer::Histogram<RealType, RealType> HistogramReal;
 
-// UniformBinsWithErrorBars
-typedef Tomographer::UniformBinsHistogramWithErrorBars<RealType, RealType> UniformBinsHistogramWithErrorBars;
+typedef Tomographer::HistogramWithErrorBars<RealType, RealType> HistogramWithErrorBars;
 
 
 // AveragedSimpleHistogram (underlying histogram w/o error bars)
-typedef Tomographer::AveragedHistogram<UniformBinsHistogram, RealType> AveragedSimpleHistogram;
+typedef Tomographer::AveragedHistogram<Histogram, RealType> AveragedSimpleHistogram;
 
-typedef Tomographer::AveragedHistogram<UniformBinsRealHistogram, RealType> AveragedSimpleRealHistogram;
+typedef Tomographer::AveragedHistogram<HistogramReal, RealType> AveragedSimpleRealHistogram;
 
-typedef Tomographer::AveragedHistogram<UniformBinsHistogramWithErrorBars, RealType> AveragedErrorBarHistogram;
+typedef Tomographer::AveragedHistogram<HistogramWithErrorBars, RealType> AveragedErrorBarHistogram;
 
 
 } // namespace Py

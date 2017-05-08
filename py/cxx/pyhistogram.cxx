@@ -70,7 +70,7 @@ struct histogram_pickle<HistogramType, false>
     check_pickle_tuple_size(py::len(t), 3);
     HistogramType & histogram = self.cast<HistogramType&>();
 
-    new (&histogram) HistogramType(t[0].cast<tpy::UniformBinsHistogramParams>()) ;
+    new (&histogram) HistogramType(t[0].cast<tpy::HistogramParams>()) ;
 
     // restore bins & off_chart
     histogram.bins = t[1].cast< Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1> >();
@@ -90,7 +90,7 @@ struct histogram_pickle<HistogramType, true>
     check_pickle_tuple_size(py::len(t), 4);
     HistogramType & histogram = self.cast<HistogramType&>();
 
-    new (&histogram) HistogramType(t[0].cast<tpy::UniformBinsHistogramParams>()) ;
+    new (&histogram) HistogramType(t[0].cast<tpy::HistogramParams>()) ;
 
     // restore bins, delta & off_chart
     histogram.bins = t[1].cast< Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1> >() ;
@@ -117,7 +117,7 @@ struct avghistogram_pickle
     check_pickle_tuple_size(py::len(t), 5);
     HistogramType & histogram = self.cast<HistogramType&>();
 
-    new (&histogram) HistogramType(t[0].cast<tpy::UniformBinsHistogramParams>()) ;
+    new (&histogram) HistogramType(t[0].cast<tpy::HistogramParams>()) ;
 
     // restore bins, delta & off_chart
     histogram.bins = t[1].cast<Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1> >();
@@ -142,14 +142,14 @@ void py_tomo_histogram(py::module rootmodule)
 
   logger.debug("py_tomo_histogram() ...");
 
-  logger.debug("UniformBinsHistogramParams...");
+  logger.debug("HistogramParams...");
 
-  // CLASS: UniformBinsHistogramParams
+  // CLASS: HistogramParams
   {
-    typedef tpy::UniformBinsHistogramParams Kl;
-    py::class_<tpy::UniformBinsHistogramParams>(
+    typedef tpy::HistogramParams Kl;
+    py::class_<tpy::HistogramParams>(
         rootmodule,
-        "UniformBinsHistogramParams",
+        "HistogramParams",
         Tomographer::Tools::fmts(
             "Specify histogram bins parameters: the minimum value, the maximum value, and the number "
             "of bins. The interval `[min,max[` is split into `num_bins` equally spaced bins."
@@ -157,11 +157,11 @@ void py_tomo_histogram(py::module rootmodule)
             "|picklable|"
             "\n\n"
             ".. seealso:: This python class interfaces its corresponding "
-            ":tomocxx:`C++ class Tomographer::UniformBinsHistogramParams "
+            ":tomocxx:`C++ class Tomographer::HistogramParams "
             "<struct_tomographer_1_1_uniform_bins_histogram_params.html>`, with the template parameter "
             "`Scalar=%s`.\n\n"
             "\n\n"
-            ".. py:function:: UniformBinsHistogramParams(min=%.1f, max=%.1f, num_bins=%d)"
+            ".. py:function:: HistogramParams(min=%.1f, max=%.1f, num_bins=%d)"
             "\n\n"
             "    Construct a histogram parameters configuration."
             "\n\n"
@@ -222,7 +222,7 @@ void py_tomo_histogram(py::module rootmodule)
            "binResolution()\n\n"
            "Returns the width of a bin.  This is simply :math:`(\\mathit{max} - \\mathit{min})/\\mathit{num_bins}`.")
       .def("__repr__", [](const Kl& p) {
-          return streamstr("UniformBinsHistogramParams(min="
+          return streamstr("HistogramParams(min="
                            << fmt_hist_param_float(p.min) << ",max="
                            << fmt_hist_param_float(p.max) << ",num_bins=" << p.num_bins << ")");
         })
@@ -235,41 +235,41 @@ void py_tomo_histogram(py::module rootmodule)
       ;
   }
 
-  logger.debug("UniformBinsHistogram...");
+  logger.debug("Histogram...");
 
-  // CLASS: UniformBinsHistogram
+  // CLASS: Histogram
   {
-    typedef tpy::UniformBinsHistogram Kl;
-    py::class_<tpy::UniformBinsHistogram>(
+    typedef tpy::Histogram Kl;
+    py::class_<tpy::Histogram>(
         rootmodule,
-        "UniformBinsHistogram",
+        "Histogram",
         Tomographer::Tools::fmts(
             "A histogram object.  An interval `[min,max]` is divided into `num_bins` bins, each of same width. "
             "Each time a new value is to be recorded, the corresponding bin's counter is incremented."
             "\n\n"
             "|picklable|"
             "\n\n"
-            ".. seealso:: This python class interfaces the C++ class :tomocxx:`Tomographer::UniformBinsHistogramParams "
+            ".. seealso:: This python class interfaces the C++ class :tomocxx:`Tomographer::HistogramParams "
             "<class_tomographer_1_1_uniform_bins_histogram.html>`, with the template parameters "
             "`Scalar=%s` and `CountType=%s`.  See the C++ class documentation for more information."
             "\n\n"
             ".. versionchanged:: 4.1\n"
             "    Replaced the class static attribute `HasErrorBars` by the property `has_error_bars`."
             "\n\n"
-            ".. py:function:: UniformBinsHistogram([params=UniformBinsHistogramParams()])\n\n"
+            ".. py:function:: Histogram([params=HistogramParams()])\n\n"
             "    Construct a new histogram object with the given histogram parameters.\n\n"
-            ".. py:function:: UniformBinsHistogram(min, max, num_bins)\n\n"
+            ".. py:function:: Histogram(min, max, num_bins)\n\n"
             "    Alternative call syntax; the effect is the same as the other constructor.\n\n"
             ".. py:attribute:: params\n\n"
-            "    The :py:class:`UniformBinsHistogramParams` object which stores the current histogram "
+            "    The :py:class:`HistogramParams` object which stores the current histogram "
             "parameters.  This attribute is read-only.  The parameters are specified to the constructor, and "
             "cannot be changed.\n\n"
             ".. py:attribute:: values_center\n\n    A shorthand for `params.values_center`. "
-            "See :py:class:`UniformBinsHistogramParams`.\n\n"
+            "See :py:class:`HistogramParams`.\n\n"
             ".. py:attribute:: values_lower\n\n    A shorthand for `params.values_lower`. "
-            "See :py:class:`UniformBinsHistogramParams`.\n\n"
+            "See :py:class:`HistogramParams`.\n\n"
             ".. py:attribute:: values_upper\n\n    A shorthand for `params.values_upper`. "
-            "See :py:class:`UniformBinsHistogramParams`.\n\n"
+            "See :py:class:`HistogramParams`.\n\n"
             ".. py:attribute:: bins\n\n"
             "    The histogram bin counts, interfaced as a `NumPy` array object storing integers.  This attribute "
             "is readable and writable, although you may not change the size or type of the array.\n\n"
@@ -285,7 +285,7 @@ void py_tomo_histogram(py::module rootmodule)
             ).c_str()
         // , py::metaclass()  -- deprecated as of pybind 2.1
         )
-      .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a = tpy::UniformBinsHistogramParams())
+      .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
       .def(py::init<RealType, RealType, std::size_t>(),
           "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("params", [](const Kl & h) -> Kl::Params { return h.params; })
@@ -314,7 +314,7 @@ void py_tomo_histogram(py::module rootmodule)
            "otherwise it is left to its current value.")
       .def("numBins", & Kl::numBins,
            "numBins()\n\n"
-           "A shorthand for `params.num_bins`.  See :py:class:`UniformBinsHistogramParams`.")
+           "A shorthand for `params.num_bins`.  See :py:class:`HistogramParams`.")
       .def("count", & Kl::count, "index"_a,
            "count(index)\n\n"
            "Returns the number of counts in the bin indexed by `index`.  Indexes start at zero.  "
@@ -329,11 +329,11 @@ void py_tomo_histogram(py::module rootmodule)
            "Calculate the normalization factor for the histogram.  This corresponds to the total number "
            "of weight-1 data points, where the weight of a data point may be specified as a second argument "
            "to :py:meth:`record()`.")
-      .def("normalized", [](const Kl & h) -> tpy::UniformBinsRealHistogram { return h.normalized<RealType>(); },
+      .def("normalized", [](const Kl & h) -> tpy::HistogramReal { return h.normalized<RealType>(); },
            "normalized()\n\n"
            "Returns a normalized version of this histogram. The bin counts as well as the off_chart counts "
            "are divided by :py:meth:`normalization()`.  The returned object is a "
-           ":py:class:`UniformBinsRealHistogram` instance.")
+           ":py:class:`HistogramReal` instance.")
       .def("prettyPrint", & Kl::prettyPrint, "max_width"_a = 0,
            "prettyPrint([max_width=0])\n\n"
            "Produce a human-readable representation of the histogram, with horizontal visual bars, which is "
@@ -341,7 +341,7 @@ void py_tomo_histogram(py::module rootmodule)
            "string.  If `max_width` is specified and nonzero, the output is designed to fit into a terminal "
            "display of the given number of characters wide, otherwise a default width is used.")
       .def("__repr__", [](const Kl& p) {
-          return streamstr("UniformBinsHistogram(min="
+          return streamstr("Histogram(min="
                            << fmt_hist_param_float(p.params.min) << ",max="
                            << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
         })
@@ -350,30 +350,30 @@ void py_tomo_histogram(py::module rootmodule)
       ;
   }
 
-  logger.debug("UniformBinsRealHistogram...");
+  logger.debug("HistogramReal...");
 
-  // CLASS: UniformBinsRealHistogram
+  // CLASS: HistogramReal
   {
-    typedef tpy::UniformBinsRealHistogram Kl;
-    py::class_<tpy::UniformBinsRealHistogram>(
+    typedef tpy::HistogramReal Kl;
+    py::class_<tpy::HistogramReal>(
         rootmodule,
-        "UniformBinsRealHistogram",
+        "HistogramReal",
         Tomographer::Tools::fmts(
             "A histogram (with uniform bin size), with a real count type. This class is basically a copy of "
-            ":py:class:`UniformBinsHistogram`, except that each bin's count is a real value.  (This allows, "
+            ":py:class:`Histogram`, except that each bin's count is a real value.  (This allows, "
             "for example, the histogram to be normalized.) Every method documented in "
-            ":py:class:`UniformBinsHistogram` is available to this class as well."
+            ":py:class:`Histogram` is available to this class as well."
             "\n\n"
             "|picklable|"
             "\n\n"
-            "The corresponding C++ class is also :tomocxx:`Tomographer::UniformBinsHistogram "
+            "The corresponding C++ class is also :tomocxx:`Tomographer::Histogram "
             "<class_tomographer_1_1_uniform_bins_histogram.html>`, although the `CountType` template parameter "
             "is set to `%s` instead of `%s`.", boost::core::demangle(typeid(RealType).name()).c_str(),
             boost::core::demangle(typeid(CountIntType).name()).c_str()
             ).c_str()
         // , py::metaclass()  -- deprecated as of pybind 2.1
         )
-      .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a = tpy::UniformBinsHistogramParams())
+      .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
       .def(py::init<RealType, RealType, std::size_t>(),
           "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("params", [](const Kl & h) -> Kl::Params { return h.params; })
@@ -394,10 +394,10 @@ void py_tomo_histogram(py::module rootmodule)
       .def("record", [](Kl & h, RealType x, RealType o) { return h.record(x, o); },
            "value"_a, "weight"_a=RealType(1))
       .def("normalization", [](const Kl & h) { return h.normalization<RealType>(); })
-      .def("normalized", [](const Kl & h) -> tpy::UniformBinsRealHistogram { return h.normalized<RealType>(); })
+      .def("normalized", [](const Kl & h) -> tpy::HistogramReal { return h.normalized<RealType>(); })
       .def("prettyPrint", &Kl::prettyPrint, "max_width"_a=0)
       .def("__repr__", [](const Kl& p) {
-          return streamstr("UniformBinsRealHistogram(min="
+          return streamstr("HistogramReal(min="
                            << fmt_hist_param_float(p.params.min) << ",max="
                            << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
         })
@@ -406,18 +406,18 @@ void py_tomo_histogram(py::module rootmodule)
       ;
   }
   
-  logger.debug("UniformBinsHistogramWithErrorBars...");
+  logger.debug("HistogramWithErrorBars...");
 
-  // UniformBinsHistogramWithErrorBars
+  // HistogramWithErrorBars
   {
-    typedef tpy::UniformBinsHistogramWithErrorBars Kl;
-    py::class_<tpy::UniformBinsHistogramWithErrorBars,tpy::UniformBinsRealHistogram>(
+    typedef tpy::HistogramWithErrorBars Kl;
+    py::class_<tpy::HistogramWithErrorBars,tpy::HistogramReal>(
         rootmodule,
-        "UniformBinsHistogramWithErrorBars",
+        "HistogramWithErrorBars",
         "A histogram (with uniform bin size), with a real count type and with error bars associated to"
         " each bin."
         "\n\n"
-        "This class internally inherits :py:class:`UniformBinsRealHistogram`, and all those methods are "
+        "This class internally inherits :py:class:`HistogramReal`, and all those methods are "
         "exposed in this class, except for `add()`. In addition, the `reset()` method also clears the "
         "error bar values, and the `normalized()` method returns a histogram with the appropriate error "
         " bars on the normalized histogram."
@@ -427,7 +427,7 @@ void py_tomo_histogram(py::module rootmodule)
         ".. versionchanged:: 4.1\n"
         "    Replaced the class static attribute `HasErrorBars` by the property `has_error_bars`."
         "\n\n"
-        "In addition to the members inherited from :py:class:`UniformBinsRealHistogram`, the following "
+        "In addition to the members inherited from :py:class:`HistogramReal`, the following "
         "members are available:"
         "\n\n"
         ".. py:attribute:: delta\n\n"
@@ -440,7 +440,7 @@ void py_tomo_histogram(py::module rootmodule)
         "have natural direct access to the type, only to the instance.)\n\n"
         // , py::metaclass()  -- deprecated as of pybind 2.1
         )
-      .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a=tpy::UniformBinsHistogramParams())
+      .def(py::init<tpy::HistogramParams>(), "params"_a=tpy::HistogramParams())
       .def(py::init<RealType, RealType, std::size_t>())
       .def_property_readonly("params", [](const Kl & h) -> Kl::Params { return h.params; })
       .def_property_readonly("values_center", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesCenter(); })
@@ -464,7 +464,7 @@ void py_tomo_histogram(py::module rootmodule)
            "the error bars on those bin counts.  The off-chart counter is set to `off_chart`."
           )
       .def("add", [](Kl & , py::args, py::kwargs) {
-          throw std::runtime_error("May not call add() on UniformBinsHistogramWithErrorBars");
+          throw std::runtime_error("May not call add() on HistogramWithErrorBars");
         })
 // add() makes no sense, user should use AveragedHistogram for that.
       .def("numBins", & Kl::numBins)
@@ -477,14 +477,14 @@ void py_tomo_histogram(py::module rootmodule)
            "value"_a, "weight"_a=RealType(1))
       .def("normalization", [](const Kl & h) { return h.normalization<RealType>(); })
       .def("normalized",
-           [](const Kl & h) -> tpy::UniformBinsHistogramWithErrorBars { return h.normalized<RealType>(); },
+           [](const Kl & h) -> tpy::HistogramWithErrorBars { return h.normalized<RealType>(); },
            "normalized()\n\n"
            "Returns a normalized version of this histogram, including the error bars. The bin counts, the "
-           "error bars and the off_chart counts are divided by :py:meth:`~UniformBinsHistogram.normalization()`. "
-           " The returned object is again a :py:class:`UniformBinsHistogramWithErrorBars` instance.")
+           "error bars and the off_chart counts are divided by :py:meth:`~Histogram.normalization()`. "
+           " The returned object is again a :py:class:`HistogramWithErrorBars` instance.")
       .def("prettyPrint", & Kl::prettyPrint, "max_width"_a = 0)
       .def("__repr__", [](const Kl& p) {
-          return streamstr("UniformBinsHistogramWithErrorBars(min="
+          return streamstr("HistogramWithErrorBars(min="
                            << fmt_hist_param_float(p.params.min) << ",max="
                            << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
         })
@@ -497,18 +497,18 @@ void py_tomo_histogram(py::module rootmodule)
   // AveragedSimpleHistogram
   {
     typedef tpy::AveragedSimpleHistogram Kl;
-    py::class_<tpy::AveragedSimpleHistogram, tpy::UniformBinsHistogramWithErrorBars>(
+    py::class_<tpy::AveragedSimpleHistogram, tpy::HistogramWithErrorBars>(
         rootmodule,
         "AveragedSimpleHistogram",
-        "A :py:class:`UniformBinsHistogramWithErrorBars` which results from the "
-        "averaging of several :py:class:`UniformBinsHistogram` histograms."
+        "A :py:class:`HistogramWithErrorBars` which results from the "
+        "averaging of several :py:class:`Histogram` histograms."
         "\n\n"
         "Add histograms to average together using the :py:meth:`addHistogram()` method, and "
         "then call :py:meth:`finalize()`. Then, the data stored in the current object will "
         "correspond to the averaged histogram. (See :tomocxx:`here the theory about how this is "
         "implemented <page_theory_averaged_histogram.html>`.)"
         "\n\n"
-        "This histogram object inherits :py:class:`UniformBinsHistogramWithErrorBars`, so all the "
+        "This histogram object inherits :py:class:`HistogramWithErrorBars`, so all the "
         "methods exposed in that class are available to access the averaged histogram data."
         "\n\n"
         "|picklable|"
@@ -521,12 +521,12 @@ void py_tomo_histogram(py::module rootmodule)
         "    The number of histograms currently stored (read-only). This property may be "
         "    accessed at any time, also before having called :py:meth:`finalize()`."
         )
-      .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a = tpy::UniformBinsHistogramParams())
+      .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
       .def(py::init<RealType, RealType, CountIntType>(),
            "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("num_histograms", [](const Kl & h) { return h.num_histograms; })
       .def("addHistogram",
-           [](Kl & h, const tpy::UniformBinsHistogram & o) { h.addHistogram(o); },
+           [](Kl & h, const tpy::Histogram & o) { h.addHistogram(o); },
            "histogram"_a,
            "addHistogram(histogram)\n\n"
            "Add a new histogram to the average with the others.")
@@ -534,7 +534,7 @@ void py_tomo_histogram(py::module rootmodule)
            [](Kl & h) { h.reset(); }
           )
       .def("reset",
-           [](Kl & h, const tpy::UniformBinsHistogramParams & param) { h.reset(param); },
+           [](Kl & h, const tpy::HistogramParams & param) { h.reset(param); },
            "reset([param])\n\n"
            "Clear all stored histograms and start a new averaging sequence. The "
            "histogram parameters are changed to `param` if you specify `param`, otherwise "
@@ -560,14 +560,14 @@ void py_tomo_histogram(py::module rootmodule)
   // AveragedSimpleRealHistogram
   {
     typedef tpy::AveragedSimpleRealHistogram Kl;
-    py::class_<tpy::AveragedSimpleRealHistogram,tpy::UniformBinsHistogramWithErrorBars>(
+    py::class_<tpy::AveragedSimpleRealHistogram,tpy::HistogramWithErrorBars>(
         rootmodule,
         "AveragedSimpleRealHistogram",
-        "A :py:class:`UniformBinsHistogramWithErrorBars` which results from the "
-        "averaging of several :py:class:`UniformBinsRealHistogram` histograms."
+        "A :py:class:`HistogramWithErrorBars` which results from the "
+        "averaging of several :py:class:`HistogramReal` histograms."
         "\n\n"
         "This class is identical in functionality to :py:class:`AveragedSimpleHistogram`, except "
-        "that the histograms which are to be averaged are :py:class:`UniformBinsRealHistogram` "
+        "that the histograms which are to be averaged are :py:class:`HistogramReal` "
         "objects."
         "\n\n"
         "|picklable|"
@@ -580,12 +580,12 @@ void py_tomo_histogram(py::module rootmodule)
         "    The number of histograms currently stored (read-only). This property may be "
         "    accessed at any time, also before having called :py:meth:`finalize()`."
         )
-      .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a = tpy::UniformBinsHistogramParams())
+      .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
       .def(py::init<RealType, RealType, CountIntType>(),
           "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("num_histograms", [](const Kl & h) { return h.num_histograms; })
       .def("addHistogram",
-           [](Kl & h, const tpy::UniformBinsRealHistogram & o) { h.addHistogram(o); },
+           [](Kl & h, const tpy::HistogramReal & o) { h.addHistogram(o); },
            "histogram"_a,
            "addHistogram(histogram)\n\n"
            "Add a new histogram to the average with the others.")
@@ -593,7 +593,7 @@ void py_tomo_histogram(py::module rootmodule)
            [](Kl & h) { h.reset(); }
           )
       .def("reset",
-           [](Kl & h, const tpy::UniformBinsHistogramParams & param) { h.reset(param); },
+           [](Kl & h, const tpy::HistogramParams & param) { h.reset(param); },
            "reset([param])\n\n"
            "Clear all stored histograms and start a new averaging sequence. The "
            "histogram parameters are changed to `param` if you specify `param`, otherwise "
@@ -619,16 +619,16 @@ void py_tomo_histogram(py::module rootmodule)
   // AveragedErrorBarHistogram
   {
     typedef tpy::AveragedErrorBarHistogram Kl;
-    py::class_<tpy::AveragedErrorBarHistogram,tpy::UniformBinsHistogramWithErrorBars>(
+    py::class_<tpy::AveragedErrorBarHistogram,tpy::HistogramWithErrorBars>(
         rootmodule,
         "AveragedErrorBarHistogram",
-        "A :py:class:`UniformBinsHistogramWithErrorBars` which results from the "
-        "averaging of several :py:class:`UniformBinsHistogramWithErrorBars` histograms."
+        "A :py:class:`HistogramWithErrorBars` which results from the "
+        "averaging of several :py:class:`HistogramWithErrorBars` histograms."
         "\n\n"
         "This class is essentially identical in functionality to "
         ":py:class:`AveragedSimpleHistogram` and :py:class:`AveragedSimpleRealHistogram`, except "
         "that the histograms which are to be averaged are "
-        " :py:class:`UniformBinsHistogramWithErrorBars` "
+        " :py:class:`HistogramWithErrorBars` "
         "objects, i.e. each histogram added already has information about error bars.  Those "
         "error bars are then combined appropriately, as described in :tomocxx:`the theory about "
         "how this class is implemented <page_theory_averaged_histogram.html>`."
@@ -643,12 +643,12 @@ void py_tomo_histogram(py::module rootmodule)
         "    The number of histograms currently stored (read-only). This property may be "
         "    accessed at any time, also before having called :py:meth:`finalize()`."
         )
-      .def(py::init<tpy::UniformBinsHistogramParams>(), "params"_a = tpy::UniformBinsHistogramParams())
+      .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
       .def(py::init<RealType, RealType, CountIntType>(),
           "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("num_histograms", [](const Kl & h) { return h.num_histograms; })
       .def("addHistogram",
-           [](Kl & h, const tpy::UniformBinsHistogramWithErrorBars & o) {
+           [](Kl & h, const tpy::HistogramWithErrorBars & o) {
              h.addHistogram(o);
            },
            "histogram"_a,
@@ -658,7 +658,7 @@ void py_tomo_histogram(py::module rootmodule)
            [](Kl & h) { h.reset(); }
           )
       .def("reset",
-           [](Kl & h, const tpy::UniformBinsHistogramParams & param) { h.reset(param); },
+           [](Kl & h, const tpy::HistogramParams & param) { h.reset(param); },
            "reset([param])\n\n"
            "Clear all stored histograms and start a new averaging sequence. The "
            "histogram parameters are changed to `param` if you specify `param`, otherwise "
@@ -680,6 +680,13 @@ void py_tomo_histogram(py::module rootmodule)
       .def("__setstate__", avghistogram_pickle<Kl>::setstate)
       ;
   }
+
+  // deprecated aliases
+  auto & m = rootmodule;
+  m.attr("UniformBinsHistogramParams") = m.attr("HistogramParams");
+  m.attr("UniformBinsHistogram") = m.attr("Histogram");
+  m.attr("UniformBinsRealHistogram") = m.attr("HistogramReal");
+  m.attr("UniformBinsHistogramWithErrorBars") = m.attr("HistogramWithErrorBars");
 
   logger.debug("py_tomo_histogram() completed.");
 }

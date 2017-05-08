@@ -8,6 +8,14 @@ Typically such a class would be returned by a core task such as
 
 
 .. automodule:: tomographer
-    :members: UniformBinsHistogramParams, UniformBinsHistogram, UniformBinsRealHistogram, UniformBinsHistogramWithErrorBars, AveragedSimpleHistogram, AveragedSimpleRealHistogram, AveragedErrorBarHistogram
+    :members: HistogramParams, Histogram, HistogramReal, HistogramWithErrorBars, AveragedSimpleHistogram, AveragedSimpleRealHistogram, AveragedErrorBarHistogram
     :show-inheritance:
 
+
+
+Deprecated Aliases
+------------------
+
+The following aliases are provided for compatibility with older versions of Tomographer
+(before Tomographer 5): `UniformBinsHistogramParams`, `UniformBinsHistogram`,
+`UniformBinsRealHistogram`, and `UniformBinsHistogramWithErrorBars`.

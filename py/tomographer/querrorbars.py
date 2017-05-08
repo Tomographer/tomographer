@@ -36,9 +36,9 @@ def fit_histogram(normalized_histogram, fit_fn, ftox, **kwopts):
     Fit the histogram data to a model function.
 
     :param normalized_histogram: the final histogram data, provided as a
-        :py:class:`tomographer.UniformBinsHistogramWithErrorBars` class (or a subclass
+        :py:class:`tomographer.HistogramWithErrorBars` class (or a subclass
         thereof), and normalized to a proper probability density (see
-        :py:meth:`tomographer.UniformBinsHistogramWithErrorBars.normalized()`).
+        :py:meth:`tomographer.HistogramWithErrorBars.normalized()`).
 
     :param ftox: a function which transforms the figure of merit values (`f`-values) into
         the natural parameter for the fit function (`x`-values).  For example, for the
@@ -137,7 +137,7 @@ class HistogramAnalysis(object):
     Arguments to the constructor:
       - `final_histogram`: the final histogram returned by the random walks
         procedure.  It is expected to be a
-        `tomographer.UniformBinsHistogramWithErrorBars`.
+        `tomographer.HistogramWithErrorBars`.
       - `ftox`: Specify how to transform the figure of merit value `f` into
         the `x` coordinate for fit. Specify the transformation as a pair of
         values `(h, s)` in the relation `x = s*(f-h)` or `f=s*x+h`, where h

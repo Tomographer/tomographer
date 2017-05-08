@@ -106,6 +106,7 @@ public:
   {
   }
 
+
   // method to get a particular stats collector
   template<int I>
   inline const typename std::tuple_element<I, MHRWStatsCollectorsTupleType>::type & getStatsCollector() const
@@ -199,6 +200,36 @@ public:
   {
   }
 
+
+
+
+  // /** \brief Create a new MultipleMHRWStatsCollectors by appending a stats collector to an
+  //  *         existing MultipleMHRWStatsCollectors
+  //  *
+  //  */
+  // template<typename NewStatsCollector>
+  // inline MultipleMHRWStatsCollectors<MHRWStatsCollectors..., NewStatsCollector>
+  // appended(NewStatsCollector & new_stats_collector) const
+  // {
+  //   return MultipleMHRWStatsCollectors<MHRWStatsCollectors..., NewStatsCollector>(
+  //       statscollectors... hem hem,
+  //       new_stats_collector)
+  // }
+  //
+  //
+  // /** \brief Create a new MultipleMHRWStatsCollectors by merging with another
+  //  *         MultipleMHRWStatsCollectors
+  //  *
+  //  */
+  // template<typename MultipleMHRWStatsCollectors2>
+  // inline
+  // ....
+  // merged(MultipleMHRWStatsCollectors2 b)
+  // {
+  //   MultipleMHRWStatsCollectors
+  // }
+
+
 };
 
 
@@ -207,7 +238,7 @@ public:
 
 /** \brief Trivial, NO-OP stats collector
  *
- * The minimal interface to a \ref pageInterfaceMHRWStatsCollector which does absolutely
+ * The minimal interface to a \ref pageInterfaceMHRWStatsCollector which does absolutely 
  * nothing.
  *
  */

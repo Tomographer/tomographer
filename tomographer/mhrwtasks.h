@@ -235,7 +235,7 @@ struct mhrandomwalk_type_helper {
     typedef MHRandomWalk<Rng,MHWalkerType,StatsCollector,MHWalkerParamsNoAdjuster,LoggerType,IterCountIntType> type;
   };
   static constexpr bool has_adjuster = false;
-  static inline MHWalkerParamsAdjusterType createMHWalkerParams(const MHRandomWalkTaskCData *, MHWalkerType &)
+  static inline MHWalkerParamsAdjusterType createMHWalkerParamsAdjuster(const MHRandomWalkTaskCData *, MHWalkerType &)
   {
     return MHWalkerParamsAdjusterType();
   }
@@ -254,10 +254,10 @@ mhrandomwalk_type_helper<MHRandomWalkTaskCData, Rng, MHWalkerType, LoggerType, I
     typedef MHRandomWalk<Rng,MHWalkerType,StatsCollector,MHWalkerParamsAdjusterType,LoggerType,IterCountIntType> type;
   };
   static constexpr bool has_adjuster = true;
-  static inline MHWalkerParamsAdjusterType && createMHWalkerParams(const MHRandomWalkTaskCData * pcdata,
+  static inline MHWalkerParamsAdjusterType && createMHWalkerParamsAdjuster(const MHRandomWalkTaskCData * pcdata,
                                                                    MHWalkerType & mhwalker)
   {
-    return pcdata->createMHWalkerParams(mhwalker);
+    return pcdata->createMHWalkerParamsAdjuster(mhwalker);
   }
 
 };
@@ -367,11 +367,12 @@ public:
     logger.longdebug("Tomographer::MHRWTasks::run()", "MHWalker object created.");
 
     typedef tomo_internal::mhrandomwalk_type_helper<MHRandomWalkTaskCData, Rng, MHWalkerType,
-                                                   LoggerType, IterCountIntType>
+                                                    LoggerType, IterCountIntType>
       mhrandomwalktypehelper;
     typedef typename mhrandomwalktypehelper::MHWalkerParamsAdjusterType MHWalkerParamsAdjusterType;
 
-    MHWalkerParamsAdjusterType mhwalkerparamsadjuster = mhrandomwalktypehelper::createMHWalkerParams(pcdata, mhwalker);
+    MHWalkerParamsAdjusterType mhwalkerparamsadjuster =
+      mhrandomwalktypehelper::createMHWalkerParamsAdjuster(pcdata, mhwalker);
 
     logger.longdebug("Tomographer::MHRWTasks::run()", "MHWalkerParamsAdjuster created [if necessary]");
 

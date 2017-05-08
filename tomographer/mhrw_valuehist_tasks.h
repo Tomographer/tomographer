@@ -56,7 +56,7 @@ namespace ValueHistogramTasks {
 namespace tomo_internal {
 template<typename CDataBaseType, bool UseBinningAnalysis>
 struct histogram_types {// version WITHOUT binning analysis:
-  typedef UniformBinsHistogram<typename CDataBaseType::ValueCalculator::ValueType,
+  typedef Histogram<typename CDataBaseType::ValueCalculator::ValueType,
                                typename CDataBaseType::HistCountIntType> HistogramType;
   /// we know that ValueHistogramMHRWStatsCollector<ValueCalculator,...,HistogramType>::ResultType is HistogramType
   typedef HistogramType MHRWStatsCollectorResultType;
@@ -134,7 +134,7 @@ void print_hist_short_bar_with_accept_info(std::ostream & str, int dig_w, std::s
 template<typename CDataBaseType_, typename LoggerType_>
 TOMOGRAPHER_EXPORT struct ResultsCollectorSimple
   : public virtual Tools::NeedOwnOperatorNew<
-      AveragedHistogram<UniformBinsHistogram<typename CDataBaseType_::HistogramType::Scalar,
+      AveragedHistogram<Histogram<typename CDataBaseType_::HistogramType::Scalar,
                                              typename CDataBaseType_::CountRealType>,
                         typename CDataBaseType_::CountRealType>
     >::ProviderType
@@ -162,12 +162,12 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorSimple
   /** \brief The type of the histogram resulting from a single task, but scaled so that
    *         each bin value corresponds to the fraction of data points in bin
    */
-  typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> ScaledHistogramType;
+  typedef Histogram<typename HistogramType::Scalar, CountRealType> ScaledHistogramType;
   /** \berief The type of the final resulting, averaged histogram
    *
    * The scale of the histogram is chosen such that each bin value corresponds to the
    * fraction of data points observed in this bin.  To normalize the histogram to a unit
-   * probability density, use \ref UniformBinsHistogram::normalized().  This scaling is
+   * probability density, use \ref Histogram::normalized().  This scaling is
    * the same as that used by the histogram produced using a binning analysis, see \ref
    * ValueHistogramWithBinningMHRWStatsCollectorResult.
    */
@@ -208,7 +208,7 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorSimple
      *
      * The scale of the histogram is chosen such that each bin value corresponds to the
      * fraction of data points observed in this bin.  To normalize the histogram to a unit
-     * probability density, use \ref UniformBinsHistogram::normalized().  This scaling is
+     * probability density, use \ref Histogram::normalized().  This scaling is
      * the same as that used by the histogram produced using a binning analysis, see \ref
      * ValueHistogramWithBinningMHRWStatsCollectorResult.
      */
@@ -254,7 +254,7 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorSimple
    *
    * The scale of the histogram is chosen such that each bin value corresponds to the
    * fraction of data points observed in this bin.  To normalize the histogram to a unit
-   * probability density, use \ref UniformBinsHistogram::normalized().
+   * probability density, use \ref Histogram::normalized().
    */
   inline FinalHistogramType finalHistogram() const {
     tomographer_assert(isFinalized() && "You may only call finalHistogram() after the runs have been finalized.");
@@ -337,7 +337,7 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorSimple
    * space.
    *
    * If \a print_histogram is \c true, then the histogram is also printed in a human
-   * readable form, using \ref UniformBinsHistogramWithErrorBars::prettyPrint().
+   * readable form, using \ref HistogramWithErrorBars::prettyPrint().
    *
    */
   inline void printFinalReport(std::ostream & str, const CDataBaseType & cdata,
@@ -411,7 +411,7 @@ public:
     // those histograms obtained by the two procedures.
     //
     // NOTE: This does not normalize the histogram to unit area.  Use \ref
-    // UniformBinsHistogram::normalized() for that.
+    // Histogram::normalized() for that.
     //
     ScaledHistogramType thishistogram = taskresult.stats_collector_result;
     typename ScaledHistogramType::CountType numsamples =
@@ -478,7 +478,7 @@ public:
 template<typename CDataBaseType_, typename LoggerType_>
 TOMOGRAPHER_EXPORT struct ResultsCollectorWithBinningAnalysis
   : public virtual Tools::NeedOwnOperatorNew<
-      UniformBinsHistogram<typename CDataBaseType_::HistogramType::Scalar,
+      Histogram<typename CDataBaseType_::HistogramType::Scalar,
                            typename CDataBaseType_::CountRealType>
     >::ProviderType
 {
@@ -536,7 +536,7 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorWithBinningAnalysis
    * Note we need a real (e.g. \a double) counting type, because the histograms we'll be
    * recording are scaled.
    */
-  typedef UniformBinsHistogram<typename HistogramType::Scalar, CountRealType> SimpleScaledHistogramType;
+  typedef Histogram<typename HistogramType::Scalar, CountRealType> SimpleScaledHistogramType;
   /** \brief Properly averaged "simple" histogram, with naive statistical standard
    *         deviation error bars from the several task runs
    */
@@ -591,7 +591,7 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorWithBinningAnalysis
    *
    * The scale of the histogram is chosen such that each bin value corresponds to the
    * fraction of data points observed in this bin.  To normalize the histogram to a unit
-   * probability density, use \ref UniformBinsHistogram::normalized().
+   * probability density, use \ref Histogram::normalized().
    */
   inline FinalHistogramType finalHistogram() const {
     tomographer_assert(isFinalized() && "You may only call finalHistogram() after the runs have been finalized.");
@@ -606,7 +606,7 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorWithBinningAnalysis
    *
    * The scale of the histogram is chosen such that each bin value corresponds to the
    * fraction of data points observed in this bin.  To normalize the histogram to a unit
-   * probability density, use \ref UniformBinsHistogram::normalized().  This scale is
+   * probability density, use \ref Histogram::normalized().  This scale is
    * chosen because it coincides with that used by the histograms reported by the binning
    * analysis.
    */
@@ -695,7 +695,7 @@ TOMOGRAPHER_EXPORT struct ResultsCollectorWithBinningAnalysis
    * space.
    *
    * If \a print_histogram is \c true, then the histogram is also printed in a human
-   * readable form, using \ref UniformBinsHistogramWithErrorBars::prettyPrint().
+   * readable form, using \ref HistogramWithErrorBars::prettyPrint().
    */
   inline void printFinalReport(std::ostream & str, const CDataBaseType & cdata,
                                int max_width = 0, bool print_histogram = true)
@@ -810,7 +810,7 @@ public:
     logger.debug("added histogram.");
     
     // this one is declared for histograms WITHOUT error bars (SimpleHistogramType is a
-    // UniformBinsHistogram), so it will just ignore the error bars.
+    // Histogram), so it will just ignore the error bars.
     logger.debug([&](std::ostream & str) {
 	str << "Simple histogram is:\n";
 	histogramPrettyPrint<SimpleScaledHistogramType>(str, stats_coll_result.hist);
@@ -974,9 +974,9 @@ TOMOGRAPHER_EXPORT struct CDataBase
    *
    * It is either:
    *
-   *   - (no binning analysis): a UniformBinsHistogram of appropriate parameters type
+   *   - (no binning analysis): a Histogram of appropriate parameters type
    *
-   *   - (with binning analysis): a UniformBinsHistogramWithErrorBars of appropriate
+   *   - (with binning analysis): a HistogramWithErrorBars of appropriate
    *     parameters types.  This is in fact \ref
    *     ValueHistogramWithBinningMHRWStatsCollectorParams::HistogramType.
    */

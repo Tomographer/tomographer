@@ -111,7 +111,7 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         "or whether the convergence status is unknown or couldn't be determined "
         " (:py:const:`BinningAnalysis.UNKNOWN_CONVERGENCE <tomographer.BinningAnalysis>`)."
         )
-      .def(py::init<tpy::UniformBinsHistogramWithErrorBars,tpy::RealMatrixType,Eigen::VectorXi>(),
+      .def(py::init<tpy::HistogramWithErrorBars,tpy::RealMatrixType,Eigen::VectorXi>(),
            "hist"_a, "error_levels"_a, "converged_status"_a)
       .def_readonly("hist", & Kl::hist )
       .def_property_readonly("error_levels", [](const Kl & x) -> tpy::RealMatrixType { return x.error_levels; })
@@ -123,7 +123,7 @@ void py_tomo_mhrwtasks(py::module rootmodule)
           return py::make_tuple(p.attr("hist"), p.attr("error_levels"), p.attr("converged_status"));
         })
       .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl, tpy::UniformBinsHistogramWithErrorBars,
+          tpy::internal::unpack_tuple_and_construct<Kl, tpy::HistogramWithErrorBars,
                                                     tpy::RealMatrixType, Eigen::VectorXi>(p, t);
         })
       ;
