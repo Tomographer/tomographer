@@ -57,6 +57,50 @@
 namespace Tomographer {
 
 
+namespace tomo_internal {
+
+struct NoResult {
+  inline NoResult() { }
+};
+
+template<typename MHRWStatsCollector, typename dummy = void>
+struct multistatscoll_result_type_helper {
+  // static constexpr bool HasResultType = false;
+  typedef NoResult ResultType;
+  inline ResultType getResult(MHRWStatsCollector & ) { return NoResult(); }
+};
+template<typename MHRWStatsCollector>
+struct multistatscoll_result_type_helper<
+  MHRWStatsCollector,
+  typename std::enable_if<
+    !std::is_same<typename MHRWStatsCollector::ResultType,void>::value,
+    void
+    >::type
+  >
+{
+  // static constexpr bool HasResultType = true;
+  typedef typename MHRWStatsCollector::ResultType ResultType;
+  inline ResultType getResult(MHRWStatsCollector & s) { return s.getResult(); }
+};
+
+template<typename ResultType, typename... MHRWStatsCollectors>
+struct multistatscoll_result_type_helper2 {
+  typedef std::tuple<MHRWStatsCollectors&...> TupleType;
+  template<typename T, int... Is>
+  inline ResultType getResult(TupleType statscollectors, Tools::Sequence<T, Is...> )
+  {
+    return std::make_tuple(
+        multistatscoll_result_type_helper<typename std::tuple_element<Is, TupleType>::type>::getResult(
+            std::get<Is>(statscollectors)
+            ) ...
+        ) ;
+  }
+};
+
+} // namespace tomo_internal
+
+
+
 /** \brief A simple MHRWStatsCollector interface which combines several stats collectors
  *
  * A \ref MHRandomWalk object expects one instance of a \a MHRWStatsCollector (see \ref
@@ -82,6 +126,11 @@ namespace Tomographer {
  *   // will relay the callbacks to all the given stat collectors `statcoll*'.
  * \endcode
  *
+ * This class also implements the \ref pageInterfaceResultable interface, providing a \ref
+ * ResultType member type which is a tuple of, for each stats collector, either its \a
+ * ResultType, or an empty type if the stats collector doesn't have a \a ResultType
+ * member.
+ *
  * The number of stat collectors that were defined is accessible through the constant
  * enumeration value \ref NumStatColl.
  *
@@ -106,13 +155,24 @@ public:
   {
   }
 
-
   // method to get a particular stats collector
   template<int I>
   inline const typename std::tuple_element<I, MHRWStatsCollectorsTupleType>::type & getStatsCollector() const
   {
     return std::get<I>(statscollectors);
   }
+
+  typedef std::tuple<typename tomo_internal::multistatscoll_result_type_helper<MHRWStatsCollectors>::ResultType...>
+    ResultType;
+
+  ResultType getResult() const
+  {
+    return tomo_internal::multistatscoll_result_type_helper2<ResultType, MHRWStatsCollectors...>::getResult(
+        statscollectors,
+        Tools::GenerateSequence<int, NumStatColl>()
+        );
+  }
+
 
   // init() callback
 
@@ -350,7 +410,7 @@ public:
  */
 template<typename ValueCalculator_,
 	 typename LoggerType = Logger::VacuumLogger,
-	 typename HistogramType_ = UniformBinsHistogram<typename ValueCalculator_::ValueType>
+	 typename HistogramType_ = Histogram<typename ValueCalculator_::ValueType>
 	 >
 TOMOGRAPHER_EXPORT class ValueHistogramMHRWStatsCollector
   : public virtual Tools::NeedOwnOperatorNew<ValueCalculator_, HistogramType_>::ProviderType
@@ -364,7 +424,7 @@ public:
   //! The type to use to represent a calculated distance
   typedef typename ValueCalculator::ValueType ValueType;
 
-  //! The type of the histogram. Usually a \ref UniformBinsHistogram with \a ValueType range type
+  //! The type of the histogram. Usually a \ref Histogram with \a ValueType range type
   typedef HistogramType_ HistogramType;
 
   //! Required for compliance with \ref pageInterfaceResultable type
@@ -531,7 +591,7 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
    * sample data points whose value were inside this bin.
    *
    * \note This histogram is not normalized to unit area. You should call \ref
-   * UniformBinsHistogramWithErrorBars::normalized() to obtain a proper normalized histogram, i.e.
+   * HistogramWithErrorBars::normalized() to obtain a proper normalized histogram, i.e.
    * to which one can fit a proper, normalized probability density.
    */
   HistogramType hist;
@@ -680,11 +740,11 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorParams
    *
    * The type of the histogram which simply stores the bin counts.
    */
-  typedef UniformBinsHistogram<typename ValueCalculator::ValueType, CountIntType> BaseHistogramType;
+  typedef Histogram<typename ValueCalculator::ValueType, CountIntType> BaseHistogramType;
   /** \brief The Final Histogram Type (with error bars).
    *
    */
-  typedef UniformBinsHistogramWithErrorBars<typename ValueCalculator::ValueType, CountRealAvgType> HistogramType;
+  typedef HistogramWithErrorBars<typename ValueCalculator::ValueType, CountRealAvgType> HistogramType;
   /** \brief The corresponding histogram params type
    *
    */

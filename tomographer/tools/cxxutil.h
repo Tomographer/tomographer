@@ -87,6 +87,35 @@ inline tomo_internal::FinalAction<F> finally(F f)
 
 
 
+// -----------------------------------------------------------------------------
+
+// see http://aherrmann.github.io/programming/2016/02/28/unpacking-tuples-in-cpp14/ and
+// http://stackoverflow.com/questions/17424477/implementation-c14-make-integer-sequence/17426611#17426611
+//
+
+template<typename T, T...> struct Sequence { typedef Sequence type; };
+
+template<typename T, typename S1, typename S2> struct Concatenate;
+
+template<typename T, T... I1, T... I2>
+struct Concatenate<T, Sequence<T, I1...>, Sequence<T, I2...> >
+  : Sequence<T, I1..., (sizeof...(I1)+I2)...> {};
+
+template<typename T, T N, typename dummy = void>
+struct GenerateSequence;
+
+template<typename T, T N, typename >
+struct GenerateSequence : Concatenate<T, typename GenerateSequence<T, N/2>::type,
+                                      typename GenerateSequence<T, N - N/2>::type>::type {};
+
+template<typename T, T N>
+struct GenerateSequence<T, N, typename std::enable_if<(N==0),void>::type>
+  : Sequence<T> {};
+
+template<typename T, T N>
+struct GenerateSequence<T, N, typename std::enable_if<(N==1),void>::type>
+  : Sequence<T, 0> {};
+
 
 
 

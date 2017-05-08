@@ -164,28 +164,26 @@ BOOST_AUTO_TEST_SUITE(t__MultiProc__OMP__TaskDispatcher);
 BOOST_FIXTURE_TEST_CASE(tasks_run, test_task_dispatcher_fixture)
 {
   Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
-  Tomographer::MultiProc::OMP::TaskDispatcher<TestTask, TestBasicCData, TestResultsCollector,
+  Tomographer::MultiProc::OMP::TaskDispatcher<TestTask, TestBasicCData, 
                                               Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+      task_dispatcher(&cData, logger, num_runs, 1);
 
   BOOST_MESSAGE("About to run tasks");
 
   task_dispatcher.run();
 
-  BOOST_CHECK_EQUAL(resultsCollector.init_called, 1);
-  BOOST_CHECK_EQUAL(resultsCollector.collectres_called, num_runs);
-  BOOST_CHECK_EQUAL(resultsCollector.runsfinished_called, 1);
+  check_correct_results();
 }
 
 BOOST_FIXTURE_TEST_CASE(make_task_dispatcher, test_task_dispatcher_fixture)
 {
-  typedef Tomographer::MultiProc::OMP::TaskDispatcher<TestTask, TestBasicCData, TestResultsCollector,
+  typedef Tomographer::MultiProc::OMP::TaskDispatcher<TestTask, TestBasicCData, 
                                                       Tomographer::Logger::BoostTestLogger, int>  TaskDispatcherType;
 
   Tomographer::Logger::BoostTestLogger logger;
 
   auto task_dispatcher = Tomographer::MultiProc::OMP::makeTaskDispatcher<TestTask>(
-      &cData, &resultsCollector, logger,
+      &cData, logger,
       num_runs, 1);
 
   // just check that the type was properly deduced (including all template parameters)
@@ -228,9 +226,8 @@ BOOST_FIXTURE_TEST_CASE(inner_code_stack_aligned, test_task_dispatcher_fixture)
 {
   Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
   Tomographer::MultiProc::OMP::TaskDispatcher<TestTaskCheckAlignedStack, TestBasicCData,
-                                              TestResultsCollector,
                                               Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+      task_dispatcher(&cData, logger, num_runs, 1);
 
   char blah_data[4] = {0}; // some random stuff -- not really needed, it's just here to clutter the code and memory
   char blah_data2[7] = {0}; // some random stuff -- not really needed, it's just here to clutter the code and memory
@@ -240,6 +237,8 @@ BOOST_FIXTURE_TEST_CASE(inner_code_stack_aligned, test_task_dispatcher_fixture)
   task_dispatcher.run();
 
   BOOST_MESSAGE("All tasks finished, run() completed.");
+
+  check_correct_results();
 
   (void)blah_data;
   (void)blah_data2;
@@ -253,9 +252,8 @@ BOOST_AUTO_TEST_CASE(status_report_periodic)
   Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
 
   Tomographer::MultiProc::OMP::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
-                                              StatusRepTestResultsCollector,
                                               Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+      task_dispatcher(&cData, logger, num_runs, 1);
 
   perform_test_status_report_periodic(task_dispatcher, logger) ;
 }
@@ -266,9 +264,8 @@ BOOST_AUTO_TEST_CASE(interrupt_tasks_withthread)
   Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
 
   Tomographer::MultiProc::OMP::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
-                                              StatusRepTestResultsCollector,
                                               Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+      task_dispatcher(&cData, logger, num_runs, 1);
 
   perform_test_interrupt_tasks_withthread(task_dispatcher, logger) ;
 
@@ -278,9 +275,8 @@ BOOST_AUTO_TEST_CASE(status_report_withthread)
   Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
 
   Tomographer::MultiProc::OMP::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
-                                              StatusRepTestResultsCollector,
                                               Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+      task_dispatcher(&cData, logger, num_runs, 1);
 
   perform_test_status_report_withthread(task_dispatcher, logger);
 }
@@ -294,9 +290,8 @@ BOOST_AUTO_TEST_CASE(status_report_withsigalrm)
   Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
 
   Tomographer::MultiProc::OMP::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
-                                              StatusRepTestResultsCollector,
                                               Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs, 1);
+      task_dispatcher(&cData, logger, num_runs, 1);
 
   perform_test_status_report_withsigalrm(task_dispatcher, logger);
 }

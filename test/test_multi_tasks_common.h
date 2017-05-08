@@ -96,14 +96,20 @@ struct TestTask {
   typedef Tomographer::MultiProc::TaskStatusReport StatusReportType;
   
   struct ResultType {
-    ResultType(int value_ = -1) : msg(), value(value_) { }
+    ResultType(int value_) : msg(), value(value_) { }
+    ResultType(ResultType && other) = default; // allow move construction
+
     std::string msg;
     int value;
+
+    // test that the multiproc implementation does not need these
+    ResultType(const ResultType & other) = delete;
+    ResultType & operator=(const ResultType & other) = delete;
   };
 
   template<typename LoggerType>
   TestTask(Input input, const TestBasicCData * , LoggerType & logger)
-    : _input(input)
+    : _input(input), _result(-1)
   {
     logger.debug("TestTask::TestTask", "constructor called") ;
   }
@@ -121,50 +127,51 @@ struct TestTask {
     //    BOOST_MESSAGE("Task finished.") ;
   }
 
-  ResultType getResult() const { return _result; }
+  inline ResultType getResult() const { return std::move(_result); }
 
   Input _input;
   ResultType _result;
   
 };
-struct TestResultsCollector {
-  TestResultsCollector(std::vector<TestTask::ResultType> check_correct_results_, int num_runs_,
-                       const TestBasicCData * pcdata_)
-    : init_called(0), collectres_called(0), runsfinished_called(0),
-      num_runs(num_runs_), pcdata(pcdata_),
-      check_correct_results(std::move(check_correct_results_))
-  {
-  }
-  void init(int num_total_runs, int n_chunk, const TestBasicCData * pcdata_)
-  {
-    BOOST_CHECK_EQUAL(num_total_runs, num_runs) ;
-    BOOST_CHECK_EQUAL(n_chunk, 1) ;
-    BOOST_CHECK_EQUAL(pcdata, pcdata_) ;
-    ++init_called;
-  }
-  template<typename ResultType>
-  void collectResult(int task_no, const ResultType& taskresult, const TestBasicCData * pcdata_)
-  {
-    BOOST_CHECK_GE(task_no, 0); BOOST_CHECK_LT(task_no, (int)check_correct_results.size());
-    BOOST_CHECK_EQUAL(taskresult.value, check_correct_results[task_no].value);
-    BOOST_CHECK_EQUAL(pcdata, pcdata_) ;
-    BOOST_TEST_MESSAGE("Collected result from task " << task_no << ": " << taskresult.msg) ;
-    ++collectres_called;
-  }
-  void runsFinished(int num_total_runs, const TestBasicCData * pcdata_)
-  {
-    BOOST_CHECK_EQUAL(num_total_runs, num_runs) ;
-    BOOST_CHECK_EQUAL(pcdata, pcdata_) ;
-    ++runsfinished_called;
-  }
 
-  int init_called;
-  int collectres_called;
-  int runsfinished_called;
-  const int num_runs;
-  const TestBasicCData * pcdata;
-  const std::vector<TestTask::ResultType> check_correct_results;
-};
+// struct TestResultsCollector {
+//   TestResultsCollector(std::vector<TestTask::ResultType> check_correct_results_, int num_runs_,
+//                        const TestBasicCData * pcdata_)
+//     : init_called(0), collectres_called(0), runsfinished_called(0),
+//       num_runs(num_runs_), pcdata(pcdata_),
+//       check_correct_results(std::move(check_correct_results_))
+//   {
+//   }
+//   void init(int num_total_runs, int n_chunk, const TestBasicCData * pcdata_)
+//   {
+//     BOOST_CHECK_EQUAL(num_total_runs, num_runs) ;
+//     BOOST_CHECK_EQUAL(n_chunk, 1) ;
+//     BOOST_CHECK_EQUAL(pcdata, pcdata_) ;
+//     ++init_called;
+//   }
+//   template<typename ResultType>
+//   void collectResult(int task_no, const ResultType& taskresult, const TestBasicCData * pcdata_)
+//   {
+//     BOOST_CHECK_GE(task_no, 0); BOOST_CHECK_LT(task_no, (int)check_correct_results.size());
+//     BOOST_CHECK_EQUAL(taskresult.value, check_correct_results[task_no].value);
+//     BOOST_CHECK_EQUAL(pcdata, pcdata_) ;
+//     BOOST_TEST_MESSAGE("Collected result from task " << task_no << ": " << taskresult.msg) ;
+//     ++collectres_called;
+//   }
+//   void runsFinished(int num_total_runs, const TestBasicCData * pcdata_)
+//   {
+//     BOOST_CHECK_EQUAL(num_total_runs, num_runs) ;
+//     BOOST_CHECK_EQUAL(pcdata, pcdata_) ;
+//     ++runsfinished_called;
+//   }
+//
+//   int init_called;
+//   int collectres_called;
+//   int runsfinished_called;
+//   const int num_runs;
+//   const TestBasicCData * pcdata;
+//   const std::vector<TestTask::ResultType> check_correct_results;
+// };
 
 
 
@@ -193,23 +200,23 @@ private:
 struct test_task_dispatcher_fixture {
   TestBasicCData cData;
   const int num_runs;
-  TestResultsCollector resultsCollector;
+
+  const std::vector<int> correct_result_values;
   
   test_task_dispatcher_fixture()
     : cData(1000),
       num_runs(10),
-      resultsCollector(mkvec<TestTask::ResultType>()
-                       <<3000
-                       <<30000
-                       <<3000
-                       <<9000
-                       <<3000
-                       <<20000
-                       <<3000
-                       <<3000
-                       <<17000
-                       <<3000,
-                       num_runs, &cData)
+      correct_result_values(mkvec<int>()
+                            <<3000
+                            <<30000
+                            <<3000
+                            <<9000
+                            <<3000
+                            <<20000
+                            <<3000
+                            <<3000
+                            <<17000
+                            <<3000)
   {
     cData.inputs = mkvec<MyTaskInput>()
       << MyTaskInput(1, 2)
@@ -222,6 +229,13 @@ struct test_task_dispatcher_fixture {
       << MyTaskInput(1, 2)
       << MyTaskInput(8, 9)
       << MyTaskInput(1, 2);
+  }
+
+  void check_correct_results(const std::vector<TestTask::ResultType*> & results)
+  {
+    for (std::size_t k = 0; k < correct_result_values.size(); ++k) {
+      BOOST_CHECK_EQUAL(results[k]->value, correct_result_values[k]) ;
+    }
   }
 };
 
@@ -309,32 +323,14 @@ private:
   int _input;
   ResultType _result;
 };
-struct StatusRepTestResultsCollector {
-  StatusRepTestResultsCollector()
-  {
-  }
-  void init(int, int, const StatusRepTestBasicCData * )
-  {
-  }
-  template<typename ResultType>
-  void collectResult(int, const ResultType& taskresult, const StatusRepTestBasicCData *)
-  {
-    BOOST_CHECK_EQUAL(taskresult, true);
-  }
-  void runsFinished(int, const StatusRepTestBasicCData * )
-  {
-  }
-};
-
 
 
 struct test_task_dispatcher_status_reporting_fixture {
   StatusRepTestBasicCData cData;
   const int num_runs;
-  StatusRepTestResultsCollector resultsCollector;
   
   test_task_dispatcher_status_reporting_fixture()
-    : cData(), num_runs(6), resultsCollector()
+    : cData(), num_runs(6)
   {
   }
 
@@ -371,6 +367,10 @@ struct test_task_dispatcher_status_reporting_fixture {
     task_dispatcher.requestPeriodicStatusReport(UnitTimeSleepMs); // every unit time
 
     task_dispatcher.run();
+
+    for ( auto res : task_dispatcher.collectedTaskResults() ) {
+      BOOST_CHECK( res );
+    }
 
     logger.info("test case:status_report_periodic", "Test case done.");
   }
@@ -465,6 +465,10 @@ struct test_task_dispatcher_status_reporting_fixture {
 
         finished = 1;
 
+        for ( auto res : task_dispatcher.collectedTaskResults() ) {
+          BOOST_CHECK( res );
+        }
+
       } else {
         // never here
         assert( false ) ;
@@ -506,6 +510,10 @@ struct test_task_dispatcher_status_reporting_fixture {
       signal(SIGALRM, sigalarm_act_cfn);
     
       task_dispatcher.run();
+
+      for ( auto res : task_dispatcher.collectedTaskResults() ) {
+        BOOST_CHECK( res );
+      }
     }
 
     logger.info("test case:status_report_withsigalrm", "Test case done.");

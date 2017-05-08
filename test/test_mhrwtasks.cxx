@@ -110,8 +110,8 @@ BOOST_AUTO_TEST_CASE(instantiate_1)
       MHRWParamsType(0.1, 10, 100, 1000),
       0.85
       );
-  BOOST_CHECK_EQUAL(r.stats_collector_result.a, MyStatsResultType().a);
-  BOOST_CHECK_EQUAL(r.stats_collector_result.b, MyStatsResultType().b);
+  BOOST_CHECK_EQUAL(r.stats_results.a, MyStatsResultType().a);
+  BOOST_CHECK_EQUAL(r.stats_results.b, MyStatsResultType().b);
   MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.mhwalker_params.stepsize, 0.1, tol);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_sweep, 10);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_therm, 100);
@@ -127,8 +127,8 @@ BOOST_AUTO_TEST_CASE(instantiate_1b)
       MHRWParamsType(0.1, 10, 100, 1000),
       0.85
       );
-  BOOST_CHECK_EQUAL(r.stats_collector_result.a, MyStatsResultType().a);
-  BOOST_CHECK_EQUAL(r.stats_collector_result.b, MyStatsResultType().b);
+  BOOST_CHECK_EQUAL(r.stats_results.a, MyStatsResultType().a);
+  BOOST_CHECK_EQUAL(r.stats_results.b, MyStatsResultType().b);
   MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.mhwalker_params.stepsize, 0.1, tol);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_sweep, 10);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_therm, 100);
@@ -164,8 +164,8 @@ BOOST_AUTO_TEST_CASE(instantiate_2)
       MyStatsResultType(),
       rw
       );
-  BOOST_CHECK_EQUAL(r.stats_collector_result.a, MyStatsResultType().a);
-  BOOST_CHECK_EQUAL(r.stats_collector_result.b, MyStatsResultType().b);
+  BOOST_CHECK_EQUAL(r.stats_results.a, MyStatsResultType().a);
+  BOOST_CHECK_EQUAL(r.stats_results.b, MyStatsResultType().b);
   MY_BOOST_CHECK_FLOATS_EQUAL(r.mhrw_params.mhwalker_params.stepsize, 2, tol);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_sweep, 10);
   BOOST_CHECK_EQUAL(r.mhrw_params.n_therm, 100);
@@ -192,14 +192,7 @@ struct MyCData
   {
   }
   
-  typedef TestMHRWStatsCollectorWithResult::ResultType MHRWStatsCollectorResultType;
-
-  template<typename LoggerType>
-  TestMHRWStatsCollectorWithResult createStatsCollector(LoggerType & logger) const
-  {
-    logger.debug("MyCData::createStatsCollector", "()");
-    return TestMHRWStatsCollectorWithResult(mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run);
-  }
+  typedef TestMHRWStatsCollectorWithResult::ResultType MHRWStatsResultsType;
 
   struct TestMHWalker2 : public TestMHWalker
   {
@@ -211,39 +204,22 @@ struct MyCData
     {
     }
   };
-  
+
+
   template<typename Rng, typename LoggerType>
-  TestMHWalker2 createMHWalker(Rng & rng, LoggerType & logger) const
+  inline MHRWTaskComponents<TestMHWalker2,TestMHRWStatsCollectorWithResult>
+  createMHRWTaskComponents(Rng & rng, LoggerType & logger) const
   {
-    logger.debug("MyCData::createMHWalker", "()");
-    return TestMHWalker2(mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run, rng) ;
+    logger.debug("MyCData::createMHRWTaskComponents", "()");
+
+    TestMHWalker2 mhwalker(mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run, rng) ;
+    TestMHRWStatsCollectorWithResult stats(mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run);
+
+    return mkMHRWTaskComponents(std::move(mhwalker), std::move(stats));
   }
 
 };
 
-struct MyTestResultsCollector {
-  int total_runs;
-  void init(int, int, const MyCData *)
-  {
-    total_runs = 0;
-  }
-  void collectResult(int task_no, Tomographer::MHRWTasks::MHRandomWalkTaskResult<bool, int, int> taskresult,
-                     const MyCData * pcdata)
-  {
-    BOOST_MESSAGE("Task: #" << task_no << ": result = " << std::boolalpha << taskresult.stats_collector_result );
-    BOOST_CHECK(taskresult.acceptance_ratio >= 0 && taskresult.acceptance_ratio <= 1);
-    BOOST_CHECK_EQUAL(taskresult.mhrw_params.mhwalker_params, pcdata->mhrw_params.mhwalker_params);
-    BOOST_CHECK_EQUAL(taskresult.mhrw_params.n_sweep, pcdata->mhrw_params.n_sweep);
-    BOOST_CHECK_EQUAL(taskresult.mhrw_params.n_therm, pcdata->mhrw_params.n_therm);
-    BOOST_CHECK_EQUAL(taskresult.mhrw_params.n_run, pcdata->mhrw_params.n_run);
-    BOOST_CHECK(taskresult.stats_collector_result);
-    ++total_runs;
-  }
-  void runsFinished(int, const MyCData * )
-  {
-    BOOST_MESSAGE("total # of runs = " << total_runs) ;
-  }
-};
 
 BOOST_AUTO_TEST_CASE(base)
 {
@@ -256,20 +232,39 @@ BOOST_AUTO_TEST_CASE(base)
 
   MyCData cdata(Tomographer::MHRWParams<int,int>(mhwalker_params, nsweep, ntherm, nrun));
 
-  MyTestResultsCollector results;
+  const int NumRuns = 5;
 
   Tomographer::MultiProc::Sequential::TaskDispatcher<
     Tomographer::MHRWTasks::MHRandomWalkTask<MyCData, std::mt19937>,
     MyCData,
-    MyTestResultsCollector,
     Tomographer::Logger::BoostTestLogger,
     long
-    > dispatcher(&cdata, &results, logger, 5);
+    > dispatcher(&cdata, logger, NumRuns);
   
   // tests are all in here
   dispatcher.run();
 
-  BOOST_CHECK_EQUAL(results.total_runs, 5);
+  typedef Tomographer::MHRWTasks::MHRandomWalkTaskResult<bool, int, int> TaskResultType;
+  std::vector<TaskResultType*> taskresults = dispatcher.collectedTaskResults();
+
+  BOOST_CHECK_EQUAL(taskresults.size(), NumRuns) ;
+
+  const auto * pcdata = &cdata;
+
+  for (std::size_t task_no = 0; task_no < NumRuns; ++task_no) {
+
+    const auto & taskresult = *taskresults[task_no];
+
+    BOOST_MESSAGE("Task: #" << task_no << ": result = " << std::boolalpha << taskresult.stats_results );
+    BOOST_CHECK(taskresult.acceptance_ratio >= 0 && taskresult.acceptance_ratio <= 1);
+    BOOST_CHECK_EQUAL(taskresult.mhrw_params.mhwalker_params, pcdata->mhrw_params.mhwalker_params);
+    BOOST_CHECK_EQUAL(taskresult.mhrw_params.n_sweep, pcdata->mhrw_params.n_sweep);
+    BOOST_CHECK_EQUAL(taskresult.mhrw_params.n_therm, pcdata->mhrw_params.n_therm);
+    BOOST_CHECK_EQUAL(taskresult.mhrw_params.n_run, pcdata->mhrw_params.n_run);
+    BOOST_CHECK(taskresult.stats_results);
+
+  }
+
 }
 
 BOOST_AUTO_TEST_SUITE_END(); // tMHRandomWalkTask

@@ -130,7 +130,8 @@
  * Tomographer::ValueHistogramMHRWStatsCollector which results in a histogram.
  *
  * \par typedef .. ResultType
- *    The type that the result has
+ *    The type that the result has.  It should be default-constructible, copyable, and
+ *    assignable.
  *
  * \par ResultType getResult()
  *    Obtain the said result. The return type must be anything that may be assigned to a
@@ -391,26 +392,65 @@
  * A \a MHRandomWalkTaskCData must be copy-constructible, and different threads must be
  * able to operate safely on different copies.
  *
+ * A \a MHRandomWalkTaskCData must further provide the following members:
  *
- * \par typedef .. MHRWStatsCollectorResultType
- *
- * \par MHRWStatsCollectorType createStatsCollector(LoggerType & logger) const
- *     Create an \a MHRWStatsCollector -type instance to use. This must be a type which
- *     compiles both with the \ref pageInterfaceMHRWStatsCollector and the \ref
- *     pageInterfaceResultable. It must have as its \a ResultType the type given as \a
- *     MHRWStatsColelctorResultType. 
+ * \par typedef .. MHRWStatsResultsType
+ *     The type which stores the results from the statistics carried out during the random
+ *     walk.  This type may be any type which can be constructed using the result of the
+ *     stats collector created by the CData type (see \a createMHRWTaskComponents()
+ *     below).  Typically, this is just the \a ResultType of the \a MHRWStatsCollector
+ *     itself which was created by \a createMHRWTaskComponents().  This type must be
+ *     default-constructible.
  *
  * \par
- *     The logger may be used to log messages, and may be passed on to the stats collector
- *     for the same purpose.  Use a template parameter for \a LoggerType.
+ *     This is the type of the stats-collection part of the results which are communicated
+ *     back to the caller of the multiprocessing task manager/dispatcher (see \ref
+ *     Tomographer::MHRWTasks::MHRandomWalkTaskResult) .
  *
- * \par MHWalker createMHWalker(Rng & rng, LoggerType & logger) const
- *     Create an \a MHWalker -type instance. This may be any \ref pageInterfaceMHWalker
- *     -compliant type. The \a Rng parameter is the same type as provided to the
- *     MHRWTasks::MHRandomWalkTask template parameter, use a template argument for this
- *     function in case. Use a template parameter for \a LoggerType.
+ *
+ * \par <\ref pageInterfaceMHRWTaskInitializer compliant type> createMHRWTaskInitializer()
+ *     Create an object which is responsible for initializing a new random walk instance.
+ *     This function will be called upon each individual task run.  The returned object
+ *     must be of a type compliant with the \ref pageInterfaceMHRWTaskInitializer.
  *
  */
+
+/** \page pageInterfaceMHRWTaskInitializer MHRWTaskInitializer Interface
+ *
+ * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
+ * for more info on what that is.</em>
+ *
+ * A \a MHRWTaskInitializer is an object which is responsible for initializing a
+ * Metropolis-Hastings Random Walk as implemented by a \ref MHRandomWalk.  It should
+ * create a \ref pageInterfaceMHWalker "MHWalker" instance, a \ref
+ * pageInterfaceMHRWStatsCollector "Stats Collector" instance, and possibly a \ref
+ * pageInterfaceMHWalkerParamsAdjuster "MHWalkerParams Adjuster" instance.
+ *
+ * A \a MHRWTaskInitializer should provide the following members:
+ *
+ * \par ......................... ...................
+ *
+ */
+
+// /* ....
+//  *
+//  * \par MHRWStatsCollectorType createStatsCollector(LoggerType & logger) const
+//  *     Create an \a MHRWStatsCollector -type instance to use. This must be a type which
+//  *     compiles both with the \ref pageInterfaceMHRWStatsCollector and the \ref
+//  *     pageInterfaceResultable. It must have as its \a ResultType the type given as \a
+//  *     MHRWStatsColelctorResultType. 
+//  *
+//  * \par
+//  *     The logger may be used to log messages, and may be passed on to the stats collector
+//  *     for the same purpose.  Use a template parameter for \a LoggerType.
+//  *
+//  * \par MHWalker createMHWalker(Rng & rng, LoggerType & logger) const
+//  *     Create an \a MHWalker -type instance. This may be any \ref pageInterfaceMHWalker
+//  *     -compliant type. The \a Rng parameter is the same type as provided to the
+//  *     MHRWTasks::MHRandomWalkTask template parameter, use a template argument for this
+//  *     function in case. Use a template parameter for \a LoggerType.
+//  *
+//  */
 
 
 // // =============================================================================

@@ -45,18 +45,19 @@
  *
  * A task is implemented by a \ref pageInterfaceTask. It may refer to some global,
  * constant data (the parameters of the problem) stored in a struct (referred to as \a
- * TaskCData in the following docs). Each \a Task generates a result, which is sent
- * to and collected by a type responsible for aggregating the data in a usable form (e.g.,
- * calculating an average and std. deviation), which compiles with the \ref
- * pageInterfaceResultsCollector. The task manager exposes an API to interact with the \a
- * Task objects: it is the \ref pageInterfaceTaskManagerIface. This interface may be used
- * for example in order to submit intermediate status reports.
+ * TaskCData in the following docs). Each \a Task must also conform to the \ref
+ * pageInterfaceResultable and generates a result, which is then collected and returned by
+ * the task dispatcher.  The task manager exposes an API to interact with the \a Task
+ * objects: it is the \ref pageInterfaceTaskManagerIface. This interface may be used for
+ * example in order to submit intermediate status reports.
+ *
+ * \since Changed in %Tomographer 5.0: removed the \a ResultsCollector type interface; the
+ *        tasks must now themselves conform to the \ref pageInterfaceResultable.
  *
  * Type interfaces which are used by the task dispatcher:
  *
  *  - \subpage pageInterfaceTaskCData
  *  - \subpage pageInterfaceTask
- *  - \subpage pageInterfaceResultsCollector
  *  - \subpage pageInterfaceTaskManagerIface
  *
  * The type interface which the task dispatcher itself obeys:
@@ -64,6 +65,10 @@
  *  - \subpage pageInterfaceTaskDispatcher
  *
  */
+
+// no longer:  *  - \subpage pageInterfaceResultsCollector
+
+
 
 
 /** \page pageInterfaceTaskCData TaskCData Interface
@@ -95,12 +100,10 @@
  *
  * A task which may be repeated in parallel with different inputs.
  *
- * \c Task should represent an instance of the task to complete (e.g. a
- * Metropolis-Hastings random walk). It should provide the following methods.
+ * A \a Task should represent an instance of the task to complete (e.g. a
+ * Metropolis-Hastings random walk).
  *
- * \par typedef .. ResultType
- *          An alias for the type of, e.g. a structure, which contains the result of
- *          the given task. See <code>Task::getResult()</code>.
+ * A \a Task interface compliant type should provide the following methods.
  *
  * \par typedef .. StatusReportType
  *          The type storing information for a status report (task progress, message,
@@ -139,13 +142,23 @@
  *          TaskStatusReportType &)</code>. \a tmgriface is an object which complies to
  *          the \ref pageInterfaceTaskManagerIface.
  *
+ * A \a Task interface compliant type must always also be compliant with the \ref
+ * pageInterfaceResultable, meaning that it must provide the following methods:
+ *
+ * \par typedef .. ResultType
+ *          An alias for the type, e.g. a structure, which contains the result of
+ *          the given task. See <code>Task::getResult()</code>.
  *
  * \par ResultType getResult()
- *          Return a custom type which holds the result for the given task. This will be
- *          given to the result collector (see \ref pageInterfaceResultsCollector).
+ *          Return a custom type which holds the result for the given task.
+ *
+ * \par
+ *          NOTE: Tasks are explicitly allowed to assume that their getResult() will only
+ *          be called once.  This allows them e.g. to std::move their internal result
+ *          object into the return value of getResult().
+ *
  *
  * \par Note on Status Reports: 
-
  *   Tasks must regularly check whether a status report has been requested as they run.
  *   This is done by regularly calling the function
  *   <code>tmgriface->statusReportRequested()</code> on the \c tmgriface object provided
@@ -165,38 +178,38 @@
 
 
 
-/** \page pageInterfaceResultsCollector ResultsCollector Interface
- *
- * \a ResultsCollector takes care of collecting the results from each task run.
- *
- * In the following, \a TaskCData is some type that was specified to the task
- * dispatcher. The type \a CountType designates the type used to count tasks (usually an
- * integral type of course). Also the type \a ResultType is the type declared for a result
- * by the task (\ref pageInterfaceTask). You may make the methods here take template
- * parameters so you don't have to worry about the exact types of these parameters.
- *
- * \par void init(CountType num_total_runs, CountType n_chunk, const TaskCData * pcdata)
- *         \a init() will be called before the tasks are run (e.g. before starting the
- *         parallel section), and may be used to initialize data.
- *
- * \par void collectResult(CountType task_no, const ResultType& taskresult, const TaskCData * pcdata)
- *         Called each time a task has finished, with the corresponding task result, along
- *         with information about which task it was and as always the shared constant
- *         data. This method does not need to worry about concurrence, for example writing
- *         to shared data (it is either called from the main thread in a critical section,
- *         or the data was serialized and passed to the main process, etc.)
- *
- * \par
- *         in the OMP task dispatcher (\ref Tomographer::MultiProc::OMP::TaskDispatcher),
- *         this is called within a \c critical OMP section, so it may safely access and
- *         write shared data.
- *
- * \par void runsFinished(CountType num_total_runs, const TaskCData * pcdata)
- *         Called after all the tasks have finished. This is the good time to, e.g.,
- *         finalize collected values, such as multiplying by parameter space volume,
- *         dividing by the number of samples to get the average, etc.
- *
- */
+// /* * \page pageInterfaceResultsCollector ResultsCollector Interface
+//  *
+//  * \a ResultsCollector takes care of collecting the results from each task run.
+//  *
+//  * In the following, \a TaskCData is some type that was specified to the task
+//  * dispatcher. The type \a CountType designates the type used to count tasks (usually an
+//  * integral type of course). Also the type \a ResultType is the type declared for a result
+//  * by the task (\ref pageInterfaceTask). You may make the methods here take template
+//  * parameters so you don't have to worry about the exact types of these parameters.
+//  *
+//  * \par void init(CountType num_total_runs, CountType n_chunk, const TaskCData * pcdata)
+//  *         \a init() will be called before the tasks are run (e.g. before starting the
+//  *         parallel section), and may be used to initialize data.
+//  *
+//  * \par void collectResult(CountType task_no, const ResultType& taskresult, const TaskCData * pcdata)
+//  *         Called each time a task has finished, with the corresponding task result, along
+//  *         with information about which task it was and as always the shared constant
+//  *         data. This method does not need to worry about concurrence, for example writing
+//  *         to shared data (it is either called from the main thread in a critical section,
+//  *         or the data was serialized and passed to the main process, etc.)
+//  *
+//  * \par
+//  *         in the OMP task dispatcher (\ref Tomographer::MultiProc::OMP::TaskDispatcher),
+//  *         this is called within a \c critical OMP section, so it may safely access and
+//  *         write shared data.
+//  *
+//  * \par void runsFinished(CountType num_total_runs, const TaskCData * pcdata)
+//  *         Called after all the tasks have finished. This is the good time to, e.g.,
+//  *         finalize collected values, such as multiplying by parameter space volume,
+//  *         dividing by the number of samples to get the average, etc.
+//  *
+//  */
 
 
 /** \page pageInterfaceTaskManagerIface TaskManagerIface Interface
@@ -234,8 +247,12 @@
  * The task dispatcher takes care of running tasks.  It should handle tasks provided by a
  * \ref pageInterfaceTask compliant template parameter, should allow these tasks to share
  * data via a \ref pageInterfaceTaskCData compliant type also specified as template
- * parameter, and should allow the results to be collected by a \ref
- * pageInterfaceResultsCollector.
+ * parameter.
+ *
+ * \since Changed in %Tomographer 5.0: Removed the results collector entirely. Now the
+ *        tasks must be \ref pageInterfaceResultable "Resultable" 's which the task
+ *        dispatcher simply collects and make available to the caller with \a
+ *        collectedTaskResults().
  *
  * <h3>What the task dispatcher should do</h3>
  *
@@ -250,14 +267,9 @@
  *     obeys the \ref pageInterfaceTaskCData and which provides the necessary input data
  *     to carry out the tasks ;
  *
- *   - A results collector instance (of a type \a ResultsCollector), which should obey the
- *     \ref pageInterfaceResultsCollector ;
- *
  *
  * Upon execution, say within a \a run() method exposed by the task dispatcher, the task
  * dispatcher is expected to do the following steps, in this order:
- *
- *   - Initialize the results collector by calling its \a init() method ;
  *
  *   - Schedule the tasks however they are meant to be run (in different threads, in
  *     different processes, serially one at a time, etc.), and run each task following
@@ -278,8 +290,7 @@
  *       should really only be called by the tasks.  See \ref
  *       Tomographer::MultiProc::Sequential::TaskDispatcher for an example.
  *
- *     * Recover the task's result using its \a getResult() method, and call the results
- *       collector's \a collectResult() method.
+ *     * Recover the task's result using its \a getResult() method.
  *
  *   - All the time during the above task execution, if the a status report is requested
  *     explicitly from an external caller (e.g. a signal handler) with a call to this
@@ -319,7 +330,7 @@
  * Tomographer::MultiProc::Sequential::TaskDispatcher or the OpenMP-based \ref
  * Tomographer::MultiProc::OMP::TaskDispatcher.
  *
- * The task dispatcher must, however, provide the following methods:
+ * The \a TaskDispatcher must however provide the following methods:
  *
  * \par void setStatusReportHandler(Fn fn)
  *   The argument should be a callable (e.g. lambda function) which accepts a single
@@ -338,7 +349,7 @@
  * \par void requestInterrupt()
  *   Interrupt all tasks as soon as possible.
  *
- * The task dispatcher must also provide the following typedef:
+ * The \a TaskDispatcher must also provide the following typedef:
  *
  * \par typedef ... TaskType;
  *   The \ref pageInterfaceTask -compliant type used to describe a task.

@@ -56,17 +56,17 @@ BOOST_AUTO_TEST_SUITE(test_multiproc)
 BOOST_FIXTURE_TEST_CASE(sequential_dispatcher, test_task_dispatcher_fixture)
 {
   Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
-  Tomographer::MultiProc::Sequential::TaskDispatcher<TestTask, TestBasicCData, TestResultsCollector,
+  Tomographer::MultiProc::Sequential::TaskDispatcher<TestTask, TestBasicCData,
                                                      Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
+      task_dispatcher(&cData, logger, num_runs);
 
   BOOST_MESSAGE("About to run tasks");
 
   task_dispatcher.run();
 
-  BOOST_CHECK_EQUAL(resultsCollector.init_called, 1);
-  BOOST_CHECK_EQUAL(resultsCollector.collectres_called, num_runs);
-  BOOST_CHECK_EQUAL(resultsCollector.runsfinished_called, 1);
+  std::vector<TestTask::ResultType*> results = task_dispatcher.collectedTaskResults();
+
+  check_correct_results(results);
 }
 
 BOOST_FIXTURE_TEST_SUITE(status_reporting, test_task_dispatcher_status_reporting_fixture) ;
@@ -75,9 +75,8 @@ BOOST_AUTO_TEST_CASE(status_report_periodic)
 {
   Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
   Tomographer::MultiProc::Sequential::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
-                                                     StatusRepTestResultsCollector,
                                                      Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
+      task_dispatcher(&cData, logger, num_runs);
 
   perform_test_status_report_periodic(task_dispatcher, logger) ;
 }
@@ -86,9 +85,8 @@ BOOST_AUTO_TEST_CASE(interrupt_tasks_withthread)
   Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
 
   Tomographer::MultiProc::Sequential::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
-                                              StatusRepTestResultsCollector,
-                                              Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
+                                                     Tomographer::Logger::BoostTestLogger, long>
+      task_dispatcher(&cData, logger, num_runs);
 
   perform_test_interrupt_tasks_withthread(task_dispatcher, logger) ;
 
@@ -98,9 +96,8 @@ BOOST_AUTO_TEST_CASE(status_report_withthread)
   Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
 
   Tomographer::MultiProc::Sequential::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
-                                              StatusRepTestResultsCollector,
                                               Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
+      task_dispatcher(&cData, logger, num_runs);
 
   perform_test_status_report_withthread(task_dispatcher, logger);
 }
@@ -109,9 +106,8 @@ BOOST_AUTO_TEST_CASE(status_report_withsigalrm)
   Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
   
   Tomographer::MultiProc::Sequential::TaskDispatcher<StatusRepTestTask, StatusRepTestBasicCData,
-                                                     StatusRepTestResultsCollector,
                                                      Tomographer::Logger::BoostTestLogger, long>
-      task_dispatcher(&cData, &resultsCollector, logger, num_runs);
+      task_dispatcher(&cData, logger, num_runs);
 
   perform_test_status_report_withsigalrm(task_dispatcher, logger);
 }

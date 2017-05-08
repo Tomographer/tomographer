@@ -214,8 +214,6 @@ namespace Sequential {
  *
  * <li> \a TaskCData should conform to the \ref pageInterfaceTaskCData.
  *
- * <li> \a ResultsCollector must be a \ref pageInterfaceResultsCollector compliant type 
- *
  * <li> \a LoggerType is the type used for logging messages (derived from \ref Logger::LoggerBase)
  *
  * <li> \a CountIntType should be a type to use to count the number of tasks. Usually
@@ -223,7 +221,7 @@ namespace Sequential {
  *
  * </ul>
  */
-template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
+template<typename TaskType_, typename TaskCData_,
          typename LoggerType_, typename CountIntType_ = int>
 TOMOGRAPHER_EXPORT class TaskDispatcher
 {
@@ -231,7 +229,6 @@ public:
   typedef TaskType_ TaskType;
   typedef typename TaskType::StatusReportType TaskStatusReportType;
   typedef TaskCData_ TaskCData;
-  typedef ResultsCollector_ ResultsCollector;
   typedef LoggerType_ LoggerType;
   typedef CountIntType_ CountIntType;
 
@@ -246,7 +243,7 @@ public:
 private:
   
   const TaskCData * pcdata;
-  ResultsCollector * results;
+  std::vector<TaskResultType*> results;
   LoggerType & logger;
 
   CountIntType num_total_runs;
@@ -352,11 +349,17 @@ private:
   TaskMgrIface mgriface;
   
 public:
-  TaskDispatcher(TaskCData * pcdata_, ResultsCollector * results_, LoggerType & logger_,
-                 CountIntType num_total_runs_)
-    : pcdata(pcdata_), results(results_), logger(logger_), num_total_runs(num_total_runs_),
+  TaskDispatcher(TaskCData * pcdata_, LoggerType & logger_, CountIntType num_total_runs_)
+    : pcdata(pcdata_), results(), logger(logger_), num_total_runs(num_total_runs_),
         mgriface(this)
   {
+  }
+  ~TaskDispatcher() {
+    for ( auto r : results ) {
+      if (r != NULL) {
+        delete r;
+      }
+    }
   }
   
   /** \brief Run the tasks
@@ -365,7 +368,7 @@ public:
    */
   void run()
   {
-    results->init(num_total_runs, CountIntType(1), pcdata);
+    results.resize(num_total_runs, NULL);
     
     logger.debug("MultiProc::Sequential::TaskDispatcher::run()", "preparing for sequential runs");
     
@@ -383,11 +386,30 @@ public:
       t.run(pcdata, logger, &mgriface);
       
       // and collect the result
-      results->collectResult(task_k, t.getResult(), pcdata);
+      TaskResultType tres = t.getResult();
+      results[task_k] = new TaskResultType(std::move(tres));
     }
-    
-    results->runsFinished(num_total_runs, pcdata);
+
+    // all done
+    logger.debug("MultiProc::Sequential::TaskDispatcher::run()", "all done");
   }
+
+  /** \brief The total number of task instances that were run
+   *
+   */
+  inline CountIntType numTaskRuns() const { return num_total_runs; }
+
+  /** \brief Returns the results of all the tasks
+   *
+   */
+  inline const std::vector<TaskResultType*> & collectedTaskResults() const {
+    return results;
+  }
+
+  /** \brief Returns the result of the given task
+   *
+   */
+  inline const TaskResultType & collectedTaskResult(CountIntType k) const { return *results[k]; }
   
   
   /** \brief assign a callable to be called whenever a status report is requested
