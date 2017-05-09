@@ -97,14 +97,18 @@ struct TestTask {
   
   struct ResultType {
     ResultType(int value_) : msg(), value(value_) { }
-    ResultType(ResultType && other) = default; // allow move construction
+    ResultType(int value_, std::string msg_) : msg(msg_), value(value_) { }
+
+    ResultType(ResultType && other) = default; // expressedly allow move construction
 
     std::string msg;
     int value;
 
-    // test that the multiproc implementation does not need these
+    // test that the multiproc implementation does not depend on these
     ResultType(const ResultType & other) = delete;
     ResultType & operator=(const ResultType & other) = delete;
+
+    ResultType explicitCopy() const { return ResultType(value, msg); }
   };
 
   template<typename LoggerType>
@@ -127,7 +131,8 @@ struct TestTask {
     //    BOOST_MESSAGE("Task finished.") ;
   }
 
-  inline ResultType getResult() const { return std::move(_result); }
+  inline ResultType getResult() const { return _result.explicitCopy(); }
+  inline ResultType stealResult() { return std::move(_result); }
 
   Input _input;
   ResultType _result;
@@ -318,6 +323,8 @@ struct StatusRepTestTask {
   }
 
   ResultType getResult() const { return _result; }
+
+  ResultType stealResult() const { return getResult(); }
 
 private:
   int _input;

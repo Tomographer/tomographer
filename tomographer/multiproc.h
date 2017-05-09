@@ -386,8 +386,7 @@ public:
       t.run(pcdata, logger, &mgriface);
       
       // and collect the result
-      TaskResultType tres = t.getResult();
-      results[task_k] = new TaskResultType(std::move(tres));
+      results[task_k] = new TaskResultType(std::move(t.stealResult()));
     }
 
     // all done

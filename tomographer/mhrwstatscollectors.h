@@ -68,6 +68,7 @@ struct multistatscoll_result_type_helper {
   // static constexpr bool HasResultType = false;
   typedef NoResult ResultType;
   inline ResultType getResult(MHRWStatsCollector & ) { return NoResult(); }
+  inline ResultType stealResult(MHRWStatsCollector & ) { return NoResult(); }
 };
 template<typename MHRWStatsCollector>
 struct multistatscoll_result_type_helper<
@@ -80,18 +81,29 @@ struct multistatscoll_result_type_helper<
 {
   // static constexpr bool HasResultType = true;
   typedef typename MHRWStatsCollector::ResultType ResultType;
-  inline ResultType getResult(MHRWStatsCollector & s) { return s.getResult(); }
+  inline ResultType getResult(const MHRWStatsCollector & s) { return s.getResult(); }
+  inline ResultType stealResult(MHRWStatsCollector & s) { return s.stealResult(); }
 };
 
 template<typename ResultType, typename... MHRWStatsCollectors>
 struct multistatscoll_result_type_helper2 {
   typedef std::tuple<MHRWStatsCollectors&...> TupleType;
   template<typename T, int... Is>
-  inline ResultType getResult(TupleType statscollectors, Tools::Sequence<T, Is...> )
+  inline ResultType getResult(TupleType & statscollectors, Tools::Sequence<T, Is...> )
   {
     return std::make_tuple(
         multistatscoll_result_type_helper<typename std::tuple_element<Is, TupleType>::type>::getResult(
             std::get<Is>(statscollectors)
+            ) ...
+        ) ;
+  }
+  inline ResultType stealResult(TupleType & statscollectors, Tools::Sequence<T, Is...> )
+  {
+    return std::make_tuple(
+        std::move(
+            multistatscoll_result_type_helper<typename std::tuple_element<Is, TupleType>::type>::stealResult(
+                std::get<Is>(statscollectors)
+                )
             ) ...
         ) ;
   }
@@ -168,6 +180,13 @@ public:
   ResultType getResult() const
   {
     return tomo_internal::multistatscoll_result_type_helper2<ResultType, MHRWStatsCollectors...>::getResult(
+        statscollectors,
+        Tools::GenerateSequence<int, NumStatColl>()
+        );
+  }
+  ResultType stealResult()
+  {
+    return tomo_internal::multistatscoll_result_type_helper2<ResultType, MHRWStatsCollectors...>::stealResult(
         statscollectors,
         Tools::GenerateSequence<int, NumStatColl>()
         );
@@ -464,7 +483,7 @@ public:
   }
 
   /** \brief Get the histogram data collected. This method is needed for \ref
-   * pageInterfaceResultable compliance.
+   *         pageInterfaceResultable compliance.
    *
    * \warning It is strongly advised to only call this function \em after having finalized
    *          the random walk (as is necessary for \ref
@@ -475,6 +494,18 @@ public:
   inline const ResultType & getResult() const
   {
     return _histogram;
+  }
+
+  /** \brief Retrieve the collected histogram data, in compliance with \ref
+   *         pageInterfaceResultable compliance.
+   *
+   * \warning Calling this function moves the histogram to the returned type, and resets
+   *          the histogram in this instance.  Further calls to getResult() and/or
+   *          stealResult() have undefined behavior.
+   */
+  inline ResultType stealResult()
+  {
+    return std::move(_histogram);
   }
 
   // stats collector part
@@ -862,6 +893,21 @@ public:
   inline const ResultType & getResult() const
   {
     return result;
+  }
+
+  /** \brief Retrieve the final histogram data, in compliance with \ref
+   *         pageInterfaceResultable compliance.
+   *
+   * This will only yield a valid value AFTER the all the data has been collected and \ref
+   * done() was called.
+   *
+   * \warning Calling this function moves the result type to the returned type, and resets
+   *          the histogram in this instance.  Further calls to getResult() and/or
+   *          stealResult() have undefined behavior.
+   */
+  inline ResultType stealResult()
+  {
+    return std::move(_histogram);
   }
 
   // stats collector part

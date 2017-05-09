@@ -429,14 +429,18 @@ public:
 
     logger.longdebug("Tomographer::MHRWTasks::run()", "MHRandomWalk run finished.");
 
-    result = new ResultType(components.stats.getResult(), rwalk);
+    result = new ResultType(std::move(components.stats.stealResult()), rwalk);
   }
 
-  inline ResultType getResult()
+  inline ResultType getResult() const
+  {
+    return *result;
+  }
+
+  inline ResultType stealResult()
   {
     return std::move(*result);
   }
-
 };
 
 

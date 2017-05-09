@@ -148,14 +148,16 @@
  * \par typedef .. ResultType
  *          An alias for the type, e.g. a structure, which contains the result of
  *          the given task. See <code>Task::getResult()</code>.
+ *          See the \ref pageInterfaceResultable.
  *
  * \par ResultType getResult()
  *          Return a custom type which holds the result for the given task.
+ *          See the \ref pageInterfaceResultable.
  *
- * \par
- *          NOTE: Tasks are explicitly allowed to assume that their getResult() will only
- *          be called once.  This allows them e.g. to std::move their internal result
- *          object into the return value of getResult().
+ * \par ResultType stealResult()
+ *          Return a custom type which holds the result for the given task.  The caller
+ *          guarantees that no further calls to getResult() and stealResult() will occur.
+ *          See the \ref pageInterfaceResultable.
  *
  *
  * \par Note on Status Reports: 

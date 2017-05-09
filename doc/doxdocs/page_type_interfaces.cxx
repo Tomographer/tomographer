@@ -129,6 +129,8 @@
  * be for example some forms of \ref pageInterfaceMHRWStatsCollector 's such as \ref
  * Tomographer::ValueHistogramMHRWStatsCollector which results in a histogram.
  *
+ * \since Added in %Tomographer 5.0: added the \a stealResult() member
+ *
  * \par typedef .. ResultType
  *    The type that the result has.  It should be default-constructible, copyable, and
  *    assignable.
@@ -136,6 +138,24 @@
  * \par ResultType getResult()
  *    Obtain the said result. The return type must be anything that may be assigned to a
  *    \a ResultType type, or a value that the \a ResultType accepts in a constructor.
+ *
+ * \par ResultType stealResult()
+ *    Retrieve the said result, with the caller guaranteeing that it will never ask for
+ *    the result again, i.e. that getResult() or stealResult() will never be called again
+ *    on this instance.  This allows the \a Resultable type to avoid copying the result
+ *    and instead \a std::move() it to the return type.
+ *
+ * \par
+ *    Note that to successfully move the result type to the return type of the \a
+ *    stealResult() function, the \a ResultType must have a move constructor, \a
+ *    stealResult() must not be declared \a const and must have as result type \a
+ *    ResultType (without any references).
+ *
+ * \par
+ *    Of course, you may just choose to copy the result again (i.e. have \a stealResult()
+ *    be declared in the same way and with same functionality as \a getResult()) if you
+ *    don't want to write a different \a stealResult() implementation or if the result
+ *    type is cheap to copy.
  */
 
 
