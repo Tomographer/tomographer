@@ -56,19 +56,22 @@
 
 namespace Tomographer {
 
+/** \brief An empty struct used as a \a ResultType in MultipleMHRWStatsCollector for stats
+ *         collectors which don't really produce results
+ */
+struct MHRWStatsCollectorNoResult {};
+
 
 namespace tomo_internal {
 
-struct NoResult {
-  inline NoResult() { }
-};
+typedef MHRWStatsCollectorNoResult NoResult; // convenience alias
 
 template<typename MHRWStatsCollector, typename dummy = void>
 struct multistatscoll_result_type_helper {
   // static constexpr bool HasResultType = false;
   typedef NoResult ResultType;
-  inline ResultType getResult(MHRWStatsCollector & ) { return NoResult(); }
-  inline ResultType stealResult(MHRWStatsCollector & ) { return NoResult(); }
+  static inline ResultType getResult(const MHRWStatsCollector & ) { return NoResult(); }
+  static inline ResultType stealResult(MHRWStatsCollector & ) { return NoResult(); }
 };
 template<typename MHRWStatsCollector>
 struct multistatscoll_result_type_helper<
@@ -81,15 +84,16 @@ struct multistatscoll_result_type_helper<
 {
   // static constexpr bool HasResultType = true;
   typedef typename MHRWStatsCollector::ResultType ResultType;
-  inline ResultType getResult(const MHRWStatsCollector & s) { return s.getResult(); }
-  inline ResultType stealResult(MHRWStatsCollector & s) { return s.stealResult(); }
+  static inline ResultType getResult(const MHRWStatsCollector & s) { return s.getResult(); }
+  static inline ResultType stealResult(MHRWStatsCollector & s) { return s.stealResult(); }
 };
 
 template<typename ResultType, typename... MHRWStatsCollectors>
 struct multistatscoll_result_type_helper2 {
-  typedef std::tuple<MHRWStatsCollectors&...> TupleType;
+  typedef std::tuple<MHRWStatsCollectors&...> TupleRefType;
+  typedef std::tuple<MHRWStatsCollectors...> TupleType;
   template<typename T, int... Is>
-  inline ResultType getResult(TupleType & statscollectors, Tools::Sequence<T, Is...> )
+  static inline ResultType getResult(const TupleRefType & statscollectors, Tools::Sequence<T, Is...> )
   {
     return std::make_tuple(
         multistatscoll_result_type_helper<typename std::tuple_element<Is, TupleType>::type>::getResult(
@@ -97,7 +101,8 @@ struct multistatscoll_result_type_helper2 {
             ) ...
         ) ;
   }
-  inline ResultType stealResult(TupleType & statscollectors, Tools::Sequence<T, Is...> )
+  template<typename T, int... Is>
+  static inline ResultType stealResult(TupleRefType & statscollectors, Tools::Sequence<T, Is...> )
   {
     return std::make_tuple(
         std::move(
@@ -597,6 +602,11 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
   {
   }
 
+  // can be copied & moved
+  ValueHistogramWithBinningMHRWStatsCollectorResult(const ValueHistogramWithBinningMHRWStatsCollectorResult &) = default;
+  ValueHistogramWithBinningMHRWStatsCollectorResult(ValueHistogramWithBinningMHRWStatsCollectorResult &&) = default;
+
+
   //! Simple constructor with direct initialization of fields
   template<typename EigenDerived1, typename EigenDerived2>
   ValueHistogramWithBinningMHRWStatsCollectorResult(const HistogramType & hist_,
@@ -907,7 +917,7 @@ public:
    */
   inline ResultType stealResult()
   {
-    return std::move(_histogram);
+    return std::move(result);
   }
 
   // stats collector part

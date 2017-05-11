@@ -209,6 +209,9 @@ namespace CxxThreads {
  * Tomographer::MultiProc::OMP::TaskDispatcher and conforms to the \ref
  * pageInterfaceTaskDispatcher type interface.
  *
+ * \since Changed in %Tomographer 5.0: removed results collector, introduced
+ *        collectedTaskResults() and friends
+ *
  * <ul>
  *
  * <li> \a TaskType must be a \ref pageInterfaceTask compliant type.  This type specifies
@@ -221,8 +224,6 @@ namespace CxxThreads {
  *      needs to be accessed by the task. It should be read-only, i.e. the task should
  *      not need to write to this information. (This typically encodes the data of the
  *      problem, ie. experimental measurement results.)
- *
- * <li> \a ResultsCollector must be a \ref pageInterfaceResultsCollector compliant type 
  *
  * <li> \a LoggerType is a logger type derived from \ref Logger::LoggerBase, for example
  *      \ref Logger::FileLogger. This is the type of a logger defined in the caller's
@@ -255,19 +256,19 @@ namespace CxxThreads {
  * </ul>
  *
  */
-template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
+template<typename TaskType_, typename TaskCData_,
          typename LoggerType_, typename CountIntType_ = int>
 TOMOGRAPHER_EXPORT class TaskDispatcher
 {
 public:
   //! The task type
   typedef TaskType_ TaskType;
+  //! The task result type
+  typedef typename TaskType::ResultType TaskResultType;
   //! The type used by a single task when providing a status report
   typedef typename TaskType::StatusReportType TaskStatusReportType;
   //! The type which stores constant, shared data for all tasks to access
   typedef TaskCData_ TaskCData;
-  //! The type which is responsible to collect the final results of the individual tasks
-  typedef ResultsCollector_ ResultsCollector;
   //! The logger type specified to the dispatcher (not necessarily thread-safe)
   typedef LoggerType_ LoggerType;
   //! Integer type used to count the number of tasks to run (or running)
@@ -311,10 +312,9 @@ private:
 
   //! thread-shared variables
   struct thread_shared_data {
-    thread_shared_data(const TaskCData * pcdata_, ResultsCollector * results_, LoggerType & logger_,
+    thread_shared_data(const TaskCData * pcdata_, LoggerType & logger_,
                        CountIntType num_total_runs, CountIntType num_threads)
       : pcdata(pcdata_),
-        results(results_),
         logger(logger_),
         time_start(),
         schedule(num_total_runs, num_threads),
@@ -322,9 +322,13 @@ private:
     { }
 
     const TaskCData * pcdata;
-    std::mutex user_mutex; // mutex for IO, as well as interface user interaction (results collector etc.)
+    std::mutex user_mutex; // mutex for IO, as well as interface user interaction (status report callback fn, etc.)
 
-    ResultsCollector * results;
+    // Apparently it's better if the elements are aligned in memory:
+    // http://stackoverflow.com/a/41387941/1694896
+    std::vector<TaskResultType*> results;
+    // std::mutex results_mutex; // don't need mutex for accessing different elements of a std::vector
+
     LoggerType & logger;
 
     StdClockType::time_point time_start;
@@ -576,9 +580,6 @@ public:
    *
    * \param pcdata_  The constant shared data, which will be accessible by all tasks
    *
-   * \param results_ The results collector instance, responsible for collecting the
-   *                 results of all individual tasks
-   *
    * \param logger_  The logger instance to use to log messages.  This logger does not need
    *                 to be thread safe.
    *
@@ -586,11 +587,20 @@ public:
    *                 to the different task instances are provided by the TaskCData's
    *                 getTaskInput() method (see \ref pageInterfaceTaskCData).
    */
-  TaskDispatcher(TaskCData * pcdata_, ResultsCollector * results_, LoggerType & logger_,
+  TaskDispatcher(TaskCData * pcdata_, LoggerType & logger_,
                  CountIntType num_total_runs_,
                  CountIntType num_threads_ = std::thread::hardware_concurrency())
-    : shared_data(pcdata_, results_, logger_, num_total_runs_, num_threads_)
+    : shared_data(pcdata_, logger_, num_total_runs_, num_threads_)
   {
+  }
+
+  ~TaskDispatcher()
+  {
+    for (auto r : shared_data.results) {
+      if (r != NULL) {
+        delete r;
+      }
+    }
   }
 
   /** \brief Run the specified tasks
@@ -602,7 +612,7 @@ public:
     shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "Let's go!");
     shared_data.time_start = StdClockType::now();
 
-    shared_data.results->init(shared_data.schedule.num_total_runs, 1, shared_data.pcdata);
+    shared_data.results.resize(shared_data.schedule.num_total_runs, NULL);
     
     shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "preparing for parallel runs");
 
@@ -745,12 +755,32 @@ public:
       throw TasksInterruptedException();
     }
 
-    shared_data.results->runsFinished(shared_data.schedule.num_total_runs, shared_data.pcdata);
-    
     shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "Done.");
   } // run()
 
   
+
+  /** \brief Total number of task run instances
+   *
+   */
+  inline CountIntType numTaskRuns() const {
+    return shared_data.schedule.num_total_runs;
+  }
+
+  /** \brief Get all the task results
+   *
+   */
+  inline const std::vector<TaskResultType*> & collectedTaskResults() const {
+    return shared_data.results;
+  }
+
+  /** \brief Get the result of a specific given task
+   *
+   */
+  inline const TaskResultType & collectedTaskResult(CountIntType k) const {
+    return *shared_data.results[k];
+  }
+
 
 private:
   void _run_task(thread_private_data & privdat, thread_shared_data & shared_data)
@@ -790,10 +820,11 @@ private:
 
     privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()",
                              "Task #%lu finished, about to collect result.", (unsigned long)privdat.task_id);
-      
-    { std::lock_guard<std::mutex> lck(shared_data.user_mutex);
-      shared_data.results->collectResult(privdat.task_id, t.getResult(), shared_data.pcdata);
-    }
+    
+    shared_data.results[privdat.task_id] = new TaskResultType(t.getResult());
+    // { std::lock_guard<std::mutex> lck(shared_data.user_mutex);
+    //   shared_data.results->collectResult(privdat.task_id, t.getResult(), shared_data.pcdata);
+    // }
     
     // {
     //   std::lock_guard<std::mutex> lck(shared_data.status_report.mutex) ;
@@ -806,6 +837,7 @@ private:
 
     privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()", "task done") ;
   }
+
 
 public:
 

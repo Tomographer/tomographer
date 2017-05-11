@@ -172,7 +172,7 @@ BOOST_FIXTURE_TEST_CASE(tasks_run, test_task_dispatcher_fixture)
 
   task_dispatcher.run();
 
-  check_correct_results();
+  check_correct_results_collected(task_dispatcher);
 }
 
 BOOST_FIXTURE_TEST_CASE(make_task_dispatcher, test_task_dispatcher_fixture)
@@ -238,7 +238,7 @@ BOOST_FIXTURE_TEST_CASE(inner_code_stack_aligned, test_task_dispatcher_fixture)
 
   BOOST_MESSAGE("All tasks finished, run() completed.");
 
-  check_correct_results();
+  check_correct_results_collected(task_dispatcher);
 
   (void)blah_data;
   (void)blah_data2;

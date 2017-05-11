@@ -299,6 +299,9 @@ namespace OMP {
  * Check out <a href="https://computing.llnl.gov/tutorials/openMP/">this good tutorial on
  * OpenMP</a>.
  *
+ * \since Changed in %Tomographer 5.0: removed results collector, introduced
+ *        collectedTaskResults() and friends
+ *
  * <ul>
  *
  * <li> \a TaskType must be a \ref pageInterfaceTask compliant type.  This type specifies
@@ -422,7 +425,7 @@ private:
     { }
 
     const TaskCData * pcdata;
-    std::vector<TaskResultType> results;
+    std::vector<TaskResultType*> results;
     LoggerType & logger;
 
     StdClockType::time_point time_start;
@@ -693,6 +696,15 @@ public:
   {
   }
 
+  ~TaskDispatcher()
+  {
+    for (auto r : shared_data.results) {
+      if (r != NULL) {
+        delete r;
+      }
+    }
+  }
+
   /** \brief Run the specified tasks
    *
    * Do everything, run tasks, collect results etc.
@@ -702,7 +714,7 @@ public:
     shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "Let's go!");
     shared_data.time_start = StdClockType::now();
 
-    shared_data.results.resize(shared_data.num_total_runs);
+    shared_data.results.resize(shared_data.num_total_runs, NULL);
     
     shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "preparing for parallel runs");
 
@@ -796,15 +808,15 @@ public:
   /** \brief Get all the task results
    *
    */
-  inline const std::vector<TaskResultType> & collectedTaskResults() const {
+  inline const std::vector<TaskResultType*> & collectedTaskResults() const {
     return shared_data.results;
   }
 
   /** \brief Get the result of a specific given task
    *
    */
-  inline TaskResultType collectedTaskResult(CountIntType k) const {
-    return shared_data.results[k];
+  inline const TaskResultType & collectedTaskResult(CountIntType k) const {
+    return *shared_data.results[k];
   }
 
 private:
@@ -863,7 +875,7 @@ private:
 #pragma omp critical
     {
       try {
-        shdat->results[k] = t.getResult();
+        shdat->results[k] = new TaskResultType(std::move(t.stealResult()));
       } catch (...) {
           got_exception = true;
           exception_str = std::string("Caught exception while storing result: ")
@@ -969,17 +981,17 @@ public:
 /** \brief Create an OMP task dispatcher. Useful if you want C++'s template argument
  *         deduction mechanism
  */
-template<typename TaskType_, typename TaskCData_, typename ResultsCollector_,
+template<typename TaskType_, typename TaskCData_,
          typename LoggerType_, typename CountIntType_ = int>
-inline TaskDispatcher<TaskType_, TaskCData_, ResultsCollector_,
+inline TaskDispatcher<TaskType_, TaskCData_,
                       LoggerType_, CountIntType_>
-makeTaskDispatcher(TaskCData_ * pcdata_, ResultsCollector_ * results_, LoggerType_ & logger_,
+makeTaskDispatcher(TaskCData_ * pcdata_, LoggerType_ & logger_,
                    CountIntType_ num_total_runs_, CountIntType_ n_chunk_ = 1)
 {
   // RVO should be rather obvious to the compiler
-  return TaskDispatcher<TaskType_, TaskCData_, ResultsCollector_,
+  return TaskDispatcher<TaskType_, TaskCData_,
                         LoggerType_, CountIntType_>(
-                            pcdata_, results_, logger_, num_total_runs_, n_chunk_
+                            pcdata_, logger_, num_total_runs_, n_chunk_
                             );
 }
 

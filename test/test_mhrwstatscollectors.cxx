@@ -130,13 +130,61 @@ struct CheckMHRWStatsCollector
   }
 };
 
+struct CheckMHRWStatsCollectorWResult : public CheckMHRWStatsCollector
+{
+  CheckMHRWStatsCollectorWResult(const int id) : CheckMHRWStatsCollector(id) { }
+
+  struct ResultType {
+    ResultType(int id_) : id(id_), timestwo(id_*2), timesthree(id_*3) { }
+    ResultType(ResultType && ) = default;
+
+    int id;
+    int timestwo;
+    int timesthree;
+
+    // make sure implementations don't rely on these
+    ResultType(const ResultType & ) = delete;
+    ResultType& operator=(const ResultType & ) = delete;
+  };
+
+  ResultType getResult() const { return ResultType(id); }
+  // here nothing special to do, same as getResult()
+  ResultType stealResult() const { return ResultType(id); }
+};
+
+struct CheckMHRWStatsCollectorWCopyableResult : public CheckMHRWStatsCollector
+{
+  CheckMHRWStatsCollectorWCopyableResult(const int id) : CheckMHRWStatsCollector(id) { }
+
+  struct ResultType {
+    ResultType(int id_) : id(id_), timestwo(id_*2), timesthree(id_*3) { }
+    ResultType(const ResultType & ) = default; // also copyable
+    ResultType(ResultType && ) = default;
+
+    int id;
+    int timestwo;
+    int timesthree;
+
+    // make sure implementations don't rely on these
+    ResultType& operator=(const ResultType & ) = delete;
+  };
+
+  ResultType getResult() const { return ResultType(id); }
+  // here nothing special to do, same as getResult()
+  ResultType stealResult() const { return ResultType(id); }
+};
+
 
 struct test_multmhrwstatscollectors_fixture
 {
-  CheckMHRWStatsCollector a, b, c, d, e;
+  CheckMHRWStatsCollectorWResult a;
+  CheckMHRWStatsCollector b;
+  CheckMHRWStatsCollectorWResult c;
+  CheckMHRWStatsCollector d;
+  CheckMHRWStatsCollector e;
 
-  Tomographer::MultipleMHRWStatsCollectors<CheckMHRWStatsCollector,CheckMHRWStatsCollector,
-                                           CheckMHRWStatsCollector,CheckMHRWStatsCollector,
+  Tomographer::MultipleMHRWStatsCollectors<CheckMHRWStatsCollectorWResult,CheckMHRWStatsCollector,
+                                           CheckMHRWStatsCollectorWResult,CheckMHRWStatsCollector,
                                            CheckMHRWStatsCollector> mult;
 
   test_multmhrwstatscollectors_fixture()
@@ -252,6 +300,50 @@ BOOST_AUTO_TEST_CASE(raw_move)
   check(d.raw_move_call_data);
   check(e.raw_move_call_data);
 }
+
+
+BOOST_AUTO_TEST_CASE(results)
+{
+  typedef std::tuple<CheckMHRWStatsCollectorWResult::ResultType,Tomographer::MHRWStatsCollectorNoResult,
+                     CheckMHRWStatsCollectorWResult::ResultType,Tomographer::MHRWStatsCollectorNoResult,
+                     Tomographer::MHRWStatsCollectorNoResult>  FullResultType;
+
+  FullResultType res(mult.stealResult());
+
+  BOOST_CHECK_EQUAL(std::get<0>(res).id, 0) ;
+  BOOST_CHECK_EQUAL(std::get<0>(res).timestwo, 0) ;
+  BOOST_CHECK_EQUAL(std::get<0>(res).timesthree, 0) ;
+  BOOST_CHECK_EQUAL(std::get<2>(res).id, 2) ;
+  BOOST_CHECK_EQUAL(std::get<2>(res).timestwo, 4) ;
+  BOOST_CHECK_EQUAL(std::get<2>(res).timesthree, 6) ;
+}
+
+BOOST_AUTO_TEST_CASE(results_copyable)
+{
+  typedef std::tuple<CheckMHRWStatsCollectorWCopyableResult::ResultType,Tomographer::MHRWStatsCollectorNoResult,
+                     CheckMHRWStatsCollectorWCopyableResult::ResultType,Tomographer::MHRWStatsCollectorNoResult,
+                     Tomographer::MHRWStatsCollectorNoResult>  FullResultType;
+
+  CheckMHRWStatsCollectorWCopyableResult a(0);
+  CheckMHRWStatsCollector b(1);
+  CheckMHRWStatsCollectorWCopyableResult c(2);
+  CheckMHRWStatsCollector d(3);
+  CheckMHRWStatsCollector e(4);
+
+  Tomographer::MultipleMHRWStatsCollectors<CheckMHRWStatsCollectorWCopyableResult,CheckMHRWStatsCollector,
+                                           CheckMHRWStatsCollectorWCopyableResult,CheckMHRWStatsCollector,
+                                           CheckMHRWStatsCollector> mult(a, b, c, d, e);
+
+  FullResultType res(mult.getResult());
+
+  BOOST_CHECK_EQUAL(std::get<0>(res).id, 0) ;
+  BOOST_CHECK_EQUAL(std::get<0>(res).timestwo, 0) ;
+  BOOST_CHECK_EQUAL(std::get<0>(res).timesthree, 0) ;
+  BOOST_CHECK_EQUAL(std::get<2>(res).id, 2) ;
+  BOOST_CHECK_EQUAL(std::get<2>(res).timestwo, 4) ;
+  BOOST_CHECK_EQUAL(std::get<2>(res).timesthree, 6) ;
+}
+
 
 BOOST_AUTO_TEST_SUITE_END();
 

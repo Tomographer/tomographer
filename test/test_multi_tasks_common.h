@@ -242,6 +242,23 @@ struct test_task_dispatcher_fixture {
       BOOST_CHECK_EQUAL(results[k]->value, correct_result_values[k]) ;
     }
   }
+
+  template<typename TaskDispatcherType>
+  void check_correct_results_collected(const TaskDispatcherType & task_dispatcher)
+  {
+    // collectedTaskResults()
+    const std::vector<TestTask::ResultType*> results = task_dispatcher.collectedTaskResults();
+    check_correct_results(results);
+
+    // numTaskRuns()
+    BOOST_CHECK_EQUAL(results.size(), task_dispatcher.numTaskRuns());
+
+    // collectedTaskResult(k)
+    const std::size_t N = task_dispatcher.numTaskRuns();
+    for (std::size_t k = 0; k < N; ++k) {
+      BOOST_CHECK_EQUAL(task_dispatcher.collectedTaskResult(k).value, correct_result_values[k]) ;
+    }
+  }
 };
 
 

@@ -64,9 +64,7 @@ BOOST_FIXTURE_TEST_CASE(sequential_dispatcher, test_task_dispatcher_fixture)
 
   task_dispatcher.run();
 
-  std::vector<TestTask::ResultType*> results = task_dispatcher.collectedTaskResults();
-
-  check_correct_results(results);
+  check_correct_results_collected(task_dispatcher);
 }
 
 BOOST_FIXTURE_TEST_SUITE(status_reporting, test_task_dispatcher_status_reporting_fixture) ;
