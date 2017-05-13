@@ -190,8 +190,10 @@ int main()
   // parameters of the random walk
   typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<>,int> MHRWParamsType;
   const MHRWParamsType mhrw_params(
-      0.5, // step size -- will be automatically adjusted during thermalization sweeps
-      2, // sweep size -- will be automaticall adjusted during thermalization sweeps
+      //      0.5, // step size -- will be automatically adjusted during thermalization sweeps
+      //      2, // sweep size -- will be automaticall adjusted during thermalization sweeps
+      1,
+      1,
       500, // # of thermalization sweeps
       32768 // # of live sweeps in which samples are collected
       );

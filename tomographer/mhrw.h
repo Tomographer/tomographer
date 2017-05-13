@@ -213,6 +213,10 @@ public:
                          const MHRandomWalkType & /* mhrw */) const { }
 
   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+  inline bool allowDoneThermalization(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
+                                      const MHRandomWalkType & /* mhrw */) const { return true; }
+
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
   inline void thermalizingDone(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
                                const MHRandomWalkType & /* mhrw */) const { }
 
@@ -665,15 +669,18 @@ private:
 
   // adjustments
   template<bool IsThermalizing>
-  void _adjustparams_afteriter(CountIntType iter_k)
+  inline void _adjustparams_afteriter(CountIntType iter_k)
   {
     _mhwalker_params_adjuster.template adjustParams<IsThermalizing, false>(_n, _mhwalker, iter_k, *this);
   }
-  void _adjustparams_aftersample(CountIntType iter_k)
+  inline void _adjustparams_aftersample(CountIntType iter_k)
   {
     _mhwalker_params_adjuster.template adjustParams<false, true>(_n, _mhwalker, iter_k, *this);
   }
-
+  inline bool _adjustparams_allow_therm_done(CountIntType iter_k)
+  {
+    return _mhwalker_params_adjuster.template allowDoneThermalization(_n, _mhwalker, iter_k, *this);
+  }
 
 
 
@@ -698,8 +705,7 @@ public:
     // keep the this expression explicit in the condition, because it may be updated by
     // the adjuster. (The compiler should optimize the const value anyway if no adjuster
     // is set because _n is declared const in that case.)
-    for (k = 0; k < (_n.n_sweep * _n.n_therm); ++k) {
-      // calculate a candidate jump point and see if we accept the move
+    for ( k = 0 ; (k < (_n.n_sweep * _n.n_therm)) || !_adjustparams_allow_therm_done(k) ; ++k ) {
       _move<true>(k, false);
       _adjustparams_afteriter<true>(k);
     }
@@ -713,7 +719,7 @@ public:
     // keep the this expression explicit in the condition, because it may be updated by
     // the adjuster. (The compiler should optimize the const value anyway if no adjuster
     // is set because _n is declared const in that case.)
-    for (k = 0; k < (_n.n_sweep * _n.n_run); ++k) {
+    for (k = 0 ; k < (_n.n_sweep * _n.n_run) ; ++k) {
 
       bool is_live_iter = ((k+1) % _n.n_sweep == 0);
       
@@ -834,27 +840,30 @@ struct MHRWStatusReport : public MultiProc::TaskStatusReport
         fdone*100.0,
         accept_ratio_msg.c_str()
         );
+    const std::string nlindent = "\n    ";
     if (Tools::StatusQuery<MHRWStatsCollectorType>::CanProvideStatusLine) {
-      std::string nlindent = "\n    ";
-      msg += nlindent;
-      std::string s = Tools::StatusQuery<MHRWStatsCollectorType>::getStatusLine(&stats_collector);
-      for (std::size_t j = 0; j < s.size(); ++j) {
-        if (s[j] == '\n') {
-          msg += nlindent;
-        } else {
-          msg += s[j];
+      const std::string s = Tools::StatusQuery<MHRWStatsCollectorType>::getStatusLine(&stats_collector);
+      if (s.size()) {
+        msg += nlindent;
+        for (std::size_t j = 0; j < s.size(); ++j) {
+          if (s[j] == '\n') {
+            msg += nlindent;
+          } else {
+            msg += s[j];
+          }
         }
       }
     }
     if (Tools::StatusQuery<MHWalkerParamsAdjusterType>::CanProvideStatusLine) {
-      std::string nlindent = "\n    ";
-      msg += nlindent;
-      std::string s = Tools::StatusQuery<MHWalkerParamsAdjusterType>::getStatusLine(&mhwalker_params_adjuster);
-      for (std::size_t j = 0; j < s.size(); ++j) {
-        if (s[j] == '\n') {
-          msg += nlindent;
-        } else {
-          msg += s[j];
+      const std::string s = Tools::StatusQuery<MHWalkerParamsAdjusterType>::getStatusLine(&mhwalker_params_adjuster);
+      if (s.size()) {
+        msg += nlindent;
+        for (std::size_t j = 0; j < s.size(); ++j) {
+          if (s[j] == '\n') {
+            msg += nlindent;
+          } else {
+            msg += s[j];
+          }
         }
       }
     }

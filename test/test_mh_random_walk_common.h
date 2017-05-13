@@ -341,6 +341,8 @@ struct TestMHRWStatsCollectorWithResult
   {
     return _result;
   }
+
+  ResultType stealResult() const { return getResult(); }
 };
 
 

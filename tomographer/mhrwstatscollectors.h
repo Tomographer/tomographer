@@ -642,7 +642,7 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
   typename BinningAnalysisParamsType::BinSumSqArray error_levels;
 
   /** \brief Information of convergence status of the error bars (see e.g. \ref
-   * BinningAnalysisParamsType::CONVERGED)
+   *         BinningAnalysisParamsType::CONVERGED)
    */
   Eigen::ArrayXi converged_status;
 
@@ -1148,11 +1148,10 @@ TOMOGRAPHER_EXPORT struct StatusProvider<MultipleMHRWStatsCollectors<Args... > >
     typedef typename std::tuple_element<I, typename MHRWStatsCollector::MHRWStatsCollectorsTupleType>::type
       ThisStatsCollector;
     return
-      (StatusQuery<ThisStatsCollector>::CanProvideStatusLine
-       ? (StatusQuery<ThisStatsCollector>::getStatusLine(& stats->template getStatsCollector<I>())
-	  + ((I < (NumStatColl-1)) ? std::string("\n") : std::string()))
-       : std::string())
-      + getStatusLine<I+1>(stats);
+      _joinnl( (StatusQuery<ThisStatsCollector>::CanProvideStatusLine
+                ? StatusQuery<ThisStatsCollector>::getStatusLine(& stats->template getStatsCollector<I>())
+                : std::string()),
+               getStatusLine<I+1>(stats) );
   };
 
   template<int I = 0, typename std::enable_if<(I == NumStatColl), bool>::type dummy = true>
@@ -1162,6 +1161,13 @@ TOMOGRAPHER_EXPORT struct StatusProvider<MultipleMHRWStatsCollectors<Args... > >
     return std::string();
   }
 
+private:
+  static inline std::string _joinnl(std::string a, std::string b) {
+    if (a.size() && b.size()) {
+      return std::move(a) + "\n" + std::move(b);
+    }
+    return std::move(a) + std::move(b); // one of these guys is empty
+  }
 };
 // static members:
 template<typename... Args>

@@ -359,6 +359,15 @@
  *    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector and \ref
  *    Tomographer::MHRWStepSizeAdjuster.
  *
+ *
+ * \par bool allowDoneThermalization(MHRWParamsType & params, const MHWalker & mhwalker, CountIntType iter_k, const MHRandomWalkType & mhrw)
+ *
+ *    This function is called after the prescribed number of thermalization sweeps has
+ *    finished.  If the return value is \c true, then the random walk proceeds to the live
+ *    run sweeps.  If the return value is \c false, then the random walk remains in
+ *    thermalization mode, while calling \a allowDoneThermalization() again after each
+ *    sweep, until it returns \c true, before proceeding to the live runs.
+ *
  */
 
 
@@ -435,22 +444,22 @@
  *
  */
 
-/** \page pageInterfaceMHRWTaskInitializer MHRWTaskInitializer Interface
- *
- * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
- * for more info on what that is.</em>
- *
- * A \a MHRWTaskInitializer is an object which is responsible for initializing a
- * Metropolis-Hastings Random Walk as implemented by a \ref MHRandomWalk.  It should
- * create a \ref pageInterfaceMHWalker "MHWalker" instance, a \ref
- * pageInterfaceMHRWStatsCollector "Stats Collector" instance, and possibly a \ref
- * pageInterfaceMHWalkerParamsAdjuster "MHWalkerParams Adjuster" instance.
- *
- * A \a MHRWTaskInitializer should provide the following members:
- *
- * \par ......................... ...................
- *
- */
+// /** \page pageInterfaceMHRWTaskInitializer MHRWTaskInitializer Interface
+//  *
+//  * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
+//  * for more info on what that is.</em>
+//  *
+//  * A \a MHRWTaskInitializer is an object which is responsible for initializing a
+//  * Metropolis-Hastings Random Walk as implemented by a \ref MHRandomWalk.  It should
+//  * create a \ref pageInterfaceMHWalker "MHWalker" instance, a \ref
+//  * pageInterfaceMHRWStatsCollector "Stats Collector" instance, and possibly a \ref
+//  * pageInterfaceMHWalkerParamsAdjuster "MHWalkerParams Adjuster" instance.
+//  *
+//  * A \a MHRWTaskInitializer should provide the following members:
+//  *
+//  * \par ......................... ...................
+//  *
+//  */
 
 // /* ....
 //  *

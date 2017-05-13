@@ -78,10 +78,12 @@ private:
   EmpiricalDataArrayType stepsizes_acceptratios_empirical_data;
   int n_empirical_data;
   
-  double desired_accept_ratio_min;
-  double desired_accept_ratio_max;
+  const double desired_accept_ratio_min;
+  const double desired_accept_ratio_max;
+  const double acceptable_accept_ratio_min;
+  const double acceptable_accept_ratio_max;
   
-  CountIntType last_corrected_iter_k;
+  CountIntType last_corrected_unacceptable_iter_k;
   StepRealType last_set_step_size;
   CountIntType orig_n_therm;
   StepRealType orig_step_times_sweep;
@@ -90,7 +92,7 @@ private:
    *         performed at constant (converged) parameters before completing the
    *         thermalization runs
    */
-  double ensure_n_therm_fixed_params_fraction;
+  const double ensure_n_therm_fixed_params_fraction;
   
   Logger::LocalLogger<BaseLoggerType> llogger;
 
@@ -101,14 +103,18 @@ public:
                                                            0.25*MHRWAcceptanceRatioRecommendedMax),
                        double desired_accept_ratio_max_ = (0.5*MHRWAcceptanceRatioRecommendedMin +
                                                            0.5*MHRWAcceptanceRatioRecommendedMax),
+                       double acceptable_accept_ratio_min_ = MHRWAcceptanceRatioRecommendedMin,
+                       double acceptable_accept_ratio_max_ = MHRWAcceptanceRatioRecommendedMax,
                        double ensure_n_therm_fixed_params_fraction_ = 0.5)
   : accept_ratio_stats_collector(accept_ratio_stats_collector_),
     stepsizes_acceptratios_empirical_data(Eigen::Array<double,EmpiricalDataBufferSize,2>::Zero()),
     n_empirical_data(0),
     desired_accept_ratio_min(desired_accept_ratio_min_),
     desired_accept_ratio_max(desired_accept_ratio_max_),
-    last_corrected_iter_k(0),
-    last_set_step_size(0),
+    acceptable_accept_ratio_min(acceptable_accept_ratio_min_),
+    acceptable_accept_ratio_max(acceptable_accept_ratio_max_),
+    last_corrected_unacceptable_iter_k(0),
+    last_set_step_size(std::numeric_limits<StepRealType>::quiet_NaN()),
     orig_n_therm(0),
     orig_step_times_sweep(0),
     ensure_n_therm_fixed_params_fraction(ensure_n_therm_fixed_params_fraction_),
@@ -153,7 +159,7 @@ public:
 
     logger.longdebug([&](std::ostream & stream) {
         stream << "will consider correction.  n_empirical_data = " << n_empirical_data <<
-          ", last_corrected_iter_k = " << last_corrected_iter_k;
+          ", last_corrected_unacceptable_iter_k = " << last_corrected_unacceptable_iter_k;
       });
 
     const double accept_ratio = accept_ratio_stats_collector.movingAverageAcceptanceRatio();
@@ -166,7 +172,9 @@ public:
         stream << "will adjust.";
       });
 
-    last_corrected_iter_k = iter_k;
+    if (accept_ratio < acceptable_accept_ratio_min || accept_ratio > acceptable_accept_ratio_max) {
+      last_corrected_unacceptable_iter_k = iter_k;
+    }
 
     const auto cur_step_size = params.mhwalker_params.step_size;
 
@@ -273,6 +281,32 @@ public:
 
   }
 
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+  bool allowDoneThermalization(MHRWParamsType & params, const MHWalker & /*mhwalker*/,
+                               CountIntType iter_k, const MHRandomWalkType & /*mhrw*/)
+  {
+    auto logger = llogger.subLogger(TOMO_ORIGIN);
+
+    const double accept_ratio = accept_ratio_stats_collector.movingAverageAcceptanceRatio();
+    logger.longdebug("iter_k=%lu, accept_ratio=%f", (unsigned long)iter_k, accept_ratio); 
+    if (!std::isfinite(accept_ratio) ||
+        accept_ratio < desired_accept_ratio_min || accept_ratio > desired_accept_ratio_max) {
+      logger.longdebug("not allowing, based on accept_ratio=%f", accept_ratio); 
+      return false;
+    }
+
+    if ((iter_k - last_corrected_unacceptable_iter_k)
+        < params.n_sweep*(ensure_n_therm_fixed_params_fraction*orig_n_therm)) {
+      logger.longdebug("not allowing, based on iter_k=%lu & last_corrected_unacceptable_iter_k=%lu",
+                       (unsigned long)iter_k, (unsigned long)last_corrected_unacceptable_iter_k); 
+      return false; // not passed enough thermalizing iterations since last correction
+    }
+
+    logger.longdebug("all fine, can return"); 
+    return true;
+  }
+
+
 private:
 
   template<typename MHRWParamsType>
@@ -291,7 +325,7 @@ private:
     last_set_step_size = new_step_size;
 
     // adapt sweep size
-    params.n_sweep = orig_step_times_sweep / new_step_size;
+    params.n_sweep = orig_step_times_sweep / new_step_size + 1;
 
     // update n_therm to make sure we have enough thermalization sweeps
     _ensure_enough_thermalization_sweeps(iter_k, params);
@@ -355,7 +389,12 @@ struct StatusProvider<MHRWStepSizeAdjuster<MHRWMovingAverageAcceptanceRatioStats
 
   static constexpr bool CanProvideStatusLine = true;
   static inline std::string getStatusLine(const StatusableObject * obj) {
-    return Tomographer::Tools::fmts("set step size = %.3g", (double)obj->getLastSetStepSize());
+    double last_step = (double)obj->getLastSetStepSize();
+    if (std::isfinite(last_step)) {
+      return Tomographer::Tools::fmts("set step size = %.3g", last_step);
+    } else {
+      return std::string();
+    }
   }
 };
 

@@ -52,11 +52,84 @@
 // -----------------------------------------------------------------------------
 // fixture(s)
 
+template<typename UType>
+inline constexpr int count_set_bits(UType x) {
+  return (x == 0) ? 0 : ((x&0x1) + count_set_bits(x>>1));
+}
+
 
 // -----------------------------------------------------------------------------
 // test suites
 
 BOOST_AUTO_TEST_SUITE(test_mhrwtasks)
+// =============================================================================
+
+BOOST_AUTO_TEST_SUITE(cheap_perm)
+
+BOOST_AUTO_TEST_CASE(interleave)
+{
+  unsigned int x = 0x0f;
+  unsigned int y = 0x00;
+
+  unsigned int i1 = Tomographer::MHRWTasks::tomo_internal::bits_interleaved<unsigned int>::interleave<4>(x, y);
+  unsigned int i2 = Tomographer::MHRWTasks::tomo_internal::bits_interleaved<unsigned int>::interleave<4>(y, x);
+
+  BOOST_TEST_MESSAGE("x=0x"<<std::hex<<x<<", y=0x"<<std::hex<<y<<" : i1=0x"<<std::hex<<i1<<", i2=0x"<<std::hex<<i2) ;
+
+  BOOST_CHECK_EQUAL(i1, 0x55) ;
+  BOOST_CHECK_EQUAL(i2, 0xaa) ;
+}
+
+BOOST_AUTO_TEST_CASE(is_perm)
+{
+  const int N = sizeof(std::size_t)*CHAR_BIT; // 15; //2048+17;
+  std::vector<std::size_t> vs;
+
+  vs.resize(N);
+  for (std::size_t k = 0; k < N; ++k) {
+    const std::size_t x = std::size_t(1)<<k; // check all individual bits
+    const std::size_t y = Tomographer::MHRWTasks::tomo_internal::kinda_random_bits_perm<std::size_t>::apply(x);
+    BOOST_TEST_MESSAGE("testing " << x << " = 0x" << std::hex << x << ", y = 0x" << std::hex << y );
+
+    //    const int NBits = 64;
+    //    BOOST_TEST_MESSAGE("right half = 0x" << std::hex << (x & ((std::size_t(1)<<(NBits>>1))-1))) ;
+    
+    // check that y has the same number of set bits as k
+    BOOST_CHECK_EQUAL(count_set_bits(y), count_set_bits(x)) ;
+    
+    vs[k] = y;
+  }
+  
+  // finally check that all vs[k] are different
+  { std::sort( vs.begin(), vs.end() );
+    auto newend = std::unique( vs.begin(), vs.end() );
+    BOOST_CHECK(newend == vs.end());
+  }
+
+
+  // do the same for sequential counts
+  const int N2 = 1024 + 37;
+  vs.resize(N2);
+  const std::size_t key = 0x11001010u;
+  for (std::size_t k = 0; k < N2; ++k) {
+    const std::size_t x = key ^ k;
+    const std::size_t y = Tomographer::MHRWTasks::tomo_internal::kinda_random_bits_perm<std::size_t>::apply(x);
+    BOOST_TEST_MESSAGE("testing " << x << " = 0x" << std::hex << x << ", y = 0x" << std::hex << y );
+    // check that y has the same number of set bits as k
+    BOOST_CHECK_EQUAL(count_set_bits(y), count_set_bits(x)) ;
+    vs[k] = y;
+  }
+  
+  // finally check that all vs[k] are different
+  { std::sort( vs.begin(), vs.end() );
+    auto newend = std::unique( vs.begin(), vs.end() );
+    BOOST_CHECK(newend == vs.end());
+  }
+ 
+}
+
+BOOST_AUTO_TEST_SUITE_END() ;
+
 // =============================================================================
 
 BOOST_AUTO_TEST_SUITE(cdatabase)
