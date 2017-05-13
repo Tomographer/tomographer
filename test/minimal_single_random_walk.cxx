@@ -69,7 +69,7 @@ typedef Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes> ValueCa
 // Tomographer::Logger::ERROR.
 //
 typedef Tomographer::Logger::FileLogger BaseLoggerType;
-BaseLoggerType rootlogger(stdout, Tomographer::Logger::LONGDEBUG);
+BaseLoggerType rootlogger(stdout, Tomographer::Logger::DEBUG); //LONGDEBUG);
 
 
 int main()
@@ -192,8 +192,10 @@ int main()
   const MHRWParamsType mhrw_params(
       //      0.5, // step size -- will be automatically adjusted during thermalization sweeps
       //      2, // sweep size -- will be automaticall adjusted during thermalization sweeps
-      1,
-      1,
+      //      1,
+      //      1,
+      1e-8,
+      1e8,
       500, // # of thermalization sweeps
       32768 // # of live sweeps in which samples are collected
       );
@@ -253,7 +255,8 @@ int main()
   StatsCollectors full_stats_coll(histstatscollector, avgacceptstatscollector, statreportcheck);
 
   typedef Tomographer::MHRWStepSizeAdjuster<Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<>,
-                                            4, LoggerType>
+                                            //                                            4,
+                                            LoggerType>
     MHWalkerAdjusterType;
   MHWalkerAdjusterType mhwalker_params_adjuster(avgacceptstatscollector, logger.parentLogger());
 

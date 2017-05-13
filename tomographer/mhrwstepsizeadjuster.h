@@ -58,7 +58,7 @@ namespace Tomographer {
  *
  */
 template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
-         int EmpiricalDataBufferSize = 4,
+//         int EmpiricalDataBufferSize = 4,
          typename BaseLoggerType = Logger::VacuumLogger,
          typename StepRealType = double,
          typename CountIntType = int>
@@ -74,9 +74,9 @@ public:
 private:
   const MHRWMovingAverageAcceptanceRatioStatsCollectorType & accept_ratio_stats_collector;
   
-  typedef Eigen::Array<double,EmpiricalDataBufferSize,2> EmpiricalDataArrayType;
-  EmpiricalDataArrayType stepsizes_acceptratios_empirical_data;
-  int n_empirical_data;
+//  typedef Eigen::Array<double,EmpiricalDataBufferSize,2> EmpiricalDataArrayType;
+//  EmpiricalDataArrayType stepsizes_acceptratios_empirical_data;
+//  int n_empirical_data;
   
   const double desired_accept_ratio_min;
   const double desired_accept_ratio_max;
@@ -107,8 +107,8 @@ public:
                        double acceptable_accept_ratio_max_ = MHRWAcceptanceRatioRecommendedMax,
                        double ensure_n_therm_fixed_params_fraction_ = 0.5)
   : accept_ratio_stats_collector(accept_ratio_stats_collector_),
-    stepsizes_acceptratios_empirical_data(Eigen::Array<double,EmpiricalDataBufferSize,2>::Zero()),
-    n_empirical_data(0),
+//    stepsizes_acceptratios_empirical_data(Eigen::Array<double,EmpiricalDataBufferSize,2>::Zero()),
+//    n_empirical_data(0),
     desired_accept_ratio_min(desired_accept_ratio_min_),
     desired_accept_ratio_max(desired_accept_ratio_max_),
     acceptable_accept_ratio_min(acceptable_accept_ratio_min_),
@@ -128,13 +128,6 @@ public:
   {
     orig_n_therm = params.n_therm;
     orig_step_times_sweep = params.n_sweep * params.mhwalker_params.step_size;
-
-    // ensure enough thermalization steps that we'll at least have a change to adjust the parameters once
-    auto min_n_therm = 2 * std::max((CountIntType)params.n_sweep,
-                                    (CountIntType)accept_ratio_stats_collector.bufferSize());
-    if (params.n_therm < min_n_therm) {
-      params.n_therm = min_n_therm;
-    }
   }
 
   template<bool IsThermalizing, bool IsAfterSample,
@@ -150,15 +143,21 @@ public:
                << accept_ratio_stats_collector.movingAverageAcceptanceRatio();
       });
 
-    // only adjust every max(sweep,moving-avg-accept-ratio-buffer-size)
+    // // only adjust every max(sweep,moving-avg-accept-ratio-buffer-size)
+    // if ( ! accept_ratio_stats_collector.hasMovingAverageAcceptanceRatio() ||
+    //      (iter_k % std::max((CountIntType)params.n_sweep,
+    //                         (CountIntType)accept_ratio_stats_collector.bufferSize())) != 0 ) {
+    //   return;
+    // }
+    // only adjust every moving-avg-accept-ratio-buffer-size
     if ( ! accept_ratio_stats_collector.hasMovingAverageAcceptanceRatio() ||
-         (iter_k % std::max((CountIntType)params.n_sweep,
-                            (CountIntType)accept_ratio_stats_collector.bufferSize())) != 0 ) {
+         (iter_k % (CountIntType)accept_ratio_stats_collector.bufferSize()) != 0 ) {
       return;
     }
 
     logger.longdebug([&](std::ostream & stream) {
-        stream << "will consider correction.  n_empirical_data = " << n_empirical_data <<
+        stream << "will consider correction.  " <<
+          //          "n_empirical_data = " << n_empirical_data <<
           ", last_corrected_unacceptable_iter_k = " << last_corrected_unacceptable_iter_k;
       });
 
@@ -176,38 +175,38 @@ public:
       last_corrected_unacceptable_iter_k = iter_k;
     }
 
-    const auto cur_step_size = params.mhwalker_params.step_size;
+//    const auto cur_step_size = params.mhwalker_params.step_size;
 
-    // analyze acceptance ratio stats and correct step size
-    Eigen::Index ind;
-    // // stored value which is closest to the current point
-    // auto delta = (stepsizes_acceptratios_empirical_data.col(0)
-    //               - Eigen::Array<StepRealType,EmpiricalDataBufferSize,1>::Constant(cur_step_size)).abs().minCoeff(&ind);
-    // if (delta < 0.05*cur_step_size) {
-    //   // we already have a data point for a step_size which is very close to this one, so
-    //   // don't store another point; rather, update this one.
-    //   //
-    //   // ind is already set.
-    //   logger.longdebug([&](std::ostream & stream) {
-    //       stream << "found existing point which is close to the current one, delta = " << delta
-    //              << ". Storing at index " << ind;
-    //     });
-    // } else {
-      // add a new point, overwriting the last data point taken
-      ind = n_empirical_data % stepsizes_acceptratios_empirical_data.rows();
-      ++n_empirical_data;
-//    }
-    // store the point    
-    stepsizes_acceptratios_empirical_data(ind, 0) = cur_step_size;
-    stepsizes_acceptratios_empirical_data(ind, 1) = accept_ratio;
+//     // analyze acceptance ratio stats and correct step size
+//     Eigen::Index ind;
+//     // // stored value which is closest to the current point
+//     // auto delta = (stepsizes_acceptratios_empirical_data.col(0)
+//     //               - Eigen::Array<StepRealType,EmpiricalDataBufferSize,1>::Constant(cur_step_size)).abs().minCoeff(&ind);
+//     // if (delta < 0.05*cur_step_size) {
+//     //   // we already have a data point for a step_size which is very close to this one, so
+//     //   // don't store another point; rather, update this one.
+//     //   //
+//     //   // ind is already set.
+//     //   logger.longdebug([&](std::ostream & stream) {
+//     //       stream << "found existing point which is close to the current one, delta = " << delta
+//     //              << ". Storing at index " << ind;
+//     //     });
+//     // } else {
+//       // add a new point, overwriting the last data point taken
+//       ind = n_empirical_data % stepsizes_acceptratios_empirical_data.rows();
+//       ++n_empirical_data;
+// //    }
+//     // store the point    
+//     stepsizes_acceptratios_empirical_data(ind, 0) = cur_step_size;
+//     stepsizes_acceptratios_empirical_data(ind, 1) = accept_ratio;
 
-    logger.longdebug([&](std::ostream & stream) {
-        stream << "stored current empirical data point; ind = "
-               << ind
-               //<< ", delta = " << delta
-               << ", cur data = \n"
-               << stepsizes_acceptratios_empirical_data;
-      });
+//     logger.longdebug([&](std::ostream & stream) {
+//         stream << "stored current empirical data point; ind = "
+//                << ind
+//                //<< ", delta = " << delta
+//                << ", cur data = \n"
+//                << stepsizes_acceptratios_empirical_data;
+//       });
 
 
 //    if (n_empirical_data < stepsizes_acceptratios_empirical_data.rows()) {
@@ -380,12 +379,17 @@ public:
 namespace Tools {
 
 template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType,
-         int EmpiricalDataBufferSize, typename CountIntType>
+//         int EmpiricalDataBufferSize,
+         typename BaseLoggerType,
+         typename StepRealType,
+         typename CountIntType>
 struct StatusProvider<MHRWStepSizeAdjuster<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
-                                           EmpiricalDataBufferSize, CountIntType> >
+//                                           EmpiricalDataBufferSize,
+                                           BaseLoggerType, StepRealType, CountIntType> >
 {
   typedef MHRWStepSizeAdjuster<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
-                               EmpiricalDataBufferSize, CountIntType> StatusableObject;
+//                               EmpiricalDataBufferSize,
+                               BaseLoggerType, StepRealType, CountIntType> StatusableObject;
 
   static constexpr bool CanProvideStatusLine = true;
   static inline std::string getStatusLine(const StatusableObject * obj) {
