@@ -507,6 +507,18 @@ template<typename ... MHRWControllerTypes>
 constexpr int MHRWMultipleControllers<MHRWControllerTypes...>::NumControllers;
 
 
+/** \brief Convenience function to create a MHRWMultipleControllers (using template
+ *         argument deduction)
+ *
+ * \since Added in %Tomographer 5.0
+ */
+template<typename... MHRWControllerTypes>
+inline MHRWMultipleControllers<MHRWControllerTypes...>
+mkMHRWMultipleControllers(MHRWControllerTypes & ... controllers)
+{
+  return MHRWMultipleControllers<MHRWControllerTypes...>( controllers ... ) ;
+}
+
 
 
 /** \brief A \ref pageInterfaceMHRWController which does not adjust anything
@@ -966,25 +978,25 @@ private:
 
   // adjustments
   template<bool IsThermalizing>
-  inline void _adjustparams_afteriter(CountIntType iter_k)
+  inline void _controller_adjust_afteriter(CountIntType iter_k)
   {
     MHRWControllerInvokerType::template invokeAdjustParams<IsThermalizing, false>(
         _mhrw_controller, _n, _mhwalker, iter_k, *this
         );
   }
-  inline void _adjustparams_aftersample(CountIntType iter_k)
+  inline void _controller_adjust_aftersample(CountIntType iter_k)
   {
     MHRWControllerInvokerType::template invokeAdjustParams<false, true>(
         _mhrw_controller, _n, _mhwalker, iter_k, *this
         );
   }
-  inline bool _adjustparams_allow_therm_done(CountIntType iter_k)
+  inline bool _controller_allow_therm_done(CountIntType iter_k)
   {
     return MHRWControllerInvokerType::template invokeAllowDoneThermalization(
         _mhrw_controller, _n, _mhwalker, iter_k, *this
         );
   }
-  inline bool _adjustparams_allow_runs_done(CountIntType iter_k)
+  inline bool _controller_allow_runs_done(CountIntType iter_k)
   {
     return MHRWControllerInvokerType::template invokeAllowDoneRuns(
         _mhrw_controller, _n, _mhwalker, iter_k, *this
@@ -1012,9 +1024,9 @@ public:
     // keep the this expression explicit in the condition, because it may be updated by
     // the controller. (The compiler should optimize the const value anyway if no
     // controller is set because _n is declared const in that case.)
-    for ( k = 0 ; (k < (_n.n_sweep * _n.n_therm)) || !_adjustparams_allow_therm_done(k) ; ++k ) {
+    for ( k = 0 ; (k < (_n.n_sweep * _n.n_therm)) || !_controller_allow_therm_done(k) ; ++k ) {
       _move<true>(k, false);
-      _adjustparams_afteriter<true>(k);
+      _controller_adjust_afteriter<true>(k);
     }
 
     _thermalizing_done();
@@ -1026,18 +1038,18 @@ public:
     // keep the this expression explicit in the condition, because it may be updated by
     // the controller. (The compiler should optimize the const value anyway if no
     // controller is set because _n is declared const in that case.)
-    for (k = 0 ; (k < (_n.n_sweep * _n.n_run)) || !_adjustparams_allow_runs_done(k) ; ++k) {
+    for (k = 0 ; (k < (_n.n_sweep * _n.n_run)) || !_controller_allow_runs_done(k) ; ++k) {
 
       bool is_live_iter = ((k+1) % _n.n_sweep == 0);
       
       // calculate a candidate jump point and see if we accept the move
       _move<false>(k, is_live_iter);
-      _adjustparams_afteriter<false>(k);
+      _controller_adjust_afteriter<false>(k);
 
       if (is_live_iter) {
         _process_sample(k, n);
         ++n;
-        _adjustparams_aftersample(k);
+        _controller_adjust_aftersample(k);
       }
 
     }

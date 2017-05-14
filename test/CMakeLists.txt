@@ -176,7 +176,8 @@ addTomographerTest(test_mathtools_solveclyap.cxx "LAPACK")
 addTomographerTest(test_histogram.cxx  "")
 addTomographerTest(test_mhrw.cxx  "")
 addTomographerTest(test_mhrwstatscollectors.cxx  "")
-addTomographerTest(test_mhrwstepsizeadjuster.cxx  "")
+addTomographerTest(test_mhrwstepsizecontroller.cxx  "")
+addTomographerTest(test_mhrwvalueerrorbinsconvergedcontroller.cxx  "")
 addTomographerTest(test_mhrwtasks.cxx  "")
 addTomographerTest(test_valuecalculator.cxx  "")
 addTomographerTest(test_mhrw_bin_err.cxx  "")
@@ -213,25 +214,25 @@ add_test(NAME minimal_tomorun
   )
 
 #
-# check "minimal tomorun with dyn adjustments" example program compiles and runs
+# check "minimal tomorun with dyn controller" example program compiles and runs
 #
-#add_executable(minimal_tomorun_adjusted
-#  minimal_tomorun_adjusted.cxx
-#  )
+add_executable(minimal_tomorun_controlled
+ minimal_tomorun_controlled.cxx
+ )
 # Enable C++11
-#set_property(TARGET minimal_tomorun_adjusted PROPERTY CXX_STANDARD 11)
+set_property(TARGET minimal_tomorun_controlled PROPERTY CXX_STANDARD 11)
 # tomographer headers
-#target_include_directories(minimal_tomorun_adjusted PRIVATE "..")
+target_include_directories(minimal_tomorun_controlled PRIVATE "..")
 # dependency: Eigen
-#target_include_directories(minimal_tomorun_adjusted  PRIVATE ${EIGEN3_INCLUDE_DIR})
-#target_compile_definitions(minimal_tomorun_adjusted  PRIVATE -DEIGEN_DONT_PARALLELIZE)
-#target_link_libraries(minimal_tomorun_adjusted  PRIVATE Threads::Threads)
-#target_include_directories(minimal_tomorun_adjusted  PRIVATE ${Boost_INCLUDE_DIR})
-#
-#add_test(NAME minimal_tomorun_adjusted
-#  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-#  COMMAND "$<TARGET_FILE:minimal_tomorun>"
-#  )
+target_include_directories(minimal_tomorun_controlled  PRIVATE ${EIGEN3_INCLUDE_DIR})
+target_compile_definitions(minimal_tomorun_controlled  PRIVATE -DEIGEN_DONT_PARALLELIZE)
+target_link_libraries(minimal_tomorun_controlled  PRIVATE Threads::Threads)
+target_include_directories(minimal_tomorun_controlled  PRIVATE ${Boost_INCLUDE_DIR})
+
+add_test(NAME minimal_tomorun_controlled
+ WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+ COMMAND "$<TARGET_FILE:minimal_tomorun_controlled>"
+ )
 
 #
 # check "minimal single random walk" example program compiles and runs

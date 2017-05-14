@@ -255,13 +255,27 @@ public:
   {
   }
 
-  //! Constructor: copy another histogram type
-  template<typename HistogramType,// and enforce it's indeed a histogram type by testing its 'HasErrorBars' property:
-           TOMOGRAPHER_ENABLED_IF_TMPL(HistogramType::HasErrorBars == 0 || HistogramType::HasErrorBars == 1)>
-  Histogram(const HistogramType & other)
-    : params(other.params), bins(other.params.num_bins), off_chart(other.off_chart)
+  //! Constructor: move another histogram type
+  Histogram(Histogram && x)
+    : params(std::move(x.params)),
+      bins(std::move(x.bins)),
+      off_chart(x.off_chart)
   {
-    bins = other.bins.template cast<CountType>();
+  }
+
+  //! Forbid expensive copies by default, use explicit \ref copy() if you need this
+  Histogram(const Histogram & ) = delete;
+
+  //! copy another histogram type
+  template<typename HistogramType,// and enforce it's indeed a histogram type by testing its 'HasErrorBars' property:
+           TOMOGRAPHER_ENABLED_IF_TMPL(HistogramType::HasErrorBars == 0 ||
+                                       HistogramType::HasErrorBars == 1)>
+  static Histogram copy(const HistogramType & other)
+  {
+    Histogram h(other.params);
+    h.bins = other.bins.template cast<CountType>();
+    h.off_chart = other.off_chart;
+    return h;
   }
 
   //! Resets the histogram to zero counts everywhere (including the off-chart counts)
@@ -520,6 +534,13 @@ public:
    */
   HistogramWithErrorBars(Scalar min, Scalar max, std::size_t num_bins)
     : Base_(min, max, num_bins), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero(num_bins))
+  {
+  }
+
+  //! Constructor: move another histogram type
+  HistogramWithErrorBars(HistogramWithErrorBars && x)
+    : Base_(std::move(x)),
+      delta(std::move(x.delta))
   {
   }
 

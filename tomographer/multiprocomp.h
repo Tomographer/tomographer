@@ -875,7 +875,7 @@ private:
 #pragma omp critical
     {
       try {
-        shdat->results[k] = new TaskResultType(std::move(t.stealResult()));
+        shdat->results[k] = new TaskResultType(t.stealResult());
       } catch (...) {
           got_exception = true;
           exception_str = std::string("Caught exception while storing result: ")

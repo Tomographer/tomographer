@@ -169,6 +169,37 @@ public:
 };
 
 
+/** \brief Convenience function to create a MHRWValueErrorBinsConvergedController (using
+ *         template argument deduction)
+ *
+ * \since Added in %Tomographer 5.0
+ */
+template<typename ValueHistogramWithBinningMHRWStatsCollectorType_,
+         typename BaseLoggerType_,
+         typename IterCountIntType_ = int>
+inline MHRWValueErrorBinsConvergedController<ValueHistogramWithBinningMHRWStatsCollectorType_,
+                                             IterCountIntType_,
+                                             BaseLoggerType_>
+mkMHRWValueErrorBinsConvergedController(
+    const ValueHistogramWithBinningMHRWStatsCollectorType_ & value_stats_collector_,
+    BaseLoggerType_ & baselogger_,
+    int check_frequency_sweeps_ = 1024,
+    std::size_t max_allowed_unknown_isolated_ = 0,
+    std::size_t max_allowed_unknown_ = 0,
+    std::size_t max_allowed_not_converged_ = 0
+    )
+{
+  return MHRWValueErrorBinsConvergedController<ValueHistogramWithBinningMHRWStatsCollectorType_,
+                                               IterCountIntType_,
+                                               BaseLoggerType_>(
+                                                   value_stats_collector_,
+                                                   baselogger_,
+                                                   check_frequency_sweeps_,
+                                                   max_allowed_unknown_isolated_,
+                                                   max_allowed_unknown_,
+                                                   max_allowed_not_converged_
+                                                   ) ;
+}
 
 
 

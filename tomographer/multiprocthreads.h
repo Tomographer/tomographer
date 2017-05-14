@@ -315,10 +315,22 @@ private:
     thread_shared_data(const TaskCData * pcdata_, LoggerType & logger_,
                        CountIntType num_total_runs, CountIntType num_threads)
       : pcdata(pcdata_),
+        user_mutex(),
+        results(),
         logger(logger_),
         time_start(),
         schedule(num_total_runs, num_threads),
         status_report()
+    { }
+
+    thread_shared_data(thread_shared_data && x)
+      : pcdata(x.pcdata),
+        user_mutex(),
+        results(std::move(x.results)),
+        logger(x.logger),
+        time_start(std::move(x.time_start)),
+        schedule(std::move(x.schedule)),
+        status_report(std::move(x.status_report))
     { }
 
     const TaskCData * pcdata;
@@ -334,7 +346,7 @@ private:
     StdClockType::time_point time_start;
 
     struct Schedule {
-      const CountIntType num_threads;
+      const int num_threads;
       CountIntType num_active_working_threads;
 
       const CountIntType num_total_runs;
@@ -346,7 +358,7 @@ private:
 
       std::mutex mutex;
 
-      Schedule(CountIntType num_total_runs_, CountIntType num_threads_)
+      Schedule(CountIntType num_total_runs_, int num_threads_)
         : num_threads(num_threads_),
           num_active_working_threads(0),
           num_total_runs(num_total_runs_),
@@ -354,6 +366,17 @@ private:
           num_launched(0),
           interrupt_requested(0),
           inner_exception(),
+          mutex()
+      {
+      }
+      Schedule(Schedule && x)
+        : num_threads(std::move(x.num_threads)),
+          num_active_working_threads(x.num_active_working_threads),
+          num_total_runs(x.num_total_runs),
+          num_completed(x.num_completed),
+          num_launched(x.num_launched),
+          interrupt_requested(x.interrupt_requested),
+          inner_exception(std::move(x.inner_exception)),
           mutex()
       {
       }
@@ -382,6 +405,18 @@ private:
           full_report(),
           user_fn(),
           counter(0),
+          mutex()
+      {
+      }
+      StatusReport(StatusReport && x)
+        : underway(x.underway),
+          initialized(x.initialized),
+          ready(x.ready),
+          periodic_interval(x.periodic_interval),
+          numreportsrecieved(x.numreportsrecieved),
+          full_report(std::move(x.full_report)),
+          user_fn(std::move(x.user_fn)),
+          counter(x.counter),
           mutex()
       {
       }
@@ -589,8 +624,13 @@ public:
    */
   TaskDispatcher(TaskCData * pcdata_, LoggerType & logger_,
                  CountIntType num_total_runs_,
-                 CountIntType num_threads_ = std::thread::hardware_concurrency())
+                 int num_threads_ = std::thread::hardware_concurrency())
     : shared_data(pcdata_, logger_, num_total_runs_, num_threads_)
+  {
+  }
+
+  TaskDispatcher(TaskDispatcher && other)
+    : shared_data(std::move(other.shared_data))
   {
   }
 
@@ -821,19 +861,8 @@ private:
     privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()",
                              "Task #%lu finished, about to collect result.", (unsigned long)privdat.task_id);
     
-    shared_data.results[privdat.task_id] = new TaskResultType(t.getResult());
-    // { std::lock_guard<std::mutex> lck(shared_data.user_mutex);
-    //   shared_data.results->collectResult(privdat.task_id, t.getResult(), shared_data.pcdata);
-    // }
-    
-    // {
-    //   std::lock_guard<std::mutex> lck(shared_data.status_report.mutex) ;
-    //   if ((int)privdat.local_status_report_counter != (int)shared_data.status_report.counter) {
-    //     // status report request missed by task... do as if we had provided a
-    //     // report, but don't provide report.
-    //     ++ shared_data.status_report.numreportsrecieved;
-    //   }
-    // }
+    // collect result
+    shared_data.results[privdat.task_id] = new TaskResultType(t.stealResult());
 
     privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()", "task done") ;
   }
@@ -913,6 +942,20 @@ public:
     
 }; // class TaskDispatcher
 
+
+template<typename TaskType_, typename TaskCData_,
+         typename LoggerType_, typename CountIntType_ = int>
+inline
+TaskDispatcher<TaskType_, TaskCData_, LoggerType_, CountIntType_>
+mkTaskDispatcher(TaskCData_ * pcdata_,
+                 LoggerType_ & logger_,
+                 CountIntType_ num_total_runs_,
+                 int num_threads_ = std::thread::hardware_concurrency())
+{
+  return TaskDispatcher<TaskType_, TaskCData_, LoggerType_, CountIntType_>(
+      pcdata_, logger_, num_total_runs_, num_threads_
+      ) ;
+}
 
 
 

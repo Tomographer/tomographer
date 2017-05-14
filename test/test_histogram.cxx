@@ -269,24 +269,29 @@ BOOST_AUTO_TEST_CASE(normalized)
   }
 }
 
-BOOST_AUTO_TEST_CASE(assign)
+BOOST_AUTO_TEST_CASE(copy)
 {
   Tomographer::UniformBinsHistogram<float, int> hist(0.0f, 1.0f, 5);
   hist.bins << 0, 3, 19, 24, 8;
   
-  Tomographer::UniformBinsHistogram<float, double> histtgt(0.0f, 1.0f, 5);
-  histtgt = hist;
+  auto histtgt = Tomographer::UniformBinsHistogram<float, double>::copy(hist);
 
   MY_BOOST_CHECK_EIGEN_EQUAL( hist.bins.cast<double>(), histtgt.bins, tol );
 }
-BOOST_AUTO_TEST_CASE(copy_construct)
+
+BOOST_AUTO_TEST_CASE(move)
 {
   Tomographer::UniformBinsHistogram<float, int> hist(0.0f, 1.0f, 5);
   hist.bins << 0, 3, 19, 24, 8;
-  
-  Tomographer::UniformBinsHistogram<float, double> histtgt(hist);
 
-  MY_BOOST_CHECK_EIGEN_EQUAL( hist.bins.cast<double>(), histtgt.bins, tol );
+  Tomographer::UniformBinsHistogram<float, int> hist2(std::move(hist));
+
+  BOOST_CHECK_EQUAL( hist2.bins.size(), 5 );
+  MY_BOOST_CHECK_FLOATS_EQUAL(hist2.bins.cast<double>()(0), 0., tol );
+  MY_BOOST_CHECK_FLOATS_EQUAL(hist2.bins.cast<double>()(1), 3., tol );
+  MY_BOOST_CHECK_FLOATS_EQUAL(hist2.bins.cast<double>()(2), 19., tol );
+  MY_BOOST_CHECK_FLOATS_EQUAL(hist2.bins.cast<double>()(3), 24., tol );
+  MY_BOOST_CHECK_FLOATS_EQUAL(hist2.bins.cast<double>()(4), 8., tol );
 }
 
 BOOST_AUTO_TEST_SUITE_END(); // uniform_bins_histogram

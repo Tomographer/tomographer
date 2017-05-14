@@ -351,7 +351,7 @@ private:
 public:
   TaskDispatcher(TaskCData * pcdata_, LoggerType & logger_, CountIntType num_total_runs_)
     : pcdata(pcdata_), results(), logger(logger_), num_total_runs(num_total_runs_),
-        mgriface(this)
+      mgriface(this)
   {
   }
   ~TaskDispatcher() {
@@ -386,7 +386,8 @@ public:
       t.run(pcdata, logger, &mgriface);
       
       // and collect the result
-      results[task_k] = new TaskResultType(std::move(t.stealResult()));
+      logger.longdebug("MultiProc::Sequential::TaskDispatcher::run()", "collecting result");
+      results[task_k] = new TaskResultType(t.stealResult());
     }
 
     // all done
@@ -469,10 +470,23 @@ public:
 }; // class TaskDispatcher
 
 
+
+template<typename TaskType_, typename TaskCData_,
+         typename LoggerType_, typename CountIntType_ = int>
+inline TaskDispatcher<TaskType_, TaskCData_, LoggerType_, CountIntType_>
+mkTaskDispatcher(TaskCData_ * pcdata_, LoggerType_ & logger_, CountIntType_ num_total_runs_)
+{
+  return TaskDispatcher<TaskType_, TaskCData_, LoggerType_, CountIntType_>(
+      pcdata_, logger_, num_total_runs_
+      );
+}
+
+
+
+
+
 } // namespace Sequential
-
 } // namespace MultiProc
-
 } // namespace Tomographer
 
 #endif

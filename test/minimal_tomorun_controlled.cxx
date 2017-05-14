@@ -33,8 +33,10 @@
 #include <tomographer/densedm/tspacellhwalker.h>
 #include <tomographer/densedm/tspacefigofmerit.h>
 #include <tomographer/mhrw.h>
+#include <tomographer/mhrwstepsizecontroller.h>
+#include <tomographer/mhrwvalueerrorbinsconvergedcontroller.h>
 #include <tomographer/mhrwtasks.h>
-#include <tomographer/mhrw_valuehist_tasks.h>
+#include <tomographer/mhrw_valuehist_tools.h>
 #include <tomographer/multiprocthreads.h>
 #include <tomographer/tools/signal_status_report.h>
 
@@ -66,7 +68,7 @@ typedef Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes> ValueCa
 // object to the engine in Tomographer::MHRWTasks::ValueHistogramTasks, which take care of
 // running the random walks etc. as needed.
 //
-struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<
+struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   ValueCalculator, // our value calculator
   true // use binning analysis
   >
@@ -84,34 +86,50 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<
 
   const DenseLLH llh;
 
-  //
-  // This function is called automatically by the task manager/dispatcher.  It should
-  // return a LLHMHWalker object which controls the random walk.
-  //
-  template<typename Rng, typename LoggerType>
-  inline Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType>
-  createMHWalker(Rng & rng, LoggerType & logger) const
+  // the result of a task run -- just store the result of the first stats collector (the
+  // 'val_stats_collector').
+  struct MHRWStatsResultsType
   {
-    return Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType>(
-	llh.dmt.initMatrixType(),
-	llh,
-	rng,
-	logger
-	);
-  }
+    ValueStatsCollectorResultType value_result;
 
-  //
-  // Create the params-adjuster
-  //
-  template<typename MHWalkerType>
-  inline MHRWStepSizeAdjuster<4> createMHWalkerParams(mhwalker) const
+    MHRWStatsResultsType(ValueStatsCollectorResultType && r)
+      : value_result(std::move(r))
+    {
+    }
+
+    template<typename... Types>
+    MHRWStatsResultsType(std::tuple<ValueStatsCollectorResultType, Types...> && r)
+      : value_result(std::move(std::get<0>(r)))
+    {
+    }
+  };
+
+  template<typename Rng, typename LoggerType, typename ExecFn>
+  inline void setupMHRWTaskAndRun(Rng & rng, LoggerType & logger, ExecFn run) const
   {
-    return MHRWStepSizeAdjuster<4> .............
-  }
+    auto val_stats_collector = createValueStatsCollector(logger);
+   Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<> movavg_accept_stats;
+   auto stats_collectors =
+     Tomographer::mkMultipleMHRWStatsCollectors(val_stats_collector, movavg_accept_stats);
+
+    auto therm_step_controller =
+      Tomographer::mkMHRWStepSizeController<MHRWParamsType>(movavg_accept_stats, logger);
+    auto numsamples_controller =
+      Tomographer::mkMHRWValueErrorBinsConvergedController(val_stats_collector, logger);
+
+    auto controllers = Tomographer::mkMHRWMultipleControllers(therm_step_controller, numsamples_controller);
+
+    Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType> mhwalker(
+            llh.dmt.initMatrixType(),
+            llh,
+            rng,
+            logger
+            );
+
+    run(mhwalker, stats_collectors, controllers);
+  };
 
 };
-
-
 
 
 //
@@ -123,7 +141,7 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<
 // Tomographer::Logger::ERROR.
 //
 typedef Tomographer::Logger::FileLogger BaseLoggerType;
-BaseLoggerType rootlogger(stdout, Tomographer::Logger::DEBUG);
+BaseLoggerType rootlogger(stderr, Tomographer::Logger::DEBUG);
 
 
 int main()
@@ -244,12 +262,10 @@ int main()
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>  OurMHRandomWalkTask;
 
-  typedef typename OurCData::ResultsCollectorType<BaseLoggerType>::Type OurResultsCollector;
-
   // parameters of the random walk
   const OurCData::MHRWParamsType mhrw_params(
-      0.2, // step size -- will be automatically adjusted during thermalization sweeps
-      50, // sweep size -- will be automaticall adjusted during thermalization sweeps
+      0.1,//0.02, // step size -- will be automatically adjusted during thermalization sweeps
+      10,//50, // sweep size -- will be automaticall adjusted during thermalization sweeps
       500, // # of thermalization sweeps
       32768 // # of live sweeps in which samples are collected
       );
@@ -263,26 +279,23 @@ int main()
   // instantiate the class which stores the shared data.
   OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params, base_seed);
 
-  // the object which will collect & store the results at the end of the day
-  OurResultsCollector results(logger.parentLogger());
-
   // repeat the whole random walk this number of times.  These random walks will run in
   // parallel depending on the number of CPUs available.
-  const int num_repeats = 4;
+  const int num_repeats = 8;
 
   // create the task manager/dispatcher, using the CxxThreads implementation
-  Tomographer::MultiProc::CxxThreads::TaskDispatcher<OurMHRandomWalkTask,OurCData,OurResultsCollector,BaseLoggerType>
-    tasks(
+  auto tasks = Tomographer::MultiProc::CxxThreads::mkTaskDispatcher<OurMHRandomWalkTask>(
         &taskcdat, // constant data
-        &results, // results collector
         logger.parentLogger(), // the main logger object
         num_repeats // num_runs
         );
 
-  // set up signal handling -- really easy we'll do this.  Hit CTRL+C to get an instant
-  // status report.
-  auto srep = Tomographer::Tools::makeSigHandlerTaskDispatcherStatusReporter(&tasks, logger.parentLogger());
-  Tomographer::Tools::installSignalHandler(SIGINT, &srep);
+  // 
+  tasks.setStatusReportHandler([&](decltype(tasks)::FullStatusReportType report) {
+      std::cout << "--- intermediate status report ---\n"
+                << report.getHumanReport() << "\n" ;
+    });
+  tasks.requestPeriodicStatusReport(500) ;
 
   //
   // Finally, run our tomo process
@@ -301,35 +314,35 @@ int main()
   // delta-time, formatted in hours, minutes, seconds and fraction of seconds
   std::string elapsed_s = Tomographer::Tools::fmtDuration(time_end - time_start);
 
-  //
-  // The 'results' object contains all the interesting results.  It is a
-  // ResultsCollectorWithBinningAnalysis object located in the namespace
-  // Tomographer::MHRWTasks::ValueHistogramTasks (check out the API documentation).
-  //
-  // The most interesting methods are probably finalHistogram() and
-  // collectedRunTaskResults().
-  //
-  auto histogram = results.finalHistogram();
+  // //
+  // // The 'results' object contains all the interesting results.  It is a
+  // // ResultsCollectorWithBinningAnalysis object located in the namespace
+  // // Tomographer::MHRWTasks::ValueHistogramTasks (check out the API documentation).
+  // //
+  // // The most interesting methods are probably finalHistogram() and
+  // // collectedRunTaskResults().
+  // //
+  // auto histogram = results.finalHistogram();
 
-  // histogram has type Tomographer::AveragedHistogram, you can use it like any other
-  // histogram object with error bars (see "Histogram Type Interface").  E.g.:
-  logger.info([&](std::ostream & stream) {
-      stream << "Histogram has " << histogram.numBins() << " bins, range is ["
-             << histogram.params.min << ".." << histogram.params.max  << "]\n";
-      for (unsigned int k = 0; k < histogram.numBins(); ++k) {
-        stream << "\t[" << std::setw(5) << histogram.binLowerValue(k)
-               << "," << std::setw(5) << histogram.binUpperValue(k) << "]  -->  "
-               << histogram.count(k) << " +/- " << histogram.errorBar(k) << "\n";
-      }
-    });
+  // // histogram has type Tomographer::AveragedHistogram, you can use it like any other
+  // // histogram object with error bars (see "Histogram Type Interface").  E.g.:
+  // logger.info([&](std::ostream & stream) {
+  //     stream << "Histogram has " << histogram.numBins() << " bins, range is ["
+  //            << histogram.params.min << ".." << histogram.params.max  << "]\n";
+  //     for (unsigned int k = 0; k < histogram.numBins(); ++k) {
+  //       stream << "\t[" << std::setw(5) << histogram.binLowerValue(k)
+  //              << "," << std::setw(5) << histogram.binUpperValue(k) << "]  -->  "
+  //              << histogram.count(k) << " +/- " << histogram.errorBar(k) << "\n";
+  //     }
+  //   });
 
-  logger.info([&](std::ostream & stream) {
-      // results.printFinalReport() will generate a default tomorun-like report with the
-      // parameters of the random walk, an overview of each histogram of each task repeat,
-      // short info on the convergence of the binning error bars, and the final histogram
-      // itself along with error bars
-      results.printFinalReport(stream, taskcdat);
-    });
+  // logger.info([&](std::ostream & stream) {
+  //     // results.printFinalReport() will generate a default tomorun-like report with the
+  //     // parameters of the random walk, an overview of each histogram of each task repeat,
+  //     // short info on the convergence of the binning error bars, and the final histogram
+  //     // itself along with error bars
+  //     results.printFinalReport(stream, taskcdat);
+  //   });
 
 
   // success.

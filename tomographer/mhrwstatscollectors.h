@@ -76,6 +76,7 @@ struct multistatscoll_result_type_helper {
 template<typename MHRWStatsCollector>
 struct multistatscoll_result_type_helper<
   MHRWStatsCollector,
+  // ignore specialization (SFINAE) if either ResultType is not defined or if ResultType is void
   typename std::enable_if<
     !std::is_same<typename MHRWStatsCollector::ResultType,void>::value,
     void
@@ -171,6 +172,9 @@ public:
     : statscollectors(statscollectors_...)
   {
   }
+
+  //! It's explicitly allowed to copy this stats collector
+  MultipleMHRWStatsCollectors(const MultipleMHRWStatsCollectors<MHRWStatsCollectors...> & copy) = default;
 
   // method to get a particular stats collector
   template<int I>
@@ -284,41 +288,7 @@ public:
   {
   }
 
-
-
-
-  // /** \brief Create a new MultipleMHRWStatsCollectors by appending a stats collector to an
-  //  *         existing MultipleMHRWStatsCollectors
-  //  *
-  //  */
-  // template<typename NewStatsCollector>
-  // inline MultipleMHRWStatsCollectors<MHRWStatsCollectors..., NewStatsCollector>
-  // appended(NewStatsCollector & new_stats_collector) const
-  // {
-  //   return MultipleMHRWStatsCollectors<MHRWStatsCollectors..., NewStatsCollector>(
-  //       statscollectors... hem hem,
-  //       new_stats_collector)
-  // }
-  //
-  //
-  // /** \brief Create a new MultipleMHRWStatsCollectors by merging with another
-  //  *         MultipleMHRWStatsCollectors
-  //  *
-  //  */
-  // template<typename MultipleMHRWStatsCollectors2>
-  // inline
-  // ....
-  // merged(MultipleMHRWStatsCollectors2 b)
-  // {
-  //   MultipleMHRWStatsCollectors
-  // }
-
-
 };
-
-
-
-
 
 /** \brief Trivial, NO-OP stats collector
  *
@@ -330,22 +300,42 @@ typedef MultipleMHRWStatsCollectors<> TrivialMHRWStatsCollector;
 
 
 
+/** \brief Convenience function to create a MultipleMHRWStatsCollector (using template
+ *         argument deduction)
+ *
+ * \since Added in %Tomographer 5.0
+ */
+template<typename... MHRWStatsCollectors>
+inline MultipleMHRWStatsCollectors<MHRWStatsCollectors...>
+mkMultipleMHRWStatsCollectors(MHRWStatsCollectors& ... mhrwstatscollectors)
+{
+  return MultipleMHRWStatsCollectors<MHRWStatsCollectors...>(mhrwstatscollectors...) ;
+}
+
+
+
+
+
 
 // -----------------
 
-template<typename CountIntType_ = int>
+/** \brief
+ *
+ * \since Added in %Tomographer 5.0
+ */
+template<typename IterCountIntType_ = int>
 TOMOGRAPHER_EXPORT class MHRWMovingAverageAcceptanceRatioStatsCollector
 {
 public:
-  typedef CountIntType_ CountIntType;
+  typedef IterCountIntType_ IterCountIntType;
 
 private:
   Eigen::ArrayXi accept_buffer;
-  CountIntType pos;
+  IterCountIntType pos;
 
 public:
 
-  inline MHRWMovingAverageAcceptanceRatioStatsCollector(int num_samples_ = 2048)
+  inline MHRWMovingAverageAcceptanceRatioStatsCollector(std::size_t num_samples_ = 2048)
     : accept_buffer(Eigen::ArrayXi::Zero(num_samples_)), pos(0)
   {
   }
@@ -539,8 +529,8 @@ public:
       if (_logger.enabledFor(Logger::LONGDEBUG)) {
 	// _logger.longdebug("ValueHistogramMHRWStatsCollector", "done()");
 	_logger.longdebug("ValueHistogramMHRWStatsCollector",
-		       "Done walking & collecting stats. Here's the histogram:\n"
-		       + _histogram.prettyPrint());
+                          "Done walking & collecting stats. Here's the histogram:\n"
+                          + _histogram.prettyPrint());
       }
     }
   }
@@ -602,9 +592,9 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
   {
   }
 
-  // can be copied & moved
-  ValueHistogramWithBinningMHRWStatsCollectorResult(const ValueHistogramWithBinningMHRWStatsCollectorResult &) = default;
-  ValueHistogramWithBinningMHRWStatsCollectorResult(ValueHistogramWithBinningMHRWStatsCollectorResult &&) = default;
+  // can be moved
+  ValueHistogramWithBinningMHRWStatsCollectorResult(ValueHistogramWithBinningMHRWStatsCollectorResult &&)
+      = default;
 
 
   //! Simple constructor with direct initialization of fields

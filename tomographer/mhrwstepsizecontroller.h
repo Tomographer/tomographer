@@ -61,9 +61,9 @@ namespace Tomographer {
  */
 template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
 //         int EmpiricalDataBufferSize = 4,
-         typename BaseLoggerType = Logger::VacuumLogger,
-         typename StepRealType = double,
-         typename CountIntType = int>
+         typename BaseLoggerType_ = Logger::VacuumLogger,
+         typename StepRealType_ = double,
+         typename IterCountIntType_ = int>
 TOMOGRAPHER_EXPORT class MHRWStepSizeController
 //  : public Tools::EigenAlignedOperatorNewProvider // not needed without empirical data buffer
 {
@@ -72,6 +72,9 @@ public:
   
   typedef MHRWMovingAverageAcceptanceRatioStatsCollectorType_
     MHRWMovingAverageAcceptanceRatioStatsCollectorType;
+  typedef BaseLoggerType_ BaseLoggerType;
+  typedef StepRealType_ StepRealType;
+  typedef IterCountIntType_ IterCountIntType;
 
 private:
   const MHRWMovingAverageAcceptanceRatioStatsCollectorType & accept_ratio_stats_collector;
@@ -85,9 +88,9 @@ private:
   const double acceptable_accept_ratio_min;
   const double acceptable_accept_ratio_max;
   
-  CountIntType last_corrected_unacceptable_iter_k;
+  IterCountIntType last_corrected_unacceptable_iter_k;
   StepRealType last_set_step_size;
-  CountIntType orig_n_therm;
+  IterCountIntType orig_n_therm;
   StepRealType orig_step_times_sweep;
   
   /** \brief Ensure that at least this fraction of the original \a n_therm sweeps are
@@ -152,7 +155,7 @@ public:
            typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType,
            TOMOGRAPHER_ENABLED_IF_TMPL(IsThermalizing)> // Only while thermalizing
   inline void adjustParams(MHRWParamsType & params, const MHWalker & /*mhwalker*/,
-                           CountIntType iter_k, const MHRandomWalkType & /*mhrw*/)
+                           IterCountIntType iter_k, const MHRandomWalkType & /*mhrw*/)
   {
     auto logger = llogger.subLogger(TOMO_ORIGIN) ;
 
@@ -163,13 +166,13 @@ public:
 
     // // only adjust every max(sweep,moving-avg-accept-ratio-buffer-size)
     // if ( ! accept_ratio_stats_collector.hasMovingAverageAcceptanceRatio() ||
-    //      (iter_k % std::max((CountIntType)params.n_sweep,
-    //                         (CountIntType)accept_ratio_stats_collector.bufferSize())) != 0 ) {
+    //      (iter_k % std::max((IterCountIntType)params.n_sweep,
+    //                         (IterCountIntType)accept_ratio_stats_collector.bufferSize())) != 0 ) {
     //   return;
     // }
     // only adjust every moving-avg-accept-ratio-buffer-size
     if ( ! accept_ratio_stats_collector.hasMovingAverageAcceptanceRatio() ||
-         (iter_k % (CountIntType)accept_ratio_stats_collector.bufferSize()) != 0 ) {
+         (iter_k % (IterCountIntType)accept_ratio_stats_collector.bufferSize()) != 0 ) {
       return;
     }
 
@@ -303,7 +306,7 @@ public:
 
   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
   bool allowDoneThermalization(const MHRWParamsType & params, const MHWalker & /*mhwalker*/,
-                               CountIntType iter_k, const MHRandomWalkType & /*mhrw*/)
+                               IterCountIntType iter_k, const MHRandomWalkType & /*mhrw*/)
   {
     auto logger = llogger.subLogger(TOMO_ORIGIN);
 
@@ -328,7 +331,7 @@ public:
 
   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
   bool allowDoneRuns(const MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
-                     CountIntType /*iter_k*/, const MHRandomWalkType & /*mhrw*/)
+                     IterCountIntType /*iter_k*/, const MHRandomWalkType & /*mhrw*/)
   {
     return true; // do whatever you like
   }
@@ -336,7 +339,7 @@ public:
 private:
 
   template<typename MHRWParamsType>
-  void _adjust_step_size(CountIntType iter_k, MHRWParamsType & params, StepRealType new_step_size)
+  void _adjust_step_size(IterCountIntType iter_k, MHRWParamsType & params, StepRealType new_step_size)
   {
     auto logger = llogger.subLogger(TOMO_ORIGIN);
 
@@ -362,7 +365,7 @@ private:
   }
 
   template<typename MHRWParamsType>
-  void _ensure_enough_thermalization_sweeps(CountIntType iter_k, MHRWParamsType & params)
+  void _ensure_enough_thermalization_sweeps(IterCountIntType iter_k, MHRWParamsType & params)
   {
     auto logger = llogger.subLogger(TOMO_ORIGIN);
 
@@ -399,27 +402,63 @@ public:
   // }
 
   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
-  inline void thermalizingDone(MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/, const MHRandomWalkType & /*mhrw*/) const
+  inline void thermalizingDone(MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
+                               const MHRandomWalkType & /*mhrw*/) const
   {
   }
 };
 
 
 
+template<typename MHRWParamsType,
+         typename MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
+         typename BaseLoggerType_
+         >
+inline 
+MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
+                       BaseLoggerType_,
+                       typename MHRWParamsType::MHWalkerParams::StepRealType,
+                       typename MHRWParamsType::CountIntType>
+mkMHRWStepSizeController(const MHRWMovingAverageAcceptanceRatioStatsCollectorType_ & accept_ratio_stats_collector_,
+                         BaseLoggerType_ & baselogger_,
+                         double desired_accept_ratio_min_ = (0.75*MHRWAcceptanceRatioRecommendedMin +
+                                                             0.25*MHRWAcceptanceRatioRecommendedMax),
+                         double desired_accept_ratio_max_ = (0.5*MHRWAcceptanceRatioRecommendedMin +
+                                                             0.5*MHRWAcceptanceRatioRecommendedMax),
+                         double acceptable_accept_ratio_min_ = MHRWAcceptanceRatioRecommendedMin,
+                         double acceptable_accept_ratio_max_ = MHRWAcceptanceRatioRecommendedMax,
+                         double ensure_n_therm_fixed_params_fraction_ = 0.5)
+{
+  return MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
+                                BaseLoggerType_,
+                                typename MHRWParamsType::MHWalkerParams::StepRealType,
+                                typename MHRWParamsType::CountIntType>(
+                                    accept_ratio_stats_collector_,
+                                    baselogger_,
+                                    desired_accept_ratio_min_,
+                                    desired_accept_ratio_max_,
+                                    acceptable_accept_ratio_min_,
+                                    acceptable_accept_ratio_max_,
+                                    ensure_n_therm_fixed_params_fraction_
+                                    );
+}
+
+
+
+
+
+
 namespace Tools {
 
 template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType,
-//         int EmpiricalDataBufferSize,
          typename BaseLoggerType,
          typename StepRealType,
-         typename CountIntType>
+         typename IterCountIntType>
 struct StatusProvider<MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
-//                                           EmpiricalDataBufferSize,
-                                           BaseLoggerType, StepRealType, CountIntType> >
+                                             BaseLoggerType, StepRealType, IterCountIntType> >
 {
   typedef MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
-//                               EmpiricalDataBufferSize,
-                               BaseLoggerType, StepRealType, CountIntType> StatusableObject;
+                                 BaseLoggerType, StepRealType, IterCountIntType> StatusableObject;
 
   static constexpr bool CanProvideStatusLine = true;
   static inline std::string getStatusLine(const StatusableObject * obj) {

@@ -71,6 +71,8 @@ struct bits_interleaved {
 };
 // generate a permutation of the bits of UIntType which maps integers 0...k to slightly
 // better seeds for each task's rng (spanning more of the seed bits)
+//
+// Despite the name, the permutation is always the same.
 template<typename UIntType, int NBits = sizeof(UIntType)*CHAR_BIT, typename = void>
 struct kinda_random_bits_perm {
   // take the NBits least significant digits and apply the permutation to them
@@ -108,7 +110,91 @@ struct kinda_random_bits_perm<UIntType, NBits, // NBits can be divided by 8:
   }
 };
 
-}
+} // namespace tomo_internal
+
+
+
+
+
+// /** \brief Initialize the random walk's mhwalker, stats collector and random walk
+//  *         controller
+//  *
+//  * \todo ............ doc .............
+//  */
+// template<typename MHWalkerType_, typename MHRWStatsCollectorType_,
+//          typename MHRWControllerType_ = MHRWNoController>
+// TOMOGRAPHER_EXPORT struct MHRWTaskComponents
+// {
+//   typedef MHWalkerType_ MHWalkerType;
+//   typedef MHRWStatsCollectorType_ MHRWStatsCollectorType;
+//   typedef MHRWControllerType_ MHRWControllerType;
+
+//   template<typename MHWalkerTypeInit, typename MHRWStatsCollectorTypeInit,
+//            // enabled only if MHRWControllerType is default-constructible
+//            typename dummy = decltype(MHRWControllerType())>
+//   inline
+//   MHRWTaskComponents(MHWalkerTypeInit && mhwalker_, MHRWStatsCollectorTypeInit && stats_)
+//     : mhwalker(std::forward<MHWalkerTypeInit>(mhwalker_)),
+//       stats(std::forward<MHRWStatsCollectorTypeInit>(stats_)),
+//       mhrwcontroller()
+//   { }
+
+//   template<typename MHWalkerTypeInit, typename MHRWStatsCollectorTypeInit,
+//            typename MHRWControllerTypeInit>
+//   inline
+//   MHRWTaskComponents(MHWalkerTypeInit && mhwalker_, MHRWStatsCollectorTypeInit && stats_,
+//                      MHRWControllerTypeInit && mhrwcontroller_)
+//     : mhwalker(std::forward<MHWalkerTypeInit>(mhwalker_)),
+//       stats(std::forward<MHRWStatsCollectorTypeInit>(stats_)),
+//       mhrwcontroller(std::forward<MHRWControllerTypeInit>(mhrwcontroller_))
+//   { }
+
+//   MHWalkerType mhwalker;
+//   MHRWStatsCollectorType stats;
+//   MHRWControllerType mhrwcontroller;
+// };
+
+// /** \brief Convenience function to create a MHRWTaskComponents (with template argument
+//  *         deduction)
+//  *
+//  * \todo ....... doc .......... example? ...........
+//  */
+// template<typename MHWalkerType, typename MHRWStatsCollectorType>
+// TOMOGRAPHER_EXPORT inline
+// MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
+//                    typename std::remove_reference<MHRWStatsCollectorType>::type>
+// mkMHRWTaskComponents(MHWalkerType && mhwalker, MHRWStatsCollectorType && stats)
+// {
+//   return MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
+//                             typename std::remove_reference<MHRWStatsCollectorType>::type>(
+//                                 std::forward<MHWalkerType>(mhwalker),
+//                                 std::forward<MHRWStatsCollectorType>(stats)
+//                                 ) ;
+// }
+
+// /** \brief Convenience function to create a MHRWTaskComponents (with template argument
+//  *         deduction)
+//  *
+//  * \todo ....... doc .......... example? ...........
+//  */
+// template<typename MHWalkerType, typename MHRWStatsCollectorType, typename MHRWControllerType>
+// TOMOGRAPHER_EXPORT inline
+// MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
+//                    typename std::remove_reference<MHRWStatsCollectorType>::type,
+//                    typename std::remove_reference<MHRWControllerType>::type>
+// mkMHRWTaskComponents(MHWalkerType && mhwalker, MHRWStatsCollectorType && stats,
+//                      MHRWControllerType && mhrwcontroller)
+// {
+//   return MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
+//                             typename std::remove_reference<MHRWStatsCollectorType>::type,
+//                             typename std::remove_reference<MHRWControllerType>::type>(
+//                                 std::forward<MHWalkerType>(mhwalker),
+//                                 std::forward<MHRWStatsCollectorType>(stats),
+//                                 std::forward<MHRWControllerType>(mhrwcontroller)
+//                                 ) ;
+// }
+
+
 
 
 /** \brief Data needed to be accessible to the working code
@@ -128,6 +214,7 @@ TOMOGRAPHER_EXPORT struct CDataBase
   typedef IterCountIntType_ IterCountIntType;
   //! Type used to specify the step size
   typedef MHWalkerParams_ MHWalkerParams;
+
   /** \brief Type used to specify the seed of the random number generator
    *
    * \since Added in %Tomographer 5.0
@@ -160,7 +247,7 @@ TOMOGRAPHER_EXPORT struct CDataBase
    * Stores the number of iterations per sweep, the number of thermalizing sweeps, the
    * number of "live" sweeps, and the step size of the random walk.
    *
-   * See \ref MHRWParams<IterCountIntType,MHWalkerParams>
+   * See \ref MHRWParams<MHWalkerParams,IterCountIntType>
    */
   const MHRWParamsType mhrw_params;
 
@@ -197,83 +284,8 @@ TOMOGRAPHER_EXPORT struct CDataBase
   }
 
 
-  /** \brief Initialize the random walk's mhwalker, stats collector and random walk
-   *         controller
-   *
-   * \todo ............ doc .............
-   */
-  template<typename MHWalkerType_, typename MHRWStatsCollectorType_,
-           typename MHRWControllerType_ = MHRWNoController>
-  struct MHRWTaskComponents
-  {
-    typedef MHWalkerType_ MHWalkerType;
-    typedef MHRWStatsCollectorType_ MHRWStatsCollectorType;
-    typedef MHRWControllerType_ MHRWControllerType;
-
-    template<typename MHWalkerTypeInit, typename MHRWStatsCollectorTypeInit,
-             // enabled only if MHRWControllerType is default-constructible
-             typename dummy = decltype(MHRWControllerType())>
-    MHRWTaskComponents(MHWalkerTypeInit && mhwalker_, MHRWStatsCollectorTypeInit && stats_)
-      : mhwalker(std::forward<MHWalkerTypeInit>(mhwalker_)),
-        stats(std::forward<MHRWStatsCollectorTypeInit>(stats_)),
-        mhrwcontroller()
-    { }
-    template<typename MHWalkerTypeInit, typename MHRWStatsCollectorTypeInit,
-             typename MHRWControllerTypeInit>
-    MHRWTaskComponents(MHWalkerTypeInit && mhwalker_, MHRWStatsCollectorTypeInit && stats_,
-                       MHRWControllerTypeInit && mhrwcontroller_)
-      : mhwalker(std::forward<MHWalkerTypeInit>(mhwalker_)),
-        stats(std::forward<MHRWStatsCollectorTypeInit>(stats_)),
-        mhrwcontroller(std::forward<MHRWControllerTypeInit>(mhrwcontroller_))
-    { }
-
-    MHWalkerType mhwalker;
-    MHRWStatsCollectorType stats;
-    MHRWControllerType mhrwcontroller;
-  };
-
-  /** \brief Convenience function to create a MHRWTaskComponents (with template argument
-   *         deduction)
-   *
-   * \todo ....... doc .......... example? ...........
-   */
-  template<typename MHWalkerType, typename MHRWStatsCollectorType>
-  static
-  MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
-                     typename std::remove_reference<MHRWStatsCollectorType>::type>
-  mkMHRWTaskComponents(MHWalkerType && mhwalker, MHRWStatsCollectorType && stats)
-  {
-    return MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
-                              typename std::remove_reference<MHRWStatsCollectorType>::type>(
-                                  std::forward<MHWalkerType>(mhwalker),
-                                  std::forward<MHRWStatsCollectorType>(stats)
-                                  ) ;
-  }
-
-  /** \brief Convenience function to create a MHRWTaskComponents (with template argument
-   *         deduction)
-   *
-   * \todo ....... doc .......... example? ...........
-   */
-  template<typename MHWalkerType, typename MHRWStatsCollectorType, typename MHRWControllerType>
-  static
-  MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
-                     typename std::remove_reference<MHRWStatsCollectorType>::type,
-                     typename std::remove_reference<MHRWControllerType>::type>
-  mkMHRWTaskComponents(MHWalkerType && mhwalker, MHRWStatsCollectorType && stats,
-                       MHRWControllerType && mhrwcontroller)
-  {
-    return MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
-                              typename std::remove_reference<MHRWStatsCollectorType>::type,
-                              typename std::remove_reference<MHRWControllerType>::type>(
-                                  std::forward<MHWalkerType>(mhwalker),
-                                  std::forward<MHRWStatsCollectorType>(stats),
-                                  std::forward<MHRWControllerType>(mhrwcontroller)
-                                  ) ;
-  }
-
-
   /** \brief Get some human-readable info about the random walk as a string.
+   *
    */
   inline void printBasicCDataMHRWInfo(std::ostream & str) const
   {
@@ -282,6 +294,7 @@ TOMOGRAPHER_EXPORT struct CDataBase
         << "\t# therm. sweeps = " << mhrw_params.n_therm << "\n"
         << "\t# run sweeps    = " << mhrw_params.n_run << "\n";
   }
+
   /** \brief Get some human-readable info about the random walk as a string, see \ref
    *         printBasicCDataMHRWInfo()
    */
@@ -292,6 +305,13 @@ TOMOGRAPHER_EXPORT struct CDataBase
     return ss.str();
   }
 };
+
+
+
+
+
+
+
 
 /** \brief Result of a task run.
  *
@@ -368,13 +388,15 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
   }
     
   //! The result furnished by the stats collector itself
-  const MHRWStatsResultsType stats_results;
+  MHRWStatsResultsType stats_results;
     
   //! The parameters of the random walk (see \ref MHRWParams<IterCountIntType,MHWalkerParams>)
-  const MHRWParamsType mhrw_params;
+  MHRWParamsType mhrw_params;
 
   //! The acceptance ratio of the Metropolis-Hastings random walk
-  const double acceptance_ratio;
+  double acceptance_ratio;
+
+  MHRandomWalkTaskResult(MHRandomWalkTaskResult && ) = default;
 };
 
 
@@ -449,7 +471,86 @@ public:
     }
   }
 
+private:
 
+  template<typename LoggerType, typename TaskMgrIface>
+  struct RunInnerCallable
+  {
+    const MHRandomWalkTaskCData * pcdata;
+    Rng & rng;
+    LoggerType & baselogger;
+    TaskMgrIface * tmgriface;
+
+    ResultType ** ppresult;
+
+    RunInnerCallable(const MHRandomWalkTaskCData * pcdata_, Rng & rng_, LoggerType & logger_,
+                     TaskMgrIface * tmgriface_, ResultType ** ppresult_)
+      : pcdata(pcdata_), rng(rng_), baselogger(logger_), tmgriface(tmgriface_), ppresult(ppresult_)
+    {
+    }
+    ~RunInnerCallable() {
+    }
+
+    template<typename MHWalkerType, typename MHRWStatsCollectorType, typename MHRWControllerType>
+    inline void operator()(MHWalkerType & mhwalker, MHRWStatsCollectorType & stats,
+                           MHRWControllerType & controller)
+    {
+      // here we actually run the stuff
+
+      auto logger = Logger::makeLocalLogger("Tomographer::MHRWTasks::MHRandomWalkTask::run()/run", baselogger);
+
+      // our own "stats collector" which checks if we need to send a status report back
+      typedef MHRWPredStatusReportStatsCollector<MHRWParamsType> OurStatusReportCheck;
+      OurStatusReportCheck statreportcheck(
+          // predicate
+          [&]() { return this->tmgriface->statusReportRequested(); },
+          // send-status-function
+          [&](StatusReportType report) { this->tmgriface->submitStatusReport(std::move(report)); }
+          );
+
+      typedef MultipleMHRWStatsCollectors<MHRWStatsCollectorType, OurStatusReportCheck>
+        OurStatsCollectors;
+      OurStatsCollectors ourstatscollectors(stats, statreportcheck);
+
+      logger.longdebug("About to creat MHRandomWalk instance");
+
+      typedef MHRandomWalk<Rng,MHWalkerType,OurStatsCollectors,MHRWControllerType,LoggerType,IterCountIntType>
+        MHRandomWalkType;
+
+      MHRandomWalkType rwalk(
+          // MH random walk parameters
+          pcdata->mhrw_params,
+          // the MHWalker
+          mhwalker,
+          // our stats collectors
+          ourstatscollectors,
+          // a random number generator
+          rng,
+          // and a logger
+          baselogger,
+          // the random walk controller
+          controller
+          );
+      
+      logger.longdebug("MHRandomWalk object created, running...");
+
+      rwalk.run();
+
+      logger.longdebug("MHRandomWalk run finished.");
+
+      *ppresult = new ResultType(stats.stealResult(), rwalk);
+    }
+
+    template<typename MHWalkerType, typename MHRWStatsCollectorType>
+    inline void operator()(MHWalkerType & mhwalker, MHRWStatsCollectorType & stats)
+    {
+      MHRWNoController ctrl;
+      operator()<MHWalkerType, MHRWStatsCollectorType, MHRWNoController>(mhwalker, stats, ctrl) ;
+    }
+  };
+
+
+public:
   /** \brief Run this task
    *
    * Runs this task, i.e. instantiates a \ref MHRandomWalk with the provided inputs and
@@ -460,62 +561,15 @@ public:
    * e.g. \ref MultiProc::OMP::TaskDispatcher::requestStatusReport().
    */
   template<typename LoggerType, typename TaskManagerIface>
-  inline void run(const MHRandomWalkTaskCData * pcdata, LoggerType & logger, TaskManagerIface * tmgriface)
+  inline void run(const MHRandomWalkTaskCData * pcdata, LoggerType & baselogger, TaskManagerIface * tmgriface)
   {
+    auto logger = Logger::makeLocalLogger("Tomographer::MHRWTasks::MHRandomWalkTask::run()", baselogger) ;
+
     Rng rng(_seed); // seeded random number generator
 
-    logger.longdebug("Tomographer::MHRWTasks::run()", "about to construct MHRW task components.");
+    RunInnerCallable<LoggerType, TaskManagerIface> run_object(pcdata, rng, baselogger, tmgriface, &result);
 
-    // the mh walker / stats collector / random walk controller
-    auto components = pcdata->createMHRWTaskComponents(rng, logger);
-
-    logger.longdebug("Tomographer::MHRWTasks::run()", "components created.");
-
-    typedef decltype(components) MHRWTaskComponentsType;
-    typedef typename MHRWTaskComponentsType::MHWalkerType MHWalkerType;
-    typedef typename MHRWTaskComponentsType::MHRWStatsCollectorType MHRWStatsCollectorType;
-    typedef typename MHRWTaskComponentsType::MHRWControllerType MHRWControllerType;
-
-    // our own "stats collector" which checks if we need to send a status report back
-    typedef MHRWPredStatusReportStatsCollector<MHRWParamsType> OurStatusReportCheck;
-    OurStatusReportCheck statreportcheck(
-        // predicate
-        [tmgriface]() { return tmgriface->statusReportRequested(); },
-        // send-status-function
-        [tmgriface](StatusReportType report) { tmgriface->submitStatusReport(report); }
-        );
-
-    typedef MultipleMHRWStatsCollectors<MHRWStatsCollectorType, OurStatusReportCheck>
-      OurStatsCollectors;
-    OurStatsCollectors ourstatscollectors(components.stats, statreportcheck);
-
-    logger.longdebug("Tomographer::MHRWTasks::run()", "About to creat MHRandomWalk instance");
-
-    typedef MHRandomWalk<Rng,MHWalkerType,OurStatsCollectors,MHRWControllerType,LoggerType,IterCountIntType>
-      MHRandomWalkType;
-
-    MHRandomWalkType rwalk(
-        // MH random walk parameters
-        pcdata->mhrw_params,
-        // the MHWalker
-        components.mhwalker,
-        // our stats collectors
-        ourstatscollectors,
-        // a random number generator
-        rng,
-        // and a logger
-        logger,
-        // the random walk controller
-        components.mhrwcontroller
-        );
-      
-    logger.longdebug("Tomographer::MHRWTasks::run()", "MHRandomWalk object created, running...");
-
-    rwalk.run();
-
-    logger.longdebug("Tomographer::MHRWTasks::run()", "MHRandomWalk run finished.");
-
-    result = new ResultType(std::move(components.stats.stealResult()), rwalk);
+    pcdata->setupMHRWTaskAndRun(rng, baselogger, run_object);
   }
 
   inline ResultType getResult() const
