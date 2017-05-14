@@ -240,9 +240,9 @@
  *
  * \par
  *     This jump function should honor the specified \a walker_params, which is the value
- *     passed to the constructor of the \ref Tomographer::MHRWParams class.  In the
- *     future, we may be able to dynamically adjust the parameters, so \a MHWalker
- *     implementations should typically not assume that the parameters won't change from
+ *     passed to the constructor of the \ref Tomographer::MHRWParams class.  The
+ *     parameters may be dynamically adjusted with a \ref pageInterfaceMHRWController, so
+ *     \a MHWalker implementations should not assume that the parameters won't change from
  *     one call of jumpFn() to another.
  *
  * \par FnValueType fnVal(const PointType & curpt)
@@ -300,36 +300,58 @@
 
 
 // =============================================================================
-// MHWalkerParamsAdjuster Interface
+// MHRWController Interface
 // =============================================================================
 
-/** \page pageInterfaceMHWalkerParamsAdjuster MHWalkerParamsAdjuster Interface
+/** \page pageInterfaceMHRWController MHRWController Interface
  *
- * This type is responsible for dynamically adjusting the parameters of a
- * Metropolis-Hastings random walk carried out by a \ref Tomographer::MHRandomWalk
- * instance.
+ * An instance of this type can be given additional control over a Metropolis-Hastings
+ * random walk (\ref Tomographer::MHRandomWalk), by dynamically adjusting the parameters
+ * of the random walk, and by dynamically controlling how many thermalization and live run
+ * sweeps are to be carried out.
  *
- * You can use \ref Tomographer::MHWalkerParamsNoAdjuster if you don't need to dynamically
+ * You can use \ref Tomographer::MHRWNoController if you don't need to dynamically
  * adjust the parameters of the random walk.
  *
- * A \a MHWalkerParamsAdjuster compliant type should provide the following constant public
+ * Multiple compatible controllers can be combined using \ref
+ * Tomographer::MHRWMultipleControllers.  For instance, you can have a step size
+ * dynamically adjusted during thermalization with \ref
+ * Tomographer::MHRWStepSizeController, and then have the random walk stop after
+ * enough samples thanks to a \ref Tomographer::MHRWValueErrorBinsConvergedController.
+ *
+ * A \a MHRWController compliant type should provide the following constant public
  * member value (e.g., as an enum):
  *
  * \par enum { AdjustmentStrategy = ... }
  *    Specify how often the parameters of the random walk should be adjusted.  The value
- *    should be a value in the \ref Tomographer::MHWalkerParamsAdjustmentStrategy enum.
+ *    should be a value in the \ref Tomographer::MHRWControllerAdjustmentStrategy enum.
  *
  * One should also provide the following member functions:
  *
- * \par void initParams(MHRWParamsType & params, const MHWalker & mhwalker, const MHRandomWalkType & mhrw)
- *    Called before starting the random walk. The \a params may be modified if desired.
+ * \par void init(MHRWParamsType & params, const MHWalker & mhwalker, const MHRandomWalkType & mhrw)
+ *    Called before starting the random walk. 
  *    References to the \ref pageInterfaceMHWalker (\a mhwalker) and to the \ref
  *    Tomographer::MHRandomWalk instance (\a mhrw) are provided.
+ *
+ * \par
+ *    The \a params may be modified if desired (e.g. to check for inconsistencies).
+ *    However bear in mind that the controller may be paired with other controllers using
+ *    a \ref Tomographer::MHRWMultipleControllers, in which case all controllers' \a init()
+ *    function will be called, so don't rely on the parameters not being modified between
+ *    this \a init() callback and future other callbacks (such as \a adjustParams()).
  *
  * \par void thermalizingDone(MHRWParamsType & params, const MHWalker & mhwalker, const MHRandomWalkType & mhrw)
  *    Called after the thermalization has finished. The \a params may be modified if
  *    desired.  References to the \ref pageInterfaceMHWalker (\a mhwalker) and to the \ref
  *    Tomographer::MHRandomWalk instance (\a mhrw) are provided.
+ *
+ * \par
+ *    The \a params may be modified if desired (e.g. to check for inconsistencies).
+ *    However bear in mind that the controller may be paired with other controllers using
+ *    a \ref Tomographer::MHRWMultipleControllers, in which case all controllers'
+ *    \a thermalizingDone() function will be called, so don't rely on the parameters not
+ *    being modified between this callback and future other callbacks (such as \a
+ *    adjustParams()).
  *
  * \par template<bool IsThermalizing, bool IsAfterSample> inline void adjustParams(MHRWParamsType & params, const MHWalker & mhwalker, CountIntType iter_k, const MHRandomWalkType & mhrw)
  *    This function is responsible for adjusting the random walk paramters (see \ref
@@ -359,14 +381,34 @@
  *    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector and \ref
  *    Tomographer::MHRWStepSizeAdjuster.
  *
+ * \par
+ *    Only those template instantiations of <code>adjustParams<...>()</code> corresponding
+ *    to the flags set in the \a AdjustmentStrategy need to be defined.  For instance, if
+ *    the \a AdjustmentStrategy is set to \a MHWalkerParamsDoNotAdjust (because, for
+ *    instance, you only need to use the allowDoneThermalization() or allowDoneRuns()
+ *    callback), then you do not need to define \a adjutsParams() at all.
  *
- * \par bool allowDoneThermalization(MHRWParamsType & params, const MHWalker & mhwalker, CountIntType iter_k, const MHRandomWalkType & mhrw)
- *
+ * \par bool allowDoneThermalization(const MHRWParamsType & params, const MHWalker & mhwalker, CountIntType iter_k, const MHRandomWalkType & mhrw)
  *    This function is called after the prescribed number of thermalization sweeps has
  *    finished.  If the return value is \c true, then the random walk proceeds to the live
  *    run sweeps.  If the return value is \c false, then the random walk remains in
  *    thermalization mode, while calling \a allowDoneThermalization() again after each
  *    sweep, until it returns \c true, before proceeding to the live runs.
+ *
+ * \par
+ *    This function is not allowed to modify the \a params.  [Rationale: see \ref
+ *    Tomographer::MHRWMultipleControllers]
+ *
+ * \par bool allowDoneRuns(const MHRWParamsType & params, const MHWalker & mhwalker, CountIntType iter_k, const MHRandomWalkType & mhrw)
+ *    This function is called after the prescribed number of live run sweeps (the runs
+ *    where we process samples, after all thermalization is done) has finished.  If the
+ *    return value is \c true, then the random walk ends.  If the return value is \c
+ *    false, then the random walk continues to run and process samples, while calling \a
+ *    allowDoneRuns() again after each sweep, until it returns \c true, before finishing.
+ *
+ * \par
+ *    This function is not allowed to modify the \a params.  [Rationale: see \ref
+ *    Tomographer::MHRWMultipleControllers]
  *
  */
 
@@ -443,23 +485,6 @@
  *     must be of a type compliant with the \ref pageInterfaceMHRWTaskInitializer.
  *
  */
-
-// /** \page pageInterfaceMHRWTaskInitializer MHRWTaskInitializer Interface
-//  *
-//  * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
-//  * for more info on what that is.</em>
-//  *
-//  * A \a MHRWTaskInitializer is an object which is responsible for initializing a
-//  * Metropolis-Hastings Random Walk as implemented by a \ref MHRandomWalk.  It should
-//  * create a \ref pageInterfaceMHWalker "MHWalker" instance, a \ref
-//  * pageInterfaceMHRWStatsCollector "Stats Collector" instance, and possibly a \ref
-//  * pageInterfaceMHWalkerParamsAdjuster "MHWalkerParams Adjuster" instance.
-//  *
-//  * A \a MHRWTaskInitializer should provide the following members:
-//  *
-//  * \par ......................... ...................
-//  *
-//  */
 
 // /* ....
 //  *

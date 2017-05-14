@@ -646,68 +646,12 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
    */
   Eigen::ArrayXi converged_status;
 
-  /** \brief Brief summary of convergence of error bars
-   *
-   * This brief summary stores the total number of bins (\c n_bins), the number of bins
-   * with converged error bars (\c n_converged), the number of bins with unknown
-   * convergence (\c n_unknown), how many of the latter are isolated (\c
-   * n_unknown_isolated), and how many bins have error bars which have not converged (\c
-   * n_not_converged).
-   *
-   * One always has <code>n_converged + n_unknown + n_not_converged == n_bins</code> and
-   * <code>n_unkonwn_isolated <= n_unknown</code>.
-   */
-  struct ErrorBarConvergenceSummary {
-    ErrorBarConvergenceSummary(int n_bins_ = -1, int n_converged_ = -1, int n_unknown_ = -1,
-                               int n_unknown_isolated_ = -1, int n_not_converged_ = -1)
-      : n_bins(n_bins_),
-        n_converged(n_converged_),
-        n_unknown(n_unknown_),
-        n_unknown_isolated(n_unknown_isolated_),
-        n_not_converged(n_not_converged_)
-    { }
-    int n_bins;
-    int n_converged;
-    int n_unknown;
-    int n_unknown_isolated;
-    int n_not_converged;
-
-    std::ostream & printInfoTo(std::ostream & stream) const
-    {
-      stream << n_converged << " converged / "
-             << n_unknown << " maybe (" << n_unknown_isolated << " isolated) / "
-             << n_not_converged << " not converged";
-      return stream;
-    }
-  };
-
-  //! Get a summary of the bin error bars convergence. See \ref Summary.
-  inline ErrorBarConvergenceSummary errorBarConvergenceSummary() const
+  //! A summary of the convergence status of the binning error bars
+  inline BinningErrorBarConvergenceSummary errorBarConvergenceSummary() const
   {
-    const auto n_bins = converged_status.size();
-
-    const Eigen::ArrayXi unkn_arr = 
-      converged_status.cwiseEqual(BinningAnalysisParamsType::UNKNOWN_CONVERGENCE).template cast<int>();
-    const Eigen::ArrayXi conv_arr =
-      converged_status.cwiseEqual(BinningAnalysisParamsType::CONVERGED).template cast<int>();
-
-    const auto n_unknown = unkn_arr.count();
-    const auto n_converged = conv_arr.count();
-    const auto n_not_converged = converged_status.cwiseEqual(BinningAnalysisParamsType::NOT_CONVERGED).count();
-
-    // Little heuristic to see whether the "unknown" converged error bars are isolated or
-    // not. Use conv_arr shifted by one in each direction as a mask -- an unconverged
-    // error bar is isolated if it is surrounded by converged error bars
-    const auto n_unknown_isol = (
-        unkn_arr.segment(1,n_bins-2)
-        .cwiseProduct(conv_arr.segment(0,n_bins-2))
-        .cwiseProduct(conv_arr.segment(2,n_bins-2))
-        ).count()
-      // edges
-      + unkn_arr(0)*conv_arr(1) + unkn_arr(n_bins-1)*conv_arr(n_bins-2);
-
-    return ErrorBarConvergenceSummary(n_bins, n_converged, n_unknown, n_unknown_isol, n_not_converged);
+    return BinningErrorBarConvergenceSummary::fromConvergedStatus(converged_status) ;
   }
+
   
   //! Dump values, error bars and convergence status in debug-human-readable form into ostream
   inline void dumpConvergenceAnalysis(std::ostream & str) const
@@ -716,11 +660,11 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
       str << "\tval[" << std::setw(3) << k << "] = "
           << std::setw(12) << hist.bins(k)
           << " +- " << std::setw(12) << hist.delta(k);
-      if (converged_status(k) == BinningAnalysisParamsType::CONVERGED) {
+      if (converged_status(k) == BINNING_CONVERGED) {
 	  str << "  [CONVERGED]";
-      } else if (converged_status(k) == BinningAnalysisParamsType::NOT_CONVERGED) {
+      } else if (converged_status(k) == BINNING_NOT_CONVERGED) {
         str << "  [NOT CONVERGED]";
-      } else if (converged_status(k) == BinningAnalysisParamsType::UNKNOWN_CONVERGENCE) {
+      } else if (converged_status(k) == BINNING_UNKNOWN_CONVERGENCE) {
         str << "  [UNKNOWN]";
       } else {
         str << "  [UNKNOWN CONVERGENCE STATUS: " << converged_status(k) << "]";
@@ -905,6 +849,16 @@ public:
     return result;
   }
 
+  /** \brief Get the current bin means collected so far.
+   *
+   */
+  inline Eigen::Array<CountRealAvgType,Eigen::Dynamic,1> binMeans() const
+  {
+    const BaseHistogramType & hist = histogram();
+    return hist.bins.template cast<CountRealAvgType>() /
+      (CountRealAvgType)(hist.bins.sum() + hist.off_chart);
+  }
+
   /** \brief Retrieve the final histogram data, in compliance with \ref
    *         pageInterfaceResultable compliance.
    *
@@ -1035,7 +989,7 @@ public:
       send_status_fn(
           MHRWStatusReportType::createFromRandWalkStatInfo(k, is_thermalizing, rw,
                                                            rw.statsCollector(),
-                                                           rw.mhWalkerParamsAdjuster())
+                                                           rw.mhrwController())
           );
     }
     //        fprintf(stderr, "StatusReportCheck::rawMove(): done\n");
@@ -1100,7 +1054,7 @@ public:
         send_status_fn(
             MHRWStatusReportType::createFromRandWalkStatInfo(k, is_thermalizing, rw,
                                                              rw.statsCollector(),
-                                                             rw.mhWalkerParamsAdjuster())
+                                                             rw.mhrwController())
             );
         last_status_report = now;
       }
@@ -1228,32 +1182,20 @@ TOMOGRAPHER_EXPORT struct StatusProvider<ValueHistogramWithBinningMHRWStatsColle
     const BaseHistogramType & histogram = stats->histogram();
 
     // calculate the error bars at different levels, to determine convergence status.
-    typedef typename MHRWStatsCollector::BinningAnalysisType BinningAnalysisType;
+    //typedef typename MHRWStatsCollector::BinningAnalysisType BinningAnalysisType;
     //typedef typename MHRWStatsCollector::CountRealAvgType CountRealAvgType;
-    typedef typename BinningAnalysisType::ValueType ValueType;
+    //typedef typename BinningAnalysisType::ValueType ValueType;
     const auto& binning_analysis = stats->getBinningAnalysis();
-    Eigen::Array<ValueType, Eigen::Dynamic, 1> binmeans(histogram.numBins());
-    binmeans = histogram.bins.template cast<ValueType>() /
-      (ValueType)(histogram.bins.sum() + histogram.off_chart);
+    const auto binmeans = stats->binMeans();
 
     auto error_levels = binning_analysis.calcErrorLevels(binmeans);
     auto conv_status = binning_analysis.determineErrorConvergence(error_levels);
 
-    int n_cnvg = 0;
-    int n_unknown = 0;
-    int n_not_cnvg = 0;
-    for (std::size_t k = 0; k < (std::size_t)histogram.numBins(); ++k) {
-      if (conv_status(k) == BinningAnalysisType::CONVERGED) {
-	++n_cnvg;
-      } else if (conv_status(k) == BinningAnalysisType::NOT_CONVERGED) {
-	++n_not_cnvg;
-      } else {
-	++n_unknown;
-      }
-    }
+    auto conv_summary = BinningErrorBarConvergenceSummary::fromConvergedStatus(conv_status);
 
     return Tomographer::tomo_internal::histogram_short_bar_fmt<BaseHistogramType>(histogram, "", maxbarwidth)
-      + Tools::fmts("   err: (cnvg/?/fail) %d/%d/%d", n_cnvg, n_unknown, n_not_cnvg);
+      + Tools::fmts("   err: (cnvg/?/fail) %d/%d/%d",
+                    (int)conv_summary.n_converged, (int)conv_summary.n_unknown, (int)conv_summary.n_not_converged);
   }
 };
 // static members:

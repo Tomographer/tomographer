@@ -197,38 +197,39 @@ TOMOGRAPHER_EXPORT struct CDataBase
   }
 
 
-  /** \brief Initialize the random walk's mhwalker, stats collector and mhwalkerparams adjuster
+  /** \brief Initialize the random walk's mhwalker, stats collector and random walk
+   *         controller
    *
    * \todo ............ doc .............
    */
   template<typename MHWalkerType_, typename MHRWStatsCollectorType_,
-           typename MHWalkerParamsAdjusterType_ = MHWalkerParamsNoAdjuster>
+           typename MHRWControllerType_ = MHRWNoController>
   struct MHRWTaskComponents
   {
     typedef MHWalkerType_ MHWalkerType;
     typedef MHRWStatsCollectorType_ MHRWStatsCollectorType;
-    typedef MHWalkerParamsAdjusterType_ MHWalkerParamsAdjusterType;
+    typedef MHRWControllerType_ MHRWControllerType;
 
     template<typename MHWalkerTypeInit, typename MHRWStatsCollectorTypeInit,
-             // enabled only if MHWalkerParamsAdjusterType is default-constructible
-             typename dummy = decltype(MHWalkerParamsAdjusterType())>
+             // enabled only if MHRWControllerType is default-constructible
+             typename dummy = decltype(MHRWControllerType())>
     MHRWTaskComponents(MHWalkerTypeInit && mhwalker_, MHRWStatsCollectorTypeInit && stats_)
       : mhwalker(std::forward<MHWalkerTypeInit>(mhwalker_)),
         stats(std::forward<MHRWStatsCollectorTypeInit>(stats_)),
-        mhwalkerparamsadjuster()
+        mhrwcontroller()
     { }
     template<typename MHWalkerTypeInit, typename MHRWStatsCollectorTypeInit,
-             typename MHWalkerParamsAdjusterTypeInit>
+             typename MHRWControllerTypeInit>
     MHRWTaskComponents(MHWalkerTypeInit && mhwalker_, MHRWStatsCollectorTypeInit && stats_,
-                       MHWalkerParamsAdjusterTypeInit && mhwalkerparamsadjuster_)
+                       MHRWControllerTypeInit && mhrwcontroller_)
       : mhwalker(std::forward<MHWalkerTypeInit>(mhwalker_)),
         stats(std::forward<MHRWStatsCollectorTypeInit>(stats_)),
-        mhwalkerparamsadjuster(std::forward<MHWalkerParamsAdjusterTypeInit>(mhwalkerparamsadjuster_))
+        mhrwcontroller(std::forward<MHRWControllerTypeInit>(mhrwcontroller_))
     { }
 
     MHWalkerType mhwalker;
     MHRWStatsCollectorType stats;
-    MHWalkerParamsAdjusterType mhwalkerparamsadjuster;
+    MHRWControllerType mhrwcontroller;
   };
 
   /** \brief Convenience function to create a MHRWTaskComponents (with template argument
@@ -254,20 +255,20 @@ TOMOGRAPHER_EXPORT struct CDataBase
    *
    * \todo ....... doc .......... example? ...........
    */
-  template<typename MHWalkerType, typename MHRWStatsCollectorType, typename MHWalkerParamsAdjusterType>
+  template<typename MHWalkerType, typename MHRWStatsCollectorType, typename MHRWControllerType>
   static
   MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
                      typename std::remove_reference<MHRWStatsCollectorType>::type,
-                     typename std::remove_reference<MHWalkerParamsAdjusterType>::type>
+                     typename std::remove_reference<MHRWControllerType>::type>
   mkMHRWTaskComponents(MHWalkerType && mhwalker, MHRWStatsCollectorType && stats,
-                       MHWalkerParamsAdjusterType && mhwalkerparamsadjuster)
+                       MHRWControllerType && mhrwcontroller)
   {
     return MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
                               typename std::remove_reference<MHRWStatsCollectorType>::type,
-                              typename std::remove_reference<MHWalkerParamsAdjusterType>::type>(
+                              typename std::remove_reference<MHRWControllerType>::type>(
                                   std::forward<MHWalkerType>(mhwalker),
                                   std::forward<MHRWStatsCollectorType>(stats),
-                                  std::forward<MHWalkerParamsAdjusterType>(mhwalkerparamsadjuster)
+                                  std::forward<MHRWControllerType>(mhrwcontroller)
                                   ) ;
   }
 
@@ -465,7 +466,7 @@ public:
 
     logger.longdebug("Tomographer::MHRWTasks::run()", "about to construct MHRW task components.");
 
-    // the mh walker / stats collector / mhwalker-params adjuster
+    // the mh walker / stats collector / random walk controller
     auto components = pcdata->createMHRWTaskComponents(rng, logger);
 
     logger.longdebug("Tomographer::MHRWTasks::run()", "components created.");
@@ -473,7 +474,7 @@ public:
     typedef decltype(components) MHRWTaskComponentsType;
     typedef typename MHRWTaskComponentsType::MHWalkerType MHWalkerType;
     typedef typename MHRWTaskComponentsType::MHRWStatsCollectorType MHRWStatsCollectorType;
-    typedef typename MHRWTaskComponentsType::MHWalkerParamsAdjusterType MHWalkerParamsAdjusterType;
+    typedef typename MHRWTaskComponentsType::MHRWControllerType MHRWControllerType;
 
     // our own "stats collector" which checks if we need to send a status report back
     typedef MHRWPredStatusReportStatsCollector<MHRWParamsType> OurStatusReportCheck;
@@ -490,7 +491,7 @@ public:
 
     logger.longdebug("Tomographer::MHRWTasks::run()", "About to creat MHRandomWalk instance");
 
-    typedef MHRandomWalk<Rng,MHWalkerType,OurStatsCollectors,MHWalkerParamsAdjusterType,LoggerType,IterCountIntType>
+    typedef MHRandomWalk<Rng,MHWalkerType,OurStatsCollectors,MHRWControllerType,LoggerType,IterCountIntType>
       MHRandomWalkType;
 
     MHRandomWalkType rwalk(
@@ -504,8 +505,8 @@ public:
         rng,
         // and a logger
         logger,
-        // the params adjuster (possibly a dummy)
-        components.mhwalkerparamsadjuster
+        // the random walk controller
+        components.mhrwcontroller
         );
       
     logger.longdebug("Tomographer::MHRWTasks::run()", "MHRandomWalk object created, running...");

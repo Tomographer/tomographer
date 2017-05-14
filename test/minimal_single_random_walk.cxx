@@ -33,9 +33,8 @@
 #include <tomographer/densedm/tspacellhwalker.h>
 #include <tomographer/densedm/tspacefigofmerit.h>
 #include <tomographer/mhrw.h>
-#include <tomographer/mhrwstepsizeadjuster.h>
-#include <tomographer/mhrwtasks.h>
-#include <tomographer/mhrw_valuehist_tasks.h>
+#include <tomographer/mhrwstepsizecontroller.h>
+#include <tomographer/mhrwvalueerrorbinsconvergedcontroller.h>
 
 
 //
@@ -254,13 +253,22 @@ int main()
 
   StatsCollectors full_stats_coll(histstatscollector, avgacceptstatscollector, statreportcheck);
 
-  typedef Tomographer::MHRWStepSizeAdjuster<Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<>,
-                                            //                                            4,
-                                            LoggerType>
-    MHWalkerAdjusterType;
-  MHWalkerAdjusterType mhwalker_params_adjuster(avgacceptstatscollector, logger.parentLogger());
+  typedef Tomographer::MHRWStepSizeController<Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<>,
+                                              //                                            4,
+                                              LoggerType>
+    MHRWStepSizeControllerType;
+  typedef Tomographer::MHRWValueErrorBinsConvergedController<HistogramStatsCollector,int,LoggerType>
+    MHRWBinsConvergedControllerType;
 
-  typedef Tomographer::MHRandomWalk<Rng,MHWalkerType,StatsCollectors,MHWalkerAdjusterType,LoggerType,int> MHRandomWalkType;
+  MHRWStepSizeControllerType mhrw_controller_step(avgacceptstatscollector, logger.parentLogger());
+  MHRWBinsConvergedControllerType mhrw_controller_conv(histstatscollector, logger.parentLogger());
+
+  typedef Tomographer::MHRWMultipleControllers<MHRWStepSizeControllerType,MHRWBinsConvergedControllerType>
+    MHRWControllerType;
+
+  MHRWControllerType mhrw_controller(mhrw_controller_step, mhrw_controller_conv);
+
+  typedef Tomographer::MHRandomWalk<Rng,MHWalkerType,StatsCollectors,MHRWControllerType,LoggerType,int> MHRandomWalkType;
 
   MHRandomWalkType rwalk(
       // MH random walk parameters
@@ -273,8 +281,8 @@ int main()
       rng,
       // and a logger
       logger.parentLogger(),
-      // dynamic params adjuster
-      mhwalker_params_adjuster
+      // dynamic controller
+      mhrw_controller
       );
 
 
@@ -302,9 +310,7 @@ int main()
              << histogram.params.min << ".." << histogram.params.max  << "]\n\n";
       stream << histogram.prettyPrint();
       stream << "\n";
-      stream << "Error bars: ";
-      result.errorBarConvergenceSummary().printInfoTo(stream);
-      stream << "\n";
+      stream << "Error bars: " << result.errorBarConvergenceSummary() << "\n";
     });
 
   // success.

@@ -33,6 +33,7 @@
 #include <limits>
 #include <random>
 #include <iomanip>
+#include <type_traits>
 
 #include <tomographer/tools/loggers.h>
 #include <tomographer/tools/fmt.h>
@@ -100,7 +101,7 @@ TOMOGRAPHER_EXPORT struct MHWalkerParamsStepSize
 };
 
 template<typename StepRealType>
-std::ostream & operator<<(std::ostream & stream, MHWalkerParamsStepSize<StepRealType> p)
+TOMOGRAPHER_EXPORT std::ostream & operator<<(std::ostream & stream, MHWalkerParamsStepSize<StepRealType> p)
 {
   return stream << "step_size=" << p.step_size;
 }
@@ -150,7 +151,7 @@ TOMOGRAPHER_EXPORT struct MHRWParams
 
 
 template<typename CountIntType, typename MHWalkerParams>
-std::ostream & operator<<(std::ostream & str, const MHRWParams<MHWalkerParams,CountIntType> & p)
+TOMOGRAPHER_EXPORT std::ostream & operator<<(std::ostream & str, const MHRWParams<MHWalkerParams,CountIntType> & p)
 {
   str << "MHRWParams(" << p.mhwalker_params << ";n_sweep=" << p.n_sweep
       << ",n_therm=" << p.n_therm << ",n_run=" << p.n_run << ")";
@@ -170,63 +171,356 @@ std::ostream & operator<<(std::ostream & str, const MHRWParams<MHWalkerParams,Co
  *   - Whether the adjustments are to be performed after an individual iteration (a single
  *     move in the random walk), or only after processing a live sample (only during live
  *     runs)
+ *
+ *
+ * \since Added in %Tomographer 5.0.
  */
-enum MHWalkerParamsAdjustmentStrategy {
+enum MHRWControllerAdjustmentStrategy {
   //! Never adjust the parameters of the random walk
-  MHWalkerParamsDoNotAdjust = 0,
+  MHRWControllerDoNotAdjust = 0,
 
   //! Adjustments are enabled during thermalization sweeps
-  MHWalkerParamsAdjustWhileThermalizing = 0x01,
+  MHRWControllerAdjustWhileThermalizing = 0x01,
   //! Adjustments are enabled during live (running) sweeps
-  MHWalkerParamsAdjustWhileRunning = 0x02,
+  MHRWControllerAdjustWhileRunning = 0x02,
   //! Adjustments are enabled during both thermalization and live (running) sweeps
-  MHWalkerParamsAdjustWhileThermalizingAndRunning =
-    MHWalkerParamsAdjustWhileThermalizing | MHWalkerParamsAdjustWhileRunning,
+  MHRWControllerAdjustWhileThermalizingAndRunning =
+    MHRWControllerAdjustWhileThermalizing | MHRWControllerAdjustWhileRunning,
+
+  /** \brief Mask out bits which decide at which random walk stage (thermalizing and/or
+   *         running) adjustments are performed
+   */
+  MHRWControllerAdjustRWStageMASK = 0x0f,
 
   //! Adjustemnts should be performed after each individual iteration
-  MHWalkerParamsAdjustEveryIteration = 0x10,
+  MHRWControllerAdjustEveryIteration = 0x10,
   //! Adjustemnts should be performed after a sample is taken (during live runs only)
-  MHWalkerParamsAdjustEverySample = 0x20,
+  MHRWControllerAdjustEverySample = 0x20,
+
+  /** \brief Mask out bits which decide at which frequency (after each iteration and/or
+   *         after each sample) adjustments are performed
+   */
+  MHRWControllerAdjustFrequencyMASK = 0xf0,
+
 
   //! Adjustemnts should be performed only while thermalizing, after each individual iteration
-  MHWalkerParamsAdjustEveryIterationWhileThermalizing =
-    MHWalkerParamsAdjustEveryIteration | MHWalkerParamsAdjustWhileThermalizing,
+  MHRWControllerAdjustEveryIterationWhileThermalizing =
+    MHRWControllerAdjustEveryIteration | MHRWControllerAdjustWhileThermalizing,
 
   //! Adjustemnts should be performed all the time, after each individual iteration
-  MHWalkerParamsAdjustAllTheTime =
-    MHWalkerParamsAdjustEveryIteration | MHWalkerParamsAdjustWhileThermalizingAndRunning
+  MHRWControllerAdjustEveryIterationAlways =
+    MHRWControllerAdjustEveryIteration | MHRWControllerAdjustWhileThermalizingAndRunning
 };
 
-/** \brief A \ref pageInterfaceMHWalkerParamsAdjuster which does not adjust anything
+
+// /** \brief A \ref pageInterfaceMHRWController which does not adjust anything
+//  *
+//  * No adjustments are performed whatsoever. The MHWalkerParams may be of any type.
+//  *
+//  * \since Added in %Tomographer 5.0.
+//  */
+// TOMOGRAPHER_EXPORT class MHRWNoController
+// {
+// public:
+//   enum { AdjustmentStrategy = MHRWControllerDoNotAdjust };
+
+//   MHRWNoController() { }
+
+//   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+//   inline void init(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
+//                    const MHRandomWalkType & /* mhrw */) const { }
+
+//   template<typename MHRWParamsType, typename MHWalker, typename CountIntType, typename MHRandomWalkType>
+//   inline bool allowDoneThermalization(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
+//                                       CountIntType /*iter_k*/, const MHRandomWalkType & /* mhrw */) const
+//   { return true; }
+
+//   template<typename MHRWParamsType, typename MHWalker, typename CountIntType, typename MHRandomWalkType>
+//   inline bool allowDoneRuns(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
+//                             CountIntType /*iter_k*/, const MHRandomWalkType & /* mhrw */) const
+//   { return true; }
+
+//   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+//   inline void thermalizingDone(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
+//                                const MHRandomWalkType & /* mhrw */) const { }
+
+//   template<bool IsThermalizing, bool IsAfterSample, typename MHRWParamsType, typename CountIntType,
+//            typename MHWalker, typename MHRandomWalkType>
+//   inline void adjustParams(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
+//                            CountIntType /* iter_k */, const MHRandomWalkType & /* mhrw */) const
+//   {
+//   }
+// };
+
+
+
+
+
+
+/** \brief Helper class to invoke a \ref pageInterfaceMHRWController 's callbacks
  *
- * No adjustments are performed whatsoever. The MHWalkerParams may be of any type.
+ * Invoke the callbacks on the controller, respecting its \a AdjustmentStrategy flags.
  */
-class MHWalkerParamsNoAdjuster
+template<typename MHRWControllerType_>
+struct MHRWControllerInvoker
+{
+  typedef MHRWControllerType_ MHRWControllerType;
+  enum { AdjustmentStrategy = MHRWControllerType::AdjustmentStrategy };
+
+private:
+  constexpr static bool _enabled_callback(bool IsThermalizing, bool IsAfterSample)
+  {
+    return
+      ( ((AdjustmentStrategy & MHRWControllerAdjustWhileThermalizing) && IsThermalizing) ||
+        ((AdjustmentStrategy & MHRWControllerAdjustWhileRunning) && !IsThermalizing) )
+      &&
+      ( ((AdjustmentStrategy & MHRWControllerAdjustEverySample) && IsAfterSample) ||
+        ((AdjustmentStrategy & MHRWControllerAdjustEveryIteration) && !IsAfterSample) )
+      ;
+  }
+
+public:
+
+  template<typename... Args>
+  static inline void invokeInit(MHRWControllerType & x, Args && ... args) {
+    x.init(std::forward<Args>(args)...) ;
+  }
+
+  template<typename MHRWParamsType, typename MHWalker, typename CountIntType, typename MHRandomWalkType>
+  static inline bool invokeAllowDoneThermalization(MHRWControllerType & x,
+                                                   const MHRWParamsType & params, // ensure this is const
+                                                   const MHWalker & mhwalker,
+                                                   CountIntType iter_k,
+                                                   const MHRandomWalkType & mhrw)
+  {
+    return x.allowDoneThermalization(params, mhwalker, iter_k, mhrw);
+  }
+
+  template<typename MHRWParamsType, typename MHWalker, typename CountIntType, typename MHRandomWalkType>
+  static inline bool invokeAllowDoneRuns(MHRWControllerType & x,
+                                         const MHRWParamsType & params, // ensure this is const
+                                         const MHWalker & mhwalker,
+                                         CountIntType iter_k,
+                                         const MHRandomWalkType & mhrw)
+  {
+    return x.allowDoneRuns(params, mhwalker, iter_k, mhrw);
+  }
+
+
+  template<bool IsThermalizing, bool IsAfterSample, typename ... Args>
+  static inline
+  typename std::enable_if<_enabled_callback(IsThermalizing,IsAfterSample), void>::type
+  invokeAdjustParams(MHRWControllerType & x, Args && ... args)
+  {
+    x.template adjustParams<IsThermalizing, IsAfterSample>(std::forward<Args>(args)...);
+  }
+  template<bool IsThermalizing, bool IsAfterSample, typename ... Args>
+  static inline
+  typename std::enable_if<!_enabled_callback(IsThermalizing,IsAfterSample), void>::type
+  invokeAdjustParams(MHRWControllerType & , Args && ... )
+  {
+    // callback disabled
+  }
+
+};
+
+
+
+
+namespace tomo_internal {
+
+template<unsigned int AdjustmentStrategy, unsigned int OtherAdjustmentStrategy>
+struct controller_flags_compatible {
+  static constexpr bool value =
+    // adjustments are done on different stages of the random walk
+    ((AdjustmentStrategy & OtherAdjustmentStrategy & MHRWControllerAdjustRWStageMASK) == 0) ;
+};
+
+
+template<bool RestOk, unsigned int ProcessedAdjustmentStrategyFlags,
+         typename... MHRWControllerTypes>
+struct controllers_compatible_helper;
+
+template<bool RestOk, unsigned int ProcessedAdjustmentStrategyFlags, typename MHRWControllerAType,
+         typename... MHRWControllerRestTypes>
+struct controllers_compatible_helper<RestOk, ProcessedAdjustmentStrategyFlags, MHRWControllerAType,
+                                   MHRWControllerRestTypes...>
+  : controllers_compatible_helper<
+      RestOk && controller_flags_compatible<MHRWControllerAType::AdjustmentStrategy,
+                                            ProcessedAdjustmentStrategyFlags>::value ,
+      ProcessedAdjustmentStrategyFlags | MHRWControllerAType::AdjustmentStrategy,
+      MHRWControllerRestTypes...
+  > { };
+
+template<bool RestOk, unsigned int ProcessedAdjustmentStrategyFlags>
+struct controllers_compatible_helper<RestOk, ProcessedAdjustmentStrategyFlags> {
+  static constexpr bool value = RestOk;
+  static constexpr unsigned int CombinedAdjustmentStrategy = ProcessedAdjustmentStrategyFlags;
+};
+
+
+template<typename... MHRWControllerTypes>
+struct controllers_compatible : controllers_compatible_helper<true, 0, MHRWControllerTypes...> { };
+
+} // namespace tomo_internal
+
+
+
+
+
+
+
+/** \brief A \ref pageInterfaceMHRWController which combines several independent
+ *         random walk controllers
+ *
+ * The random walk controllers must be \a compatible.  Two controllers \a A and \a B are
+ * \a compatible if they perform adjustments at different stages of the random walk (e.g.,
+ * one during thermalization and the other during the live runs) as given by their \a
+ * AdjustmentStrategy flags.
+ *
+ * The \a allowDoneRuns() and \a allowDoneThermalization() callbacks do not affect whether
+ * controllers are compatible.  The thermalization runs end only after all the controllers'
+ * \a allowDoneThermalization() callbacks return \a true, and similarly the live runs end
+ * only after all the controllers' \a allowDoneRuns() callbacks return \a true.
+ *
+ * \since Added in %Tomographer 5.0.
+ */
+template<typename ... MHRWControllerTypes>
+TOMOGRAPHER_EXPORT class MHRWMultipleControllers
 {
 public:
-  enum { AdjustmentStrategy = MHWalkerParamsDoNotAdjust };
 
-  MHWalkerParamsNoAdjuster() { }
+  typedef std::tuple<MHRWControllerTypes...> TupleType;
+  typedef std::tuple<MHRWControllerTypes&...> TupleRefType;
 
-  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
-  inline void initParams(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
-                         const MHRandomWalkType & /* mhrw */) const { }
+  static constexpr int NumControllers = sizeof...(MHRWControllerTypes) ;
 
-  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
-  inline bool allowDoneThermalization(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
-                                      const MHRandomWalkType & /* mhrw */) const { return true; }
+  TOMO_STATIC_ASSERT_EXPR( tomo_internal::controllers_compatible<MHRWControllerTypes...>::value ) ;
 
-  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
-  inline void thermalizingDone(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
-                               const MHRandomWalkType & /* mhrw */) const { }
+private:
+  TupleRefType controllers;
 
-  template<bool IsThermalizing, bool IsAfterSample, typename MHRWParamsType, typename CountIntType,
-           typename MHWalker, typename MHRandomWalkType>
-  inline void adjustParams(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
-                           CountIntType /* iter_k */, const MHRandomWalkType & /* mhrw */) const
+public:
+  enum {
+    AdjustmentStrategy =
+      tomo_internal::controllers_compatible<MHRWControllerTypes...>::CombinedAdjustmentStrategy
+  };
+
+
+  MHRWMultipleControllers(MHRWControllerTypes&... controllers_)
+    : controllers(controllers_...)
   {
   }
+
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType,
+           int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I < NumControllers)>
+  inline void init(MHRWParamsType & params, const MHWalker & mhwalker,
+                   const MHRandomWalkType & mhrw)
+  {
+    std::get<I>(controllers).init(params, mhwalker, mhrw);
+    init<MHRWParamsType, MHWalker, MHRandomWalkType, I+1>(params, mhwalker, mhrw);
+  }
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType,
+           int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I == NumControllers)>
+  inline void init(const MHRWParamsType &, const MHWalker &, const MHRandomWalkType &) const
+  {
+  }
+
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType,
+           int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I < NumControllers)>
+  inline void thermalizingDone(MHRWParamsType & params, const MHWalker & mhwalker,
+                               const MHRandomWalkType & mhrw)
+  {
+    std::get<I>(controllers).thermalizingDone(params, mhwalker, mhrw);
+    thermalizingDone<MHRWParamsType, MHWalker, MHRandomWalkType, I+1>(params, mhwalker, mhrw);
+  }
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType,
+           int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I == NumControllers)>
+  inline void thermalizingDone(const MHRWParamsType & , const MHWalker & ,
+                               const MHRandomWalkType & ) const
+  {
+  }
+
+  template<bool IsThermalizing, bool IsAfterSample,
+           typename MHRWParamsType, typename CountIntType,
+           typename MHWalker, typename MHRandomWalkType,
+           int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I < NumControllers)>
+  inline void adjustParams(MHRWParamsType & params, const MHWalker & mhwalker,
+                           CountIntType iter_k, const MHRandomWalkType & mhrw)
+  {
+    // only one of the calls to adjustParmas() should actually go through; we've checked
+    // this above with a static_assert
+    MHRWControllerInvoker<typename std::tuple_element<I, TupleType>::type>
+      ::template invokeAdjustParams<IsThermalizing,IsAfterSample>(
+          std::get<I>(controllers), params, mhwalker, iter_k, mhrw
+          );
+    adjustParams<IsThermalizing,IsAfterSample,MHRWParamsType,CountIntType,MHWalker,MHRandomWalkType,I+1>(
+        params, mhwalker, iter_k, mhrw
+        );
+  }
+  template<bool IsThermalizing, bool IsAfterSample,
+           typename MHRWParamsType, typename CountIntType,
+           typename MHWalker, typename MHRandomWalkType,
+           int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I == NumControllers)>
+  inline void adjustParams(const MHRWParamsType &, const MHWalker &,
+                           CountIntType , const MHRandomWalkType &) const
+  {
+  }
+
+  template<typename MHRWParamsType, typename MHWalker, typename CountIntType, typename MHRandomWalkType,
+           int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I < NumControllers)>
+  inline bool allowDoneThermalization(const MHRWParamsType & params, const MHWalker & mhwalker,
+                                      CountIntType iter_k, const MHRandomWalkType & mhrw)
+  {
+    return std::get<I>(controllers).allowDoneThermalization(params, mhwalker, iter_k, mhrw) &&
+      allowDoneThermalization<MHRWParamsType,MHWalker,CountIntType,MHRandomWalkType,I+1>(
+          params, mhwalker, iter_k, mhrw
+          ) ;
+  }
+  template<typename MHRWParamsType, typename MHWalker, typename CountIntType, typename MHRandomWalkType,
+           int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I == NumControllers)>
+  inline bool allowDoneThermalization(const MHRWParamsType & , const MHWalker & ,
+                                      CountIntType , const MHRandomWalkType & ) const
+  {
+    return true;
+  }
+
+  template<typename MHRWParamsType, typename MHWalker, typename CountIntType, typename MHRandomWalkType,
+           int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I < NumControllers)>
+  inline bool allowDoneRuns(const MHRWParamsType & params, const MHWalker & mhwalker,
+                            CountIntType iter_k, const MHRandomWalkType & mhrw)
+  {
+    return std::get<I>(controllers).allowDoneRuns(params, mhwalker, iter_k, mhrw) &&
+      allowDoneRuns<MHRWParamsType,MHWalker,CountIntType,MHRandomWalkType,I+1>(
+          params, mhwalker, iter_k, mhrw
+          ) ;
+  }
+  template<typename MHRWParamsType, typename MHWalker, typename CountIntType, typename MHRandomWalkType,
+           int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I == NumControllers)>
+  inline bool allowDoneRuns(const MHRWParamsType & , const MHWalker & ,
+                            CountIntType , const MHRandomWalkType & ) const
+  {
+    return true;
+  }
 };
+template<typename ... MHRWControllerTypes>
+constexpr int MHRWMultipleControllers<MHRWControllerTypes...>::NumControllers;
+
+
+
+
+/** \brief A \ref pageInterfaceMHRWController which does not adjust anything
+ *
+ * No adjustments are performed whatsoever. The MHWalkerParams may be of any type.
+ *
+ * \since Added in %Tomographer 5.0.
+ */
+typedef MHRWMultipleControllers<> MHRWNoController;
+
+
+
+
+
 
 
 namespace tomo_internal {
@@ -273,7 +567,7 @@ struct helper_FnValueType_or_dummy<MHWalker,false> {
  * After the thermalizing runs, a number of <em>run</em> sweeps are performed, in which a
  * <em>live</em> sample is taken at the last iteration of each sweep.
  *
- * \since Since Tomographer 5.0: added \a MHWalkerParamsAdjuster.
+ * \since Since Tomographer 5.0: added \a MHRWController.
  *
  * \tparam Rng is a C++ random number generator (for example, \ref std::mt19937)
  *
@@ -285,9 +579,9 @@ struct helper_FnValueType_or_dummy<MHWalker,false> {
  *         walk. It should be a type implementing a \a MHRWStatsCollector interface, see
  *         \ref pageInterfaceMHRWStatsCollector.
  *
- * \tparam MHWalkerParamsAdjuster a \ref pageInterfaceMHWalkerParamsAdjuster compliant
+ * \tparam MHRWController a \ref pageInterfaceMHRWController compliant
  *         type which may dynamically adjust the parameters of the random walker.  Just
- *         specify \ref MHWalkerParamsNoAdjuster if you don't need the parameters to be
+ *         specify \ref MHRWNoController if you don't need the parameters to be
  *         dynamically adjusted.
  *
  * \tparam LoggerType is a logger type to which log messages can be generated (see \ref
@@ -299,7 +593,7 @@ struct helper_FnValueType_or_dummy<MHWalker,false> {
  *
  */
 template<typename Rng_, typename MHWalker_, typename MHRWStatsCollector_,
-         typename MHWalkerParamsAdjuster_ = MHWalkerParamsNoAdjuster,
+         typename MHRWController_ = MHRWNoController,
          typename LoggerType_ = Logger::VacuumLogger,
          typename CountIntType_ = int>
 TOMOGRAPHER_EXPORT class MHRandomWalk
@@ -327,8 +621,11 @@ public:
   typedef MHRWParams<MHWalkerParams, CountIntType> MHRWParamsType;
 
   //! The type which will take care of dynamically adjusting the parameters of the random walk
-  typedef MHWalkerParamsAdjuster_ MHWalkerParamsAdjuster;
-  enum { MHWalkerParamsAdjusterStrategy = MHWalkerParamsAdjuster::AdjustmentStrategy };
+  typedef MHRWController_ MHRWController;
+  enum { MHRWControllerStrategy = MHRWController::AdjustmentStrategy };
+
+  //! The MHRWControllerInvoker for our random walk controller, for convenience
+  typedef MHRWControllerInvoker<MHRWController> MHRWControllerInvokerType;
 
   //! The type of the Metropolis-Hastings function value. (See class documentation)
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
@@ -347,7 +644,7 @@ public:
 private:
   // declare const if no adjustments are to be made. This expands to "MHRWParamsType _n;"
   // or "const MHRWParamsType _n;"
-  typename tomo_internal::const_type_helper<MHRWParamsType,(int)MHWalkerParamsAdjusterStrategy==(int)MHWalkerParamsDoNotAdjust>::type _n;
+  typename tomo_internal::const_type_helper<MHRWParamsType,(int)MHRWControllerStrategy==(int)MHRWControllerDoNotAdjust>::type _n;
 
   Rng & _rng;
   MHWalker & _mhwalker;
@@ -372,7 +669,7 @@ private:
   CountIntType num_live_points;
 
 
-  MHWalkerParamsAdjuster _mhwalker_params_adjuster;
+  MHRWController _mhrw_controller;
 
 
 public:
@@ -380,7 +677,7 @@ public:
   //! Simple constructor, initializes the given fields
   MHRandomWalk(MHWalkerParams mhwalker_params, CountIntType n_sweep, CountIntType n_therm, CountIntType n_run,
 	       MHWalker & mhwalker, MHRWStatsCollector & stats,
-               Rng & rng, LoggerType & logger_, MHWalkerParamsAdjuster mhwalker_params_adjuster = MHWalkerParamsAdjuster())
+               Rng & rng, LoggerType & logger_, MHRWController mhrw_controller = MHRWController())
     : _n(mhwalker_params, n_sweep, n_therm, n_run),
       _rng(rng),
       _mhwalker(mhwalker),
@@ -390,7 +687,7 @@ public:
       curptval(),
       num_accepted(0),
       num_live_points(0),
-      _mhwalker_params_adjuster(mhwalker_params_adjuster)
+      _mhrw_controller(mhrw_controller)
   {
     _logger.debug([&](std::ostream & stream) {
 	stream << "constructor(). n_sweep=" << n_sweep << ", mhwalker_params=" << mhwalker_params
@@ -401,7 +698,7 @@ public:
   template<typename MHRWParamsTypeInit>
   MHRandomWalk(MHRWParamsTypeInit&& n_rw,
 	       MHWalker & mhwalker, MHRWStatsCollector & stats,
-               Rng & rng, LoggerType & logger_, MHWalkerParamsAdjuster mhwalker_params_adjuster = MHWalkerParamsAdjuster())
+               Rng & rng, LoggerType & logger_, MHRWController mhrw_controller = MHRWController())
     : _n(std::forward<MHRWParamsTypeInit>(n_rw)),
       _rng(rng),
       _mhwalker(mhwalker),
@@ -411,7 +708,7 @@ public:
       curptval(),
       num_accepted(0),
       num_live_points(0),
-      _mhwalker_params_adjuster(mhwalker_params_adjuster)
+      _mhrw_controller(mhrw_controller)
   {
     _logger.debug([&](std::ostream & s) { s << "constructor(). mhrw parameters = " << _n; });
   }
@@ -422,8 +719,8 @@ public:
   //! Access the stats collector
   inline const MHRWStatsCollector & statsCollector() const { return _stats; }
 
-  //! Access the mhwalker_params adjuster
-  inline const MHWalkerParamsAdjuster & mhWalkerParamsAdjuster() const { return _mhwalker_params_adjuster; }
+  //! Access the random walk controller
+  inline const MHRWController & mhrwController() const { return _mhrw_controller; }
 
 
   //! The parameters of the random walk.
@@ -508,7 +805,7 @@ private:
     _mhwalker.init();
     _stats.init();
 
-    _mhwalker_params_adjuster.initParams(_n, _mhwalker, *this);
+    _mhrw_controller.init(_n, _mhwalker, *this);
 
     _logger.longdebug("_init() done.");
   }
@@ -519,7 +816,7 @@ private:
     _mhwalker.thermalizingDone();
     _stats.thermalizingDone();
 
-    _mhwalker_params_adjuster.thermalizingDone(_n, _mhwalker, *this);
+    _mhrw_controller.thermalizingDone(_n, _mhwalker, *this);
 
     _logger.longdebug("_thermalizing_done() done.");
   }
@@ -671,18 +968,28 @@ private:
   template<bool IsThermalizing>
   inline void _adjustparams_afteriter(CountIntType iter_k)
   {
-    _mhwalker_params_adjuster.template adjustParams<IsThermalizing, false>(_n, _mhwalker, iter_k, *this);
+    MHRWControllerInvokerType::template invokeAdjustParams<IsThermalizing, false>(
+        _mhrw_controller, _n, _mhwalker, iter_k, *this
+        );
   }
   inline void _adjustparams_aftersample(CountIntType iter_k)
   {
-    _mhwalker_params_adjuster.template adjustParams<false, true>(_n, _mhwalker, iter_k, *this);
+    MHRWControllerInvokerType::template invokeAdjustParams<false, true>(
+        _mhrw_controller, _n, _mhwalker, iter_k, *this
+        );
   }
   inline bool _adjustparams_allow_therm_done(CountIntType iter_k)
   {
-    return _mhwalker_params_adjuster.template allowDoneThermalization(_n, _mhwalker, iter_k, *this);
+    return MHRWControllerInvokerType::template invokeAllowDoneThermalization(
+        _mhrw_controller, _n, _mhwalker, iter_k, *this
+        );
   }
-
-
+  inline bool _adjustparams_allow_runs_done(CountIntType iter_k)
+  {
+    return MHRWControllerInvokerType::template invokeAllowDoneRuns(
+        _mhrw_controller, _n, _mhwalker, iter_k, *this
+        );
+  }
 
 public:
 
@@ -703,8 +1010,8 @@ public:
       });
 
     // keep the this expression explicit in the condition, because it may be updated by
-    // the adjuster. (The compiler should optimize the const value anyway if no adjuster
-    // is set because _n is declared const in that case.)
+    // the controller. (The compiler should optimize the const value anyway if no
+    // controller is set because _n is declared const in that case.)
     for ( k = 0 ; (k < (_n.n_sweep * _n.n_therm)) || !_adjustparams_allow_therm_done(k) ; ++k ) {
       _move<true>(k, false);
       _adjustparams_afteriter<true>(k);
@@ -717,9 +1024,9 @@ public:
     CountIntType n = 0; // number of live samples
 
     // keep the this expression explicit in the condition, because it may be updated by
-    // the adjuster. (The compiler should optimize the const value anyway if no adjuster
-    // is set because _n is declared const in that case.)
-    for (k = 0 ; k < (_n.n_sweep * _n.n_run) ; ++k) {
+    // the controller. (The compiler should optimize the const value anyway if no
+    // controller is set because _n is declared const in that case.)
+    for (k = 0 ; (k < (_n.n_sweep * _n.n_run)) || !_adjustparams_allow_runs_done(k) ; ++k) {
 
       bool is_live_iter = ((k+1) % _n.n_sweep == 0);
       
@@ -808,12 +1115,12 @@ struct MHRWStatusReport : public MultiProc::TaskStatusReport
    */
   IterCountIntType n_total_iters;
 
-  template<typename MHRandomWalkType, typename MHRWStatsCollectorType, typename MHWalkerParamsAdjusterType>
+  template<typename MHRandomWalkType, typename MHRWStatsCollectorType, typename MHRWControllerType>
   static inline MHRWStatusReport
   createFromRandWalkStatInfo(IterCountIntType k, bool is_thermalizing,
                              const MHRandomWalkType & rw,
                              const MHRWStatsCollectorType & stats_collector,
-                             const MHWalkerParamsAdjusterType & mhwalker_params_adjuster) {
+                             const MHRWControllerType & mhrw_controller) {
     // prepare & provide status report
     IterCountIntType totiters = rw.nSweep()*(rw.nTherm()+rw.nRun());
     // k restarts at zero after thermalization, so account for that:
@@ -854,8 +1161,8 @@ struct MHRWStatusReport : public MultiProc::TaskStatusReport
         }
       }
     }
-    if (Tools::StatusQuery<MHWalkerParamsAdjusterType>::CanProvideStatusLine) {
-      const std::string s = Tools::StatusQuery<MHWalkerParamsAdjusterType>::getStatusLine(&mhwalker_params_adjuster);
+    if (Tools::StatusQuery<MHRWControllerType>::CanProvideStatusLine) {
+      const std::string s = Tools::StatusQuery<MHRWControllerType>::getStatusLine(&mhrw_controller);
       if (s.size()) {
         msg += nlindent;
         for (std::size_t j = 0; j < s.size(); ++j) {

@@ -25,8 +25,8 @@
  * SOFTWARE.
  */
 
-#ifndef _TOMOGRAPHER_MHRWSTEPSIZEADJUSTER_H
-#define _TOMOGRAPHER_MHRWSTEPSIZEADJUSTER_H
+#ifndef _TOMOGRAPHER_MHRWSTEPSIZECONTROLLER_H
+#define _TOMOGRAPHER_MHRWSTEPSIZECONTROLLER_H
 
 #include <cstddef>
 #include <cmath>
@@ -45,16 +45,18 @@
 #include <tomographer/mhrwstatscollectors.h>
 
 
-/** \file mhrwstepsizeadjuster.h
- * \brief Routines for performing a Metropolis-Hastings random walk.
+/** \file mhrwstepsizecontroller.h
+ * \brief Tools for automatically and dynamically adjusting the step size of the random walk
  *
+ * See \ref Tomographer::MHRWStepSizeController
  */
 
 
 namespace Tomographer {
 
 
-/** \brief A \ref pageInterfaceMHWalkerParamsAdjuster dynamically adjusting the step size to keep a good acceptance ratio
+/** \brief A \ref pageInterfaceMHRWController dynamically adjusting the step size to keep
+ *         a good acceptance ratio
  *
  */
 template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
@@ -62,11 +64,11 @@ template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
          typename BaseLoggerType = Logger::VacuumLogger,
          typename StepRealType = double,
          typename CountIntType = int>
-TOMOGRAPHER_EXPORT class MHRWStepSizeAdjuster
-  : public Tools::EigenAlignedOperatorNewProvider
+TOMOGRAPHER_EXPORT class MHRWStepSizeController
+//  : public Tools::EigenAlignedOperatorNewProvider // not needed without empirical data buffer
 {
 public:
-  enum { AdjustmentStrategy = MHWalkerParamsAdjustEveryIterationWhileThermalizing };
+  enum { AdjustmentStrategy = MHRWControllerAdjustEveryIterationWhileThermalizing };
   
   typedef MHRWMovingAverageAcceptanceRatioStatsCollectorType_
     MHRWMovingAverageAcceptanceRatioStatsCollectorType;
@@ -97,7 +99,7 @@ private:
   Logger::LocalLogger<BaseLoggerType> llogger;
 
 public:
-  MHRWStepSizeAdjuster(const MHRWMovingAverageAcceptanceRatioStatsCollectorType & accept_ratio_stats_collector_,
+  MHRWStepSizeController(const MHRWMovingAverageAcceptanceRatioStatsCollectorType & accept_ratio_stats_collector_,
                        BaseLoggerType & baselogger_,
                        double desired_accept_ratio_min_ = (0.75*MHRWAcceptanceRatioRecommendedMin +
                                                            0.25*MHRWAcceptanceRatioRecommendedMax),
@@ -118,16 +120,32 @@ public:
     orig_n_therm(0),
     orig_step_times_sweep(0),
     ensure_n_therm_fixed_params_fraction(ensure_n_therm_fixed_params_fraction_),
-    llogger("Tomographer::MHRWStepSizeAdjuster", baselogger_)
+    llogger("Tomographer::MHRWStepSizeController", baselogger_)
   {
   }
       
   
   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
-  inline void initParams(MHRWParamsType & params, const MHWalker & /*mhwalker*/, const MHRandomWalkType & /*mhrw*/)
+  inline void init(MHRWParamsType & params, const MHWalker & /*mhwalker*/, const MHRandomWalkType & /*mhrw*/)
   {
+    auto logger = llogger.subLogger(TOMO_ORIGIN) ;
+
     orig_n_therm = params.n_therm;
-    orig_step_times_sweep = params.n_sweep * params.mhwalker_params.step_size;
+    if (std::isfinite(params.mhwalker_params.step_size) && 
+        params.mhwalker_params.step_size > 0) {
+      // valid step size
+      orig_step_times_sweep = params.n_sweep * params.mhwalker_params.step_size;
+    } else {
+      // invalid step size
+      const StepRealType default_start_step_size = 0.01;
+      logger.debug([&](std::ostream & stream) {
+          stream << "Invalid step_size = " << params.mhwalker_params.step_size
+                 << ", set default of = " << default_start_step_size;
+        });
+      params.mhwalker_params.step_size = default_start_step_size;
+      params.n_sweep = (StepRealType(1)/default_start_step_size) + 1;
+      orig_step_times_sweep = 1;
+    }
   }
 
   template<bool IsThermalizing, bool IsAfterSample,
@@ -163,13 +181,16 @@ public:
 
     const double accept_ratio = accept_ratio_stats_collector.movingAverageAcceptanceRatio();
 
-    if (accept_ratio >= desired_accept_ratio_min && accept_ratio <= desired_accept_ratio_max) {
+    if (!std::isfinite(accept_ratio) ||   // no statistics gathered yet -- just continue at this pace
+        (accept_ratio >= desired_accept_ratio_min && // or accept_ratio already in the desired interval
+         accept_ratio <= desired_accept_ratio_max)) {
       return;
     }
 
     logger.longdebug([&](std::ostream & stream) {
         stream << "will adjust.";
       });
+
 
     if (accept_ratio < acceptable_accept_ratio_min || accept_ratio > acceptable_accept_ratio_max) {
       last_corrected_unacceptable_iter_k = iter_k;
@@ -211,12 +232,12 @@ public:
 
 //    if (n_empirical_data < stepsizes_acceptratios_empirical_data.rows()) {
 
-      // first gather data by moving using guesses
-      
+
       // new step size -- guess a slight increase or decrease depending on too high or too low
 
+      StepRealType new_step_size = params.mhwalker_params.step_size;
+
       // accept ratio too high -- increase step size
-      StepRealType new_step_size =  params.mhwalker_params.step_size;
       if (accept_ratio >= 2*desired_accept_ratio_max) {
         new_step_size *= 1.5;
       } else if (accept_ratio >= 1.3*desired_accept_ratio_max) {
@@ -281,7 +302,7 @@ public:
   }
 
   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
-  bool allowDoneThermalization(MHRWParamsType & params, const MHWalker & /*mhwalker*/,
+  bool allowDoneThermalization(const MHRWParamsType & params, const MHWalker & /*mhwalker*/,
                                CountIntType iter_k, const MHRandomWalkType & /*mhrw*/)
   {
     auto logger = llogger.subLogger(TOMO_ORIGIN);
@@ -305,6 +326,12 @@ public:
     return true;
   }
 
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+  bool allowDoneRuns(const MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
+                     CountIntType /*iter_k*/, const MHRandomWalkType & /*mhrw*/)
+  {
+    return true; // do whatever you like
+  }
 
 private:
 
@@ -360,13 +387,16 @@ public:
   //   // return stepsizes_acceptratios_empirical_data((n_empirical_data-1) % stepsizes_acceptratios_empirical_data.rows(), 1);
   // }
 
-  template<bool IsThermalizing, bool IsAfterSample,
-           typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType,
-           TOMOGRAPHER_ENABLED_IF_TMPL(!IsThermalizing)> // After thermalizing, keep parameters fixed
-  inline void adjustParams(MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
-                           int /*iter_k*/, const MHRandomWalkType & /*mhrw*/) const
-  {
-  }
+  // ###: Let's not even declare this, because it should never be invoked according to our
+  // ###  AdjustmentStrategy:
+  // 
+  // template<bool IsThermalizing, bool IsAfterSample,
+  //          typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType,
+  //          TOMOGRAPHER_ENABLED_IF_TMPL(!IsThermalizing)> // After thermalizing, keep parameters fixed
+  // inline void adjustParams(MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
+  //                          int /*iter_k*/, const MHRandomWalkType & /*mhrw*/) const
+  // {
+  // }
 
   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
   inline void thermalizingDone(MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/, const MHRandomWalkType & /*mhrw*/) const
@@ -383,11 +413,11 @@ template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType,
          typename BaseLoggerType,
          typename StepRealType,
          typename CountIntType>
-struct StatusProvider<MHRWStepSizeAdjuster<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
+struct StatusProvider<MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
 //                                           EmpiricalDataBufferSize,
                                            BaseLoggerType, StepRealType, CountIntType> >
 {
-  typedef MHRWStepSizeAdjuster<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
+  typedef MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
 //                               EmpiricalDataBufferSize,
                                BaseLoggerType, StepRealType, CountIntType> StatusableObject;
 

@@ -68,6 +68,100 @@ struct helper_samples_size<NumLevels,true> {
 
 
 
+/** \brief Convergence status of binning error bar
+ *
+ *
+ * \since Changed in %Tomographer 5.0: these constants are now global to the namespace and
+ *        no longer members of the \ref BinningAnalysisParams class.
+ */
+enum BinningConvergence {
+  //! It is unknown whether the error bar has converged or not
+  BINNING_UNKNOWN_CONVERGENCE = 0,
+  //! The error bar appears to have converged
+  BINNING_CONVERGED,
+  //! The error bar appears NOT to have converged
+  BINNING_NOT_CONVERGED,
+};
+
+
+
+
+
+
+/** \brief Brief summary of convergence of error bars from a binning analysis
+ *
+ * This brief summary stores the total number of bins (\c n_bins), the number of bins
+ * with converged error bars (\c n_converged), the number of bins with unknown
+ * convergence (\c n_unknown), how many of the latter are isolated (\c
+ * n_unknown_isolated), and how many bins have error bars which have not converged (\c
+ * n_not_converged).
+ *
+ * One always has <code>n_converged + n_unknown + n_not_converged == n_bins</code> and
+ * <code>n_unkonwn_isolated <= n_unknown</code>.
+ *
+ * \since Added in %Tomographer 5.0.
+ */
+struct BinningErrorBarConvergenceSummary {
+  BinningErrorBarConvergenceSummary(std::size_t n_bins_ = 0,
+                                    std::size_t n_converged_ = 0,
+                                    std::size_t n_unknown_ = 0,
+                                    std::size_t n_unknown_isolated_ = 0,
+                                    std::size_t n_not_converged_ = 0)
+    : n_bins(n_bins_),
+      n_converged(n_converged_),
+      n_unknown(n_unknown_),
+      n_unknown_isolated(n_unknown_isolated_),
+      n_not_converged(n_not_converged_)
+  {
+  }
+
+  std::size_t n_bins;
+  std::size_t n_converged;
+  std::size_t n_unknown;
+  std::size_t n_unknown_isolated;
+  std::size_t n_not_converged;
+
+  /** \brief Construct a summary object from a list of converged status obtained from \ref
+   *         BinningAnalysis::determineErrorConvergence()
+   */
+  static BinningErrorBarConvergenceSummary fromConvergedStatus(const Eigen::ArrayXi & converged_status)
+  {
+    const auto n_bins = converged_status.size();
+
+    const Eigen::ArrayXi unkn_arr = 
+      converged_status.cwiseEqual(BINNING_UNKNOWN_CONVERGENCE).template cast<int>();
+    const Eigen::ArrayXi conv_arr =
+      converged_status.cwiseEqual(BINNING_CONVERGED).template cast<int>();
+
+    const auto n_unknown = unkn_arr.count();
+    const auto n_converged = conv_arr.count();
+    const auto n_not_converged = converged_status.cwiseEqual(BINNING_NOT_CONVERGED).count();
+
+    // Little heuristic to see whether the "unknown" converged error bars are isolated or
+    // not. Use conv_arr shifted by one in each direction as a mask -- an unconverged
+    // error bar is isolated if it is surrounded by converged error bars
+    const auto n_unknown_isol = (
+        unkn_arr.segment(1,n_bins-2)
+        .cwiseProduct(conv_arr.segment(0,n_bins-2))
+        .cwiseProduct(conv_arr.segment(2,n_bins-2))
+        ).count()
+      // edges
+      + unkn_arr(0)*conv_arr(1) + unkn_arr(n_bins-1)*conv_arr(n_bins-2);
+
+    return BinningErrorBarConvergenceSummary(n_bins, n_converged, n_unknown, n_unknown_isol, n_not_converged);
+  }
+};
+
+
+std::ostream & operator<<(std::ostream & stream, const BinningErrorBarConvergenceSummary & s)
+{
+  return stream << s.n_converged << " converged / "
+                << s.n_unknown << " maybe (" << s.n_unknown_isolated << " isolated) / "
+                << s.n_not_converged << " not converged";
+}
+
+
+
 /** \brief Group template parameters for BinningAnalysis
  *
  * This class serves to group together the template parameters which determine the
@@ -187,15 +281,15 @@ TOMOGRAPHER_EXPORT struct BinningAnalysisParams
    */
   typedef Eigen::Array<ValueType, NumTrackValuesCTime, NumLevelsPlusOneCTime> BinSumSqArray;
 
-  //! Constants for error bar convergence analysis.  
-  enum {
-    //! Unable to determine whether the error bars have converged.
-    UNKNOWN_CONVERGENCE = 0,
-    //! The error bars appear to have converged.
-    CONVERGED,
-    //! The error bars don't seem to have converged.
-    NOT_CONVERGED
-  };
+  // //! Constants for error bar convergence analysis.  
+  // enum {
+  //   //! Unable to determine whether the error bars have converged.
+  //   UNKNOWN_CONVERGENCE = BINNING_UNKNOWN_CONVERGENCE,
+  //   //! The error bars appear to have converged.
+  //   CONVERGED = BINNING_CONVERGED,
+  //   //! The error bars don't seem to have converged.
+  //   NOT_CONVERGED = BINNING_NOT_CONVERGED
+  // };
   
 };
 
@@ -338,11 +432,11 @@ public:
   //! Constants for error bar convergence analysis.  
   enum {
     //! Unable to determine whether the error bars have converged.
-    UNKNOWN_CONVERGENCE = Params::UNKNOWN_CONVERGENCE,
+    UNKNOWN_CONVERGENCE = BINNING_UNKNOWN_CONVERGENCE,
     //! The error bars appear to have converged.
-    CONVERGED = Params::CONVERGED,
+    CONVERGED = BINNING_CONVERGED,
     //! The error bars don't seem to have converged.
-    NOT_CONVERGED = Params::NOT_CONVERGED
+    NOT_CONVERGED = BINNING_NOT_CONVERGED
   };
 
   //! Type of the logger we will be logging debugging messages to.
@@ -783,6 +877,8 @@ public:
 
     return converged_status;
   }
+
+
 };
 
 
