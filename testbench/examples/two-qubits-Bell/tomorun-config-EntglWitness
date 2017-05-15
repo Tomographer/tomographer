@@ -1,0 +1,27 @@
+# Tomorun configuration file. All settings specified here are values for command-line
+# options to the `tomorun` program. See help by running the command `tomorun --help`.
+#
+# Run `tomorun` with this configuration by issuing the command:
+#     tomorun --config tomorun-config-EntglWitness
+
+# ------------------
+data-file-name=thedata.mat
+write-histogram-from-config-file-name = 1
+# ------------------
+
+# number of parallel random walks
+n-repeats = 12
+
+# The parameters of the random walk: step size, sweep size, and number of
+# samples to collect
+step-size = 0.01
+n-sweep = 100
+n-run = 32768
+
+# Calculate the expectation value of the observable 'EntglWitness', which is an
+# entanglement witness for our target state. The name 'EntglWitness' is a
+# variable defined in the data file 'thedata.mat'
+value-type=obs-value:EntglWitness
+
+# Histogram range:  MINVALUE:MAXVALUE/NUMBEROFBINS
+value-hist=1.5:2/100
