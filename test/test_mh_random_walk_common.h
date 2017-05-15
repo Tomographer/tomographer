@@ -347,4 +347,148 @@ struct TestMHRWStatsCollectorWithResult
 
 
 
+
+
+
+template<unsigned int AdjustStrategyFlags>
+struct TestMHRWController
+{
+  enum { AdjustmentStrategy = AdjustStrategyFlags };
+
+  int old_n_therm_counts{-1};
+  int old_n_run_counts{-1};
+  const int new_n_therm_counts{15};
+  const int new_n_run_counts{80};
+ 
+
+  bool init_called{false};
+
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+  inline void init(MHRWParamsType & params, const MHWalker & /*mhwalker*/,
+                   const MHRandomWalkType & /*mhrw*/)
+  {
+    init_called = true;
+
+    old_n_therm_counts = params.n_therm;
+    old_n_run_counts = params.n_run;
+  }
+
+  int allow_therm_deferred{0};
+
+  template<typename MHRWParamsType, typename MHWalker, typename IterCountIntType, typename MHRandomWalkType>
+  bool allowDoneThermalization(const MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
+                               IterCountIntType /*iter_k*/, const MHRandomWalkType & /*mhrw*/)
+  {
+    // add exactly three sweeps
+    //
+    // by the way, this also checks that allowDoneRuns() can be non-const and modify
+    // current object's state
+    if (allow_therm_deferred < 3) {
+      ++allow_therm_deferred;
+      return false;
+    }
+    return true;
+  }
+  
+
+  bool therm_done_called{false};
+
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+  inline void thermalizingDone(MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
+                               const MHRandomWalkType & /*mhrw*/)
+  {
+    therm_done_called = true;
+  }
+
+
+
+  int adjust_therm_called{0};
+  int adjust_run_called{0};
+  int adjust_iter_called{0};
+  int adjust_sample_called{0};
+
+  template<bool IsThermalizing, bool IsAfterSample,
+           typename MHRWParamsType, typename MHWalker, typename IterCountIntType, typename MHRandomWalkType>
+  inline void adjustParams(MHRWParamsType & params, const MHWalker & /*mhwalker*/,
+                           IterCountIntType /*iter_k*/, const MHRandomWalkType & /*mhrw*/)
+  {
+    if (IsThermalizing) {
+      ++adjust_therm_called;
+    } else {
+      ++adjust_run_called;
+    }
+    if (IsAfterSample) {
+      ++adjust_sample_called;
+    } else {
+      ++adjust_iter_called;
+    }
+
+    if (IsThermalizing) {
+      params.n_therm = new_n_therm_counts;
+    } else {
+      params.n_run = new_n_run_counts;
+    }
+  }
+
+
+
+  int allow_done_deferred{0};
+
+  template<typename MHRWParamsType, typename MHWalker, typename IterCountIntType, typename MHRandomWalkType>
+  bool allowDoneRuns(const MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
+                     IterCountIntType /*iter_k*/, const MHRandomWalkType & /*mhrw*/)
+  {
+    // add exactly three sweeps
+    //
+    // by the way, this also checks that allowDoneRuns() can be non-const and modify
+    // current object's state
+    if (allow_done_deferred < 4) {
+      ++allow_done_deferred;
+      return false;
+    }
+    return true;
+  }
+
+  bool done_called{false} ;
+
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+  inline void done(MHRWParamsType & params, const MHWalker & /*mhwalker*/,
+                   const MHRandomWalkType & mhrw)
+  {
+    done_called = true;
+
+    BOOST_CHECK_EQUAL(allow_therm_deferred, 3);
+    BOOST_CHECK( therm_done_called );
+
+    BOOST_CHECK_EQUAL(allow_done_deferred, 4);
+    BOOST_CHECK( done_called );
+
+    // do all the checks here
+    const int Th = (AdjustmentStrategy & Tomographer::MHRWControllerAdjustWhileThermalizing) ? 1 : 0;
+    const int Rn = (AdjustmentStrategy & Tomographer::MHRWControllerAdjustWhileRunning) ? 1 : 0;
+    const int Sm = (AdjustmentStrategy & Tomographer::MHRWControllerAdjustEverySample) ? 1 : 0;
+    const int It = (AdjustmentStrategy & Tomographer::MHRWControllerAdjustEveryIteration) ? 1 : 0;
+
+    BOOST_CHECK_EQUAL( params.n_therm, mhrw.mhrwParams().n_therm ) ;
+    BOOST_CHECK_EQUAL( params.n_run, mhrw.mhrwParams().n_run ) ;
+
+    BOOST_CHECK_EQUAL( params.n_therm, (Th*It) ? new_n_therm_counts : old_n_therm_counts );
+    BOOST_CHECK_EQUAL( params.n_run, Rn ? new_n_run_counts : old_n_run_counts );
+
+    // +3's and +4's: when allowDoneThermalization() / allowDonwRuns() were refused
+    BOOST_CHECK_EQUAL( adjust_therm_called ,
+                       Th*It*(params.n_therm*params.n_sweep+3) ) ; // no samples
+    BOOST_CHECK_EQUAL( adjust_run_called ,
+                       Rn*(It*(params.n_run*params.n_sweep+4) + Sm*params.n_run) ) ;
+    BOOST_CHECK_EQUAL( adjust_iter_called ,
+                       It*(Th*(params.n_therm*params.n_sweep+3) + Rn*(params.n_run*params.n_sweep+4)) ) ;
+    BOOST_CHECK_EQUAL( adjust_sample_called , Sm*Rn*params.n_run ) ;
+  }
+
+
+};
+
+
+
+
 #endif

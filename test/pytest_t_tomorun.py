@@ -85,7 +85,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
         print("test_values()")
 
         num_repeats = 8
-        hist_params = tomographer.UniformBinsHistogramParams(0.985, 1, 200)
+        hist_params = tomographer.HistogramParams(0.985, 1, 200)
 
         r = tomographer.tomorun.tomorun(
             dim=2,
@@ -97,9 +97,14 @@ class analytical_known_example_tomorun(unittest.TestCase):
             mhrw_params=tomographer.MHRWParams(
                 step_size=0.04,
                 n_sweep=25,
-                n_run=8192,
+                n_run=32768,
                 n_therm=500),
             hist_params=hist_params,
+            progress_fn=lambda report: print(report.getHumanReport()),
+            progress_interval_ms=500,
+            ctrl_converged_params={'max_allowed_not_converged': 1,
+                                   'max_allowed_unknown_notisolated': 1,
+                                   'max_allowed_unknown': 3,}
         )
         print("Final report of runs :\n{}".format(r['final_report_runs']))
         print("Final report of everything :\n{}".format(r['final_report']))
@@ -127,7 +132,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
         print("test_errbar_convergence()")
 
         num_repeats = 2
-        hist_params = tomographer.UniformBinsHistogramParams(0.995, 1, 20)
+        hist_params = tomographer.HistogramParams(0.995, 1, 100)
 
         r = tomographer.tomorun.tomorun(
             dim=2,
@@ -139,9 +144,14 @@ class analytical_known_example_tomorun(unittest.TestCase):
             mhrw_params=tomographer.MHRWParams(
                 step_size=0.04,
                 n_sweep=25,
-                n_run=16*32768,
+                n_run=8192, # controller will keep running as necessary
                 n_therm=500),
             hist_params=hist_params,
+            ctrl_converged_params={'max_allowed_unknown': 2,
+                                   'max_allowed_unknown_notisolated': 2,
+                                   'max_allowed_not_converged': 0},
+            progress_fn=lambda report: print(report.getHumanReport()),
+            progress_interval_ms=50
         )
 
         print("Final report of runs :\n{}".format(r['final_report_runs']))
@@ -149,11 +159,20 @@ class analytical_known_example_tomorun(unittest.TestCase):
         # inspect the task runs
         for k in range(num_repeats):
             runres = r['runs_results'][k]
-            # check that at most 25% of the error bars have not converged
-            self.assertGreater( (runres.stats_results.converged_status == 
-                                 tomographer.BinningAnalysis.CONVERGED*np.ones([hist_params.num_bins],
-                                                                               dtype=int)).sum(),
-                                0.75*hist_params.num_bins )
+            # check that bins have converged as required
+            self.assertLessEqual(
+                (runres.stats_results.converged_status == 
+                 tomographer.BinningAnalysis.NOT_CONVERGED*np.ones([hist_params.num_bins],
+                                                                   dtype=int)).sum(),
+                0
+
+            )
+            self.assertLessEqual(
+                (runres.stats_results.converged_status == 
+                 tomographer.BinningAnalysis.UNKNOWN_CONVERGENCE*np.ones([hist_params.num_bins],
+                                                                         dtype=int)).sum(),
+                2
+            )
 
 
     def test_custom_figofmerit(self):
@@ -161,7 +180,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
         print("test_custom_figofmerit()")
 
         num_repeats = 2
-        hist_params = tomographer.UniformBinsHistogramParams(0.99, 1, 20)
+        hist_params = tomographer.HistogramParams(0.99, 1, 20)
 
         r = tomographer.tomorun.tomorun(
             dim=2,
@@ -176,6 +195,8 @@ class analytical_known_example_tomorun(unittest.TestCase):
                 n_run=8192,
                 n_therm=500),
             hist_params=hist_params,
+            progress_fn=lambda report: print(report.getHumanReport()),
+            progress_interval_ms=100
         )
 
         print(r['final_report'])
@@ -187,10 +208,9 @@ class analytical_known_example_tomorun(unittest.TestCase):
         print("test_callback()")
 
         num_repeats = 2
-        hist_params = tomographer.UniformBinsHistogramParams(0.985, 1, 200)
+        hist_params = tomographer.HistogramParams(0.985, 1, 200)
 
         class Ns: pass
-
         glob = Ns()
         glob.num_callback_calls = 0
 
@@ -215,6 +235,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
             hist_params=hist_params,
             progress_fn=progress_callback,
             progress_interval_ms=intvl_ms,
+            ctrl_converged_params={'enabled': False},
         )
 
         # we have the total elapsed time in r['elapsed_seconds']
@@ -230,7 +251,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
         print("test_error_in_callback()")
 
         num_repeats = 2
-        hist_params = tomographer.UniformBinsHistogramParams(0.985, 1, 200)
+        hist_params = tomographer.HistogramParams(0.985, 1, 200)
 
         class Ns: pass
 
@@ -260,6 +281,155 @@ class analytical_known_example_tomorun(unittest.TestCase):
                 progress_fn=progress_callback,
                 progress_interval_ms=intvl_ms,
             )
+
+
+    def test_convergence_control_1(self):
+
+        print("test_convergence_control_1()")
+
+        num_repeats = 2
+        hist_params = tomographer.HistogramParams(0.985, 1, 50)
+
+        r = tomographer.tomorun.tomorun(
+            dim=2,
+            Emn=self.Emn,
+            Nm=self.Nm,
+            fig_of_merit="obs-value",
+            observable=self.rho_ref,
+            num_repeats=num_repeats,
+            mhrw_params=tomographer.MHRWParams(
+                step_size=0.04,
+                n_sweep=25,
+                n_run=1024, # ridicoulously low
+                n_therm=200),
+            hist_params=hist_params,
+            progress_fn=lambda report: print(report.getHumanReport()),
+            progress_interval_ms=100,
+            ctrl_converged_params={'enabled': True,
+                                   'max_allowed_unknown': 1,
+                                   'max_allowed_unknown_notisolated': 1,
+                                   'max_allowed_not_converged': 1},
+        )
+
+        for runres in r['runs_results']:
+            summary = runres.stats_results.errorBarConvergenceSummary()
+            self.assertLessEqual(summary.n_unknown, 1)
+            self.assertLessEqual(summary.n_unknown-summary.n_unknown_isolated, 1)
+            self.assertLessEqual(summary.n_not_converged, 1)
+
+    def test_convergence_control_2(self):
+
+        print("test_convergence_control_2()")
+
+        num_repeats = 2
+        hist_params = tomographer.HistogramParams(0.985, 1, 50)
+
+        class Ns: pass
+        glob = Ns()
+        glob.num_callback_calls = 0
+
+        def check_prg(report):
+            glob.num_callback_calls += 1
+            for r in report.workers:
+                if r is not None and r.fraction_done > 1:
+                    raise AssertionError("Control is disabled, random walk should not go past 100%")
+
+        r = tomographer.tomorun.tomorun(
+            dim=2,
+            Emn=self.Emn,
+            Nm=self.Nm,
+            fig_of_merit="obs-value",
+            observable=self.rho_ref,
+            num_repeats=num_repeats,
+            mhrw_params=tomographer.MHRWParams(
+                step_size=0.1, # too high
+                n_sweep=1000,
+                n_run=8192, # some ok amount, not too much
+                n_therm=100),
+            hist_params=hist_params,
+            progress_fn=check_prg,
+            progress_interval_ms=1,
+            ctrl_converged_params={'enabled': False},
+            # keep step size a little off, to prevent bins from converging too nicely:
+            ctrl_step_size_params={'enabled': False},
+        )
+
+        # make sure progress reporter was called often enough
+        self.assertGreaterEqual(glob.num_callback_calls, 10)
+
+
+    def test_stepsize_control_1(self):
+
+        print("test_stepsize_control_1()")
+
+        num_repeats = 2
+        hist_params = tomographer.HistogramParams(0.985, 1, 50)
+
+        r = tomographer.tomorun.tomorun(
+            dim=2,
+            Emn=self.Emn,
+            Nm=self.Nm,
+            fig_of_merit="obs-value",
+            observable=self.rho_ref,
+            num_repeats=num_repeats,
+            mhrw_params=tomographer.MHRWParams(
+                step_size=0.5, # must be adjusted
+                n_sweep=2,
+                n_run=1024,
+                n_therm=1),
+            hist_params=hist_params,
+            progress_fn=lambda report: print(report.getHumanReport()),
+            progress_interval_ms=100,
+            ctrl_step_size_params={'enabled': True},
+            ctrl_converged_params={'enabled': False},
+        )
+
+        for runres in r['runs_results']:
+            print("Step size is ",runres.mhrw_params.mhwalker_params['step_size'])
+            print("and n_therm is ",runres.mhrw_params.n_therm)
+            self.assertLessEqual( runres.mhrw_params.mhwalker_params['step_size'], 0.1 )
+            self.assertGreaterEqual( runres.mhrw_params.mhwalker_params['step_size'], 0.01 )
+            self.assertGreaterEqual( runres.acceptance_ratio, 0.2 )
+            self.assertLessEqual( runres.acceptance_ratio, 0.4 )
+            self.assertGreaterEqual( runres.mhrw_params.n_therm , 20 ) # make sure it was adjusted
+
+    def test_stepsize_control_2(self):
+
+        print("test_stepsize_control_2()")
+
+        num_repeats = 2
+        hist_params = tomographer.HistogramParams(0.985, 1, 50)
+
+        orig_step_size = 0.5
+        orig_n_therm = 2
+
+        r = tomographer.tomorun.tomorun(
+            dim=2,
+            Emn=self.Emn,
+            Nm=self.Nm,
+            fig_of_merit="obs-value",
+            observable=self.rho_ref,
+            num_repeats=num_repeats,
+            mhrw_params=tomographer.MHRWParams(
+                step_size=orig_step_size, # must be adjusted
+                n_sweep=2,
+                n_run=1024,
+                n_therm=orig_n_therm),
+            hist_params=hist_params,
+            progress_fn=lambda report: print(report.getHumanReport()),
+            progress_interval_ms=100,
+            ctrl_step_size_params={'enabled': False},
+            ctrl_converged_params={'enabled': False},
+        )
+
+        for runres in r['runs_results']:
+            print("Step size is ",runres.mhrw_params.mhwalker_params['step_size'])
+            print("and n_therm is ",runres.mhrw_params.n_therm)
+            # make sure it wasn't adjusted
+            self.assertAlmostEqual( runres.mhrw_params.mhwalker_params['step_size'], orig_step_size )
+            self.assertEqual( runres.mhrw_params.n_therm, orig_n_therm )
+
+
 
 
 # normally, this is not needed as we are being run via pyruntest.py, but it might be

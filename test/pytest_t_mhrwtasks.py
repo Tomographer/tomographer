@@ -75,8 +75,27 @@ class MHRWTasksStuff(unittest.TestCase):
                               tomographer.BinningAnalysis.NOT_CONVERGED,
                               tomographer.BinningAnalysis.UNKNOWN_CONVERGENCE) )
 
+
+    def test_binningbarssummary(self):
+
+        x = tomographer.BinningErrorBarConvergenceSummary()
+        self.assertEqual(x.n_bins, 0)
+        self.assertEqual(x.n_converged, 0)
+        self.assertEqual(x.n_unknown, 0)
+        self.assertEqual(x.n_unknown_isolated, 0)
+        self.assertEqual(x.n_not_converged, 0)
+
+        x = tomographer.BinningErrorBarConvergenceSummary(n_bins=1,n_converged=2,n_unknown=3,
+                                                          n_unknown_isolated=4,n_not_converged=5)
+        self.assertEqual(x.n_bins, 1)
+        self.assertEqual(x.n_converged, 2)
+        self.assertEqual(x.n_unknown, 3)
+        self.assertEqual(x.n_unknown_isolated, 4)
+        self.assertEqual(x.n_not_converged, 5)
+
+
     def test_pickle(self):
-        hist = tomographer.AveragedErrorBarHistogram(0, 1, 4)
+        hist = tomographer.AveragedErrorBarHistogram(0, 1, 3)
         stats_results = tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult(
             hist,
             np.array([ [ 1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12] ]),
@@ -109,6 +128,13 @@ class MHRWTasksStuff(unittest.TestCase):
         npt.assert_array_almost_equal(m.stats_results.histogram.delta, m2.stats_results.histogram.delta)
         npt.assert_array_almost_equal(m.stats_results.error_levels, m2.stats_results.error_levels)
         npt.assert_array_equal(m.stats_results.converged_status, m2.stats_results.converged_status)
+
+        summary = m2.stats_results.errorBarConvergenceSummary()
+        self.assertEqual(summary.n_bins, m.stats_results.histogram.numBins())
+        self.assertEqual(summary.n_converged, 1)
+        self.assertEqual(summary.n_unknown, 1)
+        self.assertEqual(summary.n_unknown_isolated, 0)
+        self.assertEqual(summary.n_not_converged, 1)
 
 #
 

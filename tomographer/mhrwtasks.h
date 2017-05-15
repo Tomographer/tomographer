@@ -530,12 +530,12 @@ private:
           mhwalker,
           // our stats collectors
           ourstatscollectors,
+          // the random walk controller
+          controller,
           // a random number generator
           rng,
           // and a logger
-          baselogger,
-          // the random walk controller
-          controller
+          baselogger
           );
       
       logger.longdebug("MHRandomWalk object created, running...");

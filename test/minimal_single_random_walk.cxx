@@ -275,12 +275,12 @@ int main()
       mhwalker,
       // our stats collectors
       full_stats_coll,
+      // dynamic controller
+      mhrw_controller,
       // a random number generator
       rng,
       // and a logger
-      logger.parentLogger(),
-      // dynamic controller
-      mhrw_controller
+      logger.parentLogger()
       );
 
 

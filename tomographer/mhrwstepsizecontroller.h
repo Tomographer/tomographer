@@ -327,6 +327,12 @@ public:
                                const MHRandomWalkType & /*mhrw*/) const
   {
   }
+
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+  inline void done(MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
+                   const MHRandomWalkType & /*mhrw*/) const
+  {
+  }
 };
 
 

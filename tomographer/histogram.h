@@ -518,6 +518,9 @@ public:
   }
 
 };
+// static members:
+template<typename Scalar_, typename CountType_>
+constexpr bool Histogram<Scalar_,CountType_>::HasErrorBars;
 
 
 
@@ -883,6 +886,7 @@ public:
     Base_::off_chart += histogram.off_chart;
     ++num_histograms;
   }
+
   /** \brief Finalize the averaging procedure
    *
    * Call this function once you have called \ref addHistogram() for all the histograms
@@ -1001,9 +1005,7 @@ template<typename HistogramType_, typename CountRealType_>
 TOMOGRAPHER_EXPORT
 class AggregatedHistogramSimple
   : public virtual Tools::NeedOwnOperatorNew<
-      AveragedHistogram<Histogram<typename HistogramType_::Scalar,
-                                  CountRealType_>,
-                        CountRealType_>
+      AveragedHistogram<HistogramType_,CountRealType_>
     >::ProviderType
 {
 public:
@@ -1024,20 +1026,10 @@ public:
   //! Type used for averaged histogram counts (e.g. \a double)
   typedef CountRealType_ CountRealType;
 
-  /** \brief The type of the histogram resulting from a single task, but scaled so that
-   *         each bin value corresponds to the fraction of data points in bin
-   */
-  typedef Histogram<HistogramScalarType, CountRealType> ScaledHistogramType;
-
   /** \brief The type of the final resulting, averaged histogram
    *
-   * The scale of the histogram is chosen such that each bin value corresponds to the
-   * fraction of data points observed in this bin.  To normalize the histogram to a unit
-   * probability density, use \ref Histogram::normalized().  This scaling is
-   * the same as that used by the histogram produced using a binning analysis, see \ref
-   * ValueHistogramWithBinningMHRWStatsCollectorResult.
    */
-  typedef AveragedHistogram<ScaledHistogramType, CountRealType> FinalHistogramType;
+  typedef AveragedHistogram<HistogramType, CountRealType> FinalHistogramType;
 
 
   
@@ -1185,12 +1177,6 @@ public:
   typedef CountRealType_ CountRealType;
 
   /** \brief The type of the final resulting, averaged histogram
-   *
-   * The scale of the histogram is chosen such that each bin value corresponds to the
-   * fraction of data points observed in this bin.  To normalize the histogram to a unit
-   * probability density, use \ref Histogram::normalized().  This scaling is
-   * the same as that used by the histogram produced using a binning analysis, see \ref
-   * ValueHistogramWithBinningMHRWStatsCollectorResult.
    */
   typedef AveragedHistogram<HistogramType, CountRealType> FinalHistogramType;
 

@@ -441,6 +441,21 @@ public:
   {
   }
 
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType,
+           int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I < NumControllers)>
+  inline void done(MHRWParamsType & params, const MHWalker & mhwalker,
+                   const MHRandomWalkType & mhrw)
+  {
+    std::get<I>(controllers).done(params, mhwalker, mhrw);
+    done<MHRWParamsType, MHWalker, MHRandomWalkType, I+1>(params, mhwalker, mhrw);
+  }
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType,
+           int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I == NumControllers)>
+  inline void done(const MHRWParamsType & , const MHWalker & ,
+                   const MHRandomWalkType & ) const
+  {
+  }
+
   template<bool IsThermalizing, bool IsAfterSample,
            typename MHRWParamsType, typename CountIntType,
            typename MHWalker, typename MHRandomWalkType,
@@ -656,11 +671,16 @@ public:
 private:
   // declare const if no adjustments are to be made. This expands to "MHRWParamsType _n;"
   // or "const MHRWParamsType _n;"
-  typename tomo_internal::const_type_helper<MHRWParamsType,(int)MHRWControllerStrategy==(int)MHRWControllerDoNotAdjust>::type _n;
+  typename tomo_internal::const_type_helper<
+    MHRWParamsType,
+    (int)MHRWControllerStrategy==(int)MHRWControllerDoNotAdjust
+    >::type _n;
 
   Rng & _rng;
   MHWalker & _mhwalker;
   MHRWStatsCollector & _stats;
+  MHRWController & _mhrw_controller;
+
   Logger::LocalLogger<LoggerType> _logger;
 
   //! Current point
@@ -681,25 +701,22 @@ private:
   CountIntType num_live_points;
 
 
-  MHRWController _mhrw_controller;
-
-
 public:
 
   //! Simple constructor, initializes the given fields
   MHRandomWalk(MHWalkerParams mhwalker_params, CountIntType n_sweep, CountIntType n_therm, CountIntType n_run,
-	       MHWalker & mhwalker, MHRWStatsCollector & stats,
-               Rng & rng, LoggerType & logger_, MHRWController mhrw_controller = MHRWController())
+	       MHWalker & mhwalker, MHRWStatsCollector & stats, MHRWController & mhrw_controller,
+               Rng & rng, LoggerType & logger_)
     : _n(mhwalker_params, n_sweep, n_therm, n_run),
       _rng(rng),
       _mhwalker(mhwalker),
       _stats(stats),
+      _mhrw_controller(mhrw_controller),
       _logger(TOMO_ORIGIN, logger_),
       curpt(),
       curptval(),
       num_accepted(0),
-      num_live_points(0),
-      _mhrw_controller(mhrw_controller)
+      num_live_points(0)
   {
     _logger.debug([&](std::ostream & stream) {
 	stream << "constructor(). n_sweep=" << n_sweep << ", mhwalker_params=" << mhwalker_params
@@ -709,18 +726,18 @@ public:
   //! Simple constructor, initializes the given fields
   template<typename MHRWParamsTypeInit>
   MHRandomWalk(MHRWParamsTypeInit&& n_rw,
-	       MHWalker & mhwalker, MHRWStatsCollector & stats,
-               Rng & rng, LoggerType & logger_, MHRWController mhrw_controller = MHRWController())
+	       MHWalker & mhwalker, MHRWStatsCollector & stats, MHRWController & mhrw_controller,
+               Rng & rng, LoggerType & logger_)
     : _n(std::forward<MHRWParamsTypeInit>(n_rw)),
       _rng(rng),
       _mhwalker(mhwalker),
       _stats(stats),
+      _mhrw_controller(mhrw_controller),
       _logger(TOMO_ORIGIN, logger_),
       curpt(),
       curptval(),
       num_accepted(0),
-      num_live_points(0),
-      _mhrw_controller(mhrw_controller)
+      num_live_points(0)
   {
     _logger.debug([&](std::ostream & s) { s << "constructor(). mhrw parameters = " << _n; });
   }
@@ -838,6 +855,9 @@ private:
   {
     _mhwalker.done();
     _stats.done();
+
+    _mhrw_controller.done(_n, _mhwalker, *this);
+
     _logger.longdebug("_done() done.");
   }
 

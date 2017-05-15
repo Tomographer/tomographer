@@ -210,7 +210,7 @@ public:
     double ensure_n_therm_fixed_params_fraction = 0;
     {
       py::gil_scoped_acquire gil_acq;
-      if (ctrl_step_size_params.attr("get")("enabled", true)) {
+      if (ctrl_step_size_params.attr("get")("enabled", true).cast<bool>()) {
         mvavg_numsamples = ctrl_step_size_params.attr("get")("num_samples", 2048).cast<int>();
         ar_params[0] = ctrl_step_size_params.attr("get")(
             "desired_accept_ratio_min",
@@ -254,10 +254,13 @@ public:
           ensure_n_therm_fixed_params_fraction
           );
 
+    int check_frequency_sweeps = 0;
     std::size_t max_allowed[3] = {0};
     {
       py::gil_scoped_acquire gil_acq;
-      if (ctrl_converged_params.attr("get")("enabled", true)) {
+      if (ctrl_converged_params.attr("get")("enabled", true).cast<bool>()) {
+        check_frequency_sweeps =
+          ctrl_converged_params.attr("get")("check_frequency_sweeps", 1024).cast<int>();
         max_allowed[0] =
           ctrl_converged_params.attr("get")("max_allowed_unknown", 2).cast<std::size_t>();
         max_allowed[1] =
@@ -265,6 +268,7 @@ public:
         max_allowed[2] =
           ctrl_converged_params.attr("get")("max_allowed_not_converged", 0).cast<std::size_t>();
       } else {
+        check_frequency_sweeps = 0;
         max_allowed[0] = std::numeric_limits<std::size_t>::max();
         max_allowed[1] = std::numeric_limits<std::size_t>::max();
         max_allowed[2] = std::numeric_limits<std::size_t>::max();
@@ -275,7 +279,7 @@ public:
     auto ctrl_convergence = 
       Tomographer::mkMHRWValueErrorBinsConvergedController(
           value_stats, logger,
-          dict_item_gil<int>(ctrl_converged_params, "check_frequency_sweeps", 1024),
+          check_frequency_sweeps,
           max_allowed[0], max_allowed[1], max_allowed[2]
           );
     // combined to a:

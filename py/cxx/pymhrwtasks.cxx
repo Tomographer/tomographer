@@ -76,6 +76,25 @@ void py_tomo_mhrwtasks(py::module rootmodule)
       ;
   }
 
+  logger.debug("BinningErrorBarConvergenceSummary  ...");
+  { typedef Tomographer::BinningErrorBarConvergenceSummary Kl;
+    py::class_<Kl>(
+        rootmodule,
+        "BinningErrorBarConvergenceSummary",
+        "A summary of how many error bars have converged. "
+        "\n\n"
+        "Reflects the corresponding C++ class .......... DOC PLEASE ..........."
+        )
+      .def(py::init<int,int,int,int,int>(),
+           "n_bins"_a=0,"n_converged"_a=0,"n_unknown"_a=0,"n_unknown_isolated"_a=0,"n_not_converged"_a=0)
+      .def_readwrite("n_bins", & Kl::n_bins)
+      .def_readwrite("n_converged", & Kl::n_converged)
+      .def_readwrite("n_unknown", & Kl::n_unknown)
+      .def_readwrite("n_unknown_isolated", & Kl::n_unknown_isolated)
+      .def_readwrite("n_not_converged", & Kl::n_not_converged)
+      ;
+  }
+
   logger.debug("ValueHistogramWithBinningMHRWStatsCollectorResult ...");
   { typedef tpy::ValueHistogramWithBinningMHRWStatsCollectorResult Kl;
     py::class_<tpy::ValueHistogramWithBinningMHRWStatsCollectorResult>(
@@ -121,6 +140,7 @@ void py_tomo_mhrwtasks(py::module rootmodule)
       .def_property_readonly("converged_status", [](const Kl & x) -> Eigen::VectorXi {
           return x.converged_status;
         })
+      .def("errorBarConvergenceSummary", & Kl::errorBarConvergenceSummary)
       // .def("__repr__", [](const Kl& p) {
       //     return streamstr("ValueHistogramWithBinningMHRWStatsCollectorResult("<<"..."<<")") ;
       //   })

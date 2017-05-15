@@ -94,10 +94,15 @@ private:
   Logger::LocalLogger<BaseLoggerType> llogger;
 
 public:
+  /** \brief Constructor
+   *
+   * Note: You may disable the controller entirely by setting \a check_frequency_sweeps=0.
+   *
+   */
   MHRWValueErrorBinsConvergedController(
       const ValueHistogramWithBinningMHRWStatsCollectorType & value_stats_collector_,
       BaseLoggerType & baselogger_,
-      int check_frequency_sweeps_ = 1024,
+      IterCountIntType check_frequency_sweeps_ = 1024,
       std::size_t max_allowed_unknown_ = 0,
       std::size_t max_allowed_unknown_notisolated_ = 0,
       std::size_t max_allowed_not_converged_ = 0
@@ -130,9 +135,8 @@ public:
                      IterCountIntType iter_k, const MHRandomWalkType & /*mhrw*/)
   {
 
-    if (max_allowed_not_converged == std::numeric_limits<std::size_t>::max()) {
-      // controller is manually disabled by allowing the maximum number of not converged
-      // error bars -- so don't bother
+    if (check_frequency_sweeps == 0) {
+      // controller is manually disabled by setting check_frequency_sweeps=0
       return true;
     }
 
@@ -173,6 +177,12 @@ public:
                                const MHRandomWalkType & /*mhrw*/) const
   {
   }
+
+  template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
+  inline void done(MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
+                   const MHRandomWalkType & /*mhrw*/) const
+  {
+  }
 };
 
 
@@ -190,7 +200,7 @@ inline MHRWValueErrorBinsConvergedController<ValueHistogramWithBinningMHRWStatsC
 mkMHRWValueErrorBinsConvergedController(
     const ValueHistogramWithBinningMHRWStatsCollectorType_ & value_stats_collector_,
     BaseLoggerType_ & baselogger_,
-    int check_frequency_sweeps_ = 1024,
+    IterCountIntType_ check_frequency_sweeps_ = 1024,
     std::size_t max_allowed_unknown_ = 0,
     std::size_t max_allowed_unknown_notisolated_ = 0,
     std::size_t max_allowed_not_converged_ = 0

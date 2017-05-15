@@ -33,8 +33,67 @@
 #include "test_tomographer.h"
 
 #include <tomographer/mhrw.h>
+#include <tomographer/mhrwstatscollectors.h>
 
 #include "test_mh_random_walk_common.h" // our test-case random walk
+
+
+// -----------------------------------------------------------------------------
+// fixtures
+// -----------------------------------------------------------------------------
+
+
+template<unsigned int AdjustmentStrategyFlags>
+struct mhrandomwalk_control_fixture
+{
+  void go()
+  {
+    typedef Tomographer::Logger::VacuumLogger LoggerType;
+    LoggerType logger;
+
+    typedef std::mt19937 Rng;
+    // rng for the random walk engine itself
+    Rng rng(3040); // fixed seed
+
+    typedef Tomographer::MHRandomWalk<Rng, TestLatticeMHRWGaussPeak<int>,
+                                      Tomographer::TrivialMHRWStatsCollector,
+                                      TestMHRWController<AdjustmentStrategyFlags>,
+                                      LoggerType, int>
+      MHRandomWalkType;
+
+    const int ntherm = 50;
+    const int nrun = 100;
+    const int nsweep = 10;
+
+    // rng for the mhwalker
+    Rng rng2(414367); // seed, fixed -> deterministic
+
+    TestLatticeMHRWGaussPeak<int> mhwalker(
+        Eigen::Vector2i::Constant(100),
+        (Eigen::Matrix2i() << 10, -5, 5, 10).finished(), 1,
+        (Eigen::Vector2i() << 40, 50).finished(),
+        rng
+        );
+    Tomographer::TrivialMHRWStatsCollector stats;
+
+    // our test controller
+    TestMHRWController<AdjustmentStrategyFlags> ctrl;
+
+    MHRandomWalkType rw(2, nsweep, ntherm, nrun, mhwalker, stats, ctrl, rng, logger);
+
+    rw.run();
+
+    // make sure that the done() callback of the controller was called, because that's
+    // where all the tests are!
+    BOOST_CHECK( ctrl.done_called );
+  }
+};
+
+
+// -----------------------------------------------------------------------------
+// test cases
+// -----------------------------------------------------------------------------
+
 
 
 BOOST_AUTO_TEST_SUITE(test_mhrw)
@@ -62,8 +121,9 @@ BOOST_AUTO_TEST_CASE(mhrandomwalksetup)
 
   TestMHWalker mhwalker(nsweep, ntherm, nrun, rng2);
   TestMHRWStatsCollector stats(nsweep, ntherm, nrun);
+  Tomographer::MHRWNoController noctrl;
   MHRandomWalkType rw(Tomographer::MHRWParams<StepSizeType,int>(2, nsweep, ntherm, nrun),
-                      mhwalker, stats, rng, logger);
+                      mhwalker, stats, noctrl, rng, logger);
 
   BOOST_CHECK_EQUAL(rw.nSweep(), nsweep);
   BOOST_CHECK_EQUAL(rw.nTherm(), ntherm);
@@ -96,7 +156,8 @@ BOOST_AUTO_TEST_CASE(mhrandomwalk)
 
   TestMHWalker mhwalker(nsweep, ntherm, nrun, rng2);
   TestMHRWStatsCollector stats(nsweep, ntherm, nrun);
-  MHRandomWalkType rw(2, nsweep, ntherm, nrun, mhwalker, stats, rng, logger);
+  Tomographer::MHRWNoController noctrl;
+  MHRandomWalkType rw(2, nsweep, ntherm, nrun, mhwalker, stats, noctrl, rng, logger);
 
   BOOST_CHECK_EQUAL(rw.nSweep(), nsweep);
   BOOST_CHECK_EQUAL(rw.nTherm(), ntherm);
@@ -111,16 +172,59 @@ BOOST_AUTO_TEST_CASE(mhrandomwalk)
 }
 
 
-BOOST_AUTO_TEST_CASE(mhrandomwalk_adjuster_iface)
+BOOST_AUTO_TEST_SUITE(mhrandomwalk_control_iface)
+
+BOOST_FIXTURE_TEST_CASE(ThRnIt,
+                        mhrandomwalk_control_fixture<
+                        Tomographer::MHRWControllerAdjustEveryIterationAlways
+                        >)
 {
-  BOOST_CHECK( false ) ; // test cases not yet written
+  go();
+}
+BOOST_FIXTURE_TEST_CASE(ThRnItSm,
+                        mhrandomwalk_control_fixture<
+                        Tomographer::MHRWControllerAdjustEveryIterationAlways|
+                        Tomographer::MHRWControllerAdjustEverySample
+                        >)
+{
+  go();
+}
+BOOST_FIXTURE_TEST_CASE(ThIt,
+                        mhrandomwalk_control_fixture<
+                        Tomographer::MHRWControllerAdjustWhileThermalizing|
+                        Tomographer::MHRWControllerAdjustEveryIteration
+                        >)
+{
+  go();
+}
+BOOST_FIXTURE_TEST_CASE(RnSm,
+                        mhrandomwalk_control_fixture<
+                        Tomographer::MHRWControllerAdjustWhileRunning|
+                        Tomographer::MHRWControllerAdjustEverySample
+                        >)
+{
+  go();
+}
+BOOST_FIXTURE_TEST_CASE(ThRnSm,
+                        mhrandomwalk_control_fixture<
+                        Tomographer::MHRWControllerAdjustWhileThermalizingAndRunning|
+                        Tomographer::MHRWControllerAdjustEverySample
+                        >)
+{
+  go();
+}
+BOOST_FIXTURE_TEST_CASE(RnItSm,
+                        mhrandomwalk_control_fixture<
+                        Tomographer::MHRWControllerAdjustWhileRunning|
+                        Tomographer::MHRWControllerAdjustEveryIteration|
+                        Tomographer::MHRWControllerAdjustEverySample
+                        >)
+{
+  go();
 }
 
+BOOST_AUTO_TEST_SUITE_END() ; // mhrandomwalk_control_iface
 
-BOOST_AUTO_TEST_CASE(mhrw_status_report)
-{
-  BOOST_CHECK( false ) ; // test cases not yet written -- import them as appropriate from mhrwtasks
-}
 
 // -----------------------------------------------------------------------------
 BOOST_AUTO_TEST_SUITE_END()

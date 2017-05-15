@@ -228,7 +228,8 @@ BOOST_AUTO_TEST_CASE(instantiate_2)
 	  (Eigen::Vector2i() << 40, 50).finished(),
 	  rng
       );
-  MHRandomWalkType rw(MHRWParamsType(StepSizeType(2), 10, 100, 1000), mhwalker, stats, rng, logger);
+  Tomographer::MHRWNoController noctrl;
+  MHRandomWalkType rw(MHRWParamsType(StepSizeType(2), 10, 100, 1000), mhwalker, stats, noctrl, rng, logger);
 
   // the thing we actually want to test:
   Tomographer::MHRWTasks::MHRandomWalkTaskResult<MyStatsResultType,

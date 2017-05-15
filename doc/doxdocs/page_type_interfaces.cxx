@@ -48,6 +48,7 @@
  *
  *  - \subpage pageInterfaceMHWalker
  *  - \subpage pageInterfaceMHRWStatsCollector
+ *  - \subpage pageInterfaceMHRWController
  *  - \subpage pageInterfaceResultable
  *  - \subpage pageInterfaceValueCalculator
  *  - \subpage pageInterfaceMHRandomWalkTaskCData
@@ -77,13 +78,13 @@
  * MHRandomWalk. (It is usually most convenient to template the methods themselves, so
  * that you don't have to specify the parameters when instantiating the object.)
  *
- * \par void init()
+ * \par void init(.......)
  * is called before starting the random walk
  *
- * \par void thermalizingDone()
+ * \par void thermalizingDone(........)
  * is called after the thermalizing runs, before starting the "live" runs.
  * 
- * \par void done()
+ * \par void done(........)
  * is called after the random walk is finished.
  *
  * \par void processSample(CountIntType k, CountIntType n, const PointType & pt, FnValueType fnval, MHRandomWalk & rw)

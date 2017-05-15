@@ -65,23 +65,23 @@ namespace ValueHistogramTools {
  * You shouldn't have to use this class directly.  Use \ref
  * CDataBase::MHRWStatsResultsBaseType instead.
  */
-template<typename ValueStatsCollectorResultType_, typename ScaledHistogramType_>
+template<typename RawHistogramType_, typename ScaledHistogramType_>
 struct MHRWStatsResultsBaseSimple
 {
-  typedef ValueStatsCollectorResultType_ ValueStatsCollectorResultType;
+  typedef RawHistogramType_ RawHistogramType;
   typedef ScaledHistogramType_ ScaledHistogramType;
 
-  MHRWStatsResultsBaseSimple(ValueStatsCollectorResultType && val)
+  MHRWStatsResultsBaseSimple(RawHistogramType && val)
     : raw_histogram(std::move(val)),
       histogram(raw_histogram.params)
   {
     typedef typename ScaledHistogramType::CountType  CountRealType;
-    CountRealType ncounts = histogram.totalCounts();
+    CountRealType ncounts = raw_histogram.totalCounts();
     histogram.load(raw_histogram.bins.template cast<CountRealType>() / ncounts,
                    raw_histogram.off_chart / ncounts);
   }
 
-  ValueStatsCollectorResultType raw_histogram;
+  RawHistogramType raw_histogram;
 
   ScaledHistogramType histogram;
 };
@@ -180,7 +180,8 @@ struct valuehist_types<CDataBaseType, true>
  * \tparam UseBinningAnalysis whether or not to use a binning analysis to obtain reliable
  *         error bars during the random walk.
  *
- * \tparam MHWalkerParams the real type to use for representing a step size in the random walk.
+ * \tparam MHWalkerParams The MHWalkerParams required for our \ref pageInterfaceMHWalker
+ *         "MHWalker" (for instance a \ref MHWalkerParamsStepSize)
  *
  * \tparam IterCountIntType the integer type to use for counting iterations.
  *
@@ -230,10 +231,11 @@ TOMOGRAPHER_EXPORT struct CDataBase
   //! The MHRWTasks::CDataBase base class
   typedef MHRWTasks::CDataBase<MHWalkerParams_, IterCountIntType_> Base;
 
+  //! The MHWalkerParams required for our MHWalker (for instance a \ref MHWalkerParamsStepSize)
+  typedef typename Base::MHWalkerParams MHWalkerParams;
+
   //! The integer type which serves to count the number of iterations (see \ref MHRWParams)
   typedef typename Base::IterCountIntType IterCountIntType;
-  //! The real type which serves to describe the step size of the random walk (typically \c double)
-  typedef typename Base::MHWalkerParams MHWalkerParams;
 
   //! The integer counting type in our underlying raw histogram type
   typedef HistCountIntType_ HistCountIntType;
@@ -261,7 +263,6 @@ TOMOGRAPHER_EXPORT struct CDataBase
   typedef typename tomo_internal::valuehist_types<CDataBase,UseBinningAnalysis>::ValueStatsCollectorResultType
     ValueStatsCollectorResultType;
 
-
   /** \brief Stores result of the stats collector. May serve as base class for your own
    *         MHRWStatsResults class.
    *
@@ -288,11 +289,13 @@ TOMOGRAPHER_EXPORT struct CDataBase
    *     parameters types.  This is in fact \ref
    *     ValueHistogramWithBinningMHRWStatsCollectorParams::HistogramType.
    */
-  typedef typename tomo_internal::valuehist_types<CDataBase,UseBinningAnalysis>::HistogramType HistogramType;
+  typedef typename tomo_internal::valuehist_types<CDataBase,UseBinningAnalysis>::HistogramType
+    HistogramType;
 
   /** \brief The appropriate parameters type for the histogram reported by the task
    */
-  typedef typename tomo_internal::valuehist_types<CDataBase,UseBinningAnalysis>::HistogramParams HistogramParams;
+  typedef typename tomo_internal::valuehist_types<CDataBase,UseBinningAnalysis>::HistogramParams
+    HistogramParams;
 
   //! Type for the parameters of the random walk.
   typedef MHRWParams<MHWalkerParams, IterCountIntType> MHRWParamsType;
@@ -326,8 +329,11 @@ TOMOGRAPHER_EXPORT struct CDataBase
 
   /** \brief Create the stats collector (without binning analysis)
    *
-   * This method is provided in compliance with the \ref
-   * pageInterfaceMHRandomWalkTaskCData for \ref MHRandomWalkTask.
+   * This method is provided so that user-provided \ref pageInterfaceMHRandomWalkTaskCData
+   * "CData random walk description classes" can easily create the necessary value
+   * histogram stats collector for collecting a histogram of values during a \ref
+   * MHRandomWalkTask.  This function should typically be called from within the user's \a
+   * setupRandomWalkAndRun() function.
    */
   template<typename LoggerType, TOMOGRAPHER_ENABLED_IF_TMPL(!UseBinningAnalysis)>
   inline ValueHistogramMHRWStatsCollector<ValueCalculator,LoggerType,HistogramType>
@@ -342,8 +348,11 @@ TOMOGRAPHER_EXPORT struct CDataBase
 
   /** \brief Create the stats collector (with binning analysis)
    *
-   * This method is provided in compliance with the \ref
-   * pageInterfaceMHRandomWalkTaskCData for \ref MHRandomWalkTask.
+   * This method is provided so that user-provided \ref pageInterfaceMHRandomWalkTaskCData
+   * "CData random walk description classes" can easily create the necessary value
+   * histogram stats collector for collecting a histogram of values during a \ref
+   * MHRandomWalkTask.  This function should typically be called from within the user's \a
+   * setupRandomWalkAndRun() function.
    */
   template<typename LoggerType, TOMOGRAPHER_ENABLED_IF_TMPL(UseBinningAnalysis)>
   inline ValueHistogramWithBinningMHRWStatsCollector<

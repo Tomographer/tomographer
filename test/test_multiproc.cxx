@@ -52,8 +52,11 @@
 
 
 BOOST_AUTO_TEST_SUITE(test_multiproc)
+// -----------------------------------------------------------------------------
 
-BOOST_FIXTURE_TEST_CASE(sequential_dispatcher, test_task_dispatcher_fixture)
+BOOST_AUTO_TEST_SUITE(sequential_dispatcher)
+
+BOOST_FIXTURE_TEST_CASE(runs, test_task_dispatcher_fixture)
 {
   Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
   Tomographer::MultiProc::Sequential::TaskDispatcher<TestTask, TestBasicCData,
@@ -109,7 +112,11 @@ BOOST_AUTO_TEST_CASE(status_report_withsigalrm)
 
   perform_test_status_report_withsigalrm(task_dispatcher, logger);
 }
+
 BOOST_AUTO_TEST_SUITE_END() ; // status_reporting
 
+BOOST_AUTO_TEST_SUITE_END() ; // sequential_dispatcher
+
+// -----------------------------------------------------------------------------
 BOOST_AUTO_TEST_SUITE_END() ; // test_multiproc
 
