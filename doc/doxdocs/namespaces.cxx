@@ -81,19 +81,29 @@
  *
  * If you are interested in collecting a histogram of a particular function over the
  * explored space, you should consider using the classes in \ref
- * MHRWTasks::ValueHistogramTasks, which provides additional support for averaging
+ * MHRWTasks::ValueHistogramTools, which provides additional helpful tools for averaging
  * histograms, calculating error bars etc.
  *
  */
 
-/** \namespace Tomographer::MHRWTasks::ValueHistogramTasks
+/** \namespace Tomographer::MHRWTasks::ValueHistogramTools
  *
- * \brief Definitions for running multiple random walks and collecting a histogram of values
+ * \brief Tools for running random walk tasks while collecting a histogram of values
  *
- * Provides class definitions for interfacing with a task manager/dispatcher (see \ref
- * pageTaskManagerDispatcher), building up on top of the more basic stuff in \ref
- * Tomographer::MHRWTasks.
+ * These tools build on top of \ref Tomographer::MHRWTasks to add specific support for
+ * collecting a histogram of values during the random walk, including a binning analysis
+ * for error bars, and then aggregating the results of each task together to form an
+ * averaged histogram.
  *
+ * The \a CData class \ref Tomographer::MHRWTasks::ValueHistogramTools::CDataBase should
+ * be used as \ref pageInterfaceMHRandomWalkTaskCData "CData class" to define your random
+ * walk task, as it provides additional typedefs as well as automatic construction of the
+ * value stats collector.
+ *
+ * The class \ref Tomographer::MHRWTasks::ValueHistogramTools::HistogramAggregator allows
+ * you to combine histograms together to form an averaged histogram.
+ *
+ * \since Namespace added in %Tomographer 5.0.
  */
 
 

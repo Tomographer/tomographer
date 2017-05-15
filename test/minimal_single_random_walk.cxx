@@ -189,10 +189,6 @@ int main()
   // parameters of the random walk
   typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<>,int> MHRWParamsType;
   const MHRWParamsType mhrw_params(
-      //      0.5, // step size -- will be automatically adjusted during thermalization sweeps
-      //      2, // sweep size -- will be automaticall adjusted during thermalization sweeps
-      //      1,
-      //      1,
       1e-8,
       1e8,
       500, // # of thermalization sweeps
@@ -219,7 +215,8 @@ int main()
   //
   const int binning_num_levels = 8;
 
-  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<ValueCalculator>  BinningMHRWStatsCollectorParams;
+  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<ValueCalculator>
+    BinningMHRWStatsCollectorParams;
 
   typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<BinningMHRWStatsCollectorParams,LoggerType>
     HistogramStatsCollector;
@@ -231,7 +228,8 @@ int main()
 	logger.parentLogger()
 	);
 
-  Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<> avgacceptstatscollector;
+  Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<>
+    avgacceptstatscollector;
 
 
   typedef Tomographer::MHRWPeriodicStatusReportStatsCollector<MHRWParamsType> OurStatusReportCheck;
@@ -254,7 +252,6 @@ int main()
   StatsCollectors full_stats_coll(histstatscollector, avgacceptstatscollector, statreportcheck);
 
   typedef Tomographer::MHRWStepSizeController<Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<>,
-                                              //                                            4,
                                               LoggerType>
     MHRWStepSizeControllerType;
   typedef Tomographer::MHRWValueErrorBinsConvergedController<HistogramStatsCollector,int,LoggerType>
@@ -268,7 +265,8 @@ int main()
 
   MHRWControllerType mhrw_controller(mhrw_controller_step, mhrw_controller_conv);
 
-  typedef Tomographer::MHRandomWalk<Rng,MHWalkerType,StatsCollectors,MHRWControllerType,LoggerType,int> MHRandomWalkType;
+  typedef Tomographer::MHRandomWalk<Rng,MHWalkerType,StatsCollectors,MHRWControllerType,LoggerType,int>
+    MHRandomWalkType;
 
   MHRandomWalkType rwalk(
       // MH random walk parameters
@@ -300,8 +298,8 @@ int main()
   std::string elapsed_s = Tomographer::Tools::fmtDuration(time_end - time_start);
 
   // the result collected directly, fresh from our stats collector
-  auto result = histstatscollector.getResult();
-  auto histogram = result.hist;
+  auto result = histstatscollector.stealResult();
+  const auto & histogram = result.histogram;
 
   // histogram has type Tomographer::AveragedHistogram, you can use it like any other
   // histogram object with error bars (see "Histogram Type Interface").  E.g.:

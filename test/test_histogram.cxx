@@ -268,6 +268,27 @@ BOOST_AUTO_TEST_CASE(normalized)
     MY_BOOST_CHECK_FLOATS_EQUAL(hn.normalization(), 1.0, tol);
   }
 }
+BOOST_AUTO_TEST_CASE(normalized_counts)
+{
+  { Tomographer::UniformBinsHistogram<float, int> hist(0.0f, 4.0f, 4);
+    hist.load( inline_vector_4<int>(0, 3, 19, 24), 10 );
+    BOOST_CHECK_EQUAL(hist.totalCounts(), hist.bins.sum() + hist.off_chart);
+    auto hn = hist.normalizedCounts();
+    auto n = hist.totalCounts();
+    MY_BOOST_CHECK_EIGEN_EQUAL(hn.bins, inline_vector_4<float>(0, 3, 19, 24)/n, tol_f);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.off_chart, 10.f/n, tol_f);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.totalCounts(), 1.f, tol_f);
+  }
+  { Tomographer::UniformBinsHistogram<float, int> hist(0.0f, 1.0f, 4);
+    hist.load( inline_vector_4<int>(0, 3, 19, 24), 10 );
+    BOOST_CHECK_EQUAL(hist.totalCounts(), hist.bins.sum() + hist.off_chart);
+    auto hn = hist.normalizedCounts<double>();
+    double n = hist.totalCounts();
+    MY_BOOST_CHECK_EIGEN_EQUAL(hn.bins, inline_vector_4<double>(0, 3, 19, 24)/n, tol);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.off_chart, 10.0/n, tol);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.totalCounts(), 1.0, tol);
+  }
+}
 
 BOOST_AUTO_TEST_CASE(copy)
 {
@@ -405,6 +426,43 @@ BOOST_AUTO_TEST_CASE(normalized)
   }
 }
 
+BOOST_AUTO_TEST_CASE(normalized_counts)
+{
+  { Tomographer::UniformBinsHistogramWithErrorBars<float, int> hist(0.0f, 4.0f, 4);
+    hist.load( inline_vector_4<int>(0, 3, 19, 24),
+               inline_vector_4<float>(0, 1, 4, 3),
+               10 );
+    auto hn = hist.normalizedCounts();
+    float n = hist.totalCounts();
+#if ! IS_GCC_4_6  // gcc 4.6 doesn't like decltype(...) it appears:
+    typedef std::is_same<decltype(hn)::Scalar, decltype(hist)::Scalar> test1td;
+    TOMO_STATIC_ASSERT_EXPR(test1td::value) ;
+    typedef std::is_same<decltype(hn)::CountType, decltype(float(1)+int(1))> test2td;
+    TOMO_STATIC_ASSERT_EXPR(test2td::value) ;
+#endif
+    MY_BOOST_CHECK_EIGEN_EQUAL(hn.bins, inline_vector_4<float>(0, 3, 19, 24)/n, tol_f);
+    MY_BOOST_CHECK_EIGEN_EQUAL(hn.delta, inline_vector_4<float>(0, 1, 4, 3)/n, tol_f);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.off_chart, 10.f/n, tol_f);
+  }
+  { Tomographer::UniformBinsHistogramWithErrorBars<float, int> hist(0.0f, 1.0f, 4);
+    hist.load( inline_vector_4<int>(0, 3, 19, 24),
+               inline_vector_4<float>(0, 1, 4, 3),
+               10 );
+    auto hn = hist.normalizedCounts<double>();
+    double n = hist.totalCounts();
+    // the x-axis Scalar doesn't change, it's the count type that does.
+#if ! IS_GCC_4_6  // gcc 4.6 doesn't like decltype(...) it appears:
+    typedef std::is_same<decltype(hn)::Scalar, decltype(hist)::Scalar> td1;
+    TOMO_STATIC_ASSERT_EXPR(td1::value) ;
+    typedef std::is_same<decltype(hn)::CountType, double> td2;
+    TOMO_STATIC_ASSERT_EXPR(td2::value) ;
+#endif
+    MY_BOOST_CHECK_EIGEN_EQUAL(hn.bins, inline_vector_4<double>(0, 3, 19, 24)/n, tol);
+    MY_BOOST_CHECK_EIGEN_EQUAL(hn.delta, inline_vector_4<double>(0, 1, 4, 3)/n, tol);
+    MY_BOOST_CHECK_FLOATS_EQUAL(hn.off_chart, 10.0/n, tol);
+  }
+}
+
 
 BOOST_AUTO_TEST_SUITE_END(); // uniform_bins_histogram_with_error_bars
 
@@ -511,6 +569,22 @@ BOOST_AUTO_TEST_CASE(with_underlying_error_bars)
 
 
 BOOST_AUTO_TEST_SUITE_END(); // averaged_histogram
+
+// -----------------------------------------------------------------------------
+
+BOOST_AUTO_TEST_SUITE(aggregated_histogram_simple);
+
+// todo: write tests
+BOOST_AUTO_TEST_CASE(x) { BOOST_CHECK(false); }
+
+BOOST_AUTO_TEST_SUITE_END()
+
+BOOST_AUTO_TEST_SUITE(aggregated_histogram_with_error_bars);
+
+// todo: write tests
+BOOST_AUTO_TEST_CASE(x) { BOOST_CHECK(false); }
+
+BOOST_AUTO_TEST_SUITE_END()
 
 // -----------------------------------------------------------------------------
 

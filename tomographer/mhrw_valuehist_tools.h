@@ -47,6 +47,8 @@
  *        walk using the tools of \ref Tomographer::MHRWTasks
  *
  * See \ref Tomographer::MHRWTasks::ValueHistogramTools .
+ *
+ * \since This file was added in %Tomographer 5.0.
  */
 
 
@@ -56,55 +58,98 @@ namespace ValueHistogramTools {
 
 
 
+
+/** \brief Stores the result of the value histogram stats collector (version without
+ *         binning analysis)
+ *
+ * You shouldn't have to use this class directly.  Use \ref
+ * CDataBase::MHRWStatsResultsBaseType instead.
+ */
+template<typename ValueStatsCollectorResultType_, typename ScaledHistogramType_>
+struct MHRWStatsResultsBaseSimple
+{
+  typedef ValueStatsCollectorResultType_ ValueStatsCollectorResultType;
+  typedef ScaledHistogramType_ ScaledHistogramType;
+
+  MHRWStatsResultsBaseSimple(ValueStatsCollectorResultType && val)
+    : raw_histogram(std::move(val)),
+      histogram(raw_histogram.params)
+  {
+    typename ScaledHistogramType::CountType ncounts = histogram.totalCounts();
+    histogram.load(raw_histogram.bins / ncounts, raw_histogram.off_chart / ncounts);
+  }
+
+  ValueStatsCollectorResultType raw_histogram;
+
+  ScaledHistogramType histogram;
+};
+
+
+
+
+
+
+// -----------------------------------------------
+
+
 namespace tomo_internal {
+//
+// version WITHOUT binning analysis:
+//
 template<typename CDataBaseType, bool UseBinningAnalysis>
-struct histogram_types {// version WITHOUT binning analysis:
+struct valuehist_types
+{
   typedef Histogram<typename CDataBaseType::ValueCalculator::ValueType,
-                               typename CDataBaseType::HistCountIntType> HistogramType;
-  /// we know that ValueHistogramMHRWStatsCollector<ValueCalculator,...,HistogramType>::ResultType is HistogramType
+                    typename CDataBaseType::HistCountIntType> HistogramType;
+
+  // useful types
+
+  // we know that ValueHistogramMHRWStatsCollector<ValueCalculator,...,HistogramType>::ResultType is HistogramType
   typedef HistogramType ValueStatsCollectorResultType;
   typedef typename HistogramType::Params HistogramParams;
+  typedef typename CDataBaseType::CountRealType CountRealType;
+  typedef Histogram<typename HistogramType::Scalar, CountRealType> ScaledHistogramType;
+
+  // base type for user cdata to use as MHRWStatsResults member
+  typedef MHRWStatsResultsBaseSimple<ValueStatsCollectorResultType, ScaledHistogramType>
+    MHRWStatsResultsBaseType;
+
+  // the correct histogram aggregator type
+  typedef AggregatedHistogramSimple<ScaledHistogramType, CountRealType> AggregatedHistogramType;
 };
+//
+// version WITH binning analysis:
+//
 template<typename CDataBaseType>
-struct histogram_types<CDataBaseType, true> {// version WITH binning analysis:
+struct valuehist_types<CDataBaseType, true>
+{
+  // useful types
+
+  typedef typename CDataBaseType::CountRealType CountRealType;
+
   /// the \ref ValueHistogramWithBinningMHRWStatsCollectorParams...
   typedef ValueHistogramWithBinningMHRWStatsCollectorParams<
-    typename CDataBaseType::ValueCalculator, typename CDataBaseType::HistCountIntType,
-    typename CDataBaseType::CountRealType, Eigen::Dynamic, Eigen::Dynamic
+    typename CDataBaseType::ValueCalculator,
+    typename CDataBaseType::HistCountIntType,
+    CountRealType,
+    Eigen::Dynamic,
+    Eigen::Dynamic
     >  BinningMHRWStatsCollectorParams;
-  //
+
   typedef typename BinningMHRWStatsCollectorParams::Result ValueStatsCollectorResultType;
   typedef typename BinningMHRWStatsCollectorParams::HistogramType HistogramType;
   typedef typename BinningMHRWStatsCollectorParams::HistogramParams HistogramParams;
+
+  // base type for user cdata to use as MHRWStatsResults member
+  typedef ValueStatsCollectorResultType MHRWStatsResultsBaseType;
+
+  // the correct histogram aggregator type
+  typedef AggregatedHistogramWithErrorBars<HistogramType, CountRealType> AggregatedHistogramType;
 };
 } // namespace tomo_internal
 
 
-
-
 // ------------------------------------------------
-
-
-
-
-namespace tomo_internal {
-template<typename HistogramType>
-TOMOGRAPHER_EXPORT
-void print_hist_short_bar_with_accept_info(std::ostream & str, int dig_w, std::size_t j, const HistogramType & hist,
-                                           double acceptance_ratio, int columns)
-{
-  histogramShortBarWithInfo(str,
-                            streamstr("#" << std::setw(dig_w) << j << ": "),
-                            hist,
-                            Tomographer::Tools::fmts(" [accept ratio = %.2f]", acceptance_ratio),
-                            false, columns);
-  if (acceptance_ratio > MHRWAcceptanceRatioRecommendedMax ||
-      acceptance_ratio < MHRWAcceptanceRatioRecommendedMin) {
-    str << "    *** Accept ratio out of recommended bounds ["<<MHRWAcceptanceRatioRecommendedMin
-        <<", "<<MHRWAcceptanceRatioRecommendedMax<<"] ! Adapt step size ***\n";
-  }
-}
-} // namespace tomo_internal
 
 
 
@@ -149,9 +194,9 @@ void print_hist_short_bar_with_accept_info(std::ostream & str, int dig_w, std::s
  * <code>tomorun/tomorun_dispatch.h</code> for another example):
  * \code
  * struct MyCData
- *   : public Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase< ... >
+ *   : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase< ... >
  * {
- *   typedef Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase< ... > Base;
+ *   typedef Tomographer::MHRWTasks::ValueHistogramTools::CDataBase< ... > Base;
  *
  *   TOMOGRAPHER_ENABLED_IF(!BinningAnalysisEnabled)
  *   MyCData(ValueCalculator valcalc, int base_seed, ...)
@@ -211,8 +256,22 @@ TOMOGRAPHER_EXPORT struct CDataBase
    *    with a convergence analysis of the errors.  It is a \ref
    *    ValueHistogramWithBinningMHRWStatsCollectorResult type.
    */
-  typedef typename tomo_internal::histogram_types<CDataBase,UseBinningAnalysis>::ValueStatsCollectorResultType
+  typedef typename tomo_internal::valuehist_types<CDataBase,UseBinningAnalysis>::ValueStatsCollectorResultType
     ValueStatsCollectorResultType;
+
+
+  /** \brief Stores result of the stats collector. May serve as base class for your own
+   *         MHRWStatsResults class.
+   *
+   * Depending on \a UseBinningAnalysis, this is either \ref MHRWStatsResultBaseSimple, or
+   * directly the corresponding \ref ValueHistogramWithBinningMHRWStatsCollectorResult
+   * type.
+   *
+   * Remember, this class takes a single argument in the constructor which is a
+   * rvalue-reference to the result of the value stats collector.
+   */
+  typedef typename tomo_internal::valuehist_types<CDataBase,UseBinningAnalysis>::MHRWStatsResultsBaseType
+    MHRWStatsResultsBaseType;
 
   /** \brief The histogram type reported by the task
    *
@@ -227,17 +286,17 @@ TOMOGRAPHER_EXPORT struct CDataBase
    *     parameters types.  This is in fact \ref
    *     ValueHistogramWithBinningMHRWStatsCollectorParams::HistogramType.
    */
-  typedef typename tomo_internal::histogram_types<CDataBase,UseBinningAnalysis>::HistogramType HistogramType;
+  typedef typename tomo_internal::valuehist_types<CDataBase,UseBinningAnalysis>::HistogramType HistogramType;
 
   /** \brief The appropriate parameters type for the histogram reported by the task
    */
-  typedef typename tomo_internal::histogram_types<CDataBase,UseBinningAnalysis>::HistogramParams HistogramParams;
+  typedef typename tomo_internal::valuehist_types<CDataBase,UseBinningAnalysis>::HistogramParams HistogramParams;
 
   //! Type for the parameters of the random walk.
   typedef MHRWParams<MHWalkerParams, IterCountIntType> MHRWParamsType;
  
 
-  //! Constructor (only for without binning analysis)
+  //! Constructor (use only without binning analysis)
   TOMOGRAPHER_ENABLED_IF(!UseBinningAnalysis)
   CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_,
 	    MHRWParamsType p, int base_seed = 0)
@@ -246,7 +305,7 @@ TOMOGRAPHER_EXPORT struct CDataBase
   {
   }
 
-  //! Constructor (only for with binning analysis)
+  //! Constructor (use only with binning analysis)
   TOMOGRAPHER_ENABLED_IF(UseBinningAnalysis)
   CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_, int binning_num_levels_,
 	    MHRWParamsType p, int base_seed = 0)
@@ -286,11 +345,11 @@ TOMOGRAPHER_EXPORT struct CDataBase
    */
   template<typename LoggerType, TOMOGRAPHER_ENABLED_IF_TMPL(UseBinningAnalysis)>
   inline ValueHistogramWithBinningMHRWStatsCollector<
-    typename tomo_internal::histogram_types<CDataBase, true>::BinningMHRWStatsCollectorParams,
+    typename tomo_internal::valuehist_types<CDataBase, true>::BinningMHRWStatsCollectorParams,
     LoggerType>
   createValueStatsCollector(LoggerType & logger) const
   {
-    typedef typename tomo_internal::histogram_types<CDataBase, true>::BinningMHRWStatsCollectorParams
+    typedef typename tomo_internal::valuehist_types<CDataBase, true>::BinningMHRWStatsCollectorParams
       BinningMHRWStatsCollectorParams;
 
     return ValueHistogramWithBinningMHRWStatsCollector<BinningMHRWStatsCollectorParams,LoggerType>(
@@ -301,12 +360,165 @@ TOMOGRAPHER_EXPORT struct CDataBase
 	);
   }
 
+
+  typedef typename tomo_internal::valuehist_types<CDataBase, UseBinningAnalysis>::AggregatedHistogramType
+    AggregatedHistogramType;
+
+
+  /** \brief Convenience function for aggregating histograms resulting from value-histogram tasks
+   *
+   * The \a TaskResultType is expected to be a subclass of \ref MHRWStatsResultBaseSimple.
+   * This will automatically be the case if you're using our \ref CDataBase type, and if
+   * you have defined your custom \a MHRWStatsResults type (see \ref
+   * pageInterfaceMHRandomWalkCDataType) using \a CDataBase::MHRWStatsResultsBaseType as
+   * base class.
+   */
+  template<typename TaskResultType>
+  AggregatedHistogramType aggregateResultHistograms(const std::vector<TaskResultType*> & task_result_list)
+  {
+    return AggregatedHistogramType::aggregate(
+        histogram_params,
+        task_result_list,
+        [](const TaskResultType * task_result)
+        -> const typename AggregatedHistogramType::HistogramType &
+        {
+          // .histogram is already the "scaled histogram".  This works both
+          // for the "simple" version as well as for the
+          // "binning-analysis-error-bar" version.
+          return task_result->stats_results.histogram;
+        });
+  }
+
+
 };
 // define static members:
 template<typename ValueCalculator_, bool UseBinningAnalysis_,
          typename MHWalkerParams_, typename IterCountIntType_,
 	 typename CountRealType_, typename HistCountIntType_>
-constexpr bool CDataBase<ValueCalculator_,UseBinningAnalysis_,MHWalkerParams_,IterCountIntType_,CountRealType_,HistCountIntType_>::UseBinningAnalysis;
+constexpr bool CDataBase<ValueCalculator_,UseBinningAnalysis_,MHWalkerParams_,
+                         IterCountIntType_,CountRealType_,HistCountIntType_>::UseBinningAnalysis;
+
+
+
+
+
+
+// ---------------------------------------------------------
+
+
+
+
+
+
+
+
+
+
+
+
+namespace tomo_internal {
+
+template<typename StatsResultsType, typename = void>
+struct maybe_show_error_summary_helper {
+  static inline void print(std::ostream & , const StatsResultsType & ) { }
+};
+template<typename StatsResultsType>
+struct maybe_show_error_summary_helper<
+  StatsResultsType,
+  typename std::enable_if<
+    !std::is_same<
+      decltype(((StatsResultsType*)NULL)->errorBarConvergenceSummary()),
+      void
+    >::value
+  >::type
+  >
+{
+  static inline void print(std::ostream & stream, const StatsResultsType & stats_results)
+  {
+    stream << "    error bars: " << stats_results.errorBarConvergenceSummary() << "\n";
+  }
+};
+template<typename StatsResultsType>
+inline void maybe_show_error_summary(std::ostream & stream, const StatsResultsType & stats_results)
+{
+  maybe_show_error_summary_helper<StatsResultsType>::print(stream, stats_results) ;
+}
+
+
+template<typename TaskResultType>
+inline void print_hist_short_bar_summary(std::ostream & stream, int dig_w, std::size_t j,
+                                         const TaskResultType * task_result, int columns)
+{
+  const auto acceptance_ratio = task_result->acceptance_ratio;
+  histogramShortBarWithInfo(stream,
+                            streamstr("#" << std::setw(dig_w) << j << ": "),
+                            task_result->stats_results.histogram,
+                            Tomographer::Tools::fmts(" [accept ratio = %.2f]", acceptance_ratio),
+                            false, columns);
+  if (acceptance_ratio > MHRWAcceptanceRatioRecommendedMax ||
+      acceptance_ratio < MHRWAcceptanceRatioRecommendedMin) {
+    stream << "    *** Accept ratio out of recommended bounds ["
+           << MHRWAcceptanceRatioRecommendedMin << ", " << MHRWAcceptanceRatioRecommendedMax
+           << "] ! Adapt step size ***\n";
+  }
+  maybe_show_error_summary(stream, task_result->stats_results);
+}
+
+} // namespace tomo_internal
+
+
+
+
+
+
+
+/** \brief Produce a final, human-readable report of the whole procedure
+ *
+ * The report is written in the C++ stream \a str.  You should provide the shared
+ * constant data structure \a cdata used for the random walk, so that the random walk
+ * parameters can be displayed.
+ *
+ * You may specify the maximum width of your terminal in \a max_width, in which case we
+ * try very hard not make lines longer than that, and to fill all available horizontal
+ * space.
+ *
+ * If \a print_histogram is \c true, then the histogram is also printed in a human
+ * readable form, using \ref HistogramWithErrorBars::prettyPrint().
+ */
+template<typename CDataBaseType, typename TaskResultType, typename AggregatedHistogramType>
+inline void printFinalReport(std::ostream & stream, const CDataBaseType & cdata,
+                             const std::vector<TaskResultType*> & task_results,
+                             const AggregatedHistogramType & aggregated_histogram,
+                             int max_width = 0, bool print_histogram = true)
+{
+  Tools::ConsoleFormatterHelper h(max_width); // possibly detect terminal width etc.
+
+  // produce report on runs
+  stream << "\n"
+         << h.centerLine("Final Report of Runs")
+         << h.hrule()
+    ;
+  cdata.printBasicCDataMHRWInfo(stream);
+
+  int dig_w = (int)std::ceil(std::log10((double)task_results.size()));
+  for (std::size_t j = 0; j < task_results.size(); ++j) {
+    tomo_internal::print_hist_short_bar_summary(stream, dig_w, j, task_results[j], h.columns());
+  }
+  stream << h.hrule()
+         << "\n";
+
+  if (print_histogram) {
+    // and the final histogram
+    stream << h.centerLine("Final Histogram")
+           << h.hrule();
+    histogramPrettyPrint(stream, aggregated_histogram.final_histogram, h.columns());
+    stream << h.hrule()
+           << "\n";
+  }
+}
+
+
+
 
 
 

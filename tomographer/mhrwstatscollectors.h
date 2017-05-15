@@ -588,7 +588,7 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
 
   //! Simple default constructor (e.g. to use as std::vector<Result>).
   explicit ValueHistogramWithBinningMHRWStatsCollectorResult()
-    : hist(), error_levels(), converged_status()
+    : histogram(), error_levels(), converged_status()
   {
   }
 
@@ -599,17 +599,17 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
 
   //! Simple constructor with direct initialization of fields
   template<typename EigenDerived1, typename EigenDerived2>
-  ValueHistogramWithBinningMHRWStatsCollectorResult(const HistogramType & hist_,
+  ValueHistogramWithBinningMHRWStatsCollectorResult(const HistogramType & histogram_,
                                                     const Eigen::DenseBase<EigenDerived1> & error_levels_,
                                                     const Eigen::DenseBase<EigenDerived2> & converged_status_)
-    : hist(hist_), error_levels(error_levels_), converged_status(converged_status_)
+    : histogram(histogram_), error_levels(error_levels_), converged_status(converged_status_)
   {
   }
 
   //! Constructor which initializes the fields from the histogram and binning analysis type.
   template<typename BinningAnalysisType>
   ValueHistogramWithBinningMHRWStatsCollectorResult(HistogramParams p, const BinningAnalysisType & b)
-    : hist(p),
+    : histogram(p),
       error_levels(b.numTrackValues(), b.numLevels()+1),
       converged_status(Eigen::ArrayXi::Constant(b.numTrackValues(), BinningAnalysisType::UNKNOWN_CONVERGENCE))
   {
@@ -625,7 +625,7 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
    * HistogramWithErrorBars::normalized() to obtain a proper normalized histogram, i.e.
    * to which one can fit a proper, normalized probability density.
    */
-  HistogramType hist;
+  HistogramType histogram;
 
   /** \brief Detailed error bars for all binning levels
    */
@@ -643,27 +643,27 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
   }
 
   
-  //! Dump values, error bars and convergence status in debug-human-readable form into ostream
-  inline void dumpConvergenceAnalysis(std::ostream & str) const
+  //! Dump values, error bars and convergence status in verbose, debug-human-readable form into ostream
+  inline void dumpConvergenceAnalysis(std::ostream & stream) const
   {
     for (int k = 0; k < converged_status.size(); ++k) {
-      str << "\tval[" << std::setw(3) << k << "] = "
-          << std::setw(12) << hist.bins(k)
-          << " +- " << std::setw(12) << hist.delta(k);
+      stream << "\tval[" << std::setw(3) << k << "] = "
+             << std::setw(12) << histogram.bins(k)
+             << " +- " << std::setw(12) << histogram.delta(k);
       if (converged_status(k) == BINNING_CONVERGED) {
-	  str << "  [CONVERGED]";
+	  stream << "  [CONVERGED]";
       } else if (converged_status(k) == BINNING_NOT_CONVERGED) {
-        str << "  [NOT CONVERGED]";
+        stream << "  [NOT CONVERGED]";
       } else if (converged_status(k) == BINNING_UNKNOWN_CONVERGENCE) {
-        str << "  [UNKNOWN]";
+        stream << "  [UNKNOWN]";
       } else {
-        str << "  [UNKNOWN CONVERGENCE STATUS: " << converged_status(k) << "]";
+        stream << "  [INVALID CONVERGENCE STATUS: " << converged_status(k) << "]";
       }
-      str << "\n";
+      stream << "\n";
     }
   }
 
-  //! Dump values, error bars and convergence status in debug-human-readable form as string
+  //! Dump values, error bars and convergence status in verbose, debug-human-readable form as string
   inline std::string dumpConvergenceAnalysis() const
   {
     std::stringstream ss;
@@ -893,12 +893,12 @@ public:
     // value interval.
     //
     const BaseHistogramType & h = value_histogram.histogram();
-    result.hist.params = h.params;
+    result.histogram.params = h.params;
     CountRealAvgType numsamples = h.bins.sum() + h.off_chart;
-    result.hist.bins = h.bins.template cast<CountRealAvgType>() / numsamples;
-    result.error_levels = binning_analysis.calcErrorLevels(result.hist.bins);
-    result.hist.delta = result.error_levels.col(binning_analysis.numLevels()).template cast<CountRealAvgType>();
-    result.hist.off_chart = h.off_chart / numsamples;
+    result.histogram.bins = h.bins.template cast<CountRealAvgType>() / numsamples;
+    result.error_levels = binning_analysis.calcErrorLevels(result.histogram.bins);
+    result.histogram.delta = result.error_levels.col(binning_analysis.numLevels()).template cast<CountRealAvgType>();
+    result.histogram.off_chart = h.off_chart / numsamples;
 
     result.converged_status = binning_analysis.determineErrorConvergence(result.error_levels);
 
@@ -909,7 +909,7 @@ public:
 	    << result.error_levels << "\n"
 	    << "\t-> convergence analysis: \n";
 	result.dumpConvergenceAnalysis(str);
-	str << "\t... and just for you, here is the final histogram:\n" << result.hist.prettyPrint() << "\n";
+	str << "\t... and just for you, here is the final histogram:\n" << result.histogram.prettyPrint() << "\n";
       });
   }
 

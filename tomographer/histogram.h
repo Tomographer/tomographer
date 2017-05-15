@@ -458,12 +458,46 @@ public:
    * This function divides the bins and the off chart counts by the appropriate
    * normalization() and stores these values into a new returned histogram.
    *
+   * See also \ref normalizedCounts().
    */
   template<typename NewCountType = Scalar>
   inline Histogram<Scalar, NewCountType> normalized() const
   {
     Histogram<Scalar, NewCountType> h(params);
     const NewCountType f = normalization<NewCountType>();
+    h.load(bins.template cast<NewCountType>() / f, NewCountType(off_chart) / f);
+    return h;
+  }
+
+
+  /** \brief Return the total number of histogram counts (no normalization)
+   *
+   * This returns the sum of all bin contents, plus the off_chart counts.  This does not
+   * account for the normalization and completely ignores the x-axis scaling.
+   *
+   * This is literally just <code>bins.sum() + off_chart</code>.
+   */
+  inline CountType totalCounts() const
+  {
+    return bins.sum() + off_chart;
+  }
+
+
+  /** \brief Get a version of this histogram, normalized by total counts
+   *
+   * This function divides the bins and the off chart counts by the total number of counts
+   * (including off-chart). This function ignores the normalization() and thus any scale
+   * given by the x-axis.  Use this normalization if you would like each individual bin to
+   * represent the average number of points which fall into that bin.
+   *
+   * If on the other hand you would like each bin to represent the probability density of
+   * falling into that bin, you should use normalized() instead.
+   */
+  template<typename NewCountType = Scalar>
+  inline Histogram<Scalar, NewCountType> normalizedCounts() const
+  {
+    Histogram<Scalar, NewCountType> h(params);
+    const NewCountType f = totalCounts();
     h.load(bins.template cast<NewCountType>() / f, NewCountType(off_chart) / f);
     return h;
   }
@@ -596,12 +630,34 @@ public:
    * This function divides the bins, the error bars and the off chart counts by the
    * appropriate normalization() and stores these values into a new returned histogram.
    *
+   * See also \ref normalizedCounts().
    */
   template<typename NewCountType = Scalar>
   inline HistogramWithErrorBars<Scalar, NewCountType> normalized() const
   {
     HistogramWithErrorBars<Scalar, NewCountType> h(params);
     const NewCountType f = Base_::template normalization<NewCountType>();
+    h.load(bins.template cast<NewCountType>() / f,
+           delta.template cast<NewCountType>() / f,
+           NewCountType(off_chart) / f);
+    return h;
+  }
+
+  /** \brief Get a version of this histogram, normalized by total counts
+   *
+   * This function divides the bins and the off chart counts by the total number of counts
+   * (including off-chart). This function ignores the normalization() and thus any scale
+   * given by the x-axis.  Use this normalization if you would like each individual bin to
+   * represent the average number of points which fall into that bin.
+   *
+   * If on the other hand you would like each bin to represent the probability density of
+   * falling into that bin, you should use normalized() instead.
+   */
+  template<typename NewCountType = Scalar>
+  inline HistogramWithErrorBars<Scalar, NewCountType> normalizedCounts() const
+  {
+    HistogramWithErrorBars<Scalar, NewCountType> h(params);
+    const NewCountType f = Base_::totalCounts();
     h.load(bins.template cast<NewCountType>() / f,
            delta.template cast<NewCountType>() / f,
            NewCountType(off_chart) / f);
@@ -876,6 +932,344 @@ public:
   }
 
 };
+
+
+
+
+/** \brief Histogram aggregator, if each histogram doesn't have error bars
+ *
+ * This class takes care of combining histograms together into a final, averaged histogram
+ * with error bars, using a \ref AveragedHistogram.  The error bars are simply determined
+ * from the standard deviation of the different histograms.
+ *
+ * \warning The error bars are only meaningful if you're averaging enough different
+ *          histograms (so that the statistical standard deviation is meaningful)
+ *
+ * The only advantage of this class over using a \ref AveragedHistogram directly is that
+ * you can aggregate a list of histograms in one call, see \ref aggregate().  It also
+ * provides a very similar API to \ref AggregatedHistogramWithErrorBars.
+ *
+ * If you're using the \ref Tomographer::MHRWTasks::ValueHistogramTools tools, note that
+ * you can directly get the right \a HistogramAggregator type by calling the method \ref
+ * CDataBase::aggregateResultHistograms() using your \a CDataBase deriving from \ref
+ * CDataBase.
+ *
+ * Use the static \a aggregate() function to construct an object instance, aggregating
+ * histograms from a list.
+ *
+ * \since Added in %Tomographer 5.0.
+ */
+template<typename HistogramType_, typename CountRealType_>
+TOMOGRAPHER_EXPORT
+class AggregatedHistogramSimple
+  : public virtual Tools::NeedOwnOperatorNew<
+      AveragedHistogram<Histogram<typename HistogramType_::Scalar,
+                                  CountRealType_>,
+                        CountRealType_>
+    >::ProviderType
+{
+public:
+  /** \brief The histogram type corresponding to the result of a task
+   *
+   * \warning This histogram type must not provide error bars.
+   */
+  typedef HistogramType_ HistogramType;
+
+  TOMO_STATIC_ASSERT_EXPR( ! HistogramType::HasErrorBars ) ;
+
+  //! The parameters type used to describe our histogram range and number of bins
+  typedef typename HistogramType::Params HistogramParams;
+
+  //! The scalar type of the histogram (i.e., x-axis labels)
+  typedef typename HistogramType::Scalar HistogramScalarType;
+
+  //! Type used for averaged histogram counts (e.g. \a double)
+  typedef CountRealType_ CountRealType;
+
+  /** \brief The type of the histogram resulting from a single task, but scaled so that
+   *         each bin value corresponds to the fraction of data points in bin
+   */
+  typedef Histogram<HistogramScalarType, CountRealType> ScaledHistogramType;
+
+  /** \brief The type of the final resulting, averaged histogram
+   *
+   * The scale of the histogram is chosen such that each bin value corresponds to the
+   * fraction of data points observed in this bin.  To normalize the histogram to a unit
+   * probability density, use \ref Histogram::normalized().  This scaling is
+   * the same as that used by the histogram produced using a binning analysis, see \ref
+   * ValueHistogramWithBinningMHRWStatsCollectorResult.
+   */
+  typedef AveragedHistogram<ScaledHistogramType, CountRealType> FinalHistogramType;
+
+
+  
+  AggregatedHistogramSimple(AggregatedHistogramSimple && x)
+    : final_histogram(std::move(x.final_histogram))
+  {
+  }
+
+  AggregatedHistogramSimple(FinalHistogramType && x)
+    : final_histogram(std::move(x))
+  {
+  }
+
+  //! The final histogram, with error bars
+  FinalHistogramType final_histogram;
+
+
+  /** \brief Aggregate a list of histograms
+   *
+   * Construct a AggregatedHistogramWithErrorBars by aggregating a list of histograms
+   * given as \a list.  The list might contain more complicated objects from which the
+   * relevant histogram is to be extracted, the callable \a extract_histogram_fn is called
+   * to extract the histogram.  For instance, \a list may be a list of run task results
+   * which contain a histogram (among other info).
+   *
+   * \param params The histogram parameters to initialize the final histogram with.
+   *
+   * \warning No check is made that the \a params matches the parameters of each
+   *          aggregated histogram.
+   *
+   * \param list The list of objects from which to extract a histogram. This should be
+   *        some container type; the only requirement is that one should be able to
+   *        iterate over it with a range-for loop with a "const auto&" item.
+   *
+   * \param extract_histogram_fn A callable which is called for each item of the list; it
+   *        is provided a single argument, the list item, and is expected to return the
+   *        histogram which will be aggregated with the others.
+   *
+   * See also \ref
+   * Tomographer::MHRWTasks::ValueHistogramTools::CDataBase::aggregateResultHistograms()
+   */
+  template<typename ContainerType, typename ExtractHistogramFn>
+  static inline AggregatedHistogramSimple aggregate(const HistogramParams & params,
+                                                    const ContainerType & list,
+                                                    ExtractHistogramFn extract_histogram_fn)
+  {
+    FinalHistogramType h(params); // initializes with zeros
+    
+    // iterate over all task histograms, add them to the averaged histogram
+    for (const auto item : list) {
+      h.addHistogram(extract_histogram_fn(item));
+    }
+    
+    h.finalize();
+
+    return AggregatedHistogramSimple(std::move(h));
+  }
+
+
+
+  /** \brief Produce a comma-separated-value (CSV) representation of the final aggregated
+   *         histogram data
+   *
+   * The histogram data is written in CSV format on the C++ output stream \a stream.  You
+   * may specify the cell separator \a sep (by default a TAB char), the line separator (by
+   * default a simple newline), and the precision used when exporting the values.  Numbers
+   * are written in scientific format (e.g. <code>1.205115485e-01</code>).
+   *
+   * Three columns are outputted.  Titles are outputted on the first line ("Value",
+   * "Counts" and "Error").  The first column holds the values, i.e., the x-axis of the
+   * histogram; the second column holds the counts (normalized to the number of samples);
+   * the third column the error bar on the counts.
+   */
+  inline void printHistogramCsv(std::ostream & stream,
+                                const std::string sep = "\t",
+                                const std::string linesep = "\n",
+                                const int precision = 10)
+  {
+    stream << "Value" << sep << "Counts" << sep << "Error" << linesep
+	   << std::scientific << std::setprecision(precision);
+    for (int kk = 0; kk < final_histogram.bins.size(); ++kk) {
+      stream << final_histogram.params.binLowerValue(kk) << sep
+	     << final_histogram.bins(kk) << sep
+	     << final_histogram.delta(kk) << linesep;
+    }
+  }
+
+
+}; // class AggregatedHistogramSimple
+
+
+
+/** \brief Histogram aggregator, if each individual histogram already has error bars
+ *
+ * This class takes care of combining histograms together into a final, averaged histogram
+ * with error bars.
+ *
+ * Two histograms are provided.  The \a final_histogram is the properly averaged histogram
+ * built by averaging the histograms and combining the error bars together (see \ref
+ * AveragedHistogram).  <b>Use this one.</b>
+ *
+ * The histogram \a simple_final_histogram, is a histogram built by averaging the
+ * histograms, but ignoring their error bars and simply calculating the error bars with
+ * the standard deviation of the different histograms as if each individual histogram
+ * didn't have error bars.  If you have enough different histograms, these error bars may
+ * also be meaningful, and can be used to compare to the error bars given by each
+ * histogram. This can be useful, for instance, to test a binning analysis procedure to
+ * make sure that the error bars from that procedure are of same order of magnitude as
+ * "naive" error bars from individual runs.
+ *
+ * If you're using the \ref Tomographer::MHRWTasks::ValueHistogramTools tools, note that
+ * you can directly get the right \a HistogramAggregator type by calling the method \a
+ * "CDataBase::aggregateResultHistograms())" using your \a CDataBase deriving from \ref
+ * CDataBase.
+ *
+ * Use the static \a aggregate() function to construct an object instance, aggregating
+ * histograms from a list.
+ */
+template<typename HistogramType_, typename CountRealType_>
+TOMOGRAPHER_EXPORT
+class AggregatedHistogramWithErrorBars
+  : public virtual Tools::NeedOwnOperatorNew<
+      AveragedHistogram<HistogramType_, CountRealType_> ,
+      AveragedHistogram<Histogram<typename HistogramType_::Scalar,
+                                  typename HistogramType_::CountType>,
+                        CountRealType_>
+    >::ProviderType
+{
+public:
+  /** \brief The histogram type corresponding to the result of a task
+   *
+   * \warning This histogram type must provide error bars.
+   */
+  typedef HistogramType_ HistogramType;
+
+  TOMO_STATIC_ASSERT_EXPR( HistogramType::HasErrorBars ) ;
+
+  //! The parameters type used to describe our histogram range and number of bins
+  typedef typename HistogramType::Params HistogramParams;
+
+  //! The scalar type of the histogram (i.e., x-axis labels)
+  typedef typename HistogramType::Scalar HistogramScalarType;
+
+  //! Type used for averaged histogram counts (e.g. \a double)
+  typedef CountRealType_ CountRealType;
+
+  /** \brief The type of the final resulting, averaged histogram
+   *
+   * The scale of the histogram is chosen such that each bin value corresponds to the
+   * fraction of data points observed in this bin.  To normalize the histogram to a unit
+   * probability density, use \ref Histogram::normalized().  This scaling is
+   * the same as that used by the histogram produced using a binning analysis, see \ref
+   * ValueHistogramWithBinningMHRWStatsCollectorResult.
+   */
+  typedef AveragedHistogram<HistogramType, CountRealType> FinalHistogramType;
+
+  /** \brief The "simple" histogram, as if without binning analysis
+   *
+   */
+  typedef Histogram<typename HistogramType::Scalar, typename HistogramType::CountType> SimpleHistogramType;
+  /** \brief Properly averaged "simple" histogram, with naive statistical standard
+   *         deviation error bars from the several task runs
+   */
+  typedef AveragedHistogram<SimpleHistogramType, CountRealType> SimpleFinalHistogramType;
+  
+
+  
+  AggregatedHistogramWithErrorBars(AggregatedHistogramWithErrorBars && x)
+    : final_histogram(std::move(x.final_histogram)),
+      simple_final_histogram(std::move(x.simple_final_histogram))
+  {
+  }
+
+  AggregatedHistogramWithErrorBars(FinalHistogramType && x, SimpleFinalHistogramType && y)
+    : final_histogram(std::move(x)),
+      simple_final_histogram(std::move(y))
+  {
+  }
+
+  //! The final histogram, properly combining the error bars of each histogram
+  FinalHistogramType final_histogram;
+
+  //! The "naive" final histogram, ignoring the error bars of each histogram (see class doc)
+  SimpleFinalHistogramType simple_final_histogram;
+
+
+  /** \brief Aggregate a list of histograms
+   *
+   * Construct a AggregatedHistogramWithErrorBars by aggregating a list of histograms
+   * given as \a list.  The list might contain more complicated objects from which the
+   * relevant histogram is to be extracted, the callable \a extract_histogram_fn is called
+   * to extract the histogram.  For instance, \a list may be a list of run task results
+   * which contain a histogram (among other info).
+   *
+   * \param params The histogram parameters to initialize the final histogram with.
+   *
+   * \warning No check is made that the \a params matches the parameters of each
+   *          aggregated histogram.
+   *
+   * \param list The list of objects from which to extract a histogram. This should be
+   *        some container type; the only requirement is that one should be able to
+   *        iterate over it with a range-for loop with a "const auto&" item.
+   *
+   * \param extract_histogram_fn A callable which is called for each item of the list; it
+   *        is provided a single argument, the list item, and is expected to return the
+   *        histogram which will be aggregated with the others.
+   *
+   * See also \ref
+   * Tomographer::MHRWTasks::ValueHistogramTools::CDataBase::aggregateResultHistograms()
+   */
+  template<typename ContainerType, typename ExtractHistogramFn>
+  static inline AggregatedHistogramWithErrorBars aggregate(const HistogramParams & params,
+                                                           const ContainerType & list,
+                                                           ExtractHistogramFn extract_histogram_fn)
+  {
+    // initializes with zeros
+    FinalHistogramType hist(params);
+    SimpleFinalHistogramType histsimple(params);
+    
+    // iterate over all task histograms, add them to the averaged histogram
+    for (const auto& item : list) {
+      const auto& h = extract_histogram_fn(item);
+      // hist's type is based on individual histograms WITH error bars, so this will take
+      // into account h's error bars.
+      hist.addHistogram(h);
+      // histsimple's type is based on non-error bar individual histograms, so this will
+      // ignore h's error bars.
+      histsimple.addHistogram(h);
+    }
+    
+    hist.finalize();
+    histsimple.finalize();
+
+    return AggregatedHistogramWithErrorBars(std::move(hist), std::move(histsimple));
+  }
+
+
+
+  /** \brief Produce a comma-separated-value (CSV) representation of the final aggregated
+   *         histogram data
+   *
+   * The histogram data is written in CSV format on the C++ output stream \a stream.  You
+   * may specify the cell separator \a sep (by default a TAB char), the line separator (by
+   * default a simple newline), and the precision used when exporting the values.  Numbers
+   * are written in scientific format (e.g. <code>1.205115485e-01</code>).
+   *
+   * The output consists of four columns.  Titles are printed on the first line ("Value",
+   * "Counts", "Error", "SimpleError").  The first column holds the values, i.e., the
+   * x-axis of the histogram; the second column holds the counts (normalized to the number
+   * of samples); the third column holds the error bar on the counts (reliable error bar
+   * from binning analysis), and the fourth column holds the naive error bar obtained when
+   * we ignore the binning analysis.
+   */
+  inline void printHistogramCsv(std::ostream & stream,
+                                const std::string sep = "\t",
+                                const std::string linesep = "\n",
+                                const int precision = 10)
+  {
+    stream << "Value" << sep << "Counts" << sep << "Error" << sep << "SimpleError" << linesep
+           << std::scientific << std::setprecision(precision);
+    for (int kk = 0; kk < final_histogram.bins.size(); ++kk) {
+      stream << final_histogram.params.binLowerValue(kk) << sep
+	     << final_histogram.bins(kk) << sep
+	     << final_histogram.delta(kk) << sep
+             << simple_final_histogram.delta(kk) << linesep;
+    }
+  }
+
+
+}; // class AggregatedHistogramWithErrorBars
 
 
 

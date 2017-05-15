@@ -38,35 +38,38 @@
 #include <tomographer/mhrwtasks.h>
 #include <tomographer/mhrw_valuehist_tools.h>
 #include <tomographer/multiprocthreads.h>
-#include <tomographer/tools/signal_status_report.h>
 
 
 
 //
-// Data types for our quantum objects.  For the sake of the example, we just leave the
-// size to be dynamic, that is, fixed at run time and not at compile time.
+// Data types for our quantum objects.  For the sake of the example, we just
+// leave the size to be dynamic, that is, fixed at run time and not at compile
+// time.
 //
 typedef Tomographer::DenseDM::DMTypes<Eigen::Dynamic, double> DMTypes;
 
 
 //
-// The class which will store our tomography data. Just define this as "DenseLLH" as a
-// shorthand.
+// The class which will store our tomography data. Just define this as
+// "DenseLLH" as a shorthand.
 //
 typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> DenseLLH;
 
 
 //
-// The type of value calculator we would like to use.  Here, we settle for the expectation
-// value of an observable, as we are interested in the square fidelity to the pure Bell
-// Phi+ state (=expectation value of the observable |Phi+><Phi+|).
+// The type of value calculator we would like to use.  Here, we settle for the
+// expectation value of an observable, as we are interested in the square
+// fidelity to the pure Bell Phi+ state (=expectation value of the observable
+// |Phi+><Phi+|).
 //
-typedef Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes> ValueCalculator;
+typedef Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>
+  ValueCalculator;
 
 //
-// We need to define a class which adds the capacity of creating the "master" random walk
-// object to the engine in Tomographer::MHRWTasks::ValueHistogramTasks, which take care of
-// running the random walks etc. as needed.
+// We need to define a class which adds the capacity of creating the "master"
+// random walk object to the engine in
+// Tomographer::MHRWTasks::ValueHistogramTasks, which take care of running the
+// random walks etc. as needed.
 //
 struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   ValueCalculator, // our value calculator
@@ -79,38 +82,49 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
 	   int binning_num_levels, // number of binning levels in the binning analysis
 	   MHRWParamsType mhrw_params, // parameters of the random walk
 	   int base_seed) // a random seed to initialize the random number generator
-    : CDataBase<ValueCalculator,true>(valcalc, hist_params, binning_num_levels, mhrw_params, base_seed),
+    : CDataBase<ValueCalculator,true>(valcalc, hist_params, binning_num_levels,
+                                        mhrw_params, base_seed),
       llh(llh_)
   {
   }
 
   const DenseLLH llh;
 
-  // the result of a task run -- just store the result of the first stats collector (the
-  // 'val_stats_collector').
-  struct MHRWStatsResultsType
+  // The result of a task run -- pass on to the default StatsResults type
+  // provided by ValueHistogramTools.  Because we have several stats collectors
+  // set, we need to pick out the result of our
+  // "value-histogram-stats-collector", which is the first one in the
+  // multiple-stats-collector object which we have create in
+  // setupRandomWalkAndRun().  We thus pick out the first result in the tuple of
+  // all stats collectors results, i.e. the one at index 0 (using std::get).
+  struct MHRWStatsResultsType : public MHRWStatsResultsBaseType
   {
-    ValueStatsCollectorResultType value_result;
-
-    MHRWStatsResultsType(ValueStatsCollectorResultType && r)
-      : value_result(std::move(r))
-    {
-    }
-
     template<typename... Types>
     MHRWStatsResultsType(std::tuple<ValueStatsCollectorResultType, Types...> && r)
-      : value_result(std::move(std::get<0>(r)))
+      : MHRWStatsResultsBaseType(std::move(std::get<0>(r)))
     {
     }
   };
 
+  //
+  // This function is called automatically by the task manager/dispatcher via
+  // MHRWTasks.  It should set up the random walk as required (at a minimum,
+  // create a MHWalker instance and pass on the default value stats collector
+  // from Tomographer::MHRWTasks::ValueHistogramTools), and run it.
+  //
+  // We should not forget to call run(), to actually run the random walk!
+  //
+  // Here, our example is slightly more involved as in "minimal_tomorun". In
+  // addition, we'll include more stats collectors and set up some random walk
+  // controllers.
+  //
   template<typename Rng, typename LoggerType, typename ExecFn>
-  inline void setupMHRWTaskAndRun(Rng & rng, LoggerType & logger, ExecFn run) const
+  inline void setupRandomWalkAndRun(Rng & rng, LoggerType & logger, ExecFn run) const
   {
     auto val_stats_collector = createValueStatsCollector(logger);
-   Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<> movavg_accept_stats;
-   auto stats_collectors =
-     Tomographer::mkMultipleMHRWStatsCollectors(val_stats_collector, movavg_accept_stats);
+    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<> movavg_accept_stats;
+    auto stats_collectors =
+      Tomographer::mkMultipleMHRWStatsCollectors(val_stats_collector, movavg_accept_stats);
 
     auto therm_step_controller =
       Tomographer::mkMHRWStepSizeController<MHRWParamsType>(movavg_accept_stats, logger);
@@ -134,7 +148,7 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
 
 //
 // The root logger which takes care of handling the log messages.  Here, we log to the
-// standard output (recall that stdout is seen as a "file").
+// standard output (recall that stdout/stderr are seen as a "file").
 //
 // The level of the logger can be changed to one of Tomographer::Logger::LONGDEBUG,
 // Tomographer::Logger::DEBUG, Tomographer::Logger::INFO, Tomographer::Logger::WARNING or
@@ -257,40 +271,61 @@ int main()
 
 
   //
-  // Data is ready, prepare & launch the random walks.  Use C++ Threads parallelization.
+  // Data is ready, prepare & launch the random walks.  Use C++ Threads
+  // parallelization.
   //
 
-  typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>  OurMHRandomWalkTask;
+
+  // The task type, for the MultiProc interface
+  typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>
+    OurMHRandomWalkTask;
 
   // parameters of the random walk
   const OurCData::MHRWParamsType mhrw_params(
-      0.1,//0.02, // step size -- will be automatically adjusted during thermalization sweeps
-      10,//50, // sweep size -- will be automaticall adjusted during thermalization sweeps
-      500, // # of thermalization sweeps
-      32768 // # of live sweeps in which samples are collected
+      // step size -- this will be automatically adjusted during
+      // thermalization sweeps. Here we only need to provide a rough guess
+      // as a starting point:
+      0.1,
+      // sweep size -- will be automatically adjusted during thermalization
+      // sweeps.  The only thing that matters here is that we choose it
+      // such that sweep_size*step_size ~ 1.  As the controller modifies
+      // the step size, it will adapt the sweep size to keep the product
+      // sweep_size*step_size constant.
+      10,
+      // Number of thermalization sweeps -- might take longer if the step size
+      // needs to be adapted a lot before finding the right acceptance ratio
+      500,
+      // Number of live sweeps in which samples are collected -- might take
+      // longer if the controller sees that the error bars haven't converged yet
+      // and lets the random walk run for longer (so you shouldn't get surprised
+      // if the random walk goes past 100% done)
+      32768
       );
 
   // seed for random number generator -- just use the current time
-  int base_seed = (int)std::chrono::system_clock::now().time_since_epoch().count();
+  std::mt19937::result_type base_seed =
+    std::chrono::system_clock::now().time_since_epoch().count();
 
   // number of levels for the binning analysis
   const int binning_num_levels = 8;
 
   // instantiate the class which stores the shared data.
-  OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params, base_seed);
+  OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels,
+                    mhrw_params, base_seed);
 
-  // repeat the whole random walk this number of times.  These random walks will run in
-  // parallel depending on the number of CPUs available.
-  const int num_repeats = 8;
+  // repeat the whole random walk this number of times.  These random walks will
+  // run in parallel depending on the number of CPUs available.
+  const int num_repeats = 4;
 
   // create the task manager/dispatcher, using the CxxThreads implementation
-  auto tasks = Tomographer::MultiProc::CxxThreads::mkTaskDispatcher<OurMHRandomWalkTask>(
+  auto tasks =
+    Tomographer::MultiProc::CxxThreads::mkTaskDispatcher<OurMHRandomWalkTask>(
         &taskcdat, // constant data
         logger.parentLogger(), // the main logger object
         num_repeats // num_runs
         );
 
-  // 
+  // get status reports every 500 milliseconds printed out on std::cout
   tasks.setStatusReportHandler([&](decltype(tasks)::FullStatusReportType report) {
       std::cout << "--- intermediate status report ---\n"
                 << report.getHumanReport() << "\n" ;
@@ -314,35 +349,33 @@ int main()
   // delta-time, formatted in hours, minutes, seconds and fraction of seconds
   std::string elapsed_s = Tomographer::Tools::fmtDuration(time_end - time_start);
 
-  // //
-  // // The 'results' object contains all the interesting results.  It is a
-  // // ResultsCollectorWithBinningAnalysis object located in the namespace
-  // // Tomographer::MHRWTasks::ValueHistogramTasks (check out the API documentation).
-  // //
-  // // The most interesting methods are probably finalHistogram() and
-  // // collectedRunTaskResults().
-  // //
-  // auto histogram = results.finalHistogram();
 
-  // // histogram has type Tomographer::AveragedHistogram, you can use it like any other
-  // // histogram object with error bars (see "Histogram Type Interface").  E.g.:
-  // logger.info([&](std::ostream & stream) {
-  //     stream << "Histogram has " << histogram.numBins() << " bins, range is ["
-  //            << histogram.params.min << ".." << histogram.params.max  << "]\n";
-  //     for (unsigned int k = 0; k < histogram.numBins(); ++k) {
-  //       stream << "\t[" << std::setw(5) << histogram.binLowerValue(k)
-  //              << "," << std::setw(5) << histogram.binUpperValue(k) << "]  -->  "
-  //              << histogram.count(k) << " +/- " << histogram.errorBar(k) << "\n";
-  //     }
-  //   });
+  const auto & task_results = tasks.collectedTaskResults();
 
-  // logger.info([&](std::ostream & stream) {
-  //     // results.printFinalReport() will generate a default tomorun-like report with the
-  //     // parameters of the random walk, an overview of each histogram of each task repeat,
-  //     // short info on the convergence of the binning error bars, and the final histogram
-  //     // itself along with error bars
-  //     results.printFinalReport(stream, taskcdat);
-  //   });
+  auto aggregated_histogram = taskcdat.aggregateResultHistograms(task_results) ;
+
+  const auto & histogram = aggregated_histogram.final_histogram;
+
+  // histogram has type Tomographer::AveragedHistogram, you can use it like any other
+  // Histogram or HistogramWithErrorBars.  You can pretty-print it with:
+  logger.info([&](std::ostream & stream) {
+      stream << "Nice little histogram after all that work: \n"
+             << histogram.prettyPrint()
+             << "\n";
+      });
+
+  logger.info([&](std::ostream & stream) {
+      // Tomographer::MHRWTasks::ValueHistogramTools::printFinalReport() will generate a
+      // default tomorun-like report with the parameters of the random walk, an overview
+      // of each histogram of each task repeat, short info on the convergence of the
+      // binning error bars, and the final histogram itself along with error bars
+      Tomographer::MHRWTasks::ValueHistogramTools::printFinalReport(
+          stream, // where to output
+          taskcdat, // the cdata
+          task_results, // the results
+          aggregated_histogram // aggregated
+          );
+    });
 
 
   // success.

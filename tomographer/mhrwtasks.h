@@ -362,10 +362,10 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
    */
   template<typename MHRWStatsResultsTypeInit,
            typename MHRWParamsTypeInit>
-  MHRandomWalkTaskResult(MHRWStatsResultsTypeInit && stats_collector_result_,
+  MHRandomWalkTaskResult(MHRWStatsResultsTypeInit && stats_results_,
                          MHRWParamsTypeInit && mhrw_params_,
                          double acceptance_ratio_)
-    : stats_results(std::forward<MHRWStatsResultsTypeInit>(stats_collector_result_)),
+    : stats_results(std::forward<MHRWStatsResultsTypeInit>(stats_results_)),
       mhrw_params(std::forward<MHRWParamsTypeInit>(mhrw_params_)),
       acceptance_ratio(acceptance_ratio_)
   {
@@ -373,13 +373,15 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
 
   /** \brief Constructor with \ref mhrw_params initialized from a random walk instance
    *
-   * \param stats_collector_result_ the stats-collector result
+   * \param stats_results_ the MHRWStatsResults result, or an acceptable initializer for
+   *        that type
+   *
    * \param mhrandomwalk should be a \ref MHRandomWalk instance
    */
   template<typename MHRWStatsResultsTypeInit, typename MHRandomWalkType>
-  MHRandomWalkTaskResult(MHRWStatsResultsTypeInit && stats_collector_result_,
+  MHRandomWalkTaskResult(MHRWStatsResultsTypeInit && stats_results_,
                          const MHRandomWalkType & mhrandomwalk)
-    : stats_results(std::forward<MHRWStatsResultsTypeInit>(stats_collector_result_)),
+    : stats_results(std::forward<MHRWStatsResultsTypeInit>(stats_results_)),
       mhrw_params(mhrandomwalk.mhrwParams()),
       acceptance_ratio(mhrandomwalk.hasAcceptanceRatio() ?
                        mhrandomwalk.acceptanceRatio() :
@@ -387,7 +389,9 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
   {
   }
     
-  //! The result furnished by the stats collector itself
+  /** \brief The result(s) coming from stats collecting (may be processed, see \ref
+   *         pageInterfaceMHRandomWalkTaskCData)
+   */
   MHRWStatsResultsType stats_results;
     
   //! The parameters of the random walk (see \ref MHRWParams<IterCountIntType,MHWalkerParams>)
@@ -569,7 +573,7 @@ public:
 
     RunInnerCallable<LoggerType, TaskManagerIface> run_object(pcdata, rng, baselogger, tmgriface, &result);
 
-    pcdata->setupMHRWTaskAndRun(rng, baselogger, run_object);
+    pcdata->setupRandomWalkAndRun(rng, baselogger, run_object);
   }
 
   inline ResultType getResult() const
