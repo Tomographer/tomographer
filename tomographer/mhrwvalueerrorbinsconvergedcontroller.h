@@ -87,7 +87,7 @@ private:
 
   IterCountIntType last_forbidden_iter_number;
 
-  const std::size_t max_allowed_unknown_isolated;
+  const std::size_t max_allowed_unknown_notisolated;
   const std::size_t max_allowed_unknown;
   const std::size_t max_allowed_not_converged;
 
@@ -98,14 +98,14 @@ public:
       const ValueHistogramWithBinningMHRWStatsCollectorType & value_stats_collector_,
       BaseLoggerType & baselogger_,
       int check_frequency_sweeps_ = 1024,
-      std::size_t max_allowed_unknown_isolated_ = 0,
+      std::size_t max_allowed_unknown_notisolated_ = 0,
       std::size_t max_allowed_unknown_ = 0,
       std::size_t max_allowed_not_converged_ = 0
       )
     : value_stats_collector(value_stats_collector_),
       check_frequency_sweeps(check_frequency_sweeps_),
       last_forbidden_iter_number(0),
-      max_allowed_unknown_isolated(max_allowed_unknown_isolated_),
+      max_allowed_unknown_notisolated(max_allowed_unknown_notisolated_),
       max_allowed_unknown(max_allowed_unknown_),
       max_allowed_not_converged(max_allowed_not_converged_),
       llogger("Tomographer::MHRWValueErrorBinsConvergedAdjuster", baselogger_)
@@ -152,7 +152,7 @@ public:
 
     if (conv_summary.n_not_converged > max_allowed_not_converged ||
         conv_summary.n_unknown > max_allowed_unknown ||
-        conv_summary.n_unknown_isolated > max_allowed_unknown_isolated) {
+        (conv_summary.n_unknown-conv_summary.n_unknown_isolated) > max_allowed_unknown_notisolated) {
       // too many unconverged error bars, continue running
       return false;
     }
@@ -184,7 +184,7 @@ mkMHRWValueErrorBinsConvergedController(
     const ValueHistogramWithBinningMHRWStatsCollectorType_ & value_stats_collector_,
     BaseLoggerType_ & baselogger_,
     int check_frequency_sweeps_ = 1024,
-    std::size_t max_allowed_unknown_isolated_ = 0,
+    std::size_t max_allowed_unknown_notisolated_ = 0,
     std::size_t max_allowed_unknown_ = 0,
     std::size_t max_allowed_not_converged_ = 0
     )
@@ -195,7 +195,7 @@ mkMHRWValueErrorBinsConvergedController(
                                                    value_stats_collector_,
                                                    baselogger_,
                                                    check_frequency_sweeps_,
-                                                   max_allowed_unknown_isolated_,
+                                                   max_allowed_unknown_notisolated_,
                                                    max_allowed_unknown_,
                                                    max_allowed_not_converged_
                                                    ) ;

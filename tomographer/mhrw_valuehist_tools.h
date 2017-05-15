@@ -75,8 +75,10 @@ struct MHRWStatsResultsBaseSimple
     : raw_histogram(std::move(val)),
       histogram(raw_histogram.params)
   {
-    typename ScaledHistogramType::CountType ncounts = histogram.totalCounts();
-    histogram.load(raw_histogram.bins / ncounts, raw_histogram.off_chart / ncounts);
+    typedef typename ScaledHistogramType::CountType  CountRealType;
+    CountRealType ncounts = histogram.totalCounts();
+    histogram.load(raw_histogram.bins.template cast<CountRealType>() / ncounts,
+                   raw_histogram.off_chart / ncounts);
   }
 
   ValueStatsCollectorResultType raw_histogram;

@@ -299,6 +299,12 @@ struct ProgOptions
     val_nbins(50),
     binning_analysis_error_bars(true), // error bars from binning analysis
     binning_analysis_num_levels(8),
+    control_step_size(true),
+    control_step_size_moving_avg_samples(2048),
+    control_binning_converged(true),
+    control_binning_converged_max_not_converged(0),
+    control_binning_converged_max_unknown(2),
+    control_binning_converged_max_unknown_notisolated(0),
     start_seed(std::chrono::system_clock::now().time_since_epoch().count()),
     Nrepeats(12),
     Nchunk(1),
@@ -330,6 +336,13 @@ struct ProgOptions
 
   bool binning_analysis_error_bars;
   int binning_analysis_num_levels;
+
+  bool control_step_size;
+  int control_step_size_moving_avg_samples;
+  bool control_binning_converged;
+  int control_binning_converged_max_not_converged;
+  int control_binning_converged_max_unknown;
+  int control_binning_converged_max_unknown_notisolated;
 
   int start_seed;
 
@@ -386,7 +399,14 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
   std::string configbasename;
   bool write_histogram_from_config_file_name = false;
 
-  bool no_binning_analysis_error_bars = ! opt->binning_analysis_error_bars;
+  bool binning_analysis_error_bars_set = false;
+  bool no_binning_analysis_error_bars_set = false;
+
+  bool control_step_size_set = false;
+  bool no_control_step_size_set = false;
+
+  bool control_binning_converged_set = false;
+  bool no_control_binning_converged_set = false;
 
   const int line_width = 80;
   options_description desc("OPTIONS", line_width, line_width*2/3);
@@ -399,15 +419,66 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
      "to a particular object defined in the datafile. See below for more info.")
     ("value-hist", value<std::string>(&valhiststr),
      "Do a histogram of the figure of merit for different measured values. Format MIN:MAX/NUM_BINS")
-    ("no-binning-analysis-error-bars", bool_switch(& no_binning_analysis_error_bars)
-     ->default_value(no_binning_analysis_error_bars),
+    ("binning-analysis-error-bars", bool_switch(& binning_analysis_error_bars_set)
+     ->default_value(false),
      // REFERENCE [2] is here
-     "Don't produce error bars from a binning analysis [2] for each histogram bin")
+     "Produce error bars from a binning analysis [2] for each histogram bin. This option is enabled "
+     "by default.")
+    ("no-binning-analysis-error-bars", bool_switch(& no_binning_analysis_error_bars_set)
+     ->default_value(false),
+     "Don't produce error bars from a binning analysis for each histogram bin")
     ("binning-analysis-num-levels", value<int>(& opt->binning_analysis_num_levels)
      ->default_value(opt->binning_analysis_num_levels),
      ("Number of levels of coarse-graining in the binning analysis. See --binning-analysis-error-bars. "
       "Choose this number such that (n-run)/(2^(<binning-num-levels>)) is a sufficiently decent sample size "
       "(say ~"+std::to_string(last_binning_level_warn_min_samples)+").").c_str())
+    ("control-step-size", bool_switch(& control_step_size_set)->default_value(false),
+     Tomographer::Tools::fmts("Dynamically adjust the step size during thermalization runs in order to "
+                              "keep the acceptance ratio approximately within the range [%.2f,%.2f] (but "
+                              "in any case within [%.2f,%.2f]). The sweep size "
+                              "is automatically adjusted so that step_size*sweep_size remains constant. "
+                              "Furthermore the thermalization runs will be prolonged as necessary to "
+                              "ensure that at least %.2f*n_therm thermalization sweeps have passed after "
+                              "the last time the step size was adjusted. This option is enabled by "
+                              "default.",
+                              Tomographer::MHRWStepSizeControllerDefaults::DesiredAcceptanceRatioMin,
+                              Tomographer::MHRWStepSizeControllerDefaults::DesiredAcceptanceRatioMax,
+                              Tomographer::MHRWStepSizeControllerDefaults::AcceptableAcceptanceRatioMin,
+                              Tomographer::MHRWStepSizeControllerDefaults::AcceptableAcceptanceRatioMax,
+                              Tomographer::MHRWStepSizeControllerDefaults::EnsureNThermFixedParamsFraction
+         ).c_str())
+    ("no-control-step-size", bool_switch(& no_control_step_size_set)->default_value(false),
+     "Do not dynamically adjust the step size during thermalization.")
+    ("control-step-size-moving-avg-samples", value<int>(& opt->control_step_size_moving_avg_samples)
+     ->default_value(opt->control_step_size_moving_avg_samples),
+     "The number of most recent samples to use when calculating the moving average of "
+     "the acceptance ratio.  Used only for dynamically adjusting the step size when "
+     "--control-step-size is set.")
+    ("control-binning-converged", bool_switch(& control_binning_converged_set)->default_value(false),
+     "When calculating error bars via a binning analysis, ensure that the error bars have "
+     "converged for (almost) all bins (see fine-tuning options below) before terminating "
+     "the random walk. The random walk will continue past 100% until the required "
+     "convergence criteria are met. This option is enabled by default.")
+    ("no-control-binning-converged", bool_switch(& no_control_binning_converged_set)->default_value(false),
+     "Do not dynamically control the random walk length, you might need to manually inspect "
+     "the convergence status of the error bars resulting from the binning analysis.")
+    ("control-binning-converged-max-not-converged",
+     value<int>(& opt->control_binning_converged_max_not_converged )
+     ->default_value(opt->control_binning_converged_max_not_converged),
+     "If control-binning-converged is set, then do not finish the random walk before there being "
+     "no more than this number of error bars which have not converged.")
+    ("control-binning-converged-max-unknown",
+     value<int>(& opt->control_binning_converged_max_unknown )
+     ->default_value(opt->control_binning_converged_max_unknown),
+     "If control-binning-converged is set, then do not finish the random walk before there being "
+     "no more than this number of error bars for which the convergence is uncertain.")
+    ("control-binning-converged-max-unknown-notisolated",
+     value<int>(& opt->control_binning_converged_max_unknown_notisolated )
+     ->default_value(opt->control_binning_converged_max_unknown_notisolated),
+     "If control-binning-converged is set, then do not finish the random walk before there being "
+     "no more than this number of error bars for which the convergence is uncertain and which are "
+     "adjacent to other error bars which have not converged or whose convergence status is unknown.")
+
     ("step-size", value<double>(& opt->step_size)->default_value(opt->step_size),
      "the step size for the region")
     ("n-sweep", value<unsigned int>(& opt->Nsweep)->default_value(opt->Nsweep),
@@ -422,7 +493,8 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
      "number of times to repeat the metropolis procedure")
     ("n-chunk", value<unsigned int>(& opt->Nchunk)->default_value(opt->Nchunk),
      "OBSOLETE OPTION -- has no effect")
-    ("n-meas-amplify-factor", value<double>(& opt->NMeasAmplifyFactor)->default_value(opt->NMeasAmplifyFactor),
+    ("n-meas-amplify-factor", value<double>(& opt->NMeasAmplifyFactor)
+     ->default_value(opt->NMeasAmplifyFactor),
      "Specify an integer factor by which to multiply number of measurements. "
      "Don't use this. It's unphysical, and meant just for debugging Tomographer itself.")
     ("write-histogram", value<std::string>(& opt->write_histogram),
@@ -452,10 +524,12 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
      "be used with --write-histogram.")
     ("periodic-status-report-ms",
      value<int>(& opt->periodic_status_report_ms)->default_value(opt->periodic_status_report_ms),
-     "If set to a value > 0, then tomorun will produce a status report every so many milliseconds. The format "
-     "of the status report is the same as when you hit Ctrl+C. You can still get reports anytime with Ctrl+C.")
-    ("version", "Print Tomographer/Tomorun version information as well as information about enabled features.")
-    ("help", "Print Help Message")
+     "If set to a value > 0, then tomorun will produce a status report every so many milliseconds. "
+     "The format of the status report is the same as when you hit Ctrl+C. You can still get reports "
+     "anytime by hitting Ctrl+C.")
+    ("version",
+     "Print Tomographer/Tomorun version information as well as information about enabled features.")
+    ("help", "Print this help message")
     ;
 
   // no positional options accepted
@@ -717,9 +791,39 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
   // Further Settings
   // --------------------
 
-  // set up the "false-type" boolean switche(s)
+  // set up the boolean switche(s)
 
-  opt->binning_analysis_error_bars = ! no_binning_analysis_error_bars;
+  if (binning_analysis_error_bars_set) {
+    if (no_binning_analysis_error_bars_set) {
+      throw bad_options("Cannot use both --binning_analysis-error-bars and "
+                        "--no-binning-analysis-error-bars");
+    }
+    opt->binning_analysis_error_bars = true;
+  } else if (no_binning_analysis_error_bars_set) {
+    opt->binning_analysis_error_bars = false;
+    // disable control-binning-converged, which is incompatible
+    opt->control_binning_converged = false;
+  }
+
+  if (control_step_size_set) {
+    if (no_control_step_size_set) {
+      throw bad_options("Cannot use both --control-step-size and "
+                        "--no-control-step-size");
+    }
+    opt->control_step_size = true;
+  } else if (no_control_step_size_set) {
+    opt->control_step_size = false;
+  }
+
+  if (control_binning_converged_set) {
+    if (no_control_binning_converged_set) {
+      throw bad_options("Cannot use both --control-binning-converged and "
+                        "--no-control-binning-converged");
+    }
+    opt->control_binning_converged = true;
+  } else if (no_control_binning_converged_set) {
+    opt->control_binning_converged = false;
+  }
 
 
   // set up write histogram file name from config file name
@@ -775,10 +879,10 @@ void display_parameters(ProgOptions * opt, LoggerType & logger)
       "       value type :         %s\n"
       "       val. histogram :     [%.2g, %.2g] (%lu bins)\n"
       "       error bars :         %s\n"
-      "       step size :          %.6f\n"
-      "       sweep size :         %lu\n"
+      "       step size :          %-8.4g%s\n"
+      "       sweep size :         %-8lu%s\n"
       "       # therm sweeps :     %lu\n"
-      "       # run sweeps :       %lu\n"
+      "       # run sweeps :       %-8lu%s\n"
       "       # intgr. repeats :   %lu\n"
       "       write histogram to : %s\n"
       "\n"
@@ -791,9 +895,12 @@ void display_parameters(ProgOptions * opt, LoggerType & logger)
        ? Tomographer::Tools::fmts("binning analysis (%d levels)", opt->binning_analysis_num_levels).c_str()
        : "std. dev. of runs"),
       opt->step_size,
+      (opt->control_step_size ? "  (dyn. adjustment enabled)" : ""),
       (unsigned long)opt->Nsweep,
+      (opt->control_step_size ? "  (dyn. adjustment enabled)" : ""),
       (unsigned long)opt->Ntherm,
       (unsigned long)opt->Nrun,
+      (opt->control_binning_converged ? "  (dyn. control of convergence)" : ""),
       (unsigned long)opt->Nrepeats,
       (opt->write_histogram.size()
        ? opt->write_histogram + std::string("-histogram.csv")

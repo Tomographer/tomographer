@@ -55,17 +55,36 @@
 namespace Tomographer {
 
 
+
+
+/** \brief Default parameters for MHRWStepSizeController
+ */
+namespace MHRWStepSizeControllerDefaults {
+
+static constexpr double AcceptableAcceptanceRatioMin = 
+  MHRWAcceptanceRatioRecommendedMin;
+static constexpr double AcceptableAcceptanceRatioMax =
+  MHRWAcceptanceRatioRecommendedMax;
+static constexpr double DesiredAcceptanceRatioMin = 
+  (0.75*AcceptableAcceptanceRatioMin + 0.25*AcceptableAcceptanceRatioMax);
+static constexpr double DesiredAcceptanceRatioMax =
+  (0.5 *AcceptableAcceptanceRatioMin + 0.5 *AcceptableAcceptanceRatioMax);
+static constexpr double EnsureNThermFixedParamsFraction = 0.5;
+} // MHRWStepSizeControllerDefaults
+
+
+
+
+
 /** \brief A \ref pageInterfaceMHRWController dynamically adjusting the step size to keep
  *         a good acceptance ratio
  *
  */
 template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
-//         int EmpiricalDataBufferSize = 4,
          typename BaseLoggerType_ = Logger::VacuumLogger,
          typename StepRealType_ = double,
          typename IterCountIntType_ = int>
 TOMOGRAPHER_EXPORT class MHRWStepSizeController
-//  : public Tools::EigenAlignedOperatorNewProvider // not needed without empirical data buffer
 {
 public:
   enum { AdjustmentStrategy = MHRWControllerAdjustEveryIterationWhileThermalizing };
@@ -78,10 +97,6 @@ public:
 
 private:
   const MHRWMovingAverageAcceptanceRatioStatsCollectorType & accept_ratio_stats_collector;
-  
-//  typedef Eigen::Array<double,EmpiricalDataBufferSize,2> EmpiricalDataArrayType;
-//  EmpiricalDataArrayType stepsizes_acceptratios_empirical_data;
-//  int n_empirical_data;
   
   const double desired_accept_ratio_min;
   const double desired_accept_ratio_max;
@@ -102,18 +117,21 @@ private:
   Logger::LocalLogger<BaseLoggerType> llogger;
 
 public:
-  MHRWStepSizeController(const MHRWMovingAverageAcceptanceRatioStatsCollectorType & accept_ratio_stats_collector_,
-                       BaseLoggerType & baselogger_,
-                       double desired_accept_ratio_min_ = (0.75*MHRWAcceptanceRatioRecommendedMin +
-                                                           0.25*MHRWAcceptanceRatioRecommendedMax),
-                       double desired_accept_ratio_max_ = (0.5*MHRWAcceptanceRatioRecommendedMin +
-                                                           0.5*MHRWAcceptanceRatioRecommendedMax),
-                       double acceptable_accept_ratio_min_ = MHRWAcceptanceRatioRecommendedMin,
-                       double acceptable_accept_ratio_max_ = MHRWAcceptanceRatioRecommendedMax,
-                       double ensure_n_therm_fixed_params_fraction_ = 0.5)
+  MHRWStepSizeController(
+    const MHRWMovingAverageAcceptanceRatioStatsCollectorType & accept_ratio_stats_collector_,
+    BaseLoggerType & baselogger_,
+    double desired_accept_ratio_min_ =
+      MHRWStepSizeControllerDefaults::DesiredAcceptanceRatioMin,
+    double desired_accept_ratio_max_ =
+      MHRWStepSizeControllerDefaults::DesiredAcceptanceRatioMax,
+    double acceptable_accept_ratio_min_ =
+      MHRWStepSizeControllerDefaults::AcceptableAcceptanceRatioMin,
+    double acceptable_accept_ratio_max_ =
+      MHRWStepSizeControllerDefaults::AcceptableAcceptanceRatioMax,
+    double ensure_n_therm_fixed_params_fraction_ = 
+      MHRWStepSizeControllerDefaults::EnsureNThermFixedParamsFraction
+    )
   : accept_ratio_stats_collector(accept_ratio_stats_collector_),
-//    stepsizes_acceptratios_empirical_data(Eigen::Array<double,EmpiricalDataBufferSize,2>::Zero()),
-//    n_empirical_data(0),
     desired_accept_ratio_min(desired_accept_ratio_min_),
     desired_accept_ratio_max(desired_accept_ratio_max_),
     acceptable_accept_ratio_min(acceptable_accept_ratio_min_),
@@ -178,7 +196,6 @@ public:
 
     logger.longdebug([&](std::ostream & stream) {
         stream << "will consider correction.  " <<
-          //          "n_empirical_data = " << n_empirical_data <<
           ", last_corrected_unacceptable_iter_k = " << last_corrected_unacceptable_iter_k;
       });
 
@@ -199,108 +216,30 @@ public:
       last_corrected_unacceptable_iter_k = iter_k;
     }
 
-//    const auto cur_step_size = params.mhwalker_params.step_size;
+    // new step size -- guess a slight increase or decrease depending on too high or too low
 
-//     // analyze acceptance ratio stats and correct step size
-//     Eigen::Index ind;
-//     // // stored value which is closest to the current point
-//     // auto delta = (stepsizes_acceptratios_empirical_data.col(0)
-//     //               - Eigen::Array<StepRealType,EmpiricalDataBufferSize,1>::Constant(cur_step_size)).abs().minCoeff(&ind);
-//     // if (delta < 0.05*cur_step_size) {
-//     //   // we already have a data point for a step_size which is very close to this one, so
-//     //   // don't store another point; rather, update this one.
-//     //   //
-//     //   // ind is already set.
-//     //   logger.longdebug([&](std::ostream & stream) {
-//     //       stream << "found existing point which is close to the current one, delta = " << delta
-//     //              << ". Storing at index " << ind;
-//     //     });
-//     // } else {
-//       // add a new point, overwriting the last data point taken
-//       ind = n_empirical_data % stepsizes_acceptratios_empirical_data.rows();
-//       ++n_empirical_data;
-// //    }
-//     // store the point    
-//     stepsizes_acceptratios_empirical_data(ind, 0) = cur_step_size;
-//     stepsizes_acceptratios_empirical_data(ind, 1) = accept_ratio;
+    StepRealType new_step_size = params.mhwalker_params.step_size;
 
-//     logger.longdebug([&](std::ostream & stream) {
-//         stream << "stored current empirical data point; ind = "
-//                << ind
-//                //<< ", delta = " << delta
-//                << ", cur data = \n"
-//                << stepsizes_acceptratios_empirical_data;
-//       });
+    // accept ratio too high -- increase step size
+    if (accept_ratio >= 2*desired_accept_ratio_max) {
+      new_step_size *= 1.5;
+    } else if (accept_ratio >= 1.3*desired_accept_ratio_max) {
+      new_step_size *= 1.2;
+    } else if (accept_ratio >= desired_accept_ratio_max) {
+      new_step_size *= 1.05;
+    } else if (accept_ratio <= 0.5*desired_accept_ratio_min) {
+      new_step_size *= 0.5;
+    } else if (accept_ratio <= 0.75*desired_accept_ratio_min) {
+      new_step_size *= 0.8;
+    } else {// if (accept_ratio <= desired_accept_ratio_min
+      new_step_size *= 0.95;
+    }
 
+    logger.longdebug([&](std::ostream & stream) {
+        stream << "blind guess corrected step_size to " << new_step_size;
+      });
 
-//    if (n_empirical_data < stepsizes_acceptratios_empirical_data.rows()) {
-
-
-      // new step size -- guess a slight increase or decrease depending on too high or too low
-
-      StepRealType new_step_size = params.mhwalker_params.step_size;
-
-      // accept ratio too high -- increase step size
-      if (accept_ratio >= 2*desired_accept_ratio_max) {
-        new_step_size *= 1.5;
-      } else if (accept_ratio >= 1.3*desired_accept_ratio_max) {
-        new_step_size *= 1.2;
-      } else if (accept_ratio >= desired_accept_ratio_max) {
-        new_step_size *= 1.05;
-      } else if (accept_ratio <= 0.5*desired_accept_ratio_min) {
-        new_step_size *= 0.5;
-      } else if (accept_ratio <= 0.75*desired_accept_ratio_min) {
-        new_step_size *= 0.8;
-      } else {// if (accept_ratio <= desired_accept_ratio_min
-        new_step_size *= 0.95;
-      }
-
-      logger.longdebug([&](std::ostream & stream) {
-          stream << "blind guess corrected step_size to " << new_step_size;
-        });
-
-      _adjust_step_size(iter_k, params, new_step_size);
-
-    // } else {
-
-    //   // rough linear fit through our data points.
-    //   // See http://mathworld.wolfram.com/LeastSquaresFitting.html
-
-    //   const auto D = stepsizes_acceptratios_empirical_data.template cast<StepRealType>();
-
-    //   logger.longdebug([&](std::ostream & stream) {
-    //       stream << "about to perform fit, D = \n" << D;
-    //     });
-
-    //   StepRealType sx = D.col(0).sum();
-    //   StepRealType sy = D.col(1).sum();
-    //   StepRealType sxy = (D.col(0) * D.col(1)).sum(); // "*" does element-wise product on arrays
-    //   StepRealType sx2 = D.col(0).matrix().squaredNorm();
-
-    //   // fit is y = a + b*x, with y = acceptance ratio and x = step size
-
-    //   constexpr int n = EmpiricalDataBufferSize;
-    //   StepRealType denom = (n*sx2 - sx*sx);
-    //   StepRealType b = (n*sxy - sx*sy) / denom;
-    //   StepRealType a = (sy*sx2 - sx*sxy) / denom;
-
-    //   if (std::abs(b)*0.1*cur_step_size < 0.01) {
-    //     // b is too small, finding the x-intercept will be unreliable.  Instead, resort to
-    //     // "dumb" guess
-    //   }
-
-
-    //   // find x0 such that y0==target-accept-ratio
-    //   StepRealType target_accept_ratio = (desired_accept_ratio_max+desired_accept_ratio_min)/2;
-    //   StepRealType new_step_size = (target_accept_ratio - a) / b;
-
-    //   // set this as new step size
-    //   _adjust_step_size(iter_k, params, new_step_size);
-
-    //   logger.longdebug([&](std::ostream & stream) {
-    //       stream << "after fit, corrected step_size to " << params.mhwalker_params.step_size;
-    //     });
-    // }
+    _adjust_step_size(iter_k, params, new_step_size);
 
   }
 
@@ -382,24 +321,6 @@ private:
 public:
 
   inline StepRealType getLastSetStepSize() const { return last_set_step_size; }
-  // inline double getLastAcceptRatio() const
-  // {
-  //   // if (n_empirical_data < 1) {
-  //   //   return std::numeric_limits<double>::quiet_NaN();
-  //   // }
-  //   // return stepsizes_acceptratios_empirical_data((n_empirical_data-1) % stepsizes_acceptratios_empirical_data.rows(), 1);
-  // }
-
-  // ###: Let's not even declare this, because it should never be invoked according to our
-  // ###  AdjustmentStrategy:
-  // 
-  // template<bool IsThermalizing, bool IsAfterSample,
-  //          typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType,
-  //          TOMOGRAPHER_ENABLED_IF_TMPL(!IsThermalizing)> // After thermalizing, keep parameters fixed
-  // inline void adjustParams(MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
-  //                          int /*iter_k*/, const MHRandomWalkType & /*mhrw*/) const
-  // {
-  // }
 
   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
   inline void thermalizingDone(MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
@@ -407,7 +328,6 @@ public:
   {
   }
 };
-
 
 
 template<typename MHRWParamsType,
@@ -419,15 +339,20 @@ MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
                        BaseLoggerType_,
                        typename MHRWParamsType::MHWalkerParams::StepRealType,
                        typename MHRWParamsType::CountIntType>
-mkMHRWStepSizeController(const MHRWMovingAverageAcceptanceRatioStatsCollectorType_ & accept_ratio_stats_collector_,
-                         BaseLoggerType_ & baselogger_,
-                         double desired_accept_ratio_min_ = (0.75*MHRWAcceptanceRatioRecommendedMin +
-                                                             0.25*MHRWAcceptanceRatioRecommendedMax),
-                         double desired_accept_ratio_max_ = (0.5*MHRWAcceptanceRatioRecommendedMin +
-                                                             0.5*MHRWAcceptanceRatioRecommendedMax),
-                         double acceptable_accept_ratio_min_ = MHRWAcceptanceRatioRecommendedMin,
-                         double acceptable_accept_ratio_max_ = MHRWAcceptanceRatioRecommendedMax,
-                         double ensure_n_therm_fixed_params_fraction_ = 0.5)
+mkMHRWStepSizeController(
+    const MHRWMovingAverageAcceptanceRatioStatsCollectorType_ & accept_ratio_stats_collector_,
+    BaseLoggerType_ & baselogger_,
+    double desired_accept_ratio_min_ =
+      MHRWStepSizeControllerDefaults::DesiredAcceptanceRatioMin,
+    double desired_accept_ratio_max_ =
+      MHRWStepSizeControllerDefaults::DesiredAcceptanceRatioMax,
+    double acceptable_accept_ratio_min_ =
+      MHRWStepSizeControllerDefaults::AcceptableAcceptanceRatioMin,
+    double acceptable_accept_ratio_max_ =
+      MHRWStepSizeControllerDefaults::AcceptableAcceptanceRatioMax,
+    double ensure_n_therm_fixed_params_fraction_ = 
+      MHRWStepSizeControllerDefaults::EnsureNThermFixedParamsFraction
+    )
 {
   return MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
                                 BaseLoggerType_,

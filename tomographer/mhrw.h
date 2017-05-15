@@ -78,9 +78,9 @@ enum {
 // note: const implies static linkage, see http://stackoverflow.com/q/2268749/1694896
 //
 /** \brief Minimal recommended acceptance ratio */
-const double MHRWAcceptanceRatioRecommendedMin = 0.2;
+constexpr const double MHRWAcceptanceRatioRecommendedMin = 0.2;
 /** \brief Maximal recommended acceptance ratio */
-const double MHRWAcceptanceRatioRecommendedMax = 0.4;
+constexpr const double MHRWAcceptanceRatioRecommendedMax = 0.4;
 
 
 /** \brief An MHWalkerParams type which just stores a step size

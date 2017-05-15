@@ -59,6 +59,8 @@
 #include <tomographer/densedm/indepmeasllh.h>
 #include <tomographer/densedm/tspacefigofmerit.h>
 #include <tomographer/mhrw.h>
+#include <tomographer/mhrwstepsizecontroller.h>
+#include <tomographer/mhrwvalueerrorbinsconvergedcontroller.h>
 #include <tomographer/mhrwtasks.h>
 #include <tomographer/multiproc.h>
 #include <tomographer/densedm/tspacellhwalker.h>
@@ -182,6 +184,14 @@ int main(int argc, char **argv)
 	);
   }
 
+  // warn the user if they specified control-binning-convergence but don't have binning
+  // analysis enabled
+  if (opt.control_binning_converged && ! opt.binning_analysis_error_bars) {
+    logger.warning([&](std::ostream & stream) {
+        stream << "--control-binning-converged cannot be used if --binning-analysis-error-bars "
+               << "is not set. --control-binning-converged will be ignored.";
+      });
+  }
 
   //
   // ---------------------------------------------------------------------------
@@ -239,7 +249,7 @@ int main(int argc, char **argv)
                  " and fixed max POVM effects = %d  (%d=dynamic)",
 		 TOMORUN_CUSTOM_FIXED_DIM, TOMORUN_CUSTOM_FIXED_MAX_DIM,
                  TOMORUN_CUSTOM_MAX_POVM_EFFECTS, Eigen::Dynamic);
-    tomorun_dispatch_eb<TOMORUN_CUSTOM_FIXED_DIM,TOMORUN_CUSTOM_FIXED_MAX_DIM,TOMORUN_CUSTOM_MAX_POVM_EFFECTS>(dim, &opt, matf, mlog);
+    tomorun_dispatch_st<TOMORUN_CUSTOM_FIXED_DIM,TOMORUN_CUSTOM_FIXED_MAX_DIM,TOMORUN_CUSTOM_MAX_POVM_EFFECTS>(dim, &opt, matf, mlog);
 
     (void)n_povms; // silence unused variable warning
 
@@ -252,16 +262,16 @@ int main(int argc, char **argv)
     // for small matrices for common system sizes (e.g. a single qubit)
     //
 //    if (dim == 2 && n_povms <= 6) { // qubit problems are really common
-//      tomorun_dispatch_eb<2, 2, 6>(dim, &opt, matf, mlog);
+//      tomorun_dispatch_st<2, 2, 6>(dim, &opt, matf, mlog);
 //    } else
     if (dim == 2) {
-      tomorun_dispatch_eb<2, 2, Eigen::Dynamic>(dim, &opt, matf, mlog);
+      tomorun_dispatch_st<2, 2, Eigen::Dynamic>(dim, &opt, matf, mlog);
     } else if (dim == 4) { // two-qubit systems are also common
-      tomorun_dispatch_eb<4, 4, Eigen::Dynamic>(dim, &opt, matf, mlog);
+      tomorun_dispatch_st<4, 4, Eigen::Dynamic>(dim, &opt, matf, mlog);
     } else if (dim <= 8) { // anything less than dimension 8 should be stored statically
-      tomorun_dispatch_eb<Eigen::Dynamic, 8, Eigen::Dynamic>(dim, &opt, matf, mlog);
+      tomorun_dispatch_st<Eigen::Dynamic, 8, Eigen::Dynamic>(dim, &opt, matf, mlog);
     } else {
-      tomorun_dispatch_eb<Eigen::Dynamic, Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
+      tomorun_dispatch_st<Eigen::Dynamic, Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
     }
 
 #endif
