@@ -153,7 +153,7 @@ struct BinningErrorBarConvergenceSummary {
 };
 
 
-std::ostream & operator<<(std::ostream & stream, const BinningErrorBarConvergenceSummary & s)
+inline std::ostream & operator<<(std::ostream & stream, const BinningErrorBarConvergenceSummary & s)
 {
   return stream << s.n_converged << " converged / "
                 << s.n_unknown << " maybe (" << s.n_unknown_isolated << " isolated) / "

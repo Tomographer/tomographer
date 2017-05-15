@@ -38,13 +38,12 @@ private:
   DummyBinningAnalysisClass() { }
 };
 
-
 void py_tomo_mhrwtasks(py::module rootmodule)
 {
   auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
   logger.debug("py_tomo_mhrwtasks() ...");
 
-  logger.debug("tomographer.BinningAnalysis (dummy, just for convergence constants) ...");
+  logger.debug("tomographer BinningAnalysis (dummy, just for convergence constants) ...");
   { typedef DummyBinningAnalysisClass Kl;
     py::class_<Kl>(
         rootmodule,
@@ -64,15 +63,15 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         )
       .def_property_readonly_static("CONVERGED",
                                     [](py::object) -> int {
-                                      return Tomographer::BinningAnalysisParams<double>::CONVERGED;
+                                      return Tomographer::BINNING_CONVERGED;
                                     })
       .def_property_readonly_static("NOT_CONVERGED",
                                     [](py::object) -> int {
-                                      return Tomographer::BinningAnalysisParams<double>::NOT_CONVERGED;
+                                      return Tomographer::BINNING_NOT_CONVERGED;
                                     })
       .def_property_readonly_static("UNKNOWN_CONVERGENCE",
                                     [](py::object) -> int {
-                                      return Tomographer::BinningAnalysisParams<double>::UNKNOWN_CONVERGENCE;
+                                      return Tomographer::BINNING_UNKNOWN_CONVERGENCE;
                                     })
       ;
   }
@@ -88,12 +87,14 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         "\n\n"
         "|picklable|"
         "\n\n"
-        ".. py:attribute:: hist"
+        ".. py:attribute:: histogram"
         "\n\n"
         "    The resulting histogram, with the final error bars. "
         "The scaling of the histogram is chosen such that each bin value represents the "
         "fraction of sample data points whose value were inside this bin.  Note: "
         "This histogram is NOT normalized to a probability density."
+        "\n\n"
+        "    .. versionchanged:: 5.0\n        Renamed `hist` to `histogram`."
         "\n\n"
         ".. py:attribute:: error_levels"
         "\n\n"
@@ -111,19 +112,20 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         "or whether the convergence status is unknown or couldn't be determined "
         " (:py:const:`BinningAnalysis.UNKNOWN_CONVERGENCE <tomographer.BinningAnalysis>`)."
         )
-      .def(py::init<tpy::HistogramWithErrorBars,tpy::RealMatrixType,Eigen::VectorXi>(),
-           "hist"_a, "error_levels"_a, "converged_status"_a)
-      .def_readonly("hist", & Kl::hist )
+      .def(py::init<const tpy::HistogramWithErrorBars&, tpy::RealMatrixType, Eigen::VectorXi>(),
+           "histogram"_a, "error_levels"_a, "converged_status"_a)
+      .def_readonly("histogram", & Kl::histogram )
       .def_property_readonly("error_levels", [](const Kl & x) -> tpy::RealMatrixType { return x.error_levels; })
       .def_property_readonly("converged_status", [](const Kl & x) -> Eigen::VectorXi { return x.converged_status; })
       // .def("__repr__", [](const Kl& p) {
       //     return streamstr("ValueHistogramWithBinningMHRWStatsCollectorResult("<<"..."<<")") ;
       //   })
       .def("__getstate__", [](py::object p) {
-          return py::make_tuple(p.attr("hist"), p.attr("error_levels"), p.attr("converged_status"));
+          return py::make_tuple(p.attr("histogram"), p.attr("error_levels"), p.attr("converged_status"));
         })
       .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl, tpy::HistogramWithErrorBars,
+          tpy::internal::unpack_tuple_and_construct<Kl,
+                                                    const tpy::HistogramWithErrorBars&,
                                                     tpy::RealMatrixType, Eigen::VectorXi>(p, t);
         })
       ;
@@ -155,17 +157,18 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         "\n\n"
         "|picklable|"
         "\n\n"
-        ".. py:attribute:: stats_collector_result\n\n"
+        ".. py:attribute:: stats_results\n\n"
         "    An object of type :py:class:`~tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult` "
         "detailing the result of the stats collecting class which is responsible for determining the final "
         "histogram, and carrying out the binning analysis to come up with error bars.\n\n"
         ".. py:attribute:: mhrw_params\n\n"
-        "    The parameters of the executed random walk, as an :py:class:`~tomographer.MHRWParams` instance.\n\n"
+        "    The parameters of the executed random walk, as an :py:class:`~tomographer.MHRWParams` "
+        "instance.\n\n"
         ".. py:attribute:: acceptance_ratio\n\n"
         "    The average acceptance ratio of the random walk (excluding the thermalization sweeps).\n\n")
-      .def(py::init<tpy::ValueHistogramWithBinningMHRWStatsCollectorResult, tpy::MHRWParams, double>(),
-           "stats_collector_result"_a, "mhrw_params"_a, "acceptance_ratio"_a)
-      .def_readonly("stats_collector_result", & Kl::stats_collector_result )
+      .def(py::init<const tpy::ValueHistogramWithBinningMHRWStatsCollectorResult&, tpy::MHRWParams, double>(),
+           "stats_results"_a, "mhrw_params"_a, "acceptance_ratio"_a)
+      .def_readonly("stats_results", & Kl::stats_results )
       .def_readonly("mhrw_params", & Kl::mhrw_params )
       .def_readonly("acceptance_ratio", & Kl::acceptance_ratio )
       .def("__repr__", [](py::object p) {
@@ -173,11 +176,15 @@ void py_tomo_mhrwtasks(py::module rootmodule)
                            << py::repr(p.attr("mhrw_params")).cast<std::string>() << ">") ;
         })
       .def("__getstate__", [](py::object p) {
-          return py::make_tuple(p.attr("stats_collector_result"), p.attr("mhrw_params"), p.attr("acceptance_ratio"));
+          return py::make_tuple(p.attr("stats_results"), p.attr("mhrw_params"), p.attr("acceptance_ratio"));
         })
       .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl, tpy::ValueHistogramWithBinningMHRWStatsCollectorResult,
-                                                    tpy::MHRWParams, double>(p, t);
+          tpy::internal::unpack_tuple_and_construct<
+            Kl,
+            const tpy::ValueHistogramWithBinningMHRWStatsCollectorResult &,
+            tpy::MHRWParams,
+            double
+            >(p, t);
         })
       ;
   }

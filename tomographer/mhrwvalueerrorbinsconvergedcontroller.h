@@ -87,8 +87,8 @@ private:
 
   IterCountIntType last_forbidden_iter_number;
 
-  const std::size_t max_allowed_unknown_notisolated;
   const std::size_t max_allowed_unknown;
+  const std::size_t max_allowed_unknown_notisolated;
   const std::size_t max_allowed_not_converged;
 
   Logger::LocalLogger<BaseLoggerType> llogger;
@@ -98,15 +98,15 @@ public:
       const ValueHistogramWithBinningMHRWStatsCollectorType & value_stats_collector_,
       BaseLoggerType & baselogger_,
       int check_frequency_sweeps_ = 1024,
-      std::size_t max_allowed_unknown_notisolated_ = 0,
       std::size_t max_allowed_unknown_ = 0,
+      std::size_t max_allowed_unknown_notisolated_ = 0,
       std::size_t max_allowed_not_converged_ = 0
       )
     : value_stats_collector(value_stats_collector_),
       check_frequency_sweeps(check_frequency_sweeps_),
       last_forbidden_iter_number(0),
-      max_allowed_unknown_notisolated(max_allowed_unknown_notisolated_),
       max_allowed_unknown(max_allowed_unknown_),
+      max_allowed_unknown_notisolated(max_allowed_unknown_notisolated_),
       max_allowed_not_converged(max_allowed_not_converged_),
       llogger("Tomographer::MHRWValueErrorBinsConvergedAdjuster", baselogger_)
   {
@@ -129,6 +129,13 @@ public:
   bool allowDoneRuns(const MHRWParamsType & params, const MHWalker & /*mhwalker*/,
                      IterCountIntType iter_k, const MHRandomWalkType & /*mhrw*/)
   {
+
+    if (max_allowed_not_converged == std::numeric_limits<std::size_t>::max()) {
+      // controller is manually disabled by allowing the maximum number of not converged
+      // error bars -- so don't bother
+      return true;
+    }
+
     auto logger = llogger.subLogger(TOMO_ORIGIN);
 
     if (last_forbidden_iter_number > 0 &&
@@ -184,8 +191,8 @@ mkMHRWValueErrorBinsConvergedController(
     const ValueHistogramWithBinningMHRWStatsCollectorType_ & value_stats_collector_,
     BaseLoggerType_ & baselogger_,
     int check_frequency_sweeps_ = 1024,
-    std::size_t max_allowed_unknown_notisolated_ = 0,
     std::size_t max_allowed_unknown_ = 0,
+    std::size_t max_allowed_unknown_notisolated_ = 0,
     std::size_t max_allowed_not_converged_ = 0
     )
 {
@@ -195,8 +202,8 @@ mkMHRWValueErrorBinsConvergedController(
                                                    value_stats_collector_,
                                                    baselogger_,
                                                    check_frequency_sweeps_,
-                                                   max_allowed_unknown_notisolated_,
                                                    max_allowed_unknown_,
+                                                   max_allowed_unknown_notisolated_,
                                                    max_allowed_not_converged_
                                                    ) ;
 }

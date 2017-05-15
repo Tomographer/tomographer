@@ -217,7 +217,7 @@ BOOST_AUTO_TEST_CASE(instantiate_2)
 
   typedef Tomographer::MHRandomWalk<Rng, TestLatticeMHRWGaussPeak<int>,
                                     Tomographer::TrivialMHRWStatsCollector,
-                                    Tomographer::MHWalkerParamsNoAdjuster,
+                                    Tomographer::MHRWNoController,
                                     Tomographer::Logger::BoostTestLogger, int>  MHRandomWalkType;
 
   Tomographer::TrivialMHRWStatsCollector stats;
@@ -279,16 +279,15 @@ struct MyCData
   };
 
 
-  template<typename Rng, typename LoggerType>
-  inline MHRWTaskComponents<TestMHWalker2,TestMHRWStatsCollectorWithResult>
-  createMHRWTaskComponents(Rng & rng, LoggerType & logger) const
+  template<typename Rng, typename LoggerType, typename RunFn>
+  void setupRandomWalkAndRun(Rng & rng, LoggerType & logger, RunFn run) const
   {
-    logger.debug("MyCData::createMHRWTaskComponents", "()");
+    logger.debug("MyCData::setupRandomWalkAndRun", "()");
 
     TestMHWalker2 mhwalker(mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run, rng) ;
     TestMHRWStatsCollectorWithResult stats(mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run);
 
-    return mkMHRWTaskComponents(std::move(mhwalker), std::move(stats));
+    run(mhwalker, stats);
   }
 
 };

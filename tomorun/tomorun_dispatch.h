@@ -85,9 +85,9 @@ struct TomorunCData : public CDataBaseType_
 	   base_seed),
       llh(llh_),
       ctrl_moving_avg_samples(opt->control_step_size_moving_avg_samples),
-      ctrl_max_allowed_not_converged(opt->control_binning_converged_max_not_converged),
       ctrl_max_allowed_unknown(opt->control_binning_converged_max_unknown),
       ctrl_max_allowed_unknown_notisolated(opt->control_binning_converged_max_unknown_notisolated)
+      ctrl_max_allowed_not_converged(opt->control_binning_converged_max_not_converged),
   {
   }
 
@@ -101,18 +101,18 @@ struct TomorunCData : public CDataBaseType_
 	   base_seed),
       llh(llh_),
       ctrl_moving_avg_samples(opt->control_step_size_moving_avg_samples),
-      ctrl_max_allowed_not_converged(opt->control_binning_converged_max_not_converged),
       ctrl_max_allowed_unknown(opt->control_binning_converged_max_unknown),
       ctrl_max_allowed_unknown_notisolated(opt->control_binning_converged_max_unknown_notisolated)
+      ctrl_max_allowed_not_converged(opt->control_binning_converged_max_not_converged),
   {
   }
 
   const DenseLLH llh;
 
   const int ctrl_moving_avg_samples;
-  const std::size_t ctrl_max_allowed_not_converged;
   const std::size_t ctrl_max_allowed_unknown;
   const std::size_t ctrl_max_allowed_unknown_notisolated;
+  const std::size_t ctrl_max_allowed_not_converged;
 
 
   template<typename Rng, typename LoggerType, typename RunFn,
@@ -173,8 +173,8 @@ struct TomorunCData : public CDataBaseType_
     auto ctrl_convergence = 
       Tomographer::mkMHRWValueErrorBinsConvergedController(
           value_stats, logger, 1024,
-          ctrl_max_allowed_unknown_notisolated,
           ctrl_max_allowed_unknown,
+          ctrl_max_allowed_unknown_notisolated,
           ctrl_max_allowed_not_converged
           );
 
@@ -208,8 +208,8 @@ struct TomorunCData : public CDataBaseType_
     auto ctrl_convergence = 
       Tomographer::mkMHRWValueErrorBinsConvergedController(
           value_stats, logger, 1024,
-          ctrl_max_allowed_unknown_notisolated,
           ctrl_max_allowed_unknown,
+          ctrl_max_allowed_unknown_notisolated,
           ctrl_max_allowed_not_converged
           );
     // combined to a:

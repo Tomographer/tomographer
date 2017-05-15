@@ -32,18 +32,19 @@
 #include <stdexcept>
 #include <limits>
 
-
 #include <tomographer/tools/loggers.h>
 #include <tomographer/densedm/dmtypes.h>
 #include <tomographer/densedm/indepmeasllh.h>
 #include <tomographer/densedm/tspacellhwalker.h>
 #include <tomographer/densedm/tspacefigofmerit.h>
 #include <tomographer/mhrw.h>
+#include <tomographer/mhrwstepsizecontroller.h>
+#include <tomographer/mhrwvalueerrorbinsconvergedcontroller.h>
 #include <tomographer/mhrwtasks.h>
-#include <tomographer/mhrw_valuehist_tasks.h>
+#include <tomographer/mhrw_valuehist_tools.h>
 #include <tomographer/multiprocthreads.h>
 #include <tomographer/valuecalculator.h>
-#include <tomographer/tools/signal_status_report.h>
+//#include <tomographer/tools/signal_status_report.h>
 #include <tomographer/mathtools/pos_semidef_util.h>
 
 
@@ -122,10 +123,10 @@ typedef Tomographer::MultiplexorValueCalculator<
 
 //
 // We need to define a class which adds the capacity of creating the "master" random walk
-// object to the engine in Tomographer::MHRWTasks::ValueHistogramTasks, which take care of
+// object to the engine in Tomographer::MHRWTasks::ValueHistogramTools, which take care of
 // running the random walks etc. as needed.
 //
-struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<
+struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   ValueCalculator, // our value calculator
   true, // use binning analysis
   Tomographer::MHWalkerParamsStepSize<RealType>, // MHWalkerParams
@@ -134,38 +135,156 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTasks::CDataBase<
   CountIntType // HistCountIntType
   >
 {
-  typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<RealType>, CountIntType> CxxMHRWParamsType;
+  typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<RealType>, CountIntType>
+    CxxMHRWParamsType;
+
+private:
+  template<typename T>
+  RealType dict_item_gil(py::object o, const char * key) const
+  {
+    py::gil_scoped_acquire gilacquire;
+    return o[key].template cast<T>();
+  }
+  template<typename T>
+  RealType dict_item_gil(py::object o, const char * key, T dfltval) const
+  {
+    py::gil_scoped_acquire gilacquire;
+    return o.attr("get")(key, dfltval).template cast<T>();
+  }
+public:
 
   OurCData(const DenseLLH & llh_, // data from the the tomography experiment
 	   ValueCalculator valcalc, // the figure-of-merit calculator
 	   HistogramParams hist_params, // histogram parameters
 	   int binning_num_levels, // number of binning levels in the binning analysis
 	   tpy::MHRWParams mhrw_params, // parameters of the random walk
-	   int base_seed) // a random seed to initialize the random number generator
-    : CDataBase<ValueCalculator,true>(valcalc, hist_params, binning_num_levels,
-                                      CxxMHRWParamsType(mhrw_params.mhwalker_params["step_size"].cast<RealType>(),
-                                                        mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run),
-                                      base_seed),
-      llh(llh_)
+	   int base_seed, // a random seed to initialize the random number generator
+           py::dict ctrl_step_size_params_, // parameters for step size controller
+           py::dict ctrl_converged_params_ // parameters for value bins converged controller
+      )
+    : CDataBase<ValueCalculator,true>(
+        valcalc, hist_params, binning_num_levels,
+        CxxMHRWParamsType(dict_item_gil<RealType>(mhrw_params.mhwalker_params, "step_size"),
+                          mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run),
+        base_seed),
+      llh(llh_),
+      ctrl_step_size_params(ctrl_step_size_params_),
+      ctrl_converged_params(ctrl_converged_params_)
   {
   }
 
   const DenseLLH llh;
 
+  const py::dict ctrl_step_size_params;
+  const py::dict ctrl_converged_params;
+
+
+  // the value result is always the first of a tuple
+  struct MHRWStatsResultsType : public MHRWStatsResultsBaseType
+  {
+    template<typename... Types>
+    MHRWStatsResultsType(std::tuple<ValueStatsCollectorResultType, Types...> && r)
+      : MHRWStatsResultsBaseType(std::move(std::get<0>(r)))
+    { }
+  };
+
+
   //
   // This function is called automatically by the task manager/dispatcher.  It should
   // return a LLHMHWalker object which controls the random walk.
   //
-  template<typename Rng, typename LoggerType>
-  inline Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType>
-  createMHWalker(Rng & rng, LoggerType & logger) const
+  template<typename Rng, typename LoggerType, typename RunFn>
+  inline void
+  setupRandomWalkAndRun(Rng & rng, LoggerType & logger, RunFn run) const
   {
-    return Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType>(
+    Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType> mhwalker(
 	llh.dmt.initMatrixType(),
 	llh,
 	rng,
 	logger
 	);
+    auto value_stats = createValueStatsCollector(logger);
+
+    int mvavg_numsamples = 1024;
+    double ar_params[4] = {0};
+    double ensure_n_therm_fixed_params_fraction = 0;
+    {
+      py::gil_scoped_acquire gil_acq;
+      if (ctrl_step_size_params.attr("get")("enabled", true)) {
+        mvavg_numsamples = ctrl_step_size_params.attr("get")("num_samples", 2048).cast<int>();
+        ar_params[0] = ctrl_step_size_params.attr("get")(
+            "desired_accept_ratio_min",
+            Tomographer::MHRWStepSizeControllerDefaults::DesiredAcceptanceRatioMin
+            ).cast<double>();
+        ar_params[1] = ctrl_step_size_params.attr("get")(
+            "desired_accept_ratio_max",
+            Tomographer::MHRWStepSizeControllerDefaults::DesiredAcceptanceRatioMax
+            ).cast<double>();
+        ar_params[2] = ctrl_step_size_params.attr("get")(
+            "acceptable_accept_ratio_min",
+            Tomographer::MHRWStepSizeControllerDefaults::AcceptableAcceptanceRatioMin
+            ).cast<double>();
+        ar_params[3] = ctrl_step_size_params.attr("get")(
+            "acceptable_accept_ratio_max",
+            Tomographer::MHRWStepSizeControllerDefaults::AcceptableAcceptanceRatioMax
+            ).cast<double>();
+        ensure_n_therm_fixed_params_fraction = ctrl_step_size_params.attr("get")(
+            "ensure_n_therm_fixed_params_fraction",
+            Tomographer::MHRWStepSizeControllerDefaults::EnsureNThermFixedParamsFraction
+            ).cast<double>();
+      } else {
+        ar_params[0] = 0;
+        ar_params[1] = 1;
+        ar_params[2] = 0;
+        ar_params[3] = 1;
+        ensure_n_therm_fixed_params_fraction = 0;
+      }
+    }
+
+    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<>
+      movavg_accept_stats(mvavg_numsamples);
+
+    auto ctrl_step = 
+      Tomographer::mkMHRWStepSizeController<MHRWParamsType>(
+          movavg_accept_stats, logger,
+          ar_params[0],
+          ar_params[1],
+          ar_params[2],
+          ar_params[3],
+          ensure_n_therm_fixed_params_fraction
+          );
+
+    std::size_t max_allowed[3] = {0};
+    {
+      py::gil_scoped_acquire gil_acq;
+      if (ctrl_converged_params.attr("get")("enabled", true)) {
+        max_allowed[0] =
+          ctrl_converged_params.attr("get")("max_allowed_unknown", 2).cast<std::size_t>();
+        max_allowed[1] =
+          ctrl_converged_params.attr("get")("max_allowed_unknown_notisolated", 0).cast<std::size_t>();
+        max_allowed[2] =
+          ctrl_converged_params.attr("get")("max_allowed_not_converged", 0).cast<std::size_t>();
+      } else {
+        max_allowed[0] = std::numeric_limits<std::size_t>::max();
+        max_allowed[1] = std::numeric_limits<std::size_t>::max();
+        max_allowed[2] = std::numeric_limits<std::size_t>::max();
+      }
+    }
+
+    // value error bins convergence controller
+    auto ctrl_convergence = 
+      Tomographer::mkMHRWValueErrorBinsConvergedController(
+          value_stats, logger,
+          dict_item_gil<int>(ctrl_converged_params, "check_frequency_sweeps", 1024),
+          max_allowed[0], max_allowed[1], max_allowed[2]
+          );
+    // combined to a:
+    auto ctrl_combined =
+      Tomographer::mkMHRWMultipleControllers(ctrl_step, ctrl_convergence);
+
+    auto stats = mkMultipleMHRWStatsCollectors(value_stats, movavg_accept_stats);
+
+    run(mhwalker, stats, ctrl_combined);
   }
 
 };
@@ -194,7 +313,9 @@ py::object py_tomorun(
     int binning_num_levels,
     int num_repeats,
     py::object progress_fn,
-    int progress_interval_ms
+    int progress_interval_ms,
+    py::dict ctrl_step_size_params,
+    py::dict ctrl_converged_params
     )
 {
   Tomographer::Logger::LocalLogger<PyLogger> logger(TOMO_ORIGIN, *tpy::logger);
@@ -215,7 +336,8 @@ py::object py_tomorun(
     // use Exn
     if (Exn.rows() != Nm.rows()) {
       throw TomorunInvalidInputError("Mismatch in number of measurements: Exn.rows()="
-                                     + std::to_string(Exn.rows()) + " but Nm.rows()=" + std::to_string(Nm.rows()));
+                                     + std::to_string(Exn.rows()) + " but Nm.rows()="
+                                     + std::to_string(Nm.rows()));
     }
     for (std::size_t k = 0; k < (std::size_t)Nm.rows(); ++k) {
       llh.addMeasEffect(Exn.row(k).transpose(), Nm(k), true);
@@ -233,7 +355,8 @@ py::object py_tomorun(
     }
   } else {
     // no measurements specified
-    throw TomorunInvalidInputError("No measurements specified. Please specify either the `Exn' or the `Emn' argument");
+    throw TomorunInvalidInputError("No measurements specified. Please specify either the `Exn' "
+                                   "or the `Emn' argument");
   }
 
   logger.debug([&](std::ostream & ss) {
@@ -267,7 +390,10 @@ py::object py_tomorun(
     MatrixType U = eig.eigenvectors();
     RealVectorType d = eig.eigenvalues();
   
-    Tomographer::MathTools::forcePosVecKeepSum<RealVectorType>(d, Eigen::NumTraits<RealType>::dummy_precision());
+    Tomographer::MathTools::forcePosVecKeepSum<RealVectorType>(
+        d,
+        Eigen::NumTraits<RealType>::dummy_precision()
+        );
   
     // TODO: ensure that something was given
 
@@ -284,7 +410,8 @@ py::object py_tomorun(
     // custom callable
 
   } else {
-    throw TomorunInvalidInputError(std::string("Invalid figure of merit: ")+py::repr(fig_of_merit).cast<std::string>());
+    throw TomorunInvalidInputError(std::string("Invalid figure of merit: ") +
+                                   py::repr(fig_of_merit).cast<std::string>());
   }
 
   ValueCalculator valcalc(
@@ -294,7 +421,8 @@ py::object py_tomorun(
         (fig_of_merit_s == "tr-dist" ? 2 :
          (fig_of_merit_s == "obs-value" ? 3 :
           (fig_of_merit_callable ? 4 :
-           throw TomorunInvalidInputError(std::string("Invalid valtype: ") + py::repr(fig_of_merit).cast<std::string>())
+           throw TomorunInvalidInputError(std::string("Invalid valtype: ")
+                                          + py::repr(fig_of_merit).cast<std::string>())
               ))))),
         // the valuecalculator instances which are available:
         Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, RealType>(T_ref),
@@ -309,10 +437,9 @@ py::object py_tomorun(
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>  OurMHRandomWalkTask;
 
-  typedef typename OurCData::ResultsCollectorType<PyLogger>::Type OurResultsCollector;
-
   // seed for random number generator
-  auto base_seed = std::chrono::system_clock::now().time_since_epoch().count();
+  std::mt19937::result_type base_seed =
+    (std::mt19937::result_type)std::chrono::system_clock::now().time_since_epoch().count();
 
   if (binning_num_levels <= 0) {
     // choose automatically. Make sure that the last level has ~128 samples to calculate std deviation.
@@ -320,9 +447,7 @@ py::object py_tomorun(
   }
 
   OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params,
-                    (int)(base_seed % std::numeric_limits<int>::max()));
-
-  OurResultsCollector results(logger.parentLogger());
+                    base_seed, ctrl_step_size_params, ctrl_converged_params);
 
   typedef
 #if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
@@ -338,19 +463,18 @@ py::object py_tomorun(
              << std::this_thread::get_id();
     }) ;
 
+  Tomographer::MultiProc::CxxThreads::TaskDispatcher<OurMHRandomWalkTask,OurCData,PyLogger>
+    tasks(
+        &taskcdat, // constant data
+        logger.parentLogger(), // the main logger object
+        num_repeats // num_runs
+        );
+
+  setTasksStatusReportPyCallback(tasks, progress_fn, progress_interval_ms, true /* GIL */);
+
   {
     py::gil_scoped_release gil_release;
     auto tmp_pylogger_gil_ = tpy::logger->pushRequireGilAcquisition();
-
-    Tomographer::MultiProc::CxxThreads::TaskDispatcher<OurMHRandomWalkTask,OurCData,OurResultsCollector,PyLogger>
-      tasks(
-          &taskcdat, // constant data
-          &results, // results collector
-          logger.parentLogger(), // the main logger object
-          num_repeats // num_runs
-          );
-
-    setTasksStatusReportPyCallback(tasks, progress_fn, progress_interval_ms, true /* GIL */);
 
     // and run our tomo process
 
@@ -390,20 +514,28 @@ py::object py_tomorun(
   // delta-time, in seconds and fraction of seconds
   std::string elapsed_s = Tomographer::Tools::fmtDuration(time_end - time_start);
 
+
+  // individual results from each task
+  const auto & task_results = tasks.collectedTaskResults();
+
+  // ... aggregated into a full averaged histogram
+  auto aggregated_histogram = taskcdat.aggregateResultHistograms(task_results) ;
+
+
   py::dict res;
 
-  res["final_histogram"] = results.finalHistogram();
-  res["simple_final_histogram"] = results.simpleFinalHistogram();
+  res["final_histogram"] = aggregated_histogram.final_histogram;
+  res["simple_final_histogram"] = aggregated_histogram.simple_final_histogram;;
   res["elapsed_seconds"] = 1.0e-6 * std::chrono::duration_cast<std::chrono::microseconds>(
       time_end - time_start
       ).count();
 
   py::list runs_results;
-  for (std::size_t k = 0; k < results.numTasks(); ++k) {
-    const auto & run_result = *results.collectedRunTaskResult(k);
+  for (std::size_t k = 0; k < task_results.size(); ++k) {
+    const auto & run_result = *task_results[k];
     runs_results.append(
         tpy::MHRandomWalkValueHistogramTaskResult(
-            run_result.stats_collector_result,
+            run_result.stats_results,
             tpy::MHRWParams(py::dict("step_size"_a=run_result.mhrw_params.mhwalker_params.step_size),
                             run_result.mhrw_params.n_sweep,
                             run_result.mhrw_params.n_therm,
@@ -416,14 +548,26 @@ py::object py_tomorun(
   // full final report
   std::string final_report;
   { std::ostringstream ss;
-    results.printFinalReport(ss, taskcdat);
+    Tomographer::MHRWTasks::ValueHistogramTools::printFinalReport(
+        ss, // where to output
+        taskcdat, // the cdata
+        task_results, // the results
+        aggregated_histogram // aggregated
+        );
     final_report = ss.str();
     res["final_report"] = final_report;
   }
 
   // final report of runs only
   { std::ostringstream ss;
-    results.printFinalReport(ss, taskcdat, 0, false);
+    Tomographer::MHRWTasks::ValueHistogramTools::printFinalReport(
+        ss, // where to output
+        taskcdat, // the cdata
+        task_results, // the results
+        aggregated_histogram, // aggregated
+        0, // width -- use default
+        false // don't print the histogram
+        );
     res["final_report_runs"] = ss.str();
   }
 
@@ -474,6 +618,8 @@ void py_tomo_tomorun(py::module rootmodule)
       "num_repeats"_a = std::thread::hardware_concurrency(),
       "progress_fn"_a = py::none(),
       "progress_interval_ms"_a = (int)500,
+      "ctrl_step_size_params"_a = py::dict(),
+      "ctrl_converged_params"_a = py::dict(),
       // doc
       ( "tomorun(dim, ...)\n\n"
         "\n\n"
@@ -518,7 +664,19 @@ void py_tomo_tomorun(py::module rootmodule)
         "            a single argument of type :py:class:`tomographer.multiproc.FullStatusReport`.  Check\n"
         "            out :py:class:`tomographer.jpyutil.RandWalkProgressBar` if you are using a\n"
         "            Jupyter notebook.  See below for more information on status progress reporting.\n"
-        ":param progress_interval_ms: The approximate time interval in milliseconds between two progress reports.\n"
+        ":param progress_interval_ms: The approximate time interval in milliseconds between two progress\n"
+        "            reports.\n"
+        ":param ctrl_step_size_params: A dictionary to set up the controller which dynamically adjusts\n"
+        "            the step size of the random walk during the thermalization runs. The possible keys\n"
+        "            are: 'enabled' (set to 'True' or 'False'), 'desired_accept_ratio_min',\n"
+        "            'desired_accept_ratio_max',\n"
+        "            'acceptable_accept_ratio_min', 'acceptable_accept_ratio_max', and\n"
+        "            'ensure_n_therm_fixed_params_fraction' (see ........ corresponding C++ doc)\n"
+        ":param ctrl_converged_params: A dictionary to set up the controller which dynamically keeps\n"
+        "            the random walk running while the error bars from binning haven't converged as\n"
+        "            required. The possible keys are: 'enabled' (set to 'True' or 'False'),\n"
+        "            'max_allowed_unknown', 'max_allowed_unknown_notisolated',\n"
+        "            'max_allowed_not_converged' and 'check_frequency_sweeps' (see ........... corresponding C++ class doc)\n"
         "\n\n"
         ".. rubric:: Figures of merit"
         "\n\n"

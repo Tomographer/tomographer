@@ -49,8 +49,8 @@ BOOST_AUTO_TEST_CASE(mhrandomwalksetup)
   typedef std::mt19937 Rng;
   Rng rng(3040); // fixed seed
 
-  typedef Tomographer::MHRandomWalk<Rng, TestMHWalker, TestMHRWStatsCollector, Tomographer::MHWalkerParamsNoAdjuster,
-                                    LoggerType, int>
+  typedef Tomographer::MHRandomWalk<Rng, TestMHWalker, TestMHRWStatsCollector,
+                                    Tomographer::MHRWNoController, LoggerType, int>
     MHRandomWalkType;
 
   const int ntherm = 50;
@@ -62,7 +62,8 @@ BOOST_AUTO_TEST_CASE(mhrandomwalksetup)
 
   TestMHWalker mhwalker(nsweep, ntherm, nrun, rng2);
   TestMHRWStatsCollector stats(nsweep, ntherm, nrun);
-  MHRandomWalkType rw(Tomographer::MHRWParams<StepSizeType,int>(2, nsweep, ntherm, nrun), mhwalker, stats, rng, logger);
+  MHRandomWalkType rw(Tomographer::MHRWParams<StepSizeType,int>(2, nsweep, ntherm, nrun),
+                      mhwalker, stats, rng, logger);
 
   BOOST_CHECK_EQUAL(rw.nSweep(), nsweep);
   BOOST_CHECK_EQUAL(rw.nTherm(), ntherm);
@@ -82,7 +83,7 @@ BOOST_AUTO_TEST_CASE(mhrandomwalk)
   // rng for the random walk engine itself
   Rng rng(3040); // fixed seed
 
-  typedef Tomographer::MHRandomWalk<Rng, TestMHWalker, TestMHRWStatsCollector, Tomographer::MHWalkerParamsNoAdjuster,
+  typedef Tomographer::MHRandomWalk<Rng, TestMHWalker, TestMHRWStatsCollector, Tomographer::MHRWNoController,
                                     LoggerType, int>
     MHRandomWalkType;
 

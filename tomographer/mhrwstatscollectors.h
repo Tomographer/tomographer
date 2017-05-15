@@ -596,13 +596,24 @@ TOMOGRAPHER_EXPORT struct ValueHistogramWithBinningMHRWStatsCollectorResult
   ValueHistogramWithBinningMHRWStatsCollectorResult(ValueHistogramWithBinningMHRWStatsCollectorResult &&)
       = default;
 
+  // can be copied
+  ValueHistogramWithBinningMHRWStatsCollectorResult(
+      const ValueHistogramWithBinningMHRWStatsCollectorResult & copy
+      )
+    : histogram(HistogramType::copy(copy.histogram)),
+      error_levels(copy.error_levels),
+      converged_status(copy.converged_status)
+  {
+  }
 
   //! Simple constructor with direct initialization of fields
   template<typename EigenDerived1, typename EigenDerived2>
   ValueHistogramWithBinningMHRWStatsCollectorResult(const HistogramType & histogram_,
                                                     const Eigen::DenseBase<EigenDerived1> & error_levels_,
                                                     const Eigen::DenseBase<EigenDerived2> & converged_status_)
-    : histogram(histogram_), error_levels(error_levels_), converged_status(converged_status_)
+    : histogram(HistogramType::copy(histogram_)),
+      error_levels(error_levels_),
+      converged_status(converged_status_)
   {
   }
 

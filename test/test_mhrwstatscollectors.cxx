@@ -465,7 +465,7 @@ BOOST_FIXTURE_TEST_CASE(simple, TestStatsCollectorFixture)
   BOOST_CHECK_EQUAL( statcoll.histogram().bins(2) ,  10); // [2,3[
   BOOST_CHECK_EQUAL( statcoll.histogram().bins(3) ,  0) ; // [3,4[
   // check the histogram with error bars
-  const auto & fhist = statcoll.getResult().hist;
+  const auto & fhist = statcoll.getResult().histogram;
   BOOST_MESSAGE("The full histogram is:\n" << fhist.prettyPrint()) ;
   MY_BOOST_CHECK_FLOATS_EQUAL( fhist.bins(0) ,  1 / 16.0 , tol );
   MY_BOOST_CHECK_FLOATS_EQUAL( fhist.bins(1) ,  5 / 16.0 , tol );
@@ -497,11 +497,12 @@ BOOST_FIXTURE_TEST_CASE(simple, TestStatsCollectorFixture)
 
 BOOST_AUTO_TEST_CASE(convergence_summary)
 {
-  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<MyMinimalistValueCalculator> VHWBParams;
+  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<MyMinimalistValueCalculator>
+    VHWBParams;
 
-  const auto CONVERGED = VHWBParams::BinningAnalysisParamsType::CONVERGED;
-  const auto UNKNOWN_CONVERGENCE = VHWBParams::BinningAnalysisParamsType::UNKNOWN_CONVERGENCE;
-  const auto NOT_CONVERGED = VHWBParams::BinningAnalysisParamsType::NOT_CONVERGED;
+  const auto CONVERGED = Tomographer::BINNING_CONVERGED;
+  const auto UNKNOWN_CONVERGENCE = Tomographer::BINNING_UNKNOWN_CONVERGENCE;
+  const auto NOT_CONVERGED = Tomographer::BINNING_NOT_CONVERGED;
 
   // some artificial converged_status vector
   VHWBParams::Result r;
@@ -525,7 +526,7 @@ BOOST_AUTO_TEST_CASE(convergence_summary)
     UNKNOWN_CONVERGENCE ;
 
   // Summary of convergence status
-  VHWBParams::Result::ErrorBarConvergenceSummary summary = r.errorBarConvergenceSummary();
+  Tomographer::BinningErrorBarConvergenceSummary summary = r.errorBarConvergenceSummary();
   BOOST_MESSAGE( "summary of error bar convergence:  " << summary.n_converged << " converged / "
                  << summary.n_unknown << " maybe (" << summary.n_unknown_isolated << " isolated) / "
                  << summary.n_not_converged << " not converged" );

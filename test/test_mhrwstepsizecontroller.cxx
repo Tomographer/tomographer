@@ -37,7 +37,7 @@
 // <Eigen/...> or <tomographer/...> header
 #include "test_tomographer.h"
 
-#include <tomographer/mhrwstepsizeadjuster.h>
+#include <tomographer/mhrwstepsizecontroller.h>
 
 
 

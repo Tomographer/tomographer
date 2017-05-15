@@ -266,8 +266,9 @@ public:
   //! Forbid expensive copies by default, use explicit \ref copy() if you need this
   Histogram(const Histogram & ) = delete;
 
-  //! copy another histogram type
-  template<typename HistogramType,// and enforce it's indeed a histogram type by testing its 'HasErrorBars' property:
+  //! explicitly copy another histogram type
+  template<typename HistogramType,// and enforce it's indeed a histogram type by testing
+                                  // its 'HasErrorBars' property:
            TOMOGRAPHER_ENABLED_IF_TMPL(HistogramType::HasErrorBars == 0 ||
                                        HistogramType::HasErrorBars == 1)>
   static Histogram copy(const HistogramType & other)
@@ -576,6 +577,18 @@ public:
     : Base_(std::move(x)),
       delta(std::move(x.delta))
   {
+  }
+
+  //! explicitly copy another histogram type
+  template<typename HistogramType,
+           TOMOGRAPHER_ENABLED_IF_TMPL(HistogramType::HasErrorBars == 1)>
+  static HistogramWithErrorBars copy(const HistogramType & other)
+  {
+    HistogramWithErrorBars h(other.params);
+    h.bins = other.bins.template cast<CountType>();
+    h.delta = other.delta.template cast<CountType>();
+    h.off_chart = other.off_chart;
+    return h;
   }
 
   /** \brief Resets the histogram to zero counts everywhere, and zero error bars.

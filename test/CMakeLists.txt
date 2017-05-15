@@ -181,7 +181,7 @@ addTomographerTest(test_mhrwvalueerrorbinsconvergedcontroller.cxx  "")
 addTomographerTest(test_mhrwtasks.cxx  "")
 addTomographerTest(test_valuecalculator.cxx  "")
 addTomographerTest(test_mhrw_bin_err.cxx  "")
-addTomographerTest(test_mhrw_valuehist_tasks.cxx  "") # DELETE THIS
+#addTomographerTest(test_mhrw_valuehist_tasks.cxx  "") # DELETE THIS
 addTomographerTest(test_mhrw_valuehist_tools.cxx  "")
 addTomographerTest(test_multiprocthreads.cxx  "cxxthreads")
 addTomographerTest(test_multiproc.cxx  "openmp") # openmp needed for testing the status report feature
