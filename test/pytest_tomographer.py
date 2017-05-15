@@ -42,15 +42,15 @@ class BasicStuff(unittest.TestCase):
         # test that the C++ code is able to raise an exception
         with self.assertRaises(TypeError):
             # wrong array shape & dimensions -- causes a pybind11 type conversion exception
-            tomographer.UniformBinsHistogram().load(np.array([ [1, 2], [3, 4] ]))
+            tomographer.Histogram().load(np.array([ [1, 2], [3, 4] ]))
 
 
 
 
 class Histograms(unittest.TestCase):
-    def test_UniformBinsHistogramParams(self):
+    def test_HistogramParams(self):
         # constructors
-        params = tomographer.UniformBinsHistogramParams(2.0, 3.0, 5)
+        params = tomographer.HistogramParams(2.0, 3.0, 5)
         self.assertAlmostEqual(params.min, 2.0)
         self.assertAlmostEqual(params.max, 3.0)
         self.assertEqual(params.num_bins, 5)
@@ -58,10 +58,10 @@ class Histograms(unittest.TestCase):
         npt.assert_array_almost_equal(params.values_upper, np.array([2.2, 2.4, 2.6, 2.8, 3.0]))
         npt.assert_array_almost_equal(params.values_center, np.array([2.1, 2.3, 2.5, 2.7, 2.9]))
         # default constructor
-        paramsdflt = tomographer.UniformBinsHistogramParams()
+        paramsdflt = tomographer.HistogramParams()
         self.assertTrue(paramsdflt.min < paramsdflt.max and paramsdflt.num_bins > 0)
         # w/ keyword arguments
-        params = tomographer.UniformBinsHistogramParams(min=2.0, max=3.0, num_bins=5)
+        params = tomographer.HistogramParams(min=2.0, max=3.0, num_bins=5)
         self.assertAlmostEqual(params.min, 2.0)
         self.assertAlmostEqual(params.max, 3.0)
         self.assertEqual(params.num_bins, 5)
@@ -95,16 +95,16 @@ class Histograms(unittest.TestCase):
         self.assertFalse(params.isWithinBounds(1.99))
 
         # repr()
-        self.assertEqual(repr(params), 'UniformBinsHistogramParams(min=2,max=3,num_bins=5)')
+        self.assertEqual(repr(params), 'HistogramParams(min=2,max=3,num_bins=5)')
         
-    def test_UniformBinsHistogram(self):
-        self.do_test_hist(tomographer.UniformBinsHistogram, int, False)
+    def test_Histogram(self):
+        self.do_test_hist(tomographer.Histogram, int, False)
 
-    def test_UniformBinsRealHistogram(self):
-        self.do_test_hist(tomographer.UniformBinsRealHistogram, float, False)
+    def test_HistogramReal(self):
+        self.do_test_hist(tomographer.HistogramReal, float, False)
 
-    def test_UniformBinsHistogramWithErrorBars(self):
-        self.do_test_hist(tomographer.UniformBinsHistogramWithErrorBars, float, True)
+    def test_HistogramWithErrorBars(self):
+        self.do_test_hist(tomographer.HistogramWithErrorBars, float, True)
 
     def do_test_hist(self, HCl, cnttype, has_error_bars):
         print("do_test_hist()")
@@ -112,9 +112,9 @@ class Histograms(unittest.TestCase):
         self.assertAlmostEqual(HCl(2.0, 3.0, 5).params.min, 2.0)
         self.assertAlmostEqual(HCl(2.0, 3.0, 5).params.max, 3.0)
         self.assertEqual(HCl(2.0, 3.0, 5).params.num_bins, 5)
-        self.assertAlmostEqual(HCl(tomographer.UniformBinsHistogramParams(2.0, 3.0, 5)).params.min, 2.0)
-        self.assertAlmostEqual(HCl(tomographer.UniformBinsHistogramParams(2.0, 3.0, 5)).params.max, 3.0)
-        self.assertEqual(HCl(tomographer.UniformBinsHistogramParams(2.0, 3.0, 5)).params.num_bins, 5)
+        self.assertAlmostEqual(HCl(tomographer.HistogramParams(2.0, 3.0, 5)).params.min, 2.0)
+        self.assertAlmostEqual(HCl(tomographer.HistogramParams(2.0, 3.0, 5)).params.max, 3.0)
+        self.assertEqual(HCl(tomographer.HistogramParams(2.0, 3.0, 5)).params.num_bins, 5)
         h = HCl() # has default constructor
         print("Default histogram parameters: ", h.params.min, h.params.max, h.params.num_bins)
         # values_center, values_lower, values_upper
@@ -130,7 +130,7 @@ class Histograms(unittest.TestCase):
         npt.assert_array_almost_equal(h.bins, np.array([0,0,0,0,0]))
         self.assertAlmostEqual(h.off_chart, 0) # almost-equal in case cnttype=float
         if has_error_bars: npt.assert_array_almost_equal(h.delta, np.zeros(h.numBins()))
-        h = HCl(tomographer.UniformBinsHistogramParams(2.0, 3.0, 5))
+        h = HCl(tomographer.HistogramParams(2.0, 3.0, 5))
         npt.assert_array_almost_equal(h.bins, np.array([0,0,0,0,0]))
         self.assertAlmostEqual(h.off_chart, 0) # almost-equal in case cnttype=float
         if has_error_bars: npt.assert_array_almost_equal(h.delta, np.zeros(h.numBins()))
@@ -288,17 +288,17 @@ class Histograms(unittest.TestCase):
     def test_AveragedSimpleHistogram(self):
         self.do_test_hist(tomographer.AveragedSimpleHistogram, float, True)
         self.do_test_avghist(tomographer.AveragedSimpleHistogram,
-                             tomographer.UniformBinsHistogram, int, False)
+                             tomographer.Histogram, int, False)
 
     def test_AveragedSimpleRealHistogram(self):
         self.do_test_hist(tomographer.AveragedSimpleRealHistogram, float, True)
         self.do_test_avghist(tomographer.AveragedSimpleRealHistogram,
-                             tomographer.UniformBinsRealHistogram, float, False)
+                             tomographer.HistogramReal, float, False)
 
     def test_AveragedErrorBarHistogram(self):
         self.do_test_hist(tomographer.AveragedErrorBarHistogram, float, True)
         self.do_test_avghist(tomographer.AveragedErrorBarHistogram,
-                             tomographer.UniformBinsHistogramWithErrorBars, int, True)
+                             tomographer.HistogramWithErrorBars, int, True)
 
     def do_test_avghist(self, AvgHCl, BaseHCl, cnttyp, base_has_error_bars):
         #
@@ -307,7 +307,7 @@ class Histograms(unittest.TestCase):
         #
         print("do_test_avghist()")
 
-        param = tomographer.UniformBinsHistogramParams(0.0, 1.0, 4)
+        param = tomographer.HistogramParams(0.0, 1.0, 4)
 
         # constructor & histogram-related methods already tested in do_test_hist
 
@@ -362,7 +362,7 @@ class Histograms(unittest.TestCase):
         self.assertAlmostEqual(np.sum(avghist.bins) + avghist.off_chart, 150)
 
         # check for reset(param)
-        param2 = tomographer.UniformBinsHistogramParams(1.0, 2.0, 20)
+        param2 = tomographer.HistogramParams(1.0, 2.0, 20)
         avghist.reset(param2)
         self.assertEqual(avghist.num_histograms, 0)
         npt.assert_array_almost_equal(avghist.bins, np.zeros(20))

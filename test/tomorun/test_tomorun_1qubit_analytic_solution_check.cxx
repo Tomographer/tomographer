@@ -183,7 +183,7 @@ int main(int argc, char **argv)
             << "chi2 = " << sumwsqdiff << "\n"
             << "chi2_red = " << chi2_red << "\n\n";
 
-  if (chi2_red > 1.5) {
+  if (!std::isfinite(chi2_red) || chi2_red > 1.5) {
     std::cerr << "Error: !!! Fit doesn't seem good... !!!\n";
     return 1;
   }

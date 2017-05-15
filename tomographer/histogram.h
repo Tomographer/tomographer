@@ -263,8 +263,13 @@ public:
   {
   }
 
-  //! Forbid expensive copies by default, use explicit \ref copy() if you need this
-  Histogram(const Histogram & ) = delete;
+  //! Constructor: copy another histogram type
+  Histogram(const Histogram & x)
+    : params(x.params),
+      bins(x.bins),
+      off_chart(x.off_chart)
+  {
+  }
 
   //! explicitly copy another histogram type
   template<typename HistogramType,// and enforce it's indeed a histogram type by testing
@@ -579,6 +584,14 @@ public:
   {
   }
 
+  //! Constructor: copy another histogram type
+  HistogramWithErrorBars(const HistogramWithErrorBars & x)
+    : Base_(x),
+      delta(x.delta)
+  {
+  }
+
+
   //! explicitly copy another histogram type
   template<typename HistogramType,
            TOMOGRAPHER_ENABLED_IF_TMPL(HistogramType::HasErrorBars == 1)>
@@ -796,6 +809,18 @@ public:
     : Base_(min, max, num_bins), num_histograms(0)
   {
   }
+
+
+  AveragedHistogram(const AveragedHistogram& copy)
+    : Base_(copy), num_histograms(copy.num_histograms)
+  {
+  }
+  AveragedHistogram(AveragedHistogram && x)
+    : Base_(std::move(x)),
+      num_histograms(x.num_histograms)
+  {
+  }
+
 
   /** \brief Resets the data and sets new params.
    *

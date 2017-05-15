@@ -112,11 +112,15 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         "or whether the convergence status is unknown or couldn't be determined "
         " (:py:const:`BinningAnalysis.UNKNOWN_CONVERGENCE <tomographer.BinningAnalysis>`)."
         )
-      .def(py::init<const tpy::HistogramWithErrorBars&, tpy::RealMatrixType, Eigen::VectorXi>(),
+      .def(py::init<tpy::HistogramWithErrorBars, tpy::RealMatrixType, Eigen::VectorXi>(),
            "histogram"_a, "error_levels"_a, "converged_status"_a)
-      .def_readonly("histogram", & Kl::histogram )
-      .def_property_readonly("error_levels", [](const Kl & x) -> tpy::RealMatrixType { return x.error_levels; })
-      .def_property_readonly("converged_status", [](const Kl & x) -> Eigen::VectorXi { return x.converged_status; })
+      .def_readonly("histogram", & Kl::histogram)
+      .def_property_readonly("error_levels", [](const Kl & x) -> tpy::RealMatrixType {
+          return x.error_levels;
+        })
+      .def_property_readonly("converged_status", [](const Kl & x) -> Eigen::VectorXi {
+          return x.converged_status;
+        })
       // .def("__repr__", [](const Kl& p) {
       //     return streamstr("ValueHistogramWithBinningMHRWStatsCollectorResult("<<"..."<<")") ;
       //   })
@@ -125,7 +129,7 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         })
       .def("__setstate__", [](Kl & p, py::tuple t) {
           tpy::internal::unpack_tuple_and_construct<Kl,
-                                                    const tpy::HistogramWithErrorBars&,
+                                                    tpy::HistogramWithErrorBars,
                                                     tpy::RealMatrixType, Eigen::VectorXi>(p, t);
         })
       ;
@@ -166,7 +170,7 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         "instance.\n\n"
         ".. py:attribute:: acceptance_ratio\n\n"
         "    The average acceptance ratio of the random walk (excluding the thermalization sweeps).\n\n")
-      .def(py::init<const tpy::ValueHistogramWithBinningMHRWStatsCollectorResult&, tpy::MHRWParams, double>(),
+      .def(py::init<tpy::ValueHistogramWithBinningMHRWStatsCollectorResult, tpy::MHRWParams, double>(),
            "stats_results"_a, "mhrw_params"_a, "acceptance_ratio"_a)
       .def_readonly("stats_results", & Kl::stats_results )
       .def_readonly("mhrw_params", & Kl::mhrw_params )
@@ -181,7 +185,7 @@ void py_tomo_mhrwtasks(py::module rootmodule)
       .def("__setstate__", [](Kl & p, py::tuple t) {
           tpy::internal::unpack_tuple_and_construct<
             Kl,
-            const tpy::ValueHistogramWithBinningMHRWStatsCollectorResult &,
+            tpy::ValueHistogramWithBinningMHRWStatsCollectorResult,
             tpy::MHRWParams,
             double
             >(p, t);

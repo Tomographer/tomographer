@@ -400,7 +400,9 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
   //! The acceptance ratio of the Metropolis-Hastings random walk
   double acceptance_ratio;
 
+
   MHRandomWalkTaskResult(MHRandomWalkTaskResult && ) = default;
+  MHRandomWalkTaskResult(const MHRandomWalkTaskResult & ) = default;
 };
 
 

@@ -150,8 +150,9 @@ class analytical_known_example_tomorun(unittest.TestCase):
         for k in range(num_repeats):
             runres = r['runs_results'][k]
             # check that at most 25% of the error bars have not converged
-            self.assertGreater( (runres.stats_collector_result.converged_status == 
-                                 tomographer.BinningAnalysis.CONVERGED*np.ones([hist_params.num_bins], dtype=int)).sum(),
+            self.assertGreater( (runres.stats_results.converged_status == 
+                                 tomographer.BinningAnalysis.CONVERGED*np.ones([hist_params.num_bins],
+                                                                               dtype=int)).sum(),
                                 0.75*hist_params.num_bins )
 
 

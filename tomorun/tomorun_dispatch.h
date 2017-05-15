@@ -86,8 +86,8 @@ struct TomorunCData : public CDataBaseType_
       llh(llh_),
       ctrl_moving_avg_samples(opt->control_step_size_moving_avg_samples),
       ctrl_max_allowed_unknown(opt->control_binning_converged_max_unknown),
-      ctrl_max_allowed_unknown_notisolated(opt->control_binning_converged_max_unknown_notisolated)
-      ctrl_max_allowed_not_converged(opt->control_binning_converged_max_not_converged),
+      ctrl_max_allowed_unknown_notisolated(opt->control_binning_converged_max_unknown_notisolated),
+      ctrl_max_allowed_not_converged(opt->control_binning_converged_max_not_converged)
   {
   }
 
@@ -102,8 +102,8 @@ struct TomorunCData : public CDataBaseType_
       llh(llh_),
       ctrl_moving_avg_samples(opt->control_step_size_moving_avg_samples),
       ctrl_max_allowed_unknown(opt->control_binning_converged_max_unknown),
-      ctrl_max_allowed_unknown_notisolated(opt->control_binning_converged_max_unknown_notisolated)
-      ctrl_max_allowed_not_converged(opt->control_binning_converged_max_not_converged),
+      ctrl_max_allowed_unknown_notisolated(opt->control_binning_converged_max_unknown_notisolated),
+      ctrl_max_allowed_not_converged(opt->control_binning_converged_max_not_converged)
   {
   }
 

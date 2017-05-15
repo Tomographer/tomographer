@@ -540,7 +540,8 @@ py::object py_tomorun(
                             run_result.mhrw_params.n_sweep,
                             run_result.mhrw_params.n_therm,
                             run_result.mhrw_params.n_run),
-            run_result.acceptance_ratio)
+            run_result.acceptance_ratio
+            )
         );
   }
   res["runs_results"] = runs_results;

@@ -45,12 +45,14 @@ class MHRWTasksStuff(unittest.TestCase):
             binning_num_levels=binning_num_levels,
             mhrw_params=mhrw_params,
             hist_params=hist_params,
+            ctrl_step_size_params={'enable': False},
         )
 
         # check that all fields are there and display meaningful values
         
         runres = r['runs_results'][0]
-        self.assertAlmostEqual(runres.mhrw_params.mhwalker_params["step_size"], mhrw_params.mhwalker_params["step_size"])
+        self.assertAlmostEqual(runres.mhrw_params.mhwalker_params["step_size"],
+                               mhrw_params.mhwalker_params["step_size"])
         self.assertEqual(runres.mhrw_params.n_sweep, mhrw_params.n_sweep)
         self.assertEqual(runres.mhrw_params.n_therm, mhrw_params.n_therm)
         self.assertEqual(runres.mhrw_params.n_run, mhrw_params.n_run)
@@ -58,24 +60,24 @@ class MHRWTasksStuff(unittest.TestCase):
         self.assertGreater(runres.acceptance_ratio, 0.2)
         self.assertLess(runres.acceptance_ratio, 0.4)
 
-        stats_collector_result = runres.stats_collector_result
+        stats_results = runres.stats_results
 
-        self.assertEqual(stats_collector_result.hist.numBins(), hist_params.num_bins)
+        self.assertEqual(stats_results.histogram.numBins(), hist_params.num_bins)
 
-        npt.assert_array_equal(stats_collector_result.error_levels.shape,
+        npt.assert_array_equal(stats_results.error_levels.shape,
                                [hist_params.num_bins, binning_num_levels+1])
         # the last error level should be the reported error bar:
-        npt.assert_array_almost_equal(stats_collector_result.error_levels[:, binning_num_levels],
-                                      stats_collector_result.hist.delta)
+        npt.assert_array_almost_equal(stats_results.error_levels[:, binning_num_levels],
+                                      stats_results.histogram.delta)
 
-        for c in stats_collector_result.converged_status:
+        for c in stats_results.converged_status:
             self.assertIn(c, (tomographer.BinningAnalysis.CONVERGED,
                               tomographer.BinningAnalysis.NOT_CONVERGED,
                               tomographer.BinningAnalysis.UNKNOWN_CONVERGENCE) )
 
     def test_pickle(self):
         hist = tomographer.AveragedErrorBarHistogram(0, 1, 4)
-        stats_collector_result = tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult(
+        stats_results = tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult(
             hist,
             np.array([ [ 1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12] ]),
             np.array([tomographer.BinningAnalysis.CONVERGED,
@@ -83,7 +85,7 @@ class MHRWTasksStuff(unittest.TestCase):
                       tomographer.BinningAnalysis.UNKNOWN_CONVERGENCE])
         )
         mhrw_task_result = tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult(
-            stats_collector_result,
+            stats_results,
             tomographer.MHRWParams(0.03, 37, 400, 65538),
             0.27
         )
@@ -103,10 +105,10 @@ class MHRWTasksStuff(unittest.TestCase):
         self.assertEqual(m.mhrw_params.n_sweep, m2.mhrw_params.n_sweep)
         self.assertEqual(m.mhrw_params.n_therm, m2.mhrw_params.n_therm)
         self.assertEqual(m.mhrw_params.n_run, m2.mhrw_params.n_run)
-        npt.assert_array_almost_equal(m.stats_collector_result.hist.bins, m2.stats_collector_result.hist.bins)
-        npt.assert_array_almost_equal(m.stats_collector_result.hist.delta, m2.stats_collector_result.hist.delta)
-        npt.assert_array_almost_equal(m.stats_collector_result.error_levels, m2.stats_collector_result.error_levels)
-        npt.assert_array_equal(m.stats_collector_result.converged_status, m2.stats_collector_result.converged_status)
+        npt.assert_array_almost_equal(m.stats_results.histogram.bins, m2.stats_results.histogram.bins)
+        npt.assert_array_almost_equal(m.stats_results.histogram.delta, m2.stats_results.histogram.delta)
+        npt.assert_array_almost_equal(m.stats_results.error_levels, m2.stats_results.error_levels)
+        npt.assert_array_equal(m.stats_results.converged_status, m2.stats_results.converged_status)
 
 #
 
