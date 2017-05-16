@@ -139,20 +139,10 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
     CxxMHRWParamsType;
 
 private:
-  template<typename T>
-  RealType dict_item_gil(py::object o, const char * key) const
-  {
-    py::gil_scoped_acquire gilacquire;
-    return o[key].template cast<T>();
-  }
-  template<typename T>
-  RealType dict_item_gil(py::object o, const char * key, T dfltval) const
-  {
-    py::gil_scoped_acquire gilacquire;
-    return o.attr("get")(key, dfltval).template cast<T>();
-  }
-  Tomographer::MHWalkerParamsStepSize<RealType> get_step_size(py::object mhwalker_params) {
-    py::gil_scoped_acquire gilacquire;
+  Tomographer::MHWalkerParamsStepSize<RealType> _get_step_size(py::object mhwalker_params) {
+    // py::gil_scoped_acquire gilacquire; -- DON'T ACQUIRE GIL BECAUSE IN OurCData
+    // CONSTRUCTOR THE GIL HASN'T BEEN RELEASED YET!
+
     if ( py::hasattr(mhwalker_params, "__getitem__") ) {
       // dict or dict-like, go. If key doesn't exist, send in zero and let the underlying
       // lib handle it
@@ -178,7 +168,7 @@ public:
       )
     : CDataBase<ValueCalculator,true>(
         valcalc, hist_params, binning_num_levels,
-        CxxMHRWParamsType(get_step_size(mhrw_params.mhwalker_params),
+        CxxMHRWParamsType(_get_step_size(mhrw_params.mhwalker_params),
                           mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run),
         base_seed),
       llh(llh_),
@@ -282,6 +272,7 @@ public:
     std::size_t max_allowed[3] = {0};
     {
       py::gil_scoped_acquire gil_acq;
+
       if (ctrl_converged_params.attr("get")("enabled", true).cast<bool>()) {
         check_frequency_sweeps =
           ctrl_converged_params.attr("get")("check_frequency_sweeps", 1024).cast<int>();
