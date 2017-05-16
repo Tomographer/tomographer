@@ -128,8 +128,7 @@ public:
    * point will be chosen using the \a rng random number generator to generate a random
    * point on the sphere.
    */
-  LLHMHWalker(const MatrixType & startpt, const DenseLLH & llh, Rng & rng,
-	      LoggerType & log_)
+  LLHMHWalker(const MatrixType & startpt, const DenseLLH & llh, Rng & rng, LoggerType & log_)
     : _llh(llh),
       _rng(rng),
       _normal_distr_rnd(0.0, 1.0),

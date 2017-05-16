@@ -272,7 +272,7 @@ py::object PyLogger::toPythonLevel(int level) const
     return py::getattr(py_logging, "DEBUG");
   case Tomographer::Logger::LONGDEBUG:
   default:
-    return py::getattr(py_logging, "NOTSET");
+    return py::cast(2); //py::getattr(py_logging, "NOTSET");
   }
 }
 

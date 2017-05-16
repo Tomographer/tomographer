@@ -151,6 +151,20 @@ private:
     py::gil_scoped_acquire gilacquire;
     return o.attr("get")(key, dfltval).template cast<T>();
   }
+  Tomographer::MHWalkerParamsStepSize<RealType> get_step_size(py::object mhwalker_params) {
+    py::gil_scoped_acquire gilacquire;
+    if ( py::hasattr(mhwalker_params, "__getitem__") ) {
+      // dict or dict-like, go. If key doesn't exist, send in zero and let the underlying
+      // lib handle it
+      return mhwalker_params.attr("get")("step_size"_s, 0).cast<RealType>();
+    }
+    if ( mhwalker_params.is_none() ) {
+      // none: let the underlying library decide what to do with this
+      return 0;
+    }
+    // try to iterpret the object itself as a float
+    return mhwalker_params.cast<RealType>();
+  }
 public:
 
   OurCData(const DenseLLH & llh_, // data from the the tomography experiment
@@ -164,7 +178,7 @@ public:
       )
     : CDataBase<ValueCalculator,true>(
         valcalc, hist_params, binning_num_levels,
-        CxxMHRWParamsType(dict_item_gil<RealType>(mhrw_params.mhwalker_params, "step_size"),
+        CxxMHRWParamsType(get_step_size(mhrw_params.mhwalker_params),
                           mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run),
         base_seed),
       llh(llh_),
@@ -195,15 +209,22 @@ public:
   //
   template<typename Rng, typename LoggerType, typename RunFn>
   inline void
-  setupRandomWalkAndRun(Rng & rng, LoggerType & logger, RunFn run) const
+  setupRandomWalkAndRun(Rng & rng, LoggerType & baselogger, RunFn run) const
   {
+    auto logger = Tomographer::Logger::makeLocalLogger("pytomorun.cxx:OurCData::setupRandomWalkAndRun()", baselogger) ;
+
     Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType> mhwalker(
 	llh.dmt.initMatrixType(),
 	llh,
 	rng,
-	logger
+	baselogger
 	);
-    auto value_stats = createValueStatsCollector(logger);
+
+    logger.debug("Created MHWalker.") ;
+
+    auto value_stats = createValueStatsCollector(baselogger);
+
+    logger.debug("Created value stats collector.") ;
 
     int mvavg_numsamples = 1024;
     double ar_params[4] = {0};
@@ -246,7 +267,7 @@ public:
 
     auto ctrl_step = 
       Tomographer::mkMHRWStepSizeController<MHRWParamsType>(
-          movavg_accept_stats, logger,
+          movavg_accept_stats, baselogger,
           ar_params[0],
           ar_params[1],
           ar_params[2],
@@ -275,18 +296,25 @@ public:
       }
     }
 
+    logger.debug("Created auto step size controller.") ;
+
     // value error bins convergence controller
     auto ctrl_convergence = 
       Tomographer::mkMHRWValueErrorBinsConvergedController(
-          value_stats, logger,
+          value_stats, baselogger,
           check_frequency_sweeps,
           max_allowed[0], max_allowed[1], max_allowed[2]
           );
+
+    logger.debug("Created bins convergence controller.") ;
+
     // combined to a:
     auto ctrl_combined =
       Tomographer::mkMHRWMultipleControllers(ctrl_step, ctrl_convergence);
 
     auto stats = mkMultipleMHRWStatsCollectors(value_stats, movavg_accept_stats);
+
+    logger.debug("random walk set up, ready to go") ;
 
     run(mhwalker, stats, ctrl_combined);
   }
@@ -436,6 +464,10 @@ py::object py_tomorun(
         tpy::CallableValueCalculator(fig_of_merit)
         );
 
+  logger.debug([&](std::ostream & stream) {
+      stream << "Value calculator set up with fig_of_merit=" << py::repr(fig_of_merit).cast<std::string>();
+    });
+
 
   // prepare the random walk tasks
 
@@ -448,6 +480,13 @@ py::object py_tomorun(
   if (binning_num_levels <= 0) {
     // choose automatically. Make sure that the last level has ~128 samples to calculate std deviation.
     binning_num_levels = (int)(std::floor(std::log(mhrw_params.n_run/128) / std::log(2)) + 1e-3) ;
+    if (binning_num_levels < 1) {
+      binning_num_levels = 1;
+    }
+  }
+  if (binning_num_levels < 4) {
+    logger.warning("Because n_run is low, you are using binning_num_levels=%d which is probably "
+                   "too little to yield reliable error bars", (int)binning_num_levels) ;
   }
 
   OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params,
@@ -663,8 +702,7 @@ void py_tomo_tomorun(py::module rootmodule)
         "            that there are enough bins at the last level to estimate the standard\n"
         "            deviation. This is done automatically by default (or if you specify the value `-1`),\n"
         "            so in normal circumstances you won't have to change the default value.\n"
-        ":param num_repeats:  The number of independent random walks to run in parallel.  (The instances\n"
-        "            will run serially if `tomographer` was compiled without OpenMP.)\n"
+        ":param num_repeats:  The number of independent random walks to run in parallel.\n"
         ":param progress_fn:  A python callback function to monitor progress.  The function should accept\n"
         "            a single argument of type :py:class:`tomographer.multiproc.FullStatusReport`.  Check\n"
         "            out :py:class:`tomographer.jpyutil.RandWalkProgressBar` if you are using a\n"

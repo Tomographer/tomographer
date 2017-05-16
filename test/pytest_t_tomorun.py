@@ -9,7 +9,7 @@ import numpy.linalg as npl
 import numpy.testing as npt
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
+#logging.basicConfig(level=logging.DEBUG)
 
 import unittest
 
@@ -202,6 +202,144 @@ class analytical_known_example_tomorun(unittest.TestCase):
         print(r['final_report'])
         # just make sure that less than 1% of points are out of [0.99,1]
         self.assertLess(r['final_histogram'].off_chart, 0.01)
+
+    def test_too_few_runs(self):
+
+        print("test_too_few_runs()")
+        num_repeats = 2
+        hist_params = tomographer.HistogramParams(0.99, 1, 10)
+
+        r = tomographer.tomorun.tomorun(
+            dim=2,
+            Emn=self.Emn,
+            Nm=self.Nm,
+            fig_of_merit="fidelity",
+            ref_state=self.rho_ref,
+            num_repeats=num_repeats,
+            mhrw_params=tomographer.MHRWParams(0.04, 25, 500, 100), # 100 is too few runs
+            hist_params=hist_params,
+            ctrl_step_size_params={'enabled':False},
+            ctrl_converged_params={'enabled':False},
+        )
+
+
+    def test_mhwalker_param_1(self):
+
+        print("test_mhwalker_param_1()")
+        num_repeats = 2
+        hist_params = tomographer.HistogramParams(0.99, 1, 10)
+        r = tomographer.tomorun.tomorun(
+            dim=2,
+            Emn=self.Emn,
+            Nm=self.Nm,
+            fig_of_merit="fidelity",
+            ref_state=self.rho_ref,
+            num_repeats=num_repeats,
+            # understands step size given as positional argument? ---
+            mhrw_params=tomographer.MHRWParams(0.04, 25, 500, 1024),
+            # ---
+            hist_params=hist_params,
+            ctrl_step_size_params={'enabled':False},
+            ctrl_converged_params={'enabled':False},
+        )
+        print(r['final_report'])
+        for rw in r['runs_results']:
+            self.assertAlmostEqual(rw.mhrw_params.mhwalker_params["step_size"], 0.04)
+
+    def test_mhwalker_param_2(self):
+
+        print("test_mhwalker_param_2()")
+        num_repeats = 2
+        hist_params = tomographer.HistogramParams(0.99, 1, 10)
+        r = tomographer.tomorun.tomorun(
+            dim=2,
+            Emn=self.Emn,
+            Nm=self.Nm,
+            fig_of_merit="fidelity",
+            ref_state=self.rho_ref,
+            num_repeats=num_repeats,
+            # understands step size given as keyword argument? ---
+            mhrw_params=tomographer.MHRWParams(step_size=0.04, n_sweep=25, n_therm=500, n_run=1024),
+            # ---
+            hist_params=hist_params,
+            ctrl_step_size_params={'enabled':False},
+            ctrl_converged_params={'enabled':False},
+        )
+        print(r['final_report'])
+        for rw in r['runs_results']:
+            self.assertAlmostEqual(rw.mhrw_params.mhwalker_params["step_size"], 0.04)
+
+    def test_mhwalker_param_3(self):
+
+        print("test_mhwalker_param_3()")
+        num_repeats = 2
+        hist_params = tomographer.HistogramParams(0.99, 1, 10)
+        r = tomographer.tomorun.tomorun(
+            dim=2,
+            Emn=self.Emn,
+            Nm=self.Nm,
+            fig_of_merit="fidelity",
+            ref_state=self.rho_ref,
+            num_repeats=num_repeats,
+            # understands step size given as dictionary? ---
+            mhrw_params=tomographer.MHRWParams({'step_size': 0.04}, 25, 500, 1024),
+            # ---
+            hist_params=hist_params,
+            ctrl_step_size_params={'enabled':False},
+            ctrl_converged_params={'enabled':False},
+        )
+        print(r['final_report'])
+        for rw in r['runs_results']:
+            self.assertAlmostEqual(rw.mhrw_params.mhwalker_params["step_size"], 0.04)
+
+    def test_mhwalker_param_4(self):
+
+        print("test_mhwalker_param_4()")
+        num_repeats = 2
+        hist_params = tomographer.HistogramParams(0.99, 1, 10)
+        r = tomographer.tomorun.tomorun(
+            dim=2,
+            Emn=self.Emn,
+            Nm=self.Nm,
+            fig_of_merit="fidelity",
+            ref_state=self.rho_ref,
+            num_repeats=num_repeats,
+            # understands 'None'? ---
+            mhrw_params=tomographer.MHRWParams(None, 25, 500, 1024),
+            # ---
+            hist_params=hist_params,
+            ctrl_step_size_params={'enabled':True}, # auto-adjust
+            ctrl_converged_params={'enabled':False},
+        )
+        print(r['final_report'])
+        for rw in r['runs_results']:
+            self.assertLessEqual(rw.mhrw_params.mhwalker_params["step_size"], 0.1)
+            self.assertGreaterEqual(rw.mhrw_params.mhwalker_params["step_size"], 0.005)
+
+    def test_mhwalker_param_5(self):
+
+        print("test_mhwalker_param_5()")
+        num_repeats = 2
+        hist_params = tomographer.HistogramParams(0.99, 1, 10)
+        r = tomographer.tomorun.tomorun(
+            dim=2,
+            Emn=self.Emn,
+            Nm=self.Nm,
+            fig_of_merit="fidelity",
+            ref_state=self.rho_ref,
+            num_repeats=num_repeats,
+            # understands missing key? ---
+            mhrw_params=tomographer.MHRWParams({}, 25, 500, 1024),
+            # ---
+            hist_params=hist_params,
+            ctrl_step_size_params={'enabled':True}, # auto-adjust
+            ctrl_converged_params={'enabled':False},
+        )
+        print(r['final_report'])
+        for rw in r['runs_results']:
+            self.assertLessEqual(rw.mhrw_params.mhwalker_params["step_size"], 0.1)
+            self.assertGreaterEqual(rw.mhrw_params.mhwalker_params["step_size"], 0.005)
+
 
     def test_callback(self):
 
