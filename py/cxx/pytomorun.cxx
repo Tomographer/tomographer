@@ -226,13 +226,16 @@ public:
 
     logger.debug("Created value stats collector.") ;
 
-    int mvavg_numsamples = 1024;
+    int mvavg_numsamples = 2048;
     double ar_params[4] = {0};
     double ensure_n_therm_fixed_params_fraction = 0;
     {
       py::gil_scoped_acquire gil_acq;
+
+      // the stats collector is there whether we enable the controller or not
+      mvavg_numsamples = ctrl_step_size_params.attr("get")("num_samples", 2048).cast<int>();
+
       if (ctrl_step_size_params.attr("get")("enabled", true).cast<bool>()) {
-        mvavg_numsamples = ctrl_step_size_params.attr("get")("num_samples", 2048).cast<int>();
         ar_params[0] = ctrl_step_size_params.attr("get")(
             "desired_accept_ratio_min",
             Tomographer::MHRWStepSizeControllerDefaults::DesiredAcceptanceRatioMin
@@ -486,7 +489,7 @@ py::object py_tomorun(
   }
   if (binning_num_levels < 4) {
     logger.warning("Because n_run is low, you are using binning_num_levels=%d which is probably "
-                   "too little to yield reliable error bars", (int)binning_num_levels) ;
+                   "too little to yield reliable error bars.", (int)binning_num_levels) ;
   }
 
   OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params,

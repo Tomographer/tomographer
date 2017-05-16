@@ -203,6 +203,58 @@ class analytical_known_example_tomorun(unittest.TestCase):
         # just make sure that less than 1% of points are out of [0.99,1]
         self.assertLess(r['final_histogram'].off_chart, 0.01)
 
+
+    def test_custom_figofmerit_parallel(self):
+
+        print("test_custom_figofmerit_parallel()")
+
+        num_repeats = 8
+        hist_params = tomographer.HistogramParams(0.99, 1, 20)
+
+        mhrw_params = tomographer.MHRWParams(
+            step_size=0.04,
+            n_sweep=25,
+            n_run=8192,
+            n_therm=500
+        )
+
+        class Ns: pass
+        glob = Ns()
+        glob.saw_parallel_runs = False
+
+        def is_running(w):
+            if w is None:
+                return False
+            return w.data['kstep'] > (mhrw_params.n_therm+2)*mhrw_params.n_sweep
+
+        def prg_fn(report):
+            print(report.getHumanReport())
+            num_running = sum([ (1 if is_running(w) else 0)  for w in report.workers ])
+            if num_running > 1:
+                glob.saw_parallel_runs = num_running
+                raise Exception("Done, test passed.")
+
+        try:
+            r = tomographer.tomorun.tomorun(
+                dim=2,
+                Emn=self.Emn,
+                Nm=self.Nm,
+                fig_of_merit=lambda T: npl.norm(np.dot(T,T.T.conj())), # purity
+                ref_state=self.rho_ref,
+                num_repeats=num_repeats,
+                mhrw_params=mhrw_params,
+                hist_params=hist_params,
+                progress_fn=prg_fn,
+                progress_interval_ms=50,
+                ctrl_step_size_params={'enabled':False},
+            )
+        except Exception as e:
+            if 'Done, test passed' not in str(e):
+                raise
+
+        self.assertGreaterEqual(glob.saw_parallel_runs, 2)
+
+
     def test_too_few_runs(self):
 
         print("test_too_few_runs()")
