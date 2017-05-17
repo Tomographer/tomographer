@@ -63,7 +63,7 @@ namespace MultiProc {
  *  - \ref MHRWTasks::MHRandomWalkTask::StatusReport for an example usage.
  *
  */
-TOMOGRAPHER_EXPORT struct TaskStatusReport
+struct TOMOGRAPHER_EXPORT TaskStatusReport
 {
   TaskStatusReport()
     : fraction_done(0), msg("<unknown>")
@@ -82,7 +82,7 @@ TOMOGRAPHER_EXPORT struct TaskStatusReport
  * Note: \a TaskStatusReportType must be default-constructible and copy-constructible.
  */
 template<typename TaskStatusReportType>
-TOMOGRAPHER_EXPORT struct FullStatusReport
+struct TOMOGRAPHER_EXPORT FullStatusReport
 {
   FullStatusReport()
     : num_completed(0),
@@ -190,7 +190,7 @@ TOMOGRAPHER_EXPORT struct FullStatusReport
 
 
 
-TOMOGRAPHER_EXPORT class TasksInterruptedException : public std::exception
+class TOMOGRAPHER_EXPORT TasksInterruptedException : public std::exception
 {
   std::string msg_;
 public:
@@ -223,7 +223,7 @@ namespace Sequential {
  */
 template<typename TaskType_, typename TaskCData_,
          typename LoggerType_, typename CountIntType_ = int>
-TOMOGRAPHER_EXPORT class TaskDispatcher
+class TOMOGRAPHER_EXPORT TaskDispatcher
 {
 public:
   typedef TaskType_ TaskType;

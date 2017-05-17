@@ -66,7 +66,7 @@ namespace Tomographer {
 template<typename ValueHistogramWithBinningMHRWStatsCollectorType_,
          typename IterCountIntType_,
          typename BaseLoggerType_>
-TOMOGRAPHER_EXPORT class MHRWValueErrorBinsConvergedController
+class TOMOGRAPHER_EXPORT MHRWValueErrorBinsConvergedController
 {
 public:
   // we never have to adjust the params, we just forbid from stopping too early in the

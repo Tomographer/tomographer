@@ -50,13 +50,13 @@ namespace Tools {
 /** \brief Provider for regular types which don't need any special operator-new
  *         implementation (see \ref NeedOwnOperatorNew)
  */
-TOMOGRAPHER_EXPORT struct NoSpecialOperatorNewProvider {
+struct TOMOGRAPHER_EXPORT NoSpecialOperatorNewProvider {
   template<typename T>
   struct OperatorNewAllocatorType { typedef std::allocator<T> Type; };
 };
 
 //! Helper for NoSpecialOperatorNewProvider
-TOMOGRAPHER_EXPORT struct NoSpecialOperatorNew {
+struct TOMOGRAPHER_EXPORT NoSpecialOperatorNew {
   typedef NoSpecialOperatorNewProvider ProviderType;
 
   // prevent inadvertently inheriting this class instead of
@@ -243,7 +243,7 @@ struct NeedOwnOperatorNew<Type1, Type2, OtherTypes...>
 /** \brief Provides correct operator-new implementation for Eigen types via the \ref
  *         NeedOwnOperatorNew mechanism
  */
-TOMOGRAPHER_EXPORT struct EigenAlignedOperatorNewProvider {
+struct TOMOGRAPHER_EXPORT EigenAlignedOperatorNewProvider {
 public:
   EIGEN_MAKE_ALIGNED_OPERATOR_NEW ;
   typedef EigenAlignedOperatorNewProvider OperatorNewProviderType;

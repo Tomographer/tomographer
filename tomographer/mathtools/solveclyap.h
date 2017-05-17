@@ -55,7 +55,7 @@ namespace SolveCLyap {
  *
  * See \ref solve().
  */
-TOMOGRAPHER_EXPORT class SolveError : public std::exception {
+class TOMOGRAPHER_EXPORT SolveError : public std::exception {
   std::string p_msg;
 public:
   SolveError(const std::string& msg)

@@ -41,7 +41,7 @@ TOMOGRAPHER_DEFINE_MSG_EXCEPTION_BASE(TomographerCxxError, std::string(), std::r
 // adapted from pybind11::exception<Type> in "pybind11/include/pybind11.h"
 //
 template<typename Type>
-class exception_with_docstring : public py::object {
+class TOMOGRAPHER_EXPORT exception_with_docstring : public py::object {
 public:
   exception_with_docstring(py::handle scope, const char *name, PyObject *baseTypeObj = PyExc_Exception,
                            std::string docstring = std::string()) {

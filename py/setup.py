@@ -79,7 +79,8 @@ require_mod_version("PyBind11", pybind11.__version__, "2.1",
 #
 # handled by us (not in CMake cache):
 # BCP=/path/to/bcp  (Boost packaging tool)
-# OPTIMIZATION_CXX_FLAGS=-UNDEBUG -march=native -O3  (compiler SIMD instruction sets & other optimizations)
+# OPTIMIZATION_CXX_FLAGS=-UNDEBUG -march=native -O3
+#                        (compiler SIMD instruction sets & other optimizations)
 #
 # To read the above variables from cache:
 # CMAKE_CACHE_FILE=path/to/CMakeCache.txt
@@ -117,6 +118,9 @@ vv.setDefault('GIT', lambda : find_executable('git'))
 vv.setDefault('BCP', lambda : find_executable('bcp'))
 
 # Defaults: flags
+#
+# DO NOT USE -fvisibility=hidden OR -flto. (Event with visibility attributes set I
+# couldn't get other modules which use the python tomographer API to load properly)
 vv.setDefault('OPTIMIZATION_CXX_FLAGS', '-UNDEBUG -march=native -O3')
 
 # Defaults: Boost stuff
@@ -291,14 +295,20 @@ class BuildExt(build_ext):
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
 
+        def defpp(sym, val=None):
+            s = sym
+            if val is not None:
+                s += '='+str(val)
+            if ct == 'msvc':
+                return '/D'+s
+            # -DSYMBOL=Value
+            return '-D'+s
+
         stdcpp = vv.get('PYBIND11_CPP_STANDARD')
         if stdcpp:
             opts.append(stdcpp)
         else:
             opts.append(cpp_flag(self.compiler))
-
-        #if has_flag(self.compiler, '-fvisibility=hidden'):
-        #    opts.append('-fvisibility=hidden')
 
         for cflg in glob_cflags:
             opts.append(cflg)
@@ -335,14 +345,12 @@ static inline py::dict tomographerpy_compileinfo_get_compiler() {
     'compiler_link_path': escape_c_utf8_str(self.compiler.linker_so[0]),
 }
             )
-            opts.append("-DTOMOGRAPHERPY_HAVE_COMPILEINFO")
+            opts.append(defpp("TOMOGRAPHERPY_HAVE_COMPILEINFO"))
             opts.append("-I"+os.path.join(thisdir,'tmp'))
 
         # don't include VERSION_INFO in the compileinfo header file
-        if ct == 'unix':
-            opts.append('-DVERSION_INFO="%s"' % self.distribution.get_version())
-        elif ct == 'msvc':
-            opts.append('/DVERSION_INFO=\\"%s\\"' % self.distribution.get_version())
+        opts.append(defpp('VERSION_INFO', '"%s"'%self.distribution.get_version()))
+        opts.append(defpp('_tomographer_cxx_EXPORTS'))
 
         for ext in self.extensions:
             ext.extra_compile_args = opts

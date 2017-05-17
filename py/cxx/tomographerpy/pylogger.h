@@ -42,7 +42,7 @@ class PyLogger; // forward declaration
 namespace Tomographer { namespace Logger {
   // Traits for PyLogger
   template<>
-  struct LoggerTraits<PyLogger> : DefaultLoggerTraits
+  struct TOMOGRAPHER_EXPORT LoggerTraits<PyLogger> : DefaultLoggerTraits
   {
     enum {
       // Python calls are not thread-safe. Enforcing thread-safety manually with "#pragma
@@ -53,7 +53,7 @@ namespace Tomographer { namespace Logger {
   };
 } } // namespaces
 
-TOMOGRAPHER_EXPORT class PyLogger : public Tomographer::Logger::LoggerBase<PyLogger>
+class TOMOGRAPHER_EXPORT PyLogger : public Tomographer::Logger::LoggerBase<PyLogger>
 {
 private:
   pybind11::object py_logging; // the Python "logging" module

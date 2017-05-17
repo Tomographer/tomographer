@@ -49,13 +49,13 @@ static void check_pickle_tuple_size(std::size_t expect, int given)
 // inspired by http://www.boost.org/doc/libs/1_46_1/libs/python/test/pickle3.cpp
 
 template<typename HistogramType, bool HasErrorBars = HistogramType::HasErrorBars>
-struct histogram_pickle
+struct TOMOGRAPHER_EXPORT histogram_pickle
 {
   // nothing by default, only specializations
 };
 // HasErrorBars=false
 template<typename HistogramType>
-struct histogram_pickle<HistogramType, false>
+struct TOMOGRAPHER_EXPORT histogram_pickle<HistogramType, false>
 {
   static py::tuple getstate(py::object self)
   {
@@ -79,7 +79,7 @@ struct histogram_pickle<HistogramType, false>
 };
 // HasErrorBars=true
 template<typename HistogramType>
-struct histogram_pickle<HistogramType, true>
+struct TOMOGRAPHER_EXPORT histogram_pickle<HistogramType, true>
 {
   static py::tuple getstate(const py::object & self)
   {
@@ -100,7 +100,7 @@ struct histogram_pickle<HistogramType, true>
 };
 // for averaged types
 template<typename HistogramType>
-struct avghistogram_pickle
+struct TOMOGRAPHER_EXPORT avghistogram_pickle
 {
   static py::tuple getstate(py::object self)
   {

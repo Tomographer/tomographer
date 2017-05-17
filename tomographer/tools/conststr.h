@@ -52,7 +52,7 @@ namespace Tools {
  * Currently, I've found no way to do compile-time string concatenation. Please tell me if
  * you have a good idea.
  */
-class conststr
+class TOMOGRAPHER_EXPORT conststr
 {
   const char* _p;
   std::size_t _sz;

@@ -61,7 +61,7 @@ namespace DenseDM {
 template<typename DMTypes_, typename LLHValueType_ = typename DMTypes_::RealScalar,
          typename IntFreqType_ = int, int FixedMaxParamList_ = Eigen::Dynamic,
 	 bool UseNMeasAmplifyFactor_ = false>
-TOMOGRAPHER_EXPORT class IndepMeasLLH
+class TOMOGRAPHER_EXPORT IndepMeasLLH
 // : public Tools::NeedEigenAlignedOperatorNew::ProviderType -- not needed, matrices are Eigen::Dynamic for now
 {
 public:

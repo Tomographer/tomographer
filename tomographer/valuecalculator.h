@@ -182,7 +182,7 @@ struct MplxVC_getval_helper<6, ValueType, ValueCalculators...>
  *
  */
 template<typename ValueType_, typename... ValueCalculators>
-TOMOGRAPHER_EXPORT class MultiplexorValueCalculator
+class TOMOGRAPHER_EXPORT MultiplexorValueCalculator
   : public virtual Tools::NeedOwnOperatorNew<ValueCalculators...>::ProviderType
 {
 public:

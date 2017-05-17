@@ -38,12 +38,12 @@ namespace py = pybind11;
 
 #ifdef _WIN32
 #  ifdef _tomographer_cxx_EXPORTS
-#    define TOMOGRAPHER_EXPORT_TYPE __declspec(dllexport)
+#    define TOMOGRAPHER_EXPORT __declspec(dllexport)
 #  else
-#    define TOMOGRAPHER_EXPORT_TYPE __declspec(dllimport)
+#    define TOMOGRAPHER_EXPORT __declspec(dllimport)
 #  endif
 #else
-#  define TOMOGRAPHER_EXPORT_TYPE __attribute__ ((visibility("default")))
+#  define TOMOGRAPHER_EXPORT __attribute__((visibility("default")))
 #endif
 
 
@@ -55,14 +55,17 @@ namespace py = pybind11;
 #include <tomographer/tools/eigen_assert_exception.h>
 
 // include this AFTER eigen_assert_exception
+#pragma GCC visibility push(default)
 #include <pybind11/eigen.h>
 
 #ifdef EIGEN_NO_DEBUG
 #  error "TomographerPy requires enabled Eigen assertions, otherwise `TomographerCxxError` won't be raised as documented."
 #endif
 
-#include <Eigen/Eigen>
+#include <Eigen/Core>
+#pragma GCC visibility pop
 
+#include <tomographer/tomographer_version.h>
 #include <tomographer/tools/cxxutil.h>
 #include <tomographer/tools/loggers.h>
 
@@ -95,6 +98,27 @@ typedef Eigen::Matrix<std::complex<RealType>, Eigen::Dynamic, Eigen::Dynamic> Cp
 typedef Eigen::Matrix<CountIntType, Eigen::Dynamic, 1> CountIntVectorType;
 
 };
+
+
+
+
+inline py::module import_tomographer()
+{
+  auto tomographer_module = py::module::import("tomographer");
+  if (PyErr_Occurred() != NULL) {
+    throw py::error_already_set();
+  }
+  const std::string module_tomographer_version =
+    tomographer_module.attr("__version__").cast<std::string>();
+  if (module_tomographer_version != TOMOGRAPHER_VERSION) {
+    throw std::runtime_error(
+        "Error: Version of compiled tomographer python module ("+module_tomographer_version +
+        ") does not match current header files version ("+TOMOGRAPHER_VERSION+"). If you "
+        "updated tomographer, please recompile all dependent modules."
+        ) ;
+  }
+  return tomographer_module;
+}
 
 
 #endif

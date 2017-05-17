@@ -66,9 +66,9 @@ static constexpr double AcceptableAcceptanceRatioMin =
 static constexpr double AcceptableAcceptanceRatioMax =
   MHRWAcceptanceRatioRecommendedMax;
 static constexpr double DesiredAcceptanceRatioMin = 
-  (0.75*AcceptableAcceptanceRatioMin + 0.25*AcceptableAcceptanceRatioMax);
+  (0.9  * AcceptableAcceptanceRatioMin + 0.1  * AcceptableAcceptanceRatioMax);
 static constexpr double DesiredAcceptanceRatioMax =
-  (0.5 *AcceptableAcceptanceRatioMin + 0.5 *AcceptableAcceptanceRatioMax);
+  (0.35 * AcceptableAcceptanceRatioMin + 0.65 * AcceptableAcceptanceRatioMax);
 static constexpr double EnsureNThermFixedParamsFraction = 0.5;
 } // MHRWStepSizeControllerDefaults
 
@@ -84,7 +84,7 @@ template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
          typename BaseLoggerType_ = Logger::VacuumLogger,
          typename StepRealType_ = double,
          typename IterCountIntType_ = int>
-TOMOGRAPHER_EXPORT class MHRWStepSizeController
+class TOMOGRAPHER_EXPORT MHRWStepSizeController
 {
 public:
   enum { AdjustmentStrategy = MHRWControllerAdjustEveryIterationWhileThermalizing };
@@ -385,8 +385,8 @@ template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType,
          typename BaseLoggerType,
          typename StepRealType,
          typename IterCountIntType>
-struct StatusProvider<MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
-                                             BaseLoggerType, StepRealType, IterCountIntType> >
+struct TOMOGRAPHER_EXPORT StatusProvider<MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
+                                                                BaseLoggerType, StepRealType, IterCountIntType> >
 {
   typedef MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
                                  BaseLoggerType, StepRealType, IterCountIntType> StatusableObject;

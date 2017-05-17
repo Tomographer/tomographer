@@ -43,15 +43,20 @@ namespace tpy {
 
 
 
-TOMOGRAPHER_EXPORT struct WorkerStatusReport {
+struct TOMOGRAPHER_EXPORT WorkerStatusReport {
   int worker_id;
   double fraction_done;
   std::string msg;
   py::dict data;
 };
 
-TOMOGRAPHER_EXPORT struct FullStatusReport {
-  FullStatusReport() : num_completed(-1), num_total_runs(-1), elapsed(0), workers(), total_fraction_done(), human_report() { }
+struct TOMOGRAPHER_EXPORT FullStatusReport {
+  FullStatusReport()
+    : num_completed(-1), num_total_runs(-1), elapsed(0),
+      workers(), total_fraction_done(), human_report()
+  {
+  }
+
   int num_completed;
   int num_total_runs;
   double elapsed; // elapsed time in seconds
@@ -65,13 +70,13 @@ TOMOGRAPHER_EXPORT struct FullStatusReport {
 }
 
 template<typename TaskType>
-struct PyStatusReportAddWorkerDataFields
+struct TOMOGRAPHER_EXPORT PyStatusReportAddWorkerDataFields
 {
   static inline void addDataFields(py::dict & , const typename TaskType::StatusReportType & ) { }
 };
 
 template<typename CData, typename Rng>
-struct PyStatusReportAddWorkerDataFields< Tomographer::MHRWTasks::MHRandomWalkTask<CData, Rng> >
+struct TOMOGRAPHER_EXPORT PyStatusReportAddWorkerDataFields< Tomographer::MHRWTasks::MHRandomWalkTask<CData, Rng> >
 {
   typedef typename Tomographer::MHRWTasks::MHRandomWalkTask<CData, Rng>::StatusReportType TaskStatusReportType;
   static inline void addDataFields(py::dict & d, const TaskStatusReportType & wr) {

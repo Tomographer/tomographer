@@ -45,7 +45,7 @@ class BoostTestLogger;
 
 // traits for BoostTestLogger
 template<>
-struct LoggerTraits<BoostTestLogger> : DefaultLoggerTraits
+struct TOMOGRAPHER_EXPORT LoggerTraits<BoostTestLogger> : DefaultLoggerTraits
 {
   enum {
     IsThreadSafe = 0, StaticMinimumImportanceLevel = -1
@@ -61,7 +61,7 @@ struct LoggerTraits<BoostTestLogger> : DefaultLoggerTraits
  *
  * Specify a logging level to the constructor, by default it is \c DEBUG.
  */
-TOMOGRAPHER_EXPORT class BoostTestLogger : public Tomographer::Logger::LoggerBase<BoostTestLogger>
+class TOMOGRAPHER_EXPORT BoostTestLogger : public Tomographer::Logger::LoggerBase<BoostTestLogger>
 {
 public:
   BoostTestLogger(int level = Tomographer::Logger::DEBUG)

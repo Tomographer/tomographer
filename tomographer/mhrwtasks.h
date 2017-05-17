@@ -116,87 +116,6 @@ struct kinda_random_bits_perm<UIntType, NBits, // NBits can be divided by 8:
 
 
 
-// /** \brief Initialize the random walk's mhwalker, stats collector and random walk
-//  *         controller
-//  *
-//  * \todo ............ doc .............
-//  */
-// template<typename MHWalkerType_, typename MHRWStatsCollectorType_,
-//          typename MHRWControllerType_ = MHRWNoController>
-// TOMOGRAPHER_EXPORT struct MHRWTaskComponents
-// {
-//   typedef MHWalkerType_ MHWalkerType;
-//   typedef MHRWStatsCollectorType_ MHRWStatsCollectorType;
-//   typedef MHRWControllerType_ MHRWControllerType;
-
-//   template<typename MHWalkerTypeInit, typename MHRWStatsCollectorTypeInit,
-//            // enabled only if MHRWControllerType is default-constructible
-//            typename dummy = decltype(MHRWControllerType())>
-//   inline
-//   MHRWTaskComponents(MHWalkerTypeInit && mhwalker_, MHRWStatsCollectorTypeInit && stats_)
-//     : mhwalker(std::forward<MHWalkerTypeInit>(mhwalker_)),
-//       stats(std::forward<MHRWStatsCollectorTypeInit>(stats_)),
-//       mhrwcontroller()
-//   { }
-
-//   template<typename MHWalkerTypeInit, typename MHRWStatsCollectorTypeInit,
-//            typename MHRWControllerTypeInit>
-//   inline
-//   MHRWTaskComponents(MHWalkerTypeInit && mhwalker_, MHRWStatsCollectorTypeInit && stats_,
-//                      MHRWControllerTypeInit && mhrwcontroller_)
-//     : mhwalker(std::forward<MHWalkerTypeInit>(mhwalker_)),
-//       stats(std::forward<MHRWStatsCollectorTypeInit>(stats_)),
-//       mhrwcontroller(std::forward<MHRWControllerTypeInit>(mhrwcontroller_))
-//   { }
-
-//   MHWalkerType mhwalker;
-//   MHRWStatsCollectorType stats;
-//   MHRWControllerType mhrwcontroller;
-// };
-
-// /** \brief Convenience function to create a MHRWTaskComponents (with template argument
-//  *         deduction)
-//  *
-//  * \todo ....... doc .......... example? ...........
-//  */
-// template<typename MHWalkerType, typename MHRWStatsCollectorType>
-// TOMOGRAPHER_EXPORT inline
-// MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
-//                    typename std::remove_reference<MHRWStatsCollectorType>::type>
-// mkMHRWTaskComponents(MHWalkerType && mhwalker, MHRWStatsCollectorType && stats)
-// {
-//   return MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
-//                             typename std::remove_reference<MHRWStatsCollectorType>::type>(
-//                                 std::forward<MHWalkerType>(mhwalker),
-//                                 std::forward<MHRWStatsCollectorType>(stats)
-//                                 ) ;
-// }
-
-// /** \brief Convenience function to create a MHRWTaskComponents (with template argument
-//  *         deduction)
-//  *
-//  * \todo ....... doc .......... example? ...........
-//  */
-// template<typename MHWalkerType, typename MHRWStatsCollectorType, typename MHRWControllerType>
-// TOMOGRAPHER_EXPORT inline
-// MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
-//                    typename std::remove_reference<MHRWStatsCollectorType>::type,
-//                    typename std::remove_reference<MHRWControllerType>::type>
-// mkMHRWTaskComponents(MHWalkerType && mhwalker, MHRWStatsCollectorType && stats,
-//                      MHRWControllerType && mhrwcontroller)
-// {
-//   return MHRWTaskComponents<typename std::remove_reference<MHWalkerType>::type,
-//                             typename std::remove_reference<MHRWStatsCollectorType>::type,
-//                             typename std::remove_reference<MHRWControllerType>::type>(
-//                                 std::forward<MHWalkerType>(mhwalker),
-//                                 std::forward<MHRWStatsCollectorType>(stats),
-//                                 std::forward<MHRWControllerType>(mhrwcontroller)
-//                                 ) ;
-// }
-
-
-
-
 /** \brief Data needed to be accessible to the working code
  *
  * This is only a base class for the actual CData. The actual CData must additionally
@@ -208,7 +127,7 @@ struct kinda_random_bits_perm<UIntType, NBits, // NBits can be divided by 8:
  */
 template<typename MHWalkerParams_, typename IterCountIntType_ = int,
          typename RngSeedType_ = std::mt19937::result_type>
-TOMOGRAPHER_EXPORT struct CDataBase
+struct TOMOGRAPHER_EXPORT CDataBase
 {
   //! Type used to count the number of iterations
   typedef IterCountIntType_ IterCountIntType;
@@ -331,7 +250,7 @@ TOMOGRAPHER_EXPORT struct CDataBase
  *
  */
 template<typename MHRWStatsResultsType_, typename IterCountIntType, typename MHWalkerParams>
-TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
+struct TOMOGRAPHER_EXPORT MHRandomWalkTaskResult
   : public virtual Tools::NeedOwnOperatorNew<MHRWStatsResultsType_>::ProviderType
 {
   /** \brief The type which stores the results from the statistics carried out during the random walk
@@ -419,7 +338,7 @@ TOMOGRAPHER_EXPORT struct MHRandomWalkTaskResult
  */
 template<typename MHRandomWalkTaskCData,
          typename Rng = std::mt19937>
-TOMOGRAPHER_EXPORT struct MHRandomWalkTask
+struct TOMOGRAPHER_EXPORT MHRandomWalkTask
 {
   //! The type used to count iterations (see \ref MHRWParams)
   typedef typename MHRandomWalkTaskCData::IterCountIntType IterCountIntType;

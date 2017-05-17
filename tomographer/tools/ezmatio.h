@@ -67,7 +67,7 @@ namespace MAT {
 
 /** \brief Base Exception class for errors within our MAT routines
  */
-TOMOGRAPHER_EXPORT class Exception : public std::exception
+class TOMOGRAPHER_EXPORT Exception : public std::exception
 {
   std::string p_heading;
   std::string p_message;
@@ -96,7 +96,7 @@ private:
 
 /** \brief Exception relating to a MATLAB variable in the data file 
  */
-TOMOGRAPHER_EXPORT class VarError : public Exception
+class TOMOGRAPHER_EXPORT VarError : public Exception
 {
 public:
   VarError(std::string msg) : Exception("", msg) { }
@@ -110,7 +110,7 @@ private:
 };
 
 //! Error while reading a variable from the MATLAB data file
-TOMOGRAPHER_EXPORT class VarReadError : public VarError
+class TOMOGRAPHER_EXPORT VarReadError : public VarError
 {
 public:
   VarReadError(const std::string varname)
@@ -121,7 +121,7 @@ public:
 };
 
 //! Type mismatch (wrong type requested) in a variable read from the MATLAB data file
-TOMOGRAPHER_EXPORT class VarTypeError : public VarError
+class TOMOGRAPHER_EXPORT VarTypeError : public VarError
 {
 public:
   VarTypeError(const std::string varname, const std::string msg)
@@ -132,7 +132,7 @@ public:
 };
 
 //! Unknown type of a variable present in the data file
-TOMOGRAPHER_EXPORT class VarMatTypeError : public VarError {
+class TOMOGRAPHER_EXPORT VarMatTypeError : public VarError {
 public:
   VarMatTypeError(const std::string msg)
     : VarError(msg)
@@ -146,7 +146,7 @@ public:
 };
 
 //! Error while opening a MATLAB file
-TOMOGRAPHER_EXPORT class FileOpenError : public Exception
+class TOMOGRAPHER_EXPORT FileOpenError : public Exception
 {
 public:
   FileOpenError(const std::string fname, const std::string errmsg = std::string())
@@ -165,7 +165,7 @@ private:
 
 
 //! Invalid index or index list provided to a routine
-TOMOGRAPHER_EXPORT class InvalidIndexError : public Exception {
+class TOMOGRAPHER_EXPORT InvalidIndexError : public Exception {
 public:
   InvalidIndexError(const std::string msg) : Exception("Invalid index: ", msg) { }
   virtual ~InvalidIndexError() noexcept { }
@@ -189,7 +189,7 @@ class Var;
  * \note This C++ class is not copyable. You may pass it by value everywhere though as if
  *       it were copyable, because of C++11 move semantics.
  */
-TOMOGRAPHER_EXPORT class File
+class TOMOGRAPHER_EXPORT File
 {
 public:
   /** \brief Open a data file for reading.
@@ -303,7 +303,7 @@ inline ValueType getNumEl(It begin, It end)
  *
  *
  */
-TOMOGRAPHER_EXPORT class DimList : public std::vector<int>
+class TOMOGRAPHER_EXPORT DimList : public std::vector<int>
 {
 public:
   //! Initializes an empty dimension list
@@ -437,7 +437,7 @@ inline std::ostream& operator<<(std::ostream& out, const DimList& dlist)
  *       constructed.
  */
 template<bool IsRowMajor_ = false>
-TOMOGRAPHER_EXPORT class IndexList : public std::vector<int>
+class TOMOGRAPHER_EXPORT IndexList : public std::vector<int>
 {
 public:
   //! Is this class calculating and expecting row-major (\c true) or column-major (\c false) format 
@@ -624,7 +624,7 @@ inline std::ostream& operator<<(std::ostream& str, const IndexList<IsRowMajor> &
  *
  */
 template<bool IsRowMajor_ = false, typename IntType_ = int>
-TOMOGRAPHER_EXPORT class IndexListIterator
+class TOMOGRAPHER_EXPORT IndexListIterator
 {
 public:
   static constexpr bool IsRowMajor = IsRowMajor_;
@@ -799,7 +799,7 @@ inline std::ostream& operator<<(std::ostream& str, const IndexListIterator<IsRow
  * type, or whatever other additional info the decoding procedure may like to have.
  */
 template<typename T, typename Enabled = void>
-TOMOGRAPHER_EXPORT class VarValueDecoder
+class TOMOGRAPHER_EXPORT VarValueDecoder
 {
 public:
   /** \brief Type returned by \ref decodeValue()
@@ -915,7 +915,7 @@ inline typename VarValueDecoder<T>::RetType value(const Var& var,
  * To read the data, you should use the template method \ref value(). The type you can
  * request is any type for which a corresponding \ref VarValueDecoder has been defined.
  */
-TOMOGRAPHER_EXPORT class Var
+class TOMOGRAPHER_EXPORT Var
 {
 private:
   struct VarData {
@@ -1328,7 +1328,7 @@ template<>  struct MatType<MAT_T_UINT8> { typedef uint8_t Type; };
  *
  */
 template<typename T>
-TOMOGRAPHER_EXPORT class VarValueDecoder<T,
+class TOMOGRAPHER_EXPORT VarValueDecoder<T,
 #ifdef TOMOGRAPHER_PARSED_BY_DOXYGEN
                        _IS_NUMERIC_TYPE
 #else
@@ -1556,7 +1556,7 @@ private:
  * You may also stream a VarShape into an \ref std::ostream for formatting, as in the
  * example.
  */
-TOMOGRAPHER_EXPORT struct VarShape
+struct TOMOGRAPHER_EXPORT VarShape
 {
   /** \brief Whether the variable is or should be complex
    *
@@ -1722,14 +1722,14 @@ inline void VarShape::checkShape(const VarShape& other)
  * ordering (the default, also Eigen's default)
  */
 template<typename T_, bool IsRowMajor_ = false>
-struct GetStdVector {
+struct TOMOGRAPHER_EXPORT GetStdVector {
   typedef T_ type;
   static constexpr bool IsRowMajor = IsRowMajor_;
 };
 
 //! Specialization of \ref VarValueDecoder to obtain an \ref std::vector with the matrix data. See \ref GetStdVector.
 template<typename T, bool IsRowMajor>
-TOMOGRAPHER_EXPORT class VarValueDecoder<GetStdVector<T, IsRowMajor> >
+class TOMOGRAPHER_EXPORT VarValueDecoder<GetStdVector<T, IsRowMajor> >
 {
 public:
   typedef std::vector<T> RetType;
@@ -1862,7 +1862,7 @@ inline void init_eigen_matrix(MatrixType & matrix, const DimList & vdims,
  *
  */
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols>
-TOMOGRAPHER_EXPORT class VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
+class TOMOGRAPHER_EXPORT VarValueDecoder<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols> >
 {
 public:
 
@@ -1966,7 +1966,7 @@ public:
  * the \a std::vector index.
  */
 template<typename Scalar, int Rows, int Cols, int Options, int MaxRows, int MaxCols, typename Alloc>
-TOMOGRAPHER_EXPORT class VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols>, Alloc> >
+class TOMOGRAPHER_EXPORT VarValueDecoder<std::vector<Eigen::Matrix<Scalar,Rows,Cols,Options,MaxRows,MaxCols>, Alloc> >
 {
 public:
 
@@ -2075,7 +2075,7 @@ template<typename EigenType> class VarValueDecoder<EigenPosSemidefMatrixWithSqrt
  * VarValueDecoder<EigenPosSmidefMatrixWithSqrt<EigenType> >.
  */
 template<typename EigenType_>
-TOMOGRAPHER_EXPORT class EigenPosSemidefMatrixWithSqrt
+class TOMOGRAPHER_EXPORT EigenPosSemidefMatrixWithSqrt
 {
 public:
   typedef EigenType_ EigenType;
@@ -2128,7 +2128,7 @@ private:
 };
 //! Specialization of \ref VarValueDecoder for extracting a positive semidefinite matrix along with sqrt
 template<typename EigenType_>
-TOMOGRAPHER_EXPORT class VarValueDecoder<EigenPosSemidefMatrixWithSqrt<EigenType_> >
+class TOMOGRAPHER_EXPORT VarValueDecoder<EigenPosSemidefMatrixWithSqrt<EigenType_> >
 {
 public:
   typedef EigenType_ EigenType;

@@ -66,7 +66,7 @@ namespace ValueHistogramTools {
  * CDataBase::MHRWStatsResultsBaseType instead.
  */
 template<typename RawHistogramType_, typename ScaledHistogramType_>
-struct MHRWStatsResultsBaseSimple
+struct TOMOGRAPHER_EXPORT MHRWStatsResultsBaseSimple
 {
   typedef RawHistogramType_ RawHistogramType;
   typedef ScaledHistogramType_ ScaledHistogramType;
@@ -224,7 +224,7 @@ struct valuehist_types<CDataBaseType, true>
 template<typename ValueCalculator_, bool UseBinningAnalysis_ = true,
          typename MHWalkerParams_ = MHWalkerParamsStepSize<double>, typename IterCountIntType_ = int,
 	 typename CountRealType_ = double, typename HistCountIntType_ = IterCountIntType_>
-TOMOGRAPHER_EXPORT struct CDataBase
+struct TOMOGRAPHER_EXPORT CDataBase
   : public MHRWTasks::CDataBase<MHWalkerParams_, IterCountIntType_>,
     public virtual Tools::NeedOwnOperatorNew<ValueCalculator_>::ProviderType
 {

@@ -43,7 +43,7 @@
 namespace tpy {
 
 namespace tomo_internal {
-struct DummyValueCalculator {
+struct TOMOGRAPHER_EXPORT DummyValueCalculator {
   typedef RealType ValueType;
   template<typename PointType>
   inline ValueType getValue(const PointType & ) const { return 0; }

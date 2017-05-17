@@ -101,7 +101,7 @@ enum BinningConvergence {
  *
  * \since Added in %Tomographer 5.0.
  */
-struct BinningErrorBarConvergenceSummary {
+struct TOMOGRAPHER_EXPORT BinningErrorBarConvergenceSummary {
   BinningErrorBarConvergenceSummary(std::size_t n_bins_ = 0,
                                     std::size_t n_converged_ = 0,
                                     std::size_t n_unknown_ = 0,
@@ -162,6 +162,8 @@ inline std::ostream & operator<<(std::ostream & stream, const BinningErrorBarCon
 
 
 
+
+
 /** \brief Group template parameters for BinningAnalysis
  *
  * This class serves to group together the template parameters which determine the
@@ -201,7 +203,7 @@ inline std::ostream & operator<<(std::ostream & stream, const BinningErrorBarCon
  */
 template<typename ValueType_, int NumTrackValues_ = Eigen::Dynamic, int NumLevels_ = Eigen::Dynamic,
          bool StoreBinSums_ = true, typename CountIntType_ = int>
-TOMOGRAPHER_EXPORT struct BinningAnalysisParams
+struct TOMOGRAPHER_EXPORT BinningAnalysisParams
 {
   /** \brief Type of the value which we are calculating error bars for. Also the type of
    *         the error bars themselves. */
@@ -350,7 +352,7 @@ TOMOGRAPHER_EXPORT struct BinningAnalysisParams
  *
  */
 template<typename Params, typename LoggerType_>
-TOMOGRAPHER_EXPORT class BinningAnalysis
+class TOMOGRAPHER_EXPORT BinningAnalysis
   // inheriting from this has some advantages over EIGEN_MAKE_ALIGNED_OPERATOR_NEW, such
   // as not needing to explicitly declare the specialization
   // NeedOwnOperatorNew<BinningAnalysis<...> >

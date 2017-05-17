@@ -205,7 +205,7 @@ struct ThreadSanitizerLoggerHelper<BaseLogger, true>
  * 
  */
 template<typename BaseLogger>
-TOMOGRAPHER_EXPORT class ThreadSanitizerLogger
+class TOMOGRAPHER_EXPORT ThreadSanitizerLogger
   : public Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >
 {
   BaseLogger & _baselogger;
@@ -273,7 +273,8 @@ namespace Logger {
  * Logger traits for \ref MultiProc::OMP::ThreadSanitizerLogger.
  */
 template<typename BaseLogger>
-struct LoggerTraits<MultiProc::OMP::ThreadSanitizerLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
+struct TOMOGRAPHER_EXPORT LoggerTraits<MultiProc::OMP::ThreadSanitizerLogger<BaseLogger> >
+  : public LoggerTraits<BaseLogger>
 {
   /** \brief Special flags for this logger */
   enum {
@@ -351,7 +352,7 @@ namespace OMP {
 template<typename TaskType_, typename TaskCData_, typename LoggerType_,
          typename CountIntType_ = int,
          typename TaskLoggerType_ = ThreadSanitizerLogger<LoggerType_> >
-TOMOGRAPHER_EXPORT class TaskDispatcher
+class TOMOGRAPHER_EXPORT TaskDispatcher
 {
 public:
   //! The task type

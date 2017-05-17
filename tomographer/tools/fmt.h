@@ -62,7 +62,7 @@ namespace Tools {
  * This exception is raised when \ref fmts() or \ref vfmts() are called with a bad format
  * argument, causing \c vsnprintf() to return a negative number.
  */
-TOMOGRAPHER_EXPORT class BadFmtsFormat : public std::exception
+class TOMOGRAPHER_EXPORT BadFmtsFormat : public std::exception
 {
   std::string msg;
 public:
@@ -193,7 +193,7 @@ template<typename T> static auto test_has_stream_op(long)
  * compile-time boolean and can be used in template parameters.
  */
 template<typename T>
-struct hasOStreamOp {
+struct TOMOGRAPHER_EXPORT hasOStreamOp {
   static constexpr bool value = (sizeof(tomo_internal::test_has_stream_op<T>(0))
 				 == sizeof(typename tomo_internal::sfinae_yes<>::yes));
 };
@@ -401,7 +401,7 @@ inline std::string fmtDuration(std::chrono::duration<Rep, Period> dt)
 /** \brief Minimal tool for formatting console stuff with fixed line width
  *
  */
-TOMOGRAPHER_EXPORT class ConsoleFormatterHelper
+class TOMOGRAPHER_EXPORT ConsoleFormatterHelper
 {
 public:
   /** \brief Constructor

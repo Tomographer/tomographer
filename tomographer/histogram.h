@@ -65,13 +65,13 @@ namespace Tomographer {
  * This is the \f$[\text{min},\text{max}]\f$ range along with the number of bins.
  */
 template<typename Scalar_ = double>
-TOMOGRAPHER_EXPORT struct HistogramParams
+struct TOMOGRAPHER_EXPORT HistogramParams
 {
   //! The scalar type used to specify the "value" (horizongal axis) of the histogram
   typedef Scalar_ Scalar;
 
   //! The obvious constructor
-  HistogramParams(Scalar min_ = 0.0, Scalar max_ = 1.0, std::size_t num_bins_ = 50)
+  inline HistogramParams(Scalar min_ = 0.0, Scalar max_ = 1.0, std::size_t num_bins_ = 50)
     : min(min_), max(max_), num_bins(num_bins_)
   {
   }
@@ -80,7 +80,7 @@ TOMOGRAPHER_EXPORT struct HistogramParams
            // enforce Params-like type by checking that properties 'min','max','num_bins' exist:
            decltype((int)std::declval<const Params2>().min + (int)std::declval<const Params2>().max
                     + std::declval<Params2>().num_bins) dummyval = 0>
-  HistogramParams(const Params2& other)
+  inline HistogramParams(const Params2& other)
     : min(other.min), max(other.max), num_bins(other.num_bins)
   {
   }
@@ -208,7 +208,7 @@ TOMOGRAPHER_EXPORT struct HistogramParams
  * Does not store any form of error bars. Complies with the \ref pageInterfaceHistogram.
  */
 template<typename Scalar_, typename CountType_ = int>
-TOMOGRAPHER_EXPORT class Histogram
+class TOMOGRAPHER_EXPORT Histogram
   // inheriting from this has some advantages over EIGEN_MAKE_ALIGNED_OPERATOR_NEW, such
   // as not needing to explicitly declare the specialization
   // NeedOwnOperatorNew<Histogram>:
@@ -531,7 +531,7 @@ constexpr bool Histogram<Scalar_,CountType_>::HasErrorBars;
  * corresponding to each bin.
  */
 template<typename Scalar_, typename CountType_ = double>
-TOMOGRAPHER_EXPORT class HistogramWithErrorBars
+class TOMOGRAPHER_EXPORT HistogramWithErrorBars
   : public Histogram<Scalar_, CountType_>
   //    public virtual Tools::EigenAlignedOperatorNewProvider -- no need for dynamically-sized matrices
 {
@@ -761,7 +761,7 @@ constexpr bool HistogramWithErrorBars<Scalar_,CountType_>::HasErrorBars;
  *         for holding an average.
  */
 template<typename HistogramType_, typename RealAvgType = double>
-TOMOGRAPHER_EXPORT class AveragedHistogram
+class TOMOGRAPHER_EXPORT AveragedHistogram
   : public HistogramWithErrorBars<typename HistogramType_::Scalar, RealAvgType>
 {
 public:
@@ -1002,8 +1002,7 @@ public:
  * \since Added in %Tomographer 5.0.
  */
 template<typename HistogramType_, typename CountRealType_>
-TOMOGRAPHER_EXPORT
-class AggregatedHistogramSimple
+class TOMOGRAPHER_EXPORT AggregatedHistogramSimple
   : public virtual Tools::NeedOwnOperatorNew<
       AveragedHistogram<HistogramType_,CountRealType_>
     >::ProviderType
@@ -1149,8 +1148,7 @@ public:
  * histograms from a list.
  */
 template<typename HistogramType_, typename CountRealType_>
-TOMOGRAPHER_EXPORT
-class AggregatedHistogramWithErrorBars
+class TOMOGRAPHER_EXPORT AggregatedHistogramWithErrorBars
   : public virtual Tools::NeedOwnOperatorNew<
       AveragedHistogram<HistogramType_, CountRealType_> ,
       AveragedHistogram<Histogram<typename HistogramType_::Scalar,

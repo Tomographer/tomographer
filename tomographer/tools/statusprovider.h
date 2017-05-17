@@ -47,7 +47,7 @@ namespace Tools {
  * This is used for stats collectors and for mhwalker params adjusters.
  */
 template<typename StatusableObject_>
-TOMOGRAPHER_EXPORT struct StatusProvider
+struct TOMOGRAPHER_EXPORT StatusProvider
 {
   typedef StatusableObject_ StatusableObject;
 
@@ -98,7 +98,7 @@ struct status_can_provide_fullmessage<StObj,
  *
  */
 template<typename StatusableObject_>
-TOMOGRAPHER_EXPORT struct StatusQuery
+struct TOMOGRAPHER_EXPORT StatusQuery
 {
   typedef StatusableObject_ StatusableObject;
 

@@ -156,7 +156,7 @@ enum LogLevelCode
  * This class has also C++ i/ostream operators defined, which parse and write the level
  * name as a \ref std::string.
  */
-TOMOGRAPHER_EXPORT class LogLevel
+class TOMOGRAPHER_EXPORT LogLevel
 {
   int _level;
 public:
@@ -259,7 +259,7 @@ inline bool isAtLeastOfSeverity(int level, int baselevel)
  * See also \ref isAtLeastOfSeverity().
  */
 template<int Level, int BaseLevel>
-struct StaticIsAtLeastOfSeverity {
+struct TOMOGRAPHER_EXPORT StaticIsAtLeastOfSeverity {
   enum {
     value = (Level <= BaseLevel)
   };
@@ -286,7 +286,7 @@ struct StaticIsAtLeastOfSeverity {
  * It's a good idea to inherit from \ref DefaultLoggerTraits, so that if additional traits
  * are added in the future, then your code will still compile.
  */
-TOMOGRAPHER_EXPORT struct DefaultLoggerTraits
+struct TOMOGRAPHER_EXPORT DefaultLoggerTraits
 {
   enum {
     /** \brief Whether a same logger instance may be called from different threads
@@ -349,7 +349,7 @@ TOMOGRAPHER_EXPORT struct DefaultLoggerTraits
  * future traits are added you get the defaults for free and your code still compiles.
  */
 template<typename LoggerType>
-struct LoggerTraits
+struct TOMOGRAPHER_EXPORT LoggerTraits
 {
   // by default, contains nothing and will produce errors if used unspecialized.
 };
@@ -361,7 +361,10 @@ namespace tomo_internal {
  * nothing if the derived logger object anyway provides its own level() method.
  */
 template<bool hasOwnGetLevel>
-class LoggerRuntimeLevel {
+class
+TOMOGRAPHER_EXPORT  // export might be needed because this is used as base class of LoggerBase
+LoggerRuntimeLevel
+{
 public:
   LoggerRuntimeLevel(int level)
     : _level(level)
@@ -386,7 +389,8 @@ private:
 // Specialization for those classes which provide their own level() method. Do nothing.
 //
 template<>
-class LoggerRuntimeLevel<true> {
+class TOMOGRAPHER_EXPORT LoggerRuntimeLevel<true>
+{
 public:
   LoggerRuntimeLevel(int /*level*/)
   {
@@ -425,7 +429,7 @@ public:
  *
  */
 template<typename Derived>
-TOMOGRAPHER_EXPORT class LoggerBase
+class TOMOGRAPHER_EXPORT LoggerBase
 #ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
   : public tomo_internal::LoggerRuntimeLevel<LoggerTraits<Derived>::HasOwnGetLevel>
 #endif
@@ -1190,7 +1194,7 @@ struct LoggerTraits<FileLogger> : public DefaultLoggerTraits
  * \note This class is thread-safe AS LONG AS you DO NOT CHANGE the target \c fp file
  *       pointer AND YOU DO NOT CHANGE the log level with \ref setLevel()
  */
-TOMOGRAPHER_EXPORT class FileLogger : public LoggerBase<FileLogger>
+class TOMOGRAPHER_EXPORT FileLogger : public LoggerBase<FileLogger>
 {
 public:
   FileLogger(FILE * fp_, int level = INFO, bool display_origin_ = true)
@@ -1277,7 +1281,7 @@ struct LoggerTraits<VacuumLogger> : public DefaultLoggerTraits
  *
  * Use this logger if you don't want to log messages.
  */
-TOMOGRAPHER_EXPORT class VacuumLogger : public LoggerBase<VacuumLogger>
+class TOMOGRAPHER_EXPORT VacuumLogger : public LoggerBase<VacuumLogger>
 {
 public:
   inline void emitLog(int /*level*/, const char * /*origin*/, const std::string & /*msg*/)
@@ -1315,7 +1319,7 @@ struct LoggerTraits<BufferLogger> : public DefaultLoggerTraits
  * Logs messages into an internal string buffer. The contents of the buffer may be
  * retrieved with \ref getContents().
  */
-TOMOGRAPHER_EXPORT class BufferLogger : public LoggerBase<BufferLogger>
+class TOMOGRAPHER_EXPORT BufferLogger : public LoggerBase<BufferLogger>
 {
   std::ostringstream buffer;
 public:
@@ -1392,7 +1396,7 @@ struct LoggerTraits<MinimumSeverityLogger<BaseLogger,Level> > : public LoggerTra
  * If \a BaseLogger is thread-safe, then this logger is also thread-safe.
  */
 template<typename BaseLogger, int Level>
-TOMOGRAPHER_EXPORT class MinimumSeverityLogger : public LoggerBase<MinimumSeverityLogger<BaseLogger,Level> >
+class TOMOGRAPHER_EXPORT MinimumSeverityLogger : public LoggerBase<MinimumSeverityLogger<BaseLogger,Level> >
 {
   //! Keep reference to the base logger, to which we relay calls
   BaseLogger & baselogger;
@@ -1482,7 +1486,7 @@ struct LoggerTraits<OriginFilteredLogger<BaseLogger> > : public LoggerTraits<Bas
  * \endcode
  */
 template<typename BaseLogger>
-TOMOGRAPHER_EXPORT class OriginFilteredLogger
+class TOMOGRAPHER_EXPORT OriginFilteredLogger
   : public Tomographer::Logger::LoggerBase<OriginFilteredLogger<BaseLogger> >
 {
   //! Reference to the base logger
@@ -1756,7 +1760,7 @@ struct LoggerTraits<LocalLogger<BaseLoggerType_> > : public LoggerTraits<BaseLog
  * \endcode
  */
 template<typename BaseLoggerType_>
-TOMOGRAPHER_EXPORT class LocalLogger
+class TOMOGRAPHER_EXPORT LocalLogger
   : public LoggerBase<LocalLogger<BaseLoggerType_> >
 {
 public:

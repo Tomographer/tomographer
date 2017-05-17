@@ -139,7 +139,7 @@ struct GenerateSequence<T, N, typename std::enable_if<(N==1),void>::type>
  *
  */
 template<typename T_, bool IsDynamic_, T_ StaticValue_ = T_()>
-TOMOGRAPHER_EXPORT class StaticOrDynamic
+class TOMOGRAPHER_EXPORT StaticOrDynamic
 {
 
 public:
@@ -188,7 +188,7 @@ constexpr typename StaticOrDynamic<T_, IsDynamic_, StaticValue_>::T StaticOrDyna
  * Specialization for the case if the value is known only at runtime.
  */
 template<typename T_, T_ StaticValue_>
-TOMOGRAPHER_EXPORT class StaticOrDynamic<T_, true, StaticValue_>
+class TOMOGRAPHER_EXPORT StaticOrDynamic<T_, true, StaticValue_>
 {
 public:
 
@@ -236,7 +236,7 @@ constexpr bool StaticOrDynamic<T_, true, StaticValue_>::IsDynamic;
  *
  */
 template<typename T_, bool enabled>
-TOMOGRAPHER_EXPORT struct StoreIfEnabled
+struct TOMOGRAPHER_EXPORT StoreIfEnabled
 {
   //! The type we're storing
   typedef T_ T;
@@ -255,7 +255,7 @@ constexpr bool StoreIfEnabled<T_, enabled>::IsEnabled;
  *
  */
 template<typename T_>
-TOMOGRAPHER_EXPORT struct StoreIfEnabled<T_, true>
+struct TOMOGRAPHER_EXPORT StoreIfEnabled<T_, true>
 {
   //! The type we're storing
   typedef T_ T;
@@ -604,7 +604,7 @@ constexpr inline conststr extractFuncName(const conststr & funcname)
  *
  */
 #define TOMOGRAPHER_DEFINE_MSG_EXCEPTION(ClassName, ErrPrefix)          \
-  TOMOGRAPHER_EXPORT class ClassName : public std::exception {          \
+  class TOMOGRAPHER_EXPORT ClassName : public std::exception {          \
     std::string _msg;                                                   \
   public:                                                               \
     ClassName(std::string msg) : _msg(std::string(ErrPrefix) + std::move(msg)) { } \
@@ -622,7 +622,7 @@ constexpr inline conststr extractFuncName(const conststr & funcname)
  * There is also no \a msg() method provided.
  */
 #define TOMOGRAPHER_DEFINE_MSG_EXCEPTION_BASE(ClassName, ErrPrefix, BaseClass) \
-  TOMOGRAPHER_EXPORT class ClassName : public BaseClass {               \
+  class TOMOGRAPHER_EXPORT ClassName : public BaseClass {               \
   public:                                                               \
     ClassName(std::string msg) : BaseClass(std::string(ErrPrefix) + std::move(msg)) { } \
     virtual ~ClassName() throw() { }                                    \

@@ -90,7 +90,7 @@ constexpr const double MHRWAcceptanceRatioRecommendedMax = 0.4;
  * step size as parameter.
  */
 template<typename StepRealType_ = double>
-TOMOGRAPHER_EXPORT struct MHWalkerParamsStepSize
+struct TOMOGRAPHER_EXPORT MHWalkerParamsStepSize
 {
   typedef StepRealType_ StepRealType;
 
@@ -101,7 +101,7 @@ TOMOGRAPHER_EXPORT struct MHWalkerParamsStepSize
 };
 
 template<typename StepRealType>
-TOMOGRAPHER_EXPORT std::ostream & operator<<(std::ostream & stream, MHWalkerParamsStepSize<StepRealType> p)
+inline std::ostream & operator<<(std::ostream & stream, MHWalkerParamsStepSize<StepRealType> p)
 {
   return stream << "step_size=" << p.step_size;
 }
@@ -117,7 +117,7 @@ TOMOGRAPHER_EXPORT std::ostream & operator<<(std::ostream & stream, MHWalkerPara
  * of the MHWalker type. Note the new template parameter order!!
  */
 template<typename MHWalkerParams_ = MHWalkerParamsStepSize<double>, typename CountIntType_ = int >
-TOMOGRAPHER_EXPORT struct MHRWParams
+struct TOMOGRAPHER_EXPORT MHRWParams
 {
   typedef MHWalkerParams_ MHWalkerParams;
   typedef CountIntType_ CountIntType;
@@ -151,7 +151,7 @@ TOMOGRAPHER_EXPORT struct MHRWParams
 
 
 template<typename CountIntType, typename MHWalkerParams>
-TOMOGRAPHER_EXPORT std::ostream & operator<<(std::ostream & str, const MHRWParams<MHWalkerParams,CountIntType> & p)
+inline std::ostream & operator<<(std::ostream & str, const MHRWParams<MHWalkerParams,CountIntType> & p)
 {
   str << "MHRWParams(" << p.mhwalker_params << ";n_sweep=" << p.n_sweep
       << ",n_therm=" << p.n_therm << ",n_run=" << p.n_run << ")";
@@ -219,7 +219,7 @@ enum MHRWControllerAdjustmentStrategy {
 //  *
 //  * \since Added in %Tomographer 5.0.
 //  */
-// TOMOGRAPHER_EXPORT class MHRWNoController
+// class TOMOGRAPHER_EXPORT MHRWNoController
 // {
 // public:
 //   enum { AdjustmentStrategy = MHRWControllerDoNotAdjust };
@@ -386,7 +386,7 @@ struct controllers_compatible : controllers_compatible_helper<true, 0, MHRWContr
  * \since Added in %Tomographer 5.0.
  */
 template<typename ... MHRWControllerTypes>
-TOMOGRAPHER_EXPORT class MHRWMultipleControllers
+class TOMOGRAPHER_EXPORT MHRWMultipleControllers
 {
 public:
 
@@ -623,7 +623,7 @@ template<typename Rng_, typename MHWalker_, typename MHRWStatsCollector_,
          typename MHRWController_ = MHRWNoController,
          typename LoggerType_ = Logger::VacuumLogger,
          typename CountIntType_ = int>
-TOMOGRAPHER_EXPORT class MHRandomWalk
+class TOMOGRAPHER_EXPORT MHRandomWalk
   : public virtual Tools::NeedOwnOperatorNew<typename MHWalker_::PointType>::ProviderType
 {
 public:
@@ -1105,7 +1105,7 @@ public:
  * MultiProc::OMP::TaskDispatcher::requestStatusReport().
  */
 template<typename MHRWParamsType>
-struct MHRWStatusReport : public MultiProc::TaskStatusReport
+struct TOMOGRAPHER_EXPORT MHRWStatusReport : public MultiProc::TaskStatusReport
 {
   typedef typename MHRWParamsType::CountIntType IterCountIntType;
 

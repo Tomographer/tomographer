@@ -483,8 +483,11 @@ py::object py_tomorun(
     }
   }
   if (binning_num_levels < 4) {
-    logger.warning("Because n_run is low, you are using binning_num_levels=%d which is probably "
-                   "too little to yield reliable error bars.", (int)binning_num_levels) ;
+    logger.warning([&](std::ostream & stream) {
+        stream << "You are using few binning levels = " << binning_num_levels
+               << " (perhaps because n_run is low), and the resulting error bars "
+               << "might not be reliable." ;
+      });
   }
   const CountIntType binning_last_level_num_samples = std::ldexp((double)mhrw_params.n_run, - binning_num_levels);
   logger.debug([&](std::ostream & stream) {

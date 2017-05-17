@@ -102,7 +102,7 @@ namespace CxxThreads {
  * 
  */
 template<typename BaseLogger>
-TOMOGRAPHER_EXPORT class ThreadSanitizerLogger
+class TOMOGRAPHER_EXPORT ThreadSanitizerLogger
   : public Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >
 {
 public:
@@ -181,7 +181,8 @@ namespace Logger {
  * Logger traits for \ref MultiProc::OMP::ThreadSanitizerLogger.
  */
 template<typename BaseLogger>
-struct LoggerTraits<MultiProc::CxxThreads::ThreadSanitizerLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
+struct TOMOGRAPHER_EXPORT LoggerTraits<MultiProc::CxxThreads::ThreadSanitizerLogger<BaseLogger> >
+  : public LoggerTraits<BaseLogger>
 {
   /** \brief Special flags for this logger */
   enum {
@@ -258,7 +259,7 @@ namespace CxxThreads {
  */
 template<typename TaskType_, typename TaskCData_,
          typename LoggerType_, typename CountIntType_ = int>
-TOMOGRAPHER_EXPORT class TaskDispatcher
+class TOMOGRAPHER_EXPORT TaskDispatcher
 {
 public:
   //! The task type

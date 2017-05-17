@@ -55,7 +55,7 @@ namespace TSpace {
  * \see fidelityT(rho,sigma)
  */
 template<typename DMTypes_, typename ValueType_ = double>
-TOMOGRAPHER_EXPORT class FidelityToRefCalculator
+class TOMOGRAPHER_EXPORT FidelityToRefCalculator
   : public virtual Tools::NeedOwnOperatorNew<typename DMTypes_::MatrixType>::ProviderType
 {
 public:
@@ -94,7 +94,7 @@ public:
  * \f]
  */
 template<typename DMTypes_, typename ValueType_ = double>
-TOMOGRAPHER_EXPORT class PurifDistToRefCalculator
+class TOMOGRAPHER_EXPORT PurifDistToRefCalculator
   : public virtual Tools::NeedOwnOperatorNew<typename DMTypes_::MatrixType>::ProviderType
 {
 public:
@@ -130,7 +130,7 @@ public:
  *
  */
 template<typename DMTypes_, typename ValueType_ = double>
-TOMOGRAPHER_EXPORT class TrDistToRefCalculator
+class TOMOGRAPHER_EXPORT TrDistToRefCalculator
   : public virtual Tools::NeedOwnOperatorNew<typename DMTypes_::MatrixType>::ProviderType
 {
 public:
@@ -164,7 +164,7 @@ public:
  *
  */
 template<typename DMTypes_>
-TOMOGRAPHER_EXPORT class ObservableValueCalculator
+class TOMOGRAPHER_EXPORT ObservableValueCalculator
   : public virtual Tools::NeedOwnOperatorNew<typename DMTypes_::VectorParamType>::ProviderType
 {
 public:

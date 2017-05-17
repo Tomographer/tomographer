@@ -183,7 +183,7 @@ namespace DenseDM {
  *       calculated by Hilbert-Schmidt matrix multiplication ...
  */
 template<typename DMTypes_>
-TOMOGRAPHER_EXPORT class ParamA
+class TOMOGRAPHER_EXPORT ParamA
 {
 public:
   //! The C++ types for quantum objects and parameterizations
