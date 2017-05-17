@@ -283,7 +283,7 @@ if (BUILD_TOMORUN)
   # version with binning analysis
   add_test(NAME test_tomorun_1qubit_analytic_solution_run_binerr
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    COMMAND "$<TARGET_FILE:tomorun>" --data-file-name "${CMAKE_CURRENT_SOURCE_DIR}/tomorun/test_tomorun_1qubit_analytic_solution.mat"  --n-repeats=4  --n-sweep=25  --n-run=32768  --step-size=0.04  --value-type=fidelity:rho_ref  --value-hist=0.985:1/200  --write-histogram=test_tomorun_1qubit_testrun_binerr --verbose
+    COMMAND "$<TARGET_FILE:tomorun>" --data-file-name "${CMAKE_CURRENT_SOURCE_DIR}/tomorun/test_tomorun_1qubit_analytic_solution.mat"  --n-repeats=4  --n-sweep=25  --n-run=32768  --step-size=0.04  --value-type=fidelity:rho_ref  --value-hist=0.985:1/200  --write-histogram=test_tomorun_1qubit_testrun_binerr --verbose --control-binning-converged-max-unknown=8
     )
   add_test(NAME test_tomorun_1qubit_analytic_solution_runcheck_binerr
     COMMAND "$<TARGET_FILE:test_tomorun_1qubit_analytic_solution_check>"
