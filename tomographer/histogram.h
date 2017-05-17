@@ -1812,11 +1812,11 @@ inline std::string histogramShortBarWithInfo(std::string head,
 
 // compatibility with Tomographer <= 4
 template<typename Scalar_ = double>
-TOMOGRAPHER_DEPRECATED_USING(UniformBinsHistogramParams, HistogramParams<Scalar_>);
+using UniformBinsHistogramParams = HistogramParams<Scalar_>;
 template<typename Scalar_, typename CountType_ = int>
-TOMOGRAPHER_DEPRECATED_USING(UniformBinsHistogram, Histogram<Scalar_,CountType_>);
+using UniformBinsHistogram = Histogram<Scalar_,CountType_>;
 template<typename Scalar_, typename CountType_ = double>
-TOMOGRAPHER_DEPRECATED_USING(UniformBinsHistogramWithErrorBars, HistogramWithErrorBars<Scalar_,CountType_>);
+using UniformBinsHistogramWithErrorBars = HistogramWithErrorBars<Scalar_,CountType_>;
 
 
 

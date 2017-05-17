@@ -117,86 +117,89 @@
 // Mark stuff as deprecated
 // -----------------------------------------------------------------------------
 
+//
+// This is giving me headaches with different compilers & compatibility ... just document
+// stuff as being deprecated.
+//
 
-#ifdef TOMOGRAPHER_PARSED_BY_DOXYGEN
+// #ifdef TOMOGRAPHER_PARSED_BY_DOXYGEN
 
+// /** \brief Mark a class declaration as deprecated
+//  *
+//  * Use for instance as:
+//  * \code
+//  *    template<typename CountType>
+//  *    TOMOGRAPHER_DEPRECATED_CLASS(MyObject) : public Base<CountType> { ... }
+//  * \endcode
+//  */
+// #  define TOMOGRAPHER_DEPRECATED_CLASS(X)  class X
 
-/** \brief Mark a class declaration as deprecated
- *
- * Use for instance as:
- * \code
- *    template<typename CountType>
- *    TOMOGRAPHER_DEPRECATED_CLASS(MyObject) : public Base<CountType> { ... }
- * \endcode
- */
-#  define TOMOGRAPHER_DEPRECATED_CLASS(X)  class X
+// /** \brief Mark a class declaration as deprecated
+//  *
+//  * Use for instance as:
+//  * \code
+//  *    template<typename CountType>
+//  *    TOMOGRAPHER_DEPRECATED_STRUCT(MyObject) : public Base<CountType> { ... }
+//  * \endcode
+//  */
+// #  define TOMOGRAPHER_DEPRECATED_STRUCT(X)  struct X
 
-/** \brief Mark a class declaration as deprecated
- *
- * Use for instance as:
- * \code
- *    template<typename CountType>
- *    TOMOGRAPHER_DEPRECATED_STRUCT(MyObject) : public Base<CountType> { ... }
- * \endcode
- */
-#  define TOMOGRAPHER_DEPRECATED_STRUCT(X)  struct X
+// /** \brief Mark a function declaration as deprecated
+//  *
+//  * Use as:
+//  * \code
+//  *   TOMOGRAPHER_DEPRECATED_FUNC(double f(int x, int y)) {
+//  *     return (double)x / y;
+//  *   }
+//  * \endcode
+//  */
+// #  define TOMOGRAPHER_DEPRECATED_FUNC(FuncDecl) FuncDecl
 
-/** \brief Mark a function declaration as deprecated
- *
- * Use as:
- * \code
- *   TOMOGRAPHER_DEPRECATED_FUNC(double f(int x, int y)) {
- *     return (double)x / y;
- *   }
- * \endcode
- */
-#  define TOMOGRAPHER_DEPRECATED_FUNC(FuncDecl) FuncDecl
+// /** \brief Mark a "using x = y" declaration as deprecated
+//  *
+//  * Use as:
+//  * \code
+//  *    // using MyAlias = OriginalType
+//  *    TOMOGRAPHER_DEPRECATED_USING(MyAlias, OriginalType);
+//  * \endcode
+//  */
+// #  define TOMOGRAPHER_DEPRECATED_USING(X, Y)  using X = Y
 
-/** \brief Mark a "using x = y" declaration as deprecated
- *
- * Use as:
- * \code
- *    // using MyAlias = OriginalType
- *    TOMOGRAPHER_DEPRECATED_USING(MyAlias, OriginalType);
- * \endcode
- */
-#  define TOMOGRAPHER_DEPRECATED_USING(X, Y)  using X = Y
+// #else
+// // implementation:
 
-#else
-// implementation:
+// #if defined(__has_cpp_attribute)
+// #  if __has_cpp_attribute(deprecated)
+// #    define _tomographer_has_cxx_deprecated_attribute
+// #  endif
+// #endif
 
-#if defined(__has_cpp_attribute)
-#  if __has_cpp_attribute(deprecated)
-#    define _tomographer_has_cxx_deprecated_attribute
-#  endif
-#endif
+// # if defined(_tomographer_has_cxx_deprecated_attribute)
+// #  define TOMOGRAPHER_DEPRECATED [[deprecated]]
+// #  define TOMOGRAPHER_DEPRECATED_FUNC(...) TOMOGRAPHER_DEPRECATED __VA_ARGS__
+// #  define TOMOGRAPHER_DEPRECATED_CLASS(...) class TOMOGRAPHER_DEPRECATED __VA_ARGS__
+// #  define TOMOGRAPHER_DEPRECATED_STRUCT(...) struct TOMOGRAPHER_DEPRECATED __VA_ARGS__
+// #  define TOMOGRAPHER_DEPRECATED_USING(X, ...)  using X TOMOGRAPHER_DEPRECATED = __VA_ARGS__
+// # elif defined(__GNUC__)
+// #  define TOMOGRAPHER_DEPRECATED __attribute__((deprecated))
+// #  define TOMOGRAPHER_DEPRECATED_FUNC(...) __VA_ARGS__ TOMOGRAPHER_DEPRECATED
+// #  define TOMOGRAPHER_DEPRECATED_CLASS(...) class TOMOGRAPHER_DEPRECATED __VA_ARGS__
+// #  define TOMOGRAPHER_DEPRECATED_STRUCT(...) struct TOMOGRAPHER_DEPRECATED __VA_ARGS__
+// #  define TOMOGRAPHER_DEPRECATED_USING(X, ...)  using TOMOGRAPHER_DEPRECATED X = __VA_ARGS__
+// # elif defined(_MSC_VER)
+// #  define TOMOGRAPHER_DEPRECATED __declspec(deprecated)
+// #  define TOMOGRAPHER_DEPRECATED_FUNC(...) __VA_ARGS__ TOMOGRAPHER_DEPRECATED
+// #  define TOMOGRAPHER_DEPRECATED_CLASS(...) class TOMOGRAPHER_DEPRECATED __VA_ARGS__
+// #  define TOMOGRAPHER_DEPRECATED_STRUCT(...) struct TOMOGRAPHER_DEPRECATED __VA_ARGS__
+// #  define TOMOGRAPHER_DEPRECATED_USING(X, ...)  TOMOGRAPHER_DEPRECATED using X = __VA_ARGS__
+// # else
+// #  define TOMOGRAPHER_DEPRECATED_FUNC(...) __VA_ARGS__
+// #  define TOMOGRAPHER_DEPRECATED_CLASS(...) class  __VA_ARGS__
+// #  define TOMOGRAPHER_DEPRECATED_STRUCT(...) struct  __VA_ARGS__
+// #  define TOMOGRAPHER_DEPRECATED_USING(X, ...)  using X = __VA_ARGS__
+// # endif
 
-# if defined(_tomographer_has_cxx_deprecated_attribute)
-#  define TOMOGRAPHER_DEPRECATED [[deprecated]]
-#  define TOMOGRAPHER_DEPRECATED_FUNC(...) TOMOGRAPHER_DEPRECATED __VA_ARGS__
-#  define TOMOGRAPHER_DEPRECATED_CLASS(...) class TOMOGRAPHER_DEPRECATED __VA_ARGS__
-#  define TOMOGRAPHER_DEPRECATED_STRUCT(...) struct TOMOGRAPHER_DEPRECATED __VA_ARGS__
-#  define TOMOGRAPHER_DEPRECATED_USING(X, ...)  using X TOMOGRAPHER_DEPRECATED = __VA_ARGS__
-# elif defined(__GNUC__)
-#  define TOMOGRAPHER_DEPRECATED __attribute__((deprecated))
-#  define TOMOGRAPHER_DEPRECATED_FUNC(...) __VA_ARGS__ TOMOGRAPHER_DEPRECATED
-#  define TOMOGRAPHER_DEPRECATED_CLASS(...) class TOMOGRAPHER_DEPRECATED __VA_ARGS__
-#  define TOMOGRAPHER_DEPRECATED_STRUCT(...) struct TOMOGRAPHER_DEPRECATED __VA_ARGS__
-#  define TOMOGRAPHER_DEPRECATED_USING(X, ...)  using TOMOGRAPHER_DEPRECATED X = __VA_ARGS__
-# elif defined(_MSC_VER)
-#  define TOMOGRAPHER_DEPRECATED __declspec(deprecated)
-#  define TOMOGRAPHER_DEPRECATED_FUNC(...) __VA_ARGS__ TOMOGRAPHER_DEPRECATED
-#  define TOMOGRAPHER_DEPRECATED_CLASS(...) class TOMOGRAPHER_DEPRECATED __VA_ARGS__
-#  define TOMOGRAPHER_DEPRECATED_STRUCT(...) struct TOMOGRAPHER_DEPRECATED __VA_ARGS__
-#  define TOMOGRAPHER_DEPRECATED_USING(X, ...)  TOMOGRAPHER_DEPRECATED using X = __VA_ARGS__
-# else
-#  define TOMOGRAPHER_DEPRECATED_FUNC(...) __VA_ARGS__
-#  define TOMOGRAPHER_DEPRECATED_CLASS(...) class  __VA_ARGS__
-#  define TOMOGRAPHER_DEPRECATED_STRUCT(...) struct  __VA_ARGS__
-#  define TOMOGRAPHER_DEPRECATED_USING(X, ...)  using X = __VA_ARGS__
-# endif
-
-#endif
+// #endif
 
 
 
