@@ -191,6 +191,8 @@
 #  define TOMOGRAPHER_DEPRECATED_USING(X, ...)  TOMOGRAPHER_DEPRECATED using X = __VA_ARGS__
 # else
 #  define TOMOGRAPHER_DEPRECATED_FUNC(...) __VA_ARGS__
+#  define TOMOGRAPHER_DEPRECATED_CLASS(...) class  __VA_ARGS__
+#  define TOMOGRAPHER_DEPRECATED_STRUCT(...) struct  __VA_ARGS__
 #  define TOMOGRAPHER_DEPRECATED_USING(X, ...)  using X = __VA_ARGS__
 # endif
 
