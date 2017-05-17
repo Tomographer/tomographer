@@ -40,7 +40,7 @@
 #include <cstddef>
 #include <cstdlib>
 
-#include <boost/predef/compiler.h>
+#include <boost/predef.h>
 
 // NOTE: DO NOT INCLUDE EIGEN HEADERS IN THIS FILE! For instance eigen_assert_exception.h
 // depends on cxxdefs.h not including any Eigen headers.
