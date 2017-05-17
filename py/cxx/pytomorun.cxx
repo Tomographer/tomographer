@@ -471,9 +471,13 @@ py::object py_tomorun(
   std::mt19937::result_type base_seed =
     (std::mt19937::result_type)std::chrono::system_clock::now().time_since_epoch().count();
 
+
+  // number of renormalization levels in the binning analysis
+  const int recommended_num_samples_last_level = 128;
   if (binning_num_levels <= 0) {
     // choose automatically. Make sure that the last level has ~128 samples to calculate std deviation.
-    binning_num_levels = (int)(std::floor(std::log(mhrw_params.n_run/128) / std::log(2)) + 1e-3) ;
+    binning_num_levels = (int)(std::floor(std::log(mhrw_params.n_run/recommended_num_samples_last_level)
+                                          / std::log(2)) + 1e-3) ;
     if (binning_num_levels < 1) {
       binning_num_levels = 1;
     }
@@ -481,6 +485,20 @@ py::object py_tomorun(
   if (binning_num_levels < 4) {
     logger.warning("Because n_run is low, you are using binning_num_levels=%d which is probably "
                    "too little to yield reliable error bars.", (int)binning_num_levels) ;
+  }
+  const CountIntType binning_last_level_num_samples = std::ldexp((double)mhrw_params.n_run, - binning_num_levels);
+  logger.debug([&](std::ostream & stream) {
+      stream << "Binning analysis: " << binning_num_levels << " levels, with "
+             << binning_last_level_num_samples << " samples at last level";
+    });
+  // warn if number of samples @ last level is below recommended value
+  if (binning_last_level_num_samples < recommended_num_samples_last_level) {
+    logger.warning([&](std::ostream & stream) {
+        stream << "The number of samples (" << binning_last_level_num_samples
+               << ") at the last binning level is below the recommended value ("
+               << recommended_num_samples_last_level << ").  Consider increasing n_run "
+               << "or decreasing binning_num_levels.";
+      });
   }
 
   OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params,
