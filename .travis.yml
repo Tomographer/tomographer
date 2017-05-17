@@ -81,8 +81,8 @@ matrix:
             - python-pip
             - libatlas-dev
             - libatlas-base-dev
-            - libboost-all-dev
-            - libboost-dev
+            - libboost1.55-all-dev
+            - libboost1.55-dev
       env:
         - CMAKE_C_COMPILER=gcc-4.8
         - CMAKE_CXX_COMPILER=g++-4.8
@@ -107,8 +107,8 @@ matrix:
             - python-pip
             - libatlas-dev
             - libatlas-base-dev
-            - libboost-all-dev
-            - libboost-dev
+            - libboost1.55-all-dev
+            - libboost1.55-dev
       env:
         - CMAKE_C_COMPILER=gcc-5
         - CMAKE_CXX_COMPILER=g++-5
@@ -133,8 +133,8 @@ matrix:
             - python3-pip
             - libatlas-dev
             - libatlas-base-dev
-            - libboost-all-dev
-            - libboost-dev
+            - libboost1.55-all-dev
+            - libboost1.55-dev
       env:
         - CMAKE_C_COMPILER=gcc-6
         - CMAKE_CXX_COMPILER=g++-6
@@ -158,8 +158,8 @@ matrix:
             - gfortran-multilib
             - libatlas-dev
             - libatlas-base-dev
-            - libboost-all-dev
-            - libboost-dev
+            - libboost1.55-all-dev
+            - libboost1.55-dev
       before_install:
         - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
         - sudo apt-add-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty main'
@@ -193,8 +193,8 @@ matrix:
             - gfortran-multilib
             - libatlas-dev
             - libatlas-base-dev
-            - libboost-all-dev
-            - libboost-dev
+            - libboost1.55-all-dev
+            - libboost1.55-dev
       before_install:
         - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
         - sudo apt-add-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty main'
