@@ -124,18 +124,19 @@ struct TOMOGRAPHER_EXPORT BinningErrorBarConvergenceSummary {
   /** \brief Construct a summary object from a list of converged status obtained from \ref
    *         BinningAnalysis::determineErrorConvergence()
    */
-  static BinningErrorBarConvergenceSummary fromConvergedStatus(const Eigen::ArrayXi & converged_status)
+  static BinningErrorBarConvergenceSummary
+    fromConvergedStatus(const Eigen::Ref<const Eigen::ArrayXi> & converged_status)
   {
     const auto n_bins = converged_status.size();
 
     const Eigen::ArrayXi unkn_arr = 
-      converged_status.cwiseEqual(BINNING_UNKNOWN_CONVERGENCE).template cast<int>();
+      converged_status.cwiseEqual(BINNING_UNKNOWN_CONVERGENCE).cast<int>();
     const Eigen::ArrayXi conv_arr =
-      converged_status.cwiseEqual(BINNING_CONVERGED).template cast<int>();
+      converged_status.cwiseEqual(BINNING_CONVERGED).cast<int>();
 
     const auto n_unknown = unkn_arr.count();
     const auto n_converged = conv_arr.count();
-    const auto n_not_converged = converged_status.cwiseEqual(BINNING_NOT_CONVERGED).count();
+    const auto n_not_converged = converged_status.cwiseEqual(BINNING_NOT_CONVERGED).cast<int>().count();
 
     // Little heuristic to see whether the "unknown" converged error bars are isolated or
     // not. Use conv_arr shifted by one in each direction as a mask -- an unconverged

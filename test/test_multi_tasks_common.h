@@ -99,14 +99,14 @@ struct TestTask {
     ResultType(int value_) : msg(), value(value_) { }
     ResultType(int value_, std::string msg_) : msg(msg_), value(value_) { }
 
-    ResultType(ResultType && other) = default; // expressedly allow move construction
+    ResultType(ResultType && ) = default; // expressedly allow move construction
 
     std::string msg;
     int value;
 
     // test that the multiproc implementation does not depend on these
-    ResultType(const ResultType & other) = delete;
-    ResultType & operator=(const ResultType & other) = delete;
+    ResultType(const ResultType & ) = delete;
+    ResultType & operator=(const ResultType & ) = delete;
 
     ResultType explicitCopy() const { return ResultType(value, msg); }
   };
@@ -251,7 +251,7 @@ struct test_task_dispatcher_fixture {
     check_correct_results(results);
 
     // numTaskRuns()
-    BOOST_CHECK_EQUAL(results.size(), task_dispatcher.numTaskRuns());
+    BOOST_CHECK_EQUAL(results.size(), (std::size_t)task_dispatcher.numTaskRuns());
 
     // collectedTaskResult(k)
     const std::size_t N = task_dispatcher.numTaskRuns();

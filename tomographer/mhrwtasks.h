@@ -75,12 +75,14 @@ struct bits_interleaved {
 // Despite the name, the permutation is always the same.
 template<typename UIntType, int NBits = sizeof(UIntType)*CHAR_BIT, typename = void>
 struct kinda_random_bits_perm {
+  TOMO_STATIC_ASSERT_EXPR(!std::is_signed<UIntType>::value) ;
   // take the NBits least significant digits and apply the permutation to them
   static inline constexpr UIntType apply(UIntType x);
 };
 // implementation for NBits=4
 template<typename UIntType>
 struct kinda_random_bits_perm<UIntType,4,void> {
+  TOMO_STATIC_ASSERT_EXPR(!std::is_signed<UIntType>::value) ;
   static inline constexpr UIntType apply(UIntType x)
   {
     // take the NBits least significant digits and apply the permutation to them
@@ -93,6 +95,7 @@ template<typename UIntType, int NBits>
 struct kinda_random_bits_perm<UIntType, NBits, // NBits can be divided by 8:
                               typename std::enable_if<(NBits&(0x7))==0, void>::type>
 {
+  TOMO_STATIC_ASSERT_EXPR(!std::is_signed<UIntType>::value) ;
   // take the NBits least significant digits and apply the permutation to them
   static inline constexpr UIntType apply(UIntType x)
   {

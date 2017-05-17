@@ -76,13 +76,13 @@ BOOST_AUTO_TEST_CASE(interleave)
 
   BOOST_TEST_MESSAGE("x=0x"<<std::hex<<x<<", y=0x"<<std::hex<<y<<" : i1=0x"<<std::hex<<i1<<", i2=0x"<<std::hex<<i2) ;
 
-  BOOST_CHECK_EQUAL(i1, 0x55) ;
-  BOOST_CHECK_EQUAL(i2, 0xaa) ;
+  BOOST_CHECK_EQUAL(i1, 0x55u) ;
+  BOOST_CHECK_EQUAL(i2, 0xaau) ;
 }
 
 BOOST_AUTO_TEST_CASE(is_perm)
 {
-  const int N = sizeof(std::size_t)*CHAR_BIT; // 15; //2048+17;
+  const std::size_t N = sizeof(std::size_t)*CHAR_BIT; // 15; //2048+17;
   std::vector<std::size_t> vs;
 
   vs.resize(N);
@@ -108,7 +108,7 @@ BOOST_AUTO_TEST_CASE(is_perm)
 
 
   // do the same for sequential counts
-  const int N2 = 1024 + 37;
+  const std::size_t N2 = 1024 + 37;
   vs.resize(N2);
   const std::size_t key = 0x11001010u;
   for (std::size_t k = 0; k < N2; ++k) {
@@ -136,8 +136,8 @@ BOOST_AUTO_TEST_SUITE(cdatabase)
 
 BOOST_AUTO_TEST_CASE(constr)
 {
-  Tomographer::MHRWTasks::CDataBase<double> cdata(Tomographer::MHRWParams<double, int>(0.1, 128, 50, 500), 100);
-  BOOST_CHECK_EQUAL(cdata.base_seed, 100);
+  Tomographer::MHRWTasks::CDataBase<double> cdata(Tomographer::MHRWParams<double, int>(0.1, 128, 50, 500), 100u);
+  BOOST_CHECK_EQUAL(cdata.base_seed, 100u);
   MY_BOOST_CHECK_FLOATS_EQUAL(cdata.mhrw_params.mhwalker_params, 0.1, tol);
   BOOST_CHECK_EQUAL(cdata.mhrw_params.n_sweep, 128);
   BOOST_CHECK_EQUAL(cdata.mhrw_params.n_therm, 50);
@@ -146,14 +146,19 @@ BOOST_AUTO_TEST_CASE(constr)
 
 BOOST_AUTO_TEST_CASE(get_task_inputs)
 {
-  const Tomographer::MHRWTasks::CDataBase<double> cdata(Tomographer::MHRWParams<double, int>(0.1, 128, 50, 500), 100);
+  const Tomographer::MHRWTasks::CDataBase<double,int,unsigned int>
+    cdata(Tomographer::MHRWParams<double, int>(0.1, 128, 50, 500), 100);
 
   BOOST_MESSAGE( cdata.getBasicCDataMHRWInfo() );
 
-  std::vector<int> inputs;
+  std::vector<unsigned int> inputs;
   inputs.reserve(1024);
   for (int k = 0; k < 1024; ++k) {
-    inputs.push_back(cdata.getTaskInput(k));
+    auto input = cdata.getTaskInput(k);
+    bool oktype = std::is_same<decltype(input),unsigned int>::value;
+    BOOST_CHECK( oktype ) ;
+    inputs.push_back(input);
+    BOOST_TEST_MESSAGE("Task input #" << k << ": " << input) ;
   }
 
   // make sure that all the inputs are different
@@ -305,7 +310,7 @@ BOOST_AUTO_TEST_CASE(base)
 
   MyCData cdata(Tomographer::MHRWParams<int,int>(mhwalker_params, nsweep, ntherm, nrun));
 
-  const int NumRuns = 5;
+  const std::size_t NumRuns = 5;
 
   Tomographer::MultiProc::Sequential::TaskDispatcher<
     Tomographer::MHRWTasks::MHRandomWalkTask<MyCData, std::mt19937>,

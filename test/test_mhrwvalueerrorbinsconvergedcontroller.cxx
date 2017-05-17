@@ -157,11 +157,13 @@ BOOST_FIXTURE_TEST_CASE(keepsrunning, TestStatsCollectorFixture2)
   
   Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<double>,int> p(0.1, 2, 2, 32) ;
 
-  typedef Tomographer::MHRWValueErrorBinsConvergedController<MyStatsCollector,int,Tomographer::Logger::BoostTestLogger>
+  typedef Tomographer::MHRWValueErrorBinsConvergedController<MyStatsCollector,int,
+                                                             Tomographer::Logger::BoostTestLogger>
     CtrlType;
   CtrlType ctrl(statcoll, logger, 1 /*check_frequency_sweeps*/, 0, 0, 0);
 
-  BOOST_CHECK_EQUAL( CtrlType::AdjustmentStrategy, Tomographer::MHRWControllerDoNotAdjust ) ;
+  BOOST_CHECK_EQUAL( (unsigned int) CtrlType::AdjustmentStrategy,
+                     (unsigned int) Tomographer::MHRWControllerDoNotAdjust ) ;
 
   ctrl.init(p, dmhwalker, mhrw);
 
@@ -182,11 +184,11 @@ BOOST_FIXTURE_TEST_CASE(keepsrunning, TestStatsCollectorFixture2)
         stream << "# samples @ last level: " << coll_samples / (1<<bin_num_levels) ;
       });
   
-    BOOST_CHECK_EQUAL(summary.n_bins, 10);
-    BOOST_CHECK_EQUAL(summary.n_converged, 8);
-    BOOST_CHECK_EQUAL(summary.n_unknown, 0);
-    BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0);
-    BOOST_CHECK_EQUAL(summary.n_not_converged, 2);
+    BOOST_CHECK_EQUAL(summary.n_bins, 10u);
+    BOOST_CHECK_EQUAL(summary.n_converged, 8u);
+    BOOST_CHECK_EQUAL(summary.n_unknown, 0u);
+    BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0u);
+    BOOST_CHECK_EQUAL(summary.n_not_converged, 2u);
   }
 
   // our point sequence is designed so that some bins have not converged -- so the
@@ -205,11 +207,11 @@ BOOST_FIXTURE_TEST_CASE(keepsrunning, TestStatsCollectorFixture2)
 
   auto summary = result.errorBarConvergenceSummary();
 
-  BOOST_CHECK_EQUAL(summary.n_bins, 10);
-  BOOST_CHECK_EQUAL(summary.n_converged, 10);
-  BOOST_CHECK_EQUAL(summary.n_unknown, 0);
-  BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0);
-  BOOST_CHECK_EQUAL(summary.n_not_converged, 0);
+  BOOST_CHECK_EQUAL(summary.n_bins, 10u);
+  BOOST_CHECK_EQUAL(summary.n_converged, 10u);
+  BOOST_CHECK_EQUAL(summary.n_unknown, 0u);
+  BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0u);
+  BOOST_CHECK_EQUAL(summary.n_not_converged, 0u);
 
   logger.debug("keepsrunning test case", [&](std::ostream & stream) {
       result.dumpConvergenceAnalysis(stream);

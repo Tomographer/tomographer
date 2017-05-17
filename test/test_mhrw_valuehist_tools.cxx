@@ -204,8 +204,8 @@ BOOST_AUTO_TEST_CASE(works)
   MY_BOOST_CHECK_FLOATS_EQUAL(r.raw_histogram.params.max, 1.0, tol);
   MY_BOOST_CHECK_FLOATS_EQUAL(r.histogram.params.min, 0.0, tol);
   MY_BOOST_CHECK_FLOATS_EQUAL(r.histogram.params.max, 1.0, tol);
-  BOOST_CHECK_EQUAL(r.raw_histogram.params.num_bins, 2);
-  BOOST_CHECK_EQUAL(r.histogram.params.num_bins, 2);
+  BOOST_CHECK_EQUAL(r.raw_histogram.params.num_bins, 2u);
+  BOOST_CHECK_EQUAL(r.histogram.params.num_bins, 2u);
   BOOST_CHECK_EQUAL(r.raw_histogram.bins(0), 9);
   BOOST_CHECK_EQUAL(r.raw_histogram.bins(1), 8);
   BOOST_CHECK_EQUAL(r.raw_histogram.off_chart, 3);
@@ -234,14 +234,14 @@ BOOST_FIXTURE_TEST_CASE(simple, check_cdata_types<false>)
 
   MY_BOOST_CHECK_FLOATS_EQUAL(cdat.histogram_params.min, 0.0, tol);
   MY_BOOST_CHECK_FLOATS_EQUAL(cdat.histogram_params.max, 1.0, tol);
-  BOOST_CHECK_EQUAL(cdat.histogram_params.num_bins, 2);
+  BOOST_CHECK_EQUAL(cdat.histogram_params.num_bins, 2u);
 
   MY_BOOST_CHECK_FLOATS_EQUAL(cdat.mhrw_params.mhwalker_params.step_size, 0.1f, tol_f);
   BOOST_CHECK_EQUAL(cdat.mhrw_params.n_sweep, 1024);
   BOOST_CHECK_EQUAL(cdat.mhrw_params.n_therm, 500);
   BOOST_CHECK_EQUAL(cdat.mhrw_params.n_run, 32768);
 
-  BOOST_CHECK_EQUAL(cdat.base_seed, 999);
+  BOOST_CHECK_EQUAL(cdat.base_seed, 999u);
 
   // aggregated histograms
 
