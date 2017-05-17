@@ -163,9 +163,15 @@
 #  define TOMOGRAPHER_DEPRECATED_USING(X, Y)  using X = Y
 
 #else
-
 // implementation:
-# if defined(__has_cpp_attribute) && __has_cpp_attribute(deprecated)
+
+#if defined(__has_cpp_attribute)
+#  if __has_cpp_attribute(deprecated)
+#    define _tomographer_has_cxx_deprecated_attribute
+#  endif
+#endif
+
+# if defined(_tomographer_has_cxx_deprecated_attribute)
 #  define TOMOGRAPHER_DEPRECATED [[deprecated]]
 #  define TOMOGRAPHER_DEPRECATED_FUNC(...) TOMOGRAPHER_DEPRECATED __VA_ARGS__
 #  define TOMOGRAPHER_DEPRECATED_CLASS(...) class TOMOGRAPHER_DEPRECATED __VA_ARGS__
