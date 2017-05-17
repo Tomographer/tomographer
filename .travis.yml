@@ -82,6 +82,7 @@ matrix:
             - libatlas-dev
             - libatlas-base-dev
             - libboost-all-dev
+            - libboost-dev
       env:
         - CMAKE_C_COMPILER=gcc-4.8
         - CMAKE_CXX_COMPILER=g++-4.8
@@ -107,6 +108,7 @@ matrix:
             - libatlas-dev
             - libatlas-base-dev
             - libboost-all-dev
+            - libboost-dev
       env:
         - CMAKE_C_COMPILER=gcc-5
         - CMAKE_CXX_COMPILER=g++-5
@@ -132,6 +134,7 @@ matrix:
             - libatlas-dev
             - libatlas-base-dev
             - libboost-all-dev
+            - libboost-dev
       env:
         - CMAKE_C_COMPILER=gcc-6
         - CMAKE_CXX_COMPILER=g++-6
@@ -156,6 +159,7 @@ matrix:
             - libatlas-dev
             - libatlas-base-dev
             - libboost-all-dev
+            - libboost-dev
       before_install:
         - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
         - sudo apt-add-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty main'
@@ -190,6 +194,7 @@ matrix:
             - libatlas-dev
             - libatlas-base-dev
             - libboost-all-dev
+            - libboost-dev
       before_install:
         - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
         - sudo apt-add-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty main'
