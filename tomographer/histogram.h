@@ -1463,7 +1463,8 @@ struct histogram_pretty_printer
   const HistogramType & hist;
   const int max_width;
 
-  typedef typename HistogramType::CountType CountType;
+  // the histogram count type, but at least precision double
+  typedef decltype(typename HistogramType::CountType(1) + double(1)) CountType;
   
   const std::string lsep;
   const std::string rsep;

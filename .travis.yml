@@ -113,7 +113,7 @@ matrix:
         - CMAKE_C_COMPILER=gcc-5
         - CMAKE_CXX_COMPILER=g++-5
         - PYTHON_EXECUTABLE=/usr/bin/python
-        - CMAKE_COMPILER_ARGS="-DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython2.7.so -DPYTHON_INCLUDE_DIR=/usr/include/python2.7"
+        - CMAKE_COMPILER_ARGS="-DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython2.7.so -DPYTHON_INCLUDE_DIR=/usr/include/python2.7 -DTOMORUN_MULTIPROC=sequential"
         - PIP=/usr/bin/pip
     - compiler: gcc
       addons:
