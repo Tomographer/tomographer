@@ -86,9 +86,9 @@ public:
 
     tomographer_assert((IndexType)_dmt.dim() == Herm.cols()); // assert Herm is (dim x dim)
     
-    x.block(0,0,_dmt.dim(),1) = Herm.real().diagonal();
+    x.block(0,0,(IndexType)_dmt.dim(),1) = Herm.real().diagonal();
 
-    IndexType k = _dmt.dim();
+    IndexType k = (IndexType)_dmt.dim();
     IndexType n, m;
     for (n = 1; n < (IndexType)_dmt.dim(); ++n) {
       for (m = 0; m < n; ++m) {
@@ -112,13 +112,13 @@ public:
     // should be optimized by compiler via RVO
     MatrixType Herm(_dmt.initMatrixType());
     
-    const IndexType dimtri = (_dmt.dim2()-_dmt.dim())/2;
+    const IndexType dimtri = (IndexType)(_dmt.dim2()-_dmt.dim())/2;
     tomographer_assert(x.rows() == (IndexType)_dmt.dim2() && x.cols() == 1); // assert x is (dim*dim x 1)
 
-    Herm.diagonal().real() = x.block(0,0,_dmt.dim(),1);
+    Herm.diagonal().real() = x.block(0,0,(IndexType)_dmt.dim(),1);
     Herm.diagonal().imag().setZero();
   
-    IndexType k = _dmt.dim();
+    IndexType k = (IndexType)_dmt.dim();
     IndexType n, m;
     for (n = 1; n < (IndexType)_dmt.dim(); ++n) {
       for (m = 0; m < n; ++m) {

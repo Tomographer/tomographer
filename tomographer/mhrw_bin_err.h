@@ -127,27 +127,29 @@ struct TOMOGRAPHER_EXPORT BinningErrorBarConvergenceSummary {
   static BinningErrorBarConvergenceSummary
     fromConvergedStatus(const Eigen::Ref<const Eigen::ArrayXi> & converged_status)
   {
-    const auto n_bins = converged_status.size();
+    const std::size_t n_bins = (std::size_t)converged_status.size();
 
     const Eigen::ArrayXi unkn_arr = 
       converged_status.cwiseEqual(BINNING_UNKNOWN_CONVERGENCE).cast<int>();
     const Eigen::ArrayXi conv_arr =
       converged_status.cwiseEqual(BINNING_CONVERGED).cast<int>();
 
-    const auto n_unknown = unkn_arr.count();
-    const auto n_converged = conv_arr.count();
-    const auto n_not_converged = converged_status.cwiseEqual(BINNING_NOT_CONVERGED).cast<int>().count();
+    const std::size_t n_unknown = (std::size_t)unkn_arr.count();
+    const std::size_t n_converged = (std::size_t)conv_arr.count();
+    const std::size_t n_not_converged =
+      (std::size_t)converged_status.cwiseEqual(BINNING_NOT_CONVERGED).cast<int>().count();
 
     // Little heuristic to see whether the "unknown" converged error bars are isolated or
     // not. Use conv_arr shifted by one in each direction as a mask -- an unconverged
     // error bar is isolated if it is surrounded by converged error bars
-    const auto n_unknown_isol = (
-        unkn_arr.segment(1,n_bins-2)
-        .cwiseProduct(conv_arr.segment(0,n_bins-2))
-        .cwiseProduct(conv_arr.segment(2,n_bins-2))
-        ).count()
-      // edges
-      + unkn_arr(0)*conv_arr(1) + unkn_arr(n_bins-1)*conv_arr(n_bins-2);
+    const std::size_t n_unknown_isol = (std::size_t)(
+        ( unkn_arr.segment(1,(Eigen::Index)n_bins-2)
+          .cwiseProduct(conv_arr.segment(0,(Eigen::Index)n_bins-2))
+          .cwiseProduct(conv_arr.segment(2,(Eigen::Index)n_bins-2))
+            ).count()
+        // edges
+        + unkn_arr(0)*conv_arr(1) + unkn_arr((Eigen::Index)n_bins-1)*conv_arr((Eigen::Index)n_bins-2)
+        );
 
     return BinningErrorBarConvergenceSummary(n_bins, n_converged, n_unknown, n_unknown_isol, n_not_converged);
   }
@@ -513,10 +515,10 @@ public:
     : numTrackValues(num_track_values_),
       numLevels(num_levels_),
       samplesSize(1 << numLevels()),
-      samples(numTrackValues(), samplesSize()),
+      samples((Eigen::Index)numTrackValues(), (Eigen::Index)samplesSize()),
       n_flushes(0),
-      bin_sum(BinSumArray::Zero(numTrackValues())),
-      bin_sumsq(BinSumSqArray::Zero(numTrackValues(), numLevels()+1)),
+      bin_sum(BinSumArray::Zero((Eigen::Index)numTrackValues())),
+      bin_sumsq(BinSumSqArray::Zero((Eigen::Index)numTrackValues(), (Eigen::Index)numLevels()+1)),
       logger(logger_)
   {
     tomographer_assert(Tools::isPositive(numLevels()));
@@ -536,7 +538,7 @@ public:
     n_flushes = 0;
     n_samples = 0;
     helper_reset_bin_sum();
-    bin_sumsq = BinSumSqArray::Zero(numTrackValues(), numLevels()+1);
+    bin_sumsq = BinSumSqArray::Zero((Eigen::Index)numTrackValues(), (Eigen::Index)numLevels()+1);
     logger.longdebug("BinningAnalysis::reset()", "ready to go.");
   }
   
@@ -553,7 +555,7 @@ public:
   template<typename Derived>
   inline void processNewValues(const Eigen::DenseBase<Derived> & vals)
   {
-    const int ninbin = n_samples % samplesSize();
+    const CountIntType ninbin = n_samples % samplesSize();
 
     ++n_samples;
 
@@ -580,15 +582,16 @@ public:
 
       for (int level = 0; level <= numLevels(); ++level) {
 
-	const int binnedsize = 1 << (numLevels()-level);
+	const CountIntType binnedsize = CountIntType(1) << (numLevels()-level);
 
 	logger.longdebug("BinningAnalysis::processNewValues()", [&](std::ostream & str) {
 	    str << "Processing binning level = " << level << ": binnedsize="<<binnedsize
                 << "; n_flushes=" << n_flushes << "\n";
-	    str << "\tbinned samples = \n" << samples.block(0,0,numTrackValues(),binnedsize);
+	    str << "\tbinned samples = \n"
+                << samples.block(0,0,(Eigen::Index)numTrackValues(),(Eigen::Index)binnedsize);
 	  });
 
-	for (int ksample = 0; ksample < binnedsize; ++ksample) {
+	for (CountIntType ksample = 0; ksample < binnedsize; ++ksample) {
 	  bin_sumsq.col(level) += samples.col(ksample).cwiseProduct(samples.col(ksample));
 	  if (ksample % 2 == 0 && binnedsize > 1) {
 	    samples.col(ksample/2) = boost::math::constants::half<ValueType>() *
@@ -628,7 +631,7 @@ private:
   TOMOGRAPHER_ENABLED_IF(StoreBinSums)
   inline void helper_reset_bin_sum()
   {
-    bin_sum.value = BinSumArray::Zero(numTrackValues());
+    bin_sum.value = BinSumArray::Zero((Eigen::Index)numTrackValues());
   }
   TOMOGRAPHER_ENABLED_IF(!StoreBinSums)
   inline void helper_reset_bin_sum() { }
@@ -725,7 +728,7 @@ public:
   template<typename Derived>
   inline BinSumSqArray calcErrorLevels(const Eigen::ArrayBase<Derived> & means) const
   {
-    tomographer_assert(means.rows() == numTrackValues());
+    tomographer_assert(means.rows() == (Eigen::Index)numTrackValues());
     tomographer_assert(means.cols() == 1);
     const int n_levels_plus_one = numLevels()+1;
     const int n_track_values = numTrackValues();
@@ -749,7 +752,7 @@ public:
 		n_track_values, 1
 		) * n_flushes
 	    - Eigen::Array<ValueType, NumTrackValuesCTime, NumLevelsPlusOneCTime>::Constant(
-		numTrackValues(), n_levels_plus_one,
+		(Eigen::Index)numTrackValues(), (Eigen::Index)n_levels_plus_one,
 		1 // the constant...
 		)
 	    ).cwiseSqrt();
@@ -769,10 +772,11 @@ public:
    */
   template<typename Derived>
   inline BinSumArray calcErrorLastLevel(const Eigen::ArrayBase<Derived> & means) const {
-    tomographer_assert(means.rows() == numTrackValues());
+    tomographer_assert(means.rows() == (Eigen::Index)numTrackValues());
     tomographer_assert(means.cols() == 1);
     return (
-	bin_sumsq.col(numLevels()) / ValueType(n_flushes) - means.cwiseProduct(means).template cast<ValueType>()
+	bin_sumsq.col((Eigen::Index)numLevels()) / ValueType(n_flushes)
+        - means.cwiseProduct(means).template cast<ValueType>()
 	).cwiseMax(0).cwiseSqrt() / std::sqrt(ValueType(n_flushes-1));
   }
   
@@ -790,7 +794,7 @@ public:
   TOMOGRAPHER_ENABLED_IF(StoreBinSums)
   inline BinSumSqArray calcErrorLevels() const {
     BinSumArray means = getBinMeans();
-    return calcErrorLevels(means);
+    return calcErrorLevels(std::move(means));
   }
 
   /** \brief Calculate the error bar of samples (from the last binning level).
@@ -808,7 +812,7 @@ public:
   TOMOGRAPHER_ENABLED_IF(StoreBinSums)
   inline BinSumArray calcErrorLastLevel() const {
     BinSumArray means = getBinMeans();
-    return calcErrorLastLevel(means);
+    return calcErrorLastLevel(std::move(means));
   }
   
   /** \brief Attempt to determine if the error bars have converged.
@@ -827,8 +831,8 @@ public:
   {
     Eigen::ArrayXi converged_status(numTrackValues()); // RVO will help
 
-    tomographer_assert(error_levels.rows() == numTrackValues());
-    tomographer_assert(error_levels.cols() == numLevels() + 1);
+    tomographer_assert(error_levels.rows() == (Eigen::Index)numTrackValues());
+    tomographer_assert(error_levels.cols() == (Eigen::Index)numLevels() + 1);
 
     logger.longdebug("BinningAnalysis::determineErrorConvergence", [&](std::ostream & str) {
 	str << "error_levels = \n" << error_levels << "\n";
@@ -840,24 +844,24 @@ public:
     const int range = 4;
     if (numLevels() < range-1) {
 
-      converged_status = Eigen::ArrayXi::Constant(numTrackValues(), UNKNOWN_CONVERGENCE);
+      converged_status = Eigen::ArrayXi::Constant((Eigen::Index)numTrackValues(), UNKNOWN_CONVERGENCE);
 
     } else {
 
-      converged_status = Eigen::ArrayXi::Constant(numTrackValues(), CONVERGED);
+      converged_status = Eigen::ArrayXi::Constant((Eigen::Index)numTrackValues(), CONVERGED);
 
-      const auto & errors = error_levels.col(numLevels());
+      const auto & errors = error_levels.col((Eigen::Index)numLevels());
 
       for (int level = numLevels()+1 - range; level < numLevels(); ++level) {
 
-	const auto & errors_thislevel = error_levels.col(level);
+	const auto & errors_thislevel = error_levels.col((Eigen::Index)level);
 
 	logger.longdebug("BinningAnalysis::determineErrorConvergence", [&](std::ostream & str) {
 	    str << "About to study level " << level << ": at this point, converged_status = \n"
 		<< converged_status << "\nand errors_thislevel = \n" << errors_thislevel;
 	  });
 
-	for (int val_it = 0; val_it < numTrackValues(); ++val_it) {
+	for (Eigen::Index val_it = 0; val_it < (Eigen::Index)numTrackValues(); ++val_it) {
 	  if (errors_thislevel(val_it) >= errors(val_it) &&
 	      converged_status(val_it) != NOT_CONVERGED) {
 	    converged_status(val_it) = CONVERGED;

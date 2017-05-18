@@ -335,7 +335,7 @@ private:
 
 public:
 
-  inline MHRWMovingAverageAcceptanceRatioStatsCollector(std::size_t num_samples_ = 2048)
+  inline MHRWMovingAverageAcceptanceRatioStatsCollector(Eigen::Index num_samples_ = 2048)
     : accept_buffer(Eigen::ArrayXi::Zero(num_samples_)), pos(0)
   {
   }
@@ -938,11 +938,11 @@ public:
   inline void processSample(CountIntType2 k, CountIntType2 n, const PointType & curpt,
                             LLHValueType curptval, MHRandomWalk & mh)
   {
-    std::size_t histindex = value_histogram.processSample(k, n, curpt, curptval, mh);
+    Eigen::Index histindex = (Eigen::Index)value_histogram.processSample(k, n, curpt, curptval, mh);
     binning_analysis.processNewValues(
 	Tools::canonicalBasisVec<Eigen::Array<ValueType,Eigen::Dynamic,1> >(
             histindex,
-            value_histogram.histogram().numBins()
+            (Eigen::Index)value_histogram.histogram().numBins()
             )
 	);
   }
@@ -1194,9 +1194,10 @@ struct TOMOGRAPHER_EXPORT StatusProvider<ValueHistogramWithBinningMHRWStatsColle
 
     auto conv_summary = BinningErrorBarConvergenceSummary::fromConvergedStatus(conv_status);
 
-    return Tomographer::tomo_internal::histogram_short_bar_fmt<BaseHistogramType>(histogram, "", maxbarwidth)
+    return histogramShortBar<BaseHistogramType>(histogram, true, maxbarwidth)
       + Tools::fmts("   err: (cnvg/?/fail) %d/%d/%d",
-                    (int)conv_summary.n_converged, (int)conv_summary.n_unknown, (int)conv_summary.n_not_converged);
+                    (int)conv_summary.n_converged, (int)conv_summary.n_unknown,
+                    (int)conv_summary.n_not_converged);
   }
 };
 // static members:

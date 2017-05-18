@@ -77,6 +77,9 @@
 #    error "OpenMP multiprocessing scheme requested, but OpenMP is not enabled"
 #  endif
 
+#define TOMORUN_THREAD_CRITICAL_SECTION         \
+  _Pragma("omp critical")
+
 #elif defined(TOMORUN_MULTIPROC_SEQUENTIAL)
 
 // Don't parallelize.
@@ -84,12 +87,18 @@
 #  define TomorunMultiProcTaskDispatcher Tomographer::MultiProc::Sequential::TaskDispatcher
 #  define TomorunMultiProcTaskDispatcherTitle "Sequential (parallelization deactivated!)"
 
+#define TOMORUN_THREAD_CRITICAL_SECTION
+
 #else // also if defined(TOMORUN_MULTIPROC_CXXTHREADS)
 
 // use C++11 threads otherwise
 #  include <tomographer/multiprocthreads.h>
 #  define TomorunMultiProcTaskDispatcher Tomographer::MultiProc::CxxThreads::TaskDispatcher
 #  define TomorunMultiProcTaskDispatcherTitle "C++11 Threads"
+
+#define TOMORUN_THREAD_CRITICAL_SECTION                 \
+  static std::mutex _tomorun_critical_section_mutex;                       \
+  std::lock_guard<std::mutex> _tomorun_lock_guard(_tomorun_critical_section_mutex);
 
 #endif
 
@@ -169,19 +178,18 @@ int main(int argc, char **argv)
   // # of samples at last level is = Nrun/(2^{num_binning_levels}).
   // [note: std::ldexp(x,e) := x * 2^{e} ]
   //
-  const unsigned long last_level_num_samples = std::ldexp((double)opt.Nrun, - opt.binning_analysis_num_levels);
+  const TomorunInt last_level_num_samples
+    = (TomorunInt)std::ldexp((TomorunReal)opt.Nrun, - opt.binning_analysis_num_levels);
   logger.debug("last_level_num_samples = %lu", last_level_num_samples);
   //
   if ( opt.binning_analysis_error_bars &&
-       ( last_level_num_samples < (unsigned long)last_binning_level_warn_min_samples ) ) {
-    logger.warning(
-	"Few samples in the last binning level of binning analysis : "
-	"Nrun=%lu, # of levels=%lu --> %lu samples. [Recommended >= %lu]",
-	(unsigned long)opt.Nrun,
-	(unsigned long)opt.binning_analysis_num_levels,
-	(unsigned long)last_level_num_samples,
-	(unsigned long)last_binning_level_warn_min_samples
-	);
+       ( last_level_num_samples < (TomorunInt)last_binning_level_warn_min_samples ) ) {
+    logger.warning([&](std::ostream & stream) {
+        stream << "Few samples in the last binning level of binning analysis : "
+               << "Nrun=" << opt.Nrun << ", # of levels=" << opt.binning_analysis_num_levels
+               << " --> " << last_level_num_samples
+               << " samples. [Recommended >= " << last_binning_level_warn_min_samples << "]";
+      });
   }
 
   // warn the user if they specified control-binning-convergence but don't have binning

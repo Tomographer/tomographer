@@ -97,14 +97,15 @@ static std::string prog_version_info_features()
   featconfig.push_back("with assertions");
 #endif
   // tomorun-specifics
-#define IDENT_TO_STRING(x) #x
+#define MKSTRING(x) #x
+#define IDENT_TO_STRING(x) MKSTRING(x)
 #ifdef TOMORUN_INT
   featconfig.push_back(Tomographer::Tools::fmts("int_type=%s", IDENT_TO_STRING(TOMORUN_INT)));
 #endif
 #ifdef TOMORUN_REAL
   featconfig.push_back(Tomographer::Tools::fmts("real_type=%s", IDENT_TO_STRING(TOMORUN_REAL)));
 #endif
-#ifdef TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS
+#if TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS
   featconfig.push_back("with povm_consistency_checks");
 #endif
 #ifdef TOMORUN_CUSTOM_FIXED_DIM
@@ -116,10 +117,14 @@ static std::string prog_version_info_features()
 #ifdef TOMORUN_CUSTOM_MAX_POVM_EFFECTS
   featconfig.push_back(Tomographer::Tools::fmts("custom_max_povm_effects=%d", TOMORUN_CUSTOM_MAX_POVM_EFFECTS));
 #endif
-#ifdef TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
+#if TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
   featconfig.push_back("with multiplexor-value-calculator");
 #else
   featconfig.push_back("no multiplexor-value-calculator");
+#endif
+  featconfig.push_back(Tomographer::Tools::fmts("rng=%s", IDENT_TO_STRING(TOMORUN_RNG_CLASS)));
+#if TOMORUN_USE_DEVICE_SEED
+  featconfig.push_back(Tomographer::Tools::fmts("rng-seed-from-device=%s", TOMORUN_RANDOM_DEVICE ""));
 #endif
   // join feature items together into a config string
   features_str += "Config: ";
@@ -290,7 +295,7 @@ struct ProgOptions
     flog(stdout),
     data_file_name(),
     step_size(0.01),
-    Nsweep(std::max(10, int(1/step_size))),
+    Nsweep((unsigned int)std::max(10, int(1/step_size))),
     Ntherm(500),
     Nrun(32768),
     valtype("fidelity"),
@@ -305,7 +310,7 @@ struct ProgOptions
     control_binning_converged_max_not_converged(0),
     control_binning_converged_max_unknown(2),
     control_binning_converged_max_unknown_notisolated(0),
-    start_seed(std::chrono::system_clock::now().time_since_epoch().count()),
+    //    start_seed(0),
     Nrepeats(12),
     Nchunk(1),
     NMeasAmplifyFactor(1.0),
@@ -340,11 +345,11 @@ struct ProgOptions
   bool control_step_size;
   int control_step_size_moving_avg_samples;
   bool control_binning_converged;
-  int control_binning_converged_max_not_converged;
-  int control_binning_converged_max_unknown;
-  int control_binning_converged_max_unknown_notisolated;
+  std::size_t control_binning_converged_max_not_converged;
+  std::size_t control_binning_converged_max_unknown;
+  std::size_t control_binning_converged_max_unknown_notisolated;
 
-  int start_seed;
+  //  int start_seed;
 
   unsigned int Nrepeats;
   unsigned int Nchunk;
@@ -463,17 +468,17 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
      "Do not dynamically control the random walk length, you might need to manually inspect "
      "the convergence status of the error bars resulting from the binning analysis.")
     ("control-binning-converged-max-not-converged",
-     value<int>(& opt->control_binning_converged_max_not_converged )
+     value<std::size_t>(& opt->control_binning_converged_max_not_converged )
      ->default_value(opt->control_binning_converged_max_not_converged),
      "If control-binning-converged is set, then do not finish the random walk before there being "
      "no more than this number of error bars which have not converged.")
     ("control-binning-converged-max-unknown",
-     value<int>(& opt->control_binning_converged_max_unknown )
+     value<std::size_t>(& opt->control_binning_converged_max_unknown )
      ->default_value(opt->control_binning_converged_max_unknown),
      "If control-binning-converged is set, then do not finish the random walk before there being "
      "no more than this number of error bars for which the convergence is uncertain.")
     ("control-binning-converged-max-unknown-notisolated",
-     value<int>(& opt->control_binning_converged_max_unknown_notisolated )
+     value<std::size_t>(& opt->control_binning_converged_max_unknown_notisolated )
      ->default_value(opt->control_binning_converged_max_unknown_notisolated),
      "If control-binning-converged is set, then do not finish the random walk before there being "
      "no more than this number of error bars for which the convergence is uncertain and which are "
@@ -855,7 +860,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 
     opt->val_min = fmin;
     opt->val_max = fmax;
-    opt->val_nbins = nbins;
+    opt->val_nbins = (std::size_t)nbins;
     logger.debug("Histogram parameters parsed: min=%g, max=%g, num_bins=%d",
 		 (double)opt->val_min, (double)opt->val_max, (int)opt->val_nbins);
   }

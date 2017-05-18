@@ -183,6 +183,9 @@ struct valuehist_types<CDataBaseType, true>
  * \tparam MHWalkerParams The MHWalkerParams required for our \ref pageInterfaceMHWalker
  *         "MHWalker" (for instance a \ref MHWalkerParamsStepSize)
  *
+ * \tparam RngSeedType The type used to store the seed of the pseudo random number
+ *         generator. See \ref MHRWTasks::CDataBase.
+ *
  * \tparam IterCountIntType the integer type to use for counting iterations.
  *
  * \tparam CountRealType the real type to use when calculating the scaled histogram with
@@ -202,7 +205,7 @@ struct valuehist_types<CDataBaseType, true>
  *   typedef Tomographer::MHRWTasks::ValueHistogramTools::CDataBase< ... > Base;
  *
  *   TOMOGRAPHER_ENABLED_IF(!BinningAnalysisEnabled)
- *   MyCData(ValueCalculator valcalc, int base_seed, ...)
+ *   MyCData(ValueCalculator valcalc, RngSeedType base_seed, ...)
  *     : Base(valcalc,
  *            typename Base::HistogramParams(...),
  *            typename Base::MHRWParamsType(...),
@@ -210,7 +213,7 @@ struct valuehist_types<CDataBaseType, true>
  *   { ... }
  *
  *   TOMOGRAPHER_ENABLED_IF(BinningAnalysisEnabled)
- *   MyCData(ValueCalculator valcalc, int base_seed, int binning_analysis_num_levels, ...)
+ *   MyCData(ValueCalculator valcalc, RngSeedType base_seed, int binning_analysis_num_levels, ...)
  *     : Base(valcalc,
  *            typename Base::HistogramParams(...),
  *            binning_analysis_num_levels,
@@ -221,18 +224,25 @@ struct valuehist_types<CDataBaseType, true>
  * };
  * \endcode
  */
-template<typename ValueCalculator_, bool UseBinningAnalysis_ = true,
-         typename MHWalkerParams_ = MHWalkerParamsStepSize<double>, typename IterCountIntType_ = int,
-	 typename CountRealType_ = double, typename HistCountIntType_ = IterCountIntType_>
+template<typename ValueCalculator_,
+         bool UseBinningAnalysis_ = true,
+         typename MHWalkerParams_ = MHWalkerParamsStepSize<double>,
+         typename RngSeedType_ = std::mt19937::result_type,
+         typename IterCountIntType_ = int,
+	 typename CountRealType_ = double,
+         typename HistCountIntType_ = IterCountIntType_>
 struct TOMOGRAPHER_EXPORT CDataBase
-  : public MHRWTasks::CDataBase<MHWalkerParams_, IterCountIntType_>,
+  : public MHRWTasks::CDataBase<MHWalkerParams_, IterCountIntType_, RngSeedType_>,
     public virtual Tools::NeedOwnOperatorNew<ValueCalculator_>::ProviderType
 {
   //! The MHRWTasks::CDataBase base class
-  typedef MHRWTasks::CDataBase<MHWalkerParams_, IterCountIntType_> Base;
+  typedef MHRWTasks::CDataBase<MHWalkerParams_, IterCountIntType_, RngSeedType_> Base;
 
   //! The MHWalkerParams required for our MHWalker (for instance a \ref MHWalkerParamsStepSize)
   typedef typename Base::MHWalkerParams MHWalkerParams;
+
+  //! Type of the seed for the pseudo-random number generator
+  typedef typename Base::RngSeedType RngSeedType;
 
   //! The integer type which serves to count the number of iterations (see \ref MHRWParams)
   typedef typename Base::IterCountIntType IterCountIntType;
@@ -304,7 +314,7 @@ struct TOMOGRAPHER_EXPORT CDataBase
   //! Constructor (use only without binning analysis)
   TOMOGRAPHER_ENABLED_IF(!UseBinningAnalysis)
   CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_,
-	    MHRWParamsType p, int base_seed = 0)
+	    MHRWParamsType p, RngSeedType base_seed = 0)
     : Base(std::move(p), base_seed), valcalc(valcalc_), histogram_params(histogram_params_),
       binningNumLevels()
   {
@@ -313,7 +323,7 @@ struct TOMOGRAPHER_EXPORT CDataBase
   //! Constructor (use only with binning analysis)
   TOMOGRAPHER_ENABLED_IF(UseBinningAnalysis)
   CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_, int binning_num_levels_,
-	    MHRWParamsType p, int base_seed = 0)
+	    MHRWParamsType p, RngSeedType base_seed = 0)
     : Base(std::move(p), base_seed), valcalc(valcalc_), histogram_params(histogram_params_),
       binningNumLevels(binning_num_levels_)
   {
@@ -404,9 +414,10 @@ struct TOMOGRAPHER_EXPORT CDataBase
 };
 // define static members:
 template<typename ValueCalculator_, bool UseBinningAnalysis_,
-         typename MHWalkerParams_, typename IterCountIntType_,
-	 typename CountRealType_, typename HistCountIntType_>
-constexpr bool CDataBase<ValueCalculator_,UseBinningAnalysis_,MHWalkerParams_,
+         typename MHWalkerParams_, typename RngSeedType_,
+         typename IterCountIntType_, typename CountRealType_,
+         typename HistCountIntType_>
+constexpr bool CDataBase<ValueCalculator_,UseBinningAnalysis_,MHWalkerParams_,RngSeedType_,
                          IterCountIntType_,CountRealType_,HistCountIntType_>::UseBinningAnalysis;
 
 
@@ -513,7 +524,7 @@ inline void printFinalReport(std::ostream & stream, const CDataBaseType & cdata,
 
   int dig_w = (int)std::ceil(std::log10((double)task_results.size()));
   for (std::size_t j = 0; j < task_results.size(); ++j) {
-    tomo_internal::print_hist_short_bar_summary(stream, dig_w, j, task_results[j], h.columns());
+    tomo_internal::print_hist_short_bar_summary(stream, dig_w, j, task_results[j], (int)h.columns());
   }
   stream << h.hrule()
          << "\n";
@@ -522,7 +533,7 @@ inline void printFinalReport(std::ostream & stream, const CDataBaseType & cdata,
     // and the final histogram
     stream << h.centerLine("Final Histogram")
            << h.hrule();
-    histogramPrettyPrint(stream, aggregated_histogram.final_histogram, h.columns());
+    histogramPrettyPrint(stream, aggregated_histogram.final_histogram, (int)h.columns());
     stream << h.hrule()
            << "\n";
   }

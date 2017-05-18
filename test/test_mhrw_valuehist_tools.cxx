@@ -77,6 +77,7 @@ struct check_cdata_types
     IdentValueCalculator,
     UseBinningAnalysis,
     Tomographer::MHWalkerParamsStepSize<float>,
+    /* RngSeedType_ = */ unsigned long,
     /* IterCountIntType_ = */ unsigned long,
     /* CountRealType_ = */ long double,
     /* HistCountIntType_ = */ long

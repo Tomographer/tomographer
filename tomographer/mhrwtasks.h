@@ -54,64 +54,64 @@ namespace MHRWTasks {
 
 
 namespace tomo_internal {
-template<typename UIntType>
-struct bits_interleaved {
-  // interleaves the first (lowest weight) HalfNBits of x and of y to yield a
-  // (2*HalfNBits)-bit number
-  template<int HalfNBits, int I = 0,
-           TOMOGRAPHER_ENABLED_IF_TMPL(I < HalfNBits)>
-  static inline constexpr UIntType interleave(const UIntType x, const UIntType y) {
-    return ((x>>I)&0x1) | (((y>>I)&0x1)<<1) | interleave<HalfNBits, I+1>(x, y) << 2;
-  }
-  template<int HalfNBits, int I = 0,
-           TOMOGRAPHER_ENABLED_IF_TMPL(I == HalfNBits)>
-  static inline constexpr UIntType interleave(const UIntType , const UIntType ) {
-    return 0;
-  }
-};
-// generate a permutation of the bits of UIntType which maps integers 0...k to slightly
-// better seeds for each task's rng (spanning more of the seed bits)
-//
-// Despite the name, the permutation is always the same.
-template<typename UIntType, int NBits = sizeof(UIntType)*CHAR_BIT, typename = void>
-struct kinda_random_bits_perm {
-  TOMO_STATIC_ASSERT_EXPR(!std::is_signed<UIntType>::value) ;
-  // take the NBits least significant digits and apply the permutation to them
-  static inline constexpr UIntType apply(UIntType x);
-};
-// implementation for NBits=4
-template<typename UIntType>
-struct kinda_random_bits_perm<UIntType,4,void> {
-  TOMO_STATIC_ASSERT_EXPR(!std::is_signed<UIntType>::value) ;
-  static inline constexpr UIntType apply(UIntType x)
-  {
-    // take the NBits least significant digits and apply the permutation to them
-    return  ( (x&0x1)<<2 | ((x>>1)&0x1)<<0 | ((x>>2)&0x1)<<3 | ((x>>3)&0x1)<<1 ) ;
-  }
-};
-// implementation for NBits divisible by 8: apply the permutation to each halves of the
-// number and interleave them
-template<typename UIntType, int NBits>
-struct kinda_random_bits_perm<UIntType, NBits, // NBits can be divided by 8:
-                              typename std::enable_if<(NBits&(0x7))==0, void>::type>
-{
-  TOMO_STATIC_ASSERT_EXPR(!std::is_signed<UIntType>::value) ;
-  // take the NBits least significant digits and apply the permutation to them
-  static inline constexpr UIntType apply(UIntType x)
-  {
-    // // left block of bits of the number is given by x>>(NBits/2)  with NBits/2==NBits>>1
-    // // right block of bits fo the number is given by x & MASK with MASK =  ((1<<HalfNBits)-1)
-    // constexpr int HalfNBits = (NBits>>1);
-    // constexpr UIntType x1 = kinda_random_bits_perm<UIntType,HalfNBits>::apply(x >> HalfNBits) ;
-    // constexpr UIntType x2 = kinda_random_bits_perm<UIntType,HalfNBits>::apply(x & ((1<<HalfNBits)-1)) ;
-    // // now, interleave the HalfNBits of x1 and of x2
-    // return bits_interleaved<UIntType>::interleave<HalfNBits>(x1,x2);
-    return bits_interleaved<UIntType>::template interleave<(NBits>>1)>(
-        kinda_random_bits_perm<UIntType,(NBits>>1)>::apply(x >> (NBits>>1)) ,
-        kinda_random_bits_perm<UIntType,(NBits>>1)>::apply(x & ((UIntType(1)<<(NBits>>1))-1))
-        );
-  }
-};
+// template<typename UIntType>
+// struct bits_interleaved {
+//   // interleaves the first (lowest weight) HalfNBits of x and of y to yield a
+//   // (2*HalfNBits)-bit number
+//   template<int HalfNBits, int I = 0,
+//            TOMOGRAPHER_ENABLED_IF_TMPL(I < HalfNBits)>
+//   static inline constexpr UIntType interleave(const UIntType x, const UIntType y) {
+//     return ((x>>I)&0x1) | (((y>>I)&0x1)<<1) | interleave<HalfNBits, I+1>(x, y) << 2;
+//   }
+//   template<int HalfNBits, int I = 0,
+//            TOMOGRAPHER_ENABLED_IF_TMPL(I == HalfNBits)>
+//   static inline constexpr UIntType interleave(const UIntType , const UIntType ) {
+//     return 0;
+//   }
+// };
+// // generate a permutation of the bits of UIntType which maps integers 0...k to slightly
+// // better seeds for each task's rng (spanning more of the seed bits)
+// //
+// // Despite the name, the permutation is always the same.
+// template<typename UIntType, int NBits = sizeof(UIntType)*CHAR_BIT, typename = void>
+// struct kinda_random_bits_perm {
+//   TOMO_STATIC_ASSERT_EXPR(!std::is_signed<UIntType>::value) ;
+//   // take the NBits least significant digits and apply the permutation to them
+//   static inline constexpr UIntType apply(UIntType x);
+// };
+// // implementation for NBits=4
+// template<typename UIntType>
+// struct kinda_random_bits_perm<UIntType,4,void> {
+//   TOMO_STATIC_ASSERT_EXPR(!std::is_signed<UIntType>::value) ;
+//   static inline constexpr UIntType apply(UIntType x)
+//   {
+//     // take the NBits least significant digits and apply the permutation to them
+//     return  ( (x&0x1)<<2 | ((x>>1)&0x1)<<0 | ((x>>2)&0x1)<<3 | ((x>>3)&0x1)<<1 ) ;
+//   }
+// };
+// // implementation for NBits divisible by 8: apply the permutation to each halves of the
+// // number and interleave them
+// template<typename UIntType, int NBits>
+// struct kinda_random_bits_perm<UIntType, NBits, // NBits can be divided by 8:
+//                               typename std::enable_if<(NBits&(0x7))==0, void>::type>
+// {
+//   TOMO_STATIC_ASSERT_EXPR(!std::is_signed<UIntType>::value) ;
+//   // take the NBits least significant digits and apply the permutation to them
+//   static inline constexpr UIntType apply(UIntType x)
+//   {
+//     // // left block of bits of the number is given by x>>(NBits/2)  with NBits/2==NBits>>1
+//     // // right block of bits fo the number is given by x & MASK with MASK =  ((1<<HalfNBits)-1)
+//     // constexpr int HalfNBits = (NBits>>1);
+//     // constexpr UIntType x1 = kinda_random_bits_perm<UIntType,HalfNBits>::apply(x >> HalfNBits) ;
+//     // constexpr UIntType x2 = kinda_random_bits_perm<UIntType,HalfNBits>::apply(x & ((1<<HalfNBits)-1)) ;
+//     // // now, interleave the HalfNBits of x1 and of x2
+//     // return bits_interleaved<UIntType>::interleave<HalfNBits>(x1,x2);
+//     return bits_interleaved<UIntType>::template interleave<(NBits>>1)>(
+//         kinda_random_bits_perm<UIntType,(NBits>>1)>::apply(x >> (NBits>>1)) ,
+//         kinda_random_bits_perm<UIntType,(NBits>>1)>::apply(x & ((UIntType(1)<<(NBits>>1))-1))
+//         );
+//   }
+// };
 
 } // namespace tomo_internal
 
@@ -198,11 +198,12 @@ struct TOMOGRAPHER_EXPORT CDataBase
    * have a different seed, otherwise we will just repeat the same "random" walks!
    *
    */
-  inline RngSeedType getTaskInput(RngSeedType k) const
+  template<typename TaskNoCountIntType>
+  inline RngSeedType getTaskInput(TaskNoCountIntType k) const
   {
-    // cheap way of spanning all RngSeedType with the first few k: just do a permutation
-    // of the bits
-    return tomo_internal::kinda_random_bits_perm<RngSeedType>::apply(base_seed + k) ;
+    // empirically it's noticeably better to feed the RNG sequential numbers rather than
+    // try to shuffle bits around (!!)
+    return (RngSeedType)k;
   }
 
 

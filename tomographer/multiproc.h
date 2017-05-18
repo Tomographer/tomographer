@@ -368,7 +368,7 @@ public:
    */
   void run()
   {
-    results.resize(num_total_runs, NULL);
+    results.resize((std::size_t)num_total_runs, NULL);
     
     logger.debug("MultiProc::Sequential::TaskDispatcher::run()", "preparing for sequential runs");
     
@@ -387,7 +387,7 @@ public:
       
       // and collect the result
       logger.longdebug("MultiProc::Sequential::TaskDispatcher::run()", "collecting result");
-      results[task_k] = new TaskResultType(t.stealResult());
+      results[(std::size_t)task_k] = new TaskResultType(t.stealResult());
     }
 
     // all done

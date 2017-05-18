@@ -567,8 +567,8 @@ private:
         // fill our lists with default-constructed values & set all running to false.
         shared_data->status_report.full_report.workers_running.clear();
         shared_data->status_report.full_report.workers_reports.clear();
-        shared_data->status_report.full_report.workers_running.resize(num_threads, false);
-        shared_data->status_report.full_report.workers_reports.resize(num_threads);
+        shared_data->status_report.full_report.workers_running.resize((std::size_t)num_threads, false);
+        shared_data->status_report.full_report.workers_reports.resize((std::size_t)num_threads);
 
         shared_data->status_report.numreportsrecieved = 0;
 
@@ -590,8 +590,8 @@ private:
       tomographer_assert(0 <= thread_id &&
                          (std::size_t)thread_id < shared_data->status_report.full_report.workers_reports.size());
 
-      shared_data->status_report.full_report.workers_running[thread_id] = true;
-      shared_data->status_report.full_report.workers_reports[thread_id] = statreport;
+      shared_data->status_report.full_report.workers_running[(std::size_t)thread_id] = true;
+      shared_data->status_report.full_report.workers_reports[(std::size_t)thread_id] = statreport;
 
       ++ shared_data->status_report.numreportsrecieved;
 
@@ -653,7 +653,7 @@ public:
     shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "Let's go!");
     shared_data.time_start = StdClockType::now();
 
-    shared_data.results.resize(shared_data.schedule.num_total_runs, NULL);
+    shared_data.results.resize((std::size_t)shared_data.schedule.num_total_runs, NULL);
     
     shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "preparing for parallel runs");
 
@@ -819,7 +819,7 @@ public:
    *
    */
   inline const TaskResultType & collectedTaskResult(CountIntType k) const {
-    return *shared_data.results[k];
+    return *shared_data.results[(std::size_t)k];
   }
 
 
@@ -863,7 +863,7 @@ private:
                              "Task #%lu finished, about to collect result.", (unsigned long)privdat.task_id);
     
     // collect result
-    shared_data.results[privdat.task_id] = new TaskResultType(t.stealResult());
+    shared_data.results[(std::size_t)privdat.task_id] = new TaskResultType(t.stealResult());
 
     privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()", "task done") ;
   }

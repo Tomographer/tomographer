@@ -118,7 +118,7 @@ typedef Tomographer::MultiplexorValueCalculator<
 
 
 
-
+typedef std::mt19937 OurRng;
 
 
 //
@@ -130,6 +130,7 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   ValueCalculator, // our value calculator
   true, // use binning analysis
   Tomographer::MHWalkerParamsStepSize<RealType>, // MHWalkerParams
+  OurRng::result_type, // RngSeedType
   CountIntType, // IterCountIntType
   RealType, // CountRealType
   CountIntType // HistCountIntType
@@ -201,7 +202,8 @@ public:
   inline void
   setupRandomWalkAndRun(Rng & rng, LoggerType & baselogger, RunFn run) const
   {
-    auto logger = Tomographer::Logger::makeLocalLogger("pytomorun.cxx:OurCData::setupRandomWalkAndRun()", baselogger) ;
+    auto logger = Tomographer::Logger::makeLocalLogger("pytomorun.cxx:OurCData::setupRandomWalkAndRun()",
+                                                       baselogger) ;
 
     Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType> mhwalker(
 	llh.dmt.initMatrixType(),
@@ -465,11 +467,11 @@ py::object py_tomorun(
 
   // prepare the random walk tasks
 
-  typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>  OurMHRandomWalkTask;
+  typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, OurRng>  OurMHRandomWalkTask;
 
   // seed for random number generator
-  std::mt19937::result_type base_seed =
-    (std::mt19937::result_type)std::chrono::system_clock::now().time_since_epoch().count();
+  OurRng::result_type base_seed =
+    (OurRng::result_type)std::chrono::system_clock::now().time_since_epoch().count();
 
 
   // number of renormalization levels in the binning analysis

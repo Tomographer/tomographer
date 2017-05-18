@@ -114,7 +114,7 @@ public:
    * \ref setMeas() to specify the measurement data.
    */
   inline IndepMeasLLH(DMTypes dmt_)
-    : dmt(dmt_), _Exn(VectorParamListType::Zero(0, dmt.dim2())), _Nx(FreqListType::Zero(0)),
+    : dmt(dmt_), _Exn(VectorParamListType::Zero(0, (Eigen::Index)dmt.dim2())), _Nx(FreqListType::Zero(0)),
       _NMeasAmplifyFactor(1)
   {
   }
@@ -331,9 +331,11 @@ private:
 				      << std::setprecision(10) << E_m));
     }
     Eigen::SelfAdjointEigenSolver<typename DMTypes::MatrixType> slv(E_m);
-    const double mineigval = slv.eigenvalues().minCoeff();
-    if ( ! (mineigval >= -1e-12) ) { // not positive semidef
-      throw InvalidMeasData(streamstr("POVM effect is not positive semidefinite (min eigval="<<mineigval<<") : E_m =\n"
+    const typename DMTypes::RealScalar mineigval = slv.eigenvalues().minCoeff();
+    if ( ! (mineigval >= -Eigen::NumTraits<typename DMTypes::RealScalar>::dummy_precision()) ) {
+      // not positive semidef
+      throw InvalidMeasData(streamstr("POVM effect is not positive semidefinite (min eigval="
+                                      << mineigval << ") : E_m =\n"
 				      << std::setprecision(10) << E_m));
     }
     if ( ! (double(E_m.norm()) > 1e-6) ) { // POVM effect is zero

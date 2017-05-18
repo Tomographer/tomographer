@@ -1507,7 +1507,7 @@ private:
 	std::remove_reference<IndexListType>::type::forward_index(index)
 	};
     // std::cout << "linear_index: ind_cmaj=" << ind_cmaj << ", -> linear index = " << ind_cmaj.linearIndex() << "\n";
-    return ind_cmaj.linearIndex();
+    return (std::size_t)ind_cmaj.linearIndex();
   }
 };
 
@@ -1746,7 +1746,7 @@ public:
   static inline std::vector<T> decodeValue(const Var & var)
   {
     const matvar_t * matvar_ptr = var.getMatvarPtr();
-    std::size_t numel = var.numel();
+    std::size_t numel = (std::size_t)var.numel();
     std::vector<T> val(numel);
 
     MAT_SWITCH_TYPE(matvar_ptr,
@@ -2024,7 +2024,7 @@ public:
     } else {
       // more dimensions
       innerdims << vardims[0] << vardims[1];
-      outerdim = getNumEl(vardims.data()+2, vardims.data()+vardims.size());
+      outerdim = (std::size_t)getNumEl(vardims.data()+2, vardims.data()+vardims.size());
     }
 
     RetType value(outerdim);
@@ -2041,7 +2041,7 @@ public:
               value[j], // matrix reference
               innerdims, // dimensions of matrix reference
               var, // data
-              j*innernumel // offset
+              (std::ptrdiff_t)j*innernumel // offset
               );
         }
         );

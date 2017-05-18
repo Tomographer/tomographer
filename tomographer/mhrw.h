@@ -976,7 +976,7 @@ private:
                              PtType2 && /*curpt*/, FnValueType curptval) const
   {
     using namespace std;
-    return (newptval > curptval) ? 1.0 : exp(newptval - curptval);
+    return (newptval > curptval) ? 1.0 : exp(double(newptval - curptval));
   }
 
   // case UseFnSyntaxType==MHUseFnRelativeValue

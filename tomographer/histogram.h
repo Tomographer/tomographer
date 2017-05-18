@@ -243,14 +243,14 @@ public:
            decltype((int)std::declval<const Params2>().min + (int)std::declval<const Params2>().max
                     + std::declval<Params2>().num_bins) dummyval = 0>
   Histogram(Params2 p = Params())
-    : params(p), bins(Eigen::Array<CountType,Eigen::Dynamic,1>::Zero(p.num_bins)),
+    : params(p), bins(Eigen::Array<CountType,Eigen::Dynamic,1>::Zero((Eigen::Index)p.num_bins)),
       off_chart(0)
   {
   }
 
   //! Constructor: stores the parameters and initializes the histogram to zero counts everywhere
   Histogram(Scalar min_, Scalar max_, std::size_t num_bins)
-    : params(min_, max_, num_bins), bins(Eigen::Array<CountType,Eigen::Dynamic,1>::Zero(num_bins)),
+    : params(min_, max_, num_bins), bins(Eigen::Array<CountType,Eigen::Dynamic,1>::Zero((Eigen::Index)num_bins)),
       off_chart(0)
   {
   }
@@ -287,7 +287,7 @@ public:
   //! Resets the histogram to zero counts everywhere (including the off-chart counts)
   inline void reset()
   {
-    bins.resize(params.num_bins);
+    bins.resize((Eigen::Index)params.num_bins);
     bins.setZero();
     off_chart = 0;
   }
@@ -358,7 +358,7 @@ public:
   //! Shorthand for <code>bins(i)</code>
   inline CountType count(std::size_t i) const
   {
-    return bins(i);
+    return bins((Eigen::Index)i);
   }
 
   //! Shorthand for Params::isWithinBounds()
@@ -372,7 +372,7 @@ public:
     return params.binIndex(value);
   }
   //! Shorthand for Params::binLowerValue()
-  inline Scalar binLowerValue(int index) const
+  inline Scalar binLowerValue(std::size_t index) const
   {
     return params.binLowerValue(index);
   }
@@ -410,7 +410,7 @@ public:
     }
     // calling bin_index_unsafe because we have already checked that value is in range.
     const std::size_t index = params.binIndexUnsafe(value);
-    ++bins( index );
+    ++bins( (Eigen::Index)index );
     return index;
   }
 
@@ -566,7 +566,7 @@ public:
    * counts and \ref delta error bars are initialized to zero.
    */
   HistogramWithErrorBars(Params params = Params())
-    : Base_(params), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero(params.num_bins))
+    : Base_(params), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero((Eigen::Index)params.num_bins))
   {
   }
 
@@ -576,7 +576,7 @@ public:
    * counts and \ref delta error bars are initialized to zero.
    */
   HistogramWithErrorBars(Scalar min, Scalar max, std::size_t num_bins)
-    : Base_(min, max, num_bins), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero(num_bins))
+    : Base_(min, max, num_bins), delta(Eigen::Array<CountType, Eigen::Dynamic, 1>::Zero((Eigen::Index)num_bins))
   {
   }
 
@@ -616,7 +616,7 @@ public:
   inline void reset()
   {
     Base_::reset();
-    delta.resize(Base_::numBins());
+    delta.resize((Eigen::Index)Base_::numBins());
     delta.setZero();
   }
 
@@ -626,7 +626,7 @@ public:
    */
   inline CountType errorBar(std::size_t i) const
   {
-    return delta(i);
+    return delta((Eigen::Index)i);
   }
 
   
@@ -879,8 +879,8 @@ public:
 
     for (std::size_t k = 0; k < histogram.numBins(); ++k) {
       RealAvgType binvalue = histogram.count(k);
-      Base_::bins(k) += binvalue;
-      Base_::delta(k) += binvalue * binvalue;
+      Base_::bins((Eigen::Index)k) += binvalue;
+      Base_::delta((Eigen::Index)k) += binvalue * binvalue;
     }
 
     Base_::off_chart += histogram.off_chart;
@@ -941,9 +941,9 @@ public:
 
     for (std::size_t k = 0; k < histogram.numBins(); ++k) {
       RealAvgType binvalue = histogram.count(k);
-      Base_::bins(k) += binvalue;
+      Base_::bins((Eigen::Index)k) += binvalue;
       RealAvgType bindelta = histogram.errorBar(k);
-      Base_::delta(k) += bindelta*bindelta;
+      Base_::delta((Eigen::Index)k) += bindelta*bindelta;
     }
 
     Base_::off_chart += histogram.off_chart;
@@ -1109,8 +1109,8 @@ public:
   {
     stream << "Value" << sep << "Counts" << sep << "Error" << linesep
 	   << std::scientific << std::setprecision(precision);
-    for (int kk = 0; kk < final_histogram.bins.size(); ++kk) {
-      stream << final_histogram.params.binLowerValue(kk) << sep
+    for (Eigen::Index kk = 0; kk < final_histogram.bins.size(); ++kk) {
+      stream << final_histogram.params.binLowerValue((std::size_t)kk) << sep
 	     << final_histogram.bins(kk) << sep
 	     << final_histogram.delta(kk) << linesep;
     }
@@ -1282,8 +1282,8 @@ public:
   {
     stream << "Value" << sep << "Counts" << sep << "Error" << sep << "SimpleError" << linesep
            << std::scientific << std::setprecision(precision);
-    for (int kk = 0; kk < final_histogram.bins.size(); ++kk) {
-      stream << final_histogram.params.binLowerValue(kk) << sep
+    for (Eigen::Index kk = 0; kk < final_histogram.bins.size(); ++kk) {
+      stream << final_histogram.params.binLowerValue((std::size_t)kk) << sep
 	     << final_histogram.bins(kk) << sep
 	     << final_histogram.delta(kk) << sep
              << simple_final_histogram.delta(kk) << linesep;
@@ -1349,7 +1349,8 @@ inline void histogram_get_labels_for_hist_params(std::vector<std::string> & labe
 {
   labels.resize(hist.numBins());
 
-  const double max_label_val = std::max(hist.binCenterValue(0), hist.binCenterValue(hist.numBins()-1));
+  const typename HistogramType::Scalar max_label_val
+    = std::max(hist.binCenterValue(0), hist.binCenterValue(hist.numBins()-1));
   const int powten = (int)std::floor(std::log10(max_label_val));
   const int relprecision = 4;
   const int precision = (powten > relprecision) ? 0 : (relprecision - powten - 1);
@@ -1403,7 +1404,10 @@ struct histogram_pretty_print_value
   {
     svalues.resize(hist.numBins());
 
-    double max_val = max_finite_value(hist.numBins(), [&](std::size_t k) { return hist.count(k); }, 1.0);
+    typename HistogramType::CountType max_val =
+      max_finite_value<typename HistogramType::CountType>(hist.numBins(),
+                                                          [&](std::size_t k) { return hist.count(k); },
+                                                          typename HistogramType::CountType(1));
 
     const int powten = (int)std::floor(std::log10(max_val));
     const int relprecision = 3;
@@ -1423,7 +1427,10 @@ struct histogram_pretty_print_value
   {
     svalues.resize(hist.numBins());
 
-    double max_val = max_finite_value(hist.numBins(), [&](std::size_t k) { return hist.count(k); }, 1.0);
+    typename HistogramType::CountType max_val =
+      max_finite_value<typename HistogramType::CountType>(hist.numBins(),
+                                                          [&](std::size_t k) { return hist.count(k); },
+                                                          typename HistogramType::CountType(1));
 
     const int powten = (int)std::floor(std::log10(max_val)); // floor of log_{10}(...)
     const int relprecision = 3;
@@ -1456,6 +1463,8 @@ struct histogram_pretty_printer
   const HistogramType & hist;
   const int max_width;
 
+  typedef typename HistogramType::CountType CountType;
+  
   const std::string lsep;
   const std::string rsep;
 
@@ -1465,10 +1474,10 @@ struct histogram_pretty_printer
   std::vector<std::string> svalues;
   int maxsvaluewidth;
 
-  double max_value;
+  CountType max_value;
 
   int max_bar_width;
-  double barscale;
+  CountType barscale;
 
   histogram_pretty_printer(const HistogramType & hist_, const int max_width_)
     : hist(hist_), max_width(max_width_), lsep(" |"), rsep("  ")
@@ -1485,7 +1494,7 @@ struct histogram_pretty_printer
 
     bool has_maxval = false;
     for (std::size_t k = 0; k < hist.numBins(); ++k) {
-      const double val = maxval(k);
+      const CountType val = maxval(k);
 
       if (std::isfinite(val) && (!has_maxval || val > max_value)) {
 	max_value = val;
@@ -1509,32 +1518,32 @@ struct histogram_pretty_printer
     barscale = ((max_value > 0) ? (max_value / max_bar_width) : 1.0);
   }
 
-  inline int value_to_bar_length(double val) const
+  inline std::size_t value_to_bar_length(CountType val) const
   {
     if (val < 0 || !std::isfinite(val)) {
       val = 0;
     }
-    int l = (int)(val/barscale+0.5);
-    if (l >= max_bar_width) {
-      return max_bar_width-1;
+    std::size_t l = (std::size_t)(val/barscale+0.5);
+    if (l >= (std::size_t)max_bar_width) {
+      return (std::size_t)max_bar_width-1;
     }
     return l;
   }
 
-  inline void fill_str_len(std::string & s, double valstart, double valend,
+  inline void fill_str_len(std::string & s, CountType valstart, CountType valend,
 			   char c, char clside, char crside) const
   {
-    int vs = value_to_bar_length(valstart);
-    int ve = value_to_bar_length(valend);
+    std::size_t vs = value_to_bar_length(valstart);
+    std::size_t ve = value_to_bar_length(valend);
     tomographer_assert(vs >= 0);
-    tomographer_assert(vs < (int)s.size());
+    tomographer_assert(vs < s.size());
     tomographer_assert(ve >= 0);
-    tomographer_assert(ve < (int)s.size());
-    for (int j = vs; j < ve; ++j) {
+    tomographer_assert(ve < s.size());
+    for (std::size_t j = vs; j < ve; ++j) {
       s[j] = c;
     }
     if (clside && crside && clside != crside && vs == ve) {
-      if (ve < (int)s.size()-1) {
+      if (ve < s.size()-1) {
 	++ve;
       } else if (vs > 1) {
 	--vs;
@@ -1564,29 +1573,29 @@ struct histogram_pretty_printer
 private:
   // maxval(k): how much this bar may extend in length
   TOMOGRAPHER_ENABLED_IF(!HistogramType::HasErrorBars)
-  inline double maxval(const std::size_t k) const
+  inline CountType maxval(const std::size_t k) const
   {
-    return (double)hist.count(k);
+    return hist.count(k);
   }
   TOMOGRAPHER_ENABLED_IF(HistogramType::HasErrorBars)
-  inline double maxval(const std::size_t k) const
+  inline CountType maxval(const std::size_t k) const
   {
-    return (double)(hist.count(k) + hist.errorBar(k));
+    return (hist.count(k) + hist.errorBar(k));
   }
   // make_bar(k): produce the histogram bar in characters...
   TOMOGRAPHER_ENABLED_IF(!HistogramType::HasErrorBars)
   inline std::string make_bar(std::size_t k) const
   {
-    std::string sbar(max_bar_width, ' ');
+    std::string sbar((std::size_t)max_bar_width, ' ');
     fill_str_len(sbar, 0.0, hist.count(k), '*', 0, 0);
     return sbar;
   }
   TOMOGRAPHER_ENABLED_IF(HistogramType::HasErrorBars)
   inline std::string make_bar(std::size_t k) const
   {
-    std::string sbar(max_bar_width, ' ');
-    const double binval = hist.count(k);
-    const double binerr = hist.errorBar(k);
+    std::string sbar((std::size_t)max_bar_width, ' ');
+    const typename HistogramType::CountType binval = hist.count(k);
+    const typename HistogramType::CountType binerr = hist.errorBar(k);
     fill_str_len(sbar, 0.0, binval - binerr, '*', '*', '*');
     fill_str_len(sbar, binval - binerr, binval + binerr, '-', '|', '|');
     return sbar;
@@ -1614,8 +1623,9 @@ inline std::string histogram_short_bar_fmt(const HistogramType & histogram, cons
   float minlogval = 0;
   float maxlogval = 0;
   for (k = 0; k < barwidth; ++k) {
-    vec(k) = histogram.bins.segment(numdiv*k, std::min((std::size_t)numdiv,
-						       (std::size_t)(histogram.bins.size()-numdiv*k))).sum();
+    vec(k) = histogram.bins.segment((Eigen::Index)(numdiv*k),
+                                    std::min((Eigen::Index)numdiv,
+                                             (Eigen::Index)(histogram.bins.size()-numdiv*k))).sum();
     if (vec(k) > 0) {
       if (log_scale) {
         veclog(k) = std::log((float)vec(k));
@@ -1642,7 +1652,7 @@ inline std::string histogram_short_bar_fmt(const HistogramType & histogram, cons
       int i = (int)(chars.size() * (veclog(k) - minlogval) / (maxlogval - minlogval));
       if (i < 0) { i = 0; }
       if (i >= (int)chars.size()) { i = (int)chars.size()-1; }
-      s += chars[i];
+      s += chars[(std::size_t)i];
     }
   }
 

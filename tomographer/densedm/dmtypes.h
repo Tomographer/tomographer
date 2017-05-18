@@ -215,7 +215,7 @@ struct TOMOGRAPHER_EXPORT DMTypes
   TOMOGRAPHER_ENABLED_IF(IsDynamicDim)
   inline typename MatrixType::ConstantReturnType initMatrixType() const
   {
-    return MatrixType::Zero(_dim.value(), _dim.value());
+    return MatrixType::Zero((Eigen::Index)_dim.value(), (Eigen::Index)_dim.value());
   }
 
   /** \brief Zero initializer for a VectorParamType [implementation for static dimension]
@@ -236,7 +236,7 @@ struct TOMOGRAPHER_EXPORT DMTypes
   TOMOGRAPHER_ENABLED_IF(IsDynamicDim)
   inline typename VectorParamType::ConstantReturnType initVectorParamType() const
   {
-    return VectorParamType::Zero(dim2());
+    return VectorParamType::Zero((Eigen::Index)dim2());
   }
 
   /** \brief Zero initializer for a VectorParamNdofType [implementation for static dimension]
@@ -259,7 +259,7 @@ struct TOMOGRAPHER_EXPORT DMTypes
   TOMOGRAPHER_ENABLED_IF(IsDynamicDim)
   inline typename VectorParamNdofType::ConstantReturnType initVectorParamNdofType() const
   {
-    return VectorParamNdofType::Zero(ndof());
+    return VectorParamNdofType::Zero((Eigen::Index)ndof());
   }
 
 

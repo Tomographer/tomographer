@@ -91,7 +91,7 @@ inline std::string vfmts(const char* fmt, va_list vl)
   // global scope... so just import std namespace here and use generic vsnprintf() call.
   using namespace std;
 
-  int size = 10;
+  std::size_t size = 10;
   char * buffer = new char[size];
   va_list ap1;
   va_copy(ap1, vl);
@@ -100,10 +100,10 @@ inline std::string vfmts(const char* fmt, va_list vl)
     // failure: bad format probably
     throw BadFmtsFormat("vsnprintf("+std::string(fmt)+") failure: code="+std::to_string(nsize));
   }
-  if(size <= nsize) {
+  if(size <= (std::size_t)nsize) {
     // buffer too small: delete buffer and try again
     delete[] buffer;
-    size = nsize+1; // +1 for "\0"
+    size = (std::size_t)nsize+1; // +1 for "\0"
     buffer = new char[size];
     nsize = vsnprintf(buffer, size, fmt, vl);
   }
@@ -412,12 +412,12 @@ public:
    *
    */
   ConsoleFormatterHelper(int width = 0)
-    : _columns(Tomographer::Tools::getWidthForTerminalOutput(width))
+    : _columns((std::size_t)Tomographer::Tools::getWidthForTerminalOutput(width))
   {
   }
 
-  //! The number of character columns (as specified to the constructor)
-  inline int columns() const { return _columns; }
+  //! The number of character columns (as specified to the constructor or detected)
+  inline std::size_t columns() const { return _columns; }
 
   /** \brief Produce a centered string
    *
@@ -427,12 +427,12 @@ public:
    */
   inline std::string centerLine(std::string x)
   {
-    if ((int)x.size() > columns()) {
+    if (x.size() > columns()) {
       return std::move(x) + "\n";
     }
-    const int r = columns() - (int)x.size();
-    const int rleft = r/2;
-    const int rright = r - rleft; // may differ from r/2 if r is odd
+    const std::size_t r = columns() - x.size();
+    const std::size_t rleft = r/2;
+    const std::size_t rright = r - rleft; // may differ from r/2 if r is odd
     return std::string(rleft, ' ') + std::move(x) + std::string(rright, ' ') + "\n";
   }
 
@@ -444,10 +444,10 @@ public:
    */
   inline std::string rightLine(std::string x)
   {
-    if ((int)x.size() > columns()) {
+    if (x.size() > columns()) {
       return std::move(x) + "\n";
     }
-    const int r = columns() - (int)x.size();
+    const std::size_t r = columns() - x.size();
     return std::string(r, ' ') + std::move(x) + "\n";
   }
 
@@ -459,10 +459,10 @@ public:
    */
   inline std::string leftLine(std::string x)
   {
-    if ((int)x.size() > columns()) {
+    if (x.size() > columns()) {
       return std::move(x) + "\n";
     }
-    const int r = columns() - (int)x.size();
+    const std::size_t r = columns() - x.size();
     return std::move(x) + std::string(r, ' ') + "\n";
   }
   
@@ -473,7 +473,7 @@ public:
   }
   
 private:
-  const int _columns;
+  const std::size_t _columns;
 };
 
 

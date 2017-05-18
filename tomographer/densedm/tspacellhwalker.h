@@ -179,7 +179,7 @@ public:
     // zero matrix given: means to choose random starting point
     MatrixType T(_llh.dmt.initMatrixType());
     T = Tools::denseRandom<MatrixType>(
-	_rng, _normal_distr_rnd, _llh.dmt.dim(), _llh.dmt.dim()
+	_rng, _normal_distr_rnd, (Eigen::Index)_llh.dmt.dim(), (Eigen::Index)_llh.dmt.dim()
 	);
     _startpt = T/T.norm(); // normalize to be on surface of the sphere
 
@@ -238,7 +238,8 @@ public:
   inline MatrixType jumpFn(const MatrixType& cur_T, WalkerParams params)
   {
     MatrixType DeltaT(Tools::denseRandom<MatrixType>(
-                          _rng, _normal_distr_rnd, _llh.dmt.dim(), _llh.dmt.dim()
+                          _rng, _normal_distr_rnd,
+                          (Eigen::Index)_llh.dmt.dim(), (Eigen::Index)_llh.dmt.dim()
                           ));
 
     MatrixType new_T(cur_T + params.step_size * DeltaT);

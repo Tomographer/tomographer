@@ -191,9 +191,10 @@ public:
  *
  * \since Added in %Tomographer 5.0
  */
-template<typename ValueHistogramWithBinningMHRWStatsCollectorType_,
-         typename BaseLoggerType_,
-         typename IterCountIntType_ = int>
+template<typename IterCountIntType_ = int,
+         // these types are deduced from the args anyway:
+         typename ValueHistogramWithBinningMHRWStatsCollectorType_ = void,
+         typename BaseLoggerType_ = void>
 inline MHRWValueErrorBinsConvergedController<ValueHistogramWithBinningMHRWStatsCollectorType_,
                                              IterCountIntType_,
                                              BaseLoggerType_>

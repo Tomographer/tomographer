@@ -29,6 +29,9 @@
 # Add our executable
 # ==============================================================================
 
+set(TOMORUN_CONFIG_DO_SLOW_POVM_CONSISTENCY_CHECKS "true" CACHE BOOL
+  "Whether to perform (slow) POVM consistency checks")
+
 add_executable(tomorun tomorun.cxx)
 
 # depends in particular on tomographer_version.h

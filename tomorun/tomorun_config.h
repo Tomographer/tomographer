@@ -31,6 +31,15 @@
 #define TOMORUN_CONFIG
 
 
+/*
+ * To set these options, compile with the corresponding "-D" flags. With cmake, use the
+ * syntax:
+ *
+ *  tomographer-X.Y/build> cmake .. -DCMAKE_CXX_FLAGS="-DTOMORUN_REAL='long double' \
+ *                                                     -DTOMORUN_RNG_CLASS=std::mt19937_64  [...] "
+ */
+
+
 
 
 /* TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS
@@ -124,6 +133,45 @@ typedef double TomorunReal;
 
 
 
+/* TOMORUN_RNG_CLASS
+ *
+ * Value: C++ pseudo random number generator name (e.g. std::mt19937)
+ *
+ */
+#ifndef TOMORUN_RNG_CLASS
+#define TOMORUN_RNG_CLASS std::mt19937
+#endif
+
+typedef TOMORUN_RNG_CLASS TomorunBaseRngType;
+
+
+/* TOMORUN_RANDOM_DEVICE
+ *
+ * The name of the physical random device (see C++ std::random_device constructor) to use
+ * to seed the pseudo-RNG.
+ *
+ * You may leave an empty macro definition to use the default constructor and use the
+ * default device.
+ *
+ */
+#ifndef TOMORUN_RANDOM_DEVICE
+#define TOMORUN_RANDOM_DEVICE "/dev/random"
+#endif
+
+
+/* TOMORUN_USE_DEVICE_SEED
+ *
+ * Set to a nonzero value to seed the pseudo-random number generators with a seed taken
+ * from a physical random device (TOMORUN_RANDOM_DEVICE).
+ *
+ * Set to zero to not attempt to access any random device (the code won't even refer to
+ * std::random_device).  The pseudo-rng's will be seeded using consecutive seeds starting
+ * from a base seed derived from the current time.
+ *
+ */
+#ifndef TOMORUN_USE_DEVICE_SEED
+#define TOMORUN_USE_DEVICE_SEED 0
+#endif
 
 
 

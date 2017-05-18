@@ -28,6 +28,8 @@
 #ifndef TOMORUN_DISPATCH
 #define TOMORUN_DISPATCH
 
+#include <random>
+
 #include <tomographer/tools/cxxutil.h>
 #include <tomographer/tools/loggers.h>
 #include <tomographer/tools/ezmatio.h>
@@ -45,10 +47,51 @@
 #include <tomographer/valuecalculator.h>
 
 
+
+
+
 // -----------------------------------------------------------------------------
 
 
-typedef std::mt19937 RngType;
+//typedef std::mt19937 BaseRngType;
+
+
+template<typename BaseRngType_>
+struct DeviceSeededRng : public BaseRngType_
+{
+  typedef BaseRngType_ BaseRngType;
+  using typename BaseRngType::result_type;
+  
+  DeviceSeededRng(result_type k) : BaseRngType(_get_device_seed(k)) { }
+
+  static inline result_type _get_device_seed(result_type k)
+  {
+#if TOMORUN_USE_DEVICE_SEED != 0
+    (void)k; // unused
+    
+    result_type finalseed;
+    // no two threads simultaneously executing the same code here please
+    TOMORUN_THREAD_CRITICAL_SECTION {
+      std::random_device devrandom( TOMORUN_RANDOM_DEVICE );
+      std::uniform_int_distribution<result_type> dseed(
+          std::numeric_limits<result_type>::min(),
+          std::numeric_limits<result_type>::max()
+          ); // full range of result_type
+      
+      finalseed =  dseed(devrandom);
+      fprintf(stderr, "Rng: device seed=%lu\n", (unsigned long) finalseed) ;
+    } // return out of critical region for OpenMP:
+    return finalseed;
+#else
+    return k;
+#endif
+  }
+};
+
+typedef DeviceSeededRng<std::mt19937>  TomorunRng;
+
+
+
 
 
 template<typename DenseLLH_, typename CDataBaseType_,
@@ -65,6 +108,8 @@ struct TomorunCData : public CDataBaseType_
   using typename Base::MHRWParamsType;
   using typename Base::ValueStatsCollectorResultType;
   using typename Base::MHRWStatsResultsBaseType;
+
+  typedef TomorunRng RngType;
 
   // the value result is always the first of a tuple
   struct MHRWStatsResultsType : public MHRWStatsResultsBaseType
@@ -146,7 +191,7 @@ struct TomorunCData : public CDataBaseType_
     auto value_stats = Base::createValueStatsCollector(logger);
 
     // step size controller, with its buddy moving-average-accept-ratio stats collector
-    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<>
+    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<TomorunInt>
       movavg_accept_stats(ctrl_moving_avg_samples);
     auto ctrl_step = 
       Tomographer::mkMHRWStepSizeController<MHRWParamsType>(movavg_accept_stats, logger);
@@ -171,7 +216,7 @@ struct TomorunCData : public CDataBaseType_
 
     // value error bins convergence controller
     auto ctrl_convergence = 
-      Tomographer::mkMHRWValueErrorBinsConvergedController(
+      Tomographer::mkMHRWValueErrorBinsConvergedController<TomorunInt>(
           value_stats, logger, 1024,
           ctrl_max_allowed_unknown,
           ctrl_max_allowed_unknown_notisolated,
@@ -200,13 +245,13 @@ struct TomorunCData : public CDataBaseType_
     // both controllers:
     //
     // step size controller, with its buddy moving-average-accept-ratio stats collector
-    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<>
+    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<TomorunInt>
       movavg_accept_stats(ctrl_moving_avg_samples);
     auto ctrl_step = 
       Tomographer::mkMHRWStepSizeController<MHRWParamsType>(movavg_accept_stats, logger);
     // value error bins convergence controller
     auto ctrl_convergence = 
-      Tomographer::mkMHRWValueErrorBinsConvergedController(
+      Tomographer::mkMHRWValueErrorBinsConvergedController<TomorunInt>(
           value_stats, logger, 1024,
           ctrl_max_allowed_unknown,
           ctrl_max_allowed_unknown_notisolated,
@@ -249,6 +294,7 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
       ValueCalculator,
       UseBinningAnalysisErrorBars,
       Tomographer::MHWalkerParamsStepSize<TomorunReal>,
+      TomorunRng::result_type, // RngSeedType
       TomorunInt, // IterCountIntType
       TomorunReal, // CountRealType
       TomorunInt // HistCountIntType
@@ -257,17 +303,18 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
     ControlValueErrorBins
     > OurCData;
 
-  typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, RngType>  OurMHRandomWalkTask;
+  typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, typename OurCData::RngType>  OurMHRandomWalkTask;
 
-  // seed for random number generator
-  auto base_seed = std::chrono::system_clock::now().time_since_epoch().count();
+  // seed for random number generator, if no random device is available
+  typename OurCData::RngType::result_type default_base_seed =
+    (typename OurCData::RngType::result_type)std::chrono::system_clock::now().time_since_epoch().count();
 
-  OurCData taskcdat(llh, valcalc, opt, base_seed);
+  OurCData taskcdat(llh, valcalc, opt, default_base_seed);
 
   TomorunMultiProcTaskDispatcher<OurMHRandomWalkTask, OurCData, LoggerType> tasks(
       &taskcdat, // constant data
       logger.parentLogger(), // the main logger object
-      opt->Nrepeats // num_runs
+      (int)opt->Nrepeats // num_runs
       );
 
   // set up signal handling
@@ -354,7 +401,7 @@ inline void tomorun_dispatch(const int dim, ProgOptions * opt, Tomographer::MAT:
   // Read data from file
   //
 
-  DMTypes dmt(dim);
+  DMTypes dmt((std::size_t)dim);
   OurDenseLLH llh(dmt);
 
   typename Tomographer::Tools::EigenStdVector<typename DMTypes::MatrixType>::type Emn;
@@ -369,7 +416,7 @@ inline void tomorun_dispatch(const int dim, ProgOptions * opt, Tomographer::MAT:
   }
 
   for (std::size_t k = 0; k < Emn.size(); ++k) {
-    llh.addMeasEffect(Emn[k], Nm(k), TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS);
+    llh.addMeasEffect(Emn[k], Nm((Eigen::Index)k), TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS);
   }
 
   logger.debug([&](std::ostream & ss) {
@@ -597,33 +644,30 @@ inline void tomorun_dispatch(const int dim, ProgOptions * opt, Tomographer::MAT:
 
 template<int FixedDim, int FixedMaxDim, int FixedMaxPOVMEffects, typename LoggerType>
 inline void tomorun_dispatch_st(const int dim, ProgOptions * opt, Tomographer::MAT::File * matf,
-                                   LoggerType & logger)
+                                LoggerType & logger)
 {
-  if (opt->binning_analysis_error_bars) {
-    static constexpr bool UseBinningAnalysisErrorBars = true;
-    DISPATCH_STATIC_BOOL(
-        opt->control_step_size, ControlStepSize,
-        DISPATCH_STATIC_BOOL(
-            opt->control_binning_converged, ControlValueErrorBins,
-            {
-              tomorun_dispatch<FixedDim, FixedMaxDim, FixedMaxPOVMEffects,
-                               UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins,
-                               LoggerType>(dim, opt, matf, logger);
-            }
-            ) ;
-        ) ;
-  } else {
-    static constexpr bool UseBinningAnalysisErrorBars = false;
-    // no binning analysis, we cannot control binning converged
-    DISPATCH_STATIC_BOOL(
-        opt->control_step_size, ControlStepSize,
-        {
+  DISPATCH_STATIC_BOOL(
+      opt->control_step_size, ControlStepSize,
+      {
+        if (opt->binning_analysis_error_bars) {
+          static constexpr bool UseBinningAnalysisErrorBars = true;
+          DISPATCH_STATIC_BOOL(
+              opt->control_binning_converged, ControlValueErrorBins,
+              {
+                tomorun_dispatch<FixedDim, FixedMaxDim, FixedMaxPOVMEffects,
+                                 UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins,
+                                 LoggerType>(dim, opt, matf, logger);
+              }
+              ) ;
+        } else {
+          static constexpr bool UseBinningAnalysisErrorBars = false;
+          // no binning analysis, we cannot control binning converged
           tomorun_dispatch<FixedDim, FixedMaxDim, FixedMaxPOVMEffects,
                            UseBinningAnalysisErrorBars, ControlStepSize, false,
                            LoggerType>(dim, opt, matf, logger);
         }
-        ) ;
-  }
+      }
+      ) ;
 }
 
 

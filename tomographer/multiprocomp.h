@@ -512,7 +512,7 @@ private:
     inline void _master_thread_update_status_report_periodic_interval_counter() const
     {
       shared_data->status_report_counter = (
-          (std::chrono::duration_cast<std::chrono::milliseconds>(
+          std::sig_atomic_t(std::chrono::duration_cast<std::chrono::milliseconds>(
               StdClockType::now().time_since_epoch()
               ).count()  /  shared_data->status_report_periodic_interval) & 0x00FFFFFF
           ) << 6;
@@ -598,8 +598,8 @@ private:
               // fill our lists with default-constructed values & set all running to false.
               shared_data->status_report_full.workers_running.clear();
               shared_data->status_report_full.workers_reports.clear();
-              shared_data->status_report_full.workers_running.resize(num_threads, false);
-              shared_data->status_report_full.workers_reports.resize(num_threads);
+              shared_data->status_report_full.workers_running.resize((std::size_t)num_threads, false);
+              shared_data->status_report_full.workers_reports.resize((std::size_t)num_threads);
 
               shared_data->status_report_numreportsrecieved = 0;
 
@@ -631,8 +631,8 @@ private:
             tomographer_assert(0 <= threadnum &&
                                (std::size_t)threadnum < shared_data->status_report_full.workers_reports.size());
 
-            shared_data->status_report_full.workers_running[threadnum] = true;
-            shared_data->status_report_full.workers_reports[threadnum] = statreport;
+            shared_data->status_report_full.workers_running[(std::size_t)threadnum] = true;
+            shared_data->status_report_full.workers_reports[(std::size_t)threadnum] = statreport;
 
             ++ shared_data->status_report_numreportsrecieved;
 
@@ -715,7 +715,7 @@ public:
     shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "Let's go!");
     shared_data.time_start = StdClockType::now();
 
-    shared_data.results.resize(shared_data.num_total_runs, NULL);
+    shared_data.results.resize((std::size_t)shared_data.num_total_runs, NULL);
     
     shared_data.logger.debug("MultiProc::OMP::TaskDispatcher::run()", "preparing for parallel runs");
 
@@ -876,7 +876,7 @@ private:
 #pragma omp critical
     {
       try {
-        shdat->results[k] = new TaskResultType(t.stealResult());
+        shdat->results[(std::size_t)k] = new TaskResultType(t.stealResult());
       } catch (...) {
           got_exception = true;
           exception_str = std::string("Caught exception while storing result: ")

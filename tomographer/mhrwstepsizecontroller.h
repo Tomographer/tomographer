@@ -164,7 +164,7 @@ public:
                  << ", set default of = " << default_start_step_size;
         });
       params.mhwalker_params.step_size = default_start_step_size;
-      params.n_sweep = (StepRealType(1)/default_start_step_size) + 1;
+      params.n_sweep = (typename MHRWParamsType::CountIntType)(StepRealType(1)/default_start_step_size) + 1;
       orig_step_times_sweep = 1;
     }
   }
@@ -293,7 +293,7 @@ private:
     last_set_step_size = new_step_size;
 
     // adapt sweep size
-    params.n_sweep = orig_step_times_sweep / new_step_size + 1;
+    params.n_sweep = (typename MHRWParamsType::CountIntType)(orig_step_times_sweep / new_step_size + 1);
 
     // update n_therm to make sure we have enough thermalization sweeps
     _ensure_enough_thermalization_sweeps(iter_k, params);
@@ -309,11 +309,11 @@ private:
     auto logger = llogger.subLogger(TOMO_ORIGIN);
 
     const auto n_therm_min = (iter_k/params.n_sweep) + 1 + (ensure_n_therm_fixed_params_fraction * orig_n_therm);
-    if (params.n_therm < n_therm_min) {
+    if (params.n_therm < (typename MHRWParamsType::CountIntType)n_therm_min) {
       logger.longdebug([&](std::ostream & stream) {
           stream << "There aren't enough thermalization sweeps. I'm setting n_therm = " << n_therm_min;
         });
-      params.n_therm = n_therm_min;
+      params.n_therm = (typename MHRWParamsType::CountIntType)n_therm_min;
     }
   }
 
