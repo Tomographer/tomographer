@@ -79,7 +79,7 @@ struct DeviceSeededRng : public BaseRngType_
           ); // full range of result_type
       
       finalseed =  dseed(devrandom);
-      fprintf(stderr, "Rng: device seed=%lu\n", (unsigned long) finalseed) ;
+      // DEBUG: fprintf(stderr, "Rng: device seed=%lu\n", (unsigned long) finalseed) ;
     } // return out of critical region for OpenMP:
     return finalseed;
 #else
