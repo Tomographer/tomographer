@@ -262,7 +262,8 @@ public:
 
     auto ctrl_step = 
       Tomographer::mkMHRWStepSizeController<MHRWParamsType>(
-          movavg_accept_stats, baselogger,
+          movavg_accept_stats,
+          baselogger,
           ar_params[0],
           ar_params[1],
           ar_params[2],
@@ -509,13 +510,7 @@ py::object py_tomorun(
   OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params,
                     base_seed, ctrl_step_size_params, ctrl_converged_params);
 
-  typedef
-#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
-    std::chrono::monotonic_clock // for GCC/G++ 4.6
-#else
-    std::chrono::steady_clock
-#endif
-    StdClockType;
+  typedef std::chrono::steady_clock StdClockType;
   StdClockType::time_point time_start;
 
   logger.debug([&](std::ostream & stream) {

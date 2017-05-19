@@ -470,11 +470,10 @@
  *
  * \par typedef .. MHRWStatsResultsType
  *     The type which stores the results from the statistics carried out during the random
- *     walk.  This type may be any type which can be constructed using the result of the
- *     stats collector created by the CData type (see \a createMHRWTaskComponents()
- *     below).  Typically, this is just the \a ResultType of the \a MHRWStatsCollector
- *     itself which was created by \a createMHRWTaskComponents().  This type must be
- *     default-constructible.
+ *     walk.  This type may be any type which can be constructed using as single argument
+ *     the result (specifically an r-value reference) of the stats collector created by \a
+ *     setupRandomWalkAndRun() (see below).  Typically, this is just the \a ResultType of
+ *     the \a MHRWStatsCollector itself.
  *
  * \par
  *     This is the type of the stats-collection part of the results which are communicated
