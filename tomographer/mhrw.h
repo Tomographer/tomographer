@@ -213,48 +213,6 @@ enum MHRWControllerAdjustmentStrategy {
 };
 
 
-// /** \brief A \ref pageInterfaceMHRWController which does not adjust anything
-//  *
-//  * No adjustments are performed whatsoever. The MHWalkerParams may be of any type.
-//  *
-//  * \since Added in %Tomographer 5.0.
-//  */
-// class TOMOGRAPHER_EXPORT MHRWNoController
-// {
-// public:
-//   enum { AdjustmentStrategy = MHRWControllerDoNotAdjust };
-
-//   MHRWNoController() { }
-
-//   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
-//   inline void init(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
-//                    const MHRandomWalkType & /* mhrw */) const { }
-
-//   template<typename MHRWParamsType, typename MHWalker, typename CountIntType, typename MHRandomWalkType>
-//   inline bool allowDoneThermalization(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
-//                                       CountIntType /*iter_k*/, const MHRandomWalkType & /* mhrw */) const
-//   { return true; }
-
-//   template<typename MHRWParamsType, typename MHWalker, typename CountIntType, typename MHRandomWalkType>
-//   inline bool allowDoneRuns(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
-//                             CountIntType /*iter_k*/, const MHRandomWalkType & /* mhrw */) const
-//   { return true; }
-
-//   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
-//   inline void thermalizingDone(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
-//                                const MHRandomWalkType & /* mhrw */) const { }
-
-//   template<bool IsThermalizing, bool IsAfterSample, typename MHRWParamsType, typename CountIntType,
-//            typename MHWalker, typename MHRandomWalkType>
-//   inline void adjustParams(const MHRWParamsType & /* params */, const MHWalker & /* mhwalker */,
-//                            CountIntType /* iter_k */, const MHRandomWalkType & /* mhrw */) const
-//   {
-//   }
-// };
-
-
-
-
 
 
 /** \brief Helper class to invoke a \ref pageInterfaceMHRWController 's callbacks

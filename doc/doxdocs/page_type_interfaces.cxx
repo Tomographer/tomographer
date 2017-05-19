@@ -78,22 +78,22 @@
  * MHRandomWalk. (It is usually most convenient to template the methods themselves, so
  * that you don't have to specify the parameters when instantiating the object.)
  *
- * \par void init(.......)
- * is called before starting the random walk
+ * \par void init(MHRWParamsType & params, const MHWalker & mhwalker, const MHRandomWalkType & mhrw)
+ *     Callback which is called before starting the random walk
  *
- * \par void thermalizingDone(........)
- * is called after the thermalizing runs, before starting the "live" runs.
+ * \par void thermalizingDone(MHRWParamsType & params, const MHWalker & mhwalker, const MHRandomWalkType & mhrw)
+ *     Callback which is called after the thermalizing runs, before starting the "live" runs.
  * 
- * \par void done(........)
- * is called after the random walk is finished.
+ * \par void done(MHRWParamsType & params, const MHWalker & mhwalker, const MHRandomWalkType & mhrw)
+ *     Callback which is called after the random walk is finished.
  *
  * \par void processSample(CountIntType k, CountIntType n, const PointType & pt, FnValueType fnval, MHRandomWalk & rw)
- *     is called at the end of each sweep, after the thermalization sweeps have finished.
- *     This function is meant to actually take live samples. \a k is the raw iteration
- *     number, \a n is the sample number (= number of live samples already taken), \a pt
- *     the current point of the walk, \a fnval the value of the function at this point
- *     (this may be the value of the MH jump function, its logarithm, or a dummy value,
- *     depending on the random walk's MHWalker::UseFnSyntaxType, see \ref
+ *     Callback which is called at the end of each sweep, after the thermalization sweeps
+ *     have finished.  This function is meant to actually take live samples. \a k is the
+ *     raw iteration number, \a n is the sample number (= number of live samples already
+ *     taken), \a pt the current point of the walk, \a fnval the value of the function at
+ *     this point (this may be the value of the MH jump function, its logarithm, or a
+ *     dummy value, depending on the random walk's MHWalker::UseFnSyntaxType, see \ref
  *     pageInterfaceMHWalker).
  *
  * \par void rawMove(CountIntType k, bool is_thermalizing, bool is_live_iter, bool accepted, double a, const PointType & newpt, FnValueType newptval, const PointType & curpt, FnValueType curptval, MHRandomWalk & rw)
