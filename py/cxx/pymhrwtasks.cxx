@@ -83,15 +83,41 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         "BinningErrorBarConvergenceSummary",
         "A summary of how many error bars have converged. "
         "\n\n"
-        "Reflects the corresponding C++ class .......... DOC PLEASE ..........."
+        "Reflects the corresponding C++ class :tomocxx:`Tomographer::BinningErrorBarConvergenceSummary <"
+        "struct_tomographer_1_1_binning_error_bar_convergence_summary.html>`."
+        "\n\n"
+        "|picklable|"
+        "\n\n"
+        ".. versionadded:: 5.0\n        This class was added in Tomographer v5.0."
+        "\n\n"
+        ".. py:attribute:: n_bins\n\n"
+        "    The total number of histogram bins (to each histogram bin corresponds a binning analysis error bar).\n\n"
+        ".. py:attribute:: n_converged\n\n"
+        "    The number of binning analysis error bars which appear to have converged.\n\n"
+        ".. py:attribute:: n_unknown\n\n"
+        "    The number of binning analysis error bars for which convergence is uncertain.\n\n"
+        ".. py:attribute:: n_unknown_isolated\n\n"
+        "    The number of binning analysis error bars for which convergence is uncertain, which "
+        "additionally are contiguous to error bars which appear to have converged.\n\n"
+        ".. py:attribute:: n_not_converged\n\n"
+        "    The number of histogram bins whose binning analysis error bar appears not to have converged.\n\n"
         )
-      .def(py::init<int,int,int,int,int>(),
+      .def(py::init<std::size_t,std::size_t,std::size_t,std::size_t,std::size_t>(),
            "n_bins"_a=0,"n_converged"_a=0,"n_unknown"_a=0,"n_unknown_isolated"_a=0,"n_not_converged"_a=0)
       .def_readwrite("n_bins", & Kl::n_bins)
       .def_readwrite("n_converged", & Kl::n_converged)
       .def_readwrite("n_unknown", & Kl::n_unknown)
       .def_readwrite("n_unknown_isolated", & Kl::n_unknown_isolated)
       .def_readwrite("n_not_converged", & Kl::n_not_converged)
+      .def("__getstate__", [](py::object p) {
+          return py::make_tuple(p.attr("n_bins"), p.attr("n_converged"), p.attr("n_unknown"),
+                                p.attr("n_unknown_isolated"), p.attr("n_not_converged"));
+        })
+      .def("__setstate__", [](Kl & p, py::tuple t) {
+          tpy::internal::unpack_tuple_and_construct<Kl, std::size_t, std::size_t, std::size_t,
+                                                    std::size_t, std::size_t>(p, t);
+        })
+      ;
       ;
   }
 
@@ -185,6 +211,8 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         "    An object of type :py:class:`~tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult` "
         "detailing the result of the stats collecting class which is responsible for determining the final "
         "histogram, and carrying out the binning analysis to come up with error bars.\n\n"
+        "    .. versionchanged:: 5.0\n        Previously, this attribute was called `stats_collector_result`."
+        "\n\n"
         ".. py:attribute:: mhrw_params\n\n"
         "    The parameters of the executed random walk, as an :py:class:`~tomographer.MHRWParams` "
         "instance.\n\n"

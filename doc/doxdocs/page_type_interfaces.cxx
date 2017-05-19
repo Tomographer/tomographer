@@ -320,6 +320,8 @@
  * Tomographer::MHRWStepSizeController, and then have the random walk stop after
  * enough samples thanks to a \ref Tomographer::MHRWValueErrorBinsConvergedController.
  *
+ * \since The \a MHRWController type interface was introduced in %Tomographer 5.0.
+ *
  * A \a MHRWController compliant type should provide the following constant public
  * member value (e.g., as an enum):
  *
@@ -480,69 +482,50 @@
  *     Tomographer::MHRWTasks::MHRandomWalkTaskResult) .
  *
  *
- * \par <\ref pageInterfaceMHRWTaskInitializer compliant type> createMHRWTaskInitializer()
- *     Create an object which is responsible for initializing a new random walk instance.
- *     This function will be called upon each individual task run.  The returned object
- *     must be of a type compliant with the \ref pageInterfaceMHRWTaskInitializer.
+ * \par template<typename RunFn> void setupRandomWalkAndRun(Rng & rng, Logger & logger, RunFn run) const
+ *     This callback is responsible for setting up the random walk and executing \a run()
+ *     to proceed with running it.  This function should create a \ref
+ *     pageInterfaceMHWalker, a \ref pageInterfaceMHRWStatsCollector, and optionally a
+ *     \ref pageInterfaceMHRWController, and pass them on to the given function \a run,
+ *     which takes care of actually running the random walk.
+ *
+ * \par
+ *     Important: this method must be const and not modify the state of the CData object.
+ *     Indeed, this function may be called multiple times in parallel from different
+ *     threads.
+ *
+ * \par
+ *     Using this function call structure allows to create the MHWalker and friends on the
+ *     stack, creating multiple stats collectors, having controllers refer to stats
+ *     collectors etc., and not having to worry about creating unique instances of the
+ *     objects and/or copying/moving them to the caller.
+ *
+ * \par
+ *     The \a run callable must be invoked with the following syntax:
+ *     \code
+ *         run(mhwalker, stats_collector, controller); // with controller, OR:
+ *         run(mhwalker, stats_collector); // without controller
+ *     \endcode
+ *     If the optional \a controller argument is omitted, a dummy \ref
+ *     Tomographer::MHRWNoController is used.
+ *
+ * \par
+ *     If you are using the tools in \ref Tomographer::MHRWTasks::ValueHistogramTools, in
+ *     particular inheriting from \ref
+ *     Tomographer::MHRWTasks::ValueHistogramTools::CDataBase, then you should use the
+ *     base class method \ref
+ *     Tomographer::MHRWTasks::ValueHistogramTools::CDataBase::createValueStatsCollector()
+ *     "createValueStatsCollector()" to create the value histogram stats collector.
+ *
+ * \par
+ *     Have a look at "test/minimal_tomorun.cxx", "test/minimal_tomorun_controlled.cxx",
+ *     "py/cxx/pytomorun.cxx" and "tomorun/tomorun_dispatch.cxx" for examples.
+ *
+ *
+ * \since Changed in %Tomographer 5.0: createMHWalker() and createStatsCollector()
+ *     have been replaced by the more flexible setupRandomWalkAndRun().
  *
  */
-
-// /* ....
-//  *
-//  * \par MHRWStatsCollectorType createStatsCollector(LoggerType & logger) const
-//  *     Create an \a MHRWStatsCollector -type instance to use. This must be a type which
-//  *     compiles both with the \ref pageInterfaceMHRWStatsCollector and the \ref
-//  *     pageInterfaceResultable. It must have as its \a ResultType the type given as \a
-//  *     MHRWStatsColelctorResultType. 
-//  *
-//  * \par
-//  *     The logger may be used to log messages, and may be passed on to the stats collector
-//  *     for the same purpose.  Use a template parameter for \a LoggerType.
-//  *
-//  * \par MHWalker createMHWalker(Rng & rng, LoggerType & logger) const
-//  *     Create an \a MHWalker -type instance. This may be any \ref pageInterfaceMHWalker
-//  *     -compliant type. The \a Rng parameter is the same type as provided to the
-//  *     MHRWTasks::MHRandomWalkTask template parameter, use a template argument for this
-//  *     function in case. Use a template parameter for \a LoggerType.
-//  *
-//  */
-
-
-// // =============================================================================
-// // Histogram
-// // =============================================================================
-
-// /* * ***\page pageInterfaceHistogram Histogram Interface*** // removed
-//  *
-//  * <em>This is a &lsquo;type interface.&rsquo; See \ref pageTypeInterfaces
-//  * for more info on what that is.</em>
-//  *
-//  * \par typedef .. Scalar
-//  *      Type used to quantify the quantity which is binned into separate bins
-//  * 
-//  * \par typedef .. CountType
-//  *      Type used to count the number of hits in each bin
-//  *
-//  * \par static constexpr bool HasErrorBars = ..
-//  *      Whether this Histogram type can provide error bars (e.g. obtained e.g. through
-//  *      binning analysis, or by averaging several histograms)
-//  *
-//  * In the following, we use \a std::size_t as indexing type, but it can be replaced by any
-//  * other integral type. You should use \a std::size_t if you store your histogram as a
-//  * dense object (that's the type which can hold the size of the largest possible object
-//  * which can be stored in memory).
-//  *
-//  * \par std::size_t numBins() const
-//  *      The number of bins in this histogram.
-//  *
-//  * \par CountType count(std::size_t i) const
-//  *      Number of counts in the bin number i
-//  *
-//  * \par CountType errorBar(std::size_t i) const
-//  *      <em>(Only if <code>HasErrorBars = true</code>)</em> Error bar (standard deviation)
-//  *      associated to the bin number i.
-//  * 
-//  */
 
 
 // =============================================================================

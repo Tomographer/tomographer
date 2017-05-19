@@ -179,41 +179,6 @@
  */
 
 
-
-// /* * \page pageInterfaceResultsCollector ResultsCollector Interface
-//  *
-//  * \a ResultsCollector takes care of collecting the results from each task run.
-//  *
-//  * In the following, \a TaskCData is some type that was specified to the task
-//  * dispatcher. The type \a CountType designates the type used to count tasks (usually an
-//  * integral type of course). Also the type \a ResultType is the type declared for a result
-//  * by the task (\ref pageInterfaceTask). You may make the methods here take template
-//  * parameters so you don't have to worry about the exact types of these parameters.
-//  *
-//  * \par void init(CountType num_total_runs, CountType n_chunk, const TaskCData * pcdata)
-//  *         \a init() will be called before the tasks are run (e.g. before starting the
-//  *         parallel section), and may be used to initialize data.
-//  *
-//  * \par void collectResult(CountType task_no, const ResultType& taskresult, const TaskCData * pcdata)
-//  *         Called each time a task has finished, with the corresponding task result, along
-//  *         with information about which task it was and as always the shared constant
-//  *         data. This method does not need to worry about concurrence, for example writing
-//  *         to shared data (it is either called from the main thread in a critical section,
-//  *         or the data was serialized and passed to the main process, etc.)
-//  *
-//  * \par
-//  *         in the OMP task dispatcher (\ref Tomographer::MultiProc::OMP::TaskDispatcher),
-//  *         this is called within a \c critical OMP section, so it may safely access and
-//  *         write shared data.
-//  *
-//  * \par void runsFinished(CountType num_total_runs, const TaskCData * pcdata)
-//  *         Called after all the tasks have finished. This is the good time to, e.g.,
-//  *         finalize collected values, such as multiplying by parameter space volume,
-//  *         dividing by the number of samples to get the average, etc.
-//  *
-//  */
-
-
 /** \page pageInterfaceTaskManagerIface TaskManagerIface Interface
  *
  * Provides an interface for the task to interact with the task
@@ -292,7 +257,7 @@
  *       should really only be called by the tasks.  See \ref
  *       Tomographer::MultiProc::Sequential::TaskDispatcher for an example.
  *
- *     * Recover the task's result using its \a getResult() method.
+ *     * Recover the task's result using its \a stealResult() or \a getResult() method.
  *
  *   - All the time during the above task execution, if the a status report is requested
  *     explicitly from an external caller (e.g. a signal handler) with a call to this

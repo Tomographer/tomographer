@@ -136,6 +136,17 @@ class MHRWTasksStuff(unittest.TestCase):
         self.assertEqual(summary.n_unknown_isolated, 0)
         self.assertEqual(summary.n_not_converged, 1)
 
+        # pickle the summary itself?
+        s2 = pickle.dumps(summary,2)
+        print("PICKLE OF SUMMARY:\n"+str(s2))
+        summary2 = pickle.loads(s2)
+        self.assertEqual(summary2.n_bins, m.stats_results.histogram.numBins())
+        self.assertEqual(summary2.n_converged, 1)
+        self.assertEqual(summary2.n_unknown, 1)
+        self.assertEqual(summary2.n_unknown_isolated, 0)
+        self.assertEqual(summary2.n_not_converged, 1)
+        
+
 #
 
 

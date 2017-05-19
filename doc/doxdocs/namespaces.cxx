@@ -103,7 +103,8 @@
  * The class \ref Tomographer::MHRWTasks::ValueHistogramTools::HistogramAggregator allows
  * you to combine histograms together to form an averaged histogram.
  *
- * \since Namespace added in %Tomographer 5.0.
+ * \since Namespace added in %Tomographer 5.0 to replace
+ *        Tomographer::MHRWTasks::ValueHistogramTasks.
  */
 
 
