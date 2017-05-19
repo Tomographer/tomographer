@@ -1,0 +1,28 @@
+
+- Tomographer::MHRWTasks::ValueHistogramTasks -> ValueHistogramTools
+  & revised the API a lot -- much more flexible
+
+- mhrwtasks reworked for added flexibiliy (setupRandomWalkAndRun etc., can add controllers
+  & refer to each other etc.)
+
+- mhrwcontrollers (incl. step size adjustment & bin error bars convergence control)
+
+- UniformBinsHistogram -> Histogram etc.
+
+- some api clean-ups
+
+- (python) added compiler info in `tomographer.version.compile_info`
+
+- (C++ & python): MHRWParams now has as first argument an abstract object, MHWalkerParams
+  [in python, this is a dictionary of parameters of the random walk]
+
+- aggregatedhistogram classes
+
+- reworked the status-report api & helper classes
+
+- PeriodicStatusReportMHRWStatsCollector & Query?StatusReportMHRWStatsCollector
+
+- added minimal examples (minimal_tomorun_controlled.cxx & minimal_single_random_walk)
+
+- tomorun: seed via device random, controllers
+
