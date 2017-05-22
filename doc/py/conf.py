@@ -52,7 +52,7 @@ extlinks = {
 
 
 intersphinx_mapping = {
-    'python': ('http://docs.python.org/3.6', None)
+    'python': ('https://docs.python.org/3.6', None)
 }
 
 #

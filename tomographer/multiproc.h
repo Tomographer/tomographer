@@ -60,7 +60,7 @@ namespace MultiProc {
  * See also:
  *  - \ref pageTaskManagerDispatcher;
  *  - \ref OMP::TaskDispatcher's status report mechanism;
- *  - \ref MHRWTasks::MHRandomWalkTask::StatusReport for an example usage.
+ *  - \ref MHRWStatusReport for an example usage.
  *
  */
 struct TOMOGRAPHER_EXPORT TaskStatusReport

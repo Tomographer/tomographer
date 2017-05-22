@@ -895,7 +895,9 @@ EXCLUDE_SYMBOLS        = \
 		         Tomographer::MathTools::tomo_internal \
 		         Tomographer::MathTools::SolveCLyap::tomo_internal \
 		         Tomographer::MHRWTasks::tomo_internal \
-		         Tomographer::MHRWTasks::ValueHistogramTasks::tomo_internal \
+		         Tomographer::MHRWTasks::ValueHistogramTools::tomo_internal \
+		         Tomographer::DenseDM::tomo_internal \
+		         Tomographer::DenseDM::TSpace::tomo_internal \
 		         Tomographer::Logger::tomo_internal \
 		         Tomographer::MultiProc::tomo_internal \
 		         Tomographer::MultiProc::OMP::tomo_internal \

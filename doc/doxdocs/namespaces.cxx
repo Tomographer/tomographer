@@ -88,7 +88,7 @@
 
 /** \namespace Tomographer::MHRWTasks::ValueHistogramTools
  *
- * \brief Tools for running random walk tasks while collecting a histogram of values
+ * \brief %Tools for running random walk tasks while collecting a histogram of values
  *
  * These tools build on top of \ref Tomographer::MHRWTasks to add specific support for
  * collecting a histogram of values during the random walk, including a binning analysis
@@ -99,9 +99,6 @@
  * be used as \ref pageInterfaceMHRandomWalkTaskCData "CData class" to define your random
  * walk task, as it provides additional typedefs as well as automatic construction of the
  * value stats collector.
- *
- * The class \ref Tomographer::MHRWTasks::ValueHistogramTools::HistogramAggregator allows
- * you to combine histograms together to form an averaged histogram.
  *
  * \since Namespace added in %Tomographer 5.0 to replace
  *        Tomographer::MHRWTasks::ValueHistogramTasks.

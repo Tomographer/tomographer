@@ -302,6 +302,7 @@ struct ProgOptions
     val_min(0.97),
     val_max(1.0),
     val_nbins(50),
+    light_jumps(true),
     binning_analysis_error_bars(true), // error bars from binning analysis
     binning_analysis_num_levels(8),
     control_step_size(true),
@@ -338,6 +339,8 @@ struct ProgOptions
   double val_min;
   double val_max;
   std::size_t val_nbins;
+
+  bool light_jumps;
 
   bool binning_analysis_error_bars;
   int binning_analysis_num_levels;
@@ -404,6 +407,9 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
   std::string configbasename;
   bool write_histogram_from_config_file_name = false;
 
+  bool light_jumps_set = false;
+  bool no_light_jumps_set = false;
+
   bool binning_analysis_error_bars_set = false;
   bool no_binning_analysis_error_bars_set = false;
 
@@ -424,6 +430,14 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
      "to a particular object defined in the datafile. See below for more info.")
     ("value-hist", value<std::string>(&valhiststr),
      "Do a histogram of the figure of merit for different measured values. Format MIN:MAX/NUM_BINS")
+    ("light-jumps", bool_switch(& light_jumps_set)->default_value(light_jumps_set),
+     "Carry out the \"light\" version of the random walk, where instead of applying a full random unitary "
+     "to the pure state vector on the purifying system, we apply a random qubit unitary in the 2-d subspace "
+     "of two randomly picked basis vectors. This runs faster and samples the same distribution, so there "
+     "should be no reason not to use it. It is enabled by default.")
+    ("no-light-jumps", bool_switch(& no_light_jumps_set)->default_value(no_light_jumps_set),
+     "Do not carry out the \"light\" version of the random walk, do the full random unitary instead "
+     "(see --light-jumps)")
     ("binning-analysis-error-bars", bool_switch(& binning_analysis_error_bars_set)
      ->default_value(false),
      // REFERENCE [2] is here
@@ -797,38 +811,25 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
   // --------------------
 
   // set up the boolean switche(s)
+#define SET_OPT_BOOL_SWITCH(OPTNAME, DASH_OPTNAME)                      \
+  if (OPTNAME ## _set) {                                                \
+    if (no_ ## OPTNAME ## _set) {                                       \
+      throw bad_options("Cannot use both --" #DASH_OPTNAME " and --no-" #DASH_OPTNAME ); \
+    }                                                                   \
+    opt-> OPTNAME = true;                                               \
+  } else if (no_ ## OPTNAME ## _set) {                                  \
+    opt-> OPTNAME = false ;                                             \
+  }
 
-  if (binning_analysis_error_bars_set) {
-    if (no_binning_analysis_error_bars_set) {
-      throw bad_options("Cannot use both --binning_analysis-error-bars and "
-                        "--no-binning-analysis-error-bars");
-    }
-    opt->binning_analysis_error_bars = true;
-  } else if (no_binning_analysis_error_bars_set) {
-    opt->binning_analysis_error_bars = false;
-    // disable control-binning-converged, which is incompatible
+  SET_OPT_BOOL_SWITCH(binning_analysis_error_bars, binning-analysis-error-bars) ;
+  if (no_binning_analysis_error_bars_set) {
+    // disable control-binning-converged, which is incompatible with no error bars
     opt->control_binning_converged = false;
   }
 
-  if (control_step_size_set) {
-    if (no_control_step_size_set) {
-      throw bad_options("Cannot use both --control-step-size and "
-                        "--no-control-step-size");
-    }
-    opt->control_step_size = true;
-  } else if (no_control_step_size_set) {
-    opt->control_step_size = false;
-  }
+  SET_OPT_BOOL_SWITCH(control_step_size, control-step-size) ;
 
-  if (control_binning_converged_set) {
-    if (no_control_binning_converged_set) {
-      throw bad_options("Cannot use both --control-binning-converged and "
-                        "--no-control-binning-converged");
-    }
-    opt->control_binning_converged = true;
-  } else if (no_control_binning_converged_set) {
-    opt->control_binning_converged = false;
-  }
+  SET_OPT_BOOL_SWITCH(control_binning_converged, control-binning-converged) ;
 
 
   // set up write histogram file name from config file name

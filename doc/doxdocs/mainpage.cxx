@@ -94,7 +94,7 @@
  *   can be executed by a \ref pageTaskManagerDispatcher such as \ref
  *   Tomographer::MultiProc::OMP.
  *
- * - On top of this the classes in \ref Tomographer::MHRWTasks::ValueHistogramTasks
+ * - On top of this the classes in \ref Tomographer::MHRWTasks::ValueHistogramTools
  *   provide more specific definitions for collecting a histogram about a value
  *   (e.g. figure of merit) during a Metropolis-Hastings random walk.
  *
@@ -155,7 +155,7 @@
  *
  * The \c tomorun program is simply a straightforward piecing together of the different
  * components detailed above.  Most of the work is already done by the classes in \ref
- * Tomographer::MHRWTasks::ValueHistogramTasks.
+ * Tomographer::MHRWTasks::ValueHistogramTools.
  *
  * The \c tomorun code is not included in this API documentation.  The code is located
  * under \c "cxx/tomorun/".  If you wish to change functionality in \c tomorun, or if you

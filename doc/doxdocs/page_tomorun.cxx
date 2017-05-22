@@ -313,14 +313,18 @@
  * of attempting to modify \c tomorun to include your use case).
  *
  * A very minimal version of a &quot;<code>tomorun</code>-like&quot; program is provided
- * in the test suite as \c "cxx/test/minimal_tomorun.cxx".
+ * in the test suite as \c "test/minimal_tomorun.cxx".
  *
- * You may want to copy it into a new source file, change the way you specify your inputs
- * (use the \ref Tomographer::MAT classes to read inputs from a \c matlab file, for
- * example), and generally speaking adjust any other aspect of the program you may want.
+ * A couple other examples in the same vein are provided, \c
+ * "test/minimal_tomorun_controlled.cxx" and \c "test/minimal_single_random_walk.cxx".
+ *
+ * You may want to copy one of those examples into a new source file, change the way you
+ * specify your inputs (use the \ref Tomographer::MAT classes to read inputs from a \c
+ * matlab file, for example), and generally speaking adjust any other aspect of the
+ * program you may want.
  *
  * The code in \c "cxx/test/minimal_tomorun.cxx" should be commented and understandable.
- * The basic logic is to use the \ref Tomographer::MHRWTasks::ValueHistogramTasks classes,
+ * The basic logic is to use the \ref Tomographer::MHRWTasks::ValueHistogramTools classes,
  * in combination with \ref Tomographer::DenseDM::TSpace::LLHMHWalker, to run random walks
  * over quantum states in T-space (see \ref pageParamsT) and collect statistics about a
  * figure of merit.  If you have any questions, don't hesitate to ask me.

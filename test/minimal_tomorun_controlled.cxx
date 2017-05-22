@@ -133,7 +133,7 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
 
     auto controllers = Tomographer::mkMHRWMultipleControllers(therm_step_controller, numsamples_controller);
 
-    Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType> mhwalker(
+    Tomographer::DenseDM::TSpace::LLHMHWalkerLight<DenseLLH,Rng,LoggerType> mhwalker(
             llh.dmt.initMatrixType(),
             llh,
             rng,

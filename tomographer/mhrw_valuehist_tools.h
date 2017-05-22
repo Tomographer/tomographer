@@ -168,8 +168,9 @@ struct valuehist_types<CDataBaseType, true>
  * Look at the file <code>test/minimal_tomorun.cxx</code> for an example of you to define
  * your cdata class.
  *
- * We provide some useful typedefs, as well as the \ref createStatsCollector() required by
- * the \ref pageInterfaceMHRandomWalkTaskCData.
+ * We provide some useful typedefs, as well as a \ref createValueStatsCollector() which
+ * should be used by subclasses in the \a setupRandomWalkAndRun() method of their \ref
+ * pageInterfaceMHRandomWalkCData implementation.
  *
  * \since Changed in %Tomographer 5.0: Removed \a StepRealType template parameter, added
  *        \a MHWalkerParams, beware the new order!
@@ -391,8 +392,8 @@ struct TOMOGRAPHER_EXPORT CDataBase
    * The \a TaskResultType is expected to be a subclass of \ref MHRWStatsResultBaseSimple.
    * This will automatically be the case if you're using our \ref CDataBase type, and if
    * you have defined your custom \a MHRWStatsResults type (see \ref
-   * pageInterfaceMHRandomWalkCDataType) using \a CDataBase::MHRWStatsResultsBaseType as
-   * base class.
+   * pageInterfaceMHRandomWalkCData) using \a CDataBase::MHRWStatsResultsBaseType as base
+   * class.
    */
   template<typename TaskResultType>
   AggregatedHistogramType aggregateResultHistograms(const std::vector<TaskResultType*> & task_result_list)

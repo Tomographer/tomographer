@@ -146,7 +146,7 @@ struct TOMOGRAPHER_EXPORT CDataBase
   /** \brief Type to store the parameters of the Metropolis-Hastings random walk (number of
    *         runs, sweep size, etc.)
    *
-   * See \ref MHRWParams<IterCountIntType,MHWalkerParams>
+   * See \ref MHRWParams<MHWalkerParams,IterCountIntType>
    */
   typedef MHRWParams<MHWalkerParams, IterCountIntType> MHRWParamsType;
 
@@ -278,9 +278,9 @@ struct TOMOGRAPHER_EXPORT MHRandomWalkTaskResult
 
   /** \brief Constructor, initializes fields to the given values
    *
-   * The first parameter is meant to be a \ref MHRWStatsCollectorResultType const
-   * reference or temporary; it may be however any type accepted by a one-argument
-   * constructor of \ref MHRWStatsCollectorResultType (this allows to call either the
+   * The first parameter is meant to be the \a ResultType of a \a MHRWStatsCollector
+   * (const reference or temporary); it may be however any type accepted by a one-argument
+   * constructor of the \a ResultType in question (this allows to call either the
    * rvalue-ref constructor or copy constructor automatically).
    */
   template<typename MHRWStatsResultsTypeInit,
@@ -317,7 +317,7 @@ struct TOMOGRAPHER_EXPORT MHRandomWalkTaskResult
    */
   MHRWStatsResultsType stats_results;
     
-  //! The parameters of the random walk (see \ref MHRWParams<IterCountIntType,MHWalkerParams>)
+  //! The parameters of the random walk (see \ref MHRWParams<MHWalkerParams,IterCountIntType>)
   MHRWParamsType mhrw_params;
 
   //! The acceptance ratio of the Metropolis-Hastings random walk

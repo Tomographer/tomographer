@@ -95,7 +95,7 @@ typedef DeviceSeededRng<std::mt19937>  TomorunRng;
 
 
 template<typename DenseLLH_, typename CDataBaseType_,
-         bool ControlStepSize, bool ControlValueErrorBins>
+         bool ControlStepSize, bool ControlValueErrorBins, bool UseTSpaceLLHWalkerLight>
 struct TomorunCData : public CDataBaseType_
 {
   typedef CDataBaseType_ Base; // base class
@@ -160,16 +160,27 @@ struct TomorunCData : public CDataBaseType_
   const std::size_t ctrl_max_allowed_not_converged;
 
 
-  template<typename Rng, typename LoggerType, typename RunFn,
-           TOMOGRAPHER_ENABLED_IF_TMPL(!ControlStepSize && !ControlValueErrorBins)>
-  inline void setupRandomWalkAndRun(Rng & rng, LoggerType & logger, RunFn run) const
+  template<typename RngType, typename LoggerType,
+           TOMOGRAPHER_ENABLED_IF_TMPL(!UseTSpaceLLHWalkerLight)>
+  inline Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,RngType,LoggerType>
+  createLLHWalker(RngType & rng, LoggerType & logger) const
   {
-    Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType> llhwalker(
-	llh.dmt.initMatrixType(),
-	llh,
-	rng,
-	logger
-	);
+    return { llh.dmt.initMatrixType(), llh, rng, logger };
+  }
+
+  template<typename RngType, typename LoggerType,
+           TOMOGRAPHER_ENABLED_IF_TMPL(UseTSpaceLLHWalkerLight)>
+  inline Tomographer::DenseDM::TSpace::LLHMHWalkerLight<DenseLLH,RngType,LoggerType>
+  createLLHWalker(RngType & rng, LoggerType & logger) const
+  {
+    return { llh.dmt.initMatrixType(), llh, rng, logger };
+  }
+
+  template<typename RngType, typename LoggerType, typename RunFn,
+           TOMOGRAPHER_ENABLED_IF_TMPL(!ControlStepSize && !ControlValueErrorBins)>
+  inline void setupRandomWalkAndRun(RngType & rng, LoggerType & logger, RunFn run) const
+  {
+    auto llhwalker = createLLHWalker(rng, logger);
 
     auto value_stats = Base::createValueStatsCollector(logger);
     auto stats = Tomographer::mkMultipleMHRWStatsCollectors(value_stats);
@@ -181,12 +192,7 @@ struct TomorunCData : public CDataBaseType_
            TOMOGRAPHER_ENABLED_IF_TMPL(ControlStepSize && !ControlValueErrorBins)>
   inline void setupRandomWalkAndRun(Rng & rng, LoggerType & logger, RunFn run) const
   {
-    Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType> llhwalker(
-	llh.dmt.initMatrixType(),
-	llh,
-	rng,
-	logger
-	);
+    auto llhwalker = createLLHWalker(rng, logger);
 
     auto value_stats = Base::createValueStatsCollector(logger);
 
@@ -205,12 +211,7 @@ struct TomorunCData : public CDataBaseType_
            TOMOGRAPHER_ENABLED_IF_TMPL(!ControlStepSize && ControlValueErrorBins)>
   inline void setupRandomWalkAndRun(Rng & rng, LoggerType & logger, RunFn run) const
   {
-    Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType> llhwalker(
-	llh.dmt.initMatrixType(),
-	llh,
-	rng,
-	logger
-	);
+    auto llhwalker = createLLHWalker(rng, logger);
 
     auto value_stats = Base::createValueStatsCollector(logger);
 
@@ -232,12 +233,7 @@ struct TomorunCData : public CDataBaseType_
            TOMOGRAPHER_ENABLED_IF_TMPL(ControlStepSize && ControlValueErrorBins)>
   inline void setupRandomWalkAndRun(Rng & rng, LoggerType & logger, RunFn run) const
   {
-    Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType> llhwalker(
-	llh.dmt.initMatrixType(),
-	llh,
-	rng,
-	logger
-	);
+    auto llhwalker = createLLHWalker(rng, logger);
 
     auto value_stats = Base::createValueStatsCollector(logger);
 
@@ -277,7 +273,7 @@ struct TomorunCData : public CDataBaseType_
 // parameters appropriately.
 //
 template<bool UseBinningAnalysisErrorBars,
-         bool ControlStepSize, bool ControlValueErrorBins,
+         bool ControlStepSize, bool ControlValueErrorBins, bool UseLLHWalkerLight,
          typename DenseLLH, typename ValueCalculator, typename LoggerType>
 inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
 		    ValueCalculator valcalc, LoggerType & baselogger)
@@ -300,7 +296,8 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
       TomorunInt // HistCountIntType
       >,
     ControlStepSize,
-    ControlValueErrorBins
+    ControlValueErrorBins,
+    UseLLHWalkerLight
     > OurCData;
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, typename OurCData::RngType>  OurMHRandomWalkTask;
@@ -379,7 +376,7 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
 //
 template<int FixedDim, int FixedMaxDim, int FixedMaxPOVMEffects,
          bool UseBinningAnalysisErrorBars,
-         bool ControlStepSize, bool ControlValueErrorBins,
+         bool ControlStepSize, bool ControlValueErrorBins, bool UseLLHWalkerLight,
          typename LoggerType>
 inline void tomorun_dispatch(const int dim, ProgOptions * opt, Tomographer::MAT::File * matf,
                              LoggerType & baselogger)
@@ -519,7 +516,7 @@ inline void tomorun_dispatch(const int dim, ProgOptions * opt, Tomographer::MAT:
         // valid constructor arguments.
         );
 
-  tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins>(
+  tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins, UseLLHWalkerLight>(
       llh,
       opt,
       multiplexor_value_calculator,
@@ -557,19 +554,19 @@ inline void tomorun_dispatch(const int dim, ProgOptions * opt, Tomographer::MAT:
     T_ref = std::move(mpsd.sqrt);
 
     if (opt->valtype.valtype == val_type_spec::FIDELITY) {
-      tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins>(
+      tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins, UseLLHWalkerLight>(
           llh,
           opt,
 	  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, TomorunReal>(T_ref),
           logger.parentLogger());
     } else if (opt->valtype.valtype == val_type_spec::PURIF_DIST) {
-      tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins>(
+      tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins, UseLLHWalkerLight>(
           llh,
           opt,
 	  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, TomorunReal>(T_ref),
           logger.parentLogger());
     } else if (opt->valtype.valtype == val_type_spec::TR_DIST) {
-      tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins>(
+      tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins, UseLLHWalkerLight>(
           llh,
           opt,
 	  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, TomorunReal>(rho_ref),
@@ -600,7 +597,7 @@ inline void tomorun_dispatch(const int dim, ProgOptions * opt, Tomographer::MAT:
 						obsname.c_str(), dim, dim));
 
     // and run our main program
-    tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins>(
+    tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins, UseLLHWalkerLight>(
         llh,
         opt,
 	Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>(dmt, A),
@@ -647,26 +644,30 @@ inline void tomorun_dispatch_st(const int dim, ProgOptions * opt, Tomographer::M
                                 LoggerType & logger)
 {
   DISPATCH_STATIC_BOOL(
-      opt->control_step_size, ControlStepSize,
-      {
-        if (opt->binning_analysis_error_bars) {
-          static constexpr bool UseBinningAnalysisErrorBars = true;
-          DISPATCH_STATIC_BOOL(
-              opt->control_binning_converged, ControlValueErrorBins,
-              {
-                tomorun_dispatch<FixedDim, FixedMaxDim, FixedMaxPOVMEffects,
-                                 UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins,
-                                 LoggerType>(dim, opt, matf, logger);
-              }
-              ) ;
-        } else {
-          static constexpr bool UseBinningAnalysisErrorBars = false;
-          // no binning analysis, we cannot control binning converged
-          tomorun_dispatch<FixedDim, FixedMaxDim, FixedMaxPOVMEffects,
-                           UseBinningAnalysisErrorBars, ControlStepSize, false,
-                           LoggerType>(dim, opt, matf, logger);
-        }
-      }
+      opt->light_jumps, UseLLHWalkerLight,
+      DISPATCH_STATIC_BOOL(
+          opt->control_step_size, ControlStepSize,
+          {
+            if (opt->binning_analysis_error_bars) {
+              static constexpr bool UseBinningAnalysisErrorBars = true;
+              DISPATCH_STATIC_BOOL(
+                  opt->control_binning_converged, ControlValueErrorBins,
+                  {
+                    tomorun_dispatch<FixedDim, FixedMaxDim, FixedMaxPOVMEffects,
+                                     UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins,
+                                     UseLLHWalkerLight, 
+                                     LoggerType>(dim, opt, matf, logger);
+                  }
+                  ) ;
+            } else {
+              static constexpr bool UseBinningAnalysisErrorBars = false;
+              // no binning analysis, we cannot control binning converged
+              tomorun_dispatch<FixedDim, FixedMaxDim, FixedMaxPOVMEffects,
+                               UseBinningAnalysisErrorBars, ControlStepSize, false, UseLLHWalkerLight,
+                               LoggerType>(dim, opt, matf, logger);
+            }
+          }
+          ) ;
       ) ;
 }
 

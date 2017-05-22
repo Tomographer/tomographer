@@ -162,7 +162,7 @@ int main(int argc, char **argv)
 
   // now, analyze data points
   
-  for (int j = 0; j < (int)pts.size(); ++j) {
+  for (std::size_t j = 0; j < pts.size(); ++j) {
     
     const DataPoint pt(pts[j].fval+bin_delta/2.0, pts[j].val, pts[j].err);
 

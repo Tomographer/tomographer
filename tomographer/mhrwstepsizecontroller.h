@@ -385,19 +385,21 @@ template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType,
          typename BaseLoggerType,
          typename StepRealType,
          typename IterCountIntType>
-struct TOMOGRAPHER_EXPORT StatusProvider<MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
-                                                                BaseLoggerType, StepRealType, IterCountIntType> >
+struct TOMOGRAPHER_EXPORT
+StatusProvider<MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
+                                      BaseLoggerType, StepRealType, IterCountIntType> >
 {
   typedef MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType,
                                  BaseLoggerType, StepRealType, IterCountIntType> StatusableObject;
 
   static constexpr bool CanProvideStatusLine = true;
+
   static inline std::string getStatusLine(const StatusableObject * obj) {
     double last_step = (double)obj->getLastSetStepSize();
     if (std::isfinite(last_step)) {
       return Tomographer::Tools::fmts("set step size = %.3g", last_step);
     } else {
-      return std::string();
+      return std::string("<no set step size>");
     }
   }
 };

@@ -643,7 +643,7 @@ struct TOMOGRAPHER_EXPORT ValueHistogramWithBinningMHRWStatsCollectorResult
   typename BinningAnalysisParamsType::BinSumSqArray error_levels;
 
   /** \brief Information of convergence status of the error bars (see e.g. \ref
-   *         BinningAnalysisParamsType::CONVERGED)
+   *         BINNING_CONVERGED)
    */
   Eigen::ArrayXi converged_status;
 
@@ -1092,6 +1092,7 @@ template<typename... Args>
 struct TOMOGRAPHER_EXPORT StatusProvider<MultipleMHRWStatsCollectors<Args... > >
 {
   typedef MultipleMHRWStatsCollectors<Args... > MHRWStatsCollector;
+  typedef MHRWStatsCollector StatusableObject;
 
   static constexpr int NumStatColl = MHRWStatsCollector::NumStatColl;
   

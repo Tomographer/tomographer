@@ -53,7 +53,6 @@
  *
  * \brief Definitions for Histogram Types.
  *
- * See also the \ref pageInterfaceHistogram.
  */
 
 namespace Tomographer {
@@ -205,7 +204,7 @@ struct TOMOGRAPHER_EXPORT HistogramParams
  * Splits the range of values \f$[\text{min},\text{max}]\f$ into \c num_bins number of
  * bins, and keeps counts of how many samples fell in which bin.
  * 
- * Does not store any form of error bars. Complies with the \ref pageInterfaceHistogram.
+ * Does not store any form of error bars.
  */
 template<typename Scalar_, typename CountType_ = int>
 class TOMOGRAPHER_EXPORT Histogram
@@ -224,7 +223,7 @@ public:
   //! The type that serves to count how many hits in each bin
   typedef CountType_ CountType;
 
-  //! This histogram type does not provide error bars (see \ref pageInterfaceHistogram)
+  //! This histogram type does not provide error bars
   static constexpr bool HasErrorBars = false;
 
   //! The type for specifying parameters of this histogram (limits, number of bins)
@@ -548,7 +547,7 @@ public:
    */
   typedef typename Base_::Params Params;
   
-  //! For the \ref pageInterfaceHistogram. This type of histogram does provide error bars
+  //! This type of histogram does provide error bars
   static constexpr bool HasErrorBars = true;
 
   //! The error bars associated with each histogram bin
@@ -620,7 +619,7 @@ public:
     delta.setZero();
   }
 
-  /** \brief For the \ref pageInterfaceHistogram. Get error bar for bin number \a i.
+  /** \brief Get error bar for bin number \a i.
    *
    * This simply returns <code>delta(i)</code>.
    */
@@ -631,7 +630,7 @@ public:
 
   
   /** \brief Load data for the histogram. Uses current histogram parameters, just sets the bin
-   * counts and the error bars.
+   *         counts and the error bars.
    *
    * \param d is an Eigen Vector or 1-D Array from which to load the data for the bin
    *     counts. It must be dense, have one column and exactly \ref numBins() rows.
@@ -731,9 +730,9 @@ constexpr bool HistogramWithErrorBars<Scalar_,CountType_>::HasErrorBars;
  *
  * What this class does exactly is explained on the page \ref pageTheoryAveragedHistogram.
  *
- * The \a HistogramType is expected to be a \ref pageInterfaceHistogram -compliant
- * type. It may, or may not, come with its own error bars. If this is the case, then the
- * error bars are properly combined.
+ * The \a HistogramType is expected to be a \ref Histogram or a \ref
+ * HistogramWithErrorBars type.  It thus may, or may not, come with its own error bars. If
+ * this is the case, then the error bars are properly combined.
  *
  * You should add histograms to average with repeated calls to \ref addHistogram().  Then,
  * you should call \ref finalize().  Then this object, which inherits \ref
@@ -742,10 +741,7 @@ constexpr bool HistogramWithErrorBars<Scalar_,CountType_>::HasErrorBars;
  *
  * \warning All the histograms added with \ref addHistogram() MUST have the same params,
  *          i.e. bin ranges and number of bins! The bin values are added up regardless of
- *          any parameters, simply because the \ref pageInterfaceHistogram does not expose
- *          any API for querying the params for a general histogram.
- *
- * This class itself complies with the \ref pageInterfaceHistogram.
+ *          any parameters.
  *
  * \warning Don't forget to call \ref finalize()! The bin counts in \ref
  *          Histogram::bins "bins", off-chart count \ref off_chart and error
@@ -753,7 +749,7 @@ constexpr bool HistogramWithErrorBars<Scalar_,CountType_>::HasErrorBars;
  *
  *
  * \tparam HistgoramType_ the type of the individual histograms that we are
- *         averaging. This must comply with the \ref pageInterfaceHistogram
+ *         averaging.
  *
  * \tparam RealAvgType the real scalar type used for averaging. You'll most likely want to
  *         choose \c double here. This can be different from the underlying \ref
@@ -767,8 +763,7 @@ class TOMOGRAPHER_EXPORT AveragedHistogram
 public:
   /** \brief Type of the individual histograms we are averaging.
    *
-   * This is the argument given as template parameter, and is expected to compily with
-   * the \ref pageInterfaceHistogram.
+   * This is the argument given as template parameter.
    */
   typedef HistogramType_ HistogramType;
   //! Shortcut for our base class' type.
@@ -781,7 +776,7 @@ public:
   //! The histogram' count type. This is exactly the same as \a RealAvgType.
   typedef typename Base_::CountType CountType;
 
-  //! For the \ref pageInterfaceHistogram. This histogram type does provide error bars.
+  //! This histogram type does provide error bars.
   static constexpr bool HasErrorBars = true;
 
   /** \brief The number of histograms averaged.
@@ -993,8 +988,9 @@ public:
  *
  * If you're using the \ref Tomographer::MHRWTasks::ValueHistogramTools tools, note that
  * you can directly get the right \a HistogramAggregator type by calling the method \ref
- * CDataBase::aggregateResultHistograms() using your \a CDataBase deriving from \ref
- * CDataBase.
+ * Tomographer::MHRWTasks::ValueHistogramTools::CDataBase::aggregateResultHistograms()
+ * "CDataBase::aggregateResultHistograms()" using your \a MHRandomWalkCData class deriving
+ * from \ref Tomographer::MHRWTasks::ValueHistogramTools::CDataBase.
  *
  * Use the static \a aggregate() function to construct an object instance, aggregating
  * histograms from a list.
@@ -1140,9 +1136,10 @@ public:
  * "naive" error bars from individual runs.
  *
  * If you're using the \ref Tomographer::MHRWTasks::ValueHistogramTools tools, note that
- * you can directly get the right \a HistogramAggregator type by calling the method \a
- * "CDataBase::aggregateResultHistograms())" using your \a CDataBase deriving from \ref
- * CDataBase.
+ * you can directly get the right \a HistogramAggregator type by calling the method \ref
+ * Tomographer::MHRWTasks::ValueHistogramTools::CDataBase::aggregateResultHistograms()
+ * "CDataBase::aggregateResultHistograms()" using your \a MHRandomWalkCData class deriving
+ * from \ref Tomographer::MHRWTasks::ValueHistogramTools::CDataBase.
  *
  * Use the static \a aggregate() function to construct an object instance, aggregating
  * histograms from a list.

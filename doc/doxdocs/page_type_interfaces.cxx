@@ -215,9 +215,6 @@
  *
  * And must provide the following members:
  *
- * \par MHWalker(MHWalker&& other)
- *     A MHWalker type must have a move constructor.
- *
  * \par PointType startPoint()
  *     Should return the starting point for the random walk.  This function will be called
  *     before \a init().
@@ -380,9 +377,9 @@
  *    More involved informaton (accept events, current point, etc.) are not provided here.
  *    If the parameters are to be adjusted based on some statistics taken on the random
  *    walk (which is usually the case), you should use a MHRWStatsCollector and point your
- *    adjuster to that stats collector to get its information.  For example, look at \ref
+ *    controller to that stats collector to get its information.  For example, look at \ref
  *    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector and \ref
- *    Tomographer::MHRWStepSizeAdjuster.
+ *    Tomographer::MHRWStepSizeController.
  *
  * \par
  *    Only those template instantiations of <code>adjustParams<...>()</code> corresponding

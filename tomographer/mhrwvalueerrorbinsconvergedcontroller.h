@@ -45,7 +45,7 @@
 #include <tomographer/mhrwstatscollectors.h>
 
 
-/** \file mhrwvaluebinsconvergedcontroller.h
+/** \file mhrwvalueerrorbinsconvergedcontroller.h
  *
  * \brief Tools for automatically stopping the random walk when enough samples have been
  *        taken to make all binning analysis error bars converge for each histogram bin

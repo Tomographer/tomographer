@@ -126,8 +126,18 @@ struct TOMOGRAPHER_EXPORT MHRWParams
     : mhwalker_params(), n_sweep(0), n_therm(0), n_run(0)
   {
   }
-  MHRWParams(MHWalkerParams mhwalker_params_, CountIntType n_sweep_, CountIntType n_therm_, CountIntType n_run_)
-    : mhwalker_params(mhwalker_params_), n_sweep(n_sweep_), n_therm(n_therm_), n_run(n_run_)
+  template<typename MHWalkerParamsInit>
+  MHRWParams(MHWalkerParamsInit && mhwalker_params_,
+             CountIntType n_sweep_, CountIntType n_therm_, CountIntType n_run_)
+    : mhwalker_params(std::forward<MHWalkerParamsInit>(mhwalker_params_)),
+      n_sweep(n_sweep_), n_therm(n_therm_), n_run(n_run_)
+  {
+  }
+
+  template<typename MHWalkerParamsOtherType, typename CountIntOtherType>
+  MHRWParams(const MHRWParams<MHWalkerParamsOtherType, CountIntOtherType> & copy)
+    : mhwalker_params(copy.mhwalker_params),
+      n_sweep(copy.n_sweep), n_therm(copy.n_therm), n_run(copy.n_run)
   {
   }
 
@@ -369,6 +379,14 @@ public:
     : controllers(controllers_...)
   {
   }
+
+
+  template<int I>
+  inline const typename std::tuple_element<I, TupleRefType>::type getController() const
+  {
+    return std::get<I>(controllers) ;
+  }
+
 
   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType,
            int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I < NumControllers)>
@@ -1170,6 +1188,68 @@ struct TOMOGRAPHER_EXPORT MHRWStatusReport : public MultiProc::TaskStatusReport
 };
 
 
+
+
+
+
+
+
+
+
+//
+// Specialize Tomographer::Tools::StatusProvider  for our MHRWMultipleControllers
+//
+
+
+namespace Tools {
+
+/** \brief Provide status reporting for a MHRWMultipleControllers
+ *
+ */
+template<typename... Args>
+struct TOMOGRAPHER_EXPORT StatusProvider<MHRWMultipleControllers<Args... > >
+{
+  typedef MHRWMultipleControllers<Args... > MHRWControllerType;
+  typedef MHRWControllerType StatusableObject;
+
+  static constexpr int NumControllers = MHRWControllerType::NumControllers;
+  
+  static constexpr bool CanProvideStatusLine = true;
+
+  template<int I = 0, typename std::enable_if<(I < NumControllers), bool>::type dummy = true>
+  static inline std::string getStatusLine(const MHRWControllerType * ctrl)
+  {
+    typedef typename std::tuple_element<I, typename MHRWControllerType::TupleType>::type
+      ThisController;
+    return
+      _joinnl( (StatusQuery<ThisController>::CanProvideStatusLine
+                ? StatusQuery<ThisController>::getStatusLine(& ctrl->template getController<I>())
+                : std::string()),
+               getStatusLine<I+1>(ctrl) );
+  };
+
+  template<int I = 0, typename std::enable_if<(I == NumControllers), bool>::type dummy = true>
+  static inline std::string getStatusLine(const MHRWControllerType * )
+  {
+    return std::string();
+  }
+
+private:
+  static inline std::string _joinnl(std::string a, std::string b) {
+    if (a.size() && b.size()) {
+      return std::move(a) + "\n" + std::move(b);
+    }
+    return std::move(a) + std::move(b); // one of these guys is empty
+  }
+};
+// static members:
+template<typename... Args>
+constexpr int StatusProvider<MHRWMultipleControllers<Args... > >::NumControllers;
+template<typename... Args>
+constexpr bool StatusProvider<MHRWMultipleControllers<Args... > >::CanProvideStatusLine;
+
+
+} // namespace Tools
 
 
 

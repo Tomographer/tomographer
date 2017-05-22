@@ -193,7 +193,7 @@ public:
    */
   inline void resetMeas()
   {
-    _Exn.resize(0, dmt.dim2());
+    _Exn.resize(0, (Eigen::Index)dmt.dim2());
     _Nx.resize(0);
   }
 
@@ -279,7 +279,7 @@ public:
 
     if ((Nx_ > 0).all()) {
       // all measurements are OK, so we can just copy the data.
-      _Exn.resize(Exn_.rows(), dmt.dim2());
+      _Exn.resize(Exn_.rows(), (Eigen::Index)dmt.dim2());
       _Exn = Exn_;
       _Nx.resize(Nx_.rows(), 1);
       _Nx = Nx_;

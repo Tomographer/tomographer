@@ -965,7 +965,7 @@ public:
    * the interrupt request, and will emit the \ref TasksInterruptedException.
    *
    * The periodic check on the tasks' side is implemented in each tasks' check for a
-   * status report, so that any \ref pageInterfaceTask-compliant type which periodically
+   * status report, so that any \ref pageInterfaceTask -compliant type which periodically
    * checks for status reports is automatically interruptible.
    *
    * \note This function is safe to be called from within a signal handler.
