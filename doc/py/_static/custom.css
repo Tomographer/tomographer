@@ -77,3 +77,16 @@ div.section > dl > dt {
 .genindextable {
     font-size: 0.8em;
 }
+
+
+/* @media screen and (max-width: 870px) { */
+.docutils.field-list > tbody > tr > th.field-name {
+    width: 1em;
+    max-width: 1em;
+    overflow: visible;
+}
+.docutils.field-list > tbody > tr > td.field-body {
+    padding-top: 1.5em;
+    overflow: visible;
+}
+/* } */

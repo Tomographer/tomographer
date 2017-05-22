@@ -399,8 +399,9 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     ("value-hist", value<std::string>(&valhiststr),
      "Do a histogram of the figure of merit for different measured values. Format MIN:MAX/NUM_BINS")
     ("light-jumps", bool_switch(& light_jumps_set)->default_value(light_jumps_set),
-     "Carry out the \"light\" version of the random walk, where instead of applying a full random unitary "
-     "to the pure state vector on the purifying system, we apply a random qubit unitary in the 2-d subspace "
+     "Carry out the \"light\" version of the random walk, where instead of moving the "
+     "bipartite purified state vector uniformly on the hypersphere, we apply a random "
+     "qubit unitary in the 2-d subspace "
      "of two randomly picked basis vectors. This runs faster and samples the same distribution, so there "
      "should be no reason not to use it. This is an experimental option, disabled by default.")
     ("no-light-jumps", bool_switch(& no_light_jumps_set)->default_value(no_light_jumps_set),

@@ -80,9 +80,9 @@ class analytical_known_example_tomorun(unittest.TestCase):
                                  [0.5j, 0.5]])
 
 
-    def test_values(self):
+    def test_values_full(self):
 
-        print("test_values()")
+        print("test_values_full()")
 
         num_repeats = 8
         hist_params = tomographer.HistogramParams(0.985, 1, 200)
@@ -99,6 +99,55 @@ class analytical_known_example_tomorun(unittest.TestCase):
                 n_sweep=25,
                 n_run=32768,
                 n_therm=500),
+            jumps_method="full",
+            hist_params=hist_params,
+            progress_fn=lambda report: print(report.getHumanReport()),
+            progress_interval_ms=500,
+            ctrl_converged_params={'max_allowed_not_converged': 1,
+                                   'max_allowed_unknown_notisolated': 1,
+                                   'max_allowed_unknown': 3,}
+        )
+        print("Final report of runs :\n{}".format(r['final_report_runs']))
+        print("Final report of everything :\n{}".format(r['final_report']))
+
+        final_histogram = r['final_histogram']
+        self.assertTrue(isinstance(final_histogram, tomographer.AveragedErrorBarHistogram))
+        simple_final_histogram = r['simple_final_histogram']
+        self.assertTrue(isinstance(simple_final_histogram, tomographer.AveragedSimpleRealHistogram))
+
+        print("Tomorun completed in {} seconds".format(r['elapsed_seconds']))
+
+        for k in range(num_repeats):
+            runres = r['runs_results'][k]
+            self.assertTrue(isinstance(runres, tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult))
+
+        # now, check the actual values of the result
+        pok = AnalyticalSolutionFn(np.sum(self.Nm))
+
+        self.assertLess(pok.get_histogram_chi2_red(final_histogram), 1.5)
+        npt.assert_array_almost_equal(final_histogram.bins, simple_final_histogram.bins)
+
+
+    def test_values_light(self):
+
+        print("test_values_light()")
+
+        num_repeats = 8
+        hist_params = tomographer.HistogramParams(0.985, 1, 200)
+
+        r = tomographer.tomorun.tomorun(
+            dim=2,
+            Emn=self.Emn,
+            Nm=self.Nm,
+            fig_of_merit="fidelity",
+            ref_state=self.rho_ref,
+            num_repeats=num_repeats,
+            mhrw_params=tomographer.MHRWParams(
+                step_size=0.04,
+                n_sweep=25,
+                n_run=32768,
+                n_therm=500),
+            jumps_method="light",
             hist_params=hist_params,
             progress_fn=lambda report: print(report.getHumanReport()),
             progress_interval_ms=500,

@@ -61,6 +61,13 @@
 using namespace pybind11::literals;
 
 
+
+
+// define an exception class for invalid inputs
+TOMOGRAPHER_DEFINE_MSG_EXCEPTION_BASE(TomorunInvalidInputError, "Invalid Input: ", TomographerCxxError) ;
+
+
+
 namespace tpy {
 
 class CallableValueCalculator
@@ -84,41 +91,144 @@ private:
   py::object fn;
 };
 
-}
 
-
-
-//
-// Data types for our quantum objects.  For the sake of the example, we just leave the
-// size to be dynamic, that is, fixed at run time and not at compile time.
-//
 typedef Tomographer::DenseDM::DMTypes<Eigen::Dynamic, RealType> DMTypes;
 
-
-//
-// The class which will store our tomography data. Just define this as "DenseLLH" as a
-// shorthand.
-//
-typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> DenseLLH;
+typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<RealType>, CountIntType>
+  CxxMHRWParamsType;
 
 
-//
-// The type of value calculator we would like to use.  Here, we settle for the expectation
-// value of an observable, as we are interested in the square fidelity to the pure Bell
-// Phi+ state (=expectation value of the observable |Phi+><Phi+|).
-//
+
+#define SWITCH_WHICH_LLHWALKER( Code )                                  \
+  switch (which) {                                                      \
+  case Full:                                                            \
+    { auto llhwalker = llhwalker_full; Code ; }                         \
+    break;                                                              \
+  case Light:                                                           \
+    { auto llhwalker = llhwalker_light; Code ; }                        \
+    break;                                                              \
+  default:                                                              \
+    throw std::runtime_error("Invalid 'which': " + std::to_string((int)which)); \
+  }
+
+
+enum LLH_MHWalker_Which {
+  LLH_MHWalker_Full = 0,
+  LLH_MHWalker_Light
+};
+
+template<typename DenseLLHType, typename RngType, typename LoggerType>
+class LLH_MHWalker
+{
+public:
+  typedef DMTypes::MatrixType PointType;
+
+  typedef Tomographer::MHWalkerParamsStepSize<RealType> WalkerParams;
+
+  typedef typename DenseLLHType::LLHValueType FnValueType;
+
+  static constexpr int UseFnSyntaxType = Tomographer::MHUseFnLogValue;
+
+  enum { Full = LLH_MHWalker_Full, Light = LLH_MHWalker_Light } ;
+
+  TOMO_STATIC_ASSERT_EXPR( Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLHType,RngType,LoggerType>::UseFnSyntaxType
+                           == Tomographer::MHUseFnLogValue ) ;
+  TOMO_STATIC_ASSERT_EXPR( Tomographer::DenseDM::TSpace::LLHMHWalkerLight<DenseLLHType,RngType,LoggerType>::UseFnSyntaxType
+                           == Tomographer::MHUseFnLogValue ) ;
+
+  LLH_MHWalker(LLH_MHWalker_Which which_, const DenseLLHType & llh_, RngType & rng_, LoggerType & baselogger)
+    : which(which_),
+      llh(llh_),
+      rng(rng_),
+      llogger("tpy::LLH_MHWalker", baselogger)
+  {
+    switch (which) {
+    case Full:
+      llhwalker_light = NULL;
+      llhwalker_full = new Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLHType,RngType,LoggerType>(
+          llh.dmt.initMatrixType(),
+          llh,
+          rng,
+          llogger.parentLogger()
+          ) ;
+      break;
+    case Light:
+      llhwalker_full = NULL;
+      llhwalker_light = new Tomographer::DenseDM::TSpace::LLHMHWalkerLight<DenseLLHType,RngType,LoggerType>(
+          llh.dmt.initMatrixType(),
+          llh,
+          rng,
+          llogger.parentLogger()
+          ) ;
+      break;
+    default:
+      throw std::runtime_error("Invalid 'which': " + std::to_string((int)which));
+    }
+  }
+
+  ~LLH_MHWalker()
+  {
+    if (llhwalker_light != NULL) {
+      delete llhwalker_light;
+    }
+    if (llhwalker_full != NULL) {
+      delete llhwalker_full;
+    }
+  }
+
+  inline PointType startPoint() const {
+    SWITCH_WHICH_LLHWALKER( return llhwalker->startPoint(); ) ;
+  }
+  inline void init() {
+    SWITCH_WHICH_LLHWALKER( llhwalker->init(); ) ;
+  }
+  inline void thermalizingDone() {
+    SWITCH_WHICH_LLHWALKER( llhwalker->thermalizingDone(); ) ;
+  }
+  inline void done() {
+    SWITCH_WHICH_LLHWALKER( llhwalker->done(); ) ;
+  }
+
+  inline PointType jumpFn(const PointType & curpt, WalkerParams walker_params) {
+    SWITCH_WHICH_LLHWALKER( return llhwalker->jumpFn(curpt, std::move(walker_params)) ; ) ;
+  }
+
+  inline FnValueType fnLogVal(const PointType & curpt) const {
+    SWITCH_WHICH_LLHWALKER( return llhwalker->fnLogVal(curpt) ; ) ;
+  }
+
+private:
+  const LLH_MHWalker_Which which;
+  const DenseLLHType & llh;
+  RngType & rng;
+  Tomographer::Logger::LocalLogger<LoggerType> llogger;
+
+  Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLHType,RngType,LoggerType> * llhwalker_full{NULL};
+  Tomographer::DenseDM::TSpace::LLHMHWalkerLight<DenseLLHType,RngType,LoggerType> * llhwalker_light{NULL};
+
+};
+
+#undef SWITCH_WHICH_LLHWALKER
+
+} // namespace tpy
+
+
+
+typedef Tomographer::DenseDM::IndepMeasLLH<tpy::DMTypes> DenseLLH;
+
+typedef std::mt19937 RngType;
+
+
 typedef Tomographer::MultiplexorValueCalculator<
   RealType,
-  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, RealType>,
-  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, RealType>,
-  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, RealType>,
-  Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>,
+  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, RealType>,
+  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, RealType>,
+  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, RealType>,
+  Tomographer::DenseDM::TSpace::ObservableValueCalculator<tpy::DMTypes>,
   tpy::CallableValueCalculator
   > ValueCalculator;
 
 
-
-typedef std::mt19937 OurRng;
 
 
 //
@@ -130,19 +240,16 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   ValueCalculator, // our value calculator
   true, // use binning analysis
   Tomographer::MHWalkerParamsStepSize<RealType>, // MHWalkerParams
-  OurRng::result_type, // RngSeedType
+  RngType::result_type, // RngSeedType
   CountIntType, // IterCountIntType
   RealType, // CountRealType
   CountIntType // HistCountIntType
   >
 {
-  typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<RealType>, CountIntType>
-    CxxMHRWParamsType;
-
 private:
-  Tomographer::MHWalkerParamsStepSize<RealType> _get_step_size(py::object mhwalker_params) {
-    // py::gil_scoped_acquire gilacquire; -- DON'T ACQUIRE GIL BECAUSE IN OurCData
-    // CONSTRUCTOR THE GIL HASN'T BEEN RELEASED YET!
+  Tomographer::MHWalkerParamsStepSize<RealType> _get_step_size(py::object mhwalker_params)
+  {
+    // don't acquire GIL, OurCData constructor is called only by master thread before GIL is released
 
     if ( py::hasattr(mhwalker_params, "__getitem__") ) {
       // dict or dict-like, go. If key doesn't exist, send in zero and let the underlying
@@ -163,16 +270,18 @@ public:
 	   HistogramParams hist_params, // histogram parameters
 	   int binning_num_levels, // number of binning levels in the binning analysis
 	   tpy::MHRWParams mhrw_params, // parameters of the random walk
-	   OurRng::result_type base_seed, // a random seed to initialize the random number generator
+	   RngType::result_type base_seed, // a random seed to initialize the random number generator
+           std::string jumps_method_, // "light" or "full"
            py::dict ctrl_step_size_params_, // parameters for step size controller
            py::dict ctrl_converged_params_ // parameters for value bins converged controller
       )
     : CDataBase<ValueCalculator,true>(
         valcalc, hist_params, binning_num_levels,
-        CxxMHRWParamsType(_get_step_size(mhrw_params.mhwalker_params),
-                          mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run),
+        tpy::CxxMHRWParamsType(_get_step_size(mhrw_params.mhwalker_params),
+                               mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run),
         base_seed),
       llh(llh_),
+      jumps_method(jumps_method_),
       ctrl_step_size_params(ctrl_step_size_params_),
       ctrl_converged_params(ctrl_converged_params_)
   {
@@ -180,6 +289,7 @@ public:
 
   const DenseLLH llh;
 
+  const std::string jumps_method;
   const py::dict ctrl_step_size_params;
   const py::dict ctrl_converged_params;
 
@@ -205,8 +315,10 @@ public:
     auto logger = Tomographer::Logger::makeLocalLogger("pytomorun.cxx:OurCData::setupRandomWalkAndRun()",
                                                        baselogger) ;
 
-    Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType> mhwalker(
-	llh.dmt.initMatrixType(),
+    tpy::LLH_MHWalker<DenseLLH,Rng,LoggerType> mhwalker(
+        ( jumps_method == "light" ? tpy::LLH_MHWalker_Light
+          : (jumps_method == "full" ? tpy::LLH_MHWalker_Full
+             : throw TomorunInvalidInputError("Invalid jumps method: '" + jumps_method + "'"))) ,
 	llh,
 	rng,
 	baselogger
@@ -321,11 +433,6 @@ public:
 
 
 
-// define an exception class for invalid inputs
-TOMOGRAPHER_DEFINE_MSG_EXCEPTION_BASE(TomorunInvalidInputError, "Invalid Input: ", TomographerCxxError) ;
-
-
-
 
 
 
@@ -343,6 +450,7 @@ py::object py_tomorun(
     int num_repeats,
     py::object progress_fn,
     int progress_interval_ms,
+    std::string jumps_method,
     py::dict ctrl_step_size_params,
     py::dict ctrl_converged_params
     )
@@ -351,9 +459,9 @@ py::object py_tomorun(
 
   logger.debug("py_tomorun()");
 
-  typedef DMTypes::MatrixType MatrixType;
+  typedef tpy::DMTypes::MatrixType MatrixType;
 
-  DMTypes dmt(dim);
+  tpy::DMTypes dmt(dim);
 
   // prepare llh object
   DenseLLH llh(dmt);
@@ -454,10 +562,10 @@ py::object py_tomorun(
                                           + py::repr(fig_of_merit).cast<std::string>())
               ))))),
         // the valuecalculator instances which are available:
-        Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, RealType>(T_ref),
-        Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, RealType>(T_ref),
-        Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, RealType>(rho_ref),
-        Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>(dmt, A),
+        Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, RealType>(T_ref),
+        Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, RealType>(T_ref),
+        Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, RealType>(rho_ref),
+        Tomographer::DenseDM::TSpace::ObservableValueCalculator<tpy::DMTypes>(dmt, A),
         tpy::CallableValueCalculator(fig_of_merit)
         );
 
@@ -468,11 +576,11 @@ py::object py_tomorun(
 
   // prepare the random walk tasks
 
-  typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, OurRng>  OurMHRandomWalkTask;
+  typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, RngType>  OurMHRandomWalkTask;
 
   // seed for random number generator
-  OurRng::result_type base_seed =
-    (OurRng::result_type)std::chrono::system_clock::now().time_since_epoch().count();
+  RngType::result_type base_seed =
+    (RngType::result_type)std::chrono::system_clock::now().time_since_epoch().count();
 
 
   // number of renormalization levels in the binning analysis
@@ -509,7 +617,7 @@ py::object py_tomorun(
   }
 
   OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params,
-                    base_seed, ctrl_step_size_params, ctrl_converged_params);
+                    base_seed, jumps_method, ctrl_step_size_params, ctrl_converged_params);
 
   typedef std::chrono::steady_clock StdClockType;
   StdClockType::time_point time_start;
@@ -675,101 +783,136 @@ void py_tomo_tomorun(py::module rootmodule)
       "num_repeats"_a = std::thread::hardware_concurrency(),
       "progress_fn"_a = py::none(),
       "progress_interval_ms"_a = (int)500,
+      "jumps_method"_a = py::str("full"),
       "ctrl_step_size_params"_a = py::dict(),
       "ctrl_converged_params"_a = py::dict(),
       // doc
-      ( "tomorun(dim, ...)\n\n"
-        "\n\n"
-        "Produce a histogram of a figure of merit during a random walk in quantum state "
-        "space according to the distribution :math:`\\mu_{B^n}(\\cdot)` defined in Ref. [1]. The "
+      ( "tomorun(dim, ...)\n"
+        "\n"
+        "\n"
+        "Produce a histogram of a figure of merit during a random walk in quantum state\n"
+        "space according to the distribution :math:`\\mu_{B^n}(\\cdot)` defined in Ref. [1]. The\n"
         "likelihood function is specified with independent POVM effects (see below)."
-        "\n\n"
-        "This python function provides comparable functionality to the `tomorun` executable program, and "
-        "allows for a better seamless interoperability with `NumPy`---all data matrices here are specified "
-        "as `NumPy` arrays."
-        "\n\n"
-        ":param dim: The dimension of the quantum system\n"
+        "\n"
+        "This python function provides comparable functionality to the `tomorun` executable program, and\n"
+        "allows for a better seamless interoperability with `NumPy`---all data matrices here are specified\n"
+        "as `NumPy` arrays.\n"
+        "\n"
+        ":param dim: The dimension of the quantum system\n\n"
         ":param Exn: The observed POVM effects, specified as a matrix in which each row is the\n"
         "            X-parameterization of a POVM effect. You may want to specify `Emn` instead,\n"
-        "            which may be simpler.\n"
+        "            which may be simpler.\n\n"
         ":param Emn: The observed POVM effects, specified as a list of :math:`\\textit{dim}\\times\\textit{dim}`\n"
-        "            matrices.\n"
-        ":param Nm:  the list of observed frequency counts for each POVM effect in `Emn` or `Exn`.\n"
+        "            matrices.\n\n"
+        ":param Nm:  the list of observed frequency counts for each POVM effect in `Emn` or `Exn`.\n\n"
         ":param fig_of_merit:  The choice of the figure of merit to study.  This is either a Python string or a\n"
         "            Python callable.  If it is a string, it must be one of 'obs-value',\n"
         "            'fidelity', 'tr-dist' or 'purif-dist' (see below for more info).  If it is a callable, it\n"
         "            should accept a single argument, the T-parameterization of the density matrix, and should\n"
         "            calculate and return the figure of merit.  The T-parameterization is a matrix :math:`T`\n"
-        "            that :math:`\\rho=TT^\\dagger`.\n"
+        "            that :math:`\\rho=TT^\\dagger`.\n\n"
         ":param ref_state:  For figures of merit which compare to a reference state ('fidelity', 'tr-dist',\n"
         "            and 'purif-dist'), this is the reference state to calculate the figure of merit with,\n"
-        "            specified as a density matrix.\n"
-        ":param observable:  For the 'obs-value' figure of merit, specify the observable here as a matrix.\n"
+        "            specified as a density matrix.\n\n"
+        ":param observable:  For the 'obs-value' figure of merit, specify the observable here as a matrix.\n\n"
         ":param hist_params:  The requested range of values to look at when collecting a histogram of the\n"
         "            figure of mert.  This should be a :py:class:`tomographer.HistogramParams`\n"
-        "            instance.\n"
+        "            instance.\n\n"
         ":param mhrw_params:  The parameters of the random walk, including the step size, the sweep size,\n"
         "            the number of thermalization sweeps, and the number of live sweeps.  Specify a\n"
-        "            :py:class:`tomographer.MHRWParams` instance here."
+        "            :py:class:`tomographer.MHRWParams` instance here.\n\n"
         ":param binning_num_levels:  The number of levels in the binning analysis [2]. One should make sure\n"
         "            that there are enough bins at the last level to estimate the standard\n"
         "            deviation. This is done automatically by default (or if you specify the value `-1`),\n"
-        "            so in normal circumstances you won't have to change the default value.\n"
-        ":param num_repeats:  The number of independent random walks to run in parallel.\n"
+        "            so in normal circumstances you won't have to change the default value.\n\n"
+        ":param num_repeats:  The number of independent random walks to run in parallel.\n\n"
         ":param progress_fn:  A python callback function to monitor progress.  The function should accept\n"
         "            a single argument of type :py:class:`tomographer.multiproc.FullStatusReport`.  Check\n"
         "            out :py:class:`tomographer.jpyutil.RandWalkProgressBar` if you are using a\n"
-        "            Jupyter notebook.  See below for more information on status progress reporting.\n"
+        "            Jupyter notebook.  See below for more information on status progress reporting.\n\n"
         ":param progress_interval_ms: The approximate time interval in milliseconds between two progress\n"
-        "            reports.\n"
-        ":param ctrl_step_size_params: A dictionary to set up the controller which dynamically adjusts\n"
+        "            reports.\n\n"
+        ":param jumps_method: Method to use for the jumps in the random walk.  This may be either \"full\"\n"
+        "            or \"light\".  The \"full\" method is the one described in the paper, with a jump\n"
+        "            corresponding to moving the purified bipartite state vector uniformly on the hypersphere.\n"
+        "            The \"light\" method is an optimized version, where only an \"elementary rotation\"---a\n"
+        "            simple qubit rotation---is applied onto two randomly chosen computational basis elements\n"
+        "            on the purified bipartite state vector.  In the end the random walk explores the same space\n"
+        "            with the same distribution.  The \"light\" can go much faster especially for large\n"
+        "            dimensions, but may be slower to converge.\n\n"
+        ":param ctrl_step_size_params: A python dict with parameters to set up the controller which dynamically adjusts\n"
         "            the step size of the random walk during the thermalization runs. The possible keys\n"
-        "            are: 'enabled' (set to 'True' or 'False'), 'desired_accept_ratio_min',\n"
-        "            'desired_accept_ratio_max',\n"
-        "            'acceptable_accept_ratio_min', 'acceptable_accept_ratio_max', and\n"
-        "            'ensure_n_therm_fixed_params_fraction' (see ........ corresponding C++ doc)\n"
+        "            are:\n\n"
+        "              - 'enabled' (set to 'True' or 'False'): Whether to enable the controller or not. If\n"
+        "                disabled, the step size is not automatically adjusted.\n\n"
+        "              - 'desired_accept_ratio_min', 'desired_accept_ratio_max': The range in which we would\n"
+        "                like to keep the acceptance ratio, by adapting the step size.\n\n"
+        "              - 'acceptable_accept_ratio_min', 'acceptable_accept_ratio_max': The range of values which\n"
+        "                the acceptance ratio is not to exceed.\n\n"
+        "              - 'ensure_n_therm_fixed_params_fraction': Whenever the step size is adjusted, the controller\n"
+        "                guarantees that at least this fraction of the given number `n_therm` of thermalization\n"
+        "                sweeps is carried out before finishing the thermalization phase.\n\n"
+        "            See also :tomocxx:`this doc of the corresponding\n"
+        "            C++ controller class <class_tomographer_1_1_m_h_r_w_step_size_controller.html>`.\n\n"
         ":param ctrl_converged_params: A dictionary to set up the controller which dynamically keeps\n"
         "            the random walk running while the error bars from binning haven't converged as\n"
-        "            required. The possible keys are: 'enabled' (set to 'True' or 'False'),\n"
-        "            'max_allowed_unknown', 'max_allowed_unknown_notisolated',\n"
-        "            'max_allowed_not_converged' and 'check_frequency_sweeps' (see ........... corresponding C++ class doc)\n"
-        "\n\n"
+        "            required. The possible keys are:\n\n"
+        "              - 'enabled' (set to 'True' or 'False'): Whether to enable the controller or not. If\n"
+        "                disabled, the error bars of the histogram bins will not be checked for convergence before\n"
+        "                terminating the random walk.\n\n"
+        "              - 'max_allowed_unknown', 'max_allowed_unknown_notisolated', 'max_allowed_not_converged':\n"
+        "                The maximum allowed number of bins for which the error bars via binning analysis have \n"
+        "                the respective convergence status.  Only after all these requirements are met will the\n"
+        "                random walk be allowed to finish.\n\n"
+        "              - 'check_frequency_sweeps': How often to check for the convergence\n"
+        "                of the binning analysis error bars (in number of sweeps).\n\n"
+        "            See also :tomocxx:`this doc of the corresponding\n"
+        "            C++ controller class <class_tomographer_1_1_m_h_r_w_value_error_bins_converged_controller.html>`.\n"
+        "\n"
+        "\n"
         ".. rubric:: Figures of merit"
-        "\n\n"
-        "The value of the `fig_of_merit` argument may be a Python string, in which case it should be one of "
-        "the following:\n\n"
-        "  - \"obs-value\": the expectation value of an observable. You should specify the argument "
-        "`observable` as a 2-D `NumPy` array specifying the observable you are interested in. "
-        "\n\n"
-        "  - \"tr-dist\": the trace distance to a reference state. You should specify the argument "
-        "`ref_state` as a 2-D `NumPy` array specifying the density matrix of the state which should serve "
-        "as reference state."
-        "\n\n"
-        "  - \"fidelity\": the (root) fidelity to a reference state [3]. You should specify the argument "
-        "`ref_state` as a 2-D `NumPy` array specifying the density matrix of the state which should serve "
-        "as reference state."
-        "\n\n"
-        "    .. note:: For the squared fidelity to a pure state (usually preferred in "
-        "experimental papers), you should use \"obs-value\" with the observable "
-        "being the density matrix of the reference state [4]."
-        "\n\n"
-        "  - \"purif-dist\": the purified distance to a reference state [5]. You should specify the argument "
-        "`ref_state` as a 2-D `NumPy` array specifying the density matrix of the state which should serve "
-        "as reference state.\n\n"
-        "The value of the `fig_of_merit` argument may also be a Python callable which directly calculates the "
-        "figure of merit.  It should accept a single argument, the T-parameterization of the density matrix given "
-        "as a `NumPy` array (defined such that :math:`\\rho=TT^\\dagger`), and should return the value of the figure "
-        "of merit.  For example, to calculate the purity of the state :math:`\\operatorname{tr}(\\rho^2)`::\n\n"
+        "\n"
+        "\n"
+        "The value of the `fig_of_merit` argument may be a Python string, in which case it should be one of\n"
+        "the following:\n"
+        "\n"
+        "  - \"obs-value\": the expectation value of an observable. You should specify the argument\n"
+        "    `observable` as a 2-D `NumPy` array specifying the observable you are interested in.\n"
+        "\n"
+        "  - \"tr-dist\": the trace distance to a reference state. You should specify the argument\n"
+        "    `ref_state` as a 2-D `NumPy` array specifying the density matrix of the state which should\n"
+        "    serve as reference state.\n"
+        "\n"
+        "  - \"fidelity\": the (root) fidelity to a reference state [3]. You should specify the argument\n"
+        "    `ref_state` as a 2-D `NumPy` array specifying the density matrix of the state which should\n"
+        "    serve as reference state. (For the squared fidelity to a pure reference state, see note below.)\n"
+        "\n"
+        "  - \"purif-dist\": the purified distance to a reference state [5]. You should specify the argument\n"
+        "    `ref_state` as a 2-D `NumPy` array specifying the density matrix of the state which should\n"
+        "    serve as reference state.\n"
+        "\n"
+        ".. note:: For the squared fidelity to a pure state (usually preferred in experimental papers),\n"
+        "          you should use \"obs-value\" with the observable being the density matrix of the\n"
+        "          reference state [4].\n"
+        "\n"
+        "The value of the `fig_of_merit` argument may also be a Python callable which directly calculates the\n"
+        "figure of merit.  It should accept a single argument, the T-parameterization of the density matrix\n"
+        "given as a `NumPy` array (defined such that :math:`\\rho=TT^\\dagger`), and should return the value\n"
+        "of the figure of merit.  For example, to calculate the purity of the state\n"
+        ":math:`\\operatorname{tr}(\\rho^2)`::\n"
+        "\n"
         "        import numpy as np\n"
         "        import numpy.linalg as npl\n"
         "        ...\n"
         "        r = tomographer.tomorun.tomorun(...,\n"
         "                                        fig_of_merit=lambda T: npl.norm(np.dot(T,T.T.conj())),\n"
         "                                        ...)\n"
-        "\n\n"
-        ".. rubric:: Return value"
-        "\n\n"
-        "The `tomorun()` function returns a Python dictionary with the following keys and values set:\n\n"
+        "\n"
+        "\n"
+        ".. rubric:: Return value\n"
+        "\n"
+        "The `tomorun()` function returns a Python dictionary with the following keys and values set:\n"
+        "\n"
         "  - ``final_histogram``: a :py:class:`~tomographer.AveragedErrorBarHistogram` instance with the final "
         "histogram data.  The histogram has the parameters specified in the `hist_params` argument. "
         "The histogram is NOT normalized to a probabilty density; you should call "
