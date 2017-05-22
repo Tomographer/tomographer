@@ -597,7 +597,7 @@ BOOST_FIXTURE_TEST_CASE(status_for_valuehistogrambinning, TestStatsCollectorFixt
       Tomographer::Tools::StatusQuery<MyStatsCollector>::CanProvideStatusLine
       );
   BOOST_CHECK_EQUAL( Tomographer::Tools::StatusQuery<MyStatsCollector>::getStatusLine(&statcoll),
-      "0|.x# |4   err: (cnvg/?/fail) 0/4/0");
+      "0|.x# |4   err(cnvg/?/x): 0/4/0");
 }
 
 BOOST_AUTO_TEST_SUITE_END();

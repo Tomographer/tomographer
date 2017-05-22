@@ -10,7 +10,7 @@ write-histogram-from-config-file-name = 1
 # ------------------
 
 # number of parallel random walks
-n-repeats = 8
+n-repeats = 4
 
 # enable our "light" random walk
 light-jumps=1
@@ -20,10 +20,12 @@ light-jumps=1
 
 # step size & sweep size will be auto-detected, just make sure that step*sweep ~ sth meaningful
 step-size = 0.1
-n-sweep = 10
+n-sweep = 50
 
 n-therm = 4096
 n-run = 32768
+
+binning-analysis-num-levels=12
 
 # Calculate the squared fidelity to the pure reference state |W> (remember: use
 # "obs-value" in this case, see `tomorun --help`)
@@ -32,9 +34,9 @@ value-type=obs-value:proj_W
 # Histogram range:  MINVALUE:MAXVALUE/NUMBEROFBINS
 value-hist=0.65:0.75/20
 
-control-binning-converged-max-not-converged=2
-control-binning-converged-max-unknown=2
-control-binning-converged-max-unknown-notisolated=2
+control-binning-converged-max-not-converged=3
+control-binning-converged-max-unknown=4
+control-binning-converged-max-unknown-notisolated=4
 
 
 

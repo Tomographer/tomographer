@@ -121,11 +121,6 @@ static std::string prog_version_info_features()
 #ifdef TOMORUN_CUSTOM_MAX_POVM_EFFECTS
   featconfig.push_back(Tomographer::Tools::fmts("custom_max_povm_effects=%d", TOMORUN_CUSTOM_MAX_POVM_EFFECTS));
 #endif
-#if TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
-  featconfig.push_back("with multiplexor-value-calculator");
-#else
-  featconfig.push_back("no multiplexor-value-calculator");
-#endif
 #ifdef TOMORUN_RNG_CLASS
   featconfig.push_back(Tomographer::Tools::fmts("rng=%s", IDENT_TO_STRING(TOMORUN_RNG_CLASS)));
 #endif
