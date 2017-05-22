@@ -304,7 +304,7 @@ struct ProgOptions
     val_min(0.97),
     val_max(1.0),
     val_nbins(50),
-    light_jumps(true),
+    light_jumps(false),
     binning_analysis_error_bars(true), // error bars from binning analysis
     binning_analysis_num_levels(8),
     control_step_size(true),
@@ -436,7 +436,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
      "Carry out the \"light\" version of the random walk, where instead of applying a full random unitary "
      "to the pure state vector on the purifying system, we apply a random qubit unitary in the 2-d subspace "
      "of two randomly picked basis vectors. This runs faster and samples the same distribution, so there "
-     "should be no reason not to use it. It is enabled by default.")
+     "should be no reason not to use it. This is an experimental option, disabled by default.")
     ("no-light-jumps", bool_switch(& no_light_jumps_set)->default_value(no_light_jumps_set),
      "Do not carry out the \"light\" version of the random walk, do the full random unitary instead "
      "(see --light-jumps)")
