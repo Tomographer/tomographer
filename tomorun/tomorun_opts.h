@@ -30,6 +30,7 @@
 #define TOMORUN_OPTS
 
 #include <stdexcept>
+#include <typeinfo>
 
 #include <boost/version.hpp>
 
@@ -104,6 +105,9 @@ static std::string prog_version_info_features()
 #endif
 #ifdef TOMORUN_REAL
   featconfig.push_back(Tomographer::Tools::fmts("real_type=%s", IDENT_TO_STRING(TOMORUN_REAL)));
+#endif
+#ifdef EIGEN_DEFAULT_INDEX_TYPE
+  featconfig.push_back(Tomographer::Tools::fmts("eigen_index_type=%s", IDENT_TO_STRING(EIGEN_DEFAULT_INDEX_TYPE)));
 #endif
 #if TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS
   featconfig.push_back("with povm_consistency_checks");
