@@ -13,7 +13,7 @@ write-histogram-from-config-file-name = 1
 n-repeats = 8
 
 # do the full random walk with random unitaries, not the "light" version
-no-light-jumps
+no-light-jumps = 1
 
 # The parameters of the random walk: step size, sweep size, and number of
 # samples to collect

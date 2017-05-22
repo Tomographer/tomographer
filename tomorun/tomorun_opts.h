@@ -529,6 +529,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 
     if (vm.count("help")) {
       std::cout
+        << std::setprecision(5)
 	<< "\n" << prog_version_info <<
 	"\n"
 	"A toolbox for error analysis in quantum tomography.\n"
@@ -547,7 +548,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
 	"--config).\n"
 	"\n"
 	"Hit CTRL-C while `tomorun` is running to inquire about progress information.\n"
-	"\n"
+	"\fn"
 	<< desc	<<
 	"\n"
 	"DATA FILE CONTENTS:\n"

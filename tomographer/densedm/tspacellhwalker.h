@@ -68,7 +68,7 @@ struct DenseLLHInvoker
   typedef typename DenseLLHType::LLHValueType LLHValueType;
 
   const DenseLLHType & llh;
-  const Tools::StoreIfEnabled<const ParamX<DMTypes>, (DenseLLHType::LLHCalcType == LLHCalcTypeX)> param_x;
+  const Tools::StoreIfEnabled<const ParamX<DMTypes>, ((int)DenseLLHType::LLHCalcType == (int)LLHCalcTypeX)> param_x;
 
   DenseLLHInvoker(const DenseLLHType & llh_)
     : llh(llh_),
