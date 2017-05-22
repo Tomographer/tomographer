@@ -429,11 +429,11 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
                               "ensure that at least %.2f*n_therm thermalization sweeps have passed after "
                               "the last time the step size was adjusted. This option is enabled by "
                               "default.",
-                              Tomographer::MHRWStepSizeControllerDefaults::DesiredAcceptanceRatioMin,
-                              Tomographer::MHRWStepSizeControllerDefaults::DesiredAcceptanceRatioMax,
-                              Tomographer::MHRWStepSizeControllerDefaults::AcceptableAcceptanceRatioMin,
-                              Tomographer::MHRWStepSizeControllerDefaults::AcceptableAcceptanceRatioMax,
-                              Tomographer::MHRWStepSizeControllerDefaults::EnsureNThermFixedParamsFraction
+                              Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::DesiredAcceptanceRatioMin,
+                              Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::DesiredAcceptanceRatioMax,
+                              Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::AcceptableAcceptanceRatioMin,
+                              Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::AcceptableAcceptanceRatioMax,
+                              Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::EnsureNThermFixedParamsFraction
          ).c_str())
     ("no-control-step-size", bool_switch(& no_control_step_size_set)->default_value(false),
      "Do not dynamically adjust the step size during thermalization.")

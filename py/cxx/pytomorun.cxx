@@ -342,23 +342,23 @@ public:
       if (ctrl_step_size_params.attr("get")("enabled", true).cast<bool>()) {
         ar_params[0] = ctrl_step_size_params.attr("get")(
             "desired_accept_ratio_min",
-            Tomographer::MHRWStepSizeControllerDefaults::DesiredAcceptanceRatioMin
+            Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::DesiredAcceptanceRatioMin
             ).cast<double>();
         ar_params[1] = ctrl_step_size_params.attr("get")(
             "desired_accept_ratio_max",
-            Tomographer::MHRWStepSizeControllerDefaults::DesiredAcceptanceRatioMax
+            Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::DesiredAcceptanceRatioMax
             ).cast<double>();
         ar_params[2] = ctrl_step_size_params.attr("get")(
             "acceptable_accept_ratio_min",
-            Tomographer::MHRWStepSizeControllerDefaults::AcceptableAcceptanceRatioMin
+            Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::AcceptableAcceptanceRatioMin
             ).cast<double>();
         ar_params[3] = ctrl_step_size_params.attr("get")(
             "acceptable_accept_ratio_max",
-            Tomographer::MHRWStepSizeControllerDefaults::AcceptableAcceptanceRatioMax
+            Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::AcceptableAcceptanceRatioMax
             ).cast<double>();
         ensure_n_therm_fixed_params_fraction = ctrl_step_size_params.attr("get")(
             "ensure_n_therm_fixed_params_fraction",
-            Tomographer::MHRWStepSizeControllerDefaults::EnsureNThermFixedParamsFraction
+            Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::EnsureNThermFixedParamsFraction
             ).cast<double>();
       } else {
         ar_params[0] = 0;
