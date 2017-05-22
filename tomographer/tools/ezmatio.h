@@ -490,8 +490,8 @@ public:
   {
     const int ndims = (int)p_dims.size();
     for (int k = ndims-1; k >= 0; --k) {
-      this->at(k) = linearindex % p_dims[k];
-      linearindex /= p_dims[k]; // integer division
+      this->at((std::size_t)k) = linearindex % p_dims[(std::size_t)k];
+      linearindex /= p_dims[(std::size_t)k]; // integer division
     }
   }
   /** \brief Set the linear index.
@@ -506,8 +506,8 @@ public:
   {
     const int ndims = (int)p_dims.size();
     for (int k = 0; k < ndims; ++k) {
-      this->at(k) = linearindex % p_dims[k];
-      linearindex /= p_dims[k]; // integer division
+      this->at((std::size_t)k) = linearindex % p_dims[(std::size_t)k];
+      linearindex /= p_dims[(std::size_t)k]; // integer division
       // std::cout << "k = " << k << "; p_dims = " << p_dims << "; at(k) = " << this->at(k)
       //           << "; linearindex=" << linearindex << "\n";
     }
@@ -522,8 +522,8 @@ public:
   {
     int linindex = 0;
     for (int k = 0; k < (int)p_dims.size(); ++k) {
-      linindex *= p_dims[k];
-      linindex += this->at(k);
+      linindex *= p_dims[(std::size_t)k];
+      linindex += this->at((std::size_t)k);
     }
     return linindex;
   }
@@ -536,8 +536,8 @@ public:
   {
     int linindex = 0;
     for (int k = (int)p_dims.size()-1; k >= 0; --k) {
-      linindex *= p_dims[k];
-      linindex += this->at(k);
+      linindex *= p_dims[(std::size_t)k];
+      linindex += this->at((std::size_t)k);
     }
     return linindex;
   }
@@ -671,15 +671,15 @@ public:
   TOMOGRAPHER_ENABLED_IF(IsRowMajor)
   IntType increment()
   {
-    for (int k = p_dims.size() - 1; k >= 0; --k) {
-      p_index[k]++;
-      if (p_index[k] < p_dims[k]) {
+    for (int k = (int)p_dims.size() - 1; k >= 0; --k) {
+      p_index[(std::size_t)k]++;
+      if (p_index[(std::size_t)k] < p_dims[(std::size_t)k]) {
         // if this increment succeeded and stays in range, ok and stop.
         break;
       } else {
         // otherwise continue the loop and increment the next value, while resetting
         // this one to zero.
-        p_index[k] = 0;
+        p_index[(std::size_t)k] = 0;
       }
     }
     return ++p_linearIndex;
@@ -688,7 +688,7 @@ public:
   TOMOGRAPHER_ENABLED_IF(!IsRowMajor)
   IntType increment()
   {
-    for (int k = 0; k < (int)p_dims.size(); ++k) {
+    for (std::size_t k = 0; k < p_dims.size(); ++k) {
       p_index[k]++;
       if (p_index[k] < p_dims[k]) {
         // if this increment succeeded and stays in range, ok and stop.
@@ -1754,7 +1754,7 @@ public:
                     
                     for(IndexListIterator<IsRowMajor> il(var.dims()); il.valid(); ++il) {
                       // std::cout << "index: " << il << "\n";
-                      val[il.linearIndex()] = acc.value(il);
+                      val[(std::size_t)il.linearIndex()] = acc.value(il);
                     }
                     
                     return val;

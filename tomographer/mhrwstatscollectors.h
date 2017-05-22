@@ -548,7 +548,7 @@ public:
 
   //! Part of the \ref pageInterfaceMHRWStatsCollector. Records the sample in the histogram.
   template<typename CountIntType, typename PointType, typename LLHValueType, typename MHRandomWalk>
-  std::size_t processSample(CountIntType k, CountIntType n, const PointType & curpt,
+  Eigen::Index processSample(CountIntType k, CountIntType n, const PointType & curpt,
                              LLHValueType /*curptval*/, MHRandomWalk & /*mh*/)
   {
     ValueType val = _vcalc.getValue(curpt);
@@ -938,11 +938,11 @@ public:
   inline void processSample(CountIntType2 k, CountIntType2 n, const PointType & curpt,
                             LLHValueType curptval, MHRandomWalk & mh)
   {
-    Eigen::Index histindex = (Eigen::Index)value_histogram.processSample(k, n, curpt, curptval, mh);
+    Eigen::Index histindex = value_histogram.processSample(k, n, curpt, curptval, mh);
     binning_analysis.processNewValues(
 	Tools::canonicalBasisVec<Eigen::Array<ValueType,Eigen::Dynamic,1> >(
             histindex,
-            (Eigen::Index)value_histogram.histogram().numBins()
+            value_histogram.histogram().numBins()
             )
 	);
   }

@@ -180,7 +180,9 @@ int main(int argc, char **argv)
   //
   const TomorunInt last_level_num_samples
     = (TomorunInt)std::ldexp((TomorunReal)opt.Nrun, - opt.binning_analysis_num_levels);
-  logger.debug("last_level_num_samples = %lu", last_level_num_samples);
+  logger.debug([&](std::ostream & stream) {
+      stream << "last_level_num_samples = " << last_level_num_samples;
+    }) ;
   //
   if ( opt.binning_analysis_error_bars &&
        ( last_level_num_samples < (TomorunInt)last_binning_level_warn_min_samples ) ) {
@@ -226,7 +228,9 @@ int main(int argc, char **argv)
       delete matf;
     });
 
-  logger.debug("Data file opened, found dim = %u", dim);
+  logger.debug([&](std::ostream & stream) {
+      stream << "Data file opened, found dim = " << dim;
+    }) ;
 
   //
   // ---------------------------------------------------------------------------
@@ -257,7 +261,8 @@ int main(int argc, char **argv)
                  " and fixed max POVM effects = %d  (%d=dynamic)",
 		 TOMORUN_CUSTOM_FIXED_DIM, TOMORUN_CUSTOM_FIXED_MAX_DIM,
                  TOMORUN_CUSTOM_MAX_POVM_EFFECTS, Eigen::Dynamic);
-    tomorun_dispatch_st<TOMORUN_CUSTOM_FIXED_DIM,TOMORUN_CUSTOM_FIXED_MAX_DIM,TOMORUN_CUSTOM_MAX_POVM_EFFECTS>(dim, &opt, matf, mlog);
+    tomorun_dispatch_st<TOMORUN_CUSTOM_FIXED_DIM,TOMORUN_CUSTOM_FIXED_MAX_DIM,
+                        TOMORUN_CUSTOM_MAX_POVM_EFFECTS>(dim, &opt, matf, mlog);
 
     (void)n_povms; // silence unused variable warning
 
@@ -269,15 +274,10 @@ int main(int argc, char **argv)
     // Provide some standard fixed-size cases, in order to avoid dynamic memory allocation
     // for small matrices for common system sizes (e.g. a single qubit)
     //
-//    if (dim == 2 && n_povms <= 6) { // qubit problems are really common
-//      tomorun_dispatch_st<2, 2, 6>(dim, &opt, matf, mlog);
-//    } else
     if (dim == 2) {
       tomorun_dispatch_st<2, 2, Eigen::Dynamic>(dim, &opt, matf, mlog);
     } else if (dim == 4) { // two-qubit systems are also common
       tomorun_dispatch_st<4, 4, Eigen::Dynamic>(dim, &opt, matf, mlog);
-    } else if (dim <= 8) { // anything less than dimension 8 should be stored statically
-      tomorun_dispatch_st<Eigen::Dynamic, 8, Eigen::Dynamic>(dim, &opt, matf, mlog);
     } else {
       tomorun_dispatch_st<Eigen::Dynamic, Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
     }

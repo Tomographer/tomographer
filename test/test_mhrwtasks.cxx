@@ -266,7 +266,7 @@ struct MyCData
   Tomographer::MHRWParams<int,int> mhrw_params;
 
   MyCData(Tomographer::MHRWParams<int,int> && p)
-    : Tomographer::MHRWTasks::CDataBase<int,int>(p, -134567),
+    : Tomographer::MHRWTasks::CDataBase<int,int>(p, 134567u),
       mhrw_params(p)
   {
   }

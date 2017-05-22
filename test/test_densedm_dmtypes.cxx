@@ -51,7 +51,7 @@ struct test_dmtypes_fixture {
   ~test_dmtypes_fixture()
   {
   }
-  template<typename DMTypes> void test_dmtypes(const int dim)
+  template<typename DMTypes> void test_dmtypes(const Eigen::Index dim)
   {
     // has RealScalar and ComplexScalar types
     typename DMTypes::RealScalar a = 1.0;
@@ -63,7 +63,7 @@ struct test_dmtypes_fixture {
     DMTypes dmt(dim);
 
     // has dim() property
-    BOOST_CHECK_EQUAL((int)dmt.dim(), dim);
+    BOOST_CHECK_EQUAL(dmt.dim(), dim);
 
     BOOST_CHECKPOINT("About to test that a wrong fixed dimension will throw");
 

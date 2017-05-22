@@ -17,10 +17,10 @@ n-repeats = 8
 
 # step size & sweep size will be auto-detected, just make sure that step*sweep ~ sth meaningful
 step-size = 0.1
-n-sweep = 100
+n-sweep = 10
 
-n-therm = 2048
-n-run = 8192
+n-therm = 4096
+n-run = 32768
 
 # Calculate the squared fidelity to the pure reference state |W> (remember: use
 # "obs-value" in this case, see `tomorun --help`)

@@ -168,7 +168,7 @@ struct TOMOGRAPHER_EXPORT DMTypes
    * FixedDim_ (or you'll get an assert failure).
    *
    */
-  inline DMTypes(std::size_t d)
+  inline DMTypes(Eigen::Index d)
     : _dim(d)
   {
   }
@@ -179,7 +179,7 @@ struct TOMOGRAPHER_EXPORT DMTypes
    * the compiler should be able to optimize this).  If the dimension is dynamically set
    * at run-time, then we return that stored value.
    */
-  inline std::size_t dim() const { return _dim.value(); }
+  inline Eigen::Index dim() const { return _dim.value(); }
 
   /** \brief get the square of the dimension of the quantum system
    *
@@ -187,14 +187,14 @@ struct TOMOGRAPHER_EXPORT DMTypes
    * coefficients needed to specify a Hermitian matrix.  It is the size of a \ref
    * VectorParamType.
    */
-  inline std::size_t dim2() const { return _dim.value()*_dim.value(); }
+  inline Eigen::Index dim2() const { return _dim.value()*_dim.value(); }
 
   /** \brief get the square of the dimension of the quantum system, minus one
    *
    * Equivalently, this is the number of degrees of freedom of a density matrix.  It is
    * the size of a \ref VectorParamNdofType.
    */
-  inline std::size_t ndof() const { return dim2()-1; }
+  inline Eigen::Index ndof() const { return dim2()-1; }
 
 
   /** \brief Zero initializer for a MatrixType [implementation for static dimension]
@@ -215,7 +215,7 @@ struct TOMOGRAPHER_EXPORT DMTypes
   TOMOGRAPHER_ENABLED_IF(IsDynamicDim)
   inline typename MatrixType::ConstantReturnType initMatrixType() const
   {
-    return MatrixType::Zero((Eigen::Index)_dim.value(), (Eigen::Index)_dim.value());
+    return MatrixType::Zero(_dim.value(), _dim.value());
   }
 
   /** \brief Zero initializer for a VectorParamType [implementation for static dimension]
@@ -236,7 +236,7 @@ struct TOMOGRAPHER_EXPORT DMTypes
   TOMOGRAPHER_ENABLED_IF(IsDynamicDim)
   inline typename VectorParamType::ConstantReturnType initVectorParamType() const
   {
-    return VectorParamType::Zero((Eigen::Index)dim2());
+    return VectorParamType::Zero(dim2());
   }
 
   /** \brief Zero initializer for a VectorParamNdofType [implementation for static dimension]
@@ -259,12 +259,12 @@ struct TOMOGRAPHER_EXPORT DMTypes
   TOMOGRAPHER_ENABLED_IF(IsDynamicDim)
   inline typename VectorParamNdofType::ConstantReturnType initVectorParamNdofType() const
   {
-    return VectorParamNdofType::Zero((Eigen::Index)ndof());
+    return VectorParamNdofType::Zero(ndof());
   }
 
 
 private:
-  const Tools::StaticOrDynamic<std::size_t, IsDynamicDim, (std::size_t)FixedDim> _dim;
+  const Tools::StaticOrDynamic<Eigen::Index, IsDynamicDim, FixedDim> _dim;
 };
 
 

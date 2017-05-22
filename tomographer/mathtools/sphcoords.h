@@ -73,7 +73,7 @@ inline void cart_to_sph(Eigen::MatrixBase<Der2>& rtheta, const Eigen::MatrixBase
   tomographer_assert(cart.cols() == 1 && rtheta.cols() == 1);
   tomographer_assert(cart.rows() == rtheta.rows());
 
-  const size_t ds = cart.rows()-1; // dimension of the sphere
+  const Eigen::Index ds = cart.rows()-1; // dimension of the sphere
 
   // see http://people.sc.fsu.edu/~jburkardt/cpp_src/hypersphere_properties/hypersphere_properties.cpp
   // and http://en.wikipedia.org/wiki/N-sphere#Spherical_coordinates
@@ -95,7 +95,7 @@ inline void cart_to_sph(Eigen::MatrixBase<Der2>& rtheta, const Eigen::MatrixBase
   // all except last
   rtheta.segment(1,ds-1).setZero();
 
-  size_t i;
+  Eigen::Index i;
 
   Scalar val = pow(cart(ds),2);
   for (i = ds-1; i >= 1; --i) {
@@ -148,13 +148,13 @@ inline void sphsurf_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBa
   tomographer_assert(cart.cols() == 1 && theta.cols() == 1);
   tomographer_assert(cart.rows() == theta.rows() + 1);
 
-  const size_t ds = theta.rows(); // dimension of the sphere
+  const Eigen::Index ds = theta.rows(); // dimension of the sphere
 
   // see http://people.sc.fsu.edu/~jburkardt/cpp_src/hypersphere_properties/hypersphere_properties.cpp
 
   cart.setConstant(R); // R coordinate
   
-  size_t i;
+  Eigen::Index i;
   for (i = 0; i < ds; ++i) {
     cart(i) *= cos(theta(i));
     cart.segment(i+1, ds+1 - (i+1)) *= sin(theta(i));
@@ -184,7 +184,7 @@ inline void sph_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<D
   tomographer_assert(cart.cols() == 1 && rtheta.cols() == 1);
   tomographer_assert(cart.rows() == rtheta.rows());
 
-  const size_t ds = rtheta.rows()-1; // dimension of the sphere
+  const Eigen::Index ds = rtheta.rows()-1; // dimension of the sphere
 
   // see http://people.sc.fsu.edu/~jburkardt/cpp_src/hypersphere_properties/hypersphere_properties.cpp
 
@@ -213,10 +213,10 @@ inline void sph_to_cart(Eigen::MatrixBase<Der2>& cart, const Eigen::MatrixBase<D
 template<typename Der1>
 inline typename Eigen::MatrixBase<Der1>::Scalar cart_to_sph_jacobian(const Eigen::MatrixBase<Der1>& rtheta)
 {
-  const size_t ds = rtheta.rows()-1; // dimension of the sphere
+  const Eigen::Index ds = rtheta.rows()-1; // dimension of the sphere
   typename Eigen::MatrixBase<Der1>::Scalar jac = pow(rtheta(0), (int)ds); // r^{n-1}
 
-  size_t i;
+  Eigen::Index i;
   for (i = 0; i < ds-1; ++i) {
     jac *= pow(sin(rtheta(1+i)), (int)(ds-1-i));
   }
@@ -248,11 +248,11 @@ inline typename Eigen::MatrixBase<Der1>::Scalar cart_to_sph_jacobian(const Eigen
 template<typename Der1>
 inline typename Eigen::MatrixBase<Der1>::Scalar surf_sph_jacobian(const Eigen::MatrixBase<Der1>& theta)
 {
-  const size_t ds = theta.rows();
+  const Eigen::Index ds = theta.rows();
 
   typename Eigen::MatrixBase<Der1>::Scalar jac = 1;
 
-  size_t i;
+  Eigen::Index i;
   for (i = 0; i < ds-1; ++i) {
     jac *= pow(sin(theta(i)), (int)(ds-1-i));
   }
@@ -288,8 +288,8 @@ inline void sphsurf_diffjac(Eigen::ArrayBase<Der1> & dxdtheta, const Eigen::Matr
   { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(Der1); }
   typedef typename Eigen::ArrayBase<Der1>::Scalar Scalar;
 
-  const size_t ds = theta.rows();
-  const size_t n = ds + 1;
+  const Eigen::Index ds = theta.rows();
+  const Eigen::Index n = ds + 1;
 
   tomographer_assert(theta.cols() == 1);
   tomographer_assert(dxdtheta.rows() == (int)n);
@@ -300,7 +300,7 @@ inline void sphsurf_diffjac(Eigen::ArrayBase<Der1> & dxdtheta, const Eigen::Matr
   Eigen::Array<Scalar, Der2::RowsAtCompileTime, 1> costheta(theta.rows());
   costheta = theta.array().cos();
 
-  size_t i, k, mm;
+  Eigen::Index i, k, mm;
   for (i = 0; i < ds; ++i) {
     for (k = 0; k < n; ++k) {
       //std::cout << "k,i = "<< k<< ", "<< i << "\n";
@@ -372,8 +372,8 @@ inline void sphsurf_diffjac2(Eigen::ArrayBase<Der1> & ddxddtheta, const Eigen::M
   { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(Der1); }
   typedef typename Eigen::ArrayBase<Der1>::Scalar Scalar;
 
-  const size_t ds = theta.rows();
-  const size_t n = ds + 1;
+  const Eigen::Index ds = theta.rows();
+  const Eigen::Index n = ds + 1;
 
   tomographer_assert(theta.cols() == 1);
   tomographer_assert(ddxddtheta.rows() == (int)n);
@@ -384,7 +384,7 @@ inline void sphsurf_diffjac2(Eigen::ArrayBase<Der1> & ddxddtheta, const Eigen::M
   Eigen::Array<Scalar, Der2::RowsAtCompileTime, 1> costheta(theta.rows());
   costheta = theta.array().cos();
 
-  size_t i, j, k, mm;
+  Eigen::Index i, j, k, mm;
   for (k = 0; k < n; ++k) {
     for (i = 0; i < ds; ++i) {
       for (j = 0; j <= i; ++j) {

@@ -213,11 +213,11 @@ public:
     : _dmt(dmt_)
   {
     // calculate and cache the generalized Gell-Mann matrices
-    lambda.resize(_dmt.ndof());
+    lambda.resize((std::size_t)_dmt.ndof());
     std::size_t count = 0;
     // first kind
-    for (std::size_t j = 0; j < _dmt.dim(); ++j) {
-      for (std::size_t k = j+1; k < _dmt.dim(); ++k) {
+    for (Eigen::Index j = 0; j < _dmt.dim(); ++j) {
+      for (Eigen::Index k = j+1; k < _dmt.dim(); ++k) {
 	lambda[count] = MatrixType::NullaryExpr(
 	    _dmt.dim(),
 	    _dmt.dim(),
@@ -227,8 +227,8 @@ public:
       }
     }
     // second kind
-    for (std::size_t j = 0; j < _dmt.dim(); ++j) {
-      for (std::size_t k = j+1; k < _dmt.dim(); ++k) {
+    for (Eigen::Index j = 0; j < _dmt.dim(); ++j) {
+      for (Eigen::Index k = j+1; k < _dmt.dim(); ++k) {
 	lambda[count] = MatrixType::NullaryExpr(
 	    _dmt.dim(),
 	    _dmt.dim(),
@@ -238,7 +238,7 @@ public:
       }
     }
     // third kind
-    for (std::size_t l = 0; l < _dmt.dim()-1; ++l) {
+    for (Eigen::Index l = 0; l < _dmt.dim()-1; ++l) {
       lambda[count] = MatrixType::NullaryExpr(
 	  _dmt.dim(),
 	  _dmt.dim(),
@@ -269,7 +269,7 @@ public:
    */
   inline const MatrixType & getLambda(std::size_t j) const
   {
-    tomographer_assert(j < _dmt.ndof());
+    tomographer_assert(j < (std::size_t)_dmt.ndof());
     return lambda[j];
   }
 
@@ -285,11 +285,11 @@ public:
   rhoToA(const Eigen::Ref<const MatrixType> & rho) const
   {
     VectorParamNdofType a(_dmt.initVectorParamNdofType());
-    tomographer_assert((std::size_t)a.size() == _dmt.ndof());
-    tomographer_assert((std::size_t)rho.rows() == _dmt.dim());
-    tomographer_assert((std::size_t)rho.cols() == _dmt.dim());
+    tomographer_assert(a.size() == _dmt.ndof());
+    tomographer_assert(rho.rows() == _dmt.dim());
+    tomographer_assert(rho.cols() == _dmt.dim());
     for (std::size_t n = 0; n < lambda.size(); ++n) {
-      a(n) = (rho * lambda[n].template selfadjointView<Eigen::Lower>())
+      a((Eigen::Index)n) = (rho * lambda[n].template selfadjointView<Eigen::Lower>())
 	.real().trace() * boost::math::constants::half_root_two<RealScalar>();
     }
     return a;
@@ -304,12 +304,12 @@ public:
   aToRho(const Eigen::Ref<const VectorParamNdofType> & a, RealScalar trace = 1.0) const
   {
     MatrixType rho(_dmt.initMatrixType());
-    tomographer_assert((std::size_t)a.size() == _dmt.ndof());
-    tomographer_assert((std::size_t)rho.rows() == _dmt.dim());
-    tomographer_assert((std::size_t)rho.cols() == _dmt.dim());
+    tomographer_assert(a.size() == _dmt.ndof());
+    tomographer_assert(rho.rows() == _dmt.dim());
+    tomographer_assert(rho.cols() == _dmt.dim());
     rho = trace * MatrixType::Identity(rho.rows(), rho.cols()) / _dmt.dim();
     for (std::size_t n = 0; n < lambda.size(); ++n) {
-      rho += a(n) * boost::math::constants::half_root_two<RealScalar>() * lambda[n];
+      rho += a((Eigen::Index)n) * boost::math::constants::half_root_two<RealScalar>() * lambda[n];
     }
     return rho;
   }

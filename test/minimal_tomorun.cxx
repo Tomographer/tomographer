@@ -79,7 +79,7 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
 	   HistogramParams hist_params, // histogram parameters
 	   int binning_num_levels, // number of binning levels in the binning analysis
 	   MHRWParamsType mhrw_params, // parameters of the random walk
-	   int base_seed) // a random seed to initialize the random number generator
+	   RngSeedType base_seed) // a random seed to initialize the random number generator
     : CDataBase<ValueCalculator,true>(valcalc, hist_params, binning_num_levels,
                                       mhrw_params, base_seed),
       llh(llh_)
@@ -265,7 +265,7 @@ int main()
 
   // seed for random number generator -- just use the current time
   std::mt19937::result_type base_seed =
-    std::chrono::system_clock::now().time_since_epoch().count();
+    (std::mt19937::result_type)std::chrono::system_clock::now().time_since_epoch().count();
 
   // number of levels for the binning analysis
   const int binning_num_levels = 8;

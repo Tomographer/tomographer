@@ -133,7 +133,7 @@ void solve(Eigen::Ref<Eigen::MatrixXcd> X, const Eigen::Ref<const Eigen::MatrixX
 {
   // do an eigenvalue decomposition of A
 
-  const int d = A.rows(); // dimension of problem
+  const Eigen::Index d = A.rows(); // dimension of problem
 
   tomographer_assert(X.rows() == X.cols() && X.rows() == d);
   tomographer_assert(A.rows() == A.cols() && A.rows() == d);
@@ -194,9 +194,9 @@ void solve(Eigen::Ref<Eigen::MatrixXcd> X, const Eigen::Ref<const Eigen::MatrixX
   int info = 0;
   double scale = 0.0;
 
-  int lda = D.outerStride();
+  int lda = (int)D.outerStride();
   int ldb = lda;//D.outerStride();
-  int ldc = Z.outerStride();
+  int ldc = (int)Z.outerStride();
 
   ztrsyl_((char*)"C", (char*)"N", &plusone, &M, &M, (double*)D.data(), &lda, (double*)D.data(), &ldb,
           (double*)Z.data(), &ldc, &scale, &info);

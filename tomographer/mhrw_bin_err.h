@@ -102,11 +102,11 @@ enum BinningConvergence {
  * \since Added in %Tomographer 5.0.
  */
 struct TOMOGRAPHER_EXPORT BinningErrorBarConvergenceSummary {
-  BinningErrorBarConvergenceSummary(std::size_t n_bins_ = 0,
-                                    std::size_t n_converged_ = 0,
-                                    std::size_t n_unknown_ = 0,
-                                    std::size_t n_unknown_isolated_ = 0,
-                                    std::size_t n_not_converged_ = 0)
+  BinningErrorBarConvergenceSummary(Eigen::Index n_bins_ = 0,
+                                    Eigen::Index n_converged_ = 0,
+                                    Eigen::Index n_unknown_ = 0,
+                                    Eigen::Index n_unknown_isolated_ = 0,
+                                    Eigen::Index n_not_converged_ = 0)
     : n_bins(n_bins_),
       n_converged(n_converged_),
       n_unknown(n_unknown_),
@@ -115,11 +115,11 @@ struct TOMOGRAPHER_EXPORT BinningErrorBarConvergenceSummary {
   {
   }
 
-  std::size_t n_bins;
-  std::size_t n_converged;
-  std::size_t n_unknown;
-  std::size_t n_unknown_isolated;
-  std::size_t n_not_converged;
+  Eigen::Index n_bins;
+  Eigen::Index n_converged;
+  Eigen::Index n_unknown;
+  Eigen::Index n_unknown_isolated;
+  Eigen::Index n_not_converged;
 
   /** \brief Construct a summary object from a list of converged status obtained from \ref
    *         BinningAnalysis::determineErrorConvergence()
@@ -127,28 +127,28 @@ struct TOMOGRAPHER_EXPORT BinningErrorBarConvergenceSummary {
   static BinningErrorBarConvergenceSummary
     fromConvergedStatus(const Eigen::Ref<const Eigen::ArrayXi> & converged_status)
   {
-    const std::size_t n_bins = (std::size_t)converged_status.size();
+    const Eigen::Index n_bins = converged_status.size();
 
     const Eigen::ArrayXi unkn_arr = 
       converged_status.cwiseEqual(BINNING_UNKNOWN_CONVERGENCE).cast<int>();
     const Eigen::ArrayXi conv_arr =
       converged_status.cwiseEqual(BINNING_CONVERGED).cast<int>();
 
-    const std::size_t n_unknown = (std::size_t)unkn_arr.count();
-    const std::size_t n_converged = (std::size_t)conv_arr.count();
-    const std::size_t n_not_converged =
-      (std::size_t)converged_status.cwiseEqual(BINNING_NOT_CONVERGED).cast<int>().count();
+    const Eigen::Index n_unknown = unkn_arr.cast<Eigen::Index>().count();
+    const Eigen::Index n_converged = conv_arr.cast<Eigen::Index>().count();
+    const Eigen::Index n_not_converged =
+      converged_status.cwiseEqual(BINNING_NOT_CONVERGED).cast<Eigen::Index>().count();
 
     // Little heuristic to see whether the "unknown" converged error bars are isolated or
     // not. Use conv_arr shifted by one in each direction as a mask -- an unconverged
     // error bar is isolated if it is surrounded by converged error bars
-    const std::size_t n_unknown_isol = (std::size_t)(
-        ( unkn_arr.segment(1,(Eigen::Index)n_bins-2)
-          .cwiseProduct(conv_arr.segment(0,(Eigen::Index)n_bins-2))
-          .cwiseProduct(conv_arr.segment(2,(Eigen::Index)n_bins-2))
+    const Eigen::Index n_unknown_isol = (
+        ( unkn_arr.segment(1,n_bins-2)
+          .cwiseProduct(conv_arr.segment(0,n_bins-2))
+          .cwiseProduct(conv_arr.segment(2,n_bins-2))
             ).count()
         // edges
-        + unkn_arr(0)*conv_arr(1) + unkn_arr((Eigen::Index)n_bins-1)*conv_arr((Eigen::Index)n_bins-2)
+        + unkn_arr(0)*conv_arr(1) + unkn_arr(n_bins-1)*conv_arr(n_bins-2)
         );
 
     return BinningErrorBarConvergenceSummary(n_bins, n_converged, n_unknown, n_unknown_isol, n_not_converged);
@@ -432,7 +432,8 @@ public:
    *          half-flushing as we go, to save memory space and hopefully gain in terms of
    *          memory cache]
    */
-  const Tools::StaticOrDynamic<CountIntType, (SamplesSizeCTime==Eigen::Dynamic), SamplesSizeCTime> samplesSize;
+  const Tools::StaticOrDynamic<CountIntType, (SamplesSizeCTime==Eigen::Dynamic),
+                               (SamplesSizeCTime < 0 ? 0 : SamplesSizeCTime)> samplesSize;
 
   //! Constants for error bar convergence analysis.  
   enum {

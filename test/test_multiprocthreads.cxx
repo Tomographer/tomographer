@@ -123,7 +123,7 @@ BOOST_AUTO_TEST_CASE(parallel)
 
   std::mutex iomutex;
 
-  const int nthreads = std::thread::hardware_concurrency();
+  const int nthreads = (int)std::thread::hardware_concurrency();
   for (int k = 0; k < nthreads; ++k) {
     tv.push_back( std::thread( [k,nthreads,&buflog,&iomutex]() {
           Tomographer::MultiProc::CxxThreads::ThreadSanitizerLogger<Tomographer::Logger::BufferLogger>

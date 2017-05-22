@@ -87,9 +87,9 @@ private:
 
   IterCountIntType last_forbidden_iter_number;
 
-  const std::size_t max_allowed_unknown;
-  const std::size_t max_allowed_unknown_notisolated;
-  const std::size_t max_allowed_not_converged;
+  const Eigen::Index max_allowed_unknown;
+  const Eigen::Index max_allowed_unknown_notisolated;
+  const Eigen::Index max_allowed_not_converged;
 
   Logger::LocalLogger<BaseLoggerType> llogger;
 
@@ -103,9 +103,9 @@ public:
       const ValueHistogramWithBinningMHRWStatsCollectorType & value_stats_collector_,
       BaseLoggerType & baselogger_,
       IterCountIntType check_frequency_sweeps_ = 1024,
-      std::size_t max_allowed_unknown_ = 0,
-      std::size_t max_allowed_unknown_notisolated_ = 0,
-      std::size_t max_allowed_not_converged_ = 0
+      Eigen::Index max_allowed_unknown_ = 0,
+      Eigen::Index max_allowed_unknown_notisolated_ = 0,
+      Eigen::Index max_allowed_not_converged_ = 0
       )
     : value_stats_collector(value_stats_collector_),
       check_frequency_sweeps(check_frequency_sweeps_),
@@ -202,9 +202,9 @@ mkMHRWValueErrorBinsConvergedController(
     const ValueHistogramWithBinningMHRWStatsCollectorType_ & value_stats_collector_,
     BaseLoggerType_ & baselogger_,
     IterCountIntType_ check_frequency_sweeps_ = 1024,
-    std::size_t max_allowed_unknown_ = 0,
-    std::size_t max_allowed_unknown_notisolated_ = 0,
-    std::size_t max_allowed_not_converged_ = 0
+    Eigen::Index max_allowed_unknown_ = 0,
+    Eigen::Index max_allowed_unknown_notisolated_ = 0,
+    Eigen::Index max_allowed_not_converged_ = 0
     )
 {
   return MHRWValueErrorBinsConvergedController<ValueHistogramWithBinningMHRWStatsCollectorType_,

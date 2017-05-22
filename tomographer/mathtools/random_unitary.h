@@ -64,9 +64,11 @@ inline void randomUnitary(Eigen::MatrixBase<DerU> & U, Rng & rng, Log & logger)
   { using namespace Eigen; EIGEN_STATIC_ASSERT_LVALUE(DerU); }
 
   tomographer_assert(U.rows() == U.cols());
-  const int n = U.rows();
+  const Eigen::Index n = U.rows();
 
-  logger.longdebug("randomUnitary()", "n = %d", n);
+  logger.longdebug("randomUnitary()", [&](std::ostream & stream) {
+      stream << "n = " << n ;
+    });
   
   typedef typename DerU::Scalar Scalar;
   typedef Eigen::Matrix<Scalar, Eigen::Dynamic, Eigen::Dynamic> MatrixType;
@@ -84,13 +86,13 @@ inline void randomUnitary(Eigen::MatrixBase<DerU> & U, Rng & rng, Log & logger)
 
   // Gram-Schmidt orthogonalization
 
-  for (int j = 0; j < n; ++j) {
+  for (Eigen::Index j = 0; j < n; ++j) {
 
     VectorType v = VectorType::Zero(n);
     v = A.col(j);
     //auto v = A.col(j);
 
-    for (int k = 0; k < j; ++k) {
+    for (Eigen::Index k = 0; k < j; ++k) {
       Scalar p = U.col(k).adjoint() * v;
       v = v - p*U.col(k);
     }

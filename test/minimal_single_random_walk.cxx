@@ -196,8 +196,8 @@ int main()
       );
 
   // seed for random number generator -- just use the current time
-  int base_seed = (int)std::chrono::system_clock::now().time_since_epoch().count();
   typedef std::mt19937 Rng;
+  Rng::result_type base_seed = (Rng::result_type)std::chrono::system_clock::now().time_since_epoch().count();
   Rng rng(base_seed);
 
   typedef BaseLoggerType LoggerType;

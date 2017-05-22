@@ -158,7 +158,7 @@ public:
       orig_step_times_sweep = params.n_sweep * params.mhwalker_params.step_size;
     } else {
       // invalid step size
-      const StepRealType default_start_step_size = 0.01;
+      const StepRealType default_start_step_size = StepRealType(0.01);
       logger.debug([&](std::ostream & stream) {
           stream << "Invalid step_size = " << params.mhwalker_params.step_size
                  << ", set default of = " << default_start_step_size;
@@ -222,17 +222,17 @@ public:
 
     // accept ratio too high -- increase step size
     if (accept_ratio >= 2*desired_accept_ratio_max) {
-      new_step_size *= 1.5;
-    } else if (accept_ratio >= 1.3*desired_accept_ratio_max) {
-      new_step_size *= 1.2;
+      new_step_size *= StepRealType(1.5);
+    } else if (accept_ratio >= StepRealType(1.3)*desired_accept_ratio_max) {
+      new_step_size *= StepRealType(1.2);
     } else if (accept_ratio >= desired_accept_ratio_max) {
-      new_step_size *= 1.05;
-    } else if (accept_ratio <= 0.5*desired_accept_ratio_min) {
-      new_step_size *= 0.5;
-    } else if (accept_ratio <= 0.75*desired_accept_ratio_min) {
-      new_step_size *= 0.8;
+      new_step_size *= StepRealType(1.05);
+    } else if (accept_ratio <= StepRealType(0.5)*desired_accept_ratio_min) {
+      new_step_size *= StepRealType(0.5);
+    } else if (accept_ratio <= StepRealType(0.75)*desired_accept_ratio_min) {
+      new_step_size *= StepRealType(0.8);
     } else {// if (accept_ratio <= desired_accept_ratio_min
-      new_step_size *= 0.95;
+      new_step_size *= StepRealType(0.95);
     }
 
     logger.longdebug([&](std::ostream & stream) {
@@ -284,8 +284,8 @@ private:
 
     // only allow the new step size to be within a certain range of the previous one
     const auto cur_step_size = params.mhwalker_params.step_size;
-    if (new_step_size < 0.7*cur_step_size) { new_step_size = 0.7*cur_step_size; }
-    if (new_step_size > 1.5*cur_step_size) { new_step_size = 1.5*cur_step_size; }
+    if (new_step_size < StepRealType(0.7)*cur_step_size) { new_step_size = StepRealType(0.7)*cur_step_size; }
+    if (new_step_size > StepRealType(1.5)*cur_step_size) { new_step_size = StepRealType(1.5)*cur_step_size; }
 
     params.mhwalker_params.step_size = new_step_size;
 

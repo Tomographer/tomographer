@@ -320,8 +320,8 @@ private:
     {
       FullStatusReport<TaskStatusReportType> fullstatus;
       
-      fullstatus.num_completed = dispatcher->task_k;
-      fullstatus.num_total_runs = dispatcher->num_total_runs;
+      fullstatus.num_completed = (int)dispatcher->task_k;
+      fullstatus.num_total_runs = (int)dispatcher->num_total_runs;
               
       // initialize task-specific reports
       // fill our lists with default-constructed values & set all running to false.
@@ -409,7 +409,7 @@ public:
   /** \brief Returns the result of the given task
    *
    */
-  inline const TaskResultType & collectedTaskResult(CountIntType k) const { return *results[k]; }
+  inline const TaskResultType & collectedTaskResult(std::size_t k) const { return *results[k]; }
   
   
   /** \brief assign a callable to be called whenever a status report is requested

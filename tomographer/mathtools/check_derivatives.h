@@ -99,7 +99,7 @@ namespace MathTools {
 template<typename Der1, typename Der2, typename fnType, typename ErrorStream>
 TOMOGRAPHER_EXPORT
 bool check_derivatives(const Eigen::ArrayBase<Der1> & derivatives, const Eigen::MatrixBase<Der2> & point,
-                       fnType fn, std::size_t valdims,
+                       fnType fn, Eigen::Index valdims,
                        const typename Eigen::MatrixBase<Der2>::Scalar delta = 1e-6,
                        const typename Eigen::MatrixBase<Der1>::Scalar tol = 1e-6,
 		       ErrorStream & error_stream = std::cerr
@@ -113,7 +113,7 @@ bool check_derivatives(const Eigen::ArrayBase<Der1> & derivatives, const Eigen::
   TOMO_STATIC_ASSERT_EXPR( ! Eigen::NumTraits<XScalar>::IsComplex ) ;
   TOMO_STATIC_ASSERT_EXPR( ! Eigen::NumTraits<ValScalar>::IsComplex ) ;
 
-  const std::size_t xdims = derivatives.cols();
+  const Eigen::Index xdims = derivatives.cols();
   tomographer_assert(point.rows() == (int)xdims);
   tomographer_assert(point.cols() == (int)1);
   tomographer_assert(derivatives.rows() == (int)valdims);
@@ -135,7 +135,7 @@ bool check_derivatives(const Eigen::ArrayBase<Der1> & derivatives, const Eigen::
 
   tomographer_assert(val0.allFinite());
 
-  std::size_t i;
+  Eigen::Index i;
   for (i = 0; i < xdims; ++i) {
     // numerically calculate the differences ...
 

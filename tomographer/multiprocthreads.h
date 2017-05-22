@@ -314,7 +314,7 @@ private:
   //! thread-shared variables
   struct thread_shared_data {
     thread_shared_data(const TaskCData * pcdata_, LoggerType & logger_,
-                       CountIntType num_total_runs, CountIntType num_threads)
+                       CountIntType num_total_runs, int num_threads)
       : pcdata(pcdata_),
         user_mutex(),
         results(),
@@ -393,7 +393,8 @@ private:
       FullStatusReportType full_report;
       FullStatusReportCallbackType user_fn;
 
-      std::sig_atomic_t counter;
+      std::sig_atomic_t counter_user;
+      std::sig_atomic_t counter_periodic;
 
       std::mutex mutex;
 
@@ -405,7 +406,8 @@ private:
           numreportsrecieved(0),
           full_report(),
           user_fn(),
-          counter(0),
+          counter_user(0),
+          counter_periodic(0),
           mutex()
       {
       }
@@ -417,7 +419,8 @@ private:
           numreportsrecieved(x.numreportsrecieved),
           full_report(std::move(x.full_report)),
           user_fn(std::move(x.user_fn)),
-          counter(x.counter),
+          counter_user(x.counter_user),
+          counter_periodic(x.counter_periodic),
           mutex()
       {
       }
@@ -441,14 +444,16 @@ private:
     TaskLoggerType & logger;
 
     CountIntType task_id;
-    CountIntType local_status_report_counter;
+    int local_status_report_counter_user;
+    int local_status_report_counter_periodic;
 
     thread_private_data(CountIntType thread_id_, thread_shared_data * shared_data_, TaskLoggerType & logger_)
       : thread_id(thread_id_),
         shared_data(shared_data_),
         logger(logger_),
         task_id(-1),
-        local_status_report_counter(0)
+        local_status_report_counter_user(0),
+        local_status_report_counter_periodic(0)
     {
     }
 
@@ -493,25 +498,24 @@ private:
         }
       } // master thread
 
-      return (int)local_status_report_counter != (int)shared_data->status_report.counter;
+      return local_status_report_counter_user != (int)shared_data->status_report.counter_user ||
+        local_status_report_counter_periodic != (int)shared_data->status_report.counter_periodic;
     }
 
     // internal use only:
     inline void _master_thread_update_status_report_periodic_interval_counter() const
     {
-      shared_data->status_report.counter = (uint32_t)(
-          (std::chrono::duration_cast<std::chrono::milliseconds>(
+      shared_data->status_report.counter_periodic = (std::sig_atomic_t) (
+          std::chrono::duration_cast<std::chrono::milliseconds>(
               StdClockType::now().time_since_epoch()
-              ).count()  /  shared_data->status_report.periodic_interval) & 0x00FFFFFF
-          ) << 6;
-      // the (x << 6) (equivalent to (x * 64)) allows individual increments from
-      // unrelated additional requestStatusReport() to be taken into account (allows 64
-      // such additional requests per periodic status report)
+              ).count()  /  shared_data->status_report.periodic_interval
+          ) ;
     }
 
     inline void submitStatusReport(const TaskStatusReportType &statreport)
     {
-      if ((int)local_status_report_counter == (int)shared_data->status_report.counter) {
+      if (local_status_report_counter_user == (int)shared_data->status_report.counter_user &&
+          local_status_report_counter_periodic == (int)shared_data->status_report.counter_periodic) {
         // error: task submitted unsollicited report
         logger.warning("CxxThreads TaskDispatcher/taskmanageriface", "Task submitted unsollicited status report");
         return;
@@ -520,7 +524,8 @@ private:
       std::lock_guard<std::mutex> lockguard(shared_data->status_report.mutex) ;
 
       // we've reacted to the given "signal"
-      local_status_report_counter = shared_data->status_report.counter;
+      local_status_report_counter_user = shared_data->status_report.counter_user;
+      local_status_report_counter_periodic = shared_data->status_report.counter_periodic;
           
       // access to the local logger is fine as a different mutex is used
       logger.longdebug("CxxThreads TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
@@ -625,7 +630,7 @@ public:
    */
   TaskDispatcher(TaskCData * pcdata_, LoggerType & logger_,
                  CountIntType num_total_runs_,
-                 int num_threads_ = std::thread::hardware_concurrency())
+                 int num_threads_ = (int)std::thread::hardware_concurrency())
     : shared_data(pcdata_, logger_, num_total_runs_, num_threads_)
   {
   }
@@ -708,7 +713,8 @@ public:
 
           {
             std::lock_guard<std::mutex> lk2(shared_data.status_report.mutex);
-            privdat.local_status_report_counter = shared_data.status_report.counter;
+            privdat.local_status_report_counter_user = shared_data.status_report.counter_user;
+            privdat.local_status_report_counter_periodic = shared_data.status_report.counter_periodic;
           }
 
           try {
@@ -773,7 +779,7 @@ public:
     std::vector<std::thread> threads;
 
     // thread_id = 0 is reserved for ourselves.
-    for (CountIntType thread_id = 1; thread_id < shared_data.schedule.num_threads; ++thread_id) {
+    for (int thread_id = 1; thread_id < shared_data.schedule.num_threads; ++thread_id) {
       threads.push_back( std::thread( [thread_id,worker_fn_id]() { // do NOT capture thread_id by reference!
             worker_fn_id(thread_id);
           } ) );
@@ -818,7 +824,7 @@ public:
   /** \brief Get the result of a specific given task
    *
    */
-  inline const TaskResultType & collectedTaskResult(CountIntType k) const {
+  inline const TaskResultType & collectedTaskResult(std::size_t k) const {
     return *shared_data.results[(std::size_t)k];
   }
 
@@ -907,7 +913,7 @@ public:
     // So just increment an atomic int.
     //
 
-    shared_data.status_report.counter = (shared_data.status_report.counter + 1) & 0x7f;
+    ++ shared_data.status_report.counter_user;
   }
 
   /** \brief Request a periodic status report
@@ -951,7 +957,7 @@ TaskDispatcher<TaskType_, TaskCData_, LoggerType_, CountIntType_>
 mkTaskDispatcher(TaskCData_ * pcdata_,
                  LoggerType_ & logger_,
                  CountIntType_ num_total_runs_,
-                 int num_threads_ = std::thread::hardware_concurrency())
+                 int num_threads_ = (int)std::thread::hardware_concurrency())
 {
   return TaskDispatcher<TaskType_, TaskCData_, LoggerType_, CountIntType_>(
       pcdata_, logger_, num_total_runs_, num_threads_

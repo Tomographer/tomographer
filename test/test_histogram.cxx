@@ -510,7 +510,7 @@ BOOST_AUTO_TEST_CASE(no_underlying_error_bars)
   BOOST_MESSAGE(avghist.prettyPrint());
 
   auto cheap_stddev = [](float x, float y, float z, float w) -> float {
-    return  std::sqrt( ((x*x+y*y+z*z+w*w)/4.f - std::pow((x+y+z+w)/4.f, 2)) / (4.f - 1) );
+    return (float) std::sqrt( ((x*x+y*y+z*z+w*w)/4.f - std::pow((x+y+z+w)/4.f, 2)) / (4.f - 1) );
   };
 
   BOOST_CHECK_CLOSE(avghist.bins.sum() + avghist.off_chart, 150.0, tol_percent);

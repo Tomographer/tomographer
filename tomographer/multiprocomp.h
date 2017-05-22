@@ -816,7 +816,7 @@ public:
   /** \brief Get the result of a specific given task
    *
    */
-  inline const TaskResultType & collectedTaskResult(CountIntType k) const {
+  inline const TaskResultType & collectedTaskResult(std::size_t k) const {
     return *shared_data.results[k];
   }
 

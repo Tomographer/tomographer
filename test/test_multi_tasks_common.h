@@ -81,8 +81,9 @@ struct TestBasicCData {
 
   std::vector<MyTaskInput> inputs;
 
-  MyTaskInput getTaskInput(int k) const {
-    return inputs[k];
+  template<typename IntType>
+  MyTaskInput getTaskInput(IntType k) const {
+    return inputs[(std::size_t)k];
   }
 };
 struct TestTask {
@@ -254,7 +255,7 @@ struct test_task_dispatcher_fixture {
     BOOST_CHECK_EQUAL(results.size(), (std::size_t)task_dispatcher.numTaskRuns());
 
     // collectedTaskResult(k)
-    const std::size_t N = task_dispatcher.numTaskRuns();
+    const std::size_t N = (std::size_t)task_dispatcher.numTaskRuns();
     for (std::size_t k = 0; k < N; ++k) {
       BOOST_CHECK_EQUAL(task_dispatcher.collectedTaskResult(k).value, correct_result_values[k]) ;
     }
@@ -294,8 +295,9 @@ struct StatusRepTestBasicCData {
 
   int UnitTimeSleepMs_;
 
-  int getTaskInput(int k) const {
-    return 2*UnitTimeSleepMs_ + (k/3)*UnitTimeSleepMs_;
+  template<typename IntType>
+  int getTaskInput(IntType k) const {
+    return 2*UnitTimeSleepMs_ + (int)(k/3)*UnitTimeSleepMs_;
   }
 };
 struct StatusRepTestTask {
@@ -324,7 +326,7 @@ struct StatusRepTestTask {
     int elapsed_ms = 0;
     int ms_to_run = _input;
     do {
-      elapsed_ms = std::chrono::duration_cast<std::chrono::milliseconds>(StdClockType::now() - time_start).count();
+      elapsed_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(StdClockType::now() - time_start).count();
       if (iface->statusReportRequested()) {
         logger.longdebug("StatusRepTestTask::run", "Task #%02d: Status report requested", _input);
         StatusReportType s(elapsed_ms / (double)ms_to_run,

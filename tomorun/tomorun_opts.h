@@ -291,82 +291,49 @@ void validate(boost::any& v, const std::vector<std::string> & values,
 
 struct ProgOptions
 {
-  ProgOptions()
-    : // provide sensible defaults:
-    nice_level(14),
-    flog(stdout),
-    data_file_name(),
-    step_size(0.01),
-    Nsweep((unsigned int)std::max(10, int(1/step_size))),
-    Ntherm(500),
-    Nrun(32768),
-    valtype("fidelity"),
-    val_min(0.97),
-    val_max(1.0),
-    val_nbins(50),
-    light_jumps(false),
-    binning_analysis_error_bars(true), // error bars from binning analysis
-    binning_analysis_num_levels(8),
-    control_step_size(true),
-    control_step_size_moving_avg_samples(2048),
-    control_binning_converged(true),
-    control_binning_converged_max_not_converged(0),
-    control_binning_converged_max_unknown(2),
-    control_binning_converged_max_unknown_notisolated(0),
-    //    start_seed(0),
-    Nrepeats(12),
-    Nchunk(1),
-    NMeasAmplifyFactor(1.0),
-    loglevel(Tomographer::Logger::INFO),
-    verbose_log_info(false), // display origins in log messages
-    write_histogram(""),
-    periodic_status_report_ms(-1)
-  {
-  }
 
-  int nice_level;
+  int nice_level{14};
 
-  FILE * flog;
+  FILE * flog{stdout};
 
-  std::string data_file_name;
+  std::string data_file_name{};
 
-  double step_size;
+  TomorunReal step_size{TomorunReal(0.01)};
 
-  unsigned int Nsweep;
-  unsigned int Ntherm;
-  unsigned int Nrun;
+  TomorunInt Nsweep{100};
+  TomorunInt Ntherm{512};
+  TomorunInt Nrun{32768};
 
-  val_type_spec valtype;
+  val_type_spec valtype{"fidelity"};
 
-  double val_min;
-  double val_max;
-  std::size_t val_nbins;
+  TomorunReal val_min{TomorunReal(0.9)};
+  TomorunReal val_max{TomorunReal(1.0)};
+  Eigen::Index val_nbins{50};
 
-  bool light_jumps;
+  bool light_jumps{false};
 
-  bool binning_analysis_error_bars;
-  int binning_analysis_num_levels;
+  bool binning_analysis_error_bars{true};
+  int binning_analysis_num_levels{8};
 
-  bool control_step_size;
-  int control_step_size_moving_avg_samples;
-  bool control_binning_converged;
-  std::size_t control_binning_converged_max_not_converged;
-  std::size_t control_binning_converged_max_unknown;
-  std::size_t control_binning_converged_max_unknown_notisolated;
+  bool control_step_size{true};
+  TomorunInt control_step_size_moving_avg_samples{2048};
 
-  //  int start_seed;
+  bool control_binning_converged{true};
+  Eigen::Index control_binning_converged_max_not_converged{0};
+  Eigen::Index control_binning_converged_max_unknown{2};
+  Eigen::Index control_binning_converged_max_unknown_notisolated{0};
 
-  unsigned int Nrepeats;
-  unsigned int Nchunk;
+  int Nrepeats{(int)std::thread::hardware_concurrency()};
+  int Nchunk{1};
 
-  double NMeasAmplifyFactor;
+  TomorunReal NMeasAmplifyFactor{TomorunReal(1.0)};
 
-  Tomographer::Logger::LogLevel loglevel;
-  bool verbose_log_info;
+  Tomographer::Logger::LogLevel loglevel{Tomographer::Logger::INFO};
+  bool verbose_log_info{false}; // whether to display origin in log messages
 
-  std::string write_histogram;
+  std::string write_histogram{""};
 
-  int periodic_status_report_ms;
+  int periodic_status_report_ms{-1};
 };
 
 
@@ -375,9 +342,9 @@ struct ProgOptions
 // ------------------------------------------------------------------------------
 
 
-TOMOGRAPHER_DEFINE_MSG_EXCEPTION(bad_options, "Invalid input: ") ;
+TOMOGRAPHER_DEFINE_MSG_EXCEPTION(bad_options, "Invalid input options: ") ;
 
-TOMOGRAPHER_DEFINE_MSG_EXCEPTION(invalid_input, "Bad program options: ") ;
+TOMOGRAPHER_DEFINE_MSG_EXCEPTION(invalid_input, "Invalid input data: ") ;
 
 inline void ensure_valid_input(bool condition, std::string msg) {
   Tomographer::Tools::tomographerEnsure<invalid_input>(condition, msg);
@@ -470,7 +437,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
          ).c_str())
     ("no-control-step-size", bool_switch(& no_control_step_size_set)->default_value(false),
      "Do not dynamically adjust the step size during thermalization.")
-    ("control-step-size-moving-avg-samples", value<int>(& opt->control_step_size_moving_avg_samples)
+    ("control-step-size-moving-avg-samples", value<TomorunInt>(& opt->control_step_size_moving_avg_samples)
      ->default_value(opt->control_step_size_moving_avg_samples),
      "The number of most recent samples to use when calculating the moving average of "
      "the acceptance ratio.  Used only for dynamically adjusting the step size when "
@@ -484,37 +451,37 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
      "Do not dynamically control the random walk length, you might need to manually inspect "
      "the convergence status of the error bars resulting from the binning analysis.")
     ("control-binning-converged-max-not-converged",
-     value<std::size_t>(& opt->control_binning_converged_max_not_converged )
+     value<Eigen::Index>(& opt->control_binning_converged_max_not_converged )
      ->default_value(opt->control_binning_converged_max_not_converged),
      "If control-binning-converged is set, then do not finish the random walk before there being "
      "no more than this number of error bars which have not converged.")
     ("control-binning-converged-max-unknown",
-     value<std::size_t>(& opt->control_binning_converged_max_unknown )
+     value<Eigen::Index>(& opt->control_binning_converged_max_unknown )
      ->default_value(opt->control_binning_converged_max_unknown),
      "If control-binning-converged is set, then do not finish the random walk before there being "
      "no more than this number of error bars for which the convergence is uncertain.")
     ("control-binning-converged-max-unknown-notisolated",
-     value<std::size_t>(& opt->control_binning_converged_max_unknown_notisolated )
+     value<Eigen::Index>(& opt->control_binning_converged_max_unknown_notisolated )
      ->default_value(opt->control_binning_converged_max_unknown_notisolated),
      "If control-binning-converged is set, then do not finish the random walk before there being "
      "no more than this number of error bars for which the convergence is uncertain and which are "
      "adjacent to other error bars which have not converged or whose convergence status is unknown.")
 
-    ("step-size", value<double>(& opt->step_size)->default_value(opt->step_size),
+    ("step-size", value<TomorunReal>(& opt->step_size)->default_value(opt->step_size),
      "the step size for the region")
-    ("n-sweep", value<unsigned int>(& opt->Nsweep)->default_value(opt->Nsweep),
+    ("n-sweep", value<TomorunInt>(& opt->Nsweep)->default_value(opt->Nsweep),
      "number of iterations per sweep")
-    ("n-therm", value<unsigned int>(& opt->Ntherm)->default_value(opt->Ntherm),
+    ("n-therm", value<TomorunInt>(& opt->Ntherm)->default_value(opt->Ntherm),
      "number of thermalizing sweeps")
-    ("n-run", value<unsigned int>(& opt->Nrun)->default_value(opt->Nrun),
+    ("n-run", value<TomorunInt>(& opt->Nrun)->default_value(opt->Nrun),
      "number of running sweeps after thermalizing. If you're doing a binning analysis "
      "(default except if you give --no-binning-analysis-error-bars), use here a "
      "multiple of 2^(binning-analysis-num-levels).")
-    ("n-repeats", value<unsigned int>(& opt->Nrepeats)->default_value(opt->Nrepeats),
+    ("n-repeats", value<int>(& opt->Nrepeats)->default_value(opt->Nrepeats),
      "number of times to repeat the metropolis procedure")
-    ("n-chunk", value<unsigned int>(& opt->Nchunk)->default_value(opt->Nchunk),
+    ("n-chunk", value<int>(& opt->Nchunk)->default_value(opt->Nchunk),
      "OBSOLETE OPTION -- has no effect")
-    ("n-meas-amplify-factor", value<double>(& opt->NMeasAmplifyFactor)
+    ("n-meas-amplify-factor", value<TomorunReal>(& opt->NMeasAmplifyFactor)
      ->default_value(opt->NMeasAmplifyFactor),
      "Specify an integer factor by which to multiply number of measurements. "
      "Don't use this. It's unphysical, and meant just for debugging Tomographer itself.")
@@ -747,7 +714,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
        */
       if (configdir != ".") {
 	throw bad_options(streamstr("Sorry, config file must reside in current working directory: "
-				    << configfname));
+				    << configfname << ". Change to directory and run again."));
       }
     }
 
@@ -864,11 +831,13 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
       throw bad_options("--value-hist expects an argument of format MIN:MAX[/NUM_BINS]");
     }
 
-    opt->val_min = fmin;
-    opt->val_max = fmax;
-    opt->val_nbins = (std::size_t)nbins;
-    logger.debug("Histogram parameters parsed: min=%g, max=%g, num_bins=%d",
-		 (double)opt->val_min, (double)opt->val_max, (int)opt->val_nbins);
+    opt->val_min = (TomorunReal)fmin;
+    opt->val_max = (TomorunReal)fmax;
+    opt->val_nbins = (Eigen::Index)nbins;
+    logger.debug([&](std::ostream & stream) {
+        stream << "Histogram parameters parsed: min=" << opt->val_min << ", max=" << opt->val_max
+               << ", num_bins=" << opt->val_nbins ;
+      });
   }
 }
 
@@ -889,37 +858,37 @@ void display_parameters(ProgOptions * opt, LoggerType & logger)
       "Using  data from file :     %s  (measurements x%.3g)\n"
       "       random walk jumps :  %s\n"
       "       value type :         %s\n"
-      "       val. histogram :     [%.2g, %.2g] (%lu bins)\n"
+      "       val. histogram :     [%.2g, %.2g] (%s bins)\n"
       "       error bars :         %s\n"
       "       step size :          %-8.4g%s\n"
-      "       sweep size :         %-8lu%s\n"
-      "       # therm sweeps :     %lu\n"
-      "       # run sweeps :       %-8lu%s\n"
-      "       # intgr. repeats :   %lu\n"
+      "       sweep size :         %-8s%s\n"
+      "       # therm sweeps :     %s\n"
+      "       # run sweeps :       %-8s%s\n"
+      "       # intgr. repeats :   %d\n"
       "       write histogram to : %s\n"
       "\n"
-      "       --> total no. of live samples = %lu  (%.2e)\n"
+      "       --> total no. of live samples = %s  (%.2e)\n"
       "\n",
-      opt->data_file_name.c_str(), opt->NMeasAmplifyFactor,
+      opt->data_file_name.c_str(), (double)opt->NMeasAmplifyFactor,
       (opt->light_jumps ? "\"light\"" : "\"full\""),
       streamcstr(opt->valtype),
-      opt->val_min, opt->val_max, (unsigned long)opt->val_nbins,
+      (double)opt->val_min, (double)opt->val_max, streamcstr(opt->val_nbins),
       (opt->binning_analysis_error_bars
        ? Tomographer::Tools::fmts("binning analysis (%d levels)", opt->binning_analysis_num_levels).c_str()
        : "std. dev. of runs"),
-      opt->step_size,
+      (double)opt->step_size,
       (opt->control_step_size ? "  (dyn. adjustment enabled)" : ""),
-      (unsigned long)opt->Nsweep,
+      streamcstr(opt->Nsweep),
       (opt->control_step_size ? "  (dyn. adjustment enabled)" : ""),
-      (unsigned long)opt->Ntherm,
-      (unsigned long)opt->Nrun,
+      streamcstr(opt->Ntherm),
+      streamcstr(opt->Nrun),
       (opt->control_binning_converged ? "  (dyn. control of convergence)" : ""),
-      (unsigned long)opt->Nrepeats,
+      (int)opt->Nrepeats,
       (opt->write_histogram.size()
        ? opt->write_histogram + std::string("-histogram.csv")
        : std::string("<don't write histogram>")).c_str(),
-      (unsigned long)(opt->Nrun*opt->Nrepeats),
-      (double)(opt->Nrun*opt->Nrepeats)
+      streamcstr(opt->Nrun*(TomorunInt)opt->Nrepeats),
+      (double)(opt->Nrun*(TomorunInt)opt->Nrepeats)
       );
 }
 

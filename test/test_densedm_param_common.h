@@ -63,15 +63,16 @@ struct TestParamsFixture
 
     Tomographer::DenseDM::ParamA<DMTypes> param(dmt);
     // display generalized Gell-Mann matrices
-    for (std::size_t l = 0; l < dmt.ndof(); ++l) {
-      BOOST_MESSAGE("\tlambda[" << l << "] = \n" << param.getLambda(l));
-      BOOST_CHECK_SMALL((param.getLambda(l).adjoint() - param.getLambda(l)).norm(), tol_percent);
+    for (Eigen::Index l = 0; l < dmt.ndof(); ++l) {
+      BOOST_MESSAGE("\tlambda[" << l << "] = \n" << param.getLambda((std::size_t)l));
+      BOOST_CHECK_SMALL((param.getLambda((std::size_t)l).adjoint() - param.getLambda((std::size_t)l)).norm(),
+                        tol_percent);
     }
     // do checks that all HS inner products are correct
     Eigen::MatrixXcd inner_prods = Eigen::MatrixXcd::Zero(dmt.ndof(), dmt.ndof());
-    for (std::size_t i = 0; i < dmt.ndof(); ++i) {
-      for (std::size_t j = 0; j < dmt.ndof(); ++j) {
-	inner_prods(i,j) = (param.getLambda(i).adjoint() * param.getLambda(j)).trace();
+    for (Eigen::Index i = 0; i < dmt.ndof(); ++i) {
+      for (Eigen::Index j = 0; j < dmt.ndof(); ++j) {
+	inner_prods(i,j) = (param.getLambda((std::size_t)i).adjoint() * param.getLambda((std::size_t)j)).trace();
       }
     }
     BOOST_MESSAGE("Matrix of inner products [expected == 2*Ident]: tr(A'*B) = \n" << inner_prods);

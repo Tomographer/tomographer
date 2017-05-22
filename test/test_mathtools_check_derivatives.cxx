@@ -62,7 +62,7 @@ struct check_derivatives_fixture
 
   inline EigenPointType random_point(int seed) const
   {
-    std::mt19937 rng(seed);
+    std::mt19937 rng((std::mt19937::result_type)seed);
     std::uniform_real_distribution<XScalar> dist(0.1, 2.0);
     return Tomographer::Tools::denseRandom<EigenPointType>(rng, dist, xdims);
   }
@@ -86,7 +86,7 @@ struct check_derivatives_fixture
   {
     for (int j = 0; j < valdims; ++j) {
       for (int i = 0; i < xdims; ++i) {
-        derivatives(j,i) = (1+i+2*j) * (1+(i%2)) * std::pow(x(i),i%2);
+        derivatives(j,i) = (float)( (1+i+2*j) * (1+(i%2)) * std::pow(x(i),i%2) );
       }
     }
   }
@@ -152,7 +152,7 @@ BOOST_FIXTURE_TEST_CASE(one_val_d_f, Fixture1val_d_f)
     BOOST_CHECK(ok) ;
   }
 
-  der(0,2) = der(0,2)*2 + 1.0;
+  der(0,2) = der(0,2)*2 + 1.f;
 
   {
     std::stringstream stream;

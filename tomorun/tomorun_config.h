@@ -116,22 +116,6 @@ typedef double TomorunReal;
 //#define TOMORUN_CUSTOM_MAX_POVM_EFFECTS  Eigen::Dynamic
 
 
-/* TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
- *
- * Value: 1 | 0
- *
- * Use the class MultiplexorValueCalculator and dynamically choose the figure of merit to
- * calculate, rather than using a fully templated tomorun<> function specialized to a
- * single figure of merit and replicated for each figure of merit. I'm not sure which is
- * faster, benchmarks needed.
- */
-#ifndef TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
-#define TOMORUN_USE_MULTIPLEXORVALUECALCULATOR true
-#endif
-
-
-
-
 
 /* TOMORUN_RNG_CLASS
  *
@@ -173,6 +157,25 @@ typedef std::mt19937 TomorunBaseRngType;
 #define TOMORUN_USE_DEVICE_SEED 0
 #endif
 
+
+
+
+
+
+// DEPRECATED OPTION NO LONGER HAS EFFECT (would bloat the code too much with the other options:)
+
+// /* TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
+//  *
+//  * Value: 1 | 0
+//  *
+//  * Use the class MultiplexorValueCalculator and dynamically choose the figure of merit to
+//  * calculate, rather than using a fully templated tomorun<> function specialized to a
+//  * single figure of merit and replicated for each figure of merit. I'm not sure which is
+//  * faster, benchmarks needed.
+//  */
+// #ifndef TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
+// #define TOMORUN_USE_MULTIPLEXORVALUECALCULATOR true
+// #endif
 
 
 

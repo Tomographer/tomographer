@@ -154,10 +154,10 @@ struct TomorunCData : public CDataBaseType_
 
   const DenseLLH llh;
 
-  const int ctrl_moving_avg_samples;
-  const std::size_t ctrl_max_allowed_unknown;
-  const std::size_t ctrl_max_allowed_unknown_notisolated;
-  const std::size_t ctrl_max_allowed_not_converged;
+  const TomorunInt ctrl_moving_avg_samples;
+  const Eigen::Index ctrl_max_allowed_unknown;
+  const Eigen::Index ctrl_max_allowed_unknown_notisolated;
+  const Eigen::Index ctrl_max_allowed_not_converged;
 
 
   template<typename RngType, typename LoggerType,
@@ -359,7 +359,9 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
     logger.info([&](std::ostream & str) { str << "Wrote histogram to CSV file " << csvfname << "."; });
   }
 
-  logger.info("Computation time: %s\n\n", elapsed_s.c_str());
+  logger.info([&](std::ostream & stream) {
+      stream << "Computation time: " << elapsed_s << "\n\n";
+    });
 }
 
 
@@ -378,7 +380,7 @@ template<int FixedDim, int FixedMaxDim, int FixedMaxPOVMEffects,
          bool UseBinningAnalysisErrorBars,
          bool ControlStepSize, bool ControlValueErrorBins, bool UseLLHWalkerLight,
          typename LoggerType>
-inline void tomorun_dispatch(const int dim, ProgOptions * opt, Tomographer::MAT::File * matf,
+inline void tomorun_dispatch(const Eigen::Index dim, ProgOptions * opt, Tomographer::MAT::File * matf,
                              LoggerType & baselogger)
 {
   Tomographer::Logger::LocalLogger<LoggerType> logger(TOMO_ORIGIN, baselogger);
@@ -398,18 +400,18 @@ inline void tomorun_dispatch(const int dim, ProgOptions * opt, Tomographer::MAT:
   // Read data from file
   //
 
-  DMTypes dmt((std::size_t)dim);
+  DMTypes dmt(dim);
   OurDenseLLH llh(dmt);
 
   typename Tomographer::Tools::EigenStdVector<typename DMTypes::MatrixType>::type Emn;
   Emn = Tomographer::MAT::value<decltype(Emn)>(matf->var("Emn"));
-  Eigen::VectorXi Nm;
-  Nm = Tomographer::MAT::value<Eigen::VectorXi>(matf->var("Nm"));
-  ensure_valid_input((int)Emn.size() == Nm.size(),
+  Eigen::Matrix<TomorunInt,Eigen::Dynamic,1> Nm;
+  Nm = Tomographer::MAT::value<Eigen::Matrix<TomorunInt,Eigen::Dynamic,1> >(matf->var("Nm"));
+  ensure_valid_input((Eigen::Index)Emn.size() == Nm.size(),
 		     "number of POVM effects in `Emn' doesn't match length of `Nm'");
   if (Emn.size() > 0) {
     ensure_valid_input(Emn[0].cols() == dim && Emn[0].rows() == dim,
-		       Tomographer::Tools::fmts("POVM effects don't have dimension %d x %d", dim, dim));
+		       streamstr("POVM effects don't have dimension " << dim << " x " << dim));
   }
 
   for (std::size_t k = 0; k < Emn.size(); ++k) {
@@ -432,11 +434,7 @@ inline void tomorun_dispatch(const int dim, ProgOptions * opt, Tomographer::MAT:
   // for futher processing.
   //
 
-  //////////////////////////////////////////////////////////////////////////////
-#if TOMORUN_USE_MULTIPLEXORVALUECALCULATOR == 1 ////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
-  logger.debug("Using MultiplexorValueCalculator.");
+  logger.debug("Creating the MultiplexorValueCalculator.");
 
   // Instantiate & Use a MultiplexorValueCalculator for the different possible figures of
   // merit.
@@ -478,8 +476,8 @@ inline void tomorun_dispatch(const int dim, ProgOptions * opt, Tomographer::MAT:
     A = Tomographer::MAT::value<MatrixType>(matf->var(obsname));
     
     ensure_valid_input(A.cols() == dim && A.rows() == dim,
-		       Tomographer::Tools::fmts("Observable (%s) is expected to be a square matrix %d x %d",
-						obsname.c_str(), dim, dim));
+		       streamstr("Observable \"" << obsname << "\" is expected to be a square matrix "
+                                 << dim << " x " << dim));
   }
   // -----------------------------------------------
   // INSERT FIGURE OF MERIT HERE: add an else-if branch, and set up appropriate parameters
@@ -522,108 +520,6 @@ inline void tomorun_dispatch(const int dim, ProgOptions * opt, Tomographer::MAT:
       multiplexor_value_calculator,
       logger.parentLogger());
         
-  //////////////////////////////////////////////////////////////////////////////
-#else  /////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
-
-  logger.debug("Not using MultiplexorValueCalculator, but directly specialized"
-               " templated versions for each figure of merit.");
-
-  //
-  // Instantiate The Correct Figure Of Merit Calculator and directly delegate the call to
-  // tomorun()
-  //
-
-  //
-  // Figure of merit is one of the built-in distance measures. There might be a reference
-  // state.
-  //
-  if (opt->valtype.valtype == val_type_spec::FIDELITY ||
-      opt->valtype.valtype == val_type_spec::TR_DIST ||
-      opt->valtype.valtype == val_type_spec::PURIF_DIST) {
-    
-    MatrixType rho_ref(dmt.initMatrixType());
-    MatrixType T_ref(dmt.initMatrixType());
-    
-    // read the reference state given explicitly as, e.g., "fidelity:rho_ref"
-    Tomographer::Mat::EigenPosSemidefMatrixWithSqrt<MatrixType> mpsd =
-      Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(
-        matf->var(opt->valtype.ref_obj_name.size() ? opt->valtype.ref_obj_name : "rho_ref")
-        );
-    rho_ref = std::move(mpsd.mat);
-    T_ref = std::move(mpsd.sqrt);
-
-    if (opt->valtype.valtype == val_type_spec::FIDELITY) {
-      tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins, UseLLHWalkerLight>(
-          llh,
-          opt,
-	  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, TomorunReal>(T_ref),
-          logger.parentLogger());
-    } else if (opt->valtype.valtype == val_type_spec::PURIF_DIST) {
-      tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins, UseLLHWalkerLight>(
-          llh,
-          opt,
-	  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, TomorunReal>(T_ref),
-          logger.parentLogger());
-    } else if (opt->valtype.valtype == val_type_spec::TR_DIST) {
-      tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins, UseLLHWalkerLight>(
-          llh,
-          opt,
-	  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, TomorunReal>(rho_ref),
-          logger.parentLogger());
-    } else {
-      throw std::logic_error("WTF?? You shouldn't be here!");
-    }
-
-    return;
-  }
-  //
-  // Figure of merit: observable value
-  //
-  if (opt->valtype.valtype == val_type_spec::OBS_VALUE) {
-    
-    // load the observable
-    MatrixType A(dmt.initMatrixType());
-
-    std::string obsname = "Observable";
-    if (opt->valtype.ref_obj_name.size()) {
-      obsname = opt->valtype.ref_obj_name;
-    }
-
-    A = Tomographer::MAT::value<MatrixType>(matf->var(obsname));
-    
-    ensure_valid_input(A.cols() == dim && A.rows() == dim,
-		       Tomographer::Tools::fmts("Observable (%s) is expected to be a square matrix %d x %d",
-						obsname.c_str(), dim, dim));
-
-    // and run our main program
-    tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins, UseLLHWalkerLight>(
-        llh,
-        opt,
-	Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>(dmt, A),
-        logger.parentLogger());
-
-    return;
-  }
-  // --------------------------------------------------
-  //
-  // INSERT CUSTOM FIGURE OF MERIT HERE:
-  //
-  // Add a new "if (opt->valtype.valtype == val_type_spec::MY_NEW_CUSTOM_FIGURE_OF_MERIT)
-  // { ... }" IF branch, read any possible reference state and do any other necessary
-  // set-up, and then relay the call to "tomorun<UseBinningAnalysisErrorBars>( ... )".
-  //
-  // See also the instructions in API documentation, page 'Adding a new figure of merit to
-  // the tomorun program'
-  //
-  // --------------------------------------------------
-
-  throw std::logic_error(streamstr("Unknown value type: " << opt->valtype));
-
-
-  //////////////////////////////////////////////////////////////////////////////
-#endif /////////////////////////////////////////////////////////////////////////
-  //////////////////////////////////////////////////////////////////////////////
 }
 
 
@@ -645,7 +541,6 @@ inline void tomorun_dispatch_st(const int dim, ProgOptions * opt, Tomographer::M
 {
   DISPATCH_STATIC_BOOL(
       opt->light_jumps, UseLLHWalkerLight,
-//  constexpr bool UseLLHWalkerLight = false;
       DISPATCH_STATIC_BOOL(
           opt->control_step_size, ControlStepSize,
           {
