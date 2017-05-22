@@ -60,6 +60,10 @@ namespace Tomographer {
 /** \brief A \ref pageInterfaceMHRWController dynamically adjusting the step size to keep
  *         a good acceptance ratio
  *
+ * This controller is based on \ref Tomographer::MHRWAcceptRatioWalkerParamsController. In
+ * case you're wondering, the \a AcceptanceRatioBasedParamsAdjusterType we're using is
+ * this class itself.  This class conforms both to \ref pageInterfaceMHRWController and
+ * \ref pageInterfaceAcceptanceRatioBasedParamsAdjuster.
  */
 template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
          typename BaseLoggerType_ = Logger::VacuumLogger,
