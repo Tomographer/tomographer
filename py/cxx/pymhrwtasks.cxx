@@ -102,7 +102,7 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         ".. py:attribute:: n_not_converged\n\n"
         "    The number of histogram bins whose binning analysis error bar appears not to have converged.\n\n"
         )
-      .def(py::init<std::size_t,std::size_t,std::size_t,std::size_t,std::size_t>(),
+      .def(py::init<Eigen::Index,Eigen::Index,Eigen::Index,Eigen::Index,Eigen::Index>(),
            "n_bins"_a=0,"n_converged"_a=0,"n_unknown"_a=0,"n_unknown_isolated"_a=0,"n_not_converged"_a=0)
       .def_readwrite("n_bins", & Kl::n_bins)
       .def_readwrite("n_converged", & Kl::n_converged)
@@ -114,8 +114,8 @@ void py_tomo_mhrwtasks(py::module rootmodule)
                                 p.attr("n_unknown_isolated"), p.attr("n_not_converged"));
         })
       .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl, std::size_t, std::size_t, std::size_t,
-                                                    std::size_t, std::size_t>(p, t);
+          tpy::internal::unpack_tuple_and_construct<Kl, Eigen::Index, Eigen::Index, Eigen::Index,
+                                                    Eigen::Index, Eigen::Index>(p, t);
         })
       ;
       ;

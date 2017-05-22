@@ -251,14 +251,14 @@ namespace CxxThreads {
  *      threads minus one). The task logger is NOT constructed in a thread-safe code
  *      region.
  *
- * <li> \a CountIntType should be a type to use to count the number of tasks. Usually
+ * <li> \a TaskCountIntType should be a type to use to count the number of tasks. Usually
  *      there's no reason not to use an \c int.
  *
  * </ul>
  *
  */
 template<typename TaskType_, typename TaskCData_,
-         typename LoggerType_, typename CountIntType_ = int>
+         typename LoggerType_, typename TaskCountIntType_ = int>
 class TOMOGRAPHER_EXPORT TaskDispatcher
 {
 public:
@@ -273,11 +273,11 @@ public:
   //! The logger type specified to the dispatcher (not necessarily thread-safe)
   typedef LoggerType_ LoggerType;
   //! Integer type used to count the number of tasks to run (or running)
-  typedef CountIntType_ CountIntType;
+  typedef TaskCountIntType_ TaskCountIntType;
   //! A thread-safe logger type which is passed on to the child tasks
   typedef ThreadSanitizerLogger<LoggerType_> TaskLoggerType;
   //! The type to use to generate a full status report of all running tasks
-  typedef FullStatusReport<TaskStatusReportType> FullStatusReportType;
+  typedef FullStatusReport<TaskStatusReportType,TaskCountIntType> FullStatusReportType;
 
   /** \brief The relevant type for a callback function (or callable) which is provided
    *         with the full status report
@@ -314,7 +314,7 @@ private:
   //! thread-shared variables
   struct thread_shared_data {
     thread_shared_data(const TaskCData * pcdata_, LoggerType & logger_,
-                       CountIntType num_total_runs, int num_threads)
+                       TaskCountIntType num_total_runs, int num_threads)
       : pcdata(pcdata_),
         user_mutex(),
         results(),
@@ -348,18 +348,18 @@ private:
 
     struct Schedule {
       const int num_threads;
-      CountIntType num_active_working_threads;
+      TaskCountIntType num_active_working_threads;
 
-      const CountIntType num_total_runs;
-      CountIntType num_completed;
-      CountIntType num_launched;
+      const TaskCountIntType num_total_runs;
+      TaskCountIntType num_completed;
+      TaskCountIntType num_launched;
 
-      std::sig_atomic_t interrupt_requested;
+      volatile std::sig_atomic_t interrupt_requested;
       std::string inner_exception;
 
       std::mutex mutex;
 
-      Schedule(CountIntType num_total_runs_, int num_threads_)
+      Schedule(TaskCountIntType num_total_runs_, int num_threads_)
         : num_threads(num_threads_),
           num_active_working_threads(0),
           num_total_runs(num_total_runs_),
@@ -389,12 +389,12 @@ private:
       bool initialized;
       bool ready;
       int periodic_interval;
-      CountIntType numreportsrecieved;
+      TaskCountIntType numreportsrecieved;
       FullStatusReportType full_report;
       FullStatusReportCallbackType user_fn;
 
-      std::sig_atomic_t counter_user;
-      std::sig_atomic_t counter_periodic;
+      volatile std::sig_atomic_t counter_user;
+      volatile std::sig_atomic_t counter_periodic;
 
       std::mutex mutex;
 
@@ -437,17 +437,17 @@ private:
   //! thread-local variables and stuff &mdash; also serves as TaskManagerIface
   struct thread_private_data
   {
-    const CountIntType thread_id;
+    const int thread_id;
 
     thread_shared_data * shared_data;
 
     TaskLoggerType & logger;
 
-    CountIntType task_id;
+    TaskCountIntType task_id;
     int local_status_report_counter_user;
     int local_status_report_counter_periodic;
 
-    thread_private_data(CountIntType thread_id_, thread_shared_data * shared_data_, TaskLoggerType & logger_)
+    thread_private_data(int thread_id_, thread_shared_data * shared_data_, TaskLoggerType & logger_)
       : thread_id(thread_id_),
         shared_data(shared_data_),
         logger(logger_),
@@ -487,7 +487,7 @@ private:
           std::lock_guard<std::mutex> lck2(shared_data->user_mutex, std::adopt_lock);
 
           // call user-defined status report handler
-          shared_data->status_report.user_fn(shared_data->status_report.full_report);
+          shared_data->status_report.user_fn(std::move(shared_data->status_report.full_report));
           // all reports recieved: done --> reset our status_report flags
           shared_data->status_report.numreportsrecieved = 0;
           shared_data->status_report.underway = false;
@@ -629,7 +629,7 @@ public:
    *                 getTaskInput() method (see \ref pageInterfaceTaskCData).
    */
   TaskDispatcher(TaskCData * pcdata_, LoggerType & logger_,
-                 CountIntType num_total_runs_,
+                 TaskCountIntType num_total_runs_,
                  int num_threads_ = (int)std::thread::hardware_concurrency())
     : shared_data(pcdata_, logger_, num_total_runs_, num_threads_)
   {
@@ -810,7 +810,7 @@ public:
   /** \brief Total number of task run instances
    *
    */
-  inline CountIntType numTaskRuns() const {
+  inline TaskCountIntType numTaskRuns() const {
     return shared_data.schedule.num_total_runs;
   }
 
@@ -951,15 +951,15 @@ public:
 
 
 template<typename TaskType_, typename TaskCData_,
-         typename LoggerType_, typename CountIntType_ = int>
+         typename LoggerType_, typename TaskCountIntType_ = int>
 inline
-TaskDispatcher<TaskType_, TaskCData_, LoggerType_, CountIntType_>
+TaskDispatcher<TaskType_, TaskCData_, LoggerType_, TaskCountIntType_>
 mkTaskDispatcher(TaskCData_ * pcdata_,
                  LoggerType_ & logger_,
-                 CountIntType_ num_total_runs_,
+                 TaskCountIntType_ num_total_runs_,
                  int num_threads_ = (int)std::thread::hardware_concurrency())
 {
-  return TaskDispatcher<TaskType_, TaskCData_, LoggerType_, CountIntType_>(
+  return TaskDispatcher<TaskType_, TaskCData_, LoggerType_, TaskCountIntType_>(
       pcdata_, logger_, num_total_runs_, num_threads_
       ) ;
 }

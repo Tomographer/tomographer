@@ -65,7 +65,7 @@ struct TOMOGRAPHER_EXPORT SignalHandler
    */
   virtual void handleSignal(int sig_num) = 0;
 };
-  
+
 
 
 #ifndef TOMOGRAPHER_SIG_HANDLER_REPEAT_EXIT_DELAY
@@ -81,7 +81,7 @@ namespace tomo_internal {
     assert(signum >= 0 && signum < NSIG && "signum out of range 0...NSIG !") ;
     
 #if defined(__MINGW32__) || defined(__MINGW64__)
-    // re-attach handler---seems like it's needed on Windows---why??
+    // re-attach handler---seems like it's needed on Windows...
     signal(signum, tomo_internal::signal_dispatch_fn);
 #endif
     
@@ -114,7 +114,6 @@ namespace tomo_internal {
  * If other handlers are alreay set for a different signal number, they are not
  * overridden.
  */
-TOMOGRAPHER_EXPORT
 inline void installSignalHandler(int signum, SignalHandler * sobj)
 {
   tomo_internal::signal_handler[signum] = sobj;

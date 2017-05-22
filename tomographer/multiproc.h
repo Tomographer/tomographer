@@ -81,7 +81,7 @@ struct TOMOGRAPHER_EXPORT TaskStatusReport
  *
  * Note: \a TaskStatusReportType must be default-constructible and copy-constructible.
  */
-template<typename TaskStatusReportType>
+template<typename TaskStatusReportType, typename TaskCountIntType>
 struct TOMOGRAPHER_EXPORT FullStatusReport
 {
   FullStatusReport()
@@ -94,10 +94,10 @@ struct TOMOGRAPHER_EXPORT FullStatusReport
   }
 
   //! Number of completed tasks
-  int num_completed;
+  TaskCountIntType num_completed;
 
   //! Total number of tasks to perform
-  int num_total_runs;
+  TaskCountIntType num_total_runs;
     
   /** \brief List specifying for each worker (e.g. a spawned thread) whether it is
    * active or not
@@ -153,7 +153,10 @@ struct TOMOGRAPHER_EXPORT FullStatusReport
    */
   inline std::string getHumanReport() const
   {
-    std::string elapsed_s = Tomographer::Tools::fmtDuration(std::chrono::milliseconds(int(elapsed*1000)));
+    std::string elapsed_s = Tomographer::Tools::fmtDuration(
+        std::chrono::milliseconds(
+            (std::chrono::milliseconds::rep)(elapsed*1000)
+            ));
     std::stringstream ss;
     ss << "=========================== Intermediate Progress Report ============================\n"
        << "  "
@@ -172,7 +175,7 @@ struct TOMOGRAPHER_EXPORT FullStatusReport
       }
     } else {
       ss << "Current Run(s) information (workers working/spawned "
-         << (int)std::count(workers_running.begin(), workers_running.end(), true)
+         << std::count(workers_running.begin(), workers_running.end(), true)
          << "/" << workers_running.size() << "):\n";
       for (std::size_t k = 0; k < workers_running.size(); ++k) {
         ss << "=== " << std::setw(2) << k << ": ";
@@ -216,13 +219,14 @@ namespace Sequential {
  *
  * <li> \a LoggerType is the type used for logging messages (derived from \ref Logger::LoggerBase)
  *
- * <li> \a CountIntType should be a type to use to count the number of tasks. Usually
- *      there's no reason not to use an \c int.
+ * <li> \a TaskCountIntType should be a type to use to count the number of tasks. Usually
+ *      there's no reason not to use an \c int, unless you want to launch an exceptionally large
+ *      number of tasks
  *
  * </ul>
  */
 template<typename TaskType_, typename TaskCData_,
-         typename LoggerType_, typename CountIntType_ = int>
+         typename LoggerType_, typename TaskCountIntType_ = int>
 class TOMOGRAPHER_EXPORT TaskDispatcher
 {
 public:
@@ -230,13 +234,13 @@ public:
   typedef typename TaskType::StatusReportType TaskStatusReportType;
   typedef TaskCData_ TaskCData;
   typedef LoggerType_ LoggerType;
-  typedef CountIntType_ CountIntType;
+  typedef TaskCountIntType_ TaskCountIntType;
 
   // not directly needed, but make sure TaskType::ResultType exists as part of testing the
   // task, cdata and result-collectors's correct type interface implementation
   typedef typename TaskType::ResultType TaskResultType;
 
-  typedef FullStatusReport<TaskStatusReportType> FullStatusReportType;
+  typedef FullStatusReport<TaskStatusReportType, TaskCountIntType> FullStatusReportType;
 
   typedef std::function<void(const FullStatusReportType&)> FullStatusReportCallbackType;
 
@@ -246,12 +250,12 @@ private:
   std::vector<TaskResultType*> results;
   LoggerType & logger;
 
-  CountIntType num_total_runs;
+  TaskCountIntType num_total_runs;
   
   /** \brief current executing task number == number of completed tasks
    *
    */
-  CountIntType task_k;
+  TaskCountIntType task_k;
 
   typedef
 #if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
@@ -293,7 +297,8 @@ private:
     inline void _request_interrupt() {
       interrupt_requested = 1;
     }
-    inline void _request_periodic_status_report(int milliseconds) {
+    template<typename IntType>
+    inline void _request_periodic_status_report(IntType milliseconds) {
       if ( milliseconds >= 0 ) {
         _status_report_periodic_interval = std::chrono::duration_cast<StdClockType::duration>(
             std::chrono::milliseconds(1+milliseconds)
@@ -318,10 +323,10 @@ private:
 
     inline void submitStatusReport(const TaskStatusReportType &statreport)
     {
-      FullStatusReport<TaskStatusReportType> fullstatus;
+      FullStatusReportType fullstatus;
       
-      fullstatus.num_completed = (int)dispatcher->task_k;
-      fullstatus.num_total_runs = (int)dispatcher->num_total_runs;
+      fullstatus.num_completed = dispatcher->task_k;
+      fullstatus.num_total_runs = dispatcher->num_total_runs;
               
       // initialize task-specific reports
       // fill our lists with default-constructed values & set all running to false.
@@ -338,7 +343,7 @@ private:
           StdClockType::now() - _tasks_start_time
           ).count() * 1e-6;
 
-      status_report_user_fn(fullstatus);
+      status_report_user_fn(std::move(fullstatus));
 
       status_report_requested = false;
       _last_status_report = StdClockType::now();
@@ -349,7 +354,7 @@ private:
   TaskMgrIface mgriface;
   
 public:
-  TaskDispatcher(TaskCData * pcdata_, LoggerType & logger_, CountIntType num_total_runs_)
+  TaskDispatcher(TaskCData * pcdata_, LoggerType & logger_, TaskCountIntType num_total_runs_)
     : pcdata(pcdata_), results(), logger(logger_), num_total_runs(num_total_runs_),
       mgriface(this)
   {
@@ -397,7 +402,7 @@ public:
   /** \brief The total number of task instances that were run
    *
    */
-  inline CountIntType numTaskRuns() const { return num_total_runs; }
+  inline TaskCountIntType numTaskRuns() const { return num_total_runs; }
 
   /** \brief Returns the results of all the tasks
    *
@@ -451,7 +456,8 @@ public:
    *
    * Pass \a -1 to cancel the periodic status reporting.
    */
-  inline void requestPeriodicStatusReport(int milliseconds)
+  template<typename IntType>
+  inline void requestPeriodicStatusReport(IntType milliseconds)
   {
     mgriface._request_periodic_status_report(milliseconds);
   }
@@ -472,11 +478,11 @@ public:
 
 
 template<typename TaskType_, typename TaskCData_,
-         typename LoggerType_, typename CountIntType_ = int>
-inline TaskDispatcher<TaskType_, TaskCData_, LoggerType_, CountIntType_>
-mkTaskDispatcher(TaskCData_ * pcdata_, LoggerType_ & logger_, CountIntType_ num_total_runs_)
+         typename LoggerType_, typename TaskCountIntType_ = int>
+inline TaskDispatcher<TaskType_, TaskCData_, LoggerType_, TaskCountIntType_>
+mkTaskDispatcher(TaskCData_ * pcdata_, LoggerType_ & logger_, TaskCountIntType_ num_total_runs_)
 {
-  return TaskDispatcher<TaskType_, TaskCData_, LoggerType_, CountIntType_>(
+  return TaskDispatcher<TaskType_, TaskCData_, LoggerType_, TaskCountIntType_>(
       pcdata_, logger_, num_total_runs_
       );
 }

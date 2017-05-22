@@ -168,7 +168,7 @@ BOOST_AUTO_TEST_CASE(IndexListIterator1)
     std::vector<int> indlist(dims.size());
     std::size_t jj = j;
     for (std::size_t k = 0; k < dims.size(); ++k) {
-      indlist[k] = (int)(jj % dims[k]);
+      indlist[k] = ((int)jj % dims[k]);
       jj /= (std::size_t)dims[k];
     }
     MY_BOOST_CHECK_STD_VECTOR_EQUAL(it.index(), indlist, tol);
@@ -196,8 +196,8 @@ BOOST_AUTO_TEST_CASE(IndexListIterator2)
     std::vector<int> indlist(dims.size());
     std::size_t jj = j;
     for (int k = (int)dims.size()-1; k >= 0; --k) {
-      indlist[(std::size_t)k] = jj % dims[(std::size_t)k];
-      jj /= dims[(std::size_t)k];
+      indlist[(std::size_t)k] = (int)jj % dims[(std::size_t)k];
+      jj /= (std::size_t)dims[(std::size_t)k];
     }
     MY_BOOST_CHECK_STD_VECTOR_EQUAL(it.index(), indlist, tol);
 

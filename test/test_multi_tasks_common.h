@@ -366,7 +366,7 @@ struct test_task_dispatcher_status_reporting_fixture {
   {
     auto plogger = &logger; // see http://stackoverflow.com/q/21443023/1694896
     task_dispatcher.setStatusReportHandler(
-        [plogger](const Tomographer::MultiProc::FullStatusReport<StatusRepTestTask::StatusReportType>& r) {
+        [plogger](const typename TaskDispatcher::FullStatusReportType& r) {
           plogger->info("status_report test case", [&](std::ostream & stream) {
               stream << "Full status report recieved. num_completed = " << r.num_completed
                      << ", num_total_runs = " << r.num_total_runs << "\n";

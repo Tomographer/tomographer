@@ -99,6 +99,9 @@ enum BinningConvergence {
  * One always has <code>n_converged + n_unknown + n_not_converged == n_bins</code> and
  * <code>n_unkonwn_isolated <= n_unknown</code>.
  *
+ * The reason for the \a Eigen::Index type is because we count number of bins in a \ref
+ * Histogram, which has Eigen types.
+ *
  * \since Added in %Tomographer 5.0.
  */
 struct TOMOGRAPHER_EXPORT BinningErrorBarConvergenceSummary {

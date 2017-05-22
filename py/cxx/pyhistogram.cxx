@@ -190,7 +190,7 @@ void py_tomo_histogram(py::module rootmodule)
             "\n\n"
             "\n\n", boost::core::demangle(typeid(RealType).name()).c_str(),
             Kl().min, Kl().max, (int)Kl().num_bins).c_str())
-      .def(py::init<RealType,RealType,std::size_t>(),
+      .def(py::init<RealType,RealType,Eigen::Index>(),
            "min"_a=Kl().min, "max"_a=Kl().max, "num_bins"_a=Kl().num_bins)
       .def_readwrite("min", & Kl::min)
       .def_readwrite("max", & Kl::max)
@@ -230,7 +230,7 @@ void py_tomo_histogram(py::module rootmodule)
           return py::make_tuple(p.min, p.max, p.num_bins) ;
         })
       .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl, RealType,RealType,std::size_t>(p, t);
+          tpy::internal::unpack_tuple_and_construct<Kl, RealType,RealType,Eigen::Index>(p, t);
         })
       ;
   }
@@ -286,7 +286,7 @@ void py_tomo_histogram(py::module rootmodule)
         // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
-      .def(py::init<RealType, RealType, std::size_t>(),
+      .def(py::init<RealType, RealType, Eigen::Index>(),
           "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("params", [](const Kl & h) -> Kl::Params { return h.params; })
       .def_property_readonly("values_center", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesCenter(); })
@@ -374,7 +374,7 @@ void py_tomo_histogram(py::module rootmodule)
         // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
-      .def(py::init<RealType, RealType, std::size_t>(),
+      .def(py::init<RealType, RealType, Eigen::Index>(),
           "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("params", [](const Kl & h) -> Kl::Params { return h.params; })
       .def_property_readonly("values_center", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesCenter(); })
@@ -441,7 +441,7 @@ void py_tomo_histogram(py::module rootmodule)
         // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def(py::init<tpy::HistogramParams>(), "params"_a=tpy::HistogramParams())
-      .def(py::init<RealType, RealType, std::size_t>())
+      .def(py::init<RealType, RealType, Eigen::Index>())
       .def_property_readonly("params", [](const Kl & h) -> Kl::Params { return h.params; })
       .def_property_readonly("values_center", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesCenter(); })
       .def_property_readonly("values_lower", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesLower(); })

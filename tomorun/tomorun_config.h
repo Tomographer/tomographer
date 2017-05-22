@@ -42,30 +42,6 @@
 
 
 
-/* TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS
- *
- * Value: true | false
- *
- * If defined, will make sure that all POVM effects read from the input file are positive
- * semidefinite and nonzero.
- */
-#ifndef TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS
-#define TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS true
-#endif
-
-
-/* TOMORUN_TIMERCLOCK
- *
- * Value: C++ clock class name (std::chrono::...)
- *
- */
-#ifdef TOMORUN_TIMERCLOCK
-typedef TOMORUN_TIMERCLOCK TimerClock;
-#else
-typedef std::chrono::high_resolution_clock TimerClock;
-#endif
-
-
 /* TOMORUN_INT
  *
  * Value: a integer type
@@ -94,6 +70,32 @@ typedef double TomorunReal;
 #endif
 
 
+/* TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS
+ *
+ * Value: true | false
+ *
+ * If defined, will make sure that all POVM effects read from the input file are positive
+ * semidefinite and nonzero.
+ */
+#ifndef TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS
+#define TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS true
+#endif
+
+
+/* TOMORUN_TIMERCLOCK
+ *
+ * Value: C++ clock class name (std::chrono::...)
+ *
+ */
+#ifdef TOMORUN_TIMERCLOCK
+typedef TOMORUN_TIMERCLOCK TimerClock;
+#else
+typedef std::chrono::high_resolution_clock TimerClock;
+#endif
+
+
+
+
 /* TOMORUN_CUSTOM_FIXED_DIM, TOMORUN_CUSTOM_FIXED_MAX_DIM, TOMORUN_CUSTOM_MAX_POVM_EFFECTS
  *
  * You may define these to fixed values to specialize the tomorun problem to a specific
@@ -102,11 +104,13 @@ typedef double TomorunReal;
  * run-time.  Leave these symbols undefined to have a selection of common values of
  * fixed-size matrices with a fallback to dynamic-size.
  *
+ * WARNING: You need to define all three macros, not just one or two of them.
+ *
  * TOMORUN_CUSTOM_FIXED_DIM fixes the dimension of the system to a compile-time fixed
- * value which cannot be changed at run-time.  Leave the default common cases or use
- * Eigen::Dynamic if you want tomorun to work with different system sizes.
- * TOMORUN_CUSTOM_FIXED_MAX_DIM specifies a maximum dimension for the dimension of the
- * quantum system; the latter may at run-time take any value up to this limit.
+ * value which cannot be changed at run-time.  Use Eigen::Dynamic if you want tomorun to
+ * work with different system sizes.  TOMORUN_CUSTOM_FIXED_MAX_DIM specifies a maximum
+ * dimension for the dimension of the quantum system; the latter may at run-time take any
+ * value up to this limit; use Eigen::Dynamic for no limit.
  *
  * If these are not defined (the default), then some common cases are provided with a
  * fallback to all-dynamic specified at runtime. (See bottom of tomorun.cxx)
@@ -162,7 +166,11 @@ typedef std::mt19937 TomorunBaseRngType;
 
 
 
-// DEPRECATED OPTION NO LONGER HAS EFFECT (would bloat the code too much with the other options:)
+
+
+
+// DEPRECATED OPTIONS, NO LONGER HAVE EFFECT
+// (would bloat the code too much with the other options:)
 
 // /* TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
 //  *
@@ -176,6 +184,9 @@ typedef std::mt19937 TomorunBaseRngType;
 // #ifndef TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
 // #define TOMORUN_USE_MULTIPLEXORVALUECALCULATOR true
 // #endif
+#ifdef TOMORUN_USE_MULTIPLEXORVALUECALCULATOR
+#warning "TOMORUN_USE_MULTIPLEXORVALUECALCULATOR is now deprecated. The multiplexor is always used."
+#endif
 
 
 

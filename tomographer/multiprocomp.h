@@ -343,14 +343,14 @@ namespace OMP {
  *      omp_get_num_threads() to get the current thread number and the total number of
  *      threads, respectively.
  *
- * <li> \a CountIntType should be a type to use to count the number of tasks. Usually
+ * <li> \a TaskCountIntType should be a type to use to count the number of tasks. Usually
  *      there's no reason not to use an \c int.
  *
  * </ul>
  *
  */
 template<typename TaskType_, typename TaskCData_, typename LoggerType_,
-         typename CountIntType_ = int,
+         typename TaskCountIntType_ = int,
          typename TaskLoggerType_ = ThreadSanitizerLogger<LoggerType_> >
 class TOMOGRAPHER_EXPORT TaskDispatcher
 {
@@ -366,11 +366,11 @@ public:
   //! The logger type specified to the dispatcher (not necessarily thread-safe)
   typedef LoggerType_ LoggerType;
   //! Integer type used to count the number of tasks to run (or running)
-  typedef CountIntType_ CountIntType;
+  typedef TaskCountIntType_ TaskCountIntType;
   //! A thread-safe logger type which is passed on to the child tasks
   typedef TaskLoggerType_ TaskLoggerType;
   //! The type to use to generate a full status report of all running tasks
-  typedef FullStatusReport<TaskStatusReportType> FullStatusReportType;
+  typedef FullStatusReport<TaskStatusReportType,TaskCountIntType> FullStatusReportType;
 
   /** \brief The relevant type for a callback function (or callable) which is provided
    *         with the full status report
@@ -407,7 +407,7 @@ private:
   //! thread-shared variables
   struct thread_shared_data {
     thread_shared_data(const TaskCData * pcdata_, LoggerType & logger_,
-                       CountIntType num_total_runs_, CountIntType n_chunk_)
+                       TaskCountIntType num_total_runs_, TaskCountIntType n_chunk_)
       : pcdata(pcdata_),
         results(),
         logger(logger_),
@@ -436,18 +436,18 @@ private:
     bool status_report_ready;
     volatile std::sig_atomic_t status_report_counter;
     int status_report_periodic_interval;
-    CountIntType status_report_numreportsrecieved;
+    TaskCountIntType status_report_numreportsrecieved;
 
     FullStatusReportType status_report_full;
     FullStatusReportCallbackType status_report_user_fn;
 
     volatile std::sig_atomic_t interrupt_requested;
 
-    CountIntType num_total_runs;
-    CountIntType n_chunk;
-    CountIntType num_completed;
+    TaskCountIntType num_total_runs;
+    TaskCountIntType n_chunk;
+    TaskCountIntType num_completed;
 
-    CountIntType num_active_working_threads;
+    TaskCountIntType num_active_working_threads;
   };
   //! thread-local variables and stuff &mdash; also serves as TaskManagerIface
   struct thread_private_data
@@ -456,8 +456,8 @@ private:
 
     TaskLoggerType * logger;
 
-    CountIntType kiter;
-    CountIntType local_status_report_counter;
+    TaskCountIntType kiter;
+    int local_status_report_counter;
 
     inline bool statusReportRequested() const
     {
@@ -485,7 +485,7 @@ private:
           {
             try {
               // call user-defined status report handler
-              shared_data->status_report_user_fn(shared_data->status_report_full);
+              shared_data->status_report_user_fn(std::move(shared_data->status_report_full));
               // all reports recieved: done --> reset our status_report_* flags
               shared_data->status_report_numreportsrecieved = 0;
               shared_data->status_report_underway = false;
@@ -505,7 +505,7 @@ private:
         }
       } // omp master
 
-      return (int)local_status_report_counter != (int)shared_data->status_report_counter;
+      return local_status_report_counter != (int)shared_data->status_report_counter;
     }
 
     // internal use only:
@@ -523,7 +523,7 @@ private:
 
     inline void submitStatusReport(const TaskStatusReportType &statreport)
     {
-      if ((int)local_status_report_counter == (int)shared_data->status_report_counter) {
+      if (local_status_report_counter == (int)shared_data->status_report_counter) {
         // error: task submitted unsollicited report
         logger->warning("OMP TaskDispatcher/taskmanageriface", "Task submitted unsollicited status report");
         return;
@@ -691,8 +691,8 @@ public:
    *                 href="https://computing.llnl.gov/tutorials/openMP/\#DO"
    *                 target="_blank">this page</a>).
    */
-  TaskDispatcher(TaskCData * pcdata_, LoggerType & logger_, CountIntType num_total_runs_,
-                 CountIntType n_chunk_ = 1)
+  TaskDispatcher(TaskCData * pcdata_, LoggerType & logger_, TaskCountIntType num_total_runs_,
+                 TaskCountIntType n_chunk_ = 1)
     : shared_data(pcdata_, logger_, num_total_runs_, n_chunk_)
   {
   }
@@ -725,11 +725,11 @@ public:
 
     // declaring these as "const" causes a weird compiler error
     // "`n_chunk' is predetermined `shared' for `shared'"
-    CountIntType num_total_runs = shared_data.num_total_runs;
-    CountIntType n_chunk = shared_data.n_chunk;
+    TaskCountIntType num_total_runs = shared_data.num_total_runs;
+    TaskCountIntType n_chunk = shared_data.n_chunk;
     (void)n_chunk; // silence "unused variable" warning when compiling without OMP support
 
-    CountIntType k = 0;
+    TaskCountIntType k = 0;
 
     thread_shared_data *shdat = &shared_data;
     thread_private_data privdat;
@@ -802,7 +802,7 @@ public:
   /** \brief Total number of task run instances
    *
    */
-  inline CountIntType numTaskRuns() const {
+  inline TaskCountIntType numTaskRuns() const {
     return shared_data.num_total_runs;
   }
 
@@ -821,7 +821,7 @@ public:
   }
 
 private:
-  void _run_task(thread_private_data & privdat, thread_shared_data * shdat, CountIntType k)
+  void _run_task(thread_private_data & privdat, thread_shared_data * shdat, TaskCountIntType k)
     TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
   {
 
@@ -883,7 +883,7 @@ private:
             + boost::current_exception_diagnostic_information();
       }
         
-      if ((int)privdat.local_status_report_counter != (int)shdat->status_report_counter) {
+      if (privdat.local_status_report_counter != (int)shdat->status_report_counter) {
         // status report request missed by task... do as if we had provided a
         // report, but don't provide report.
         ++ shdat->status_report_numreportsrecieved;
@@ -983,15 +983,15 @@ public:
  *         deduction mechanism
  */
 template<typename TaskType_, typename TaskCData_,
-         typename LoggerType_, typename CountIntType_ = int>
+         typename LoggerType_, typename TaskCountIntType_ = int>
 inline TaskDispatcher<TaskType_, TaskCData_,
-                      LoggerType_, CountIntType_>
+                      LoggerType_, TaskCountIntType_>
 makeTaskDispatcher(TaskCData_ * pcdata_, LoggerType_ & logger_,
-                   CountIntType_ num_total_runs_, CountIntType_ n_chunk_ = 1)
+                   TaskCountIntType_ num_total_runs_, TaskCountIntType_ n_chunk_ = 1)
 {
   // RVO should be rather obvious to the compiler
   return TaskDispatcher<TaskType_, TaskCData_,
-                        LoggerType_, CountIntType_>(
+                        LoggerType_, TaskCountIntType_>(
                             pcdata_, logger_, num_total_runs_, n_chunk_
                             );
 }

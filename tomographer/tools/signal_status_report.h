@@ -53,17 +53,23 @@ template<typename TaskDispatcher, typename Logger>
 struct TOMOGRAPHER_EXPORT SigHandlerTaskDispatcherStatusReporter
   : public SignalHandler
 {
-  typedef Tomographer::MultiProc::FullStatusReport<typename TaskDispatcher::TaskType::StatusReportType>
-    FullStatusReportType;
+  typedef typename TaskDispatcher::FullStatusReportType FullStatusReportType;
 
   SigHandlerTaskDispatcherStatusReporter(TaskDispatcher * tasks_, Logger & logger_)
     : tasks(tasks_), logger(logger_)
   {
-    tasks->setStatusReportHandler(
-        [this](const FullStatusReportType& report) {
-          logger.debug("SigHandlerStatusReporter/lambda", "intermediate progress report lambda called");
-          this->intermediateProgressReport(report);
-        });
+    logger.debug("Tomographer::Tools::SigHandlerTaskDispatcherStatusReporter",
+                 "Setting up signal handler, with default callback") ;
+    tasks->setStatusReportHandler(intermediateProgressReport) ;
+  }
+
+  template<typename CallbackFn>
+  SigHandlerTaskDispatcherStatusReporter(TaskDispatcher * tasks_, Logger & logger_, CallbackFn && fn)
+    : tasks(tasks_), logger(logger_)
+  {
+    logger.debug("Tomographer::Tools::SigHandlerTaskDispatcherStatusReporter",
+                 "Setting up signal handler, with custom callback") ;
+    tasks->setStatusReportHandler(std::forward<CallbackFn>(fn)) ;
   }
   
   TaskDispatcher * tasks;
@@ -77,10 +83,9 @@ struct TOMOGRAPHER_EXPORT SigHandlerTaskDispatcherStatusReporter
   /** \brief Format a nice intermediate progress report.
    *
    */
-  void intermediateProgressReport(const FullStatusReportType& report)
+  static void intermediateProgressReport(const FullStatusReportType& report)
   {
-    std::string human_report = report.getHumanReport();
-    fprintf(stderr, "\n%s\n", human_report.c_str());
+    std::cerr << "\n" << report.getHumanReport() << "\n";
   };
 
 };
@@ -91,6 +96,19 @@ makeSigHandlerTaskDispatcherStatusReporter(TaskDispatcher * tasks, LoggerT & log
 {
   return SigHandlerTaskDispatcherStatusReporter<TaskDispatcher, LoggerT>(tasks, logger);
 }
+
+
+template<typename TaskDispatcher, typename LoggerT, typename CallbackFn>
+inline SigHandlerTaskDispatcherStatusReporter<TaskDispatcher, LoggerT>
+makeSigHandlerTaskDispatcherStatusReporter(TaskDispatcher * tasks, LoggerT & logger, CallbackFn && fn)
+{
+  return SigHandlerTaskDispatcherStatusReporter<TaskDispatcher, LoggerT>(
+      tasks,
+      logger,
+      std::forward<CallbackFn>(fn)
+      );
+}
+
 
 
 } // namespace Tools

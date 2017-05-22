@@ -301,7 +301,7 @@
  *
  * \par void setStatusReportHandler(Fn fn)
  *   The argument should be a callable (e.g. lambda function) which accepts a single
- *   paramter of const reference to a <code>FullStatusReportType</code>
+ *   paramter of const reference to a \a FullStatusReportType.
  *
  * \par void requestStatusReport()
  *   Initiate a status report query.  The call will typically return immediately, and
@@ -316,9 +316,14 @@
  * \par void requestInterrupt()
  *   Interrupt all tasks as soon as possible.
  *
- * The \a TaskDispatcher must also provide the following typedef:
+ * The \a TaskDispatcher must also provide the following typedefs:
  *
  * \par typedef ... TaskType;
  *   The \ref pageInterfaceTask -compliant type used to describe a task.
+ *
+ * \par typedef .. FullStatusReportType;
+ *   A specialized type (or subclass) of \ref Tomographer::MultiProc::FullStatusReport
+ *   which is passed as parameter to the callback function given to \a
+ *   setStatusReportHandler()
  *
  */

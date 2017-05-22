@@ -163,7 +163,7 @@ public:
 	   HistogramParams hist_params, // histogram parameters
 	   int binning_num_levels, // number of binning levels in the binning analysis
 	   tpy::MHRWParams mhrw_params, // parameters of the random walk
-	   int base_seed, // a random seed to initialize the random number generator
+	   OurRng::result_type base_seed, // a random seed to initialize the random number generator
            py::dict ctrl_step_size_params_, // parameters for step size controller
            py::dict ctrl_converged_params_ // parameters for value bins converged controller
       )
@@ -272,7 +272,7 @@ public:
           );
 
     int check_frequency_sweeps = 0;
-    std::size_t max_allowed[3] = {0};
+    Eigen::Index max_allowed[3] = {0};
     {
       py::gil_scoped_acquire gil_acq;
 
@@ -280,16 +280,16 @@ public:
         check_frequency_sweeps =
           ctrl_converged_params.attr("get")("check_frequency_sweeps", 1024).cast<int>();
         max_allowed[0] =
-          ctrl_converged_params.attr("get")("max_allowed_unknown", 2).cast<std::size_t>();
+          ctrl_converged_params.attr("get")("max_allowed_unknown", 2).cast<Eigen::Index>();
         max_allowed[1] =
-          ctrl_converged_params.attr("get")("max_allowed_unknown_notisolated", 0).cast<std::size_t>();
+          ctrl_converged_params.attr("get")("max_allowed_unknown_notisolated", 0).cast<Eigen::Index>();
         max_allowed[2] =
-          ctrl_converged_params.attr("get")("max_allowed_not_converged", 0).cast<std::size_t>();
+          ctrl_converged_params.attr("get")("max_allowed_not_converged", 0).cast<Eigen::Index>();
       } else {
         check_frequency_sweeps = 0;
-        max_allowed[0] = std::numeric_limits<std::size_t>::max();
-        max_allowed[1] = std::numeric_limits<std::size_t>::max();
-        max_allowed[2] = std::numeric_limits<std::size_t>::max();
+        max_allowed[0] = std::numeric_limits<Eigen::Index>::max();
+        max_allowed[1] = std::numeric_limits<Eigen::Index>::max();
+        max_allowed[2] = std::numeric_limits<Eigen::Index>::max();
       }
     }
 
@@ -368,7 +368,7 @@ py::object py_tomorun(
                                      + std::to_string(Exn.rows()) + " but Nm.rows()="
                                      + std::to_string(Nm.rows()));
     }
-    for (std::size_t k = 0; k < (std::size_t)Nm.rows(); ++k) {
+    for (Eigen::Index k = 0; k < Nm.rows(); ++k) {
       llh.addMeasEffect(Exn.row(k).transpose(), Nm(k), true);
     }
   } else if (py::len(Emn)) {
@@ -378,8 +378,8 @@ py::object py_tomorun(
                                      + std::to_string(py::len(Emn)) +
                                      " but Nm.rows()=" + std::to_string(Nm.rows()));
     }
-    for (std::size_t k = 0; k < (std::size_t)Nm.rows(); ++k) {
-      MatrixType POVMeffect = Emn[k].cast<MatrixType>();
+    for (Eigen::Index k = 0; k < Nm.rows(); ++k) {
+      MatrixType POVMeffect = Emn[(std::size_t)k].cast<MatrixType>();
       llh.addMeasEffect(POVMeffect, Nm(k), true);
     }
   } else {
@@ -492,7 +492,8 @@ py::object py_tomorun(
                << "might not be reliable." ;
       });
   }
-  const CountIntType binning_last_level_num_samples = std::ldexp((double)mhrw_params.n_run, - binning_num_levels);
+  const CountIntType binning_last_level_num_samples =
+    (CountIntType)std::ldexp((double)mhrw_params.n_run, - binning_num_levels);
   logger.debug([&](std::ostream & stream) {
       stream << "Binning analysis: " << binning_num_levels << " levels, with "
              << binning_last_level_num_samples << " samples at last level";

@@ -45,29 +45,49 @@ namespace tpy {
 
 struct TOMOGRAPHER_EXPORT WorkerStatusReport {
   int worker_id;
-  double fraction_done;
-  std::string msg;
+  py::float_ fraction_done;
+  py::str msg;
   py::dict data;
 };
 
 struct TOMOGRAPHER_EXPORT FullStatusReport {
   FullStatusReport()
-    : num_completed(-1), num_total_runs(-1), elapsed(0),
+    : num_completed(-1), num_total_runs(-1), elapsed(0.0),
       workers(), total_fraction_done(), human_report()
   {
   }
 
-  int num_completed;
-  int num_total_runs;
-  double elapsed; // elapsed time in seconds
+  py::int_ num_completed;
+  py::int_ num_total_runs;
+  py::float_ elapsed; // elapsed time in seconds
 
   py::list workers; // list of [WorkerStatusReport or None (for idle)]
 
-  double total_fraction_done;
-  std::string human_report;
+  py::float_ total_fraction_done;
+  py::str human_report;
 };
 
 }
+
+template<typename MHWalkerParams>
+struct TOMOGRAPHER_EXPORT PyMHWalkerParamsToDict
+{
+  static inline py::dict makeDict(const MHWalkerParams & ) { return {}; }
+};
+template<typename StepRealType>
+struct TOMOGRAPHER_EXPORT PyMHWalkerParamsToDict<Tomographer::MHWalkerParamsStepSize<StepRealType> >
+{
+  static inline py::dict makeDict(const Tomographer::MHWalkerParamsStepSize<StepRealType> & p) {
+    return py::dict(py::arg("step_size") = p.step_size);
+  }
+};
+
+template<typename MHWalkerParams>
+inline py::dict pyMHWalkerParamsToDictInvoke(const MHWalkerParams & p)
+{
+  return PyMHWalkerParamsToDict<MHWalkerParams>::makeDict(p);
+}
+
 
 template<typename TaskType>
 struct TOMOGRAPHER_EXPORT PyStatusReportAddWorkerDataFields
@@ -80,19 +100,20 @@ struct TOMOGRAPHER_EXPORT PyStatusReportAddWorkerDataFields< Tomographer::MHRWTa
 {
   typedef typename Tomographer::MHRWTasks::MHRandomWalkTask<CData, Rng>::StatusReportType TaskStatusReportType;
   static inline void addDataFields(py::dict & d, const TaskStatusReportType & wr) {
-    d["mhrw_params"] = tpy::MHRWParams(py::dict(py::arg("step_size")=wr.mhrw_params.mhwalker_params.step_size),
-                                       wr.mhrw_params.n_sweep,
-                                       wr.mhrw_params.n_therm,
-                                       wr.mhrw_params.n_run);
+    d["mhrw_params"] = tpy::MHRWParams(
+        pyMHWalkerParamsToDictInvoke(wr.mhrw_params.mhwalker_params),
+        wr.mhrw_params.n_sweep,
+        wr.mhrw_params.n_therm,
+        wr.mhrw_params.n_run);
     d["acceptance_ratio"] = wr.acceptance_ratio;
     d["kstep"] = wr.kstep;
     d["n_total_iters"] = wr.n_total_iters;
   }
 };
 
-template<typename TaskType>
+template<typename TaskType, typename IntType = int>
 inline tpy::FullStatusReport preparePyTaskStatusReport(
-    const Tomographer::MultiProc::FullStatusReport<typename TaskType::StatusReportType> & report
+    const Tomographer::MultiProc::FullStatusReport<typename TaskType::StatusReportType, IntType> & report
     )
 {
   tpy::FullStatusReport r;
@@ -128,18 +149,14 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, py::object pr
                                            int progress_interval_ms, bool require_gil_acquisition = false)
 {
   typedef typename TaskDispatcher::TaskType TaskType;
-  typedef typename TaskType::StatusReportType TaskStatusReportType;
 
   //
   // NOTE: always set a progress report handler, even if progress_fn is None.  Indeed, we
   // use this callback to e.g. check for keyboard interrupt signals.
   //
 
-  auto fn = [progress_fn/*,time_start*/](const Tomographer::MultiProc::FullStatusReport<TaskStatusReportType> & report) {
+  auto fn = [progress_fn](const typename TaskDispatcher::FullStatusReportType & report) {
 
-    //fprintf(stderr, "DEBUG:: handler called, pid=%d, this_thread::get_id=%s\n", (int)getpid(), streamstr(std::this_thread::get_id()).c_str() ) ;
-    // check to see if we got any KeyboardInterrupt
-    // PyErr_CheckSignals() returns -1 if an exception was raised
     if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
       //fprintf(stderr, "DEBUG:: error set, throwing\n") ;
       throw py::error_already_set();
@@ -148,60 +165,19 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, py::object pr
     if (!progress_fn.is_none()) {
       auto r = preparePyTaskStatusReport<TaskType>(report);
       //fprintf(stderr, "DEBUG:: about to call py callback\n") ;
-      //try {
       progress_fn(py::cast(r));
-      // } catch (std::exception & exc) {
-      //   //fprintf(stderr, "DEBUG:: EXCEPTION! %s", exc.what()) ;
-      //   throw;
-      // } catch (...) {
-      //   //fprintf(stderr, "DEBUG:: EXCEPTION! (unknown)") ;
-      //   throw;
-      // }
       if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
         fprintf(stderr, "DEBUG:: error set, throwing\n") ;
         throw py::error_already_set();
       }
       //fprintf(stderr, "DEBUG:: py callback done\n") ;
     }
-    // borrowed from tomographer/tools/signal_status_handler.h: --->  FOR DEBUGGING::
-    /*
-      std::string elapsed = Tomographer::Tools::fmtDuration(StdClockType::now() - time_start);
-      fprintf(stderr,
-      "\n"
-      "=========================== Intermediate Progress Report ============================\n"
-      "  Total Completed Runs: %d/%d: %5.2f%%\n"
-      "  %s total elapsed\n",
-      report.num_completed, report.num_total_runs,
-      (double)report.num_completed/report.num_total_runs*100.0,
-      elapsed.c_str());
-      if (report.workers_running.size() == 1) {
-      if (report.workers_running[0]) {
-      fprintf(stderr, "--> %s\n", report.workers_reports[0].msg.c_str());
-      }
-      } else if (report.workers_running.size() > 1) {
-      fprintf(stderr,
-      "Current Run(s) information (workers working/spawned %d/%d):\n",
-      (int)std::count(report.workers_running.begin(), report.workers_running.end(), true),
-      (int)report.workers_running.size()
-      );
-      for (unsigned int k = 0; k < report.workers_running.size(); ++k) {
-      std::string msg = report.workers_running[k] ? report.workers_reports[k].msg : std::string("<idle>");
-      fprintf(stderr, "=== #%2u: %s\n", k, msg.c_str());
-      }
-      } else {
-      // no info. (workers_running.size() == 0)
-      }
-      fprintf(stderr,
-      "=====================================================================================\n\n");
-    */
-    // <----
   };
 
-  auto fn_with_gil = [fn](const Tomographer::MultiProc::FullStatusReport<TaskStatusReportType> & report) {
+  auto fn_with_gil = [fn](const typename TaskDispatcher::FullStatusReportType & report) {
     py::gil_scoped_acquire gil_acquire;
     fn(report);
   };
-
 
   if (require_gil_acquisition) {
     tasks.setStatusReportHandler(fn_with_gil);

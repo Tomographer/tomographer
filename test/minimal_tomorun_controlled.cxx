@@ -326,7 +326,7 @@ int main()
         );
 
   // get status reports every 500 milliseconds printed out on std::cout
-  tasks.setStatusReportHandler([&](decltype(tasks)::FullStatusReportType report) {
+  tasks.setStatusReportHandler([&](const decltype(tasks)::FullStatusReportType & report) {
       std::cout << "--- intermediate status report ---\n"
                 << report.getHumanReport() << "\n" ;
     });
