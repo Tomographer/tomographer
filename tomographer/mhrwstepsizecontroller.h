@@ -397,9 +397,9 @@ StatusProvider<MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsColle
   static inline std::string getStatusLine(const StatusableObject * obj) {
     double last_step = (double)obj->getLastSetStepSize();
     if (std::isfinite(last_step)) {
-      return Tomographer::Tools::fmts("set step size = %.3g", last_step);
+      return Tomographer::Tools::fmts("step size = %.3g", last_step);
     } else {
-      return std::string("<no set step size>");
+      return std::string();
     }
   }
 };

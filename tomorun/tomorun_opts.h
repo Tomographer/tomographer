@@ -122,7 +122,9 @@ static std::string prog_version_info_features()
 #else
   featconfig.push_back("no multiplexor-value-calculator");
 #endif
+#ifdef TOMORUN_RNG_CLASS
   featconfig.push_back(Tomographer::Tools::fmts("rng=%s", IDENT_TO_STRING(TOMORUN_RNG_CLASS)));
+#endif
 #if TOMORUN_USE_DEVICE_SEED
   featconfig.push_back(Tomographer::Tools::fmts("rng-seed-from-device=%s", TOMORUN_RANDOM_DEVICE ""));
 #endif
@@ -821,6 +823,9 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     opt-> OPTNAME = false ;                                             \
   }
 
+
+  SET_OPT_BOOL_SWITCH(light_jumps, light-jumps) ;
+
   SET_OPT_BOOL_SWITCH(binning_analysis_error_bars, binning-analysis-error-bars) ;
   if (no_binning_analysis_error_bars_set) {
     // disable control-binning-converged, which is incompatible with no error bars
@@ -882,6 +887,7 @@ void display_parameters(ProgOptions * opt, LoggerType & logger)
       "display_parameters()",
       // message
       "Using  data from file :     %s  (measurements x%.3g)\n"
+      "       random walk jumps :  %s\n"
       "       value type :         %s\n"
       "       val. histogram :     [%.2g, %.2g] (%lu bins)\n"
       "       error bars :         %s\n"
@@ -895,6 +901,7 @@ void display_parameters(ProgOptions * opt, LoggerType & logger)
       "       --> total no. of live samples = %lu  (%.2e)\n"
       "\n",
       opt->data_file_name.c_str(), opt->NMeasAmplifyFactor,
+      (opt->light_jumps ? "\"light\"" : "\"full\""),
       streamcstr(opt->valtype),
       opt->val_min, opt->val_max, (unsigned long)opt->val_nbins,
       (opt->binning_analysis_error_bars

@@ -138,11 +138,11 @@ typedef double TomorunReal;
  * Value: C++ pseudo random number generator name (e.g. std::mt19937)
  *
  */
-#ifndef TOMORUN_RNG_CLASS
-#define TOMORUN_RNG_CLASS std::mt19937
-#endif
-
+#ifdef TOMORUN_RNG_CLASS
 typedef TOMORUN_RNG_CLASS TomorunBaseRngType;
+#else
+typedef std::mt19937 TomorunBaseRngType;
+#endif
 
 
 /* TOMORUN_RANDOM_DEVICE

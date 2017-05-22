@@ -1,0 +1,38 @@
+# Tomorun configuration file. All settings specified here are values for command-line
+# options to the `tomorun` program. See help by running the command `tomorun --help`.
+#
+# Run `tomorun` with this configuration by issuing the command:
+#     tomorun --config tomorun-config-Fid2
+
+# ------------------
+data-file-name=data_file.mat
+write-histogram-from-config-file-name = 1
+# ------------------
+
+# number of parallel random walks
+n-repeats = 8
+
+# The parameters of the random walk: step size, sweep size, and number of
+# samples to collect
+
+# step size & sweep size will be auto-detected, just make sure that step*sweep ~ sth meaningful
+step-size = 0.1
+n-sweep = 100
+
+n-therm = 2048
+n-run = 8192
+
+# Calculate the squared fidelity to the pure reference state |W> (remember: use
+# "obs-value" in this case, see `tomorun --help`)
+value-type=obs-value:proj_W
+
+# Histogram range:  MINVALUE:MAXVALUE/NUMBEROFBINS
+value-hist=0.6:0.8/50
+
+control-binning-converged-max-not-converged=2
+control-binning-converged-max-unknown=2
+control-binning-converged-max-unknown-notisolated=2
+
+
+
+periodic-status-report-ms=500

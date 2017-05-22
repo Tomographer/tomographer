@@ -645,6 +645,7 @@ inline void tomorun_dispatch_st(const int dim, ProgOptions * opt, Tomographer::M
 {
   DISPATCH_STATIC_BOOL(
       opt->light_jumps, UseLLHWalkerLight,
+//  constexpr bool UseLLHWalkerLight = false;
       DISPATCH_STATIC_BOOL(
           opt->control_step_size, ControlStepSize,
           {

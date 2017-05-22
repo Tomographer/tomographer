@@ -490,7 +490,7 @@ public:
     auto logger = _llogger.subLogger(TOMO_ORIGIN) ;
 
     // repeat several times, to have some chance of the effect not just rotating the purification ...
-    for (int j = 0; j < (int)_llh.dmt.dim2(); ++j) {
+    for (int j = 0; j < (int)_llh.dmt.dim(); ++j) {
 
       // select two random indices, and randomly select whether we apply an elementary x, y or z rotation
       Eigen::Index k1 = _jumpdir_distr_rnd(_rng);
@@ -539,6 +539,9 @@ public:
       new_T(i1,j1) = x;
       new_T(i2,j2) = y;
     }
+
+    // ensure continued normalization
+    new_T /= new_T.norm(); // norm is Frobenius norm
 
     // new_T is ready, return it
     return new_T;
