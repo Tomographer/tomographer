@@ -77,6 +77,8 @@
 #    error "OpenMP multiprocessing scheme requested, but OpenMP is not enabled"
 #  endif
 
+inline int defaultNumRepeat() { return omp_get_num_processors(); }
+
 #define TOMORUN_THREAD_CRITICAL_SECTION         \
   _Pragma("omp critical")
 
@@ -87,6 +89,8 @@
 #  define TomorunMultiProcTaskDispatcher Tomographer::MultiProc::Sequential::TaskDispatcher
 #  define TomorunMultiProcTaskDispatcherTitle "Sequential (parallelization deactivated!)"
 
+inline int defaultNumRepeat() { return 1; }
+
 #define TOMORUN_THREAD_CRITICAL_SECTION
 
 #else // also if defined(TOMORUN_MULTIPROC_CXXTHREADS)
@@ -95,6 +99,8 @@
 #  include <tomographer/multiprocthreads.h>
 #  define TomorunMultiProcTaskDispatcher Tomographer::MultiProc::CxxThreads::TaskDispatcher
 #  define TomorunMultiProcTaskDispatcherTitle "C++11 Threads"
+
+inline int defaultNumRepeat() { return (int)std::thread::hardward_concurrency(); }
 
 #define TOMORUN_THREAD_CRITICAL_SECTION                 \
   static std::mutex _tomorun_critical_section_mutex;                       \

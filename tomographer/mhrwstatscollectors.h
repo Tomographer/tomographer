@@ -1196,7 +1196,7 @@ struct TOMOGRAPHER_EXPORT StatusProvider<ValueHistogramWithBinningMHRWStatsColle
     auto conv_summary = BinningErrorBarConvergenceSummary::fromConvergedStatus(conv_status);
 
     return histogramShortBar<BaseHistogramType>(histogram, true, maxbarwidth)
-      + Tools::fmts("   err: (cnvg/?/fail) %d/%d/%d",
+      + Tools::fmts("   err(cnvg/?/x): %d/%d/%d",
                     (int)conv_summary.n_converged, (int)conv_summary.n_unknown,
                     (int)conv_summary.n_not_converged);
   }

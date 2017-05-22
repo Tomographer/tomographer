@@ -327,7 +327,7 @@ struct ProgOptions
   Eigen::Index control_binning_converged_max_unknown{2};
   Eigen::Index control_binning_converged_max_unknown_notisolated{0};
 
-  int Nrepeats{(int)std::thread::hardware_concurrency()};
+  int Nrepeats{defaultNumRepeat()};
   int Nchunk{1};
 
   TomorunReal NMeasAmplifyFactor{TomorunReal(1.0)};
