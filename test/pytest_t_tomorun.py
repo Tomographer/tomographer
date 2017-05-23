@@ -119,7 +119,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
 
         for k in range(num_repeats):
             runres = r['runs_results'][k]
-            self.assertTrue(isinstance(runres, tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult))
+            self.assertTrue(isinstance(runres, tomographer.mhrwtasks.MHRandomWalkTaskResult))
 
         # now, check the actual values of the result
         pok = AnalyticalSolutionFn(np.sum(self.Nm))
@@ -167,7 +167,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
 
         for k in range(num_repeats):
             runres = r['runs_results'][k]
-            self.assertTrue(isinstance(runres, tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult))
+            self.assertTrue(isinstance(runres, tomographer.mhrwtasks.MHRandomWalkTaskResult))
 
         # now, check the actual values of the result
         pok = AnalyticalSolutionFn(np.sum(self.Nm))
