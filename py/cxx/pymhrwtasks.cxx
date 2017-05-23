@@ -238,4 +238,7 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         })
       ;
   }
+
+  // alias for backwards compatibility, e.g. for un-pickling data pickled with Tomographer < 5
+  mhrwtasksmodule.attr("MHRandomWalkValueHistogramTaskResult") = mhrwtasksmodule.attr("MHRandomWalkTaskResult");
 }
