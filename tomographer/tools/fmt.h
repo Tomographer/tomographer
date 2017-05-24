@@ -248,14 +248,14 @@ struct StreamIfPossibleWrapper
 };
 //! implementation of sending a StreamIfPossibleWrapper through a std::ostream
 template<typename T>
-std::ostream & operator<<(std::ostream & stream, const StreamIfPossibleWrapper<T>& wobj)
+inline std::ostream & operator<<(std::ostream & stream, const StreamIfPossibleWrapper<T>& wobj)
 {
   wobj.stream_into(stream);
   return stream;
 }
 //! implementation of sending a StreamIfPossibleWrapper through a std::ostream
 template<typename T>
-std::ostream&& operator<<(std::ostream&& stream, const StreamIfPossibleWrapper<T>& wobj)
+inline std::ostream&& operator<<(std::ostream&& stream, const StreamIfPossibleWrapper<T>& wobj)
 {
   wobj.stream_into(stream);
   return std::move(stream);
@@ -491,7 +491,7 @@ public:
 
   std::function<void(std::ostream&)> fn;
 };
-std::ostream & operator<<(std::ostream & stream, const LazyOStreamCallback & lazy)
+inline std::ostream & operator<<(std::ostream & stream, const LazyOStreamCallback & lazy)
 {
   lazy.fn(stream);
   return stream;
@@ -704,7 +704,7 @@ public:
   }
 };
 
-std::ostream & operator<<(std::ostream & stream, const FmtFootnotes & f)
+inline std::ostream & operator<<(std::ostream & stream, const FmtFootnotes & f)
 {
   const std::vector<std::string> & ftlist = f.getFootNotes();
   int w = (int)(std::ceil(std::log10((double)ftlist.size()))+0.01);
