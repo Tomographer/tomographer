@@ -335,7 +335,7 @@ if (BUILD_TOMORUN)
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
       "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
-      --check-histogram-file=out-histogram.csv "--check-qeb=(0.958,0.009,6.1e-4),25%" "--ftox=(1,-1)"
+      --check-histogram-file=out-histogram.csv "--check-qeb=(0.958,0.009,6.1e-4),10%" "--ftox=(1,-1)"
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
       --write-histogram=out --n-run=32768 "--value-type=obs-value:rho_ref" "--value-hist=0.9:1/50" --light-jumps
@@ -344,7 +344,7 @@ if (BUILD_TOMORUN)
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
       "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
-      --check-histogram-file=out2-histogram.csv "--check-qeb=(0.0377,0.013,.00014),25%" "--ftox=(0,1)"
+      --check-histogram-file=out2-histogram.csv "--check-qeb=(0.0377,0.013,.0014),10%" "--ftox=(0,1)"
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
       --write-histogram=out2 --n-run=32768 "--value-type=tr-dist:rho_MLE" "--value-hist=0.:0.2/50"  --no-light-jumps
@@ -353,7 +353,7 @@ if (BUILD_TOMORUN)
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
       "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
-      --check-histogram-file=out3-histogram.csv "--check-qeb=(1.83,0.036,0.0025),25%" "--ftox=(2,-1)"
+      --check-histogram-file=out3-histogram.csv "--check-qeb=(1.83,0.036,0.0025),10%" "--ftox=(2,-1)"
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
       --write-histogram=out3 --n-run=32768 "--value-type=obs-value:EntglWitness" "--value-hist=1.6:2.0/50"  --no-light-jumps
@@ -363,7 +363,7 @@ if (BUILD_TOMORUN)
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
       "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
       # not sure the qeb's are really relevant here (for this figure of merit), but it's good enough for the test case
-      --check-histogram-file=out4-histogram.csv "--check-qeb=(0.21,0.022,3.6e-4),25%" "--ftox=(0,1)"
+      --check-histogram-file=out4-histogram.csv "--check-qeb=(0.21,0.022,3.6e-4),10%" "--ftox=(0,1)"
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
       --write-histogram=out4 --n-run=32768 "--value-type=purif-dist:rho_ref" "--value-hist=0.0:0.4/50"  --no-light-jumps
