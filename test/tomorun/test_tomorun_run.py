@@ -140,8 +140,8 @@ def do_check_qeb(hfile, refqeb, ftox, use_qeb_hint):
 
     kwargs = {}
     if use_qeb_hint:
-        kwargs['p0'] = tq.reskew_logmu_curve(m, *qu_error_bars_to_deskewed_c(ftox, *(refqeb[:3]),
-                                                                             y0=np.maximum(h.bins)))
+        kwargs['p0'] = tq.reskew_logmu_curve(*qu_error_bars_to_deskewed_c(ftox, *(refqeb[:3]),
+                                                                          y0=np.maximum(h.bins)))
     a = tq.HistogramAnalysis(h, ftox=ftox, **kwargs)
 
     # make sure the fit was ok
