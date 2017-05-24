@@ -151,23 +151,22 @@
  *
  *   - \subpage pageDebugging
  *
- * <h3>Tomorun-Executable Related Topics</h3>
+ * <h3>Tomorun &mdash; The Standalone Executable</h3>
  *
- * The \c tomorun program is simply a straightforward piecing together of the different
- * components detailed above.  Most of the work is already done by the classes in \ref
- * Tomographer::MHRWTasks::ValueHistogramTools.
+ * The \c tomorun command-line program is simply a straightforward piecing together of the
+ * different components detailed above.  It can be used as a standalone program, giving it
+ * the measurement data as input (via a MATLAB data file), and retrieving the final
+ * histogram of the figure of merit as output.
  *
- * The \c tomorun code is not included in this API documentation.  The code is located
- * under \c "cxx/tomorun/".  If you wish to change functionality in \c tomorun, or if you
- * wish to implement a very particular calculation, you might like to have a look at the
- * test example \c "cxx/test/minimal_tomorun.cxx", which provides a very minimal
- * implementation of tomorun for a specific example&mdash;it may be more convenient for
- * you to modify that program.
+ * For help on using \a tomorun, refer to <a
+ * href="https://tomographer.github.io/tomographer/get-started" target="_blank">this
+ * "getting started" page</a>, or query its help text using <code>tomorun -<b></b>-help</code>.
  *
  * Topics:
  *
- *   - \subpage pageTomorunNewFigureOfMerit
- *   - \subpage pageCustomTomorunExe
+ *   - \subpage pageTomorun
+ *   - \ref pageTomorunNewFigureOfMerit
+ *   - \ref pageCustomTomorunExe
  *
  * <h3>Known Bugs & To Do List</h3>
  *
