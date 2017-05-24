@@ -131,10 +131,13 @@ public:
 
   enum { Full = LLH_MHWalker_Full, Light = LLH_MHWalker_Light } ;
 
-  TOMO_STATIC_ASSERT_EXPR( Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLHType,RngType,LoggerType>::UseFnSyntaxType
-                           == Tomographer::MHUseFnLogValue ) ;
-  TOMO_STATIC_ASSERT_EXPR( Tomographer::DenseDM::TSpace::LLHMHWalkerLight<DenseLLHType,RngType,LoggerType>::UseFnSyntaxType
-                           == Tomographer::MHUseFnLogValue ) ;
+  TOMO_STATIC_ASSERT_EXPR(
+      (int)Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLHType,RngType,LoggerType>::UseFnSyntaxType
+      == (int)Tomographer::MHUseFnLogValue
+      ) ;
+  TOMO_STATIC_ASSERT_EXPR(
+      (int)Tomographer::DenseDM::TSpace::LLHMHWalkerLight<DenseLLHType,RngType,LoggerType>::UseFnSyntaxType
+      == (int)Tomographer::MHUseFnLogValue ) ;
 
   LLH_MHWalker(LLH_MHWalker_Which which_, const DenseLLHType & llh_, RngType & rng_, LoggerType & baselogger)
     : which(which_),

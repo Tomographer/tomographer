@@ -19,12 +19,20 @@ psi_W[32] = 1.0/np.sqrt(6.0)
 
 proj_W = np.outer(psi_W, psi_W.T.conj())
 
+dim = 2**6
 
-Emn = np.zeros(shape=(2**6,2**6,2))
-Emn[:,:,0] = proj_W
-Emn[:,:,1] = np.eye(64) - proj_W
+# Emn formatted for MATLAB file, column-major
+matEmn = np.zeros(shape=(dim,dim,2))
+matEmn[:,:,0] = proj_W
+matEmn[:,:,1] = np.eye(64) - proj_W
+
+# Emn formatted for Python NumPy, Emn[k,:,:] is POVM effect
+Emn = [ proj_W,
+        np.eye(64) - proj_W ]
 
 # let's plug in some simulated data
-Nm = np.array([[ 9991, 9 ]]).T
+Nm = [ 9991, 9 ]
+matNm = np.array([Nm]).T
 
-sio.savemat('data_file.mat', {'dim': 64, 'Emn': Emn, 'Nm': Nm, 'proj_W': proj_W })
+if __name__ == '__main__':
+    sio.savemat('data_file.mat', {'dim': dim, 'Emn': matEmn, 'Nm': matNm, 'proj_W': proj_W })

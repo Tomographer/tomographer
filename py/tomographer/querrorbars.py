@@ -16,6 +16,8 @@ class _Ns:
     pass
 
 
+
+
 def fit_fn_default(x, a2, a1, m, c):
     """
     The default fit model for the logarithm of the histogram data.  The `x`-values are not
@@ -314,3 +316,30 @@ class HistogramAnalysis(object):
 
         return d;
         
+#
+
+
+def load_tomorun_csv_histogram_file(fn):
+    """
+    Load a histogram data file produced by executing the `tomorun` executable program
+    (instead of via the `tomographer.tomorun` python module).
+
+    The argument `fn` is the file name. It is expected to be a TAB-separated CSV file
+    where the first row (header) is blindly discarded.  Any fourth column is disregarded.
+
+    Note: We blindly assume, without checking, that the first column is a list of linearly
+    spaced values.
+
+    The returned value is simply a :py:class:`tomographer.HistogramWithErrorBars` object.
+    """
+    import tomographer
+    
+    dat = np.loadtxt(fn, skiprows=1)
+    # dat[:,0] should be lin-spaced values corresponding to the left edges of the histogram bins
+    fmin = dat[0,0]
+    numbins = dat.shape[0]
+    binresolution = dat[1,0]-dat[0,0]
+    fmax = dat[numbins-1,0] + binresolution
+    h = tomographer.HistogramWithErrorBars(fmin, fmax, numbins)
+    h.load(dat[:,1], dat[:,2])
+    return h
