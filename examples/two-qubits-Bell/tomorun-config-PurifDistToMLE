@@ -10,13 +10,15 @@ write-histogram-from-config-file-name = 1
 # ------------------
 
 # number of parallel random walks
-n-repeats = 12
+n-repeats = 36
 
 # The parameters of the random walk: step size, sweep size, and number of
 # samples to collect
 step-size = 0.01
 n-sweep = 100
-n-run = 32768
+n-run = 65536
+
+no-light-jumps=1
 
 # Calculate the trace distance to the maximum likelihood estimate state rho_MLE (which is
 # specified in the MATLAB data file)

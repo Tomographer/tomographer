@@ -89,6 +89,11 @@ def do_check_qeb(hfile, refqeb, ftox):
 
     a = tq.HistogramAnalysis(h, ftox=ftox)
 
+    # make sure the fit was ok
+    redchi2 = a.fitRedChi2()
+    logger.debug("redchi2 = {:.4g}".format(redchi2))
+    assert_approx_eq_rel(redchi2, 1.0, 0.5) # 0.5--1.5
+
     a.printQuantumErrorBars(print_func=logger.debug)
     qeb = a.quantumErrorBars()
 

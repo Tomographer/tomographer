@@ -12,6 +12,10 @@ import scipy
 import scipy.optimize as sciopt
 import matplotlib.pyplot as matplt
 
+import logging
+logger=logging.getLogger(__name__)
+
+
 class _Ns:
     pass
 
@@ -189,6 +193,22 @@ class HistogramAnalysis(object):
 
         self.fit_histogram_result = fit_histogram(self.normalized_histogram, fit_fn=self.fit_fn, ftox=self.ftox, **kwopts)
         self.fit_params = self.FitParamsType(*self.fit_histogram_result.popt)
+
+        # calculate reduced chi2 statistic
+        xok = self.fit_histogram_result.xok
+        logpok = self.fit_histogram_result.logpok
+        errlogpok = self.fit_histogram_result.errlogpok
+
+        redchi2 = np.sum( [
+            np.square( ( logpok[k] - self.fit_fn(xok[k], *self.fit_params) ) / errlogpok[k] )
+            for k in range(len(xok))
+        ])
+        redchi2 /= (len(xok) - 4)
+        self.redchi2 = redchi2
+        if self.redchi2 < 0.7 or self.redchi2 > 1.3 :
+            logger.warning(("Reduced chi-squared statistic = {:.4g}, perhaps the fit model isn't good, "
+                            "or the fit optimization failed?").format(self.redchi2))
+
     
     def xtof(self, x):
         """
@@ -212,6 +232,14 @@ class HistogramAnalysis(object):
         `(a2, a1, m, c)`.
         """
         return self.fit_params
+
+    def fitRedChi2(self):
+        """
+        Return the `Reduced chi-squraed statistic
+        <https://en.wikipedia.org/wiki/Reduced_chi-squared_statistic>`_ for the fit.
+        Should be close to `1` for a good fit.
+        """
+        return self.redchi2
 
     def printFitParameters(self, print_func=print):
         """
