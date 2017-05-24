@@ -353,7 +353,7 @@ if (BUILD_TOMORUN)
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
       "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
-      --check-histogram-file=out3-histogram.csv "--check-qeb=(1.83,0.036,0.0025),10%" "--ftox=(2,-1)"
+      --check-histogram-file=out3-histogram.csv "--check-qeb=(1.83,0.036,0.0025),30%" "--ftox=(2,-1)"
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
       --write-histogram=out3 --n-run=32768 "--value-type=obs-value:EntglWitness" "--value-hist=1.6:2.0/50"  --no-light-jumps
