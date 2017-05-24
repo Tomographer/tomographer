@@ -78,7 +78,7 @@
  *
  * For our example, we can get inspired by the code for, e.g., \ref
  * Tomographer::DenseDM::TSpace::TrDistToRefCalculator defined in \ref tspacefigofmerit.h.
- * For example, let's create a file called \c "hs_dist.h" inside the \c "cxx/tomorun/"
+ * For example, let's create a file called \c "hs_dist.h" inside the \c "tomorun/"
  * directory of the tomographer project:
  * \code
  *   #ifndef HS_DIST_H
@@ -136,171 +136,20 @@
  * allocated.
  *
  *
- * <h2>2. Declare the new figure of merit as command line option value</h2>
+ * <h2>2. Integrate the new figure of merit into the \c tomorun program</h2>
  *
- * The choice of figure of merit is specified as the argument to the command line option
- * \c "--value-type". So you should in fact first decide of a short memo string describing
- * your figure of merit (e.g. for our example \c "HS-dist" would be an appropriate choice).
+ * In order to integrate a new figure of merit into the \c tomorun program, one simply has
+ * to declare it in the \c "tomorun/tomorun_figofmerit.h" header file.  Search for "INSERT
+ * CUSTOM FIGURE OF MERIT HERE".
  *
- * Open the file \c "tomorun_opts.h" located inside the \c "cxx/tomorun/" directory.  The
- * locations where you should adapt the code are marked by comments saying \c "INSERT
- * CUSTOM FIGURE OF MERIT HERE".  Adapt the code as follows.
+ * You need to declare a class, which describes how to create the value calculator for
+ * this figure of merit, what help text to display, and the option name.
  *
- * The class \c val_type_spec is a type which is used to store the choice of figure of
- * merit.  It stores the choice as an enum value, but it is capable of converting to and
- * from a string. So you should add a new enumeration value, as well as adapt the class
- * methods, so that it understands your new figure of merit.
- * 
- * As with the other figures of merit, the user may also pass a string argument in the
- * form \c "HS-dist:string_argument_goes_here" which can specify for example a reference
- * state.  You don't have to do anything special for that, it's taken care of for you
- * already.
+ * ..................
  *
- * Also change the command-line help text to include documentation for your new figure of
- * merit.
+ * Finally, you have to insert your class name into the std::tuple \a
+ * TomorunFiguresOfMerit a bit lower in the file.
  *
- * In our example, we'd change the following enumeration inside the class
- * <tt>val_type_spec</tt> from:
- * \code
- *  enum ValueType {
- *    INVALID = 0,
- *    OBS_VALUE,
- *    TR_DIST,
- *    FIDELITY,
- *    PURIF_DIST
- *  };
- * \endcode
- * to:
- * \code
- *  enum ValueType {
- *    INVALID = 0,
- *    OBS_VALUE,
- *    TR_DIST,
- *    FIDELITY,
- *    PURIF_DIST,
- *    HS_DIST // new figure of merit: HS distance to some reference state
- *  };
- * \endcode
- * Then we would insert the following inside the method \a
- * val_type_spec::set_value_string(), after the similar tests for the other figures of
- * merit:
- * \code
- *   if (valtype_str == "HS-dist") {
- *     valtype = HS_DIST;
- *     ref_obj_name = ref_obj_name_str; // the reference state
- *     return;
- *   }
- * \endcode
- * and similarly, we'd update the function <tt>operator<<(std::ostream & str, const
- * val_type_spec & val)</tt> to include a case for our figure of merit:
- * \code
- *   case val_type_spec::HS_DIST:
- *     str << "HS-dist";
- *     break;
- * \endcode
- *
- * <h2>3. Instruct \c tomorun how to instantiate your figure of merit calculator</h2>
- *
- * The final piece of code which needs to be added is the logic of how your class which
- * calculates the figure of merit (in our example, inside \c "hs_dist.h") should be
- * instantiated.
- *
- * The relevant file to modify is the file named \c tomorun_dispatch.h, located
- * inside the \c "cxx/tomorun/" directory.
- *
- * First, include your \c "hs_dist.h" file near the top: insert the line
- * \code
- *   #include "hs_dist.h"
- * \endcode
- *  near the top of the file, below the other include directives.
- *
- * Then you'll have to code how specifically the program should instantiate your value
- * calculator. Add a conditional in the function <tt>tomorun_dispatch()</tt> which tests
- * whether the user asked for your figure of merit, and instantiate your class
- * appropriately.  The general logic should look like this:
- * \code
- *   if (opt->valtype.valtype == val_type_spec::<MY_CUSTOM_FIGURE_OF_MERIT>) {
- *
- *     ... instantiate ValueCalculator and dispatch to tomorun<...>(...)  ...
- *
- *     // Finally, dispatch the execution to tomorun<>(...):
- *     tomorun<BinningAnalysisErrorBars>(
- *         tomodat,            // the TomoProblem instance
- *         opt,                // the program options
- *         // and our ValueCalculator instance:
- *         MyCustomFigureOfMeritValueCalculator<...>(...),
- *         logger); // and finally the logger instance
- *     return;
- *   }
- * \endcode
- *
- * Starting in Tomographer version 2, the set up is slightly more complicated, because
- * there are two different ways \c tomorun can be compiled.  It can either be compiled by
- * using a \ref Tomographer::MultiplexorValueCalculator, or with static checks and
- * different static code for each figure of merit (as before).  The former approach seems
- * more efficient, and is now the default (this can be changed with CMake options when
- * compiling tomorun). The logic is not that compicated, so you're best off by seeing what
- * the code does for the built-in figures of merit and mimicking that.
- *
- * You're probably best off copying from the built-in examples inside that same function,
- * or the example for the Hilbert-Schmidt distance presented here. Here are some
- * additional tips:
- *
- *   - The object \c "opt->valtype.ref_obj_name" is an std::string of anything the user
- *     specified at the command line or in the config file as second part to the \c
- *     "--value-type" option (e.g., representing the name of the variable in the MATLAB
- *     data file containing the reference state density matrix).
- *
- *   - You can load data from the MATLAB data file via the \c "matf" object, which is a
- *     \ref Tomographer::MAT::File instance.
- *
- *   - You may of course use any tool provided by Eigen and the Tomographer API, for
- *     example \ref Tomographer::Tools::forcePosSemiDef() to ensure a matrix is positive
- *     semidefinite.
- *
- * In our example for the Hilbert-Schmidt distance, the reference state is read from the
- * MATLAB data file. It is to be taken by default to be \c "rho_MLE", which is the maximum
- * likelihood estimate state, if \c "--value-type=HS-dist". A custom reference state can
- * be given which is to be read from the MATLAB data file (if \c
- * "--value-type=HS-dist:my_ref_state_dm", where \c "my_ref_state_dm" is the name of the
- * variable inside the MATLAB data file containing the density matrix of the reference
- * state). Here's the code for the non-multiplexed version of the value-calculator:
- * \code
- *  if (opt->valtype.valtype == val_type_spec::HS_DIST) {
- *    
- *    MatrixType rho_ref(dmt.initMatrixType());
- *
- *    // determine the variable name of the reference state. By default, "rho_MLE".
- *    std::string refname = "rho_MLE";
- *    if (opt->valtype.ref_obj_name.size()) {
- *      // explicit reference state given in the command-line option
- *      refname = opt->valtype.ref_obj_name;
- *    }
- *
- *    // read the reference state from the MATLAB data file into the matrix 'rho_ref'
- *    rho_ref = Tomographer::MAT::value<MatrixType>(matf->var(refname));
- *
- *    // make sure that all eigenvalues of rho_ref are positive.
- *    rho_ref = Tomographer::Tools::forcePosSemiDef(rho_ref, 1e-12);
- *
- *    // emit debug message; this is displayed in verbose mode
- *    logger.debug("tomorun_dispatch()", [&](std::ostream & str) {
- *        str << "Using HS distance figure of merit with rho_ref = \n"
- *            << rho_ref << "\n";
- *      });
- *
- *    // finally, dispatch the execution to the main function tomorun().
- *    tomorun<BinningAnalysisErrorBars>(
- *      // first argument: the tomography problem data and types
- *      tomodat,
- *      // second argument: the command-line options
- *      opt,
- *      // thrid argument: an instance of the figure of merit calculator
- *      HsDistToRefCalculator<DMTypes>(rho_ref),
- *      // fourth argument: the logger object to emit log messages
- *      logger);
- *  }
- * \endcode
  * 
  */
 
@@ -333,7 +182,7 @@
  * matlab file, for example), and generally speaking adjust any other aspect of the
  * program you may want.
  *
- * The code in \c "cxx/test/minimal_tomorun.cxx" should be commented and understandable.
+ * The code in \c "test/minimal_tomorun.cxx" should be commented and understandable.
  * The basic logic is to use the \ref Tomographer::MHRWTasks::ValueHistogramTools classes,
  * in combination with \ref Tomographer::DenseDM::TSpace::LLHMHWalker, to run random walks
  * over quantum states in T-space (see \ref pageParamsT) and collect statistics about a
