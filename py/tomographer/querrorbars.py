@@ -254,11 +254,6 @@ class HistogramAnalysis(object):
             '{:>12s} = {:g}'.format(k, getattr(self.fit_params, k))
             for k in self.fit_params._fields
         ]))
-#        print_func("Fit Parameters:\n\ta2 = {a2:.4g}\n\ta1 = {a1:.4g}\n\t m = {m:.4g}\n\t c = {c:.4g}\n".format(
-#            a2=self.fit_params.a2,
-#            a1=self.fit_params.a1,
-#            m=self.fit_params.m,
-#            c=self.fit_params.c))
         return self.fit_params
 
     def quantumErrorBars(self):

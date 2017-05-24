@@ -359,18 +359,16 @@ if (BUILD_TOMORUN)
       --write-histogram=out3 --n-run=32768 "--value-type=obs-value:EntglWitness" "--value-hist=1.6:2.0/50"  --no-light-jumps
       )
 
-    # Fit isn't good for this one
-    #
-    # add_test(NAME test_tomorun_case_4
-    #   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-    #   COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
-    #   "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
-    #   # not sure the qeb's are really relevant here (for this figure of merit), but it's good enough for the test case
-    #   --check-histogram-file=out4-histogram.csv "--check-qeb=(0.21,0.022,3.6e-4),10%" --use-qeb-hint "--ftox=(0,1)"
-    #   --
-    #   "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
-    #   --write-histogram=out4 --n-run=32768 "--value-type=purif-dist:rho_ref" "--value-hist=0.0:0.4/50"  --no-light-jumps
-    #   )
+    add_test(NAME test_tomorun_case_4
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+      COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
+      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
+      # not sure the qeb's are really relevant here (for this figure of merit), but it's good enough for the test case
+      --check-histogram-file=out4-histogram.csv "--check-percent-within-range=95%(0.156,0.260)"
+      --
+      "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
+      --write-histogram=out4 --n-run=32768 "--value-type=purif-dist:rho_ref" "--value-hist=0.0:0.4/50"  --no-light-jumps
+      )
     
   else()
 

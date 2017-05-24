@@ -30,6 +30,14 @@ def ftox_pair(ftoxstr):
         raise ValueError("ftox: expected \"(h,s)\" pair")
     return (float(m.group('h')), int(m.group('s')))
 
+def percent_within_range_type(x):
+    if isinstance(x, tuple):
+        return x
+    m = re.match(r"^(?P<percent>[0-9.e+-]+)%\s*\((?P<min>[0-9.e+-]+),\s*(?P<max>[0-9.e+-]+)\)$", x)
+    if m is None:
+        raise ValueError("percent_within_range: expected \"<percent>% (<min>,<max>)\" format")
+    return (float(m.group('percent')), float(m.group('min')), float(m.group('max')))
+
 def run_main():
     parser = argparse.ArgumentParser("test_tomorun_run")
     parser.add_argument("tomorun_argv", nargs='+')
@@ -40,6 +48,7 @@ def run_main():
     parser.add_argument("--check-qeb", action='store', type=check_qeb_args)
     parser.add_argument("--use-qeb-hint", action='store_true', default=False)
     parser.add_argument("--ftox", action='store', type=ftox_pair, default=(0,1,))
+    parser.add_argument("--check-percent-within-range", action='append', type=percent_within_range_type)
 
     args = parser.parse_args()
 
@@ -59,6 +68,8 @@ def run_main():
             raise
         logger.debug("Got the expected return code %d"%(args.expect_exit_code))
 
+    did_check = False
+
     # load the output histogram
     if args.check_histogram_file:
 
@@ -66,12 +77,21 @@ def run_main():
 
             # check the quantum error bars
             do_check_qeb(args.check_histogram_file, args.check_qeb, ftox=args.ftox, use_qeb_hint=args.use_qeb_hint)
-            return
+            did_check = True
+
+        if hasattr(args,'check_percent_within_range') and args.check_percent_within_range is not None:
+
+            # check that a certain percentatge of the total weight falls within the given
+            # range (can be a list of ranges), if the option is specified multiple times
+            for check_rng in args.check_percent_within_range:
+                do_check_percent_within_range(args.check_histogram_file, check_rng)
+            did_check = True
 
     if args.no_further_checks:
         return
 
-    raise RuntimeError("Nothing to check.")
+    if not did_check:
+        raise RuntimeError("Didn't check anything.")
         
 
 def assert_approx_eq_rel(x, y, err):
@@ -79,6 +99,36 @@ def assert_approx_eq_rel(x, y, err):
     refom = np.maximum(np.absolute(x),np.absolute(y))
     assert np.absolute(x-y) < err*refom
     print(" OK")
+
+
+def do_check_percent_within_range(hfile, percent_within_range):
+    # only import tomographer here, after possibly having set sys.path
+    import tomographer as t
+    import tomographer.querrorbars as tq
+    logger.debug("Loaded tomographer from {} and tomographer.querrorbars from {}".format(t.__path__, tq.__file__))
+    
+    h = tq.load_tomorun_csv_histogram_file(hfile)
+    
+    percent, rngmin, rngmax = percent_within_range
+    
+    if h.params.isWithinBounds(rngmin):
+        idxmin = h.params.binIndex(rngmin)
+    else:
+        idxmin = 0
+    if h.params.isWithinBounds(rngmax):
+        idxmax = h.params.binIndex(rngmax)
+    else:
+        idxmax = h.numBins()-1
+
+    w = np.sum(h.bins[idxmin:idxmax])
+
+    logger.debug("Total weight within [{:.4g},{:.4g}] is {:.3g}%; required is {:.3g}%"
+                 .format(rngmin,rngmax, w*100.0, percent))
+
+    print("Testing {!r} > {!r} ... ".format(w, percent/100.0), end='')
+    assert w > percent/100.0
+    print(" OK")
+
 
 def do_check_qeb(hfile, refqeb, ftox, use_qeb_hint):
     # only import tomographer here, after possibly having set sys.path
