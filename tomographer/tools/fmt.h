@@ -44,6 +44,7 @@
 #include <utility> // std::declval
 #include <vector>
 #include <iomanip>
+#include <functional>
 
 #include <tomographer/tools/cxxutil.h> // PRINTFN_ARGS_SAFE
 
@@ -682,9 +683,12 @@ public:
 
   void addSilentFootNote(std::size_t no, std::string footnote)
   {
+    (void)no; // silence "unused" warning
+
     // Footnotes numbering starts at 1
     tomographer_assert(no-1 == ftlist.size()
                        && "Your footnotes have changed numbering! Check your silent footnotes.") ;
+
     ftlist.push_back(footnote);
   }
 

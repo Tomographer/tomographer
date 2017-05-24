@@ -306,8 +306,12 @@ struct TupleDynGet
 
 struct GetStrNameField {
   using ValType = std::string;
-  template<typename X>
-  struct Get { const std::string value{X().name}; };
+  template<typename X_>
+  struct Get {
+    typedef X_ X;
+    inline Get() : value(X().name) { }
+    const std::string value;
+  };
 };
 
 template<typename FiguresOfMeritTuple>
