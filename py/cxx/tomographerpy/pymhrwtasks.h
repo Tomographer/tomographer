@@ -58,9 +58,9 @@ typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<
 
 
 typedef Tomographer::MHRWTasks::MHRandomWalkTaskResult<
-    ValueHistogramWithBinningMHRWStatsCollectorResult, CountIntType, py::object
+  py::object, CountIntType, py::object
   >
-  MHRandomWalkValueHistogramTaskResult;
+  MHRandomWalkTaskResult;
 
 
 } // Py

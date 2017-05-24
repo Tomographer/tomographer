@@ -49,6 +49,7 @@
  *  - \subpage pageInterfaceMHWalker
  *  - \subpage pageInterfaceMHRWStatsCollector
  *  - \subpage pageInterfaceMHRWController
+ *  - \subpage pageInterfaceMHRWAcceptanceRatioBasedParamsAdjuster
  *  - \subpage pageInterfaceResultable
  *  - \subpage pageInterfaceValueCalculator
  *  - \subpage pageInterfaceMHRandomWalkTaskCData
@@ -524,9 +525,9 @@
  */
 
 
-/** \page pageInterfaceAcceptanceRatioBasedParamsAdjuster AcceptanceRatioBasedParamsAdjuster Interface
+/** \page pageInterfaceMHRWAcceptanceRatioBasedParamsAdjuster MHRWAcceptanceRatioBasedParamsAdjuster Interface
  *
- * A \a AcceptanceRatioBasedParamsAdjuster is responsible for modifying the parameters of
+ * A \a MHRWAcceptanceRatioBasedParamsAdjuster is responsible for modifying the parameters of
  * the random walk \a MHWalker (i.e., the \a MHWalkerParams), in order to correct for an
  * acceptance ratio which is not in the required interval.
  *
@@ -536,13 +537,13 @@
  *
  * Objects complying with this type interface should provide the following members:
  *
- * \par initParams(MHRWParamsType & params, const MHWalker & mhwalker, const MHRandomWalkType & mhrw)
+ * \par void initParams(MHRWParamsType & params, const MHWalker & mhwalker, const MHRandomWalkType & mhrw)
  *     Callback which is called at the beginning of the random walk. \a params may be
  *     modified, but really only to just set default values if needed.  Other controllers
  *     may also have the opportunity to do an initialization of the params, so any precise
  *     params setting should be done in the other callback below.
  *
- * \par adjustParamsForAcceptRatio(MHRWParamsType & params, double accept_ratio, const MHRWAcceptRatioWalkerParamsControllerType & controller, const MHWalker & mhwalker, IterCountIntType iter_k, const MHRandomWalkType & mhrw)
+ * \par void adjustParamsForAcceptRatio(MHRWParamsType & params, double accept_ratio, const MHRWAcceptRatioWalkerParamsControllerType & controller, const MHWalker & mhwalker, IterCountIntType iter_k, const MHRandomWalkType & mhrw)
  *     Correct the \a params to keep the \a accept_ratio in the desired interval. The
  *     desired and acceptable interval for the acceptance ratio are available via \a
  *     controller as <code>controller.desiredAcceptanceRatioMin()</code> etc. (see \ref

@@ -42,6 +42,8 @@
 #include <sstream> // stringstream
 #include <iostream>
 #include <utility> // std::declval
+#include <vector>
+#include <iomanip>
 
 #include <tomographer/tools/cxxutil.h> // PRINTFN_ARGS_SAFE
 
@@ -246,14 +248,14 @@ struct StreamIfPossibleWrapper
 };
 //! implementation of sending a StreamIfPossibleWrapper through a std::ostream
 template<typename T>
-std::ostream & operator<<(std::ostream & stream, const StreamIfPossibleWrapper<T>& wobj)
+inline std::ostream & operator<<(std::ostream & stream, const StreamIfPossibleWrapper<T>& wobj)
 {
   wobj.stream_into(stream);
   return stream;
 }
 //! implementation of sending a StreamIfPossibleWrapper through a std::ostream
 template<typename T>
-std::ostream&& operator<<(std::ostream&& stream, const StreamIfPossibleWrapper<T>& wobj)
+inline std::ostream&& operator<<(std::ostream&& stream, const StreamIfPossibleWrapper<T>& wobj)
 {
   wobj.stream_into(stream);
   return std::move(stream);
@@ -475,6 +477,256 @@ public:
 private:
   const std::size_t _columns;
 };
+
+
+// =============================================================================
+
+// Helper
+
+namespace tomo_internal {
+class LazyOStreamCallback {
+public:
+  template<typename CallFn>
+  LazyOStreamCallback(CallFn && fn_) : fn(fn_) { }
+
+  std::function<void(std::ostream&)> fn;
+};
+inline std::ostream & operator<<(std::ostream & stream, const LazyOStreamCallback & lazy)
+{
+  lazy.fn(stream);
+  return stream;
+}
+} // tomo_internal
+
+
+// =============================================================================
+
+// Simple word wrapping
+
+class SimpleWordWrapper
+{
+public:
+  SimpleWordWrapper(std::size_t w_,
+                    std::string init_ = "",
+                    int indent_ = 0,
+                    int first_indent_ = 0,
+                    bool hard_wrap_long_lines_ = false,
+                    bool obey_newlines_ = false)
+    : w(w_),
+      init(std::move(init_)),
+      indent(indent_),
+      first_indent(first_indent_),
+      hard_wrap_long_lines(hard_wrap_long_lines_),
+      obey_newlines(obey_newlines_)
+  {
+  }
+
+  std::vector<std::string> rawWrapLines(const std::string & text) const
+  {
+    std::vector<std::string> output;
+    std::size_t pos = 0;
+
+    std::string startline;
+    int startline_len = first_indent + (int)init.size();
+
+    auto finish_line = [&output,&startline,&startline_len,this](std::string linetoend = "") {
+      std::string full_line = std::move(startline) + std::move(linetoend);
+      if (full_line.size()) {
+        output.push_back(full_line);
+      }
+      startline = "";
+      startline_len = indent;
+    };
+    auto add_startline = [&startline,&startline_len](std::string morestartline) {
+      startline += std::move(morestartline);
+      startline_len += morestartline.size();
+    };
+
+    while (pos < text.size()) {
+
+      std::size_t this_w = (std::size_t)std::max((int)w - startline_len, 1);
+
+      // build the next line of the output
+
+      if (text[pos] == ' ' || text[pos] == '\n') {
+        bool new_paragraph = false;
+        while (pos < text.size() && (text[pos] == ' ' || text[pos] == '\n')) {
+          if (text[pos] == '\n') {
+            new_paragraph = true;
+          }
+          ++ pos; // ignore leading spaces
+        }
+        if (new_paragraph) {
+          finish_line();
+          output.push_back("");
+          continue;
+        }
+      }
+
+      std::size_t nxtpos = text.find_first_of('\n', pos);
+      if (nxtpos != std::string::npos && nxtpos < pos+this_w) { // have a newline on this line
+        if (obey_newlines) {
+          // hard newline within next line, break there
+          finish_line( text.substr(pos, nxtpos-pos) );
+          pos = nxtpos+1;
+          continue;
+        } else {
+          // might be a paragraph ending, so continue re-parsing from here
+          add_startline( text.substr(pos, nxtpos-pos) );
+          pos = nxtpos+1;
+          continue;
+        }
+      }
+
+      if (text.size() < pos + this_w) {
+        // fits in one line
+        finish_line( text.substr(pos) );
+        pos = text.size();
+        break;
+      }
+
+      // starting at this_w from pos, look back for first space or newline
+      std::size_t lpos = text.find_last_of(" \n", pos+this_w);
+      if (lpos == std::string::npos || lpos < pos) { // not found within this line
+        // line too long with no spaces
+        if (hard_wrap_long_lines) {
+          finish_line( text.substr(pos, this_w) );
+          pos += this_w;
+          continue;
+        }
+        // otherwise, look for next space and break there
+        std::size_t nxtpos = text.find_first_of(" \n", pos+this_w);
+        if (nxtpos == std::string::npos) {
+          // all up to the end is one super long word
+          finish_line( text.substr(pos) );
+          pos = text.size();
+          break;
+        }
+        // ok, wrapping a bit further off the line keeping the long word intact
+        finish_line( text.substr(pos, nxtpos-pos) );
+        pos = nxtpos+1;
+        continue;
+      }
+      // wrap line normally at last space
+      finish_line( text.substr(pos, lpos-pos) );
+      pos = lpos+1;
+
+      continue;
+    }
+    finish_line();
+    
+    // if last line is new paragraph, remove it
+    if (output.size() && output.back().size() == 0) {
+      output.pop_back();
+    }
+
+    return output;
+  }
+
+  tomo_internal::LazyOStreamCallback wrapped(const std::string & text) const
+  {
+    std::vector<std::string> lines = rawWrapLines(text);
+    return tomo_internal::LazyOStreamCallback([lines,this](std::ostream & stream) {
+        for (std::size_t k = 0; k < lines.size(); ++k) {
+          if (k == 0) {
+            stream << std::string((std::size_t)first_indent, ' ') << init << lines[0] << "\n";
+          } else {
+            stream << std::string((std::size_t)indent, ' ') << lines[k] << "\n";
+          }
+        }
+      });
+  }
+
+  std::size_t getWidth() const { return w; }
+  std::string getInit() const { return init; }
+  int getIndent() const { return indent; }
+  int getFirstIndent() const { return first_indent; }
+  bool getHardWrapLongLines() const { return hard_wrap_long_lines; }
+  bool getObeyNewlines() const { return obey_newlines; }
+
+private:
+  std::size_t w;
+  std::string init;
+  int indent;
+  int first_indent;
+  bool hard_wrap_long_lines;
+  bool obey_newlines;
+};
+
+
+// =============================================================================
+
+// Format footnotes in std::ostream
+
+
+/** \brief Helper to format footnotes in Fmt
+ *
+ * 
+ */
+class FmtFootnotes
+{
+private:
+  std::vector<std::string> ftlist;
+public:
+  FmtFootnotes() : ftlist{}
+  {
+  }
+  
+  tomo_internal::LazyOStreamCallback addFootNote(std::string footnote)
+  {
+    return tomo_internal::LazyOStreamCallback([footnote,this](std::ostream & stream) {
+        stream << "[" << std::to_string(ftlist.size()+1) << "]";
+        ftlist.push_back(footnote);
+      }) ;
+  }
+
+  void addSilentFootNote(std::size_t no, std::string footnote)
+  {
+    // Footnotes numbering starts at 1
+    tomographer_assert(no-1 == ftlist.size()
+                       && "Your footnotes have changed numbering! Check your silent footnotes.") ;
+    ftlist.push_back(footnote);
+  }
+
+  const std::vector<std::string> & getFootNotes() const { return ftlist; }
+
+  tomo_internal::LazyOStreamCallback wrapped(std::size_t width = 80) const
+  {
+    return tomo_internal::LazyOStreamCallback([width,this](std::ostream & stream) {
+        const std::vector<std::string> & ftlist = getFootNotes();
+        int w = (int)(std::ceil(std::log10((double)ftlist.size()))+0.01);
+        for (std::size_t k = 0; k < ftlist.size(); ++k) {
+          std::string head = "["+std::to_string(1+k)+"] ";
+          SimpleWordWrapper wrapper(width, head, w+4, 1);
+          stream << wrapper.wrapped(ftlist[k]);
+        }
+      });
+  }
+};
+
+inline std::ostream & operator<<(std::ostream & stream, const FmtFootnotes & f)
+{
+  const std::vector<std::string> & ftlist = f.getFootNotes();
+  int w = (int)(std::ceil(std::log10((double)ftlist.size()))+0.01);
+  const std::string nlindent = "\n" + std::string((std::size_t)w+4, ' ');
+  for (std::size_t k = 0; k < ftlist.size(); ++k) {
+    std::string s = ftlist[k];
+
+    // string replace "\n" by "\n<indent spaces>" -- see https://stackoverflow.com/a/3418285/1694896
+    size_t start_pos = 0;
+    while (s.size() && (start_pos = s.find("\n", start_pos)) != std::string::npos) {
+        s.replace(start_pos, 1, nlindent);
+        start_pos += nlindent.length();
+    }
+
+    // output this footnote
+    stream << " [" << std::setw(w) << (k+1) << "] " << s << "\n";
+  }
+
+  return stream;
+}
+
+
 
 
 } // namespace Tools

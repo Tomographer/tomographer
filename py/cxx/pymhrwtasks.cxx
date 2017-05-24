@@ -190,41 +190,39 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         ":py:func:`tomographer.tomorun.tomorun()`." )
       ) ;
   
-  logger.debug("mhrwtasks.MHRandomWalkValueHistogramTaskResult ...");
-  { typedef tpy::MHRandomWalkValueHistogramTaskResult Kl;
-    py::class_<tpy::MHRandomWalkValueHistogramTaskResult>(
+  logger.debug("mhrwtasks.MHRandomWalkTaskResult ...");
+  { typedef tpy::MHRandomWalkTaskResult Kl;
+    py::class_<tpy::MHRandomWalkTaskResult>(
         mhrwtasksmodule,
-        "MHRandomWalkValueHistogramTaskResult",
+        "MHRandomWalkTaskResult",
         "The result of an executed Metropolis-Hastings random walk task."
         "\n\n"
         "This class interfaces the corresponding C++ class :tomocxx:`"
         "Tomographer::MHRWTasks::MHRandomWalkTaskResult"
-        " <struct_tomographer_1_1_m_h_r_w_tasks_1_1_m_h_random_walk_task_result.html>`, "
-        "when specialized to the :tomocxx:`"
-        "Tomographer::ValueHistogramWithErrorBarsMHRWStatsCollector"
-        " <class_tomographer_1_1_value_histogram_with_binning_m_h_r_w_stats_collector.html>` stats"
-        " collector type."
+        " <struct_tomographer_1_1_m_h_r_w_tasks_1_1_m_h_random_walk_task_result.html>` "
+        "(the stats results type can be anything, represented in a Python object)."
         "\n\n"
         "|picklable|"
         "\n\n"
         ".. py:attribute:: stats_results\n\n"
-        "    An object of type :py:class:`~tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult` "
-        "detailing the result of the stats collecting class which is responsible for determining the final "
-        "histogram, and carrying out the binning analysis to come up with error bars.\n\n"
-        "    .. versionchanged:: 5.0\n        Previously, this attribute was called `stats_collector_result`."
+        "    An object containing the results of the stats collected during the random walk. This can be\n"
+        "    any Python object.\n\n"
+        "    .. versionchanged:: 5.0\n"
+        "        Previously, this attribute was called `stats_collector_result` and necessarily had the\n"
+        "        type :py:class:`tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult`."
         "\n\n"
         ".. py:attribute:: mhrw_params\n\n"
         "    The parameters of the executed random walk, as an :py:class:`~tomographer.MHRWParams` "
         "instance.\n\n"
         ".. py:attribute:: acceptance_ratio\n\n"
         "    The average acceptance ratio of the random walk (excluding the thermalization sweeps).\n\n")
-      .def(py::init<tpy::ValueHistogramWithBinningMHRWStatsCollectorResult, tpy::MHRWParams, double>(),
+      .def(py::init<py::object, tpy::MHRWParams, double>(),
            "stats_results"_a, "mhrw_params"_a, "acceptance_ratio"_a)
       .def_readonly("stats_results", & Kl::stats_results )
       .def_readonly("mhrw_params", & Kl::mhrw_params )
       .def_readonly("acceptance_ratio", & Kl::acceptance_ratio )
       .def("__repr__", [](py::object p) {
-          return streamstr("<MHRandomWalkValueHistogramTaskResult with "
+          return streamstr("<MHRandomWalkTaskResult with "
                            << py::repr(p.attr("mhrw_params")).cast<std::string>() << ">") ;
         })
       .def("__getstate__", [](py::object p) {
@@ -233,11 +231,14 @@ void py_tomo_mhrwtasks(py::module rootmodule)
       .def("__setstate__", [](Kl & p, py::tuple t) {
           tpy::internal::unpack_tuple_and_construct<
             Kl,
-            tpy::ValueHistogramWithBinningMHRWStatsCollectorResult,
+            py::object,
             tpy::MHRWParams,
             double
             >(p, t);
         })
       ;
   }
+
+  // alias for backwards compatibility, e.g. for un-pickling data pickled with Tomographer < 5
+  mhrwtasksmodule.attr("MHRandomWalkValueHistogramTaskResult") = mhrwtasksmodule.attr("MHRandomWalkTaskResult");
 }

@@ -61,9 +61,9 @@ namespace Tomographer {
  *         a good acceptance ratio
  *
  * This controller is based on \ref Tomographer::MHRWAcceptRatioWalkerParamsController. In
- * case you're wondering, the \a AcceptanceRatioBasedParamsAdjusterType we're using is
+ * case you're wondering, the \a MHRWAcceptanceRatioBasedParamsAdjusterType we're using is
  * this class itself.  This class conforms both to \ref pageInterfaceMHRWController and
- * \ref pageInterfaceAcceptanceRatioBasedParamsAdjuster.
+ * \ref pageInterfaceMHRWAcceptanceRatioBasedParamsAdjuster.
  */
 template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
          typename BaseLoggerType_ = Logger::VacuumLogger,
@@ -71,7 +71,7 @@ template<typename MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
          typename IterCountIntType_ = int>
 class TOMOGRAPHER_EXPORT MHRWStepSizeController
   : public MHRWAcceptRatioWalkerParamsController<
-  // we will be our own AcceptanceRatioBasedParamsAdjusterType
+  // we will be our own MHRWAcceptanceRatioBasedParamsAdjusterType
   MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
                          BaseLoggerType_, StepRealType_, IterCountIntType_>,
   // other params
@@ -82,7 +82,7 @@ class TOMOGRAPHER_EXPORT MHRWStepSizeController
 {
 public:
   typedef  MHRWAcceptRatioWalkerParamsController<
-    // we will be our own AcceptanceRatioBasedParamsAdjusterType
+    // we will be our own MHRWAcceptanceRatioBasedParamsAdjusterType
     MHRWStepSizeController<MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
                            BaseLoggerType_, StepRealType_, IterCountIntType_>,
     // other params
@@ -137,7 +137,7 @@ public:
   }
       
 
-  // callbacks for AcceptanceRatioBasedParamsAdjusterType:
+  // callbacks for MHRWAcceptanceRatioBasedParamsAdjusterType:
   
   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
   inline void initParams(MHRWParamsType & params, const MHWalker & , const MHRandomWalkType & )

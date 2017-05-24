@@ -103,7 +103,7 @@ class MHRWTasksStuff(unittest.TestCase):
                       tomographer.BinningAnalysis.NOT_CONVERGED,
                       tomographer.BinningAnalysis.UNKNOWN_CONVERGENCE])
         )
-        mhrw_task_result = tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult(
+        mhrw_task_result = tomographer.mhrwtasks.MHRandomWalkTaskResult(
             stats_results,
             tomographer.MHRWParams(0.03, 37, 400, 65538),
             0.27

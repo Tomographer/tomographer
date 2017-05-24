@@ -77,12 +77,12 @@ static constexpr double EnsureNThermFixedParamsFraction = 0.5;
 /** \brief Basic functionality for a \ref pageInterfaceMHRWController to adjust \a
  *         MHWalkerParams based on keeping the acceptance ratio within a required range
  *
- * The \a AcceptanceRatioBasedParamsAdjusterType must be a \ref
- * pageInterfaceAcceptanceRatioBasedParamsAdjuster compliant type.
+ * The \a MHRWAcceptanceRatioBasedParamsAdjusterType must be a \ref
+ * pageInterfaceMHRWAcceptanceRatioBasedParamsAdjuster compliant type.
  *
  * See \ref MHRWStepSizeController for an example.
  */
-template<typename AcceptanceRatioBasedParamsAdjusterType_,
+template<typename MHRWAcceptanceRatioBasedParamsAdjusterType_,
          typename MHRWMovingAverageAcceptanceRatioStatsCollectorType_,
          typename BaseLoggerType_ = Logger::VacuumLogger,
          typename IterCountIntType_ = int>
@@ -91,7 +91,7 @@ class TOMOGRAPHER_EXPORT MHRWAcceptRatioWalkerParamsController
 public:
   enum { AdjustmentStrategy = MHRWControllerAdjustEveryIterationWhileThermalizing };
   
-  typedef AcceptanceRatioBasedParamsAdjusterType_ AcceptanceRatioBasedParamsAdjusterType;
+  typedef MHRWAcceptanceRatioBasedParamsAdjusterType_ MHRWAcceptanceRatioBasedParamsAdjusterType;
   typedef MHRWMovingAverageAcceptanceRatioStatsCollectorType_
     MHRWMovingAverageAcceptanceRatioStatsCollectorType;
   typedef BaseLoggerType_ BaseLoggerType;
@@ -100,7 +100,7 @@ public:
 private:
   const MHRWMovingAverageAcceptanceRatioStatsCollectorType & accept_ratio_stats_collector;
   
-  AcceptanceRatioBasedParamsAdjusterType & params_adjuster;
+  MHRWAcceptanceRatioBasedParamsAdjusterType & params_adjuster;
 
   const double desired_accept_ratio_min;
   const double desired_accept_ratio_max;
@@ -122,7 +122,7 @@ public:
   MHRWAcceptRatioWalkerParamsController(
     const MHRWMovingAverageAcceptanceRatioStatsCollectorType & accept_ratio_stats_collector_,
     BaseLoggerType & baselogger_,
-    AcceptanceRatioBasedParamsAdjusterType & params_adjuster_,
+    MHRWAcceptanceRatioBasedParamsAdjusterType & params_adjuster_,
     double desired_accept_ratio_min_ =
       MHRWAcceptRatioWalkerParamsControllerDefaults::DesiredAcceptanceRatioMin,
     double desired_accept_ratio_max_ =

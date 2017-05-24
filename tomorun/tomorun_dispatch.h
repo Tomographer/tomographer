@@ -44,7 +44,6 @@
 #include <tomographer/mhrw_valuehist_tools.h>
 #include <tomographer/densedm/tspacellhwalker.h>
 #include <tomographer/mathtools/pos_semidef_util.h>
-#include <tomographer/valuecalculator.h>
 
 
 
@@ -427,8 +426,6 @@ inline void tomorun_dispatch(const Eigen::Index dim, ProgOptions * opt, Tomograp
 
   llh.setNMeasAmplifyFactor(opt->NMeasAmplifyFactor);
 
-  typedef typename DMTypes::MatrixType MatrixType;
-  
   //
   // Data has now been successfully read. Now, dispatch to the correct template function
   // for futher processing.
@@ -436,83 +433,8 @@ inline void tomorun_dispatch(const Eigen::Index dim, ProgOptions * opt, Tomograp
 
   logger.debug("Creating the MultiplexorValueCalculator.");
 
-  // Instantiate & Use a MultiplexorValueCalculator for the different possible figures of
-  // merit.
-
-  MatrixType T_ref(dmt.initMatrixType());
-  MatrixType rho_ref(dmt.initMatrixType());
-  MatrixType A(dmt.initMatrixType());
-
-  // make sure that whichever fig of merit gets eventually used, each ValueCalculator has
-  // valid parameters (they may error-check their argument).
-  T_ref(0,0) = 1;
-  rho_ref(0,0) = 1;
-  // A may stay zero
-
-  if (opt->valtype.valtype == val_type_spec::FIDELITY ||
-      opt->valtype.valtype == val_type_spec::TR_DIST ||
-      opt->valtype.valtype == val_type_spec::PURIF_DIST) {
-    
-    // read the reference state given explicitly as, e.g., "fidelity:rho_ref"
-    Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> mpsd =
-      Tomographer::MAT::value<Tomographer::MAT::EigenPosSemidefMatrixWithSqrt<MatrixType> >(
-          matf->var(opt->valtype.ref_obj_name.size() ? opt->valtype.ref_obj_name : std::string("rho_ref"))
-          );
-    rho_ref = std::move(mpsd.mat);
-    T_ref = std::move(mpsd.sqrt);
-
-    logger.debug([&](std::ostream & str) {
-        str << "Using rho_ref = \n" << rho_ref << "\n\t-> T_ref = \n" << T_ref << "\n";
-      });
-
-  }
-  else if (opt->valtype.valtype == val_type_spec::OBS_VALUE) {
-    
-    std::string obsname = "Observable";
-    if (opt->valtype.ref_obj_name.size()) {
-      obsname = opt->valtype.ref_obj_name;
-    }
-
-    A = Tomographer::MAT::value<MatrixType>(matf->var(obsname));
-    
-    ensure_valid_input(A.cols() == dim && A.rows() == dim,
-		       streamstr("Observable \"" << obsname << "\" is expected to be a square matrix "
-                                 << dim << " x " << dim));
-  }
-  // -----------------------------------------------
-  // INSERT FIGURE OF MERIT HERE: add an else-if branch, and set up appropriate parameters
-  // for your ValueCalculator instance as for the other figures of merit. Just make sure
-  // that your ValueCalculator gets an acceptable argument, even if your figure of merit
-  // was not selected in the end, as it will be anyway constructed.
-  // -----------------------------------------------
-  else {
-    throw invalid_input(streamstr("Unknown valtype: " << opt->valtype));
-  }
-
-  Tomographer::MultiplexorValueCalculator<
-    TomorunReal,
-    Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, TomorunReal>,
-    Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, TomorunReal>,
-    Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, TomorunReal>,
-    Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>
-    //...// INSERT CUSTOM FIGURE OF MERIT HERE: add your ValueCalculator instance here.
-    >  multiplexor_value_calculator(
-        // index of the valuecalculator to actually use:
-        (opt->valtype.valtype == val_type_spec::FIDELITY ? 0 :
-         (opt->valtype.valtype == val_type_spec::PURIF_DIST ? 1 :
-          (opt->valtype.valtype == val_type_spec::TR_DIST ? 2 :
-           (opt->valtype.valtype == val_type_spec::OBS_VALUE ? 3 :
-            //...// INSERT CUSTOM FIGURE OF MERIT HERE: add check to set your figure of merit
-            throw invalid_input(streamstr("Invalid valtype: " << opt->valtype.valtype))
-               )))),
-        // the valuecalculator instances which are available:
-        Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes, TomorunReal>(T_ref),
-        Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes, TomorunReal>(T_ref),
-        Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes, TomorunReal>(rho_ref),
-        Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>(dmt, A)
-        // INSERT CUSTOM FIGURE OF MERIT HERE: add your valuecalculator instance, with
-        // valid constructor arguments.
-        );
+  auto multiplexor_value_calculator =
+    makeTomorunMultiplexorValueCalculatorType<DMTypes>(opt->valtype.valtype, dmt, opt->valtype.ref_obj_name, matf);
 
   tomorun<UseBinningAnalysisErrorBars, ControlStepSize, ControlValueErrorBins, UseLLHWalkerLight>(
       llh,

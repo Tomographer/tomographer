@@ -113,8 +113,8 @@ inline py::module import_tomographer()
   if (module_tomographer_version != TOMOGRAPHER_VERSION) {
     throw std::runtime_error(
         "Error: Version of compiled tomographer python module ("+module_tomographer_version +
-        ") does not match current header files version ("+TOMOGRAPHER_VERSION+"). If you "
-        "updated tomographer, please recompile all dependent modules."
+        ") does not match version used to compile the current module (" + std::string(TOMOGRAPHER_VERSION)
+        + "). If you updated tomographer, please recompile all dependent modules."
         ) ;
   }
   return tomographer_module;

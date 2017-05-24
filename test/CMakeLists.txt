@@ -267,6 +267,12 @@ if (BUILD_TOMORUN)
   # Enable C++11
   set_property(TARGET test_tomorun_1qubit_analytic_solution_check PROPERTY CXX_STANDARD 11)
 
+  # # query help text
+  # add_test(NAME test_tomorun_help
+  #   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  #   COMMAND "$<TARGET_FILE:tomorun>" --help
+  #   )
+
   # version without binning analysis
   add_test(NAME test_tomorun_1qubit_analytic_solution_run_simple
     WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"

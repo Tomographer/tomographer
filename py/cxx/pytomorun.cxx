@@ -565,11 +565,11 @@ py::object py_tomorun(
                                           + py::repr(fig_of_merit).cast<std::string>())
               ))))),
         // the valuecalculator instances which are available:
-        Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, RealType>(T_ref),
-        Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, RealType>(T_ref),
-        Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, RealType>(rho_ref),
-        Tomographer::DenseDM::TSpace::ObservableValueCalculator<tpy::DMTypes>(dmt, A),
-        tpy::CallableValueCalculator(fig_of_merit)
+      [&]() { return new Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, RealType>(T_ref); },
+      [&]() { return new Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, RealType>(T_ref); },
+      [&]() { return new Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, RealType>(rho_ref); },
+      [&]() { return new Tomographer::DenseDM::TSpace::ObservableValueCalculator<tpy::DMTypes>(dmt, A); },
+      [&]() { return new tpy::CallableValueCalculator(fig_of_merit); }
         );
 
   logger.debug([&](std::ostream & stream) {
@@ -701,8 +701,8 @@ py::object py_tomorun(
   for (std::size_t k = 0; k < task_results.size(); ++k) {
     const auto & run_result = *task_results[k];
     runs_results.append(
-        tpy::MHRandomWalkValueHistogramTaskResult(
-            run_result.stats_results,
+        tpy::MHRandomWalkTaskResult(
+            py::cast(tpy::ValueHistogramWithBinningMHRWStatsCollectorResult(run_result.stats_results)),
             tpy::MHRWParams(py::dict("step_size"_a=run_result.mhrw_params.mhwalker_params.step_size),
                             run_result.mhrw_params.n_sweep,
                             run_result.mhrw_params.n_therm,
@@ -935,7 +935,8 @@ void py_tomo_tomorun(py::module rootmodule)
         "report of all the runs contained in ``final_report_runs``, as well as a visual representation of the "
         "final averaged histogram.\n\n"
         "  - ``runs_results``: a list of all the raw results provided by each task run.  Each item of the "
-        "list is an instance of :py:class:`tomographer.mhrwtasks.MHRandomWalkValueHistogramTaskResult`.\n\n"
+        "list is an instance of :py:class:`tomographer.mhrwtasks.MHRandomWalkTaskResult`, with its `stats_results`"
+        " member being a instance of :py:class:`tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult`.\n\n"
         "\n\n"
         ".. rubric:: Status reporting"
         "\n\n"

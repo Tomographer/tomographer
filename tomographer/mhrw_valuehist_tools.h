@@ -170,7 +170,7 @@ struct valuehist_types<CDataBaseType, true>
  *
  * We provide some useful typedefs, as well as a \ref createValueStatsCollector() which
  * should be used by subclasses in the \a setupRandomWalkAndRun() method of their \ref
- * pageInterfaceMHRandomWalkCData implementation.
+ * pageInterfaceMHRandomWalkTaskCData implementation.
  *
  * \since Changed in %Tomographer 5.0: Removed \a StepRealType template parameter, added
  *        \a MHWalkerParams, beware the new order!
@@ -277,7 +277,7 @@ struct TOMOGRAPHER_EXPORT CDataBase
   /** \brief Stores result of the stats collector. May serve as base class for your own
    *         MHRWStatsResults class.
    *
-   * Depending on \a UseBinningAnalysis, this is either \ref MHRWStatsResultBaseSimple, or
+   * Depending on \a UseBinningAnalysis, this is either \ref MHRWStatsResultsBaseSimple, or
    * directly the corresponding \ref ValueHistogramWithBinningMHRWStatsCollectorResult
    * type.
    *
@@ -389,10 +389,10 @@ struct TOMOGRAPHER_EXPORT CDataBase
 
   /** \brief Convenience function for aggregating histograms resulting from value-histogram tasks
    *
-   * The \a TaskResultType is expected to be a subclass of \ref MHRWStatsResultBaseSimple.
+   * The \a TaskResultType is expected to be a subclass of \ref MHRWStatsResultsBaseSimple.
    * This will automatically be the case if you're using our \ref CDataBase type, and if
    * you have defined your custom \a MHRWStatsResults type (see \ref
-   * pageInterfaceMHRandomWalkCData) using \a CDataBase::MHRWStatsResultsBaseType as base
+   * pageInterfaceMHRandomWalkTaskCData) using \a CDataBase::MHRWStatsResultsBaseType as base
    * class.
    */
   template<typename TaskResultType>

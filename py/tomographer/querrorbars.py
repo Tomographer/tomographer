@@ -116,18 +116,32 @@ def deskew_logmu_curve(a2, a1, m, c):
         (a, x0, y0) = deskew_logmu_curve(a2, a1, m, c)
     """
     
-    x0 = (np.sqrt(a1**2 + 8*a2*m) - a1) / (4*a2)
-    y0 = -a2*x0**2 - a1*x0 + m*np.log(x0) + c
-    a = a2 + m / (2 * x0**2)
+    x0 = (np.sqrt(np.square(a1) + 8*a2*m) - a1) / (4*a2)
+    y0 = -a2*np.square(x0) - a1*x0 + m*np.log(x0) + c
+    a = a2 + m / (2 * np.square(x0))
 
     return (a, x0, y0)
+
+
+def reskew_logmu_curve(m, a, x0, y0):
+    a2 = a - m / (2 * np.square(x0))
+    a1 = (a2*m - 2*np.square(a2)*np.square(x0)) / (a2*x0)
+    c = y0 + a2*np.square(x0) + a1*x0 - m*np.log(x0)
+    return (a2, a1, m, c)
 
 
 def qu_error_bars_from_deskewed(xtof, m, a, x0, y0):
     f0 = xtof(x0)
     Delta = 1/np.sqrt(a)
-    gamma = m / (6 * a**2 * x0**3)
+    gamma = m / (6 * np.square(a) * np.power(x0,3))
     return (f0, Delta, gamma)
+
+
+def qu_error_bars_to_deskewed_c(ftox, f0, Delta, gamma, y0=1):
+    a = 1/(np.square(Delta))
+    x0 = ftox(f0)
+    m = gamma * 6 * np.square(a) * np.power(x0,3)
+    return (m, a, x0, y0)
 
 
 class HistogramAnalysis(object):
@@ -167,7 +181,7 @@ class HistogramAnalysis(object):
             self.fit_fn = fit_fn_default
             if 'bounds' not in kwopts:
                 # a2, a1, m, c
-                kwopts['bounds'] = ( (0, -np.inf, 0.1, -np.inf), np.inf, )
+                kwopts['bounds'] = ( (0, -np.inf, 0, -np.inf), np.inf, )
             if 'p0' not in kwopts:
                 kwopts['p0'] = [ 1000, 300, 10, 0 ]
 
@@ -261,6 +275,8 @@ class HistogramAnalysis(object):
              log_scale=False,
              xlabel='Distribution of values',
              plot_deskewed_gaussian=True,
+             show_plot=True,
+             curve_npts=200,
              **kwopts):
         """
         Plot the histogram data using `matplotlib`.
@@ -273,6 +289,8 @@ class HistogramAnalysis(object):
         :param show_plot: if `True` (the default), then the plot is displayed immediately.
             If `False`, then the returned object has an additional method `show()` which can
             be used to display the plot.
+        
+        :param curve_npts: Number of points for the smooth fit curve plot.
 
         The return value is an object with the attributes `fig` (the `matplotlib` figure
         object) and `ax` (the `matplotlib` axes object) which you can use to set specific
@@ -297,19 +315,17 @@ class HistogramAnalysis(object):
         p = self.fit_histogram_result.p
         errp = self.fit_histogram_result.errp
 
+        fvals = np.linspace(np.min(f), np.max(f), curve_npts)
+
         d.ax.errorbar(x=f, y=p, yerr=errp, c='b', fmt='.', label='numerics')
-        d.ax.plot(np.linspace(np.min(f), np.max(f), 100),
-                  np.exp(self.fit_fn(self.ftox(np.linspace(np.min(f), np.max(f), 100)),
-                                     *self.fit_params)),
-                  c='r', label='fit')
+        d.ax.plot(fvals, np.exp(self.fit_fn(self.ftox(fvals), *self.fit_params)), c='r', label='fit')
         if plot_deskewed_gaussian:
             if self.custom_fit_fn:
                 raise RuntimeError("Cannot plot deskewed gaussian with a custom fit; use plot_deskewed_gaussian=False.")
             (a, x0, y0) = deskew_logmu_curve(self.fit_params.a2, self.fit_params.a1, self.fit_params.m, self.fit_params.c)
-            f = np.linspace(np.min(f), np.max(f), 100)
-            d.ax.plot(f, np.exp(-a*(self.ftox(f)-x0)**2 + y0), c='g', label='deskewed Gaussian')
+            d.ax.plot(fvals, np.exp(-a*(self.ftox(fvals)-x0)**2 + y0), c='g', label='deskewed Gaussian')
 
-        if kwopts.get('show_plot', True):
+        if show_plot:
             matplt.show()
         else:
             d.show = matplt.show
