@@ -117,14 +117,14 @@ BOOST_AUTO_TEST_CASE(essential)
       Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>
       >  multiplexor(
 	  val,
-	  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes>(T_ref),
-	  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes>(T_ref),
-	  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes>(rho_ref),
-	  obs,
-	  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes>(T),
-	  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes>(T),
-	  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes>(rho),
-	  obs
+	  [&](){ return new Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes>(T_ref); },
+	  [&](){ return new Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes>(T_ref); },
+	  [&](){ return new Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes>(rho_ref); },
+	  [&](){ return new Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>(obs); },
+	  [&](){ return new Tomographer::DenseDM::TSpace::FidelityToRefCalculator<DMTypes>(T); },
+	  [&](){ return new Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<DMTypes>(T); },
+	  [&](){ return new Tomographer::DenseDM::TSpace::TrDistToRefCalculator<DMTypes>(rho); },
+	  [&](){ return new Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>(obs); }
 	  );
     MY_BOOST_CHECK_FLOATS_EQUAL(multiplexor.getValue(T), correct_values[val], tol);
   }
@@ -136,7 +136,7 @@ BOOST_AUTO_TEST_CASE(fixed1)
   Tomographer::MultiplexorValueCalculator<
     int,
     const_value_calculator
-    > multiplexor(0, const_value_calculator(191));
+    > multiplexor(0, [&](){ return new const_value_calculator(191); });
   BOOST_CHECK_EQUAL(multiplexor.getValue(-1), 191);
 }
 BOOST_AUTO_TEST_CASE(fixed2)
@@ -148,8 +148,8 @@ BOOST_AUTO_TEST_CASE(fixed2)
       const_value_calculator
       > multiplexor(
 	  val,
-	  const_value_calculator(0),
-	  const_value_calculator(1)
+	  [&]() { return new const_value_calculator(0); },
+	  [&]() { return new const_value_calculator(1); }
 	  );
     BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
   }
@@ -164,9 +164,9 @@ BOOST_AUTO_TEST_CASE(fixed3)
       const_value_calculator
       > multiplexor(
 	  val,
-	  const_value_calculator(0),
-	  const_value_calculator(1),
-	  const_value_calculator(2)
+	  [&]() { return new const_value_calculator(0); },
+	  [&]() { return new const_value_calculator(1); },
+	  [&]() { return new const_value_calculator(2); }
 	  );
     BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
   }
@@ -182,10 +182,10 @@ BOOST_AUTO_TEST_CASE(fixed4)
       const_value_calculator
       > multiplexor(
 	  val,
-	  const_value_calculator(0),
-	  const_value_calculator(1),
-	  const_value_calculator(2),
-	  const_value_calculator(3)
+	  [&]() { return new const_value_calculator(0); },
+	  [&]() { return new const_value_calculator(1); },
+	  [&]() { return new const_value_calculator(2); },
+	  [&]() { return new const_value_calculator(3); }
 	  );
     BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
   }
@@ -202,11 +202,11 @@ BOOST_AUTO_TEST_CASE(fixed5)
       const_value_calculator
       > multiplexor(
 	  val,
-	  const_value_calculator(0),
-	  const_value_calculator(1),
-	  const_value_calculator(2),
-	  const_value_calculator(3),
-	  const_value_calculator(4)
+	  [&]() { return new const_value_calculator(0); },
+	  [&]() { return new const_value_calculator(1); },
+	  [&]() { return new const_value_calculator(2); },
+	  [&]() { return new const_value_calculator(3); },
+	  [&]() { return new const_value_calculator(4); }
 	  );
     BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
   }
@@ -224,12 +224,12 @@ BOOST_AUTO_TEST_CASE(fixed6)
       const_value_calculator
       > multiplexor(
 	  val,
-	  const_value_calculator(0),
-	  const_value_calculator(1),
-	  const_value_calculator(2),
-	  const_value_calculator(3),
-	  const_value_calculator(4),
-	  const_value_calculator(5)
+	  [&]() { return new const_value_calculator(0); },
+	  [&]() { return new const_value_calculator(1); },
+	  [&]() { return new const_value_calculator(2); },
+	  [&]() { return new const_value_calculator(3); },
+	  [&]() { return new const_value_calculator(4); },
+	  [&]() { return new const_value_calculator(5); }
 	  );
     BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
   }
@@ -248,13 +248,13 @@ BOOST_AUTO_TEST_CASE(fixed7)
       const_value_calculator
       > multiplexor(
 	  val,
-	  const_value_calculator(0),
-	  const_value_calculator(1),
-	  const_value_calculator(2),
-	  const_value_calculator(3),
-	  const_value_calculator(4),
-	  const_value_calculator(5),
-	  const_value_calculator(6)
+	  [&]() { return new const_value_calculator(0); },
+	  [&]() { return new const_value_calculator(1); },
+	  [&]() { return new const_value_calculator(2); },
+	  [&]() { return new const_value_calculator(3); },
+	  [&]() { return new const_value_calculator(4); },
+	  [&]() { return new const_value_calculator(5); },
+	  [&]() { return new const_value_calculator(6); }
 	  );
     BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
   }
@@ -274,14 +274,14 @@ BOOST_AUTO_TEST_CASE(fixed8)
       const_value_calculator
       > multiplexor(
 	  val,
-	  const_value_calculator(0),
-	  const_value_calculator(1),
-	  const_value_calculator(2),
-	  const_value_calculator(3),
-	  const_value_calculator(4),
-	  const_value_calculator(5),
-	  const_value_calculator(6),
-	  const_value_calculator(7)
+	  [&]() { return new const_value_calculator(0); },
+	  [&]() { return new const_value_calculator(1); },
+	  [&]() { return new const_value_calculator(2); },
+	  [&]() { return new const_value_calculator(3); },
+	  [&]() { return new const_value_calculator(4); },
+	  [&]() { return new const_value_calculator(5); },
+	  [&]() { return new const_value_calculator(6); },
+	  [&]() { return new const_value_calculator(7); }
 	  );
     BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
   }
@@ -302,15 +302,15 @@ BOOST_AUTO_TEST_CASE(fixed9)
       const_value_calculator
       > multiplexor(
 	  val,
-	  const_value_calculator(0),
-	  const_value_calculator(1),
-	  const_value_calculator(2),
-	  const_value_calculator(3),
-	  const_value_calculator(4),
-	  const_value_calculator(5),
-	  const_value_calculator(6),
-	  const_value_calculator(7),
-	  const_value_calculator(8)
+	  [&]() { return new const_value_calculator(0); },
+	  [&]() { return new const_value_calculator(1); },
+	  [&]() { return new const_value_calculator(2); },
+	  [&]() { return new const_value_calculator(3); },
+	  [&]() { return new const_value_calculator(4); },
+	  [&]() { return new const_value_calculator(5); },
+	  [&]() { return new const_value_calculator(6); },
+	  [&]() { return new const_value_calculator(7); },
+	  [&]() { return new const_value_calculator(8); }
 	  );
     BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
   }
@@ -332,16 +332,16 @@ BOOST_AUTO_TEST_CASE(fixed10)
       const_value_calculator
       > multiplexor(
 	  val,
-	  const_value_calculator(0),
-	  const_value_calculator(1),
-	  const_value_calculator(2),
-	  const_value_calculator(3),
-	  const_value_calculator(4),
-	  const_value_calculator(5),
-	  const_value_calculator(6),
-	  const_value_calculator(7),
-	  const_value_calculator(8),
-	  const_value_calculator(9)
+	  [&]() { return new const_value_calculator(0); },
+	  [&]() { return new const_value_calculator(1); },
+	  [&]() { return new const_value_calculator(2); },
+	  [&]() { return new const_value_calculator(3); },
+	  [&]() { return new const_value_calculator(4); },
+	  [&]() { return new const_value_calculator(5); },
+	  [&]() { return new const_value_calculator(6); },
+	  [&]() { return new const_value_calculator(7); },
+	  [&]() { return new const_value_calculator(8); },
+	  [&]() { return new const_value_calculator(9); }
 	  );
     BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
   }

@@ -26,28 +26,38 @@
  */
 
 
-/** \page pageTomorunNewFigureOfMerit Adding a new figure of merit to the \c tomorun program
+/** \page pageTomorunNewFigureOfMerit Using a custom figure of merit
  *
  * The \c tomorun executable has several figures of merit built into the program: the
  * trace distance, the purified distance, or the fidelity to any reference state, as well
  * as the expectation value of an observable.  If you wish to produce a histogram of a
- * different figure of merit which can't be cast into one of these, you need to change the
- * source code of the tomorun program.
+ * different figure of merit which can't be cast into one of these, you have the following
+ * options.
  *
- * Another option, which may be easier if you have a very special purpose which might not
- * warrant inclusion into the generic \c tomorun program, is to combine the required
- * classes into a new special-purpose program.  This is not difficult, and there is
- * already an example ready&mdash;see \ref pageCustomTomorunExe.
+ * I.   Use the Python module, which allows you to specify any custom figure of merit given
+ *      as a Python callable;
  *
- * This information page describes how you should change the source code of \c tomorun to
- * include your figure of merit.
+ * II.  Write a small, special-purpose C++ program which does exactly what you need, in
+ *      which you can code your custom figure of merit;
+ *
+ * III. Modify the source of the \c tomorun program itself, to add your new figure of merit.
+ *
+ * Option I is the simplest, and should be your default choice; options II and III require
+ * a bit more work.
+ * 
+ * Option II may be easier if you have a very special purpose which might not warrant
+ * inclusion into the generic \c tomorun program.  You can simply combine the required
+ * tools into a new special-purpose program.  This is not difficult, and there are already
+ * examples ready&mdash;see \ref pageCustomTomorunExe.
+ *
+ * In the following we describe the necessary steps for Option III.
  *
  * \note If you perform modifications which may be useful to others, please <b>fork the
- * repository on github</b>, perform your changes, and send me a pull request.  This way
- * your changes will be availble to other users who would like to use the %Tomographer
- * project.  Please see <a
- * href="https://github.com/Tomographer/tomographer/blob/master/README.md#contributing">here</a>
- * for information on how to contribute.
+ *       repository on github</b>, perform your changes, and send me a pull request.  This
+ *       way your changes will be availble to other users who would like to use the
+ *       %Tomographer project.  Please see <a
+ *       href="https://github.com/Tomographer/tomographer/blob/master/README.md#contributing">here</a>
+ *       for information on how to contribute.
  *
  * We'll illustrate these steps with a simple example: the two-norm distance (aka. the
  * Hilbert-Schmidt distance) to any reference state, defined by \f$
@@ -132,8 +142,8 @@
  * \c "--value-type". So you should in fact first decide of a short memo string describing
  * your figure of merit (e.g. for our example \c "HS-dist" would be an appropriate choice).
  *
- * Now, open the file \c "tomorun_opts.h" located inside the \c "cxx/tomorun/" directory.
- * The locations where you should adapt the code are marked by comments saying \c "INSERT
+ * Open the file \c "tomorun_opts.h" located inside the \c "cxx/tomorun/" directory.  The
+ * locations where you should adapt the code are marked by comments saying \c "INSERT
  * CUSTOM FIGURE OF MERIT HERE".  Adapt the code as follows.
  *
  * The class \c val_type_spec is a type which is used to store the choice of figure of

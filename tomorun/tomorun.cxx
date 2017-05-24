@@ -110,6 +110,7 @@ inline int defaultNumRepeat() { return (int)std::thread::hardware_concurrency();
 
 
 #include "tomorun_config.h"
+#include "tomorun_figofmerit.h"
 #include "tomorun_opts.h"
 #include "tomorun_dispatch.h"
 

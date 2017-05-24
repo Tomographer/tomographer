@@ -562,11 +562,11 @@ py::object py_tomorun(
                                           + py::repr(fig_of_merit).cast<std::string>())
               ))))),
         // the valuecalculator instances which are available:
-        Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, RealType>(T_ref),
-        Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, RealType>(T_ref),
-        Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, RealType>(rho_ref),
-        Tomographer::DenseDM::TSpace::ObservableValueCalculator<tpy::DMTypes>(dmt, A),
-        tpy::CallableValueCalculator(fig_of_merit)
+      [&]() { return new Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, RealType>(T_ref); },
+      [&]() { return new Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, RealType>(T_ref); },
+      [&]() { return new Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, RealType>(rho_ref); },
+      [&]() { return new Tomographer::DenseDM::TSpace::ObservableValueCalculator<tpy::DMTypes>(dmt, A); },
+      [&]() { return new tpy::CallableValueCalculator(fig_of_merit); }
         );
 
   logger.debug([&](std::ostream & stream) {

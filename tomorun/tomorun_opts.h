@@ -38,6 +38,7 @@
 #include <tomographer/tools/ezmatio.h>
 
 
+
 static const std::string prog_version_info_1 =
   "Tomographer/Tomorun " TOMOGRAPHER_VERSION "\n"
   ;
@@ -145,127 +146,15 @@ static const int last_binning_level_warn_min_samples = 128;
 
 
 
+
+
 //
 // see http://stackoverflow.com/a/8822627/1694896
 // custom validation for types in boost::program_options
 //
-struct val_type_spec
-{
-  val_type_spec(const std::string & str)
-    : valtype(INVALID),
-      ref_obj_name()
-  {
-    set_value_string(str);
-  }
-
-  enum ValueType {
-    INVALID = 0,
-    OBS_VALUE,
-    TR_DIST,
-    FIDELITY,
-    PURIF_DIST
-    //
-    // INSERT CUSTOM FIGURE OF MERIT HERE:
-    // See instructions in API documentation, page 'Adding a new figure of merit to the tomorun program'
-    //
-    // <MY_CUSTOM_FIGURE_OF_MERIT_INTERNAL_CODE>
-  };
-
-
-  ValueType valtype;
-
-  std::string ref_obj_name;
-
-  inline void set_value_string(const std::string & str)
-  {
-    std::size_t k = str.find(':');
-    std::string valtype_str;
-    std::string ref_obj_name_str;
-    if (k == std::string::npos) {
-      // not found
-      valtype_str = str;
-    } else {
-      valtype_str = str.substr(0, k);
-      ref_obj_name_str = str.substr(k+1); // the rest of the string
-    }
-
-    // validate the given value
-    if (valtype_str == "obs-value") {
-      valtype = OBS_VALUE;
-      ref_obj_name = ref_obj_name_str;
-      return;
-    }
-    if (valtype_str == "tr-dist") {
-      valtype = TR_DIST;
-      ref_obj_name = ref_obj_name_str;
-      return;
-    }
-    if (valtype_str == "fidelity") {
-      valtype = FIDELITY;
-      ref_obj_name = ref_obj_name_str;
-      return;
-    }
-    if (valtype_str == "purif-dist") {
-      valtype = PURIF_DIST;
-      ref_obj_name = ref_obj_name_str;
-      return;
-    }
-    //
-    // INSERT CUSTOM FIGURE OF MERIT HERE:
-    // See instructions in API documentation, page 'Adding a new figure of merit to the tomorun program'
-    //
-    // if (valtype_str == "<my-figure-of-merit-code-in-config-file>") {
-    //   valtype = <MY_CUSTOM_FIGURE_OF_MERIT_INTERNAL_CODE>;
-    //   ref_obj_name = ref_obj_name_str; // in case there's a reference object name (eg. reference state)
-    //   return;
-    // }
-    //
-    
-    throw std::invalid_argument(std::string("Invalid argument to val_type_spec: '") + str + std::string("'"));
-  }
-};
-
-inline std::ostream & operator<<(std::ostream & str, const val_type_spec & val)
-{
-  switch (val.valtype) {
-  case val_type_spec::OBS_VALUE:
-    str << "obs-value";
-    break;
-  case val_type_spec::TR_DIST:
-    str << "tr-dist";
-    break;
-  case val_type_spec::FIDELITY:
-    str << "fidelity";
-    break;
-  case val_type_spec::PURIF_DIST:
-    str << "purif-dist";
-    break;
-
-  //
-  // INSERT CUSTOM FIGURE OF MERIT HERE:
-  // See instructions in API documentation, page 'Adding a new figure of merit to the tomorun program'
-  //
-  // case val_type_spec::<MY_CUSTOM_FIGURE_OF_MERIT_INTERNAL_CODE>:
-  //   str << "<my-figure-of-merit-code-in-config-file>";
-  //   break;
-
-  case val_type_spec::INVALID:
-    str << "<invalid>";
-    break;
-  default:
-    str << "<unknown/invalid>";
-    break;
-  }
-
-  if (val.ref_obj_name.size()) {
-    str << ":" << val.ref_obj_name;
-  }
-
-  return str;
-}
 
 void validate(boost::any& v, const std::vector<std::string> & values,
-              val_type_spec * /* target_type */,
+              figure_of_merit_spec * /* target_type */,
               int)
 {
   using namespace boost::program_options;
@@ -278,7 +167,7 @@ void validate(boost::any& v, const std::vector<std::string> & values,
   const std::string & s = validators::get_single_string(values);
 
   try {
-    v = boost::any(val_type_spec(s));
+    v = boost::any(figure_of_merit_spec(s));
   } catch (const std::invalid_argument & exc) {
     throw validation_error(validation_error::invalid_option_value);
   }
@@ -303,7 +192,7 @@ struct ProgOptions
   TomorunInt Ntherm{512};
   TomorunInt Nrun{32768};
 
-  val_type_spec valtype{"fidelity"};
+  figure_of_merit_spec valtype{"fidelity"};
 
   TomorunReal val_min{TomorunReal(0.9)};
   TomorunReal val_max{TomorunReal(1.0)};
@@ -392,7 +281,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
   desc.add_options()
     ("data-file-name", value<std::string>(& opt->data_file_name),
      "specify MATLAB (.mat) file to read data from")
-    ("value-type", value<val_type_spec>(& opt->valtype)->default_value(opt->valtype),
+    ("value-type", value<figure_of_merit_spec>(& opt->valtype)->default_value(opt->valtype),
      "Which value to acquire histogram of, e.g. fidelity to MLE. Possible values are 'fidelity', "
      "'purif-dist', 'tr-dist' or 'obs-value'. The value type may be followed by ':ObjName' to refer "
      "to a particular object defined in the datafile. See below for more info.")
@@ -527,154 +416,124 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
     variables_map vm;
     store(command_line_parser(argc, argv).options(desc).positional(p).run(), vm);
 
+
     if (vm.count("help")) {
-      std::cout
-        << std::setprecision(5)
-	<< "\n" << prog_version_info <<
-	"\n"
-	"A toolbox for error analysis in quantum tomography.\n"
-	"\n"
-	"Usage: tomorun --data-file-name=<data-file-name> [options]\n"
-	"       tomorun --config=<tomorun-config-file>\n"
-	"\n"
-//      |--------------------------------------------------------------------------------| 80 chars (col. 89)
-	"Produce a histogram of a figure of merit during a random walk in quantum state\n"
-	// REFERENCE [1] is here
-	"space according to the distribution \\mu_{B^n}(.) defined in Ref. [1]. The\n"
-	"likelihood function is specified with independent POVM effects (see below).\n"
-	"\n"
-	"Input data is given as a MATLAB file (--data-file-name). See below for exact\n"
-	"format. Options may be specified in a separate file and referred to (option\n"
-	"--config).\n"
-	"\n"
-	"Hit CTRL-C while `tomorun` is running to inquire about progress information.\n"
-	"\fn"
-	<< desc	<<
-	"\n"
-	"DATA FILE CONTENTS:\n"
-	"The data file must contain the following MATLAB variables:\n"
-	"\n"
-	"    - dim\n"
-	"      An integer scalar: the dimension of the quantum system\n"
-	"\n"
-	"    - Emn\n"
-	"      A list of all the POVM effects. This is a complex matrix of shape\n"
-	"      (dim,dim,K) where dim is the dimension of the system and K the total\n"
-	"      number of POVM effects.\n"
-	"\n"
-	"    - Nm\n"
-	"      A list of (integer) frequencies. Nm(k) is the number of times the POVM\n"
-	"      effect Emn(:,:,k) was observed.\n"
-	"\n"
-	"    - <any other variable name>\n"
-	"      The MATLAB data file may contain further variables for use in some\n"
-	"      figures of merit. See below.\n"
-	"\n"
-	"Note: if the MatIO library was compiled without HDF5/MATLAB-7.3 file format\n"
-	"support, you must save your MATLAB data files in MATLAB v6 file format, e.g.:\n"
-	"\n"
-	"    (Matlab)>> save('datafile.mat', ..., '-v6')\n"
-	"\n"
-	"OUTPUT HISTOGRAM:\n"
-	"The histogram data is output to a text file in tab-separated values format with\n"
-	"a single-line header. There are three or four columns, depending on whether a\n"
-	"binning analysis is performed. Each row corresponds to a histogram bin. The\n"
-	"columns are:\n"
-	"\n"
-	"    - The first column is the X-axis value, given as the *left edge* of the bin.\n"
-	"      For example, if the range [0, 1[ is divided into 10 bins, then the first\n"
-	"      column will display the values 0.0, 0.1, 0.2, ..., 0.9; the first bin\n"
-	"      covers samples in the range [0.0, 0.1[, the second collects samples in the\n"
-	"      range [0.1, 0.2[, and so on.\n"
-	"\n"
-	"    - The second column gives the average counts in the histogram bin. The value\n"
-	"      here is the average of the characteristic function \"is the point in this\n"
-	"      bin\" over the samples of the random walk.\n"
-	"\n"
-	"    - The third column gives an error bar on the figure in the second column. If\n"
-	"      binning analysis is enabled, then the third column is the corresponding\n"
-	"      error bar obtained by combining error bars from the binning analyses of\n"
-	"      each random walk. If binning analysis is disabled, this column is the\n"
-	"      statistical standard deviation of the results of the different random\n"
-	"      walks (make sure to have enough independent runs for this figure to make\n"
-	"      sense in this case).\n"
-	"\n"
-	"    - If binning analysis is enabled, then the fourth column is the statistical\n"
-	"      standard deviation of the results of the different random walks,\n"
-	"      regardless of error bars from the binning analysis (this figure might be\n"
-	"      irrelevant or misleading if too few independent random walks are\n"
-	"      instanciated). There is no fourth column if binning analysis is disabled.\n"
-	"\n"
-	"FIGURES OF MERIT:\n"
-	"The argument to the option --value-type should be specified as \"keyword\" or\n"
-	"\"keyword:<RefObject>\". <RefObject> should be the name of a MATLAB variable\n"
-	"present in the data file provided to --data-file-name. The possible keywords and\n"
-	"corresponding possible reference variables are:\n"
-	"\n"
-	"    - \"obs-value\": the expectation value of an observable. <RefObject> should\n"
-	"      be the name of a MATLAB variable present in the MATLAB data file. This\n"
-	"      object should be a complex dim x dim matrix which represents the\n"
-	"      observable in question. If no <RefObject> is specified, the variable named\n"
-	"      \"Observable\" is looked up in the data file.\n"
-	"\n"
-	"    - \"tr-dist\": the trace distance to a reference state. <RefObject> should\n"
-	"      be the name of a MATLAB variable present in the MATLAB data file. This\n"
-	"      object should be a complex dim x dim matrix, the density matrix of the\n"
-	"      reference state. If no <RefObject> is specified, then 'rho_MLE' is used.\n"
-	"\n"
-	// REFERENCE [3] is here
-	"    - \"fidelity\": the (root) fidelity to a reference state [3]. <RefObject>\n"
-	"      should be the name of a MATLAB variable present in the MATLAB data file.\n"
-	"      This object should be a complex dim x dim matrix, the density matrix of\n"
-	"      the reference state. If no <RefObject> is specified, then 'rho_MLE' is\n"
-        "      used.\n"
-	"      \n"
-	"      Note: For the squared fidelity to a pure state (usually preferred in\n"
-	"      experimental papers), you should use \"obs-value\" with the observable\n"
-	// REFERENCE [4] is here
-        "      being the density matrix of the reference state [4].\n"
-	"\n"
-	// REFERENCE [5] is here
-	"    - \"purif-dist\": the purified distance to a reference state [5].\n"
-	"      <RefObject> should be the name of a MATLAB variable present in the MATLAB\n"
-	"      data file. This object should be a complex dim x dim matrix, the density\n"
-	"      matrix of the reference state. If no <RefObject> is specified, then\n"
-	"      'rho_MLE' is used.\n"
-        //
-        // INSERT CUSTOM FIGURE OF MERIT HERE:
-        // Please don't forget to document the option value corresponding to your figure
-        // of merit. Document also any possible string that is understood after the colon
-        // in the option value.
-        //
-	"\n"
-	"FOOTNOTES AND REFERENCES:\n"
-	" [1] Christandl and Renner, Phys. Rev. Lett. 12:120403 (2012), arXiv:1108.5329\n"
-	" [2] Ambegaokar and Troyer, Am. J. Phys., 78(2):150 (2010), arXiv:0906.0943\n"
-	" [3] The root fidelity is defined as F(rho,sigma)=|| rho^{1/2} sigma^{1/2} ||_1,\n"
-	"     as in Nielsen and Chuang, \"Quantum Computation and Quantum Information\".\n"
-	" [4] Indeed, for pure rho_ref, F^2(rho,rho_ref) = tr(rho*rho_ref).\n"
-	" [5] The purified distance, also called \"infidelity\" in the literature, is\n"
-	"     defined as P(rho,sigma) = \\sqrt{1 - F^2(rho,sigma)}.\n"
-	"\n"
-	"CITATION:\n"
-	"If you use this program in your research, we warmly encourage you to cite the\n"
-	"following works:\n"
-	"\n"
-	"  1. Philippe Faist and Renato Renner. Practical and Reliable Error Bars in\n"
-        "     Quantum Tomography. Physical Review Letters 117:1, 010404 (2016).\n"
-        "     arXiv:1509.06763.\n"
-	"\n"
-	"  2. Philippe Faist. The Tomographer Project. Available at\n"
-	"     https://github.com/Tomographer/tomographer/.\n"
-	"\n"
-	"FEEDBACK:\n"
-	"Please report bugs, issues, and wishes at:\n"
-	"\n"
-	"    https://github.com/Tomographer/tomographer/issues\n"
-	"\n"
-	"Have a lot of fun!\n"
-	"\n"
-	;
+    Tomographer::Tools::FmtFootnotes footnotes;
+    // Reference [1]
+    footnotes.addSilentFootNote(1, "Christandl and Renner, Phys. Rev. Lett. 12:120403 (2012), arXiv:1108.5329");
+    // Reference [2] in options above
+    footnotes.addSilentFootNote(2, "Ambegaokar and Troyer, Am. J. Phys., 78(2):150 (2010), arXiv:0906.0943");
+
+    auto & stream = std::cout;
+    stream
+      << std::setprecision(5)
+      << "\n" << prog_version_info <<
+      "\n"
+      "A toolbox for error analysis in quantum tomography.\n"
+      "\n"
+      "Usage: tomorun --data-file-name=<data-file-name> [options]\n"
+      "       tomorun --config=<tomorun-config-file>\n"
+      "\n"
+//    |--------------------------------------------------------------------------------| 80 chars (col. 87)
+      "Produce a histogram of a figure of merit during a random walk in quantum state\n"
+      // REFERENCE [1] is here
+      "space according to the distribution \\mu_{B^n}(.) defined in Ref. [1]. The\n"
+      "likelihood function is specified with independent POVM effects (see below).\n"
+      "\n"
+      "Input data is given as a MATLAB file (--data-file-name). See below for exact\n"
+      "format. Options may be specified in a separate file and referred to (option\n"
+      "--config).\n"
+      "\n"
+      "Hit CTRL-C while `tomorun` is running to inquire about progress information.\n"
+      "\n"
+      <<  desc	<<
+      "\n"
+      "DATA FILE CONTENTS:\n"
+      "The data file must contain the following MATLAB variables:\n"
+      "\n"
+      "    - dim\n"
+      "      An integer scalar: the dimension of the quantum system\n"
+      "\n"
+      "    - Emn\n"
+      "      A list of all the POVM effects. This is a complex matrix of shape\n"
+      "      (dim,dim,K) where dim is the dimension of the system and K the total\n"
+      "      number of POVM effects.\n"
+      "\n"
+      "    - Nm\n"
+      "      A list of (integer) frequencies. Nm(k) is the number of times the POVM\n"
+      "      effect Emn(:,:,k) was observed.\n"
+      "\n"
+      "    - <any other variable name>\n"
+      "      The MATLAB data file may contain further variables for use in some\n"
+      "      figures of merit. See below.\n"
+      "\n"
+      "Note: if the MatIO library was compiled without HDF5/MATLAB-7.3 file format\n"
+      "support, you must save your MATLAB data files in MATLAB v6 file format, e.g.:\n"
+      "\n"
+      "    (Matlab)>> save('datafile.mat', ..., '-v6')\n"
+      "\n"
+      "OUTPUT HISTOGRAM:\n"
+      "The histogram data is output to a text file in tab-separated values format with\n"
+      "a single-line header. There are three or four columns, depending on whether a\n"
+      "binning analysis is performed. Each row corresponds to a histogram bin. The\n"
+      "columns are:\n"
+      "\n"
+      "    - The first column is the X-axis value, given as the *left edge* of the bin.\n"
+      "      For example, if the range [0, 1[ is divided into 10 bins, then the first\n"
+      "      column will display the values 0.0, 0.1, 0.2, ..., 0.9; the first bin\n"
+      "      covers samples in the range [0.0, 0.1[, the second collects samples in the\n"
+      "      range [0.1, 0.2[, and so on.\n"
+      "\n"
+      "    - The second column gives the average counts in the histogram bin. The value\n"
+      "      here is the average of the characteristic function \"is the point in this\n"
+      "      bin\" over the samples of the random walk.\n"
+      "\n"
+      "    - The third column gives an error bar on the figure in the second column. If\n"
+      "      binning analysis is enabled, then the third column is the corresponding\n"
+      "      error bar obtained by combining error bars from the binning analyses of\n"
+      "      each random walk. If binning analysis is disabled, this column is the\n"
+      "      statistical standard deviation of the results of the different random\n"
+      "      walks (make sure to have enough independent runs for this figure to make\n"
+      "      sense in this case).\n"
+      "\n"
+      "    - If binning analysis is enabled, then the fourth column is the statistical\n"
+      "      standard deviation of the results of the different random walks,\n"
+      "      regardless of error bars from the binning analysis (this figure might be\n"
+      "      irrelevant or misleading if too few independent random walks are\n"
+      "      instanciated). There is no fourth column if binning analysis is disabled.\n"
+      "\n"
+      "FIGURES OF MERIT:\n"
+      "The argument to the option --value-type should be specified as \"keyword\" or\n"
+      "\"keyword:<RefObject>\". <RefObject> should be the name of a MATLAB variable\n"
+      "present in the data file provided to --data-file-name. The possible keywords and\n"
+      "corresponding possible reference variables are:\n"
+      "\n"
+      ;
+    PrintFigsOfMerit<TomorunFiguresOfMerit>::print(stream, footnotes);
+    stream << 
+      "\n"
+      "FOOTNOTES AND REFERENCES:\n"
+           << footnotes.wrapped(80) <<
+      "\n"
+      "CITATION:\n"
+      "If you use this program in your research, we warmly encourage you to cite the\n"
+      "following works:\n"
+      "\n"
+      "  1. Philippe Faist and Renato Renner. Practical and Reliable Error Bars in\n"
+      "     Quantum Tomography. Physical Review Letters 117:1, 010404 (2016).\n"
+      "     arXiv:1509.06763.\n"
+      "\n"
+      "  2. Philippe Faist. The Tomographer Project. Available at\n"
+      "     https://github.com/Tomographer/tomographer/.\n"
+      "\n"
+      "FEEDBACK:\n"
+      "Please report bugs, issues, and wishes at:\n"
+      "\n"
+      "    https://github.com/Tomographer/tomographer/issues\n"
+      "\n"
+      "Have a lot of fun!\n"
+      "\n"
+      ;
 
       ::exit(1);
     }

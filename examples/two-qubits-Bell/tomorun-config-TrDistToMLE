@@ -23,4 +23,4 @@ n-run = 32768
 value-type=tr-dist:rho_MLE
 
 # Histogram range:  MINVALUE:MAXVALUE/NUMBEROFBINS
-value-hist=0:0.2/200
+value-hist=0:0.2/50
