@@ -38,6 +38,7 @@ def run_main():
     parser.add_argument("--no-further-checks", action='store_true', default=False)
     parser.add_argument("--check-histogram-file", action='store', default=None)
     parser.add_argument("--check-qeb", action='store', type=check_qeb_args)
+    parser.add_argument("--use-qeb-hint", action='store_true', default=False)
     parser.add_argument("--ftox", action='store', type=ftox_pair, default=(0,1,))
 
     args = parser.parse_args()
@@ -64,7 +65,7 @@ def run_main():
         if hasattr(args,'check_qeb') and args.check_qeb is not None:
 
             # check the quantum error bars
-            do_check_qeb(args.check_histogram_file, args.check_qeb, args.ftox)
+            do_check_qeb(args.check_histogram_file, args.check_qeb, ftox=args.ftox, use_qeb_hint=args.use_qeb_hint)
             return
 
     if args.no_further_checks:
@@ -79,7 +80,7 @@ def assert_approx_eq_rel(x, y, err):
     assert np.absolute(x-y) < err*refom
     print(" OK")
 
-def do_check_qeb(hfile, refqeb, ftox):
+def do_check_qeb(hfile, refqeb, ftox, use_qeb_hint):
     # only import tomographer here, after possibly having set sys.path
     import tomographer as t
     import tomographer.querrorbars as tq
@@ -87,7 +88,11 @@ def do_check_qeb(hfile, refqeb, ftox):
     
     h = tq.load_tomorun_csv_histogram_file(hfile)
 
-    a = tq.HistogramAnalysis(h, ftox=ftox)
+    kwargs = {}
+    if use_qeb_hint:
+        kwargs['p0'] = tq.reskew_logmu_curve(m, *qu_error_bars_to_deskewed_c(ftox, *(refqeb[:3]),
+                                                                             y0=np.maximum(h.bins)))
+    a = tq.HistogramAnalysis(h, ftox=ftox, **kwargs)
 
     # make sure the fit was ok
     redchi2 = a.fitRedChi2()
