@@ -183,7 +183,7 @@ class HistogramAnalysis(object):
                 # a2, a1, m, c
                 kwopts['bounds'] = ( (0, -np.inf, 0, -np.inf), np.inf, )
             if 'p0' not in kwopts:
-                kwopts['p0'] = [ 1000, 300, 10, 0 ]
+                kwopts['p0'] = [ 1000, 0, 10, 0 ]
 
         self.FitParamsType = collections.namedtuple('FitParamsType', inspect.getargspec(self.fit_fn).args[1:])
 
