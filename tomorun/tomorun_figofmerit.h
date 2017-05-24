@@ -360,6 +360,23 @@ struct TrMplxVCInit<DMTypes, std::tuple<FiguresOfMeritTypes...> >
 {
   using FiguresOfMeritTuple = std::tuple<FiguresOfMeritTypes...>;
 
+  template<int N>
+  struct InitVC {
+    InitVC(DMTypes dmt_, const std::string & ref_obj_name_, Tomographer::MAT::File * matf_)
+      : dmt(dmt_), ref_obj_name(ref_obj_name_), matf(matf_)
+    {
+    }
+    DMTypes dmt;
+    const std::string & ref_obj_name;
+    Tomographer::MAT::File * matf;
+
+    inline typename std::tuple_element<N,FiguresOfMeritTuple>::type::template ValueCalculator<DMTypes> *
+    operator()() const
+    {
+      return std::tuple_element<N,FiguresOfMeritTuple>::type::createValueCalculator(dmt, ref_obj_name, matf);
+    }
+  };
+
   template<int... N>
   static inline TomorunMultiplexorValueCalculatorType<DMTypes>
   mk(int i, DMTypes dmt, const std::string & ref_obj_name,
@@ -367,9 +384,7 @@ struct TrMplxVCInit<DMTypes, std::tuple<FiguresOfMeritTypes...> >
   {
     return TomorunMultiplexorValueCalculatorType<DMTypes>(
         i,
-        [dmt,ref_obj_name,matf]() { 
-          return std::tuple_element<N,FiguresOfMeritTuple>::type::createValueCalculator(dmt, ref_obj_name, matf) ;
-        } ...
+        InitVC<N>(dmt, ref_obj_name, matf) ...
         ) ;
   }
   
