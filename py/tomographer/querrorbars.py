@@ -159,6 +159,41 @@ def calc_redchi2(x, y, dy, theo_fn, num_fit_params):
     return redchi2
 
 
+def guess_fitparams_from_data(histogram, ftox_fn):
+    # read off graphically x0, y0, Delta, and gamma from the data -- just a rough guess
+    # with absolutely no garantees
+    
+    idxmax = np.argmax(histogram.bins)
+
+    fvals = histogram.values_center
+    xvals = np.array([ ftox_fn(f) for f in fvals ])
+    pvals = histogram.bins
+
+    x0 = ftox_fn(xvals[idxmax])
+    expy0 = histogram.bins[idxmax]
+    y0 = np.log(expy0)
+
+    # find values above 1/e relative height of y0
+    thresval = expy0*np.exp(-1.0)
+
+    # linearly interpolate left intersect from bordering data points
+    firstidxabove = np.argmax(histogram.bins > thresval)
+    if firstidxabove == 0: firstidxabove = 1
+    x0m = ( xvals[firstidxabove-1] +
+            (thresval-histogram.bins[firstidxabove-1])/(histogram.bins[firstidxabove]-histogram.bins[firstidxabove-1])
+            *(xvals[firstidxabove]-xvals[firstidxabove-1]) )
+
+    lastidxabove = histogram.numBins() - np.argmax(histogram.bins[::-1] > thresval) - 1
+    if lastidxabove+1 >= histogram.numBins(): lastidxabove -= 1
+    x0p = ( xvals[lastidxabove+1] +
+            (thresval-histogram.bins[lastidxabove+1])/(histogram.bins[lastidxabove]-histogram.bins[lastidxabove+1])
+            *(xvals[lastidxabove]-xvals[lastidxabove+1]) )
+    
+    Delta = (x0p - x0m) / 2.0
+    gamma = (x0p + x0m) / 2.0 - x0
+
+    return tq.reskew_logmu_curve(*tq.qu_error_bars_to_deskewed_c(ftox_fn, f0, Delta, gamma, y0=y0))
+
 
 class HistogramAnalysis(object):
     """
@@ -199,12 +234,15 @@ class HistogramAnalysis(object):
                 # a2, a1, m, c
                 kwopts['bounds'] = ( (0, -np.inf, 0, -np.inf), np.inf, )
             if 'p0' not in kwopts:
-                kwopts['p0'] = [ 1000, 0, 10, 0 ]
+                kwopts['p0'] = guess_fitparams_from_data(self.normalized_histogram, self.ftox)
+                logger.debug("Guessing initial fit params = {!r}".format(kwopts['p0']))
 
         self.FitParamsType = collections.namedtuple('FitParamsType', inspect.getargspec(self.fit_fn).args[1:])
 
         self.fit_histogram_result = fit_histogram(self.normalized_histogram, fit_fn=self.fit_fn, ftox=self.ftox, **kwopts)
         self.fit_params = self.FitParamsType(*self.fit_histogram_result.popt)
+
+        logger.debug("Fit params = {!r}".format(self.fit_params))
 
         # calculate reduced chi2 statistic
         xok = self.fit_histogram_result.xok

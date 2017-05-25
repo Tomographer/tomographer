@@ -349,7 +349,7 @@ if (BUILD_TOMORUN)
       --check-histogram-file=out1b-histogram.csv --check-binning-vs-naive
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
-      --write-histogram=out1b --n-run=8192 --n-repeats=64 "--value-type=obs-value:rho_ref" "--value-hist=0.93:.980/20"
+      --write-histogram=out1b --n-run=8192 --n-repeats=32 "--value-type=obs-value:rho_ref" "--value-hist=0.93:.980/20"
       --binning-analysis-error-bars --binning-analysis-num-levels=7
       --periodic-status-report-ms=2000
       )
