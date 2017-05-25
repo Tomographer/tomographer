@@ -148,6 +148,18 @@ def qu_error_bars_to_deskewed_c(ftox, f0, Delta, gamma, y0=1):
     return (m, a, x0, y0)
 
 
+def calc_redchi2(x, y, dy, theo_fn, num_fit_params):
+
+    redchi2 = np.sum( [
+        np.square( ( y[k] - theo_fn(x[k]) ) / dy[k] )
+        for k in range(len(x))
+    ])
+    redchi2 /= (len(x) - num_fit_params)
+
+    return redchi2
+
+
+
 class HistogramAnalysis(object):
     """
     Take care of analyzing histogram data obtained from performing a random walk over
@@ -199,13 +211,8 @@ class HistogramAnalysis(object):
         logpok = self.fit_histogram_result.logpok
         errlogpok = self.fit_histogram_result.errlogpok
 
-        redchi2 = np.sum( [
-            np.square( ( logpok[k] - self.fit_fn(xok[k], *self.fit_params) ) / errlogpok[k] )
-            for k in range(len(xok))
-        ])
-        redchi2 /= (len(xok) - 4)
-        self.redchi2 = redchi2
-        if self.redchi2 < 0.7 or self.redchi2 > 1.3 :
+        self.redchi2 = calc_redchi2(xok, logpok, errlogpok, lambda x: self.fit_fn(x, *self.fit_params), num_fit_params=4)
+        if self.redchi2 > 1.3 :
             logger.warning(("Reduced chi-squared statistic = {:.4g}, perhaps the fit model isn't good, "
                             "or the fit optimization failed?").format(self.redchi2))
 
