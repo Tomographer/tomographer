@@ -121,3 +121,26 @@ endmacro(EnsureCXX11StdThisThreadSleepForAvailable)
 
 
 
+#
+# Check for C++11 std::thread availability (for instance, it is not available
+# straightforwardly on MinGW, even though the compiler might support C++11)
+#
+
+macro(CheckHaveCxx11Threads)
+
+  set(_save_CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS}")
+  set(_save_CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES}")
+  set(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} ${CMAKE_CXX11_STANDARD_COMPILE_OPTION} ${CMAKE_THREAD_LIBS_INIT}")
+  set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES} ${CMAKE_CXX11_STANDARD_COMPILE_OPTION} ${CMAKE_THREAD_LIBS_INIT}")
+  CHECK_CXX_SOURCE_COMPILES(
+    "#include <thread>
+#include <mutex>
+std::mutex mutex_;
+void fn() { std::lock_guard<std::mutex> guard_(mutex_); }
+int main() { std::thread thrd(fn); }"
+    HAVE_CXX11_THREAD_CLASSES
+    )
+  set(CMAKE_REQUIRED_DEFINITIONS "${_save_CMAKE_REQUIRED_DEFINITIONS}")
+  set(CMAKE_REQUIRED_LIBRARIES "${_save_CMAKE_REQUIRED_LIBRARIES}")
+
+endmacro()

@@ -1531,9 +1531,9 @@ struct histogram_pretty_printer
   {
     std::size_t vs = value_to_bar_length(valstart);
     std::size_t ve = value_to_bar_length(valend);
-    tomographer_assert(vs >= 0);
+    //tomographer_assert(vs >= 0);
     tomographer_assert(vs < s.size());
-    tomographer_assert(ve >= 0);
+    //tomographer_assert(ve >= 0);
     tomographer_assert(ve < s.size());
     for (std::size_t j = vs; j < ve; ++j) {
       s[j] = c;

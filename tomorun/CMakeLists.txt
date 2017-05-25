@@ -29,9 +29,6 @@
 # Add our executable
 # ==============================================================================
 
-set(TOMORUN_CONFIG_DO_SLOW_POVM_CONSISTENCY_CHECKS "true" CACHE BOOL
-  "Whether to perform (slow) POVM consistency checks")
-
 add_executable(tomorun tomorun.cxx)
 
 # depends in particular on tomographer_version.h
@@ -84,11 +81,17 @@ set(TOMORUN_MULTIPROC "cxxthreads" CACHE STRING
 if(TOMORUN_MULTIPROC STREQUAL "openmp")
   # compile with OpenMP
   message(STATUS "tomorun will be compiled with OpenMP multiprocessing")
+  if (NOT OPENMP_FOUND)
+    message(FATAL_ERROR "Can't compile tomorun with TOMORUN_MULTIPROC=openmp as OpenMP is not found. Please either specify the correct options for OpenMP, or set TOMORUN_MULTIPROC=cxxthreads|sequential")
+  endif()
   target_compile_options(tomorun PRIVATE ${OpenMP_CXX_FLAGS})
   target_link_libraries(tomorun PRIVATE ${OpenMP_CXX_FLAGS})
   target_compile_definitions(tomorun PRIVATE -DTOMORUN_MULTIPROC_OPENMP)
 elseif(TOMORUN_MULTIPROC STREQUAL "cxxthreads")
   message(STATUS "tomorun will be compiled with C++11 threads multiprocessing")
+  if (NOT HAVE_CXX11_THREAD_CLASSES)
+    message(FATAL_ERROR "Can't compile tomorun with TOMORUN_MULTIPROC=cxxthreads as C++11 threads were not found. Please either specify the correct options for C++11 threads (or override with HAVE_CXX11_THREADS_CLASSES=1), or set TOMORUN_MULTIPROC=openmp|sequential")
+  endif()
   target_link_libraries(tomorun PRIVATE Threads::Threads)
   target_compile_definitions(tomorun PRIVATE -DTOMORUN_MULTIPROC_CXXTHREADS)
 elseif(TOMORUN_MULTIPROC STREQUAL "sequential")

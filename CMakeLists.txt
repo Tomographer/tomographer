@@ -65,6 +65,9 @@ find_package(OpenMP)
 # Find system threads compiler flags (e.g. -pthread, in order to use std::thread on gcc)
 find_package(Threads)
 
+# See if we have C++11 threads available
+CheckHaveCxx11Threads()
+
 # Find boost headers (math, ...) 
 find_package(Boost 1.40 REQUIRED)
 
