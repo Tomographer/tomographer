@@ -342,28 +342,46 @@ if (BUILD_TOMORUN)
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
       "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
-      --check-histogram-file=out-histogram.csv "--check-qeb=(0.958,0.009,6.1e-4),10%" --use-qeb-hint "--ftox=(1,-1)"
+      --check-histogram-file=out-histogram.csv "--check-qeb=(0.958,0.0090,6.1e-4),10%" "--ftox=(1,-1)"
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
-      --write-histogram=out --n-run=32768 "--value-type=obs-value:rho_ref" "--value-hist=0.9:1/50" --light-jumps
+      --write-histogram=out --n-run=32768 --n-repeats=8 "--value-type=obs-value:rho_ref" "--value-hist=0.9:1/50"
+      --light-jumps
+      --periodic-status-report-ms=2000
+      )
+    add_test(NAME test_tomorun_case_1b
+      WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+      COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
+      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
+      --check-histogram-file=out1b-histogram.csv --check-binning-vs-naive
+      --
+      "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
+      --write-histogram=out1b --n-run=8192 --n-repeats=64 "--value-type=obs-value:rho_ref" "--value-hist=0.93:.980/20"
+      --binning-analysis-error-bars --binning-analysis-num-levels=7
+      --periodic-status-report-ms=2000
       )
     add_test(NAME test_tomorun_case_2
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
       "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
-      --check-histogram-file=out2-histogram.csv "--check-qeb=(0.0377,0.013,.0014),10%" --use-qeb-hint "--ftox=(0,1)"
+      --check-histogram-file=out2-histogram.csv "--check-qeb=(0.0377,0.013,0.0014),10%" "--ftox=(0,1)"
+      # "--check-fitparams=(722.8,319.6,14.09,63.00)"  "--ftox=(0,1)"
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
-      --write-histogram=out2 --n-run=32768 "--value-type=tr-dist:rho_MLE" "--value-hist=0.:0.2/50"  --no-light-jumps
+      --write-histogram=out2 --n-run=32768 --n-repeats=8 "--value-type=tr-dist:rho_MLE" "--value-hist=0.:0.2/50"
+      --no-light-jumps
+      --periodic-status-report-ms=2000 --no-control-binning-converged
       )
     add_test(NAME test_tomorun_case_3
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
       "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
-      --check-histogram-file=out3-histogram.csv "--check-qeb=(1.83,0.036,0.0025),30%" --use-qeb-hint "--ftox=(2,-1)"
+      --check-histogram-file=out3-histogram.csv "--check-qeb=(1.83,0.036,0.0025),30%" "--ftox=(2,-1)"
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
-      --write-histogram=out3 --n-run=32768 "--value-type=obs-value:EntglWitness" "--value-hist=1.6:2.0/50"  --no-light-jumps
+      --write-histogram=out3 --n-run=32768 --n-repeats=8 "--value-type=obs-value:EntglWitness" "--value-hist=1.6:2.0/50"
+      --no-light-jumps
+      --periodic-status-report-ms=2000
       )
 
     add_test(NAME test_tomorun_case_4
@@ -374,7 +392,9 @@ if (BUILD_TOMORUN)
       --check-histogram-file=out4-histogram.csv "--check-percent-within-range=95%(0.156,0.260)"
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
-      --write-histogram=out4 --n-run=32768 "--value-type=purif-dist:rho_ref" "--value-hist=0.0:0.4/50"  --no-light-jumps
+      --write-histogram=out4 --n-run=32768 --n-repeats=8 "--value-type=purif-dist:rho_ref" "--value-hist=0.0:0.4/50"
+      --no-light-jumps
+      --periodic-status-report-ms=2000
       )
     
   else()
