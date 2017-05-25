@@ -38,17 +38,6 @@ def percent_within_range_type(x):
         raise ValueError("percent_within_range: expected \"<percent>% (<min>,<max>)\" format")
     return (float(m.group('percent')), float(m.group('min')), float(m.group('max')))
 
-def float_ntuple_type(x, n):
-    if isinstance(x,tuple):
-        return x
-    m = re.match(r"^\(" + ",".join( [r"([0-9.e+-]+)"] * n ) + r"\)", x)
-    if m is None:
-        raise ValueError("expected {}-tuple of values \"({})\"".format(n, ",".join(["?"]*n)))
-    return tuple([float(m.group(k+1)) for k in range(n)])
-
-def range_type(x): return float_ntuple_type(x,2)
-def fitparams_type(x): return float_ntuple_type(x,4)
-
 def run_main():
     parser = argparse.ArgumentParser("test_tomorun_run")
     parser.add_argument("tomorun_argv", nargs='+')
@@ -192,7 +181,7 @@ def do_check_qeb(hfile, refqeb, args):
     kwargs = {}
     #if use_qeb_hint:
     ftox = args.ftox
-    ftoxfn = lambda f: ftox[1]*(f - ftox[0])
+    ftoxfn = lambda f, s=ftox[1], h=ftox[0]: s*(f - h)
     guessfitparams = tq.reskew_logmu_curve(*tq.qu_error_bars_to_deskewed_c(ftoxfn, *(refqeb[:3]),
                                                                            y0=np.log(np.amax(h.bins))))
 
@@ -224,8 +213,8 @@ def do_check_fitparams(hfile, fitparams, args):
     h = tq.load_tomorun_csv_histogram_file(hfile).normalized()
 
     ftox = args.ftox
-    ftoxfn = lambda f: ftox[1]*(f - ftox[0])
-    xtoffn = lambda x: ftox[0] + ftox[1]*x
+    ftoxfn = lambda f, s=ftox[1], h=ftox[0]: s*(f - h)
+    xtoffn = lambda x, s=ftox[1], h=ftox[0]: h + s*x
 
     theo_fn = lambda x: tq.fit_fn_default(x, *fitparams)
 

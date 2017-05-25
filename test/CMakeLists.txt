@@ -81,6 +81,13 @@ macro(addTomographerTest test_cxx NeedsList)
   #    endif()
   #  endif()
 
+  if (NOT HAVE_CXX11_THREAD_CLASSES AND ";${NeedsList};" MATCHES ";cxxthreads;")
+    # Can't compile, we don't have std::thread & friends -- skip test
+    message(WARNING "Test ${test_name} will automatically fail because this system doesn't support C++11 threads")
+    add_test(NAME ${test_name} COMMAND false)
+    return()
+  endif()
+
   # the test binary executable
   add_executable(${test_name}
     ${test_cxx}

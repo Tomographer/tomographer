@@ -35,9 +35,9 @@ def analyze_histogram(args):
     a.printQuantumErrorBars(print_func=logger.info)
 
     if args.show_plot:
-        a.plot()
+        a.plot(curve_npts=args.curve_npts)
     if args.show_plot_log:
-        a.plot(log_scale=True)
+        a.plot(curve_npts=args.curve_npts, log_scale=True)
 
 def run_main():
     logging.basicConfig(level=logging.INFO)
@@ -48,6 +48,9 @@ def run_main():
     parser.add_argument("--ftox", action='store', type=ftox_pair, default=(0,1),
                         help="f-to-x conversion function, specified as pair (h,s).  (See "
                         "tomographer.querrorbars.HistogramAnalysis for more info)")
+    parser.add_argument("--curve-npts", action='store', type=int, default=500,
+                        help="Number of points to use to display the smooth fit curve")
+
     parser.add_argument("--show-plot", dest='show_plot', action='store_true', default=True,
                         help="Show plot of the distribution of the figure of merit.")
     parser.add_argument("--no-show-plot", dest='show_plot', action='store_false',
