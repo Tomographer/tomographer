@@ -319,13 +319,13 @@ if (BUILD_TOMORUN)
   set_tests_properties(test_tomorun_1qubit_analytic_solution_runcheck_light
     PROPERTIES DEPENDS "test_tomorun_1qubit_analytic_solution_check;test_tomorun_1qubit_analytic_solution_run_light")
 
-  if (BUILD_TOMOPY)
+  if (BUILD_TOMOPY OR TOMOGRAPHER_TEST_SETUPPY_BUILD)
 
     # Additional tests
     add_test(NAME test_tomorun_case_help
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
-      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
+      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py:__TOMOGRAPHER_PYTHONPATH__"
       --expect-exit-code=1 --no-further-checks
       --
       "$<TARGET_FILE:tomorun>" --help
@@ -333,7 +333,7 @@ if (BUILD_TOMORUN)
     add_test(NAME test_tomorun_case_version
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
-      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
+      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py:__TOMOGRAPHER_PYTHONPATH__"
       --expect-exit-code=2 --no-further-checks
       --
       "$<TARGET_FILE:tomorun>" --version
@@ -341,7 +341,7 @@ if (BUILD_TOMORUN)
     add_test(NAME test_tomorun_case_1
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
-      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
+      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py:__TOMOGRAPHER_PYTHONPATH__"
       --check-histogram-file=out-histogram.csv "--check-qeb=(0.958,0.0090,6.1e-4),10%" "--ftox=(1,-1)"
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
@@ -352,7 +352,7 @@ if (BUILD_TOMORUN)
     add_test(NAME test_tomorun_case_1b
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
-      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
+      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py:__TOMOGRAPHER_PYTHONPATH__"
       --check-histogram-file=out1b-histogram.csv --check-binning-vs-naive
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
@@ -363,7 +363,7 @@ if (BUILD_TOMORUN)
     add_test(NAME test_tomorun_case_2
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
-      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
+      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py:__TOMOGRAPHER_PYTHONPATH__"
       --check-histogram-file=out2-histogram.csv "--check-qeb=(0.0377,0.013,0.0014),10%" "--ftox=(0,1)"
       # "--check-fitparams=(722.8,319.6,14.09,63.00)"  "--ftox=(0,1)"
       --
@@ -375,7 +375,7 @@ if (BUILD_TOMORUN)
     add_test(NAME test_tomorun_case_3
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
-      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
+      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py:__TOMOGRAPHER_PYTHONPATH__"
       --check-histogram-file=out3-histogram.csv "--check-qeb=(1.83,0.036,0.0025),30%" "--ftox=(2,-1)"
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
@@ -387,7 +387,7 @@ if (BUILD_TOMORUN)
     add_test(NAME test_tomorun_case_4
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
-      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py"
+      "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py:__TOMOGRAPHER_PYTHONPATH__"
       # not sure the qeb's are really relevant here (for this figure of merit), but it's good enough for the test case
       --check-histogram-file=out4-histogram.csv "--check-percent-within-range=95%(0.156,0.260)"
       --

@@ -142,7 +142,7 @@ def qu_error_bars_from_deskewed(xtof, m, a, x0, y0):
 
 
 def qu_error_bars_to_deskewed_c(ftox, f0, Delta, gamma, y0=1):
-    a = 1/(np.square(Delta))
+    a = 1.0 / np.square(Delta)
     x0 = ftox(f0)
     m = gamma * 6 * np.square(a) * np.power(x0,3)
     return (m, a, x0, y0)
@@ -169,9 +169,12 @@ def guess_fitparams_from_data(histogram, ftox_fn):
     xvals = np.array([ ftox_fn(f) for f in fvals ])
     pvals = histogram.bins
 
-    x0 = ftox_fn(xvals[idxmax])
+    x0 = xvals[idxmax]
+    f0 = fvals[idxmax]
     expy0 = histogram.bins[idxmax]
     y0 = np.log(expy0)
+
+    #logger.debug("x0={},f0={},expy0={},y0={}".format(x0,f0,expy0,y0))
 
     # find values above 1/e relative height of y0
     thresval = expy0*np.exp(-1.0)
@@ -189,10 +192,19 @@ def guess_fitparams_from_data(histogram, ftox_fn):
             (thresval-histogram.bins[lastidxabove+1])/(histogram.bins[lastidxabove]-histogram.bins[lastidxabove+1])
             *(xvals[lastidxabove]-xvals[lastidxabove+1]) )
     
-    Delta = (x0p - x0m) / 2.0
-    gamma = (x0p + x0m) / 2.0 - x0
+    Delta = np.absolute((x0p - x0m) / 2.0)
+    gamma = 2*np.absolute((x0p + x0m) / 2.0 - x0)
 
-    return tq.reskew_logmu_curve(*tq.qu_error_bars_to_deskewed_c(ftox_fn, f0, Delta, gamma, y0=y0))
+    #logger.debug("xvals={}".format(xvals))
+    #logger.debug("firstidxabove={},lastidxabove={},x0m={},x0p={},f0={},Delta={},gamma={}".format(firstidxabove,lastidxabove,x0m,x0p,f0,Delta,gamma))
+
+    (a2,a1,m,c) = reskew_logmu_curve(*qu_error_bars_to_deskewed_c(ftox_fn, f0, Delta, gamma, y0=y0))
+
+    if a2 < 0 or m < 0:
+        logger.info("Having trouble guessing fit parameters graphically, resorting to generic guess")
+        return (500.0, 100.0, 20., 0)
+
+    return (a2, a1, m, c)
 
 
 class HistogramAnalysis(object):
@@ -241,8 +253,9 @@ class HistogramAnalysis(object):
 
         self.fit_histogram_result = fit_histogram(self.normalized_histogram, fit_fn=self.fit_fn, ftox=self.ftox, **kwopts)
         self.fit_params = self.FitParamsType(*self.fit_histogram_result.popt)
+        self.fit_params_cov = self.FitParamsType(*np.diagonal(self.fit_histogram_result.pcov))
 
-        logger.debug("Fit params = {!r}".format(self.fit_params))
+        self.printFitParameters(print_func=logger.debug,show_cov=True)
 
         # calculate reduced chi2 statistic
         xok = self.fit_histogram_result.xok
@@ -286,7 +299,7 @@ class HistogramAnalysis(object):
         """
         return self.redchi2
 
-    def printFitParameters(self, print_func=print):
+    def printFitParameters(self, print_func=print, show_cov=False):
         """
         Display the fit parameters.
 
@@ -295,8 +308,13 @@ class HistogramAnalysis(object):
 
         The fit parameters are returned in the same format as :py:meth:`fitParameters()`.
         """
+        def fmt_param_val(x, cov):
+            if show_cov:
+                return '{:>8g}  +-  {:.3g}'.format(x, np.sqrt(cov))
+            else:
+                return '{:g}'.format(x)
         print_func("Fit parameters:\n" + "\n".join([
-            '{:>12s} = {:g}'.format(k, getattr(self.fit_params, k))
+            '{:>12s} = {}'.format(k, fmt_param_val(getattr(self.fit_params, k), getattr(self.fit_params_cov, k)))
             for k in self.fit_params._fields
         ]))
         return self.fit_params

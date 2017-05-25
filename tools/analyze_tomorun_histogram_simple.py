@@ -24,7 +24,7 @@ def analyze_histogram(args):
 
     final_histogram = tomographer.querrorbars.load_tomorun_csv_histogram_file(args.histogram)
 
-    logger.debug(final_histogram.prettyPrint())
+    logger.debug("\n"+final_histogram.prettyPrint())
 
     assert np.absolute(np.absolute(args.ftox[1]) - 1) < 1e-6 # args.ftox[1] is +1 or -1
     logger.debug("Using f = {} {} x".format(args.ftox[0], '+' if args.ftox[1] > 0 else '-'))
@@ -40,7 +40,7 @@ def analyze_histogram(args):
         a.plot(curve_npts=args.curve_npts, log_scale=True)
 
 def run_main():
-    logging.basicConfig(level=logging.INFO)
+    logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 
     parser = argparse.ArgumentParser("analyze_tomorun_histogram_simple")
     parser.add_argument("histogram",

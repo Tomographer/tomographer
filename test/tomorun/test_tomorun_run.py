@@ -3,6 +3,7 @@ from __future__ import print_function
 
 import sys
 import re
+import os
 import os.path
 import subprocess
 import argparse
@@ -29,6 +30,17 @@ def ftox_pair(ftoxstr):
     if m is None:
         raise ValueError("ftox: expected \"(h,s)\" pair")
     return (float(m.group('h')), int(m.group('s')))
+
+def float_ntuple_type(x, n):
+    if isinstance(x,tuple):
+        return x
+    m = re.match(r"^\(" + ",".join( [r"([0-9.e+-]+)"] * n ) + r"\)", x)
+    if m is None:
+        raise ValueError("expected {}-tuple of values \"({})\"".format(n, ",".join(["?"]*n)))
+    return tuple([float(m.group(k+1)) for k in range(n)])
+
+def range_type(x): return float_ntuple_type(x,2)
+def fitparams_type(x): return float_ntuple_type(x,4)
 
 def percent_within_range_type(x):
     if isinstance(x, tuple):
@@ -57,6 +69,8 @@ def run_main():
     # setup sys.path, if needed
     if hasattr(args,'setpath') and args.setpath is not None:
         for p in reversed(args.setpath.split(':')):
+            if p == '__TOMOGRAPHER_PYTHONPATH__':
+                p = os.environ.get('TOMOGRAPHER_PYTHONPATH', None)
             if p:
                 sys.path.insert(0, p)
         logger.debug("Set sys.path = {!r}".format(sys.path))
