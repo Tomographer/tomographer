@@ -89,7 +89,7 @@ PYBIND11_PLUGIN(_tomographer_cxx)
   logger.debug("INIT TOMOGRAPHER");
 
   // our basic library exception class
-  tpy::TomographerCxxErrorObj = register_exception_with_docstring<TomographerCxxError>(
+  tpy::TomographerCxxErrorObj = tpy::registerExceptionWithDocstring<tpy::TomographerCxxError>(
       rootmodule,
       "TomographerCxxError",
       PyExc_RuntimeError,
@@ -98,7 +98,7 @@ PYBIND11_PLUGIN(_tomographer_cxx)
       "API.\n\n"
       );
 
-  register_exception_with_docstring<Tomographer::Tools::EigenAssertException>(
+  tpy::registerExceptionWithDocstring<Tomographer::Tools::EigenAssertException>(
       rootmodule,
       "EigenAssertError",
       tpy::TomographerCxxErrorObj.ptr(),

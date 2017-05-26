@@ -207,3 +207,11 @@
 
 
 
+/** \namespace tpy
+ *
+ * \brief C++ Classes and Utilities for Python Modules
+ *
+ * These are mostly C++ typedefs for classes which are exposed to Python, as well as some
+ * helpers.
+ * 
+ */

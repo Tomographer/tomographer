@@ -298,7 +298,7 @@ void py_tomo_densedm(py::module rootmodule)
         })
       .def("__setstate__", [](py::object p, py::tuple t) {
           if (py::len(t) != 2) {
-            throw TomographerCxxError(streamstr("Invalid pickle state: expected 2 args, got " << py::len(t)));
+            throw tpy::TomographerCxxError(streamstr("Invalid pickle state: expected 2 args, got " << py::len(t)));
           }
           p.attr("setMeas")(t[0], t[1], false);
         })

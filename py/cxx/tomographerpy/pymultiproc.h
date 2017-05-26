@@ -42,14 +42,35 @@
 namespace tpy {
 
 
-
-struct TOMOGRAPHER_EXPORT WorkerStatusReport {
+/** \brief Report of the status of a single worker
+ *
+ * Provides basic information, such as \a worker_id, fraction of the work done
+ * (\a fraction_done), and a human-readable message (\a msg), but also
+ * task-specific data stored in the dictionary \a data. Anything can be stored
+ * in \a data, this should be documented by the function or class which emits
+ * the status reports.
+ */
+struct TOMOGRAPHER_EXPORT WorkerStatusReport
+{
+  //! Unique identifier of the worker
   int worker_id;
+
+  //! Fraction of the job done for this worker (0.0 to 1.0)
   py::float_ fraction_done;
+
+  //! Human-readable message summarizing the status of this worker
   py::str msg;
+
+  //! Additional task-specific data; see also \ref PyStatusReportAddWorkerDataFields
   py::dict data;
 };
 
+/** \brief Complete status report for multiple tasks running in parallel
+ *
+ * Reports the number of tasks completed, the number of total tasks to run, the
+ * time elapsed, the total fraction done, as well as individual status reports
+ * for each running worker, and a global human-readable summary.
+ */
 struct TOMOGRAPHER_EXPORT FullStatusReport {
   FullStatusReport()
     : num_completed(-1), num_total_runs(-1), elapsed(0.0),
@@ -57,44 +78,51 @@ struct TOMOGRAPHER_EXPORT FullStatusReport {
   {
   }
 
+  //! Number of tasks which have already completed
   py::int_ num_completed;
+  //! Total number of tasks which have been or will be run
   py::int_ num_total_runs;
-  py::float_ elapsed; // elapsed time in seconds
+  //! Elapsed time in seconds since the launching of the tasks
+  py::float_ elapsed;
 
+  /** \brief A Python list of worker status; either a \ref WorkerStatusReport,
+   *         or \a py::none() if the worker is idle
+   */
   py::list workers; // list of [WorkerStatusReport or None (for idle)]
 
+  //! Total fraction of work done, as a fraction between 0 and 1
   py::float_ total_fraction_done;
+
+  //! Complete, human-readable summary of the current status of everything
   py::str human_report;
 };
 
-}
 
-template<typename MHWalkerParams>
-struct TOMOGRAPHER_EXPORT PyMHWalkerParamsToDict
-{
-  static inline py::dict makeDict(const MHWalkerParams & ) { return {}; }
-};
-template<typename StepRealType>
-struct TOMOGRAPHER_EXPORT PyMHWalkerParamsToDict<Tomographer::MHWalkerParamsStepSize<StepRealType> >
-{
-  static inline py::dict makeDict(const Tomographer::MHWalkerParamsStepSize<StepRealType> & p) {
-    return py::dict(py::arg("step_size") = p.step_size);
-  }
-};
-
-template<typename MHWalkerParams>
-inline py::dict pyMHWalkerParamsToDictInvoke(const MHWalkerParams & p)
-{
-  return PyMHWalkerParamsToDict<MHWalkerParams>::makeDict(p);
-}
-
-
+/** \brief C++ utility to populate the \a data field of a \ref
+ *         WorkerStatusReport for a given \a TaskType
+ *
+ * Specialize this class template to all requested \ref pageInterfaceTask types
+ * in order to provide meaningful status reports.
+ *
+ * This class should provide a single static member, which should add fields to
+ * a dictionary based on a status report emanating from that task type.
+ */
 template<typename TaskType>
 struct TOMOGRAPHER_EXPORT PyStatusReportAddWorkerDataFields
 {
+  /** \brief Add fields to the given dict, from a status report sent in by a \a
+   *         TaskType. The default implementation does nothing
+   */
   static inline void addDataFields(py::dict & , const typename TaskType::StatusReportType & ) { }
 };
 
+/** \brief Add fields to the given dict, from a status report sent in by a \a
+ *         Tomographer::MHRWTasks::MHRandomWalkTask
+ *
+ * The fields \c "mhrw_params", \c "acceptance_ratio", \c "kstep" (iteration
+ * number), and \c "n_total_iters" are added to the dictionary with
+ * corresponding values.
+ */
 template<typename CData, typename Rng>
 struct TOMOGRAPHER_EXPORT PyStatusReportAddWorkerDataFields< Tomographer::MHRWTasks::MHRandomWalkTask<CData, Rng> >
 {
@@ -111,6 +139,14 @@ struct TOMOGRAPHER_EXPORT PyStatusReportAddWorkerDataFields< Tomographer::MHRWTa
   }
 };
 
+/** \brief Utility to prepare a Python status report (\ref FullStatusReport)
+ *         from a task's status report
+ *
+ * If you write C++ code using a task dispatcher, and would want to provide
+ * status reporting to your caller, then consider using the higher-level \ref
+ * setTasksStatusReportPyCallback(), which does everything for you, including
+ * checking for signals (e.g. keyboard interrupts).
+ */
 template<typename TaskType, typename IntType = int>
 inline tpy::FullStatusReport preparePyTaskStatusReport(
     const Tomographer::MultiProc::FullStatusReport<typename TaskType::StatusReportType, IntType> & report
@@ -144,6 +180,24 @@ inline tpy::FullStatusReport preparePyTaskStatusReport(
 }
 
 
+/** \brief Set up status reporting for a task dispatcher, using a Python callback for status reports
+ *
+ * Sets up the given \ref pageInterfaceTaskDispatcher "task dispatcher" \a tasks
+ * to provide status reports every \a progress_interval_ms milliseconds, by
+ * calling the Python callback \a progress_fn.
+ *
+ * Also, when we recieve progress reports, we check for signals (e.g. keyboard
+ * interrupts) or other Python exceptions.  If such an exception occurred, we
+ * interrupt the tasks.
+ *
+ * The argument \a progress_fn can be \a None, in which case no callback is
+ * performed; however we still check for signals including keyboard interrupts
+ * and for other Python exceptions.
+ *
+ * If \a require_gil_acquisition is \a true, then the GIL (Global Interpreter
+ * Lock) is acquired before any Python API call.  Otherwise, we assume that we
+ * already hold the GIL and don't attempt to acquire it.
+ */
 template<typename TaskDispatcher>
 inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, py::object progress_fn,
                                            int progress_interval_ms, bool require_gil_acquisition = false)
@@ -188,7 +242,7 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, py::object pr
 }
 
 
-
+} // namespace tpy
 
 
 

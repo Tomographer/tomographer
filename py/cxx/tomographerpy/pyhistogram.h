@@ -36,20 +36,32 @@
 
 namespace tpy {
 
+//! Histogram Params. See \ref Tomographer::HistogramParams
 typedef Tomographer::HistogramParams<RealType> HistogramParams;
 
+//! A Histogram with integer counts. See \ref Tomographer::Histogram
 typedef Tomographer::Histogram<RealType, CountIntType> Histogram;
 
+//! A Histogram with real counts. See \ref Tomographer::Histogram
 typedef Tomographer::Histogram<RealType, RealType> HistogramReal;
 
+//! A Histogram with real counts and error bars. See \ref Tomographer::HistogramWithErrorBars
 typedef Tomographer::HistogramWithErrorBars<RealType, RealType> HistogramWithErrorBars;
 
 
-// AveragedSimpleHistogram (underlying histogram w/o error bars)
+/** \brief Average of histograms with underlying histograms without error bars
+ *         and with integer counts. See \ref Tomographer::AveragedHistogram
+ */
 typedef Tomographer::AveragedHistogram<Histogram, RealType> AveragedSimpleHistogram;
 
+/** \brief Average of histograms with underlying histograms without error bars
+ *         and with real counts. See \ref Tomographer::AveragedHistogram
+ */
 typedef Tomographer::AveragedHistogram<HistogramReal, RealType> AveragedSimpleRealHistogram;
 
+/** \brief Average of histograms with underlying histograms with error bars (and
+ *         with real counts). See \ref Tomographer::AveragedHistogram
+ */
 typedef Tomographer::AveragedHistogram<HistogramWithErrorBars, RealType> AveragedErrorBarHistogram;
 
 

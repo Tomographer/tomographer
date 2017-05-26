@@ -84,17 +84,31 @@ namespace boost { namespace core {  using boost::units::detail::demangle; } }
 
 namespace tpy {
 
+//! Real type for template arguments (double)
 typedef double RealType;
+//! Integer type for template arguments (int)
 typedef int CountIntType;
 
+//! Shorthand, a 1-D Eigen::Matrix of RealType's
 typedef Eigen::Matrix<RealType, Eigen::Dynamic, 1> RealVectorType;
+//! Shorthand, a 2-D Eigen::Matrix of RealType's
 typedef Eigen::Matrix<RealType, Eigen::Dynamic, Eigen::Dynamic> RealMatrixType;
+//! Shorthand, a 1-D Eigen::Matrix of std::complex<RealType>'s
 typedef Eigen::Matrix<std::complex<RealType>, Eigen::Dynamic, 1> CplxVectorType;
+//! Shorthand, a 2-D Eigen::Matrix of std::complex<RealType>'s
 typedef Eigen::Matrix<std::complex<RealType>, Eigen::Dynamic, Eigen::Dynamic> CplxMatrixType;
 
+//! Shorthand, a 1-D Eigen::Matrix of CountIntType's
 typedef Eigen::Matrix<CountIntType, Eigen::Dynamic, 1> CountIntVectorType;
 
-
+/** \brief Import tomographer definitions into other Python modules
+ *
+ * If you write your own C++/Python module, then make sure you call \a
+ * import_tomographer() towards the beginning of your initialization function.  This
+ * function also ensures that the same versions of tomographer and of pybind11 are being
+ * used between the compiled tomographer module and the available tomographerpy headers.
+ *
+ */
 inline py::module import_tomographer()
 {
   auto tomographer_module = py::module::import("tomographer");
@@ -129,6 +143,7 @@ inline py::module import_tomographer()
 
 
 } // namespace tpy
+
 
 
 #endif

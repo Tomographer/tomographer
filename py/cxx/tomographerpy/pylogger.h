@@ -58,6 +58,37 @@ namespace Tomographer { namespace Logger {
 
 namespace tpy {
 
+/** \brief Logger providing transparent integration with Python's \a logging module
+ *
+ * This logger can be used whenever you need to specify a logger to any of Tomographer's
+ * classes, and it will log messages directly into Python's \a logging mechanism.
+ *
+ * The log level is set upon initialization of the PyLogger, by replicating the effective
+ * level of the Python logging mechanism.
+ *
+ * \note Changes from the Python side to the \a logging's level will not be noticed on the
+ *       C++ side.  If you need to be able to dynamically change the log level, then you
+ *       should expose your instance to Python (\a PyLogger is exposed as a class), and
+ *       set the new level BOTH via Python's \c logging module AND by setting the \a
+ *       logging attribute of the PyLogger instance to the same level.
+ *
+ * Log levels correspond as follows:
+ *
+ *  - Tomographer::Logger::ERROR - \a logging.ERROR
+ *  - Tomographer::Logger::WARNING - \a logging.WARNING
+ *  - Tomographer::Logger::INFO - \a logging.INFO
+ *  - Tomographer::Logger::DEBUG - \a logging.DEBUG
+ *  - Tomographer::Logger::LONGDEBUG - \a 1 (one)
+ *
+ * (Note that there is no corresponding level name in the \c logging module for \c
+ * LONGDEBUG.)
+ *
+ * This logger is not thread-safe. You shouldn't even use it with any
+ * Tomographer::MultiProc task dispatcher, even if these latter provide locks, because
+ * once the GIL (Global Interpreter Lock) is released, you need to acquire it before
+ * calling any Python API function. In this case, you should use a \ref
+ * GilProtectedPyLogger.
+ */
 class TOMOGRAPHER_EXPORT PyLogger
   : public Tomographer::Logger::LoggerBase<PyLogger>
 {
@@ -66,61 +97,64 @@ private:
   pybind11::object py_logger; // the Python "logging.Logger" instance for our use
   bool _bypasspython;
 public:
-  inline
-  PyLogger();
+  //! Constructor
+  inline PyLogger();
 
-  inline
-  void initPythonLogger(std::string logger_name = "tomographer");
+  //! Initialize the logger and attach it to a logger in the \c logging module named \a logger_name
+  inline void initPythonLogger(std::string logger_name = "tomographer");
 
-  inline
-  void setLevel(int level);
-
-  inline
-  void emitLog(int level, const char * origin, const std::string & msg);
-
-  inline
-  py::object toPythonLevel(int level) const;
-
-  inline
-  py::object toPythonLevelName(int level) const;
-
-  inline
-  int fromPythonLevel(py::object pylvl) const;
-
-
-  // Tools to bypass a Python call to logger and just write to stderr -- not used so far.
-  // To be used in a critical situation where it's not a good idea to call Python code
-  inline void bypassPython() {
-    _bypasspython = true;
-  }
-  inline void endBypassPython() {
-    _bypasspython = false;
-  }
-  struct _BypassPython {
-    PyLogger *pylogger;
-    _BypassPython(PyLogger * l) : pylogger(l) {
-      pylogger->bypassPython();
-    }
-    _BypassPython(const _BypassPython & copy) = delete;
-    _BypassPython(_BypassPython && other) : pylogger(other.pylogger) { other.pylogger = NULL; }
-    ~_BypassPython() {
-      if (pylogger != NULL) {
-        pylogger->endBypassPython();
-      }
-    }
-  };
-  /**
-   * \code
-   *   {
-   *     auto dummy = pushBypassPython();
-   *
-   *     ...
-   *   } // bypass released after "dummy" goes out of scope
-   * \endcode
+  /** \brief Change the level of the current logger. Note that this will NOT automatically
+   *         change the effective level of the underlying Python logger!
    */
-  inline _BypassPython pushBypassPython() {
-    return _BypassPython(this);
-  }
+  inline void setLevel(int level);
+
+  //! Convert a Tomographer::Logger level to a Python \c logging level (Python integer)
+  inline py::object toPythonLevel(int level) const;
+
+  //! Convert a Tomographer::Logger level to a Python \c logging level name (Python string)
+  inline py::object toPythonLevelName(int level) const;
+
+  //! Convert a \c logging level to a Tomographer::Logger level constant
+  inline int fromPythonLevel(py::object pylvl) const;
+
+
+  //! Callback for actually emitting log messages, don't call this manually
+  inline void emitLog(int level, const char * origin, const std::string & msg);
+
+
+  // // Tools to bypass a Python call to logger and just write to stderr -- not used so far.
+  // // To be used in a critical situation where it's not a good idea to call Python code
+  // inline void bypassPython() {
+  //   _bypasspython = true;
+  // }
+  // inline void endBypassPython() {
+  //   _bypasspython = false;
+  // }
+  // struct _BypassPython {
+  //   PyLogger *pylogger;
+  //   _BypassPython(PyLogger * l) : pylogger(l) {
+  //     pylogger->bypassPython();
+  //   }
+  //   _BypassPython(const _BypassPython & copy) = delete;
+  //   _BypassPython(_BypassPython && other) : pylogger(other.pylogger) { other.pylogger = NULL; }
+  //   ~_BypassPython() {
+  //     if (pylogger != NULL) {
+  //       pylogger->endBypassPython();
+  //     }
+  //   }
+  // };
+  // /**
+  //  * \code
+  //  *   {
+  //  *     auto dummy = pushBypassPython();
+  //  *
+  //  *     ...
+  //  *   } // bypass released after "dummy" goes out of scope
+  //  * \endcode
+  //  */
+  // inline _BypassPython pushBypassPython() {
+  //   return _BypassPython(this);
+  // }
 
 };
 

@@ -73,12 +73,13 @@ void py_tomo_mhrw(py::module rootmodule)
           py::object mhwalker_params = py::none();
           tpy::CountIntType n_sweep = 0, n_therm = 0, n_run = 0;
           if (py::len(args) && py::len(kwargs)) {
-            throw TomographerCxxError("Can't specify positional arguments along with keyword arguments for MHRWParams(...)");
+            throw tpy::TomographerCxxError("Can't specify positional arguments along with keyword arguments "
+                                           "for MHRWParams(...)");
           }
           if (py::len(args)) {
             if (py::len(args) != 4) {
-              throw TomographerCxxError("Expected exactly four arguments in call to "
-                                        "MHRWParams(mhwalker_params, n_sweep, n_therm, n_run)");
+              throw tpy::TomographerCxxError("Expected exactly four arguments in call to "
+                                             "MHRWParams(mhwalker_params, n_sweep, n_therm, n_run)");
             }
             // exactly 4 args given: they are, in order, (mhwalker_params, n_sweep, n_therm, n_run)
             mhwalker_params = args[0];

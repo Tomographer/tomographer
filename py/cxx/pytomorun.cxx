@@ -65,7 +65,7 @@ using namespace pybind11::literals;
 
 
 // define an exception class for invalid inputs
-TOMOGRAPHER_DEFINE_MSG_EXCEPTION_BASE(TomorunInvalidInputError, "Invalid Input: ", TomographerCxxError) ;
+TOMOGRAPHER_DEFINE_MSG_EXCEPTION_BASE(TomorunInvalidInputError, "Invalid Input: ", tpy::TomographerCxxError) ;
 
 
 
@@ -250,23 +250,6 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   tpy::CountIntType // HistCountIntType
   >
 {
-private:
-  Tomographer::MHWalkerParamsStepSize<tpy::RealType> _get_step_size(py::object mhwalker_params)
-  {
-    // don't acquire GIL, OurCData constructor is called only by master thread before GIL is released
-
-    if ( py::hasattr(mhwalker_params, "__getitem__") ) {
-      // dict or dict-like, go. If key doesn't exist, send in zero and let the underlying
-      // lib handle it
-      return mhwalker_params.attr("get")("step_size"_s, 0).cast<tpy::RealType>();
-    }
-    if ( mhwalker_params.is_none() ) {
-      // none: let the underlying library decide what to do with this
-      return 0;
-    }
-    // try to iterpret the object itself as a float
-    return mhwalker_params.cast<tpy::RealType>();
-  }
 public:
 
   OurCData(const DenseLLH & llh_, // data from the the tomography experiment
@@ -281,8 +264,9 @@ public:
       )
     : CDataBase<ValueCalculator,true>(
         valcalc, hist_params, binning_num_levels,
-        tpy::CxxMHRWParamsType(_get_step_size(mhrw_params.mhwalker_params),
-                               mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run),
+        tpy::CxxMHRWParamsType(
+            tpy::pyMHWalkerParamsFromPyObj<Tomographer::MHWalkerParamsStepSize<tpy::RealType>>(mhrw_params.mhwalker_params),
+            mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run),
         base_seed),
       llh(llh_),
       jumps_method(jumps_method_),
@@ -663,7 +647,7 @@ py::object py_tomorun(
         num_repeats // num_runs
         );
 
-  setTasksStatusReportPyCallback(tasks, progress_fn, progress_interval_ms, true /* GIL */);
+  tpy::setTasksStatusReportPyCallback(tasks, progress_fn, progress_interval_ms, true /* GIL */);
 
   {
     logger_with_gil.requireGilAcquisition(true);
@@ -1000,7 +984,7 @@ void py_tomo_tomorun(py::module rootmodule)
 
   logger.debug("tomorun.TomorunInvalidInputError ...");
 
-  register_exception_with_docstring<TomorunInvalidInputError>(
+  tpy::registerExceptionWithDocstring<TomorunInvalidInputError>(
       tomorunmodule,
       "TomorunInvalidInputError",
       tpy::TomographerCxxErrorObj.ptr(),

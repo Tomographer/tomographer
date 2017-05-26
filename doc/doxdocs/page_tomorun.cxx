@@ -184,7 +184,7 @@
  * the bottom of the file).
  *
  * For (1), in our example, we might define the class \a HsDistFigureOfMerit as
- * follows. (Also, we need to add <code>#include "hs_dist.h"</code> at the top
+ * follows. (Also, we need to add <code>\#include "hs_dist.h"</code> at the top
  * of the file.)
  *
  * \code

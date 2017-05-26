@@ -50,13 +50,25 @@ struct TOMOGRAPHER_EXPORT DummyValueCalculator {
 };
 } // tomo_internal
 
+
+/** \brief Result type of a \ref Tomographer::ValueHistogramWithBinningMHRWStatsCollector,
+ *         this is basically a combination of a histogram and an error analysis
+ */
 typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<
     tomo_internal::DummyValueCalculator, CountIntType, RealType, Eigen::Dynamic, Eigen::Dynamic
   >::Result
   ValueHistogramWithBinningMHRWStatsCollectorResult;
 
 
-
+/** \brief Result type of a \ref Tomographer::MHRWTasks::MHRandomWalkTask with an abstract
+ *         stats results type
+ *
+ * The stats result type can be anything which is exposed to Python, via \a py::object.
+ *
+ * Also, the \a MHWalkerParams is any \a py::object (typically \a py::dict), see \ref
+ * tpy::MHRWParams.
+ *
+ */
 typedef Tomographer::MHRWTasks::MHRandomWalkTaskResult<
   py::object, CountIntType, py::object
   >

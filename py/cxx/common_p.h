@@ -47,7 +47,7 @@ extern PyLogger * logger;
 // the main exception object
 extern py::object TomographerCxxErrorObj;
 
-}
+} // namespace tpy
 
 
 
@@ -82,7 +82,7 @@ void unpack_tuple_and_construct(Kl & p, py::tuple t)
 }
 
 } // internal
-} // tpy
+} // namespace tpy
 
 
 #endif

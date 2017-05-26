@@ -34,17 +34,36 @@
 #include <tomographerpy/common.h>
 
 
+namespace tpy {
+
+
+#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
+
+// implementation
 TOMOGRAPHER_DEFINE_MSG_EXCEPTION_BASE(TomographerCxxError, std::string(), std::runtime_error) ;
 
+#else
+// fake code for Doxygen
+
+/** \brief Base exception class for errors in the \c tomographer python module.
+ *
+ * This C++ exception translates to a correspondingly named Python exception.
+ */
+class TomographerCxxError : public std::runtime_error { }; // fake
+
+#endif
 
 
-// adapted from pybind11::exception<Type> in "pybind11/include/pybind11.h"
-//
+
+namespace tomo_internal {
+
+// (Adapted from \c "pybind11::exception<Type>" in \c "pybind11/include/pybind11.h"
+// sources.)
 template<typename Type>
-class TOMOGRAPHER_EXPORT exception_with_docstring : public py::object {
+class TOMOGRAPHER_EXPORT ExceptionWithDocstring : public py::object {
 public:
-  exception_with_docstring(py::handle scope, const char *name, PyObject *baseTypeObj = PyExc_Exception,
-                           std::string docstring = std::string()) {
+  ExceptionWithDocstring(py::handle scope, const char *name, PyObject *baseTypeObj = PyExc_Exception,
+                         std::string docstring = std::string()) {
     std::string full_name = scope.attr("__name__").cast<std::string>() +
       std::string(".") + name;
     m_ptr = PyErr_NewExceptionWithDoc(const_cast<char*>(full_name.c_str()),
@@ -63,17 +82,21 @@ public:
     PyErr_SetString(m_ptr, message);
   }
 };
-//
-// adapted from pybind11::register_exception<Type> in "pybind11/include/pybind11.h"
-//
+} // namespace tomo_internal
+
+/** \brief Helper to register in Python a C++ exception with a docstring
+ *
+ * (Adapted from \c "pybind11::register_exception<Type>" in \c
+ * "pybind11/include/pybind11.h" sources.)
+ */
 template <typename CppException>
-exception_with_docstring<CppException> &register_exception_with_docstring(
+tomo_internal::ExceptionWithDocstring<CppException> & registerExceptionWithDocstring(
     py::handle scope,
     const char *name,
     PyObject *base = PyExc_Exception,
     std::string docstring = std::string()
     ) {
-  static exception_with_docstring<CppException> ex(scope, name, base, docstring);
+  static tomo_internal::ExceptionWithDocstring<CppException> ex(scope, name, base, docstring);
   py::register_exception_translator([](std::exception_ptr p) {
       if (!p) return;
       try {
@@ -84,6 +107,8 @@ exception_with_docstring<CppException> &register_exception_with_docstring(
     });
   return ex;
 }
+
+} // namespace tpy
 
 
 #endif

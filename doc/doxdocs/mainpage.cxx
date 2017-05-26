@@ -45,6 +45,9 @@
  *
  * These are basic tools and utilities:
  *
+ * - Tools for storing and manipulating histograms, such as \ref Tomographer::Histogram
+ *   and \ref Tomographer::HistogramWithErrorBars;
+ *
  * - Most tools, e.g. C++ language utilities and other tools, are defined in the
  *   namespace \ref Tomographer::Tools;
  *

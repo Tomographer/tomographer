@@ -65,16 +65,53 @@ namespace Tomographer { namespace Logger {
 
 namespace tpy {
 
-/** \brief Logger type that relays to a PyLogger while protecting the call with GIL
- *         acquisition.
+/** \brief Logger type that relays to (wraps around) a PyLogger while protecting
+ *         the call with GIL acquisition.
  *
- * Only the emitLog() method is provided.
+ * You should use this logger type whenever you need to provide a logger to
+ * Tomographer C++ classes which might be emitting messages while the GIL is not
+ * held.
  *
+ * This class behaves as a usual logger, i.e. you can call \a debug(), \a
+ * info(), \a warning(), etc.
+ *
+ * Any calls to emitLog() will relay to the specified PyLogger instance after
+ * ensuring the GIL is held.  GIL acquisition may be disabled by calling \a
+ * requireGilAcquisition(false) (or by passing \a false as second argument to
+ * the constructor), which may be useful in case you need to create the instance
+ * outside of a GIL-release block:
+ *
+ * \code
+ *   tpy::GilProtectedPyLogger gil_logger(logger, false);
+ *
+ *   // Messages emitted here should not attempt to acquire GIL as we haven't
+ *   // released it yet
+ *   Tomographer::MultiProc::CxxThreads::TaskDispatcher<....,GilProtectedPyLogger>
+ *     tasks(..., gil_logger, ...);
+ *
+ *   {
+ *     py::gil_scoped_release gilrelease;
+ *     gil_logger->requireGilAcquisition(true);
+ *
+ *     tasks.run(); // emitted messages will acquire GIL
+ *   }
+ *   // Here we hold the GIL again
+ *   gil_logger->requireGilAcquisition(false);
+ *
+ *   // now, extract results from the tasks
+ *   py::dict results = ....  extract from `tasks` ...
+ * \endcode
  */
 class TOMOGRAPHER_EXPORT GilProtectedPyLogger
   : public Tomographer::Logger::LoggerBase<GilProtectedPyLogger>
 {
 public:
+  /** \brief Constructor
+   *
+   * The argument \a logger_ is the PyLogger instance to wrap.
+   *
+   * If \a require_gil_acquisition_ is False
+   */
   inline GilProtectedPyLogger(PyLogger & logger_, bool require_gil_acquisition_ = true)
     : LoggerBase<GilProtectedPyLogger>(logger_.level()), // freeze to current level
       logger(logger_),
@@ -82,14 +119,19 @@ public:
   {
   }
 
+  //! The PyLogger which we relay messages to
   inline PyLogger & getLogger() const { return logger; }
+
+  //! Whether or not we are set to acquire the GIL for emitting messages at this point
   inline bool getRequireGilAcquisition() const { return require_gil_acquisition; }
 
+  //! Instruct to acquire (true) or not (false) the GIL when emitting messages
   inline void requireGilAcquisition(bool value) {
     tomographer_assert(require_gil_acquisition != value);
     require_gil_acquisition = value;
   }
 
+  //! The callback function for the logger, you shouldn't call this directly
   inline void emitLog(int level, const char * origin, const std::string & msg)
   {
     if (require_gil_acquisition) {

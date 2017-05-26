@@ -75,7 +75,6 @@ require_mod_version("PyBind11", pybind11.__version__, "2.1",
 # Boost_INCLUDE_DIR=/path/to/boost/headers
 # EIGEN3_INCLUDE_DIR=/path/to/eigen/headers
 # PYBIND11_CPP_STANDARD=-std=c++14
-# MACOSX_CXX_FLAGS=-stdlib=libc++ -mmacosx-version-min=10.7
 #
 # handled by us (not in CMake cache):
 # BCP=/path/to/bcp  (Boost packaging tool)
@@ -110,7 +109,7 @@ vv = Vars([
     'EIGEN3_INCLUDE_DIR',
     'PYBIND11_CPP_STANDARD',
     'OPTIMIZATION_CXX_FLAGS',
-    'MACOSX_CXX_FLAGS',
+#    'MACOSX_CXX_FLAGS',
 ], cachefile=cmake_cache_file)
 
 # Defaults: programs (git, bcp)
@@ -133,7 +132,9 @@ vv.setDefault('EIGEN3_INCLUDE_DIR',
                                         return_with_suffix='eigen3'))
 
 # Defaults: Mac OS X C++ flags
-vv.setDefault('MACOSX_CXX_FLAGS', '-stdlib=libc++ -mmacosx-version-min=10.7')
+#
+# ### Wait... since each client compiles the module locally, there is no need for these.
+#vv.setDefault('MACOSX_CXX_FLAGS', '-stdlib=libc++ -mmacosx-version-min=10.7')
 
 
 
@@ -288,8 +289,8 @@ class BuildExt(build_ext):
         'unix': [],
     }
 
-    if sys.platform == 'darwin':
-        c_opts['unix'] += shlex.split(vv.get('MACOSX_CXX_FLAGS'))
+    #if sys.platform == 'darwin':
+    #    c_opts['unix'] += shlex.split(vv.get('MACOSX_CXX_FLAGS'))
 
     def build_extensions(self):
         ct = self.compiler.compiler_type

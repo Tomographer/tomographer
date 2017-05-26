@@ -796,6 +796,7 @@ WARN_LOGFILE           =
 # Note: If this tag is empty the current directory is searched.
 
 INPUT                  = @RELPATH_SRCROOT@/tomographer \
+                         @RELPATH_SRCROOT@/py/cxx/tomographerpy \
                          @DOCROOT@/doxdocs
 
 # This tag can be used to specify the character encoding of the source files
