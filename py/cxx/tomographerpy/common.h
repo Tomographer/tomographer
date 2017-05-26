@@ -29,11 +29,11 @@
 #define TOMOPY_COMMON_H
 
 #include <cstdio>
+#include <string>
 
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
-
 
 
 #ifdef _WIN32
@@ -45,7 +45,6 @@ namespace py = pybind11;
 #else
 #  define TOMOGRAPHER_EXPORT __attribute__((visibility("default")))
 #endif
-
 
 
 // DEBUGGING ONLY: set TOMOGRAPHERPY_DEBUG_EIGEN_ASSERT_CAUSES_ABORT to cause eigen_assert() failures to abort() and dump core
@@ -72,7 +71,6 @@ namespace py = pybind11;
 #include <tomographerpy/pylogger.h>
 
 
-
 // get a demangle() function from Boost, either with boost::core::demangle() (boost >=
 // 1.56) or boost::units::detail::demangle() (boost before that)
 #include <boost/version.hpp>
@@ -84,11 +82,10 @@ namespace boost { namespace core {  using boost::units::detail::demangle; } }
 #endif
 
 
+namespace tpy {
 
 typedef double RealType;
 typedef int CountIntType;
-
-namespace tpy {
 
 typedef Eigen::Matrix<RealType, Eigen::Dynamic, 1> RealVectorType;
 typedef Eigen::Matrix<RealType, Eigen::Dynamic, Eigen::Dynamic> RealMatrixType;
@@ -96,10 +93,6 @@ typedef Eigen::Matrix<std::complex<RealType>, Eigen::Dynamic, 1> CplxVectorType;
 typedef Eigen::Matrix<std::complex<RealType>, Eigen::Dynamic, Eigen::Dynamic> CplxMatrixType;
 
 typedef Eigen::Matrix<CountIntType, Eigen::Dynamic, 1> CountIntVectorType;
-
-};
-
-
 
 
 inline py::module import_tomographer()
@@ -117,8 +110,25 @@ inline py::module import_tomographer()
         + "). If you updated tomographer, please recompile all dependent modules."
         ) ;
   }
+  const std::string this_pybind11_ver =
+    std::to_string(PYBIND11_VERSION_MAJOR) + std::string(".") +
+    std::to_string(PYBIND11_VERSION_MINOR) + std::string(".") +
+    std::to_string(PYBIND11_VERSION_PATCH) + std::string(".") ;
+  const std::string module_tomographer_pybind11_ver =
+    tomographer_module.attr("version").attr("compile_info").attr("get")("pybind11", "").cast<std::string>();
+  if (module_tomographer_pybind11_ver != this_pybind11_ver) {
+    throw std::runtime_error(
+        "Error: Compiled tomographer's version of PyBind11 (" + module_tomographer_pybind11_ver +
+        ") does not match version used to compile the current module (" + this_pybind11_ver
+        + "). Please recompile all modules using the same PyBind11 version."
+        ) ;
+  }
   return tomographer_module;
 }
+
+
+
+} // namespace tpy
 
 
 #endif

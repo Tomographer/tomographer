@@ -80,7 +80,7 @@ PYBIND11_PLUGIN(_tomographer_cxx)
   py::options options;
   options.disable_function_signatures();
 
-  tpy::logger = new PyLogger;
+  tpy::logger = new tpy::PyLogger;
 
   // python logging
   tpy::logger->initPythonLogger();
@@ -109,14 +109,14 @@ PYBIND11_PLUGIN(_tomographer_cxx)
 
 
   // expose Python API for setting the C++ logger level -- use shared_ptr as holder type
-  py::class_<PyLogger,std::shared_ptr<PyLogger>>(rootmodule, "PyLogger")
+  py::class_<tpy::PyLogger,std::shared_ptr<tpy::PyLogger> >(rootmodule, "PyLogger")
     .def_property("level",
-                  [](const PyLogger & l) { return l.toPythonLevel(l.level()); },
-                  [](PyLogger & l, py::object newlevel) {
+                  [](const tpy::PyLogger & l) { return l.toPythonLevel(l.level()); },
+                  [](tpy::PyLogger & l, py::object newlevel) {
                     l.setLevel(l.fromPythonLevel(newlevel));
                   })
     .def("__repr__",
-         [](const PyLogger & l) {
+         [](const tpy::PyLogger & l) {
            return std::string("<PyLogger level=logging.") + l.toPythonLevelName(l.level()).cast<std::string>()
              + std::string(">");
          }

@@ -66,12 +66,12 @@ void py_tomo_mhrw(py::module rootmodule)
             "    See :tomocxx:`Tomographer::MHRWParams <struct_tomographer_1_1_m_h_r_w_params.html>`.\n\n"
             ".. py:attribute:: n_run\n\n"
             "    See :tomocxx:`Tomographer::MHRWParams <struct_tomographer_1_1_m_h_r_w_params.html>`.\n\n",
-            boost::core::demangle(typeid(CountIntType).name()).c_str()
+            boost::core::demangle(typeid(tpy::CountIntType).name()).c_str()
             ).c_str()
         )
       .def("__init__", [](Kl & instance, py::args args, py::kwargs kwargs) {
           py::object mhwalker_params = py::none();
-          CountIntType n_sweep = 0, n_therm = 0, n_run = 0;
+          tpy::CountIntType n_sweep = 0, n_therm = 0, n_run = 0;
           if (py::len(args) && py::len(kwargs)) {
             throw TomographerCxxError("Can't specify positional arguments along with keyword arguments for MHRWParams(...)");
           }
@@ -82,13 +82,13 @@ void py_tomo_mhrw(py::module rootmodule)
             }
             // exactly 4 args given: they are, in order, (mhwalker_params, n_sweep, n_therm, n_run)
             mhwalker_params = args[0];
-            n_sweep = args[1].cast<CountIntType>();
-            n_therm = args[2].cast<CountIntType>();
-            n_run = args[3].cast<CountIntType>();
+            n_sweep = args[1].cast<tpy::CountIntType>();
+            n_therm = args[2].cast<tpy::CountIntType>();
+            n_run = args[3].cast<tpy::CountIntType>();
           } else if (py::len(kwargs)) {
-            n_sweep = kwargs.attr("pop")("n_sweep"_s, 0).cast<CountIntType>();
-            n_therm = kwargs.attr("pop")("n_therm"_s, 0).cast<CountIntType>();
-            n_run = kwargs.attr("pop")("n_run"_s, 0).cast<CountIntType>();
+            n_sweep = kwargs.attr("pop")("n_sweep"_s, 0).cast<tpy::CountIntType>();
+            n_therm = kwargs.attr("pop")("n_therm"_s, 0).cast<tpy::CountIntType>();
+            n_run = kwargs.attr("pop")("n_run"_s, 0).cast<tpy::CountIntType>();
             mhwalker_params = kwargs;
           } else { // no arguments at all -- default constructor
             mhwalker_params = py::dict();
@@ -113,16 +113,16 @@ void py_tomo_mhrw(py::module rootmodule)
                                 mhrw_params.n_run);
         })
       .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl, py::object,CountIntType,CountIntType,CountIntType>(p, t);
+          tpy::internal::unpack_tuple_and_construct<Kl, py::object,tpy::CountIntType,tpy::CountIntType,tpy::CountIntType>(p, t);
           // if (t.size() != 4) {
           //   throw std::runtime_error("Invalid pickle state!");
           // }
           // // Invoke the in-place constructor. Note that this is needed even
           // // when the object just has a trivial default constructor
-          // new (&p) Kl(t[0].cast<RealType>(),
-          //             t[1].cast<CountIntType>(),
-          //             t[2].cast<CountIntType>(),
-          //             t[3].cast<CountIntType>());
+          // new (&p) Kl(t[0].cast<tpy::RealType>(),
+          //             t[1].cast<tpy::CountIntType>(),
+          //             t[2].cast<tpy::CountIntType>(),
+          //             t[3].cast<tpy::CountIntType>());
         });
     ;
   }

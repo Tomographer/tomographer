@@ -129,7 +129,7 @@ struct TOMOGRAPHER_EXPORT avghistogram_pickle
 
 
 
-static inline std::string fmt_hist_param_float(RealType val)
+static inline std::string fmt_hist_param_float(tpy::RealType val)
 {
   return Tomographer::Tools::fmts("%.3g", (double)val);
 }
@@ -188,9 +188,9 @@ void py_tomo_histogram(py::module rootmodule)
             "\n\n"
             "    Read-only attribute returning a vector (numpy array) of values corresponding to each bin upper value."
             "\n\n"
-            "\n\n", boost::core::demangle(typeid(RealType).name()).c_str(),
+            "\n\n", boost::core::demangle(typeid(tpy::RealType).name()).c_str(),
             Kl().min, Kl().max, (int)Kl().num_bins).c_str())
-      .def(py::init<RealType,RealType,Eigen::Index>(),
+      .def(py::init<tpy::RealType,tpy::RealType,Eigen::Index>(),
            "min"_a=Kl().min, "max"_a=Kl().max, "num_bins"_a=Kl().num_bins)
       .def_readwrite("min", & Kl::min)
       .def_readwrite("max", & Kl::max)
@@ -230,7 +230,7 @@ void py_tomo_histogram(py::module rootmodule)
           return py::make_tuple(p.min, p.max, p.num_bins) ;
         })
       .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl, RealType,RealType,Eigen::Index>(p, t);
+          tpy::internal::unpack_tuple_and_construct<Kl, tpy::RealType,tpy::RealType,Eigen::Index>(p, t);
         })
       ;
   }
@@ -280,13 +280,13 @@ void py_tomo_histogram(py::module rootmodule)
             "an instance property and not a class property.  (This is because in Python, you don't usually "
             "have natural direct access to the type, only to the instance.)\n\n"
             ,
-            boost::core::demangle(typeid(RealType).name()).c_str(),
-            boost::core::demangle(typeid(CountIntType).name()).c_str()
+            boost::core::demangle(typeid(tpy::RealType).name()).c_str(),
+            boost::core::demangle(typeid(tpy::CountIntType).name()).c_str()
             ).c_str()
         // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
-      .def(py::init<RealType, RealType, Eigen::Index>(),
+      .def(py::init<tpy::RealType, tpy::RealType, Eigen::Index>(),
           "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("params", [](const Kl & h) -> Kl::Params { return h.params; })
       .def_property_readonly("values_center", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesCenter(); })
@@ -300,14 +300,14 @@ void py_tomo_histogram(py::module rootmodule)
            "reset()\n\n"
            "Clears the current histogram counts (including `off_chart` counts) to zero.  The histogram "
            "parameters in `params` are kept intact.")
-      .def("load", [](Kl & h, const tpy::CountIntVectorType& x, CountIntType o) { h.load(x, o); },
-           "bins"_a, "off_chart"_a = CountIntType(0),
+      .def("load", [](Kl & h, const tpy::CountIntVectorType& x, tpy::CountIntType o) { h.load(x, o); },
+           "bins"_a, "off_chart"_a = tpy::CountIntType(0),
            "load(bins[, off_chart=0])\n\n"
            "Load bin values from the vector of values `bins`, which is expected to be a `NumPy` array. If "
            "`off_chart` is specified, the current `off_chart` count is also set to the given value; otherwise "
            "it is reset to zero.")
-      .def("add", [](Kl & h, const tpy::CountIntVectorType& x, CountIntType o) { h.add(x.array(), o); },
-           "bins"_a, "off_chart"_a = CountIntType(0),
+      .def("add", [](Kl & h, const tpy::CountIntVectorType& x, tpy::CountIntType o) { h.add(x.array(), o); },
+           "bins"_a, "off_chart"_a = tpy::CountIntType(0),
            "add(bins[, off_chart=0])\n\n"
            "Add a number of counts to each bin, specifed by a vector of values `bins` which is expected to be "
            "a `NumPy` array. If `off_chart` is specified, the current `off_chart` count is increased by this number, "
@@ -319,17 +319,17 @@ void py_tomo_histogram(py::module rootmodule)
            "count(index)\n\n"
            "Returns the number of counts in the bin indexed by `index`.  Indexes start at zero.  "
            "Raises :py:exc:`TomographerCxxError` if index is out of range.")
-      .def("record", [](Kl & h, RealType x, CountIntType o) { return h.record(x, o); },
-           "value"_a, "weight"_a = CountIntType(1),
+      .def("record", [](Kl & h, tpy::RealType x, tpy::CountIntType o) { return h.record(x, o); },
+           "value"_a, "weight"_a = tpy::CountIntType(1),
            "record(value[, weight=1])\n\n"
            "Record a new data sample. This increases the corresponding bin count by one, or by `weight` if the "
            "latter argument is provided.")
-      .def("normalization", [](const Kl & h) { return h.normalization<RealType>(); },
+      .def("normalization", [](const Kl & h) { return h.normalization<tpy::RealType>(); },
            "normalization()\n\n"
            "Calculate the normalization factor for the histogram.  This corresponds to the total number "
            "of weight-1 data points, where the weight of a data point may be specified as a second argument "
            "to :py:meth:`record()`.")
-      .def("normalized", [](const Kl & h) -> tpy::HistogramReal { return h.normalized<RealType>(); },
+      .def("normalized", [](const Kl & h) -> tpy::HistogramReal { return h.normalized<tpy::RealType>(); },
            "normalized()\n\n"
            "Returns a normalized version of this histogram. The bin counts as well as the off_chart counts "
            "are divided by :py:meth:`normalization()`.  The returned object is a "
@@ -368,13 +368,13 @@ void py_tomo_histogram(py::module rootmodule)
             "\n\n"
             "The corresponding C++ class is also :tomocxx:`Tomographer::Histogram "
             "<class_tomographer_1_1_uniform_bins_histogram.html>`, although the `CountType` template parameter "
-            "is set to `%s` instead of `%s`.", boost::core::demangle(typeid(RealType).name()).c_str(),
-            boost::core::demangle(typeid(CountIntType).name()).c_str()
+            "is set to `%s` instead of `%s`.", boost::core::demangle(typeid(tpy::RealType).name()).c_str(),
+            boost::core::demangle(typeid(tpy::CountIntType).name()).c_str()
             ).c_str()
         // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
-      .def(py::init<RealType, RealType, Eigen::Index>(),
+      .def(py::init<tpy::RealType, tpy::RealType, Eigen::Index>(),
           "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("params", [](const Kl & h) -> Kl::Params { return h.params; })
       .def_property_readonly("values_center", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesCenter(); })
@@ -385,16 +385,16 @@ void py_tomo_histogram(py::module rootmodule)
       .def_readwrite("off_chart", & Kl::off_chart)
       .def_property_readonly("has_error_bars", [](py::object) { return false; })
       .def("reset", & Kl::reset)
-      .def("load", [](Kl & h, const tpy::RealVectorType& x, RealType o) { h.load(x, o); },
-           "bins"_a, "off_chart"_a = CountIntType(0))
-      .def("add", [](Kl & h, const tpy::RealVectorType& x, RealType o) { h.add(x.array(), o); },
-           "bins"_a, "off_chart"_a = CountIntType(0))
+      .def("load", [](Kl & h, const tpy::RealVectorType& x, tpy::RealType o) { h.load(x, o); },
+           "bins"_a, "off_chart"_a = tpy::CountIntType(0))
+      .def("add", [](Kl & h, const tpy::RealVectorType& x, tpy::RealType o) { h.add(x.array(), o); },
+           "bins"_a, "off_chart"_a = tpy::CountIntType(0))
       .def("numBins", & Kl::numBins)
       .def("count", & Kl::count, "index"_a)
-      .def("record", [](Kl & h, RealType x, RealType o) { return h.record(x, o); },
-           "value"_a, "weight"_a=RealType(1))
-      .def("normalization", [](const Kl & h) { return h.normalization<RealType>(); })
-      .def("normalized", [](const Kl & h) -> tpy::HistogramReal { return h.normalized<RealType>(); })
+      .def("record", [](Kl & h, tpy::RealType x, tpy::RealType o) { return h.record(x, o); },
+           "value"_a, "weight"_a=tpy::RealType(1))
+      .def("normalization", [](const Kl & h) { return h.normalization<tpy::RealType>(); })
+      .def("normalized", [](const Kl & h) -> tpy::HistogramReal { return h.normalized<tpy::RealType>(); })
       .def("prettyPrint", &Kl::prettyPrint, "max_width"_a=0)
       .def("__repr__", [](const Kl& p) {
           return streamstr("HistogramReal(min="
@@ -441,7 +441,7 @@ void py_tomo_histogram(py::module rootmodule)
         // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def(py::init<tpy::HistogramParams>(), "params"_a=tpy::HistogramParams())
-      .def(py::init<RealType, RealType, Eigen::Index>())
+      .def(py::init<tpy::RealType, tpy::RealType, Eigen::Index>())
       .def_property_readonly("params", [](const Kl & h) -> Kl::Params { return h.params; })
       .def_property_readonly("values_center", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesCenter(); })
       .def_property_readonly("values_lower", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesLower(); })
@@ -454,10 +454,10 @@ void py_tomo_histogram(py::module rootmodule)
       .def_property_readonly("has_error_bars", [](py::object) { return true; })
       .def("reset", & Kl::reset)
       .def("load",
-           [](Kl & h, const tpy::RealVectorType& x, const tpy::RealVectorType& err, RealType o) {
+           [](Kl & h, const tpy::RealVectorType& x, const tpy::RealVectorType& err, tpy::RealType o) {
              h.load(x, err, o);
            },
-           "y"_a, "yerr"_a, "off_chart"_a = RealType(0),
+           "y"_a, "yerr"_a, "off_chart"_a = tpy::RealType(0),
            "load(y, yerr[, off_chart=0])"
            "\n\n"
            "Load data into the histogram. The array `y` specifies the bin counts, and `yerr` specifies "
@@ -473,11 +473,11 @@ void py_tomo_histogram(py::module rootmodule)
           "errorBar(index)\n\n"
           "Get the error bar value associated to the bin of the given `index`. Raises "
            ":py:exc:`TomographerCxxError` if index is out of range.")
-      .def("record", [](Kl & h, RealType x, RealType o) { return h.record(x, o); },
-           "value"_a, "weight"_a=RealType(1))
-      .def("normalization", [](const Kl & h) { return h.normalization<RealType>(); })
+      .def("record", [](Kl & h, tpy::RealType x, tpy::RealType o) { return h.record(x, o); },
+           "value"_a, "weight"_a=tpy::RealType(1))
+      .def("normalization", [](const Kl & h) { return h.normalization<tpy::RealType>(); })
       .def("normalized",
-           [](const Kl & h) -> tpy::HistogramWithErrorBars { return h.normalized<RealType>(); },
+           [](const Kl & h) -> tpy::HistogramWithErrorBars { return h.normalized<tpy::RealType>(); },
            "normalized()\n\n"
            "Returns a normalized version of this histogram, including the error bars. The bin counts, the "
            "error bars and the off_chart counts are divided by :py:meth:`~Histogram.normalization()`. "
@@ -522,7 +522,7 @@ void py_tomo_histogram(py::module rootmodule)
         "    accessed at any time, also before having called :py:meth:`finalize()`."
         )
       .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
-      .def(py::init<RealType, RealType, CountIntType>(),
+      .def(py::init<tpy::RealType, tpy::RealType, tpy::CountIntType>(),
            "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("num_histograms", [](const Kl & h) { return h.num_histograms; })
       .def("addHistogram",
@@ -581,7 +581,7 @@ void py_tomo_histogram(py::module rootmodule)
         "    accessed at any time, also before having called :py:meth:`finalize()`."
         )
       .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
-      .def(py::init<RealType, RealType, CountIntType>(),
+      .def(py::init<tpy::RealType, tpy::RealType, tpy::CountIntType>(),
           "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("num_histograms", [](const Kl & h) { return h.num_histograms; })
       .def("addHistogram",
@@ -644,7 +644,7 @@ void py_tomo_histogram(py::module rootmodule)
         "    accessed at any time, also before having called :py:meth:`finalize()`."
         )
       .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
-      .def(py::init<RealType, RealType, CountIntType>(),
+      .def(py::init<tpy::RealType, tpy::RealType, tpy::CountIntType>(),
           "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("num_histograms", [](const Kl & h) { return h.num_histograms; })
       .def("addHistogram",

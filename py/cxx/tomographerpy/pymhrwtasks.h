@@ -63,7 +63,7 @@ typedef Tomographer::MHRWTasks::MHRandomWalkTaskResult<
   MHRandomWalkTaskResult;
 
 
-} // Py
+} // namespace tpy
 
 
 

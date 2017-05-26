@@ -53,6 +53,7 @@
 #include "tomographerpy/pymhrw.h"
 #include "tomographerpy/pymhrwtasks.h"
 #include "tomographerpy/exc.h"
+#include "tomographerpy/pygil.h"
 
 #include "common_p.h"
 
@@ -73,17 +74,17 @@ namespace tpy {
 class CallableValueCalculator
 {
 public:
-  typedef RealType ValueType;
+  typedef tpy::RealType ValueType;
   
   CallableValueCalculator(py::object fn_)
     : fn(fn_)
   {
   }
 
-  RealType getValue(const Eigen::Ref<const tpy::CplxMatrixType> & T) const
+  tpy::RealType getValue(const Eigen::Ref<const tpy::CplxMatrixType> & T) const
   {
     py::gil_scoped_acquire gil_acquire;
-    return fn(py::cast(T)).cast<RealType>();
+    return fn(py::cast(T)).cast<tpy::RealType>();
   }
 
 
@@ -92,9 +93,9 @@ private:
 };
 
 
-typedef Tomographer::DenseDM::DMTypes<Eigen::Dynamic, RealType> DMTypes;
+typedef Tomographer::DenseDM::DMTypes<Eigen::Dynamic, tpy::RealType> DMTypes;
 
-typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<RealType>, CountIntType>
+typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<tpy::RealType>, tpy::CountIntType>
   CxxMHRWParamsType;
 
 
@@ -123,7 +124,7 @@ class LLH_MHWalker
 public:
   typedef DMTypes::MatrixType PointType;
 
-  typedef Tomographer::MHWalkerParamsStepSize<RealType> WalkerParams;
+  typedef Tomographer::MHWalkerParamsStepSize<tpy::RealType> WalkerParams;
 
   typedef typename DenseLLHType::LLHValueType FnValueType;
 
@@ -223,10 +224,10 @@ typedef std::mt19937 RngType;
 
 
 typedef Tomographer::MultiplexorValueCalculator<
-  RealType,
-  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, RealType>,
-  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, RealType>,
-  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, RealType>,
+  tpy::RealType,
+  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, tpy::RealType>,
+  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, tpy::RealType>,
+  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, tpy::RealType>,
   Tomographer::DenseDM::TSpace::ObservableValueCalculator<tpy::DMTypes>,
   tpy::CallableValueCalculator
   > ValueCalculator;
@@ -242,29 +243,29 @@ typedef Tomographer::MultiplexorValueCalculator<
 struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   ValueCalculator, // our value calculator
   true, // use binning analysis
-  Tomographer::MHWalkerParamsStepSize<RealType>, // MHWalkerParams
+  Tomographer::MHWalkerParamsStepSize<tpy::RealType>, // MHWalkerParams
   RngType::result_type, // RngSeedType
-  CountIntType, // IterCountIntType
-  RealType, // CountRealType
-  CountIntType // HistCountIntType
+  tpy::CountIntType, // IterCountIntType
+  tpy::RealType, // CountRealType
+  tpy::CountIntType // HistCountIntType
   >
 {
 private:
-  Tomographer::MHWalkerParamsStepSize<RealType> _get_step_size(py::object mhwalker_params)
+  Tomographer::MHWalkerParamsStepSize<tpy::RealType> _get_step_size(py::object mhwalker_params)
   {
     // don't acquire GIL, OurCData constructor is called only by master thread before GIL is released
 
     if ( py::hasattr(mhwalker_params, "__getitem__") ) {
       // dict or dict-like, go. If key doesn't exist, send in zero and let the underlying
       // lib handle it
-      return mhwalker_params.attr("get")("step_size"_s, 0).cast<RealType>();
+      return mhwalker_params.attr("get")("step_size"_s, 0).cast<tpy::RealType>();
     }
     if ( mhwalker_params.is_none() ) {
       // none: let the underlying library decide what to do with this
       return 0;
     }
     // try to iterpret the object itself as a float
-    return mhwalker_params.cast<RealType>();
+    return mhwalker_params.cast<tpy::RealType>();
   }
 public:
 
@@ -318,6 +319,21 @@ public:
     auto logger = Tomographer::Logger::makeLocalLogger("pytomorun.cxx:OurCData::setupRandomWalkAndRun()",
                                                        baselogger) ;
 
+    //
+    // NOTE: This function can be called from multiple threads simultaneously as
+    // the GIL (Global Interpreter Lock) is currently not held.  Don't call any
+    // Python-related function without acquiring the Python GIL, see examples
+    // below.  Also, Don't write to global variables.
+    //
+    // However, do not call logger methods while holding the GIL, as the logger
+    // will itself try to acquire the GIL again causing a deadlock.
+    //
+    // A handy macro is TPY_EXPR_WITH_GIL( expression ), which evaluates the
+    // given expression while holding the GIL and returns the result,
+    // immediately re-releasing the GIL. Just surround any Python-related calls
+    // with that macro.
+    //
+
     tpy::LLH_MHWalker<DenseLLH,Rng,LoggerType> mhwalker(
         ( jumps_method == "light" ? tpy::LLH_MHWalker_Light
           : (jumps_method == "full" ? tpy::LLH_MHWalker_Full
@@ -337,11 +353,11 @@ public:
     double ar_params[4] = {0};
     double ensure_n_therm_fixed_params_fraction = 0;
     {
-      py::gil_scoped_acquire gil_acq;
+      py::gil_scoped_acquire gil; // acquire GIL for these calls
 
       // the stats collector is there whether we enable the controller or not
       mvavg_numsamples = ctrl_step_size_params.attr("get")("num_samples", 2048).cast<int>();
-
+    
       if (ctrl_step_size_params.attr("get")("enabled", true).cast<bool>()) {
         ar_params[0] = ctrl_step_size_params.attr("get")(
             "desired_accept_ratio_min",
@@ -386,11 +402,12 @@ public:
           ensure_n_therm_fixed_params_fraction
           );
 
+    logger.debug("Created auto step size controller.") ;
+
     int check_frequency_sweeps = 0;
     Eigen::Index max_allowed[3] = {0};
     {
-      py::gil_scoped_acquire gil_acq;
-
+      py::gil_scoped_acquire gilacq;
       if (ctrl_converged_params.attr("get")("enabled", true).cast<bool>()) {
         check_frequency_sweeps =
           ctrl_converged_params.attr("get")("check_frequency_sweeps", 1024).cast<int>();
@@ -407,8 +424,6 @@ public:
         max_allowed[2] = std::numeric_limits<Eigen::Index>::max();
       }
     }
-
-    logger.debug("Created auto step size controller.") ;
 
     // value error bins convergence controller
     auto ctrl_convergence = 
@@ -458,7 +473,7 @@ py::object py_tomorun(
     py::dict ctrl_converged_params
     )
 {
-  Tomographer::Logger::LocalLogger<PyLogger> logger(TOMO_ORIGIN, *tpy::logger);
+  Tomographer::Logger::LocalLogger<tpy::PyLogger> logger(TOMO_ORIGIN, *tpy::logger);
 
   logger.debug("py_tomorun()");
 
@@ -532,7 +547,7 @@ py::object py_tomorun(
   
     Tomographer::MathTools::forcePosVecKeepSum<RealVectorType>(
         d,
-        Eigen::NumTraits<RealType>::dummy_precision()
+        Eigen::NumTraits<tpy::RealType>::dummy_precision()
         );
   
     // TODO: ensure that something was given
@@ -565,9 +580,9 @@ py::object py_tomorun(
                                           + py::repr(fig_of_merit).cast<std::string>())
               ))))),
         // the valuecalculator instances which are available:
-      [&]() { return new Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, RealType>(T_ref); },
-      [&]() { return new Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, RealType>(T_ref); },
-      [&]() { return new Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, RealType>(rho_ref); },
+      [&]() { return new Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, tpy::RealType>(T_ref); },
+      [&]() { return new Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, tpy::RealType>(T_ref); },
+      [&]() { return new Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, tpy::RealType>(rho_ref); },
       [&]() { return new Tomographer::DenseDM::TSpace::ObservableValueCalculator<tpy::DMTypes>(dmt, A); },
       [&]() { return new tpy::CallableValueCalculator(fig_of_merit); }
         );
@@ -603,8 +618,8 @@ py::object py_tomorun(
                << "might not be reliable." ;
       });
   }
-  const CountIntType binning_last_level_num_samples =
-    (CountIntType)std::ldexp((double)mhrw_params.n_run, - binning_num_levels);
+  const tpy::CountIntType binning_last_level_num_samples =
+    (tpy::CountIntType)std::ldexp((double)mhrw_params.n_run, - binning_num_levels);
   logger.debug([&](std::ostream & stream) {
       stream << "Binning analysis: " << binning_num_levels << " levels, with "
              << binning_last_level_num_samples << " samples at last level";
@@ -630,18 +645,20 @@ py::object py_tomorun(
              << std::this_thread::get_id();
     }) ;
 
-  Tomographer::MultiProc::CxxThreads::TaskDispatcher<OurMHRandomWalkTask,OurCData,PyLogger>
+  tpy::GilProtectedPyLogger logger_with_gil(logger.parentLogger(), false);
+
+  Tomographer::MultiProc::CxxThreads::TaskDispatcher<OurMHRandomWalkTask,OurCData,tpy::GilProtectedPyLogger>
     tasks(
         &taskcdat, // constant data
-        logger.parentLogger(), // the main logger object
+        logger_with_gil, // the main logger object -- automatically acquires the GIL for emitting messages
         num_repeats // num_runs
         );
 
   setTasksStatusReportPyCallback(tasks, progress_fn, progress_interval_ms, true /* GIL */);
 
   {
+    logger_with_gil.requireGilAcquisition(true);
     py::gil_scoped_release gil_release;
-    auto tmp_pylogger_gil_ = tpy::logger->pushRequireGilAcquisition();
 
     // and run our tomo process
 
@@ -672,7 +689,8 @@ py::object py_tomorun(
       throw; // error via pybind11
     }
 
-  } // gil release scope
+  } // gil released scope
+  logger_with_gil.requireGilAcquisition(false);
 
   auto time_end = StdClockType::now();
 

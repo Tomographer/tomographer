@@ -46,6 +46,8 @@ class MHRWTasksStuff(unittest.TestCase):
             mhrw_params=mhrw_params,
             hist_params=hist_params,
             ctrl_step_size_params={'enable': False},
+            progress_interval_ms=500,
+            progress_fn=lambda x: print(x.getHumanReport()),
         )
 
         # check that all fields are there and display meaningful values

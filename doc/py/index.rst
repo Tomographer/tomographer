@@ -42,6 +42,7 @@ Modules and classes
    :maxdepth: 2
 
    tomographer
+   custom_module
 
 
 Indices and tables
