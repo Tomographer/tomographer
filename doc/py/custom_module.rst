@@ -73,7 +73,7 @@ This is a standard ``setup.py`` file for packaging Python packages, using
 There are various flags which need to be set when compiling your module, which
 you can simply steal from the `tomographer` module: indeed, the `tomographer`
 module :py:data:`exposes the flags it was compiled with
-<tomographer.compile_info>`, so you can just recycle them.
+<tomographer.version.compile_info>`, so you can just recycle them.
 
 This ``setup.py`` script allows the user (you!) to specify options as
 environment variables, for instance::

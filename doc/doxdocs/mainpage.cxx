@@ -133,6 +133,13 @@
  *   Tomographer::DenseDM::TSpace::TrDistToRefCalculator "TrDistToRefCalculator", and \ref
  *   Tomographer::DenseDM::TSpace::ObservableValueCalculator "ObservableValueCalculator".
  * 
+ * <h3>Tools for writing C++ code interfaced with Python</h3>
+ *
+ * A set of typedefs and utilities provided in the namespace \ref tpy allow you to easily
+ * write fast C++ code using the above components, while providing a convenient Python
+ * interface for easy control and manipulation.  See <a href="py/custom_module.html">here
+ * for more info</a>.
+ *
  *
  * <h2>Documentation Pages</h2>
  *
