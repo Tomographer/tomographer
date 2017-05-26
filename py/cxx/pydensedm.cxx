@@ -29,6 +29,7 @@
 #include <cstdint>
 
 #include <tomographerpy/common.h>
+#include <tomographerpy/exc.h>
 #include <tomographerpy/pydensedm.h>
 
 #include <pybind11/eval.h>
@@ -86,12 +87,24 @@ void py_tomo_densedm(py::module rootmodule)
         "    The number of degrees of freedom.  This is `dim2-1`\n\n"
         "\n\n"
         )
-      .def(py::init<int>(), "dim"_a)
+      .def(py::init<Eigen::Index>(), "dim"_a)
       .def_property_readonly("dim", & Kl::dim )
       .def_property_readonly("dim2", & Kl::dim2 )
       .def_property_readonly("ndof", & Kl::ndof )
       .def("__repr__", [](const Kl & p) { return streamstr("DMTypes(dim="<<p.dim()<<")"); })
-      .def("__getinitargs__", [](py::object p) { return py::make_tuple(p.attr("dim")); })
+      .def("__getstate__", [](py::object p) { return py::make_tuple(p.attr("dim")); })
+      .def("__setstate__", [](py::object self, py::tuple t) {
+          auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
+          logger.debug("Got t=%s\n", py::repr(t).cast<std::string>().c_str());
+          if (py::len(t) != 1) {
+            throw tpy::TomographerCxxError(streamstr("Invalid pickle state: expected 1 arg, got "
+                                                     << py::len(t)));
+          }
+          Kl & x = self.cast<Kl&>();
+
+          // in-place create the DMTypes object
+          new (&x) Kl(t[0].cast<Eigen::Index>()) ;
+        })
       ;
   }
   logger.debug("densedm.ParamX ...");
@@ -221,17 +234,22 @@ void py_tomo_densedm(py::module rootmodule)
           // X-param-vector or complex matrix.  This works for an Exn matrix (will iter
           // on rows), a 3-D numpy array (will iter on first dimension), as well as a
           // list of matrices (will iter on list).
+          auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
+          logger.debug(streamstr("setMeas("<<py::repr(E).cast<std::string>()<<","<<py::repr(Nx).cast<std::string>()<<"), dmt.dim="<<l.dmt.dim()));
           l.resetMeas();
           const std::size_t len = py::len(E);
-          tomographer_assert(len == py::len(Nx)) ;
+          if (len != py::len(Nx)) {
+            throw tpy::TomographerCxxError(streamstr("Mismatch between number of POVM effects ("<<len<<") and length "
+                                                     "of frequencies vector ("<<py::len(Nx)<<")"));
+          }
           for (std::size_t k = 0; k < len; ++k) {
 
             Eigen::MatrixXcd E_x_or_m = E[py::cast(k)].cast<Eigen::MatrixXcd>();
             tpy::CountIntType Nk = Nx[py::cast(k)].cast<tpy::CountIntType>();
-            if (PyErr_Occurred() != NULL) {
-              // tell pybind11 that the exception is already set
-              throw py::error_already_set();
-            }
+            // if (PyErr_Occurred() != NULL) {
+            //   // tell pybind11 that the exception is already set
+            //   throw py::error_already_set();
+            // }
               
             if (E_x_or_m.cols() == 1) {
               // it is a X-param vector
@@ -292,15 +310,24 @@ void py_tomo_densedm(py::module rootmodule)
           return streamstr("<IndepMeasLLH dim="<<p.dmt.dim()<<" numEffects="<<p.numEffects()
                            <<" Ntot="<<p.Nx().sum()<<">") ;
         })
-      .def("__getinitargs__", [](py::object p) { return py::make_tuple(p.attr("dmt")); })
       .def("__getstate__", [](py::object p) {
-          return py::make_tuple(p.attr("Exn")(), p.attr("N")());
+          //fprintf(stderr, "DEBUG::: called!!\n");
+          return py::make_tuple(p.attr("dmt"), p.attr("Exn")(), p.attr("Nx")());
         })
-      .def("__setstate__", [](py::object p, py::tuple t) {
-          if (py::len(t) != 2) {
-            throw tpy::TomographerCxxError(streamstr("Invalid pickle state: expected 2 args, got " << py::len(t)));
+      .def("__setstate__", [](py::object self, py::tuple t) {
+          auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
+          logger.debug("Got t=%s\n", py::repr(t).cast<std::string>().c_str());
+
+          if (py::len(t) != 3) {
+            throw tpy::TomographerCxxError(streamstr("Invalid pickle state: expected 3 args, got " << py::len(t)));
           }
-          p.attr("setMeas")(t[0], t[1], false);
+          Kl & x = self.cast<Kl&>();
+
+          // in-place create the object.  First argument is dmt, to be passed to the constructor
+          new (&x) Kl(t[0].cast<tpy::DMTypes>()) ;
+
+          // then, set the measurement data
+          self.attr("setMeas")(t[1], t[2], false);
         })
       ;
   }

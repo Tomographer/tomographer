@@ -319,7 +319,9 @@ void py_tomo_histogram(py::module rootmodule)
       .def("__repr__", [](const Kl& p) {
           return streamstr("Histogram(min="
                            << fmt_hist_param_float(p.params.min) << ",max="
-                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
+                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins
+                           << ",bins=" << py::repr(p.bins).cast<std::string>()
+                           << ",off_chart=" << py::repr(p.off_chart).cast<std::string>() << ")");
         })
       .def("__getstate__", [](py::object self) {
           return py::make_tuple(
@@ -452,7 +454,10 @@ void py_tomo_histogram(py::module rootmodule)
       .def("__repr__", [](const Kl& p) {
           return streamstr("HistogramWithErrorBars(min="
                            << fmt_hist_param_float(p.params.min) << ",max="
-                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
+                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins
+                           << ",bins=" << py::repr(p.bins).cast<std::string>()
+                           << ",delta=" << py::repr(p.delta).cast<std::string>()
+                           << ",off_chart=" << py::repr(p.off_chart).cast<std::string>() << ")");
         })
       .def("__getstate__", [](py::object self) {
           return py::make_tuple( self.attr("params"), self.attr("bins"), self.attr("delta"), self.attr("off_chart") );
