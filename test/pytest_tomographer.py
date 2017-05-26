@@ -7,7 +7,7 @@ import numpy as np
 import numpy.testing as npt
 
 import logging
-logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.NOTSET) # test LONGDEBUG logging level
 
 import unittest
 

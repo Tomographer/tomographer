@@ -538,6 +538,11 @@ py::object py_tomorun(
 
   if (fig_of_merit_s == "fidelity" || fig_of_merit_s == "tr-dist" || fig_of_merit_s == "purif-dist") {
 
+    if (ref_state.rows() != dmt.dim() || ref_state.cols() != dmt.dim()) {
+      throw TomorunInvalidInputError(streamstr("Expected " << dmt.dim() << " x " << dmt.dim() << " complex matrix as "
+                                               "'ref_state' argument for fig_of_merit='"<<fig_of_merit_s<<"'")) ;
+    }
+
     Eigen::SelfAdjointEigenSolver<MatrixType> eig(ref_state);
 
     typedef typename Eigen::SelfAdjointEigenSolver<MatrixType>::RealVectorType RealVectorType;
@@ -557,7 +562,11 @@ py::object py_tomorun(
 
   } else if (fig_of_merit_s == "obs-value") {
 
-    // TODO: ensure that something was given
+    if (observable.rows() != dmt.dim() || observable.cols() != dmt.dim()) {
+      throw TomorunInvalidInputError(streamstr("Expected " << dmt.dim() << " x " << dmt.dim() << " complex matrix as "
+                                               "'observable' argument for fig_of_merit='obs-value'")) ;
+    }
+
     A = observable;
     
   } else if (fig_of_merit_callable) {

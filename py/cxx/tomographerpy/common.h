@@ -113,7 +113,7 @@ inline py::module import_tomographer()
   const std::string this_pybind11_ver =
     std::to_string(PYBIND11_VERSION_MAJOR) + std::string(".") +
     std::to_string(PYBIND11_VERSION_MINOR) + std::string(".") +
-    std::to_string(PYBIND11_VERSION_PATCH) + std::string(".") ;
+    std::to_string(PYBIND11_VERSION_PATCH) ;
   const std::string module_tomographer_pybind11_ver =
     tomographer_module.attr("version").attr("compile_info").attr("get")("pybind11", "").cast<std::string>();
   if (module_tomographer_pybind11_ver != this_pybind11_ver) {

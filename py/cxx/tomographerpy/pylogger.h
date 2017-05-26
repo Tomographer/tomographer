@@ -33,6 +33,11 @@
 // this in case a user includes pylogger.h without including common.h first.
 #include <tomographerpy/common.h>
 
+#if PY_MAJOR_VERSION < 3
+// If using Python 2, we need the eval() function internally below -- see toPythonLevel()
+#include <pybind11/eval.h>
+#endif
+
 #include <tomographer/tools/loggers.h>
 
 
@@ -183,29 +188,34 @@ void PyLogger::emitLog(int level, const char * origin, const std::string & msg)
     return;
   }
   if (py_logger.is_none()) {
-    fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGER NOT SET.\n");
-    fprintf(stderr, "Message was (%d): %s: %s\n\n", level, origin, msg.c_str());
+    fprintf(stderr,
+            "tomographer:PyLogger: INTERNAL ERROR: PYTHON LOGGING MODULE NOT SET.\n"
+            "In attempt to call emitLog().");
+    fprintf(stderr,
+            "Message was (%d): %s: %s\n\n", level, origin, msg.c_str());
   } else {
     //fprintf(stderr, "Emitting log ... (%s)\n", msg.c_str());
 
     py::object pylevel = toPythonLevel(level);
 
+    //DEBUG::: fprintf(stderr, "DEBUG: pylevel = %s\n", py::repr(pylevel).cast<std::string>().c_str());
+
     std::string full_msg = std::string("<")+origin+"> "+msg;
 
     py::dict extra;
     extra["origin"] = origin;
-    extra["msg_orig"] = msg;
+    extra["raw_msg"] = msg;
     py::dict kwargs;
     kwargs["extra"] = extra;
     auto logfn = py::getattr(py_logger, "log");
     //      try {
-    if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
-      throw py::error_already_set();
-    }
+    // if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
+    //   throw py::error_already_set();
+    // }
     logfn(*py::make_tuple(pylevel, full_msg), **kwargs);
-    if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
-      throw py::error_already_set();
-    }
+    // if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
+    //   throw py::error_already_set();
+    // }
   }
 }
 
@@ -214,7 +224,9 @@ inline
 py::object PyLogger::toPythonLevel(int level) const
 {
   if (py_logging.is_none()) {
-    fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGING MODULE NOT SET.\nIn attempt to call toPythonLevel().");
+    fprintf(stderr,
+            "tomographer:PyLogger: INTERNAL ERROR: PYTHON LOGGING MODULE NOT SET.\n"
+            "In attempt to call toPythonLevel().");
     return py::none();
   }
   switch (level) {
@@ -228,7 +240,14 @@ py::object PyLogger::toPythonLevel(int level) const
     return py::getattr(py_logging, "DEBUG");
   case Tomographer::Logger::LONGDEBUG:
   default:
-    return py::cast(2); //py::getattr(py_logging, "NOTSET");
+#if PY_MAJOR_VERSION >= 3
+    return py::cast(1); //py::getattr(py_logging, "NOTSET");
+#else
+    // Returning py::cast(1) above causes an error in Python2 "TypeError: level must be an
+    // integer" ... because it casts the 1 into "1L", a 'long', and not an 'int'!!  So
+    // resort to an ugly hack:
+    return py::eval("1");
+#endif
   }
 }
 
@@ -236,7 +255,9 @@ inline
 py::object PyLogger::toPythonLevelName(int level) const
 {
   if (py_logging.is_none()) {
-    fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGING MODULE NOT SET.\nIn attempt to call toPythonLevel().");
+    fprintf(stderr,
+            "tomographer:PyLogger: INTERNAL ERROR: PYTHON LOGGING MODULE NOT SET.\n"
+            "In attempt to call toPythonLevelName().");
     return py::none();
   }
   return py_logging.attr("getLevelName")(toPythonLevel(level));
@@ -246,7 +267,9 @@ inline
 int PyLogger::fromPythonLevel(py::object pylvl) const
 {
   if (py_logging.is_none()) {
-    fprintf(stderr, "INTERNAL ERROR: PYTHON LOGGING MODULE NOT SET.\nIn attempt to call fromPythonLevel().");
+    fprintf(stderr,
+            "tomographer:PyLogger: INTERNAL ERROR: PYTHON LOGGING MODULE NOT SET.\n"
+            "In attempt to call fromPythonLevel().");
     return -1;
   }
 
