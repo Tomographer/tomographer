@@ -18,6 +18,9 @@ TOMOGRAPHER_URL = os.environ.get('TOMOGRAPHER_URL',
 GIT = os.environ.get('GIT', "git")
 CMAKE = os.environ.get('CMAKE', "cmake")
 MAKE = os.environ.get('MAKE', "make")
+CURL = os.environ.get('CURL', "curl")
+TAR = os.environ.get('TAR', "tar")
+UNZIP = os.environ.get('UNZIP', "unzip")
 
 base_cmake_args = []
 
@@ -87,6 +90,29 @@ class TomographerBuild(object):
             # make
             do_run([MAKE, '-j'+str(multiprocessing.cpu_count()), 'VERBOSE=1'],
                    cwd=self.work_tomographer_build, add_environ=self.add_environ)
+
+
+class TomographerTomorunReleaseExe(object):
+    def __init__(self, tomographer_version, plat, archivefmt):
+        archivefilename = 'tomographer-'+tomographer_version+'-'+plat+'.'+archivefmt
+        url = ('https://github.com/Tomographer/tomographer/releases/download/'+
+               tomographer_version+'/'+archivefilename)
+        
+        self.key = 'rel-'+tomographer_version+'-'+plat
+
+        self.workdir = os.path.join(benchwork_dir, self.key)
+
+        if not os.path.isdir(self.workdir):
+            os.mkdir(self.workdir)
+            do_run([CURL, '-L', '-O', url], cwd=self.workdir)
+            if archivefmt == 'tar.gz':
+                do_run([TAR, 'xfz', archivefilename], cwd=self.workdir)
+            elif archivefmt == 'tar.bz2':
+                do_run([TAR, 'xfj', archivefilename], cwd=self.workdir)
+            elif archivefmt == 'zip':
+                do_run([UNZIP, archivefilename], cwd=self.workdir)
+            else:
+                raise ValueError("Unknown archive format: "+archivefmt)
 
 
 

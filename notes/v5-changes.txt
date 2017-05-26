@@ -8,6 +8,13 @@
 - mhrwcontrollers (incl. step size adjustment & bin error bars convergence control)
 
 - UniformBinsHistogram -> Histogram etc.
+  * new Py histogram classes with NumPy buffers
+  * deprectated Averaged**Histogram classes
+
+- updated documentation, in particular for writing your own C++ code with a Python module
+  interface
+
+- aggregatedhistogram classes
 
 - some api clean-ups
 
@@ -16,8 +23,6 @@
 - (C++ & python): MHRWParams now has as first argument an abstract object, MHWalkerParams
   [in python, this is a dictionary of parameters of the random walk]
 
-- aggregatedhistogram classes
-
 - reworked the status-report api & helper classes
 
 - PeriodicStatusReportMHRWStatsCollector & Query?StatusReportMHRWStatsCollector
@@ -25,4 +30,6 @@
 - added minimal examples (minimal_tomorun_controlled.cxx & minimal_single_random_walk)
 
 - tomorun: seed via device random, controllers
+
+- tomorun: new structure for figures of merit, easily extendible
 
