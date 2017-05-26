@@ -429,7 +429,7 @@ private:
       auto logger = Logger::makeLocalLogger("Tomographer::MHRWTasks::MHRandomWalkTask::run()/run", baselogger);
 
       // our own "stats collector" which checks if we need to send a status report back
-      typedef MHRWPredStatusReportStatsCollector<MHRWParamsType> OurStatusReportCheck;
+      typedef PredStatusReportMHRWStatsCollector<MHRWParamsType> OurStatusReportCheck;
       OurStatusReportCheck statreportcheck(
           // predicate
           [&]() { return this->tmgriface->statusReportRequested(); },

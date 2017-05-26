@@ -957,7 +957,7 @@ public:
  *
  */
 template<typename MHRWParamsType_>
-class TOMOGRAPHER_EXPORT MHRWPredStatusReportStatsCollector
+class TOMOGRAPHER_EXPORT PredStatusReportMHRWStatsCollector
 {
 public:
   typedef MHRWParamsType_ MHRWParamsType;
@@ -969,7 +969,7 @@ private:
 
 public:
   template<typename PredicateFn, typename SendStatusFn>
-  MHRWPredStatusReportStatsCollector(PredicateFn && pred_fn_, SendStatusFn && send_status_fn_)
+  PredStatusReportMHRWStatsCollector(PredicateFn && pred_fn_, SendStatusFn && send_status_fn_)
     : pred_fn(pred_fn_), send_status_fn(send_status_fn_)
   { }
 
@@ -1014,7 +1014,7 @@ template<typename MHRWParamsType_, typename ClockType_ =
                                                          std::chrono::steady_clock
 #endif
                                                          >
-class TOMOGRAPHER_EXPORT MHRWPeriodicStatusReportStatsCollector
+class TOMOGRAPHER_EXPORT PeriodicStatusReportMHRWStatsCollector
 {
 public:
   typedef MHRWParamsType_ MHRWParamsType;
@@ -1031,7 +1031,7 @@ private:
 
 public:
   template<typename DurationInit, typename SendStatusFn>
-  MHRWPeriodicStatusReportStatsCollector(DurationInit && interval_, SendStatusFn && send_status_fn_)
+  PeriodicStatusReportMHRWStatsCollector(DurationInit && interval_, SendStatusFn && send_status_fn_)
     : interval(interval_), send_status_fn(send_status_fn_)
   { }
 

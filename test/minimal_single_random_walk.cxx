@@ -232,7 +232,7 @@ int main()
     avgacceptstatscollector;
 
 
-  typedef Tomographer::MHRWPeriodicStatusReportStatsCollector<MHRWParamsType> OurStatusReportCheck;
+  typedef Tomographer::PeriodicStatusReportMHRWStatsCollector<MHRWParamsType> OurStatusReportCheck;
   OurStatusReportCheck statreportcheck(
       // frequency interval -- every this many milliseconds
       std::chrono::milliseconds(100),
