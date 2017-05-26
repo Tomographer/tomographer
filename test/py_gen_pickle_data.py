@@ -22,6 +22,7 @@ import tomographer.multiproc
 import pickle
 
 version = tomographer.__version__
+tveri = tomographer.version.version_info
 
 pyversion = sys.version_info[0]
 
@@ -37,13 +38,22 @@ if not os.path.isdir(pickledatadir):
     os.mkdir(pickledatadir)
 
 
+print("Pickling data to directory '{}', this is Tomographer version {} [{!r}]".format(pickledatadir, version, tveri))
+
+
 # tomographer: Histogram classes
 def do_histogram():
 
     d = {}
     
-    p = tomographer.UniformBinsHistogramParams(0.0, 1.0, 5)
-    d["UniformBinsHistogramParams"] = p
+    if tveri < (5,0):
+        # Tomographer < 5.0
+        p = tomographer.UniformBinsHistogramParams(0.0, 1.0, 5)
+        d["UniformBinsHistogramParams"] = p
+    else:
+        # Tomographer >= 5.0
+        p = tomographer.HistogramParams(0.0, 1.0, 5)
+        d["HistogramParams"] = p
 
     def load_values_maybe_error_bars(h, values, errors, off_chart=0):
         if not h.has_error_bars:
@@ -51,12 +61,20 @@ def do_histogram():
         else:
             h.load(values, errors, off_chart)
 
-    for c, n in [(tomographer.UniformBinsHistogram, 'UniformBinsHistogram'),
-                 (tomographer.UniformBinsRealHistogram, 'UniformBinsRealHistogram'),
-                 (tomographer.UniformBinsHistogramWithErrorBars, 'UniformBinsHistogramWithErrorBars'),
-                 (tomographer.AveragedSimpleHistogram, 'AveragedSimpleHistogram'),
-                 (tomographer.AveragedSimpleRealHistogram, 'AveragedSimpleRealHistogram'),
-                 (tomographer.AveragedErrorBarHistogram, 'AveragedErrorBarHistogram'),]:
+    if tveri < (5,0):
+        # Tomographer < 5.0
+        klasses = [(tomographer.UniformBinsHistogram, 'UniformBinsHistogram'),
+                     (tomographer.UniformBinsRealHistogram, 'UniformBinsRealHistogram'),
+                     (tomographer.UniformBinsHistogramWithErrorBars, 'UniformBinsHistogramWithErrorBars'),
+                     (tomographer.AveragedSimpleHistogram, 'AveragedSimpleHistogram'),
+                     (tomographer.AveragedSimpleRealHistogram, 'AveragedSimpleRealHistogram'),
+                     (tomographer.AveragedErrorBarHistogram, 'AveragedErrorBarHistogram'),]
+    else:
+        # Tomographer >= 5.0
+        klasses = [(tomographer.Histogram, 'Histogram'),
+                   (tomographer.HistogramWithErrorBars, 'HistogramWithErrorBars'),]
+
+    for c, n in klasses:
                  
         x = c(p)
         load_values_maybe_error_bars(x, np.array([10, 20, 30, 40, 50]),
@@ -71,22 +89,28 @@ def do_histogram():
 do_histogram()
 
 
-# # tomographer.densedm: LLH class
-# def do_densedm():
+# tomographer.densedm: LLH class
+def do_densedm():
 
-#     d = {}
+    if tveri < (5,0):
+        # Pickling in tomographer.densedm was broken before Tomographer 5.0
+        return
 
-#     dmt = tomographer.densedm.DMTypes(dim=2)
-#     llh = tomographer.densedm.IndepMeasLLH(dmt)
-#     llh.setMeas(np.array([ [1, 0, 0, 0], [0, 1, 0, 0] ]), np.array([15, 85]))
+    # Following for Tomographer >= 5.0
 
-#     d['llh'] = llh
+    d = {}
 
-#     # save all of this stuff as a pickle
-#     with open(os.path.join(pickledatadir, 'densedm.pickle'), 'wb') as f:
-#         pickle.dump(d,f,2)
+    dmt = tomographer.densedm.DMTypes(dim=2)
+    llh = tomographer.densedm.IndepMeasLLH(dmt)
+    llh.setMeas(np.array([ [1, 0, 0, 0], [0, 1, 0, 0] ]), np.array([15, 85]))
+
+    d['llh'] = llh
+
+    # save all of this stuff as a pickle
+    with open(os.path.join(pickledatadir, 'densedm.pickle'), 'wb') as f:
+        pickle.dump(d,f,2)
     
-# do_densedm()
+do_densedm()
 
 
 # tomographer.tomorun: Task results & reports
