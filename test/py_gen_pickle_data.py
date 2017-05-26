@@ -1,6 +1,10 @@
 #
-# Generated pickled data for current tomographer version, to make sure that data can be
-# loaded with backwards compatibility.
+# Generate pickled data for current tomographer version and store to data files (which are
+# to be included in the git repo).
+#
+# These pickle files are loaded by pytest_pickle.py to make sure that data pickled by
+# earlier versions of Tomographer can be successfully loaded, with full backwards
+# compatibility.
 #
 
 from __future__ import print_function
