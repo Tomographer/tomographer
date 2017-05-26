@@ -36,98 +36,20 @@
 
 #include "common_p.h"
 
+#include <pybind11/operators.h>
+
+
+using namespace pybind11::literals;
+
+
 
 static void check_pickle_tuple_size(std::size_t expect, int given)
 {
   if ((int)expect != given) {
-    throw std::runtime_error(std::string("Invalid pickle state: expected ")+std::to_string(expect)+", got "
-                             +std::to_string(given));
+    throw tpy::TomographerCxxError(std::string("Invalid pickle state: expected ")+std::to_string(expect)+", got "
+                                  +std::to_string(given));
   }
 }
-
-
-// inspired by http://www.boost.org/doc/libs/1_46_1/libs/python/test/pickle3.cpp
-
-template<typename HistogramType, bool HasErrorBars = HistogramType::HasErrorBars>
-struct TOMOGRAPHER_EXPORT histogram_pickle
-{
-  // nothing by default, only specializations
-};
-// HasErrorBars=false
-template<typename HistogramType>
-struct TOMOGRAPHER_EXPORT histogram_pickle<HistogramType, false>
-{
-  static py::tuple getstate(py::object self)
-  {
-    return py::make_tuple(
-        self.attr("params"),
-        self.attr("bins"),
-        self.attr("off_chart")
-        ) ;
-  }
-  static void setstate(py::object self, py::tuple t)
-  {
-    check_pickle_tuple_size(py::len(t), 3);
-    HistogramType & histogram = self.cast<HistogramType&>();
-
-    new (&histogram) HistogramType(t[0].cast<tpy::HistogramParams>()) ;
-
-    // restore bins & off_chart
-    histogram.bins = t[1].cast< Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1> >();
-    histogram.off_chart = t[2].cast<typename HistogramType::CountType>();
-  }
-};
-// HasErrorBars=true
-template<typename HistogramType>
-struct TOMOGRAPHER_EXPORT histogram_pickle<HistogramType, true>
-{
-  static py::tuple getstate(const py::object & self)
-  {
-    return py::make_tuple( self.attr("params"), self.attr("bins"), self.attr("delta"), self.attr("off_chart") );
-  }
-  static void setstate(py::object self, py::tuple t)
-  {
-    check_pickle_tuple_size(py::len(t), 4);
-    HistogramType & histogram = self.cast<HistogramType&>();
-
-    new (&histogram) HistogramType(t[0].cast<tpy::HistogramParams>()) ;
-
-    // restore bins, delta & off_chart
-    histogram.bins = t[1].cast< Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1> >() ;
-    histogram.delta = t[2].cast<Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1> >() ;
-    histogram.off_chart = t[3].cast<typename HistogramType::CountType>() ;
-  }
-};
-// for averaged types
-template<typename HistogramType>
-struct TOMOGRAPHER_EXPORT avghistogram_pickle
-{
-  static py::tuple getstate(py::object self)
-  {
-    return py::make_tuple(
-        self.attr("params"),
-        self.attr("bins"),
-        self.attr("delta"),
-        self.attr("off_chart"),
-        self.attr("num_histograms")
-        ) ;
-  }
-  static void setstate(py::object self, py::tuple t)
-  {
-    check_pickle_tuple_size(py::len(t), 5);
-    HistogramType & histogram = self.cast<HistogramType&>();
-
-    new (&histogram) HistogramType(t[0].cast<tpy::HistogramParams>()) ;
-
-    // restore bins, delta & off_chart
-    histogram.bins = t[1].cast<Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1> >();
-    histogram.delta = t[2].cast<Eigen::Matrix<typename HistogramType::CountType, Eigen::Dynamic, 1> >();
-    histogram.off_chart = t[3].cast<typename HistogramType::CountType>();
-    histogram.num_histograms = t[4].cast<int>();
-  }
-};
-
-
 
 static inline std::string fmt_hist_param_float(tpy::RealType val)
 {
@@ -161,7 +83,7 @@ void py_tomo_histogram(py::module rootmodule)
             "<struct_tomographer_1_1_uniform_bins_histogram_params.html>`, with the template parameter "
             "`Scalar=%s`.\n\n"
             "\n\n"
-            ".. py:function:: HistogramParams(min=%.1f, max=%.1f, num_bins=%d)"
+            ".. py:function:: HistogramParams(min=%.1f, max=%.1f, num_bins=%ld)"
             "\n\n"
             "    Construct a histogram parameters configuration."
             "\n\n"
@@ -178,18 +100,18 @@ void py_tomo_histogram(py::module rootmodule)
             "    The number of bins the range `[min,max]` is divided into, defining the bins. (Read-write attribute)\n\n"
             ".. py:attribute:: values_center"
             "\n\n"
-            "    Read-only attribute returning a vector (numpy array) of values corresponding to each bin center value."
+            "    Read-only attribute returning a vector (NumPy array) of values corresponding to each bin center value."
             "\n\n"
             ".. py:attribute:: values_lower"
             "\n\n"
-            "    Read-only attribute returning a vector (numpy array) of values corresponding to each bin lower value."
+            "    Read-only attribute returning a vector (NumPy array) of values corresponding to each bin lower value."
             "\n\n"
             ".. py:attribute:: values_upper"
             "\n\n"
-            "    Read-only attribute returning a vector (numpy array) of values corresponding to each bin upper value."
+            "    Read-only attribute returning a vector (NumPy array) of values corresponding to each bin upper value."
             "\n\n"
             "\n\n", boost::core::demangle(typeid(tpy::RealType).name()).c_str(),
-            Kl().min, Kl().max, (int)Kl().num_bins).c_str())
+            Kl().min, Kl().max, (long)Kl().num_bins).c_str())
       .def(py::init<tpy::RealType,tpy::RealType,Eigen::Index>(),
            "min"_a=Kl().min, "max"_a=Kl().max, "num_bins"_a=Kl().num_bins)
       .def_readwrite("min", & Kl::min)
@@ -230,7 +152,7 @@ void py_tomo_histogram(py::module rootmodule)
           return py::make_tuple(p.min, p.max, p.num_bins) ;
         })
       .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl, tpy::RealType,tpy::RealType,Eigen::Index>(p, t);
+          tpy::internal::unpack_tuple_and_construct<Kl, tpy::RealType, tpy::RealType, Eigen::Index>(p, t);
         })
       ;
   }
@@ -243,181 +165,193 @@ void py_tomo_histogram(py::module rootmodule)
     py::class_<tpy::Histogram>(
         rootmodule,
         "Histogram",
-        Tomographer::Tools::fmts(
-            "A histogram object.  An interval `[min,max]` is divided into `num_bins` bins, each of same width. "
-            "Each time a new value is to be recorded, the corresponding bin's counter is incremented."
-            "\n\n"
-            "|picklable|"
-            "\n\n"
-            ".. seealso:: This python class interfaces the C++ class :tomocxx:`Tomographer::HistogramParams "
-            "<class_tomographer_1_1_uniform_bins_histogram.html>`, with the template parameters "
-            "`Scalar=%s` and `CountType=%s`.  See the C++ class documentation for more information."
-            "\n\n"
-            ".. versionchanged:: 4.1\n"
-            "    Replaced the class static attribute `HasErrorBars` by the property `has_error_bars`."
-            "\n\n"
-            ".. py:function:: Histogram([params=HistogramParams()])\n\n"
-            "    Construct a new histogram object with the given histogram parameters.\n\n"
-            ".. py:function:: Histogram(min, max, num_bins)\n\n"
-            "    Alternative call syntax; the effect is the same as the other constructor.\n\n"
-            ".. py:attribute:: params\n\n"
-            "    The :py:class:`HistogramParams` object which stores the current histogram "
-            "parameters.  This attribute is read-only.  The parameters are specified to the constructor, and "
-            "cannot be changed.\n\n"
-            ".. py:attribute:: values_center\n\n    A shorthand for `params.values_center`. "
-            "See :py:class:`HistogramParams`.\n\n"
-            ".. py:attribute:: values_lower\n\n    A shorthand for `params.values_lower`. "
-            "See :py:class:`HistogramParams`.\n\n"
-            ".. py:attribute:: values_upper\n\n    A shorthand for `params.values_upper`. "
-            "See :py:class:`HistogramParams`.\n\n"
-            ".. py:attribute:: bins\n\n"
-            "    The histogram bin counts, interfaced as a `NumPy` array object storing integers.  This attribute "
-            "is readable and writable, although you may not change the size or type of the array.\n\n"
-            ".. py:attribute:: off_chart\n\n"
-            "    The number of recorded data points which were beyond the histogram range `[params.min, params.max[`.\n\n"
-            ".. py:attribute:: has_error_bars\n\n"
-            "    The constant `False`.  Note that, by contrast to the correpsonding C++ class, this is "
-            "an instance property and not a class property.  (This is because in Python, you don't usually "
-            "have natural direct access to the type, only to the instance.)\n\n"
-            ,
-            boost::core::demangle(typeid(tpy::RealType).name()).c_str(),
-            boost::core::demangle(typeid(tpy::CountIntType).name()).c_str()
-            ).c_str()
+        // doc
+        "A histogram object.  An interval `[min,max]` is divided into `num_bins` bins, each of same width. "
+        "Each time a new value is to be recorded, the corresponding bin's counter is incremented."
+        "\n\n"
+        "|picklable|"
+        "\n\n"
+        ".. seealso:: This python class mirrors the C++ class :tomocxx:`Tomographer::HistogramParams "
+        "<class_tomographer_1_1_uniform_bins_histogram.html>`.  See the C++ class documentation for "
+        "more information.  However, the Python implementation uses NumPy arrays internally, so it can "
+        "transparently store different bin count types."
+        "\n\n"
+        ".. versionchanged:: 4.1\n"
+        "    Replaced the class static attribute `HasErrorBars` by the property `has_error_bars`."
+        "\n\n"
+        ".. versionchanged:: 5.0\n"
+        "    This class no longer has a fixed storage type, now using a NumPy array internally. The "
+        "    `HistogramReal` has been deprecated."
+        "\n\n"
+        ".. py:function:: Histogram([params=HistogramParams()])\n\n"
+        "    Construct a new histogram object with the given histogram parameters.\n\n"
+        ".. py:function:: Histogram(min, max, num_bins)\n\n"
+        "    Alternative call syntax; the effect is the same as the other constructor.\n\n"
+        ".. py:attribute:: params\n\n"
+        "    The :py:class:`HistogramParams` object which stores the current histogram "
+        "parameters.  This attribute is read-only.  The parameters are specified to the constructor, and "
+        "cannot be changed.\n\n"
+        ".. py:attribute:: values_center\n\n    A shorthand for `params.values_center`. "
+        "See :py:class:`HistogramParams`.\n\n"
+        ".. py:attribute:: values_lower\n\n    A shorthand for `params.values_lower`. "
+        "See :py:class:`HistogramParams`.\n\n"
+        ".. py:attribute:: values_upper\n\n    A shorthand for `params.values_upper`. "
+        "See :py:class:`HistogramParams`.\n\n"
+        ".. py:attribute:: bins\n\n"
+        "    The histogram bin counts, interfaced as a `NumPy` array object storing integers.  This attribute "
+        "is readable and writable, although you may not change the size or type of the array.\n\n"
+        ".. py:attribute:: off_chart\n\n"
+        "    The number of recorded data points which were beyond the histogram range `[params.min, params.max[`.\n\n"
+        ".. py:attribute:: has_error_bars\n\n"
+        "    The constant `False`.  Note that, by contrast to the correpsonding C++ class, this is "
+        "an instance property and not a class property.  (This is because in Python, you don't usually "
+        "have natural direct access to the type, only to the instance.)\n\n"
         // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
       .def(py::init<tpy::RealType, tpy::RealType, Eigen::Index>(),
           "min"_a, "max"_a, "num_bins"_a)
-      .def_property_readonly("params", [](const Kl & h) -> Kl::Params { return h.params; })
+      .def_property_readonly("params", [](const Kl & h) -> tpy::HistogramParams { return h.params; })
       .def_property_readonly("values_center", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesCenter(); })
       .def_property_readonly("values_lower", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesLower(); })
       .def_property_readonly("values_upper", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesUpper(); })
-      .def_property("bins", [](const Kl & h) -> tpy::CountIntVectorType { return h.bins.matrix(); },
-                    [](Kl & h, const tpy::CountIntVectorType& v) { h.bins = v; })
-      .def_readwrite("off_chart", & Kl::off_chart )
+      .def_property("bins", [](const Kl & h) { return h.bins; }, & Kl::set_bins )
+      .def_property("off_chart", [](const Kl& h) { return h.off_chart; }, & Kl::set_off_chart )
       .def_property_readonly("has_error_bars", [](py::object) { return false; })
-      .def("reset", & Kl::reset,
-           "reset()\n\n"
-           "Clears the current histogram counts (including `off_chart` counts) to zero.  The histogram "
-           "parameters in `params` are kept intact.")
-      .def("load", [](Kl & h, const tpy::CountIntVectorType& x, tpy::CountIntType o) { h.load(x, o); },
+      .def("reset", [](Kl & h) {
+          h.bins[py::slice(0,h.bins.attr("size").cast<py::ssize_t>(),1)] = py::cast(0);
+          h.off_chart = py::cast(0);
+        },
+        "reset()\n\n"
+        "Clears the current histogram counts (including `off_chart` counts) to zero.  The histogram "
+        "parameters in `params` are kept intact.")
+      .def("load", & Kl::load,
            "bins"_a, "off_chart"_a = tpy::CountIntType(0),
+           // doc
            "load(bins[, off_chart=0])\n\n"
            "Load bin values from the vector of values `bins`, which is expected to be a `NumPy` array. If "
            "`off_chart` is specified, the current `off_chart` count is also set to the given value; otherwise "
            "it is reset to zero.")
-      .def("add", [](Kl & h, const tpy::CountIntVectorType& x, tpy::CountIntType o) { h.add(x.array(), o); },
-           "bins"_a, "off_chart"_a = tpy::CountIntType(0),
-           "add(bins[, off_chart=0])\n\n"
-           "Add a number of counts to each bin, specifed by a vector of values `bins` which is expected to be "
-           "a `NumPy` array. If `off_chart` is specified, the current `off_chart` count is increased by this number, "
-           "otherwise it is left to its current value.")
-      .def("numBins", & Kl::numBins,
+      .def("add", [](Kl & h, py::object x, py::object o) {
+          auto np = py::module::import("numpy");
+          np.attr("add")(h.bins, x, "out"_a=h.bins);
+          h.off_chart = np.attr("add")(h.off_chart, o);
+        },
+        "bins"_a, "off_chart"_a = py::cast(0),
+        // doc
+        "add(bins[, off_chart=0])\n\n"
+        "Add a number of counts to each bin, specifed by a vector of values `bins` which is expected to be "
+        "a `NumPy` array. If `off_chart` is specified, the current `off_chart` count is increased by this number, "
+        "otherwise it is left to its current value.")
+      .def("numBins", [](Kl & h) { return h.params.num_bins; },
            "numBins()\n\n"
            "A shorthand for `params.num_bins`.  See :py:class:`HistogramParams`.")
-      .def("count", & Kl::count, "index"_a,
-           "count(index)\n\n"
-           "Returns the number of counts in the bin indexed by `index`.  Indexes start at zero.  "
-           "Raises :py:exc:`TomographerCxxError` if index is out of range.")
-      .def("record", [](Kl & h, tpy::RealType x, tpy::CountIntType o) { return h.record(x, o); },
-           "value"_a, "weight"_a = tpy::CountIntType(1),
-           "record(value[, weight=1])\n\n"
-           "Record a new data sample. This increases the corresponding bin count by one, or by `weight` if the "
-           "latter argument is provided.")
-      .def("normalization", [](const Kl & h) { return h.normalization<tpy::RealType>(); },
-           "normalization()\n\n"
-           "Calculate the normalization factor for the histogram.  This corresponds to the total number "
-           "of weight-1 data points, where the weight of a data point may be specified as a second argument "
-           "to :py:meth:`record()`.")
-      .def("normalized", [](const Kl & h) -> tpy::HistogramReal { return h.normalized<tpy::RealType>(); },
-           "normalized()\n\n"
-           "Returns a normalized version of this histogram. The bin counts as well as the off_chart counts "
-           "are divided by :py:meth:`normalization()`.  The returned object is a "
-           ":py:class:`HistogramReal` instance.")
-      .def("prettyPrint", & Kl::prettyPrint, "max_width"_a = 0,
-           "prettyPrint([max_width=0])\n\n"
-           "Produce a human-readable representation of the histogram, with horizontal visual bars, which is "
-           "suitable to be displayed in a terminal (for instance).  The formatted histogram is returned as a "
-           "string.  If `max_width` is specified and nonzero, the output is designed to fit into a terminal "
+      .def("count", [](Kl & h, Eigen::Index i) {
+          return h.bins[py::cast(i)];
+        },
+        "index"_a,
+        // doc
+        "count(index)\n\n"
+        "Returns the number of counts in the bin indexed by `index`.  Indexes start at zero.  "
+        "Raises :py:exc:`TomographerCxxError` if index is out of range.")
+      .def("record", [](Kl & h, py::object value, py::object w) {
+          auto np = py::module::import("numpy");
+          if ( ! h.params.isWithinBounds(value.cast<tpy::RealType>()) ) {
+            h.off_chart = np.attr("add")(h.off_chart, w);
+            return (Eigen::Index)(-1);
+          }
+          // calling bin_index_unsafe because we have already checked that value is in range.
+          const Eigen::Index index = h.params.binIndexUnsafe(value.cast<tpy::RealType>());
+          np.attr("add").attr("at")(h.bins, py::cast(index), w);
+          return index;
+        },
+        "value"_a, "weight"_a = py::cast(1),
+        // doc
+        "record(value[, weight=1])\n\n"
+        "Record a new data sample. This increases the corresponding bin count by one, or by `weight` if the "
+        "latter argument is provided.")
+      .def("normalization", [](const Kl & h) {
+          return h.normalization();
+        },
+        "normalization()\n\n"
+        "Calculate the normalization factor for the histogram.  This corresponds to the total number "
+        "of weight-1 data points, where the weight of a data point may be specified as a second argument "
+        "to :py:meth:`record()`.")
+      .def("normalized", [](const Kl & h) {
+          tpy::Histogram newh(h.params);
+          py::object f = h.normalization();
+          auto np = py::module::import("numpy");
+          newh.load(np.attr("true_divide")(h.bins, f), np.attr("true_divide")(h.off_chart, f));
+          return newh;
+        },
+        "normalized()\n\n"
+        "Returns a normalized version of this histogram. The bin counts as well as the off_chart counts "
+        "are divided by :py:meth:`normalization()`.  The returned object is a "
+        ":py:class:`Histogram` instance.")
+      .def("totalCounts", & Kl::totalCounts,
+           "totalCounts()\n\n"
+           "Return the total number of histogram counts (no normalization)\n\n"
+           "This returns the sum of all `bins` contents, plus the `off_chart` counts. This does not "
+           "account for the normalization and completely ignores the x-axis scaling.")
+      .def("normalizedCounts", [](const Kl & h) {
+          tpy::Histogram newh(h.params);
+          py::object f = h.totalCounts();
+          auto np = py::module::import("numpy");
+          newh.load(np.attr("true_divide")(h.bins, f), np.attr("true_divide")(h.off_chart, f));
+          return newh;
+        },
+        "normalizedCounts()\n\n"
+        "Get a version of this histogram, normalized by total counts.  See :tomocxx:`the doc for the "
+        "corresponding C++ function <class_tomographer_1_1_histogram.html#a51e60cfa1f7f111787ee015805aac93c>`.")
+      .def("prettyPrint", [](const Kl & h, int max_width) {
+          return Tomographer::histogramPrettyPrint(
+              h.toCxxHistogram<tpy::RealType,tpy::RealType>(),
+              max_width
+              );
+        },
+        "max_width"_a = 0,
+        // doc
+        "prettyPrint([max_width=0])\n\n"
+        "Produce a human-readable representation of the histogram, with horizontal visual bars, which is "
+        "suitable to be displayed in a terminal (for instance).  The formatted histogram is returned as a "
+        "string.  If `max_width` is specified and nonzero, the output is designed to fit into a terminal "
            "display of the given number of characters wide, otherwise a default width is used.")
       .def("__repr__", [](const Kl& p) {
           return streamstr("Histogram(min="
                            << fmt_hist_param_float(p.params.min) << ",max="
                            << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
         })
-      .def("__getstate__", histogram_pickle<Kl>::getstate)
-      .def("__setstate__", histogram_pickle<Kl>::setstate)
-      ;
-  }
-
-  logger.debug("HistogramReal...");
-
-  // CLASS: HistogramReal
-  {
-    typedef tpy::HistogramReal Kl;
-    py::class_<tpy::HistogramReal>(
-        rootmodule,
-        "HistogramReal",
-        Tomographer::Tools::fmts(
-            "A histogram (with uniform bin size), with a real count type. This class is basically a copy of "
-            ":py:class:`Histogram`, except that each bin's count is a real value.  (This allows, "
-            "for example, the histogram to be normalized.) Every method documented in "
-            ":py:class:`Histogram` is available to this class as well."
-            "\n\n"
-            "|picklable|"
-            "\n\n"
-            "The corresponding C++ class is also :tomocxx:`Tomographer::Histogram "
-            "<class_tomographer_1_1_uniform_bins_histogram.html>`, although the `CountType` template parameter "
-            "is set to `%s` instead of `%s`.", boost::core::demangle(typeid(tpy::RealType).name()).c_str(),
-            boost::core::demangle(typeid(tpy::CountIntType).name()).c_str()
-            ).c_str()
-        // , py::metaclass()  -- deprecated as of pybind 2.1
-        )
-      .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
-      .def(py::init<tpy::RealType, tpy::RealType, Eigen::Index>(),
-          "min"_a, "max"_a, "num_bins"_a)
-      .def_property_readonly("params", [](const Kl & h) -> Kl::Params { return h.params; })
-      .def_property_readonly("values_center", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesCenter(); })
-      .def_property_readonly("values_lower", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesLower(); })
-      .def_property_readonly("values_upper", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesUpper(); })
-      .def_property("bins", [](const Kl & h) -> tpy::RealVectorType { return h.bins.matrix(); },
-                    [](Kl & h, const tpy::RealVectorType& v) { h.bins = v; })
-      .def_readwrite("off_chart", & Kl::off_chart)
-      .def_property_readonly("has_error_bars", [](py::object) { return false; })
-      .def("reset", & Kl::reset)
-      .def("load", [](Kl & h, const tpy::RealVectorType& x, tpy::RealType o) { h.load(x, o); },
-           "bins"_a, "off_chart"_a = tpy::CountIntType(0))
-      .def("add", [](Kl & h, const tpy::RealVectorType& x, tpy::RealType o) { h.add(x.array(), o); },
-           "bins"_a, "off_chart"_a = tpy::CountIntType(0))
-      .def("numBins", & Kl::numBins)
-      .def("count", & Kl::count, "index"_a)
-      .def("record", [](Kl & h, tpy::RealType x, tpy::RealType o) { return h.record(x, o); },
-           "value"_a, "weight"_a=tpy::RealType(1))
-      .def("normalization", [](const Kl & h) { return h.normalization<tpy::RealType>(); })
-      .def("normalized", [](const Kl & h) -> tpy::HistogramReal { return h.normalized<tpy::RealType>(); })
-      .def("prettyPrint", &Kl::prettyPrint, "max_width"_a=0)
-      .def("__repr__", [](const Kl& p) {
-          return streamstr("HistogramReal(min="
-                           << fmt_hist_param_float(p.params.min) << ",max="
-                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
+      .def("__getstate__", [](py::object self) {
+          return py::make_tuple(
+              self.attr("params"),
+              self.attr("bins"),
+              self.attr("off_chart")
+              ) ;
         })
-      .def("__getstate__", histogram_pickle<Kl>::getstate)
-      .def("__setstate__", histogram_pickle<Kl>::setstate)
+      .def("__setstate__", [](py::object self, py::tuple t) {
+          check_pickle_tuple_size(py::len(t), 3);
+          tpy::Histogram & histogram = self.cast<tpy::Histogram&>();
+
+          new (&histogram) tpy::Histogram(t[0].cast<tpy::HistogramParams>()) ;
+
+          // restore bins & off_chart
+          histogram.bins = t[1];
+          histogram.off_chart = t[2];
+        })
       ;
   }
-  
+
   logger.debug("HistogramWithErrorBars...");
 
   // HistogramWithErrorBars
   {
     typedef tpy::HistogramWithErrorBars Kl;
-    py::class_<tpy::HistogramWithErrorBars,tpy::HistogramReal>(
+    py::class_<tpy::HistogramWithErrorBars,tpy::Histogram>(
         rootmodule,
         "HistogramWithErrorBars",
-        "A histogram (with uniform bin size), with a real count type and with error bars associated to"
-        " each bin."
+        "A histogram (with uniform bin size), with error bars associated to each bin."
         "\n\n"
-        "This class internally inherits :py:class:`HistogramReal`, and all those methods are "
+        "This class internally inherits :py:class:`Histogram`, and all those methods are "
         "exposed in this class, except for `add()`. In addition, the `reset()` method also clears the "
         "error bar values, and the `normalized()` method returns a histogram with the appropriate error "
         " bars on the normalized histogram."
@@ -427,7 +361,10 @@ void py_tomo_histogram(py::module rootmodule)
         ".. versionchanged:: 4.1\n"
         "    Replaced the class static attribute `HasErrorBars` by the property `has_error_bars`."
         "\n\n"
-        "In addition to the members inherited from :py:class:`HistogramReal`, the following "
+        ".. versionchanged:: 5.0\n"
+        "    This class no longer has a fixed storage type, now using NumPy arrays internally."
+        "\n\n"
+        "In addition to the members inherited from :py:class:`Histogram`, the following "
         "members are available:"
         "\n\n"
         ".. py:attribute:: delta\n\n"
@@ -442,56 +379,106 @@ void py_tomo_histogram(py::module rootmodule)
         )
       .def(py::init<tpy::HistogramParams>(), "params"_a=tpy::HistogramParams())
       .def(py::init<tpy::RealType, tpy::RealType, Eigen::Index>())
-      .def_property_readonly("params", [](const Kl & h) -> Kl::Params { return h.params; })
-      .def_property_readonly("values_center", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesCenter(); })
-      .def_property_readonly("values_lower", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesLower(); })
-      .def_property_readonly("values_upper", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesUpper(); })
-      .def_property("bins", [](const Kl & h) -> tpy::RealVectorType { return h.bins.matrix(); },
-                    [](Kl & h, const tpy::RealVectorType v) { h.bins = v; })
-      .def_property("delta", [](const Kl & h) -> tpy::RealVectorType { return h.delta.matrix(); },
-                    [](Kl & h, const tpy::RealVectorType v) { h.delta = v; })
-      .def_readwrite("off_chart", & Kl::off_chart)
+      .def_property("delta", [](const Kl & h) { return h.delta; }, & Kl::set_delta )
       .def_property_readonly("has_error_bars", [](py::object) { return true; })
-      .def("reset", & Kl::reset)
-      .def("load",
-           [](Kl & h, const tpy::RealVectorType& x, const tpy::RealVectorType& err, tpy::RealType o) {
-             h.load(x, err, o);
-           },
+      .def("reset", [](Kl & h) {
+          h.bins[py::slice(0,h.bins.attr("size").cast<py::ssize_t>(),1)] = py::cast(0);
+          h.delta[py::slice(0,h.bins.attr("size").cast<py::ssize_t>(),1)] = py::cast(0);
+          h.off_chart = py::cast(0);
+        },
+        "reset()\n\n"
+        "Clears the current histogram counts (including `off_chart` counts) to zero.  The histogram "
+        "parameters in `params` are kept intact.")
+      .def("load", & Kl::load,
            "y"_a, "yerr"_a, "off_chart"_a = tpy::RealType(0),
+           // doc
            "load(y, yerr[, off_chart=0])"
            "\n\n"
            "Load data into the histogram. The array `y` specifies the bin counts, and `yerr` specifies "
            "the error bars on those bin counts.  The off-chart counter is set to `off_chart`."
           )
+      // add() and record() make no sense
       .def("add", [](Kl & , py::args, py::kwargs) {
-          throw std::runtime_error("May not call add() on HistogramWithErrorBars");
+          throw tpy::TomographerCxxError("May not call add() on HistogramWithErrorBars");
         })
-// add() makes no sense, user should use AveragedHistogram for that.
-      .def("numBins", & Kl::numBins)
-      .def("count", & Kl::count, "index"_a)
-      .def("errorBar", & Kl::errorBar, "index"_a,
-          "errorBar(index)\n\n"
-          "Get the error bar value associated to the bin of the given `index`. Raises "
-           ":py:exc:`TomographerCxxError` if index is out of range.")
-      .def("record", [](Kl & h, tpy::RealType x, tpy::RealType o) { return h.record(x, o); },
-           "value"_a, "weight"_a=tpy::RealType(1))
-      .def("normalization", [](const Kl & h) { return h.normalization<tpy::RealType>(); })
+      .def("record", [](Kl & , py::args, py::kwargs) {
+          throw tpy::TomographerCxxError("May not call record() on HistogramWithErrorBars");
+        })
+      .def("errorBar", [](Kl & h, Eigen::Index i) {
+          return h.delta[py::cast(i)];
+          },
+        "index"_a,
+        // doc
+        "errorBar(index)\n\n"
+        "Get the error bar value associated to the bin of the given `index`. Raises "
+        ":py:exc:`TomographerCxxError` if index is out of range.")
       .def("normalized",
-           [](const Kl & h) -> tpy::HistogramWithErrorBars { return h.normalized<tpy::RealType>(); },
+           [](const Kl & h) {
+             tpy::HistogramWithErrorBars newh(h.params);
+             py::object f = h.normalization();
+             auto np = py::module::import("numpy");
+             newh.load(np.attr("true_divide")(h.bins, f), np.attr("true_divide")(h.delta, f),
+                       np.attr("true_divide")(h.off_chart, f));
+             return newh;
+           },
            "normalized()\n\n"
            "Returns a normalized version of this histogram, including the error bars. The bin counts, the "
            "error bars and the off_chart counts are divided by :py:meth:`~Histogram.normalization()`. "
            " The returned object is again a :py:class:`HistogramWithErrorBars` instance.")
-      .def("prettyPrint", & Kl::prettyPrint, "max_width"_a = 0)
+      .def("normalizedCounts", [](const Kl & h) {
+          tpy::HistogramWithErrorBars newh(h.params);
+          py::object f = h.totalCounts();
+          auto np = py::module::import("numpy");
+          newh.load(np.attr("true_divide")(h.bins, f), np.attr("true_divide")(h.delta, f),
+                    np.attr("true_divide")(h.off_chart, f));
+          return newh;
+        },
+        "normalizedCounts()\n\n"
+        "Get a version of this histogram, normalized by total counts.  See :tomocxx:`the doc for the "
+        "corresponding C++ function <class_tomographer_1_1_histogram.html#a51e60cfa1f7f111787ee015805aac93c>`.")
+      .def("prettyPrint", [](const Kl & h, int max_width) {
+          return Tomographer::histogramPrettyPrint(
+              h.toCxxHistogram<tpy::RealType,tpy::RealType>(),
+              max_width
+              );          
+        },
+        "max_width"_a = 0,
+        // doc
+        "prettyPrint([max_width=0])\n\n"
+        "Produce a human-readable representation of the histogram, with horizontal visual bars, which is "
+        "suitable to be displayed in a terminal (for instance).  The formatted histogram is returned as a "
+        "string.  If `max_width` is specified and nonzero, the output is designed to fit into a terminal "
+           "display of the given number of characters wide, otherwise a default width is used.")
       .def("__repr__", [](const Kl& p) {
           return streamstr("HistogramWithErrorBars(min="
                            << fmt_hist_param_float(p.params.min) << ",max="
                            << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
         })
-      .def("__getstate__", histogram_pickle<Kl>::getstate)
-      .def("__setstate__", histogram_pickle<Kl>::setstate)
+      .def("__getstate__", [](py::object self) {
+          return py::make_tuple( self.attr("params"), self.attr("bins"), self.attr("delta"), self.attr("off_chart") );
+        })
+      .def("__setstate__", [](py::object self, py::tuple t) {
+          // allow 5
+          if (py::len(t) < 4 || py::len(t) > 5) {
+            throw tpy::TomographerCxxError(streamstr("Invalid pickle state: expected 4, got "
+                                                     << py::len(t)));
+          }
+          tpy::HistogramWithErrorBars & histogram = self.cast<tpy::HistogramWithErrorBars&>();
+
+          new (&histogram) tpy::HistogramWithErrorBars(t[0].cast<tpy::HistogramParams>()) ;
+
+          // restore bins, delta & off_chart
+          histogram.bins = t[1];
+          histogram.delta = t[2];
+          histogram.off_chart = t[3];
+          // It's possible we get passed a 5th parameter (t[4]), if we are unpickling an
+          // AveragedXXXXXHistogram from an earlier version of Tomographer.  Just ignore it.
+        })
        ;
   }
+
+  /* These won't be useful -- they are deprecated.  If anything, we should
+     expose the AggregatedHistogram classes .......
 
   logger.debug("AveragedSimpleHistogram...");
   // AveragedSimpleHistogram
@@ -680,9 +667,15 @@ void py_tomo_histogram(py::module rootmodule)
       .def("__setstate__", avghistogram_pickle<Kl>::setstate)
       ;
   }
+  */
+
 
   // deprecated aliases
   auto & m = rootmodule;
+  m.attr("AveragedSimpleHistogram") = m.attr("HistogramWithErrorBars");
+  m.attr("AveragedSimpleRealHistogram") = m.attr("HistogramWithErrorBars");
+  m.attr("AveragedErrorBarHistogram") = m.attr("HistogramWithErrorBars");
+  m.attr("HistogramReal") = m.attr("Histogram");
   m.attr("UniformBinsHistogramParams") = m.attr("HistogramParams");
   m.attr("UniformBinsHistogram") = m.attr("Histogram");
   m.attr("UniformBinsRealHistogram") = m.attr("HistogramReal");

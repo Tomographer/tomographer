@@ -360,6 +360,17 @@ inline typename std::enable_if<!std::is_unsigned<X>::value, bool>::type isPositi
 
 
 
+/** \brief Test whether floating-point value is finite.
+ *
+ * Potentially extends std::isfinite() in that we can specialize the template for custom
+ * types.
+ */
+template<typename X>
+inline bool isFinite(const X val)
+{
+  return std::isfinite(val);
+}
+
 
 
 // -----------------------------------------------------------------------------

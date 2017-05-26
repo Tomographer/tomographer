@@ -12,15 +12,22 @@ Typically such a class would be returned by a core task such as
 
 - :py:class:`tomographer.Histogram`
 
-- :py:class:`tomographer.HistogramReal`
-
 - :py:class:`tomographer.HistogramWithErrorBars`
 
-- :py:class:`tomographer.AveragedSimpleHistogram`
 
-- :py:class:`tomographer.AveragedSimpleRealHistogram`
+.. versionchanged:: 5.0
 
-- :py:class:`tomographer.AveragedErrorBarHistogram`
+   The histogram classes now use NumPy internal arrays for storing their data, so that the
+   count data type is not statically fixed.  The `HistogramReal` class has been deprecated.
+
+.. versionchanged:: 5.0
+
+   The `AveragedSimpleHistogram`, `AveragedSimpleRealHistogram` and
+   `AveragedErrorBarHistogram` classes have been deprecated.  The logic is that they
+   aren't really needed especially on the Python side, and if we wish to make this
+   functionality available it would make more sense to do so via the
+   :tomocxx:`AggregatedHistogram classes
+   <class_tomographer_1_1_aggregated_histogram_simple.html>`.
 
 
 .. rubric:: Deprecated Aliases
@@ -32,7 +39,7 @@ The following aliases are provided for compatibility with older versions of Tomo
 
 
 .. automodule:: tomographer
-    :members: HistogramParams, Histogram, HistogramReal, HistogramWithErrorBars, AveragedSimpleHistogram, AveragedSimpleRealHistogram, AveragedErrorBarHistogram
+    :members: HistogramParams, Histogram, HistogramWithErrorBars
     :show-inheritance:
 
 

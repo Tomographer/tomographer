@@ -325,8 +325,10 @@ BOOST_AUTO_TEST_CASE(basic)
 {
   Tomographer::HistogramWithErrorBars<double, float> hist(-1.0, 1.0, 4);
 
-  hist.record(0.01, 1.2f);
-  hist.record(-0.56, 0.1f);
+  // this doesn't make sense!! what about the error bars?
+  //  hist.record(0.01, 1.2f);
+  //  hist.record(-0.56, 0.1f);
+  (hist.bins << 0.1f, 0.f, 1.2f, 0.f).finished();
 
   (hist.delta << 0.1f, 0.f, 0.4f, 0.f).finished();
 

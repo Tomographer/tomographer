@@ -75,10 +75,13 @@ struct TOMOGRAPHER_EXPORT HistogramParams
   {
   }
   //! Copy constructor, from any other Histogram::Params type.
-  template<typename Params2,
+  template<typename Params2
+#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
            // enforce Params-like type by checking that properties 'min','max','num_bins' exist:
-           decltype((int)std::declval<const Params2>().min + (int)std::declval<const Params2>().max
-                    + std::declval<Params2>().num_bins) dummyval = 0>
+           , decltype((int)std::declval<const Params2>().min + (int)std::declval<const Params2>().max
+                    + std::declval<Params2>().num_bins) dummyval = 0
+#endif
+           >
   inline HistogramParams(const Params2& other)
     : min(other.min), max(other.max), num_bins(other.num_bins)
   {
@@ -98,7 +101,7 @@ struct TOMOGRAPHER_EXPORT HistogramParams
    */
   inline bool isWithinBounds(Scalar value) const
   {
-    return std::isfinite(value) && value >= min && value < max;
+    return Tools::isFinite(value) && value >= min && value < max;
   }
   /** \brief Returns which bin this value should be counted in (index in the histogram's
    *         \a bins array)
@@ -237,11 +240,14 @@ public:
   CountType off_chart;
 
   //! Constructor: stores the parameters and initializes the histogram to zero counts everywhere
-  template<typename Params2 = Params,
+  template<typename Params2 = Params
+#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
            // enforce Params-like type by checking that properties 'min','max','num_bins' exist:
-           decltype((int)std::declval<const Params2>().min + (int)std::declval<const Params2>().max
-                    + std::declval<Params2>().num_bins) dummyval = 0>
-  Histogram(Params2 p = Params())
+           , decltype((int)std::declval<const Params2>().min + (int)std::declval<const Params2>().max
+                    + std::declval<Params2>().num_bins) dummyval = 0
+#endif
+           >
+  Histogram(Params2 p = Params2())
     : params(p), bins(Eigen::Array<CountType,Eigen::Dynamic,1>::Zero(p.num_bins)),
       off_chart(0)
   {
@@ -697,6 +703,13 @@ private:
    */
   template<typename... Args>
   inline void add(Args && ... )
+  {
+  }
+  /** \brief disable the record() method, which doesn't take care of error bars. To combine
+   *         histograms into an averaged histogram, use \ref AveragedHistogram.
+   */
+  template<typename... Args>
+  inline void record(Args && ... )
   {
   }
 public:
@@ -1313,7 +1326,7 @@ inline Scalar max_finite_value(const Eigen::Index num_items, Fn val_generator,
   Scalar max_val = default_val;
   for (Eigen::Index k = 0; k < num_items; ++k) {
     const Scalar this_val = val_generator(k);
-    if (std::isfinite(this_val) && (!has_first_val || this_val > max_val)) {
+    if (Tools::isFinite(this_val) && (!has_first_val || this_val > max_val)) {
       max_val = this_val;
       has_first_val = true;
     }
@@ -1492,7 +1505,7 @@ struct histogram_pretty_printer
     for (std::size_t k = 0; k < (std::size_t)hist.numBins(); ++k) {
       const CountType val = maxval(k);
 
-      if (std::isfinite(val) && (!has_maxval || val > max_value)) {
+      if (Tools::isFinite(val) && (!has_maxval || val > max_value)) {
 	max_value = val;
 	has_maxval = true;
       }
@@ -1516,7 +1529,7 @@ struct histogram_pretty_printer
 
   inline std::size_t value_to_bar_length(CountType val) const
   {
-    if (val < 0 || !std::isfinite(val)) {
+    if (val < 0 || !Tools::isFinite(val)) {
       val = 0;
     }
     std::size_t l = (std::size_t)(val/barscale+0.5);

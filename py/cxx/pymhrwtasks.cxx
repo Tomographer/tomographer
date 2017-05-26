@@ -159,7 +159,7 @@ void py_tomo_mhrwtasks(py::module rootmodule)
         )
       .def(py::init<tpy::HistogramWithErrorBars, tpy::RealMatrixType, Eigen::VectorXi>(),
            "histogram"_a, "error_levels"_a, "converged_status"_a)
-      .def_readonly("histogram", & Kl::histogram)
+      .def_property_readonly("histogram", [](const Kl& x) -> tpy::HistogramWithErrorBars { return x.histogram; } )
       .def_property_readonly("error_levels", [](const Kl & x) -> tpy::RealMatrixType {
           return x.error_levels;
         })

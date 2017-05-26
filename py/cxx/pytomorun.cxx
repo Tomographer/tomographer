@@ -702,8 +702,8 @@ py::object py_tomorun(
 
   py::dict res;
 
-  res["final_histogram"] = aggregated_histogram.final_histogram;
-  res["simple_final_histogram"] = aggregated_histogram.simple_final_histogram;;
+  res["final_histogram"] = tpy::HistogramWithErrorBars(aggregated_histogram.final_histogram);
+  res["simple_final_histogram"] = tpy::HistogramWithErrorBars(aggregated_histogram.simple_final_histogram);
   res["elapsed_seconds"] = 1.0e-6 * std::chrono::duration_cast<std::chrono::microseconds>(
       time_end - time_start
       ).count();
@@ -927,12 +927,12 @@ void py_tomo_tomorun(py::module rootmodule)
         "\n"
         "The `tomorun()` function returns a Python dictionary with the following keys and values set:\n"
         "\n"
-        "  - ``final_histogram``: a :py:class:`~tomographer.AveragedErrorBarHistogram` instance with the final "
+        "  - ``final_histogram``: a :py:class:`~tomographer.HistogramWithErrorBars` instance with the final "
         "histogram data.  The histogram has the parameters specified in the `hist_params` argument. "
-        "The histogram is NOT normalized to a probabilty density; you should call "
-        " :py:meth:`~tomographer.HistogramWithErrorBars.normalized()` if you need a "
+        "The histogram is NOT normalized to a probabilty density; you should call its "
+        " :py:meth:`~tomographer.HistogramWithErrorBars.normalized()` method if you need a "
         " normalized histogram.\n\n"
-        "  - ``simple_final_histogram``: a :py:class:`~tomographer.AveragedSimpleRealHistogram` obtained "
+        "  - ``simple_final_histogram``: a :py:class:`~tomographer.HistogramWithErrorBars` obtained "
         "from averaging the raw histograms from each task run, ignoring their error bars from"
         " the binning analysis.  Under normal circumstances there is no "
         "reason you should ignore the binning analysis, so normally you should not be using this "

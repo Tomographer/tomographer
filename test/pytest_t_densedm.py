@@ -127,6 +127,13 @@ class tIndepMeasLLH(unittest.TestCase):
         #with self.assertRaises(Exception):
         #    llh.logLikelihoodX(np.array([1, 0, 0.5j, 0]))
 
+        import pickle
+
+        ss = pickle.dumps(llh,2)
+        llh2 = pickle.loads(ss)
+        llhval = llh.logLikelihoodRho(np.array([[0.4, 0.1j],
+                                                [-0.1j, 0.6]]))
+        self.assertAlmostEqual(llhval, 15*np.log(0.4)+85*np.log(0.6))
 
 
 # normally, this is not needed as we are being run via pyruntest.py, but it might be

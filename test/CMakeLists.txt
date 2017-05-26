@@ -461,6 +461,7 @@ addTomographerPyTest(pytest_t_tomorun)
 addTomographerPyTest(pytest_t_querrorbars)
 addTomographerPyTest(pytest_t_jpyutil)
 addTomographerPyTest(pytest_t_tools_densedm)
+addTomographerPyTest(pytest_pickle)
 
 
 

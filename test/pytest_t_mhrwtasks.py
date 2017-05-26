@@ -21,13 +21,16 @@ import tomographer
 class MHRWTasksStuff(unittest.TestCase):
     def test_fields(self):
 
+        def prg_callback(x):
+            print(x.getHumanReport())
+
         # just run tomorun on some arbitrary data to get some stuff to check
         mhrw_params = tomographer.MHRWParams(
             step_size=0.04,
             n_sweep=25,
             n_run=8192,
             n_therm=500)
-        hist_params = tomographer.UniformBinsHistogramParams(0.985, 1, 20)
+        hist_params = tomographer.HistogramParams(0.985, 1, 20)
         binning_num_levels = 7
         r = tomographer.tomorun.tomorun(
             dim=2,
@@ -47,7 +50,7 @@ class MHRWTasksStuff(unittest.TestCase):
             hist_params=hist_params,
             ctrl_step_size_params={'enable': False},
             progress_interval_ms=500,
-            progress_fn=lambda x: print(x.getHumanReport()),
+            progress_fn=prg_callback,
         )
 
         # check that all fields are there and display meaningful values
@@ -97,7 +100,7 @@ class MHRWTasksStuff(unittest.TestCase):
 
 
     def test_pickle(self):
-        hist = tomographer.AveragedErrorBarHistogram(0, 1, 3)
+        hist = tomographer.HistogramWithErrorBars(0, 1, 3)
         stats_results = tomographer.ValueHistogramWithBinningMHRWStatsCollectorResult(
             hist,
             np.array([ [ 1, 2, 3], [4, 5, 6], [7, 8, 9], [10, 11, 12] ]),
