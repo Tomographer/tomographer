@@ -15,7 +15,7 @@ Checklist For Releasing a New Version of Tomographer
 **PERFORMING THE RELEASE:**
 
 - [ ] Make sure Change Log is up to date, including new **version number** and
-  **full release date**
+  **full release date**; **commit & push** changes
   
 - [ ] Prepare **release notes**
 
@@ -26,4 +26,7 @@ Checklist For Releasing a New Version of Tomographer
 - [ ] Update the git tag in a full **github release**, add *release notes*, the
       *source archives*, and the *binary releases*
 
+- [ ] Generate new API documentation (`make doc`)
+
+- [ ] Update web site's `_config.yml`
 
