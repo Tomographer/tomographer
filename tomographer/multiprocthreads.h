@@ -31,9 +31,6 @@
 #include <chrono>
 #include <stdexcept>
 
-#include <thread>
-#include <mutex>
-
 #include <boost/exception/diagnostic_information.hpp>
 
 #include <tomographer/tools/loggers.h>
@@ -41,6 +38,15 @@
 #include <tomographer/tools/needownoperatornew.h>
 #include <tomographer/multiproc.h>
 
+#include <thread>
+#include <mutex>
+// Include these here only, because on MinGW with mingw-std-threads, this
+// includes windows headers which messes up tomographer/tools/logger.h by
+// defining ERROR preprocessor symbols and other sh***t...
+#ifdef TOMOGRAPHER_USE_MINGW_STD_THREAD
+#  include <mingw.thread.h>
+#  include <mingw.mutex.h>
+#endif
 
 
 

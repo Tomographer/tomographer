@@ -128,13 +128,31 @@ endmacro(EnsureCXX11StdThisThreadSleepForAvailable)
 
 macro(CheckHaveCxx11Threads)
 
+  # On MinGW, we might need to use a separate implementation of std::thread &
+  # friends (see https://github.com/meganz/mingw-std-threads).  In this case, set
+  # TOMOGRAPHER_USE_MINGW_STD_THREAD
+  if (MINGW)
+    set(TOMOGRAPHER_USE_MINGW_STD_THREAD "" CACHE STRING
+      "If a separate MinGW implementation of std::thread & friends is needed (https://github.com/meganz/mingw-std-threads), provide the include path here.")
+  endif()
+  if(TOMOGRAPHER_USE_MINGW_STD_THREAD)
+    message(STATUS "Using MinGW C++11 Threads at ${TOMOGRAPHER_USE_MINGW_STD_THREAD}")
+  endif()
+
   set(_save_CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS}")
   set(_save_CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES}")
   set(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} ${CMAKE_CXX11_STANDARD_COMPILE_OPTION} ${CMAKE_THREAD_LIBS_INIT}")
+  if (TOMOGRAPHER_USE_MINGW_STD_THREAD)
+    set(CMAKE_REQUIRED_DEFINITIONS "${CMAKE_REQUIRED_DEFINITIONS} -DTOMOGRAPHER_USE_MINGW_STD_THREAD")
+  endif()
   set(CMAKE_REQUIRED_LIBRARIES "${CMAKE_REQUIRED_LIBRARIES} ${CMAKE_CXX11_STANDARD_COMPILE_OPTION} ${CMAKE_THREAD_LIBS_INIT}")
-  CHECK_CXX_SOURCE_COMPILES(
-    "#include <thread>
+  CHECK_CXX_SOURCE_COMPILES("
+#include <thread>
 #include <mutex>
+#ifdef TOMOGRAPHER_USE_MINGW_STD_THREAD
+#  include <mingw.thread.h>
+#  include <mingw.mutex.h>
+#endif
 std::mutex mutex_;
 void fn() { std::lock_guard<std::mutex> guard_(mutex_); }
 int main() { std::thread thrd(fn); }"
@@ -143,4 +161,13 @@ int main() { std::thread thrd(fn); }"
   set(CMAKE_REQUIRED_DEFINITIONS "${_save_CMAKE_REQUIRED_DEFINITIONS}")
   set(CMAKE_REQUIRED_LIBRARIES "${_save_CMAKE_REQUIRED_LIBRARIES}")
 
+endmacro()
+
+
+
+macro(TargetMaybeUseMingwStdThread tgt)
+  if (TOMOGRAPHER_USE_MINGW_STD_THREAD)
+    target_compile_definitions(${tgt} PRIVATE -DTOMOGRAPHER_USE_MINGW_STD_THREAD)
+    target_include_directories(${tgt} PRIVATE ${TOMOGRAPHER_USE_MINGW_STD_THREAD})
+  endif()
 endmacro()

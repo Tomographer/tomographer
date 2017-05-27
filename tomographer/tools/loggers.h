@@ -60,6 +60,11 @@
 #endif
 
 
+#ifdef ERROR
+#error "The macro ERROR is defined. You may be on a Windows system. Make sure that <tomographer/tools/logger.h> is included BEFORE any windows-related header."
+#endif
+
+
 namespace Tomographer
 {
 

@@ -29,7 +29,6 @@
 #define PYMULTIPROC_H
 
 #include <string>
-#include <thread> // DEBUG!!
 
 #include <tomographerpy/common.h>
 

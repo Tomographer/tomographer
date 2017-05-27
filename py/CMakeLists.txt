@@ -87,6 +87,7 @@ target_compile_definitions(_tomographer_cxx PRIVATE -DEIGEN_DONT_PARALLELIZE)
 
 # Uses C++ threads (need -pthread on gcc)
 target_link_libraries(_tomographer_cxx PRIVATE Threads::Threads)
+TargetMaybeUseMingwStdThread(_tomographer_cxx)
 
 add_custom_target(tomographerpy)
 add_dependencies(tomographerpy _tomographer_cxx)

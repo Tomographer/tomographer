@@ -43,7 +43,8 @@
 #else
 // normal C++11 API function, not available on mingw32 w/ win threads
 #include <thread>
-#define TOMOGRAPHERTESTS_SLEEP_FOR_MS(x) std::this_thread::sleep_for(std::chrono::milliseconds((x)))
+#define TOMOGRAPHERTESTS_SLEEP_FOR_MS(x)			\
+  std::this_thread::sleep_for(std::chrono::milliseconds((x)))
 #endif
 
 

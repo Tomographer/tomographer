@@ -534,11 +534,11 @@ BOOST_AUTO_TEST_CASE(convergence_summary)
   BOOST_CHECK_EQUAL(summary.n_converged + summary.n_unknown + summary.n_not_converged, summary.n_bins);
   BOOST_CHECK_LE(summary.n_unknown_isolated, summary.n_unknown);
 
-  BOOST_CHECK_EQUAL(summary.n_bins, 16u);
-  BOOST_CHECK_EQUAL(summary.n_converged, 8u);
-  BOOST_CHECK_EQUAL(summary.n_unknown, 6u);
-  BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 3u);
-  BOOST_CHECK_EQUAL(summary.n_not_converged, 2u);
+  BOOST_CHECK_EQUAL(summary.n_bins, 16);
+  BOOST_CHECK_EQUAL(summary.n_converged, 8);
+  BOOST_CHECK_EQUAL(summary.n_unknown, 6);
+  BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 3);
+  BOOST_CHECK_EQUAL(summary.n_not_converged, 2);
 }
 
 BOOST_AUTO_TEST_SUITE_END();

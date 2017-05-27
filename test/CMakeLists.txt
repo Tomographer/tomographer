@@ -123,6 +123,10 @@ macro(addTomographerTest test_cxx NeedsList)
 
   if (";${NeedsList};" MATCHES ";cxxthreads;")
     target_link_libraries(${test_name} PRIVATE Threads::Threads)
+    if (TOMOGRAPHER_USE_MINGW_STD_THREAD)
+      target_compile_definitions(${test_name} PRIVATE -DTOMOGRAPHER_USE_MINGW_STD_THREAD)
+      target_include_directories(${test_name} PRIVATE ${TOMOGRAPHER_USE_MINGW_STD_THREAD})
+    endif()
   endif()
 
   target_compile_definitions(${test_name} PRIVATE "-DBOOST_TEST_MODULE=${test_name}")
@@ -214,6 +218,7 @@ target_include_directories(minimal_tomorun PRIVATE "..")
 target_include_directories(minimal_tomorun  PRIVATE ${EIGEN3_INCLUDE_DIR})
 target_compile_definitions(minimal_tomorun PRIVATE -DEIGEN_DONT_PARALLELIZE)
 target_link_libraries(minimal_tomorun PRIVATE Threads::Threads)
+TargetMaybeUseMingwStdThread(minimal_tomorun)
 target_include_directories(minimal_tomorun PRIVATE ${Boost_INCLUDE_DIR})
 
 add_test(NAME minimal_tomorun
@@ -235,6 +240,7 @@ target_include_directories(minimal_tomorun_controlled PRIVATE "..")
 target_include_directories(minimal_tomorun_controlled  PRIVATE ${EIGEN3_INCLUDE_DIR})
 target_compile_definitions(minimal_tomorun_controlled  PRIVATE -DEIGEN_DONT_PARALLELIZE)
 target_link_libraries(minimal_tomorun_controlled  PRIVATE Threads::Threads)
+TargetMaybeUseMingwStdThread(minimal_tomorun_controlled)
 target_include_directories(minimal_tomorun_controlled  PRIVATE ${Boost_INCLUDE_DIR})
 
 add_test(NAME minimal_tomorun_controlled

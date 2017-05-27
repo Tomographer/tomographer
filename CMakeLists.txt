@@ -65,7 +65,8 @@ find_package(OpenMP)
 # Find system threads compiler flags (e.g. -pthread, in order to use std::thread on gcc)
 find_package(Threads)
 
-# See if we have C++11 threads available
+# See if we have C++11 threads available.  This also takes care of checking for
+# TOMOGRAPHER_USE_MINGW_STD_THREAD
 CheckHaveCxx11Threads()
 
 # Find boost headers (math, ...) 
