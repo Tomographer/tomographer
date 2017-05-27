@@ -251,7 +251,8 @@ class HistogramAnalysis(object):
 
         self.FitParamsType = collections.namedtuple('FitParamsType', inspect.getargspec(self.fit_fn).args[1:])
 
-        self.fit_histogram_result = fit_histogram(self.normalized_histogram, fit_fn=self.fit_fn, ftox=self.ftox, **kwopts)
+        self.fit_histogram_result = fit_histogram(self.normalized_histogram, fit_fn=self.fit_fn,
+                                                  ftox=self.ftox, **kwopts)
         self.fit_params = self.FitParamsType(*self.fit_histogram_result.popt)
         self.fit_params_cov = self.FitParamsType(*np.diagonal(self.fit_histogram_result.pcov))
 
@@ -262,10 +263,14 @@ class HistogramAnalysis(object):
         logpok = self.fit_histogram_result.logpok
         errlogpok = self.fit_histogram_result.errlogpok
 
-        self.redchi2 = calc_redchi2(xok, logpok, errlogpok, lambda x: self.fit_fn(x, *self.fit_params), num_fit_params=4)
-        if self.redchi2 > 1.3 :
-            logger.warning(("Reduced chi-squared statistic = {:.4g}, perhaps the fit model isn't good, "
-                            "or the fit optimization failed?").format(self.redchi2))
+        self.redchi2 = calc_redchi2(xok, logpok, errlogpok,
+                                    lambda x: self.fit_fn(x, *self.fit_params), num_fit_params=4)
+        
+        redchi2_warn_threshold = kwopts.get('redchi2_warn_threshold', 1.4)
+
+        if self.redchi2 > redchi2_warn_threshold :
+            logger.warning(("Reduced chi-squared statistic = {:.4g}. It could be that the fit "
+                            "model isn't good or that the fit optimization failed.").format(self.redchi2))
 
     
     def xtof(self, x):
