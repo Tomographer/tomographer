@@ -66,7 +66,8 @@ tomo_name_w_ver_a = {
     'zip': install_name + ".zip",
     }
 
-if os.path.exists(tomo_name_w_ver) or any((os.path.exists(n) for n in tomo_name_w_ver_a.values())):
+if os.path.exists(tomo_name_w_ver) or any( (os.path.exists(n)
+                                            for n in tomo_name_w_ver_a.values()) ):
     print("Error: some files with conflicting names exist, aborting.\n" +
           "Please remove the following files if you wish to proceed:\n" +
           "\t"+tomo_name_w_ver)
