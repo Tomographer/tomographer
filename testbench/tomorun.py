@@ -5,7 +5,7 @@ import os
 import os.path
 import subprocess
 
-from tomographerbuild import TomographerBuild, timeit_call
+from tomographerbuild import TomographerBuild, TomorunReleaseExe, timeit_call
 
 
 cmake_release_opts = [
@@ -39,3 +39,4 @@ build_g287a5ae_GCC6_optim_release = TomographerBuild('v5.0aaa-15-g287a5ae', cmak
     '-DTOMORUN_MULTIPROC=openmp',
     ])
 
+release_v41_binary = Tomographer

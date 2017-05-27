@@ -102,6 +102,8 @@ class TomographerTomorunReleaseExe(object):
 
         self.workdir = os.path.join(benchwork_dir, self.key)
 
+        self.work_tomographer_dir = os.path.join(os.workdir, 'tomographer-'+tomographer_version+'-'+plat)
+
         if not os.path.isdir(self.workdir):
             os.mkdir(self.workdir)
             do_run([CURL, '-L', '-O', url], cwd=self.workdir)

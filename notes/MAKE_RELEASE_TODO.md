@@ -2,12 +2,20 @@
 Checklist For Releasing a New Version of Tomographer
 ----------------------------------------------------
 
+**BEFORE RELEASE:**
+
 - [ ] Travis CI -- All tests must pass
 
-- [ ] Make sure the binary releases for the different systems compile
+- [ ] Make sure the binary releases for the different systems compile and run on
+      all required systems
+
+- [ ] Make sure other custom modules compile against the new tomographer module
+      version
+
+**PERFORMING THE RELEASE:**
 
 - [ ] Make sure Change Log is up to date, including new **version number** and
-  **full date**
+  **full release date**
   
 - [ ] Prepare **release notes**
 
@@ -15,7 +23,7 @@ Checklist For Releasing a New Version of Tomographer
 
 - [ ] **Compile binary releases** for the different systems
 
-- [ ] Update the git tag in a full **github release**, add *release notes*, the *source
-  archives*, and the *binary releases*
+- [ ] Update the git tag in a full **github release**, add *release notes*, the
+      *source archives*, and the *binary releases*
 
 
