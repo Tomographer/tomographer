@@ -330,8 +330,8 @@ py::object run_function(
   // ... aggregated into a full averaged histogram
   auto aggregated_histogram = taskcdat.aggregateResultHistograms(task_results) ;
 
-  res["final_histogram"] = aggregated_histogram.final_histogram;
-  res["simple_final_histogram"] = aggregated_histogram.simple_final_histogram;;
+  res["final_histogram"] = tpy::HistogramWithErrorBars(aggregated_histogram.final_histogram);
+  res["simple_final_histogram"] = tpy::HistogramWithErrorBars(aggregated_histogram.simple_final_histogram);
   res["elapsed_seconds"] = 1.0e-6 * std::chrono::duration_cast<std::chrono::microseconds>(
       time_end - time_start
       ).count();

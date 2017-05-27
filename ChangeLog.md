@@ -3,7 +3,7 @@ Change Log
 ==========
 
 
-## [PENDING NEW RELEASE]
+## v5.0 (?????????)
 
   * Added "light jumps" random walk algorithm. The new algorithm chooses
     differently which next candidate point (for jumping to): instead of
@@ -43,10 +43,6 @@ Change Log
     `Tomographer::MHRWValueErrorBinsConvergedController`, as well as
     `Tomographer::MHRWAcceptRatioWalkerParamsController`
 
-  * Changed `Tomographer::MHRWParams` template parameters, now allowing for
-    arbitrary *MHWalkerParams* specifying whatever parameters the MHWalker needs
-    in order to carry out its random walk
-
   * `Tomographer::UniformBinsHistogram` → `Tomographer::Histogram` (etc.),
     deprecated aliases available
 
@@ -55,6 +51,10 @@ Change Log
   * Some API clean-ups
 
 **Major Backwards-Incompatible API Changes to Some Components:**
+
+  * Changed `Tomographer::MHRWParams` template parameters, now allowing for
+    arbitrary *MHWalkerParams* specifying whatever parameters the MHWalker needs
+    in order to carry out its random walk
 
   * Status reporting API changed. Introduced
     `Tomographer::Tools::StatusProvider` and `Tomographer::Tools::StatusQuery`.

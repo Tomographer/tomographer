@@ -30,27 +30,23 @@ vv = Vars([
 #
 # default values for the variables
 #
-# For CXX_FLAGS, use the same C++ compiler flags as those used to compile tomographer
-# itself. Includes optimization options.
-vv.setDefault('CXX_FLAGS', " ".join((shlexquote(x) for x in tomographer.version.compile_info['cflags'])))
+
+# For CXX_FLAGS, use the same C++ compiler flags as those used to compile
+# tomographer itself. Includes optimization options.
+tomographer_cflags = tomographer.version.compile_info['cflags']
+if tomographer_cflags is not None:
+    vv.setDefault('CXX_FLAGS',
+                  " ".join([shlexquote(x) for x in tomographer_cflags]))
+else:
+    # We are using a wierdly compiled tomographer module which doesn't expose
+    # its cflags. Use some reasonable defaults.
+    vv.setDefault('CXX_FLAGS', '-std=c++11 -UNDEBUG -O3 -g -march=native')
 
 #
 # Display variables to the user
 #
 print(vv.message())
 
-
-include_dirs = [
-    numpy.get_include(),
-    pybind11.get_include(),
-] + tomographer.include.get_include()
-cflags = shlex.split(vv.get('CXX_FLAGS'))
-ldflags = [
-    
-]
-headers = [
-    
-]
 
 
 #

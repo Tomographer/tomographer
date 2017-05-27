@@ -30,4 +30,7 @@ r = my_custom_module.run(
     progress_fn=lambda report: print(report.getHumanReport()),
 )
 
-print(r['final_report'])
+print(r['final_report_runs'])
+
+print("... and here is the final histogram:")
+print(r['final_histogram'].prettyPrint())
