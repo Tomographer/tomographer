@@ -11,6 +11,10 @@ Checklist For Releasing a New Version of Tomographer
 
 - [ ] Make sure other custom modules compile against the new tomographer module
       version
+      
+- [ ] Make sure `python setup.py sdist` and `python setup.py bdist_wheel` work
+      for both `python2` and `python3`; if changes were made to the setup file,
+      upload and test via TestPyPi first.
 
 **PERFORMING THE RELEASE:**
 
@@ -30,3 +34,5 @@ Checklist For Releasing a New Version of Tomographer
 
 - [ ] Update web site's `_config.yml`
 
+- [ ] Generate source Python package (NOT WHEEL) via `python3 setup.py sdist`;
+      upload it to PyPI.
