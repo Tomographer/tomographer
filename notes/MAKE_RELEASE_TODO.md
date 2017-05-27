@@ -26,7 +26,7 @@ Checklist For Releasing a New Version of Tomographer
 - [ ] Update the git tag in a full **github release**, add *release notes*, the
       *source archives*, and the *binary releases*
 
-- [ ] Generate new API documentation (`make doc`)
+- [ ] Generate new API documentation (`make doc`), copy to web site tree
 
 - [ ] Update web site's `_config.yml`
 
