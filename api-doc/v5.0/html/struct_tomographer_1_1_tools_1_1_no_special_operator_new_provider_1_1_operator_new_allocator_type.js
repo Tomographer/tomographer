@@ -1,0 +1,4 @@
+var struct_tomographer_1_1_tools_1_1_no_special_operator_new_provider_1_1_operator_new_allocator_type =
+[
+    [ "Type", "struct_tomographer_1_1_tools_1_1_no_special_operator_new_provider_1_1_operator_new_allocator_type.html#acb72dd1222601f3b47920701416c2e7e", null ]
+];

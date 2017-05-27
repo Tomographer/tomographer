@@ -1,0 +1,31 @@
+<map id="tomographer/tools/fmt.h" name="tomographer/tools/fmt.h">
+<area shape="rect" id="node2" href="$indepmeasllh_8h.html" title="C++ types and functions for calculating the log&#45;likelihood for independent measurements. " alt="" coords="2420,79,2575,117"/>
+<area shape="rect" id="node4" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="2663,172,2833,197"/>
+<area shape="rect" id="node7" href="$mhrwacceptratiowalkerparamscontroller_8h.html" title="Tools for automatically and dynamically adjusting the step size of the random walk. " alt="" coords="383,432,729,457"/>
+<area shape="rect" id="node8" href="$mhrwstepsizecontroller_8h.html" title="Tools for automatically and dynamically adjusting the step size of the random walk. " alt="" coords="432,519,680,544"/>
+<area shape="rect" id="node9" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Multiprocessing Task Interfaces) for parallel Metropolis&#45;Hasting..." alt="" coords="1324,432,1500,457"/>
+<area shape="rect" id="node12" href="$mhrwvalueerrorbinsconvergedcontroller_8h.html" title="Tools for automatically stopping the random walk when enough samples have been taken to make all binn..." alt="" coords="753,432,1098,457"/>
+<area shape="rect" id="node14" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="1316,259,1460,284"/>
+<area shape="rect" id="node17" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="389,85,555,111"/>
+<area shape="rect" id="node21" href="$ezmatio_8h.html" title="Utilities for reading MATLAB &quot;*.mat&quot; data files. See Tomographer::MAT. " alt="" coords="2129,85,2319,111"/>
+<area shape="rect" id="node22" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="1242,85,1430,111"/>
+<area shape="rect" id="node3" href="$pydensedm_8h_source.html" title="py/cxx/tomographerpy\l/pydensedm.h" alt="" coords="2558,252,2711,291"/>
+<area shape="rect" id="node5" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="1020,345,1249,371"/>
+<area shape="rect" id="node13" href="$pyhistogram_8h_source.html" title="py/cxx/tomographerpy\l/pyhistogram.h" alt="" coords="2785,252,2938,291"/>
+<area shape="rect" id="node6" href="$mhrw__valuehist__tools_8h.html" title="Tools for collecting a histogram of values during a Metropolis&#45;Hastings random walk using the tools o..." alt="" coords="1190,512,1383,551"/>
+<area shape="rect" id="node10" href="$pymhrwtasks_8h_source.html" title="py/cxx/tomographerpy\l/pymhrwtasks.h" alt="" coords="1764,512,1916,551"/>
+<area shape="rect" id="node11" href="$pymultiproc_8h_source.html" title="py/cxx/tomographerpy\l/pymultiproc.h" alt="" coords="1486,512,1639,551"/>
+<area shape="rect" id="node15" href="$tspacellhwalker_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="1673,339,1828,377"/>
+<area shape="rect" id="node16" href="$pymhrw_8h_source.html" title="py/cxx/tomographerpy\l/pymhrw.h" alt="" coords="1625,425,1778,464"/>
+<area shape="rect" id="node18" href="$multiprocomp_8h.html" title="Multiprocessing with OpenMP parallel multithreading. " alt="" coords="672,172,864,197"/>
+<area shape="rect" id="node19" href="$multiprocthreads_8h.html" title="Multiprocessing with native C++11 threads. " alt="" coords="438,172,648,197"/>
+<area shape="rect" id="node20" href="$signal__status__report_8h.html" title="Basic common code for intercepting a signal to print status information of a task manager..." alt="" coords="144,165,312,204"/>
+<area shape="rect" id="node23" href="$random__unitary_8h.html" title="Produce a random unitary according to the Haar measure. " alt="" coords="1613,165,1771,204"/>
+<area shape="rect" id="node24" href="$simple__find__zero_8h.html" title="A very simplistic tool for finding a relatively straightforward zero with few iterations. " alt="" coords="1795,165,1954,204"/>
+<area shape="rect" id="node25" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1141,165,1299,204"/>
+<area shape="rect" id="node26" href="$boost__test__logger_8h.html" title="Provide a logger class for when using the Boost Unit Test Framework (see Tomographer::Logger::BoostTe..." alt="" coords="1373,165,1539,204"/>
+<area shape="rect" id="node27" href="$common_8h_source.html" title="py/cxx/tomographerpy\l/common.h" alt="" coords="2288,165,2440,204"/>
+<area shape="rect" id="node29" href="$pygil_8h_source.html" title="py/cxx/tomographerpy\l/pygil.h" alt="" coords="2004,339,2156,377"/>
+<area shape="rect" id="node30" href="$pylogger_8h_source.html" title="py/cxx/tomographerpy\l/pylogger.h" alt="" coords="2004,252,2156,291"/>
+<area shape="rect" id="node28" href="$exc_8h_source.html" title="py/cxx/tomographerpy\l/exc.h" alt="" coords="2230,252,2383,291"/>
+</map>

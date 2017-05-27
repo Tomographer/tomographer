@@ -1,0 +1,256 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Utilities for compiling other modules (tomographer.include) &#8212; Tomographer Python Interface v5.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Version and compilation information (tomographer.version)" href="tomographer.version.html" />
+    <link rel="prev" title="Utilities for Jupyter notebooks (tomographer.jpyutil)" href="tomographer.jpyutil.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tomographer.include">
+<span id="utilities-for-compiling-other-modules-tomographer-include"></span><h1>Utilities for compiling other modules (<cite>tomographer.include</cite>)<a class="headerlink" href="#module-tomographer.include" title="Permalink to this headline">¶</a></h1>
+<p>The convenience module <cite>tomographer.include</cite> facilitates the development of new
+<cite>Python</cite>/<cite>C++</cite> modules using tomographer along with tomographerpy headers.</p>
+<dl class="function">
+<dt id="tomographer.include.get_include">
+<code class="descclassname">tomographer.include.</code><code class="descname">get_include</code><span class="sig-paren">(</span><em>keys=False</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.include.get_include" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the directory(ies) to add to C++ include path in order to compile
+extensions using <cite>tomographer</cite>/<cite>tomographerpy</cite> headers.  This function is
+intended to be used in your <cite>setup.py</cite> in order to compile your extension.</p>
+<p>Tomographer&#8217;s dependencies, the Eigen and Boost headers, are included in the
+package data so that you can easily compile other extensions using
+Tomographer.  This function will also return the necessary include paths to
+reach those dependencies.  (Note: Only a subset of the boost headers are
+included, as defined by <a class="reference internal" href="#tomographer.include.BOOST_DEPS_COMPONENTS" title="tomographer.include.BOOST_DEPS_COMPONENTS"><code class="xref py py-data docutils literal"><span class="pre">BOOST_DEPS_COMPONENTS</span></code></a>).</p>
+<p>If <cite>keys=False</cite> (the default), then a list of include paths are returned.
+If <cite>keys=True</cite>, then a dictionary is returned with the keys <cite>[&#8216;tomographer&#8217;,
+&#8216;tomographerpy&#8217;, &#8216;boost&#8217;, &#8216;eigen&#8217;]</cite> and with corresponding values which are
+the include paths for each component.</p>
+<p>See also: Information about compile flags in
+<a class="reference internal" href="tomographer.version.html#tomographer.version.compile_info" title="tomographer.version.compile_info"><code class="xref py py-data docutils literal"><span class="pre">tomographer.version.compile_info['cflags']</span></code></a>.</p>
+</dd></dl>
+
+<dl class="data">
+<dt id="tomographer.include.BOOST_DEPS_COMPONENTS">
+<code class="descclassname">tomographer.include.</code><code class="descname">BOOST_DEPS_COMPONENTS</code><em class="property"> = ['algorithm', 'math', 'core', 'exception', 'predef']</em><a class="headerlink" href="#tomographer.include.BOOST_DEPS_COMPONENTS" title="Permalink to this definition">¶</a></dt>
+<dd><p>Those components of boost which are included in the header dependencies directory of
+this package.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomographer.include.find_include_dir">
+<code class="descclassname">tomographer.include.</code><code class="descname">find_include_dir</code><span class="sig-paren">(</span><em>headername</em>, <em>pkgnames=[]</em>, <em>testfn=&lt;function isdir&gt;</em>, <em>return_with_suffix=None</em>, <em>add_paths=[]</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.include.find_include_dir" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find an include directory for a third-party library.</p>
+<p>This function works by looking for <cite>headername</cite> using the test function <cite>testfn</cite>.  By
+default, it looks for a directory named <cite>headername</cite>.</p>
+<p>Arguments:</p>
+<blockquote>
+<div><ul class="simple">
+<li><cite>headername</cite>: file or directory name to look for</li>
+<li><cite>pkgnames</cite>: package names under which these headers may have been packaged, e.g.,
+by homebrew.  This is used to add guess paths.</li>
+<li><cite>testfn</cite>: how to determine that <cite>headername</cite> was found.  The default,
+<a class="reference external" href="https://docs.python.org/3.6/library/os.path.html#os.path.isdir" title="(in Python v3.6)"><code class="xref py py-func docutils literal"><span class="pre">os.path.isdir()</span></code></a>, checks that <cite>headername</cite> is a directory.</li>
+<li><cite>return_with_suffix</cite>: you may set this to a path fragment to be appended to the
+directory found</li>
+<li><cite>add_paths</cite>: additional search paths to use</li>
+</ul>
+</div></blockquote>
+<p>Returns: The directory relative to which we found <cite>headername</cite>, possibly supplemented
+by the given suffix in <cite>return_with_suffix</cite>.  <cite>None</cite> is returned if the include files
+were not found.</p>
+</dd></dl>
+
+<dl class="function">
+<dt id="tomographer.include.find_lib">
+<code class="descclassname">tomographer.include.</code><code class="descname">find_lib</code><span class="sig-paren">(</span><em>libname</em>, <em>pkgnames</em>, <em>libnamesuffixes=[]</em>, <em>add_paths=[]</em>, <em>prefer_static=True</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.include.find_lib" title="Permalink to this definition">¶</a></dt>
+<dd><p>Find a third-party library.</p>
+<p>This function looks for the library <cite>libname</cite> using common library naming schemes
+(e.g. lib`libname`.dylib) in common search paths.</p>
+<p>Returns the full path to the library or <cite>None</cite> if not found.</p>
+<p>Arguments:</p>
+<blockquote>
+<div><ul class="simple">
+<li><cite>libname</cite>: the base name of the library, without any <code class="docutils literal"><span class="pre">lib</span></code> prefix or any suffix</li>
+<li><cite>pkgnames</cite>: as for <a class="reference internal" href="#tomographer.include.find_include_dir" title="tomographer.include.find_include_dir"><code class="xref py py-func docutils literal"><span class="pre">find_include_dir()</span></code></a>, specify possible package names
+which may contain this library</li>
+<li><cite>libnamesuffixes</cite>: possible library suffixes for <cite>libname</cite> (but not filename
+suffix). This is used for instance some times to distinguish a multithreaded
+version of a library from a non-multithreaded one)</li>
+<li><cite>add_paths</cite>: additional paths in which to look</li>
+<li><cite>prefer_static</cite>: if <cite>True</cite>, then static library suffixes are tried before the
+dynamic ones; if <cite>False</cite>, the opposite.</li>
+</ul>
+</div></blockquote>
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.include.Vars">
+<em class="property">class </em><code class="descclassname">tomographer.include.</code><code class="descname">Vars</code><span class="sig-paren">(</span><em>vars</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.include.Vars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference external" href="https://docs.python.org/3.6/library/functions.html#object" title="(in Python v3.6)"><code class="xref py py-class docutils literal"><span class="pre">object</span></code></a></p>
+<p>Minimal handling of compilation config variables, importable from CMake cache.</p>
+<dl class="docutils">
+<dt>Constructor arguments:</dt>
+<dd><ul class="first last simple">
+<li><cite>vars</cite>: the list of variable names which we will be storing.</li>
+<li><cite>cachefile</cite>: a CMake cache file to look values into.  If <cite>None</cite>, no CMake cache is
+consulted.</li>
+</ul>
+</dd>
+<dt>The variables are looked up:</dt>
+<dd><ul class="first last simple">
+<li>in the environment variables</li>
+<li>in the CMake cache, if any is specified</li>
+<li>as per any given default value (with <a class="reference internal" href="#tomographer.include.Vars.setDefault" title="tomographer.include.Vars.setDefault"><code class="xref py py-meth docutils literal"><span class="pre">setDefault()</span></code></a>))</li>
+</ul>
+</dd>
+</dl>
+<p>Example usage:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="n">cmake_cache_file</span> <span class="o">=</span> <span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s1">&#39;CMAKE_CACHE_FILE&#39;</span><span class="p">,</span> <span class="kc">None</span><span class="p">)</span>
+<span class="n">vv</span> <span class="o">=</span> <span class="n">Vars</span><span class="p">([</span>
+    <span class="s1">&#39;GIT&#39;</span><span class="p">,</span>
+    <span class="s1">&#39;EIGEN3_INCLUDE_DIR&#39;</span><span class="p">,</span>
+<span class="p">],</span> <span class="n">cachefile</span><span class="o">=</span><span class="n">cmake_cache_file</span><span class="p">)</span>
+<span class="n">vv</span><span class="o">.</span><span class="n">setDefault</span><span class="p">(</span><span class="s1">&#39;GIT&#39;</span><span class="p">,</span> <span class="k">lambda</span> <span class="p">:</span> <span class="n">find_executable</span><span class="p">(</span><span class="s1">&#39;git&#39;</span><span class="p">))</span>
+<span class="n">vv</span><span class="o">.</span><span class="n">setDefault</span><span class="p">(</span><span class="s1">&#39;EIGEN3_INCLUDE_DIR&#39;</span><span class="p">,</span>
+              <span class="k">lambda</span> <span class="p">:</span> <span class="n">find_include_dir</span><span class="p">(</span><span class="s1">&#39;eigen3&#39;</span><span class="p">,</span> <span class="n">pkgnames</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;eigen&#39;</span><span class="p">,</span><span class="s1">&#39;eigen3&#39;</span><span class="p">],</span>
+                                        <span class="n">return_with_suffix</span><span class="o">=</span><span class="s1">&#39;eigen3&#39;</span><span class="p">))</span>
+</pre></div>
+</div>
+<dl class="method">
+<dt id="tomographer.include.Vars.get">
+<code class="descname">get</code><span class="sig-paren">(</span><em>k</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.include.Vars.get" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the value associated with the variable <cite>k</cite> (specified in environment, read from
+cache, or default value).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.include.Vars.setDefault">
+<code class="descname">setDefault</code><span class="sig-paren">(</span><em>k</em>, <em>defvalue</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.include.Vars.setDefault" title="Permalink to this definition">¶</a></dt>
+<dd><p>If no value has been detected for key <cite>k</cite>, set the value <cite>defvalue</cite>.  <cite>defvalue</cite> may
+be a callable which is invoked only if the value is actually needed.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="function">
+<dt id="tomographer.include.ensure_str">
+<code class="descclassname">tomographer.include.</code><code class="descname">ensure_str</code><span class="sig-paren">(</span><em>s</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.include.ensure_str" title="Permalink to this definition">¶</a></dt>
+<dd><p>Simple conversion of the value <cite>s</cite> to a <cite>str</cite>, that is, a byte string on Python 2 and
+a unicode string on Python 3.</p>
+<p>Input is expected to be a byte-string or unicode string in both Py2 or Py3.</p>
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Tomographer Python Interface</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tomographer._hist_classes.html">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.multiproc.html">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.densedm.html">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tomorun.html">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.mhrwtasks.html">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.querrorbars.html">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tools.html">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.jpyutil.html">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities for compiling other modules (<cite>tomographer.include</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.version.html">Version and compilation information (<cite>tomographer.version</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_module.html">Writing Special-Purpose C++ Code with a Python Interface</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="tomographer.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="tomographer.jpyutil.html" title="previous chapter">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+      <li>Next: <a href="tomographer.version.html" title="next chapter">Version and compilation information (<cite>tomographer.version</cite>)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Philippe Faist.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/tomographer.include.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

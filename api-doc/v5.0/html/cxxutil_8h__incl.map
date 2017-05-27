@@ -1,0 +1,4 @@
+<map id="tomographer/tools/cxxutil.h" name="tomographer/tools/cxxutil.h">
+<area shape="rect" id="node10" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="126,79,315,104"/>
+<area shape="rect" id="node12" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="892,79,1082,104"/>
+</map>

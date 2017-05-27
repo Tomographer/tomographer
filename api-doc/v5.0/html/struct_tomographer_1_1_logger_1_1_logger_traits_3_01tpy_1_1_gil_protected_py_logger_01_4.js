@@ -1,0 +1,4 @@
+var struct_tomographer_1_1_logger_1_1_logger_traits_3_01tpy_1_1_gil_protected_py_logger_01_4 =
+[
+    [ "IsThreadSafe", "struct_tomographer_1_1_logger_1_1_logger_traits_3_01tpy_1_1_gil_protected_py_logger_01_4.html#ab10f95c0e91dc78fbbec510e325af181a9c94c36da7f1860533b4b612a9de2373", null ]
+];

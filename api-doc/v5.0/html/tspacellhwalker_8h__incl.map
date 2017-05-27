@@ -1,0 +1,16 @@
+<map id="tomographer/densedm/tspacellhwalker.h" name="tomographer/densedm/tspacellhwalker.h">
+<area shape="rect" id="node6" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="2077,259,2264,284"/>
+<area shape="rect" id="node31" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="936,345,1208,371"/>
+<area shape="rect" id="node33" href="$densellh_8h.html" title="Some declarations for the DenseLLH type interface. " alt="" coords="24,165,179,204"/>
+<area shape="rect" id="node34" href="$dmtypes_8h.html" title="C++ types for describing dense density matrices in various parameterizations. " alt="" coords="520,339,675,377"/>
+<area shape="rect" id="node35" href="$param__herm__x_8h.html" title="Tools for parameterizing hermitian matrices with the X Parameterization. " alt="" coords="405,165,560,204"/>
+<area shape="rect" id="node36" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="1192,92,1336,117"/>
+<area shape="rect" id="node16" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="1778,345,1940,371"/>
+<area shape="rect" id="node29" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="1979,499,2168,524"/>
+<area shape="rect" id="node21" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="867,425,1048,451"/>
+<area shape="rect" id="node27" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="723,499,912,524"/>
+<area shape="rect" id="node38" href="$statusprovider_8h_source.html" title="tomographer/tools/statusprovider.h" alt="" coords="884,172,1111,197"/>
+<area shape="rect" id="node39" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="1498,259,1664,284"/>
+<area shape="rect" id="node41" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1185,165,1343,204"/>
+<area shape="rect" id="node42" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="1282,345,1475,371"/>
+</map>

@@ -1,0 +1,15 @@
+<map id="tomographer/mhrwacceptratiowalkerparamscontroller.h" name="tomographer/mhrwacceptratiowalkerparamscontroller.h">
+<area shape="rect" id="node9" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="864,312,1052,337"/>
+<area shape="rect" id="node19" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="578,392,740,417"/>
+<area shape="rect" id="node23" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="1457,472,1638,497"/>
+<area shape="rect" id="node32" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="1188,392,1459,417"/>
+<area shape="rect" id="node34" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="1561,152,1705,177"/>
+<area shape="rect" id="node43" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="1857,79,2086,104"/>
+<area shape="rect" id="node30" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="435,545,625,571"/>
+<area shape="rect" id="node28" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="1469,545,1658,571"/>
+<area shape="rect" id="node35" href="$statusprovider_8h_source.html" title="tomographer/tools/statusprovider.h" alt="" coords="1483,232,1710,257"/>
+<area shape="rect" id="node36" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="52,312,218,337"/>
+<area shape="rect" id="node38" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1733,225,1892,264"/>
+<area shape="rect" id="node39" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="2011,392,2204,417"/>
+<area shape="rect" id="node46" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="2273,312,2443,337"/>
+</map>

@@ -1,0 +1,273 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Storing Tomography Data and Calculating the Likelihood Function (tomographer.densedm) &#8212; Tomographer Python Interface v5.0 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v5.0',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Tomorun, the main tomography routine (tomographer.tomorun)" href="tomographer.tomorun.html" />
+    <link rel="prev" title="Multiprocessing related classes (tomographer.multiproc)" href="tomographer.multiproc.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tomographer.densedm">
+<span id="storing-tomography-data-and-calculating-the-likelihood-function-tomographer-densedm"></span><h1>Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)<a class="headerlink" href="#module-tomographer.densedm" title="Permalink to this headline">¶</a></h1>
+<p>Classes and utilities for handling a tomography setup in which quantum states are represented via their density operator stored as dense matrices in memory.</p>
+<p>The <a class="reference internal" href="#tomographer.densedm.DMTypes" title="tomographer.densedm.DMTypes"><code class="xref py py-class docutils literal"><span class="pre">DMTypes</span></code></a> class stores the quantum system dimension, and is used by the other types.</p>
+<p>The <a class="reference internal" href="#tomographer.densedm.IndepMeasLLH" title="tomographer.densedm.IndepMeasLLH"><code class="xref py py-class docutils literal"><span class="pre">IndepMeasLLH</span></code></a> class is capable of storing measurement data (resulting from independent measurement effects on each system) and calculating the corresponding log-likelihood function. (Note that this still allows for correlated measurements such as adaptive tomography, it just prohibits truly quantum joint measurements over the different copies.)</p>
+<p>The <a class="reference internal" href="#tomographer.densedm.ParamX" title="tomographer.densedm.ParamX"><code class="xref py py-class docutils literal"><span class="pre">ParamX</span></code></a> allows to calculate the X-parameterization of a Hermitian matrix (and back). See <a class="reference external" href="../page_params_x.html">the definition of the X Parameterization</a> for more info.  The X-parameterization is used, e.g., by the <a class="reference internal" href="#tomographer.densedm.IndepMeasLLH" title="tomographer.densedm.IndepMeasLLH"><code class="xref py py-class docutils literal"><span class="pre">IndepMeasLLH</span></code></a> class to store the POVM effects and to calculate inner products more efficiently.</p>
+<dl class="class">
+<dt id="tomographer.densedm.DMTypes">
+<em class="property">class </em><code class="descclassname">tomographer.densedm.</code><code class="descname">DMTypes</code><a class="headerlink" href="#tomographer.densedm.DMTypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pybind11_builtins.pybind11_object_48</span></code></p>
+<p>Stores the dimension of the quantum system, the square of the dimension and the number of degrees of freedom.</p>
+<p>All attributes of this class are read-only.</p>
+<p>This class is <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>able.</p>
+<dl class="function">
+<dt id="tomographer.densedm.DMTypes.DMTypes">
+<code class="descname">DMTypes</code><span class="sig-paren">(</span><em>dim</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.densedm.DMTypes.DMTypes" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a DMTypes object storing the given dimension for the quantum system.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.densedm.DMTypes.dim">
+<code class="descname">dim</code><a class="headerlink" href="#tomographer.densedm.DMTypes.dim" title="Permalink to this definition">¶</a></dt>
+<dd><p>The dimension of the quantum system.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.densedm.DMTypes.dim2">
+<code class="descname">dim2</code><a class="headerlink" href="#tomographer.densedm.DMTypes.dim2" title="Permalink to this definition">¶</a></dt>
+<dd><p>The square of the dimension.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.densedm.DMTypes.ndof">
+<code class="descname">ndof</code><a class="headerlink" href="#tomographer.densedm.DMTypes.ndof" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of degrees of freedom.  This is <cite>dim2-1</cite></p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.densedm.IndepMeasLLH">
+<em class="property">class </em><code class="descclassname">tomographer.densedm.</code><code class="descname">IndepMeasLLH</code><a class="headerlink" href="#tomographer.densedm.IndepMeasLLH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pybind11_builtins.pybind11_object_48</span></code></p>
+<p>Stores measurement data and calculates the log-likelihood function.</p>
+<p>Measurements are specified as a list of observed POVM effects along with frequencies, i.e., how many times each POVM effect was observed.</p>
+<p>POVM effects are stored internally in X parameterization. See <a class="reference external" href="../page_params_x.html">here for more details</a>.</p>
+<p>This Python class is a wrapper for the C++ class <a class="reference external" href="../class_tomographer_1_1_dense_d_m_1_1_indep_meas_l_l_h.html">Tomographer::DenseDM::IndepMeasLLH</a>.</p>
+<p>This class is <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>able.</p>
+<dl class="function">
+<dt id="tomographer.densedm.IndepMeasLLH.IndepMeasLLH">
+<code class="descname">IndepMeasLLH</code><span class="sig-paren">(</span><em>dmt</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.densedm.IndepMeasLLH.IndepMeasLLH" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor. Specify the system dimension in the <cite>dmt</cite> argument. The latter  must be an <a class="reference internal" href="#tomographer.densedm.DMTypes" title="tomographer.densedm.DMTypes"><code class="xref py py-class docutils literal"><span class="pre">DMTypes</span></code></a> instance.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.densedm.IndepMeasLLH.dmt">
+<code class="descname">dmt</code><a class="headerlink" href="#tomographer.densedm.IndepMeasLLH.dmt" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#tomographer.densedm.DMTypes" title="tomographer.densedm.DMTypes"><code class="xref py py-class docutils literal"><span class="pre">DMTypes</span></code></a> instance storing the dimension of the system. This is a  read-only attribute.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.densedm.IndepMeasLLH.numEffects">
+<code class="descname">numEffects</code><a class="headerlink" href="#tomographer.densedm.IndepMeasLLH.numEffects" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of separate POVM effects recorded. See <a class="reference internal" href="#tomographer.densedm.IndepMeasLLH.resetMeas" title="tomographer.densedm.IndepMeasLLH.resetMeas"><code class="xref py py-meth docutils literal"><span class="pre">resetMeas()</span></code></a>,  <a class="reference internal" href="#tomographer.densedm.IndepMeasLLH.addMeasEffect" title="tomographer.densedm.IndepMeasLLH.addMeasEffect"><code class="xref py py-meth docutils literal"><span class="pre">addMeasEffect()</span></code></a> and <a class="reference internal" href="#tomographer.densedm.IndepMeasLLH.setMeas" title="tomographer.densedm.IndepMeasLLH.setMeas"><code class="xref py py-meth docutils literal"><span class="pre">setMeas()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.densedm.IndepMeasLLH.Exn">
+<code class="descname">Exn</code><span class="sig-paren">(</span><span class="optional">[</span><em>k</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.densedm.IndepMeasLLH.Exn" title="Permalink to this definition">¶</a></dt>
+<dd><p>If <cite>k</cite> is not specified, then return the matrix of all POVM effects in X-parameterization.  Each row of the returned matrix is a POVM effect in X-parameterization.</p>
+<p>If <cite>k</cite> is specified, then only the given POVM effect indexed by <cite>k</cite> is returned. It is given in X parameterization, as a 1-D array.</p>
+<p>In any case, the returned value is a <cite>numpy.array</cite> object.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.densedm.IndepMeasLLH.Nx">
+<code class="descname">Nx</code><span class="sig-paren">(</span><span class="optional">[</span><em>k</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.densedm.IndepMeasLLH.Nx" title="Permalink to this definition">¶</a></dt>
+<dd><p>If <cite>k</cite> is not specified, then return a list of frequencies associated to each row of the matrix returned by <a class="reference internal" href="#tomographer.densedm.IndepMeasLLH.Exn" title="tomographer.densedm.IndepMeasLLH.Exn"><code class="xref py py-meth docutils literal"><span class="pre">Exn()</span></code></a>.  The return value is a 1-D NumPy array.</p>
+<p>If <cite>k</cite> is specified, then return the frequency associated to the POVM effect indexed by <cite>k</cite>. The returned value is an integer.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.densedm.IndepMeasLLH.addMeasEffect">
+<code class="descname">addMeasEffect</code><span class="sig-paren">(</span><em>E</em>, <em>n</em><span class="optional">[</span>, <em>check_validity=True</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.densedm.IndepMeasLLH.addMeasEffect" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add an observed POVM effect and a corresponding frequency. The argument <cite>E</cite> may be a 1-D NumPy array, in wihch case it is assumed to carry the X parameterization of the POVM effect.  Otherwise, <cite>E</cite> should be a complex square matrix describing the POVM effect in its usual matrix form.  In any case, <cite>n</cite> is an integer specifying how many times this POVM effect was observed (it may be set to 1).</p>
+<p>If <cite>check_validity</cite> is <cite>True</cite>, then some consistency checks are performed on the POVM effect, such as verifying it for positive semidefiniteness.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.densedm.IndepMeasLLH.logLikelihoodRho">
+<code class="descname">logLikelihoodRho</code><span class="sig-paren">(</span><em>rho</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.densedm.IndepMeasLLH.logLikelihoodRho" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the log-likelihood function at the state <cite>rho</cite>, specified by its density matrix given as a <cite>NumPy</cite> array.  This overload converts its argument to X-parameterization and calls <a class="reference internal" href="#tomographer.densedm.IndepMeasLLH.logLikelihoodX" title="tomographer.densedm.IndepMeasLLH.logLikelihoodX"><code class="xref py py-meth docutils literal"><span class="pre">logLikelihoodX()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.densedm.IndepMeasLLH.logLikelihoodX">
+<code class="descname">logLikelihoodX</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.densedm.IndepMeasLLH.logLikelihoodX" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the log-likelihood function.  The argument is the X parameterization of the state at which the log-likelihood should be evaluated.  The log-likelihood function is defined as <span class="math">\(\ln\Lambda(\rho) = \sum_k N_k \ln\operatorname{tr}(E_k\cdot\rho)\)</span>, where <span class="math">\(E_k\)</span> is the POVM effect indexed by <cite>k</cite> and <span class="math">\(N_k\)</span> is the corresponding frequency.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.densedm.IndepMeasLLH.resetMeas">
+<code class="descname">resetMeas</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.densedm.IndepMeasLLH.resetMeas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Forget any stored POVM effects.  The internal <cite>Exn</cite> and <cite>Nx</cite> objects are cleared.  You may start adding POVM effects with <a class="reference internal" href="#tomographer.densedm.IndepMeasLLH.setMeas" title="tomographer.densedm.IndepMeasLLH.setMeas"><code class="xref py py-meth docutils literal"><span class="pre">setMeas()</span></code></a> or <a class="reference internal" href="#tomographer.densedm.IndepMeasLLH.addMeasEffect" title="tomographer.densedm.IndepMeasLLH.addMeasEffect"><code class="xref py py-meth docutils literal"><span class="pre">addMeasEffect()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.densedm.IndepMeasLLH.setMeas">
+<code class="descname">setMeas</code><span class="sig-paren">(</span><em>E</em>, <em>Nx</em><span class="optional">[</span>, <em>check_validity=True</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.densedm.IndepMeasLLH.setMeas" title="Permalink to this definition">¶</a></dt>
+<dd><p>Set all the measurement data in one go and clear any previously given measurement data.</p>
+<p>The object <cite>E</cite> is iterated over (if it is a <cite>NumPy</cite> array, the iteration goes over the first dimension) and each element is interpreted as a POVM effect.  Each element is understood as for <a class="reference internal" href="#tomographer.densedm.IndepMeasLLH.addMeasEffect" title="tomographer.densedm.IndepMeasLLH.addMeasEffect"><code class="xref py py-meth docutils literal"><span class="pre">addMeasEffect()</span></code></a> either as the X-parameterization if a POVM effect, if a 1-D array is specified, or as the matrix representation of the POVM effect.  For example, <cite>E</cite> may be</p>
+<blockquote>
+<div><ul class="simple">
+<li>a list of complex 2-D <cite>NumPy</cite> arrays, specifying the list of POVM effects in matrix representation;</li>
+<li>a 3-D <cite>NumPy</cite> array, where the first index designates the POVM effect, and the second and third     dimension are the matrix dimensions of each POVM effect;</li>
+<li>a matrix (<cite>NumPy</cite> array) of the same form as returned by <a class="reference internal" href="#tomographer.densedm.IndepMeasLLH.Exn" title="tomographer.densedm.IndepMeasLLH.Exn"><code class="xref py py-meth docutils literal"><span class="pre">Exn()</span></code></a>, i.e., with each     row being the the X-parameterization of a POVM effect;</li>
+<li>a list of 1-D <cite>NumPy</cite> arrays specifying the X parameterization of each POVM effect.</li>
+</ul>
+</div></blockquote>
+<p>The argument <cite>Nx</cite> must be a list (or <cite>numpy.array</cite>) specifying the corresponding frequencies for each POVM effect. <cite>Nx</cite> must be of the same length as <cite>E</cite> (or, if <cite>E</cite> is a <cite>NumPy</cite> array, as the first dimension of <cite>E</cite>).</p>
+<p>If <cite>check_validity</cite> is <cite>True</cite>, then some consistency checks are performed on the POVM effects, such as verifying them for positive semidefiniteness.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.densedm.ParamX">
+<em class="property">class </em><code class="descclassname">tomographer.densedm.</code><code class="descname">ParamX</code><a class="headerlink" href="#tomographer.densedm.ParamX" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pybind11_builtins.pybind11_object_48</span></code></p>
+<p>Calculates the X-parameterization of hermitian matrices (and back).</p>
+<p>This Python class is a wrapper for the C++ class <a class="reference external" href="../class_tomographer_1_1_dense_d_m_1_1_param_x.html">Tomographer::DenseDM::ParamX</a>.</p>
+<dl class="function">
+<dt id="tomographer.densedm.ParamX.ParamX">
+<code class="descname">ParamX</code><span class="sig-paren">(</span><em>dmt</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.densedm.ParamX.ParamX" title="Permalink to this definition">¶</a></dt>
+<dd><p>Constructor. Pass on a <a class="reference internal" href="#tomographer.densedm.DMTypes" title="tomographer.densedm.DMTypes"><code class="xref py py-class docutils literal"><span class="pre">DMTypes</span></code></a> instance specifying the dimension of the quantum system.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.densedm.ParamX.HermToX">
+<code class="descname">HermToX</code><span class="sig-paren">(</span><em>Herm</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.densedm.ParamX.HermToX" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the X-parameterization of the Hermitian matrix <cite>Herm</cite>.  Returns a 1-D <cite>numpy.array</cite> object.  Only the lower triangluar portion of the matrix is accessed by this method.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.densedm.ParamX.XToHerm">
+<code class="descname">XToHerm</code><span class="sig-paren">(</span><em>x</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.densedm.ParamX.XToHerm" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the Hermitian matrix corresponding to the given X-parameterization vector.  The vector is expected to be a <cite>numpy.array</cite> object.  Returns a 2-D <cite>numpy.array</cite> object containing the full Hermitian matrix.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Tomographer Python Interface</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tomographer._hist_classes.html">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.multiproc.html">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tomorun.html">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.mhrwtasks.html">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.querrorbars.html">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tools.html">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.jpyutil.html">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.include.html">Utilities for compiling other modules (<cite>tomographer.include</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.version.html">Version and compilation information (<cite>tomographer.version</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_module.html">Writing Special-Purpose C++ Code with a Python Interface</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="tomographer.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="tomographer.multiproc.html" title="previous chapter">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+      <li>Next: <a href="tomographer.tomorun.html" title="next chapter">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Philippe Faist.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/tomographer.densedm.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

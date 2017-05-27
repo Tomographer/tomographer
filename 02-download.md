@@ -66,11 +66,11 @@ location. For a system-wide install, simply symlink the `tomorun` executable to,
 ### Windows
 
 Unpack the archive anywhere on your system, such as inside `C:\Program Files`. It will
-create a single folder named `tomographer-<VERSION>-<SYS>`.
+create a single folder named `tomographer-{{ site.tomographer_latest_version }}-win-mingw32`.
 
 You can then access the `tomorun` executable, using the command-line DOS prompt, as
 
-    >C:\Program Files\tomographer-<VERSION>-<SYS>\bin\tomorun.exe [options]
+    >C:\Program Files\tomographer-{{ site.tomographer_latest_version }}-win-mingw32\bin\tomorun.exe [options]
 
 
 Downloading & Installing Tomorun From Source
@@ -81,10 +81,10 @@ Prerequisites
 
 You'll need:
 
-  - a recent C++ compiler (g++ >= 4.6, Intel ICC >= 14, LLVM/Clang++ >= 3.8)
-  - [CMake >= 3.1](http://www.cmake.org/)
-  - [Boost libraries](http://www.boost.org/)
-  - [Eigen3 library >= 3.3](http://eigen.tuxfamily.org/)
+  - a recent C++ compiler (g++ ≥ 4.8, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.3)
+  - [CMake ≥ 3.1](http://www.cmake.org/)
+  - [Boost libraries ≥ 1.40](http://www.boost.org/)
+  - [Eigen3 library ≥ 3.3](http://eigen.tuxfamily.org/)
   - [MatIO library](https://sourceforge.net/projects/matio/)
 
 A recent C++ compiler is required as some C++11 features and elements of its

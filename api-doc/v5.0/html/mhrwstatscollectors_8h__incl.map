@@ -1,0 +1,14 @@
+<map id="tomographer/mhrwstatscollectors.h" name="tomographer/mhrwstatscollectors.h">
+<area shape="rect" id="node8" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="550,399,730,424"/>
+<area shape="rect" id="node20" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="2268,239,2455,264"/>
+<area shape="rect" id="node31" href="$statusprovider_8h_source.html" title="tomographer/tools/statusprovider.h" alt="" coords="144,159,371,184"/>
+<area shape="rect" id="node32" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="676,239,847,264"/>
+<area shape="rect" id="node41" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="1560,79,1704,104"/>
+<area shape="rect" id="node45" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1146,152,1305,191"/>
+<area shape="rect" id="node15" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="640,472,829,497"/>
+<area shape="rect" id="node17" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="1901,472,2091,497"/>
+<area shape="rect" id="node27" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="1720,319,1883,344"/>
+<area shape="rect" id="node36" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="731,319,925,344"/>
+<area shape="rect" id="node39" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="1323,319,1594,344"/>
+<area shape="rect" id="node43" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="1741,239,1907,264"/>
+</map>

@@ -30,24 +30,25 @@ include:
   # These dirs used by sphinx have an initial underscore and need to be explicitly included
   - _static
   - _sources
+  - _downloads
 
 
 # ------------------------------------------
 # Tomographer available downloads & versions
 # ------------------------------------------
 
-tomographer_latest_version: v4.1
-tomographer_apidoc_version: v4.1
+tomographer_latest_version: v5.0
+tomographer_apidoc_version: v5.0
 tomographer_binaries:
-  - version: 'v4.0'
+  - version: 'v5.0'
     system: 'macosx'
     ext: '.tar.gz'
     title: 'Mac OS X Binaries (64-bit, TAR.GZ archive), OS X >= 10.6'
-  - version: 'v4.0'
+  - version: 'v5.0'
     system: 'linux'
     ext: '.tar.gz'
     title: "Linux Binaries (64-bit, TAR.GZ archive), statically linked"
-  - version: 'v4.0'
+  - version: 'v5.0'
     system: 'win-mingw32'
     ext: '.zip'
     title: "Windows Binaries (32-bit, ZIP archive)"
