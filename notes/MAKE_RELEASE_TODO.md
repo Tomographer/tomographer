@@ -36,3 +36,6 @@ Checklist For Releasing a New Version of Tomographer
 
 - [ ] Generate source Python package (NOT WHEEL) via `python3 setup.py sdist`;
       upload it to PyPI.
+      
+- [ ] Inspect and clean up Zenodo entry (click on DOI to get there)
+
