@@ -3,7 +3,7 @@ Change Log
 ==========
 
 
-## v5.0 (?????????)
+## v5.0 (2017-05-27)
 
   * Added "light jumps" random walk algorithm. The new algorithm chooses
     differently which next candidate point (for jumping to): instead of
