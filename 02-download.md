@@ -31,7 +31,7 @@ Download
 If there's a binary distribution for your system, that's your best option.
 
 {% for b in site.tomographer_binaries %}
-- [{{ b.title }}](https://github.com/Tomographer/tomographer/releases/download/{{ b.version }}/tomographer-{{ b.version }}-{{ b.system }}{{ b.ext }}){:target="_blank"}
+- [{{ b.title }}](https://github.com/Tomographer/tomographer/releases/download/{{ b.version }}/tomographer-tomorun-{{ b.version }}-{{ b.system }}{{ b.ext }}){:target="_blank"}
 {% endfor %}
 
 If you couldn't find a binary for your system, or if the binary is incompatible or doesn't
