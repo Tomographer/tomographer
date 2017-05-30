@@ -28,7 +28,8 @@ Downloading & Installing Tomorun Binary
 Download
 --------
 
-If there's a binary distribution for your system, that's your best option.
+If there's a binary distribution for your system, that's your best option.  ([See all
+releases here](https://github.com/Tomographer/tomographer/releases/).)
 
 {% for b in site.tomographer_binaries %}
 - [{{ b.title }}](https://github.com/Tomographer/tomographer/releases/download/{{ b.version }}/tomographer-tomorun-{{ b.version }}-{{ b.system }}{{ b.ext }}){:target="_blank"}
