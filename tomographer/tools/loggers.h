@@ -400,15 +400,16 @@ public:
 };
 
 
-template<typename Fn, typename = void>
-struct IsOstreamArgCallable : public std::false_type { };
 template<typename Fn>
-struct IsOstreamArgCallable<
-  Fn, 
-  typename std::enable_if<
-    std::is_convertible<typename std::remove_reference<Fn>::type,
-                        std::function<void(std::ostream&)> >::value, void>::type
-  >  : public std::true_type { };
+struct IsOstreamArgCallable
+{
+  enum {
+    value = std::is_convertible<
+      typename std::remove_reference<Fn>::type,
+      std::function<void(std::ostream&)>
+    >::value
+  };
+};
 
 } // namespace tomo_internal
 
