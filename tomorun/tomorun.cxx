@@ -211,6 +211,14 @@ int main(int argc, char **argv)
       });
   }
 
+
+  // warn if the user selected obsolete option(s)
+  if (opt.Nchunk != 1) {
+    logger.warning([&](std::ostream & stream) {
+      stream << "Obsolete --n-chunk option has no effect.";
+      });
+  }
+
   //
   // ---------------------------------------------------------------------------
   // Read tomography data from MATLAB file

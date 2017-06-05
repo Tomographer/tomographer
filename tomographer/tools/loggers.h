@@ -35,7 +35,7 @@
 #include <sstream> // std::stringstream
 #include <iostream>
 #include <functional> // std::function
-#include <type_traits> // std::enable_if
+#include <type_traits> // std::enable_if, std::true_type
 #include <map>
 
 #include <boost/algorithm/string.hpp> // to_upper()
@@ -51,13 +51,6 @@
  */
 
 
-
-#ifndef TOMOGRAPHER_PARSED_BY_DOXYGEN
-
-#define ENABLE_IF_Fn_CALLABLE_OSTREAM                                      \
-  typename std::enable_if<std::is_convertible<Fn,std::function<void(std::ostream&)> >::value, void>::type
-
-#endif
 
 
 #ifdef ERROR
@@ -170,7 +163,7 @@ public:
   //! Construct a level using a string level name
   LogLevel(const char * s) { setLevel(s); }
   //! Construct a level using a string level name
-  LogLevel(const std::string& s) { setLevel(s); }
+  LogLevel(std::string s) { setLevel(std::move(s)); }
 
   //! Get the stored level code. See \ref LogLevelCode.
   inline int level() const { return _level; }
@@ -230,7 +223,7 @@ inline std::istream & operator>>(std::istream & str, LogLevel &l)
 {
   std::string s;
   str >> s;
-  l.setLevel(s);
+  l.setLevel(std::move(s));
   return str;
 }
 //! C++ output stream operator for \ref LogLevel
@@ -405,7 +398,19 @@ public:
     tomographer_assert(0 && "Call to LoggerRuntimeLevel::setLogLevel() for Logger which defines HasOwnGetLevel=1!");
   }
 };
-}
+
+
+template<typename Fn, typename = void>
+struct IsOstreamArgCallable : public std::false_type { };
+template<typename Fn>
+struct IsOstreamArgCallable<
+  Fn, 
+  typename std::enable_if<
+    std::is_convertible<typename std::remove_reference<Fn>::type,
+                        std::function<void(std::ostream&)> >::value, void>::type
+  >  : public std::true_type { };
+
+} // namespace tomo_internal
 
 
 /** \brief Base logger class.
@@ -458,7 +463,7 @@ public:
    * The logging level is set to \a level, by default \ref Logger::INFO. Any messages with
    * lesser severity will be automatically discarded.
    *
-   * Note that if the derived logger class provides its own \c logger() method, and
+   * Note that if the derived logger class provides its own \c level() method, and
    * declares it with \a LoggerTraits<Derived>::HasOwnGetLevel, then the level provided
    * here is discarded and ignored.
    */
@@ -475,24 +480,37 @@ public:
    * arguments.
    */
   PRINTF3_ARGS_SAFE
-  inline void error(const char * origin, const char * fmt, ...);
+  inline void error(const char * origin, const char * fmt, ...)
+  {
+    va_list ap;
+    va_start(ap, fmt);
+    log<ERROR>(origin, fmt, ap);
+    va_end(ap);
+  }
+
   /** \brief emit an error message
    *
    * Call this method to report an error.
    *
-   * See \ref debug(const char *, const std::string&) for information about the function
+   * See \ref debug(const char *, std::string) for information about the function
    * arguments.
    */
-  inline void error(const char * origin, const std::string & msg);
+  inline void error(const char * origin, std::string msg)
+  {
+    log<ERROR>(origin, std::move(msg));
+  }
+
   /** \brief emit an error message
    *
    * Call this method to report an error.
    *
    * See \ref debug(const char *, Fn) for information about the function arguments.
    */
-  template<typename Fn>
-  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-  error(const char * origin, Fn f);
+  template<typename Fn, TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  inline void error(const char * origin, Fn && f)
+  {
+    log<ERROR>(origin, std::forward<Fn>(f));
+  }
 
   /** \brief emit a warning message
    *
@@ -502,24 +520,37 @@ public:
    * arguments.
    */
   PRINTF3_ARGS_SAFE
-  inline void warning(const char * origin, const char * fmt, ...);
+  inline void warning(const char * origin, const char * fmt, ...)
+  {
+    va_list ap;
+    va_start(ap, fmt);
+    log<WARNING>(origin, fmt, ap);
+    va_end(ap);
+  }
+
   /** \brief emit a warning message
    *
    * Call this method to report a warning.
    *
-   * See \ref debug(const char*, const std::string&) for information about the function
+   * See \ref debug(const char*, std::string) for information about the function
    * arguments.
    */
-  inline void warning(const char * origin, const std::string & msg);
+  inline void warning(const char * origin, std::string msg)
+  {
+    log<WARNING>(origin, std::move(msg));
+  }
+
   /** \brief emit a warning message
    *
    * Call this method to report a warning.
    *
    * See \ref debug(const char *, Fn) for information about the function arguments.
    */
-  template<typename Fn>
-  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-  warning(const char * origin, Fn f);
+  template<typename Fn, TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  inline void warning(const char * origin, Fn && f)
+  {
+    log<WARNING>(origin, std::forward<Fn>(f));
+  }
 
   /** \brief emit an information/notice message
    *
@@ -529,24 +560,36 @@ public:
    * arguments.
    */
   PRINTF3_ARGS_SAFE
-  inline void info(const char * origin, const char * fmt, ...);
+  inline void info(const char * origin, const char * fmt, ...)
+  {
+    va_list ap;
+    va_start(ap, fmt);
+    log<INFO>(origin, fmt, ap);
+    va_end(ap);
+  }
+  
   /** \brief emit an information/notice message
    *
    * Call this method to report an information/notice message.
    *
-   * See \ref debug(const char*, const std::string&) for information about the function
+   * See \ref debug(const char*, std::string) for information about the function
    * arguments.
    */
-  inline void info(const char * origin, const std::string & msg);
+  inline void info(const char * origin, std::string msg)
+  {
+    log<INFO>(origin, std::move(msg));
+  }
   /** \brief emit an information/notice message
    *
    * Call this method to report an information/notice message.
    *
    * See \ref debug(const char *, Fn) for information about the function arguments.
    */
-  template<typename Fn>
-  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-  info(const char * origin, Fn f);
+  template<typename Fn, TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  inline void info(const char * origin, Fn && f)
+  {
+    log<INFO>(origin, std::forward<Fn>(f));
+  }
 
   /** \brief emit an debug message
    *
@@ -566,7 +609,13 @@ public:
    * \param ... additional arguments for the \c printf formatting string.
    */
   PRINTF3_ARGS_SAFE
-  inline void debug(const char * origin, const char * fmt, ...);
+  inline void debug(const char * origin, const char * fmt, ...)
+  {
+    va_list ap;
+    va_start(ap, fmt);
+    log<DEBUG>(origin, fmt, ap);
+    va_end(ap);
+  }
 
   /** \brief emit an debug message
    *
@@ -584,7 +633,11 @@ public:
    * specify the name of the function with its class (e.g. \c "MyClass::my_method()").
    * \param msg the log message to produce.
    */
-  inline void debug(const char * origin, const std::string & msg);
+  inline void debug(const char * origin, std::string msg)
+  {
+    log<DEBUG>(origin, std::move(msg));
+  }
+
   /** \brief emit an debug message
    *
    * Call this method to report a debugging message with this logger. This will relay the
@@ -613,9 +666,11 @@ public:
    * before transmitting it to the underlying logger implementation. (But don't rely on
    * this!)
    */
-  template<typename Fn>
-  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-  debug(const char * origin, Fn f);
+  template<typename Fn, TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  inline void debug(const char * origin, Fn && f)
+  {
+    log<DEBUG>(origin, std::forward<Fn>(f));
+  }
 
   /** \brief emit a very verbose debugging message
    *
@@ -625,24 +680,36 @@ public:
    * arguments.
    */
   PRINTF3_ARGS_SAFE
-  inline void longdebug(const char * origin, const char * fmt, ...);
+  inline void longdebug(const char * origin, const char * fmt, ...)
+  {
+    va_list ap;
+    va_start(ap, fmt);
+    log<LONGDEBUG>(origin, fmt, ap);
+    va_end(ap);
+  }
+
   /** \brief emit a very verbose debugging message
    *
    * Call this method to report debugging messages which are emitted very often.
    *
-   * See \ref debug(const char*, const std::string&) for information about the function
+   * See \ref debug(const char*, std::string) for information about the function
    * arguments.
    */
-  inline void longdebug(const char * origin, const std::string & msg);
+  inline void longdebug(const char * origin, std::string msg)
+  {
+    log<LONGDEBUG>(origin, std::move(msg));
+  }
   /** \brief emit a very verbose debugging message
    *
    * Call this method to report debugging messages which are emitted very often.
    *
    * See \ref debug(const char *, Fn) for information about the function arguments.
    */
-  template<typename Fn>
-  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-  longdebug(const char * origin, Fn f);
+  template<typename Fn, TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  inline void longdebug(const char * origin, Fn && f)
+  {
+    log<LONGDEBUG>(origin, std::forward<Fn>(f));
+  }
 
 
   /** \brief emit a log message at the given log level.
@@ -655,17 +722,28 @@ public:
    * function arguments.
    */
   PRINTF4_ARGS_SAFE
-  inline void log(int level, const char * origin, const char * fmt, ...);
+  inline void log(int level, const char * origin, const char * fmt, ...)
+  {
+    va_list ap;
+    va_start(ap, fmt);
+    _do_log(level, origin, fmt, ap);
+    va_end(ap);
+  }
+
   /** \brief emit a log message at the given log level.
    *
    * You should never need to call this method, and I'm not sure it's a good design
    * choice. (Mind that messages logged here may not be statically removed if a static
    * minimum level is set.)
    *
-   * Otherwise, see \ref debug(const char*, const std::string&) for information about the
+   * Otherwise, see \ref debug(const char*, std::string) for information about the
    * function arguments.
    */
-  inline void log(int level, const char * origin, const std::string & msg);
+  inline void log(int level, const char * origin, std::string msg)
+  {
+    _do_log(level, origin, std::move(msg));
+  }
+
   /** \brief emit a log message at the given log level.
    *
    * You should never need to call this method, and I'm not sure it's a good design
@@ -675,10 +753,11 @@ public:
    * Otherwise, see \ref debug(const char *, Fn) for information about the function
    * arguments.
    */
-  template<typename Fn>
-  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-  log(int level, const char * origin, Fn f);
-
+  template<typename Fn, TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  inline void log(int level, const char * origin, Fn && f)
+  {
+    _do_log(level, origin, std::forward<Fn>(f));
+  }
 
 
   /** \brief emit a log message at the given log level.
@@ -689,9 +768,20 @@ public:
    * See \ref debug(const char *, const char *, ...) for information about the
    * function arguments.
    */
-  template<int Level>
+  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value)>
   PRINTF3_ARGS_SAFE
-  inline void log(const char * origin, const char * fmt, ...);
+  inline void log(const char * origin, const char * fmt, ...)
+  {
+    va_list ap;
+    va_start(ap, fmt);
+    _do_log(Level, origin, fmt, ap);
+    va_end(ap);
+  }
+  //! Special-case implementation for messages which are known to be discarded at compile time
+  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(!StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value)>
+  PRINTF3_ARGS_SAFE
+  inline void log(const char * , const char * , ...) { }
+
   /** \brief emit a log message at the given log level.
    *
    * The log level is given statically. You shouldn't need to call this method directly,
@@ -701,18 +791,32 @@ public:
    * of \c ... . The format string and argument list are expected to be the same as for
    * \ref log(const char * origin, const char * fmt, ...) .
    */
-  template<int Level>
-  inline void log(const char * origin, const char * fmt, va_list ap);
+  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value)>
+  inline void log(const char * origin, const char * fmt, va_list ap)
+  {
+    _do_log(Level, origin, fmt, ap);
+  }
+  //! Special-case implementation for messages which are known to be discarded at compile time
+  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(!StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value)>
+  inline void log(const char * , const char * , va_list ) { }
+
   /** \brief emit a log message at the given log level.
    *
    * The log level is given statically. You shouldn't need to call this method directly,
    * it's probably more readable to use \ref debug(), \ref warning(), etc.
    *
-   * Otherwise, see \ref debug(const char*, const std::string&) for information about the
+   * Otherwise, see \ref debug(const char*, std::string) for information about the
    * function arguments.
    */
-  template<int Level>
-  inline void log(const char * origin, const std::string & msg);
+  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value)>
+  inline void log(const char * origin, std::string msg)
+  {
+    _do_log(Level, origin, std::move(msg));
+  }
+  //! Special-case implementation for messages which are known to be discarded at compile time
+  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(!StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value)>
+  inline void log(const char * , std::string ) { }
+
   /** \brief emit a log message at the given log level.
    *
    * The log level is given statically. You shouldn't need to call this method directly,
@@ -721,9 +825,18 @@ public:
    * Otherwise, see \ref debug(const char *, Fn) for information about the function
    * arguments.
    */
-  template<int Level, typename Fn>
-  inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-  log(const char * origin, Fn f);
+  template<int Level, typename Fn,
+           TOMOGRAPHER_ENABLED_IF_TMPL(StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value &&
+                                       tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  inline void log(const char * origin, Fn f)
+  {
+    _do_log(Level, origin, f);
+  }
+  //! Special-case implementation for messages which are known to be discarded at compile time
+  template<int Level, typename Fn,
+           TOMOGRAPHER_ENABLED_IF_TMPL(!StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value &&
+                                       tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  inline void log(const char * , Fn ) { }
 
 
   /** \brief Check whether the logger is statically disabled for some levels
@@ -767,7 +880,7 @@ public:
    */
   inline bool enabledFor(int level_) const
   {
-    return derived()->staticallyEnabledFor(level_) &&
+    return staticallyEnabledFor(level_) &&
       isAtLeastOfSeverity(level_, getLevel());
   };
 
@@ -842,335 +955,46 @@ protected:
 #endif
 
 private:
+
+  TOMOGRAPHER_ENABLED_IF(!HasFilterByOrigin)
+  inline bool _test_filter_by_origin(int , const char * ) const { return true; }
+  TOMOGRAPHER_ENABLED_IF(HasFilterByOrigin)
+  inline bool _test_filter_by_origin(int level, const char * origin)
+  {
+    return derived()->filterByOrigin(level, origin);
+  }
+
+  inline bool _test_should_emit(int level, const char * origin)
+  {
+    return enabledFor(level) && _test_filter_by_origin(level, origin) ;
+  }
+
+  inline void _do_log(int level, const char * origin, const char * fmt, va_list ap)
+  {
+    if (_test_should_emit(level, origin)) {
+      std::string msg = Tools::vfmts(fmt, ap);
+      derived()->emitLog(level, origin, std::move(msg));
+    }
+  }
+  inline void _do_log(int level, const char * origin, std::string msg)
+  {
+    if (_test_should_emit(level, origin)) {
+      derived()->emitLog(level, origin, std::move(msg));
+    }
+  }
+  template<typename Fn, TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  inline void _do_log(int level, const char * origin, Fn f)
+  {
+    if (_test_should_emit(level, origin)) {
+      std::ostringstream sstr;
+      f(sstr);
+      derived()->emitLog(level, origin, sstr.str());
+    }
+  }
+
 };
 
 
-namespace tomo_internal {
-  /** Helper to invoke the logger's filter_by_origin() method, if applicable.
-   */
-  template<typename Derived, bool derivedHasFilterByOrigin>
-  struct LoggerBaseHelperFilterByOrigin {
-    static inline bool test_logger_filter(LoggerBase<Derived> * /*loggerbase*/, int /*level*/,
-					  const char * /*origin*/)
-    {
-      // do nothing by default
-      return true;
-    }
-  };
-  //
-  // specialization for loggers with filtering by origin
-  //
-  template<typename Derived>
-  struct LoggerBaseHelperFilterByOrigin<Derived, true> {
-    static inline bool test_logger_filter(LoggerBase<Derived> * loggerbase, int level,
-					  const char * origin)
-    {
-      return static_cast<const Derived*>(loggerbase)->filterByOrigin(level, origin);
-    }
-  };
-  /**
-   * Helper to decide whether to emit log entry or not for a given log level. This is
-   * separate from \c LoggerBase really only because otherwise it would have needed to be
-   * a public member to be accessible from \c LoggerBaseHelperStatic.
-   */
-  template<typename Derived>
-  struct LoggerBaseHelperDynamic {
-    static inline void call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin,
-                                     const std::string & msg)
-    {
-      //      try {
-        //printf("Calling emit_log(%d,\"%s\",\"%s\") on object %p\n", level, origin, msg.c_str(), loggerbase);
-      static_cast<Derived*>(loggerbase)->emitLog(level, origin, msg);
-      // } catch (const std::exception & e) {
-      //   std::fprintf(stderr,
-      //   	     "Warning in LoggerBaseHelperDynamic::call_emit_log(%d, \"%s\", \"%s\"):"
-      //   	     " Exception caught: %s\n",
-      //   	     level, origin, msg.c_str(), e.what());
-      // }
-    }
-    static inline bool test_should_emit(LoggerBase<Derived> * loggerbase, int level, const char * origin)
-    {
-      if ( ! static_cast<const Derived*>(loggerbase)->enabledFor(level) ) {
-	return false;
-      }
-      if ( ! LoggerBaseHelperFilterByOrigin<Derived, LoggerTraits<Derived>::HasFilterByOrigin>
-	   ::test_logger_filter(loggerbase, level, origin) ) {
-	return false;
-      }
-      return true;
-    }
-
-    static inline void test_and_call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin,
-                                              const std::string & msg)
-    {
-      if ( ! test_should_emit(loggerbase, level, origin) ) {
-        return;
-      }
-
-      call_emit_log(loggerbase, level, origin, msg);
-    }
-    static inline void test_and_call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin,
-                                              const char * fmt, va_list ap)
-    {
-      if ( ! test_should_emit(loggerbase, level, origin) ) {
-        return;
-      }
-
-      //      try {
-      const std::string msg = Tools::vfmts(fmt, ap);
-      call_emit_log(loggerbase, level, origin, msg);
-      // } catch (const std::exception & e) {
-      //   std::fprintf(stderr,
-      //   	     "Warning in LoggerBase::test_and_call_emit_log(%d, \"%s\", \"%s\", ...):"
-      //   	     " Exception caught: %s\n",
-      //   	     level, origin, fmt, e.what());
-      // }
-    }
-    template<typename Fn>
-    static inline
-    ENABLE_IF_Fn_CALLABLE_OSTREAM
-    test_and_call_emit_log(LoggerBase<Derived> * loggerbase, int level, const char * origin, Fn f)
-    {
-      if ( ! test_should_emit(loggerbase, level, origin) ) {
-        return;
-      }
-
-      //      try {
-      std::ostringstream sstr;
-      f(sstr);
-      call_emit_log(loggerbase, level, origin, sstr.str());
-      // } catch (const std::exception & e) {
-      //   std::fprintf(stderr, "Warning in LoggerBase::test_and_call_emit_log(%d, \"%s\", f(ostream)):"
-      //   	     " Exception caught: %s\n",
-      //   	     level, origin, e.what());
-      // }
-    }
-  };
-
-  /** \brief helper which delegates the call to the dynamic version \ref
-   * LoggerBaseHelperDynamic.
-   *
-   * If the log message should be statically discarded (as given by the template parameter
-   * \a isStaticallyDiscarded), then nothing is done.
-   */
-  template<typename Derived, int Level, bool isStaticallyDiscarded = false>
-  struct LoggerBaseHelperStatic2 {
-    template<typename... Args>
-    static inline void test_and_call_emit_log(LoggerBase<Derived> * loggerbase, const char * origin,
-                                              Args... args)
-    {
-      LoggerBaseHelperDynamic<Derived>::test_and_call_emit_log(loggerbase, Level, origin, args...);
-    }
-  };
-  // specialization for calls where the message should be statically discarded
-  template<typename Derived, int Level>
-  struct LoggerBaseHelperStatic2<Derived, Level, true> {
-    template<typename... Args>
-    static inline void test_and_call_emit_log(LoggerBase<Derived> *, const char *, Args...)
-    {
-      // discard logging message.
-    }
-  };
-
-  /** \brief Helper to statically decide whether to emit log entry or not for a given log
-   * level.
-   */
-  template<typename Derived, int Level>
-  struct LoggerBaseHelperStatic {
-    template<typename... Args>
-    static inline void test_and_call_emit_log(LoggerBase<Derived> * loggerbase, const char * origin,
-                                              Args... args)
-    {
-      // call the default or specialized version of our second helper, which will either
-      // relay the call the dynamic version or discard the message.
-      //std::fprintf(stderr,
-      //        "LoggerBaseHelperStatic<Derived,Level=%d>::test_and_call_emit_log(...). StaticMinimumSeverityLevel=%d\n",
-      //        (int)Level, (int)(LoggerTraits<Derived>::StaticMinimumSeverityLevel));
-      LoggerBaseHelperStatic2<
-	Derived, Level,
-	! StaticIsAtLeastOfSeverity<Level, LoggerTraits<Derived>::StaticMinimumSeverityLevel>::value
-	>::test_and_call_emit_log(
-	    loggerbase, origin, args...
-	    );
-    }
-  };
-  
-
-} // namespace tomo_internal
-
-
-template<typename Derived>
-inline void LoggerBase<Derived>::error(const char * origin, const char * fmt, ...)
-{
-  va_list ap;
-  va_start(ap, fmt);
-  derived()->template log<ERROR>(origin, fmt, ap);
-  va_end(ap);
-}
-
-template<typename Derived>
-inline void LoggerBase<Derived>::error(const char * origin, const std::string & msg)
-{
-  derived()->template log<ERROR>(origin, msg);
-}
-
-template<typename Derived>
-template<typename Fn>
-inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-LoggerBase<Derived>::error(const char * origin, Fn f)
-{
-  derived()->template log<ERROR>(origin, f);
-}
-
-
-template<typename Derived>
-inline void LoggerBase<Derived>::warning(const char * origin, const char * fmt, ...)
-{
-  va_list ap;
-  va_start(ap, fmt);
-  derived()->template log<WARNING>(origin, fmt, ap);
-  va_end(ap);
-}
-
-template<typename Derived>
-inline void LoggerBase<Derived>::warning(const char * origin, const std::string & msg)
-{
-  derived()->template log<WARNING>(origin, msg);
-}
-
-template<typename Derived>
-template<typename Fn>
-inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-LoggerBase<Derived>::warning(const char * origin, Fn f)
-{
-  derived()->template log<WARNING>(origin, f);
-}
-
-template<typename Derived>
-inline void LoggerBase<Derived>::info(const char * origin, const char * fmt, ...)
-{
-  va_list ap;
-  va_start(ap, fmt);
-  derived()->template log<INFO>(origin, fmt, ap);
-  va_end(ap);
-}
-
-template<typename Derived>
-inline void LoggerBase<Derived>::info(const char * origin, const std::string & msg)
-{
-  derived()->template log<INFO>(origin, msg);
-}
-
-template<typename Derived>
-template<typename Fn>
-inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-LoggerBase<Derived>::info(const char * origin, Fn f)
-{
-  derived()->template log<INFO>(origin, f);
-}
-
-template<typename Derived>
-inline void LoggerBase<Derived>::debug(const char * origin, const char * fmt, ...)
-{
-  va_list ap;
-  va_start(ap, fmt);
-  derived()->template log<DEBUG>(origin, fmt, ap);
-  va_end(ap);
-}
-
-template<typename Derived>
-inline void LoggerBase<Derived>::debug(const char * origin, const std::string & msg)
-{
-  derived()->template log<DEBUG>(origin, msg);
-}
-
-template<typename Derived>
-template<typename Fn>
-inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-LoggerBase<Derived>::debug(const char * origin, Fn f)
-{
-  derived()->template log<DEBUG>(origin, f);
-}
-
-template<typename Derived>
-inline void LoggerBase<Derived>::longdebug(const char * origin, const char * fmt, ...)
-{
-  va_list ap;
-  va_start(ap, fmt);
-  derived()->template log<LONGDEBUG>(origin, fmt, ap);
-  va_end(ap);
-}
-
-template<typename Derived>
-inline void LoggerBase<Derived>::longdebug(const char * origin, const std::string & msg)
-{
-  derived()->template log<LONGDEBUG>(origin, msg);
-}
-
-template<typename Derived>
-template<typename Fn>
-inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-LoggerBase<Derived>::longdebug(const char * origin, Fn f)
-{
-  derived()->template log<LONGDEBUG>(origin, f);
-}
-
-
-template<typename Derived>
-inline void LoggerBase<Derived>::log(int level, const char * origin, const char * fmt, ...)
-{
-  va_list ap;
-  va_start(ap, fmt);
-  tomo_internal::LoggerBaseHelperDynamic<Derived>::test_and_call_emit_log(this, level, origin, fmt, ap);
-  va_end(ap);
-}
-
-template<typename Derived>
-inline void LoggerBase<Derived>::log(int level, const char * origin, const std::string & msg)
-{
-  tomo_internal::LoggerBaseHelperDynamic<Derived>::test_and_call_emit_log(this, level, origin, msg);
-}
-
-template<typename Derived>
-template<typename Fn>
-inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-LoggerBase<Derived>::log(int level, const char * origin, Fn f)
-{
-  tomo_internal::LoggerBaseHelperDynamic<Derived>::test_and_call_emit_log(this, level, origin, f);
-}
-
-
-template<typename Derived>
-template<int Level>
-inline void LoggerBase<Derived>::log(const char * origin, const char * fmt, ...)
-{
-  va_list ap;
-  va_start(ap, fmt);
-  tomo_internal::LoggerBaseHelperStatic<Derived, Level>::test_and_call_emit_log(this, origin, fmt, ap);
-  va_end(ap);
-}
-
-template<typename Derived>
-template<int Level>
-inline void LoggerBase<Derived>::log(const char * origin, const char * fmt, va_list ap)
-{
-  tomo_internal::LoggerBaseHelperStatic<Derived, Level>::test_and_call_emit_log(this, origin, fmt, ap);
-}
-
-template<typename Derived>
-template<int Level>
-inline void LoggerBase<Derived>::log(const char * origin, const std::string & msg)
-{
-  tomo_internal::LoggerBaseHelperStatic<Derived, Level>::test_and_call_emit_log(this, origin, msg);
-}
-
-template<typename Derived>
-template<int Level, typename Fn>
-inline ENABLE_IF_Fn_CALLABLE_OSTREAM
-LoggerBase<Derived>::log(const char * origin, Fn f)
-{
-  tomo_internal::LoggerBaseHelperStatic<Derived, Level>::test_and_call_emit_log(this, origin, f);
-}
 
 
 
@@ -1231,7 +1055,7 @@ public:
     display_origin = display_origin_;
   }
 
-  inline void emitLog(int level, const char * origin, const std::string & msg)
+  inline void emitLog(int level, const char * origin, std::string msg)
   {
     static const std::string level_prefixes[] = {
       std::string("\n\n*** ERROR -- "),
@@ -1242,7 +1066,7 @@ public:
         ( (level >= 0 && level < (int)std::extent<decltype(level_prefixes)>::value)
           ? level_prefixes[level] : std::string() )
         + ((display_origin && origin && origin[0]) ? "["+std::string(origin)+"] " : std::string())
-        + msg
+        + std::move(msg) // \a msg is moved here, don't use \a msg any more
         );
 
     // display the log message
@@ -1333,10 +1157,10 @@ public:
   {
   }
 
-  inline void emitLog(int /*level*/, const char * origin, const std::string& msg)
+  inline void emitLog(int /*level*/, const char * origin, std::string msg)
   {
     buffer << (origin&&origin[0] ? "["+std::string(origin)+"] " : std::string())
-           << msg.c_str() << "\n";
+           << std::move(msg) << "\n";
   }
 
   /** \brief Changes the runtime log level to a new value.
@@ -1417,9 +1241,9 @@ public:
   }
 
   //! Emit a log by relaying to the base logger
-  inline void emitLog(int level, const char * origin, const std::string& msg)
+  inline void emitLog(int level, const char * origin, std::string msg)
   {
-    baselogger.emitLog(level, origin, msg);
+    baselogger.emitLog(level, origin, std::move(msg));
   }
 
   //! Get the base logger's set level.
@@ -1559,9 +1383,9 @@ public:
    *
    * Simply relay the call to the base logger instance's \a emitLog().
    */
-  inline void emitLog(int level, const char * origin, const std::string& msg)
+  inline void emitLog(int level, const char * origin, std::string msg)
   {
-    baselogger.emitLog(level, origin, msg);
+    baselogger.emitLog(level, origin, std::move(msg));
   }
 
   /** \brief Message filtering by origin implementation.
@@ -1626,7 +1450,7 @@ namespace tomo_internal {
 /** \internal */
 struct extractTomoOrigin_helper {
   static inline constexpr LocalLoggerOriginSpec step2(const Tools::conststr fn, std::size_t last_doublecolons,
-							 std::size_t after_prelast_doublecolons)
+                                                      std::size_t after_prelast_doublecolons)
   {
     return ( fn.substr_e(after_prelast_doublecolons, last_doublecolons) == fn.substr(last_doublecolons+2)
 	     // fn is a constructor, so keep class name and use "::" as glue
@@ -1793,8 +1617,8 @@ public:
    *        for actually emitting the messages in some useful way (e.g. it may be a \ref
    *        FileLogger, \ref BufferLogger, etc.)
    */
-  LocalLogger(const std::string & origin_fn_name, BaseLoggerType & logger_)
-    : Base_(), _origin_prefix(origin_fn_name), _glue("::"), _baselogger(logger_)
+  LocalLogger(std::string origin_fn_name, BaseLoggerType & logger_)
+    : Base_(), _origin_prefix(std::move(origin_fn_name)), _glue("::"), _baselogger(logger_)
   {
     this->longdebug("[begin]");
   }
@@ -1804,8 +1628,8 @@ public:
    * to also specify the glue to use when concatenating origins for sub-loggers, see \ref
    * glue() and \ref subLogger().
    */
-  LocalLogger(const std::string & origin_prefix, const std::string & glue, BaseLoggerType & logger_)
-    : Base_(), _origin_prefix(origin_prefix), _glue(glue), _baselogger(logger_)
+  LocalLogger(std::string origin_prefix, std::string glue, BaseLoggerType & logger_)
+    : Base_(), _origin_prefix(std::move(origin_prefix)), _glue(std::move(glue)), _baselogger(logger_)
   {
     this->longdebug("[begin]");
   }
@@ -1904,9 +1728,9 @@ public:
    * You may use the macro \ref TOMO_ORIGIN as argument here to automatically set the
    * origin to the current function or method name.
    */
-  inline LocalLogger<LocalLogger<BaseLoggerType> > subLogger(const std::string & new_prefix)
+  inline LocalLogger<LocalLogger<BaseLoggerType> > subLogger(std::string new_prefix)
   {
-    return LocalLogger<LocalLogger<BaseLoggerType> >(new_prefix, *this);
+    return LocalLogger<LocalLogger<BaseLoggerType> >(std::move(new_prefix), *this);
   }
   /** \brief Create a sub-logger
    *
@@ -1914,10 +1738,10 @@ public:
    * object's glue string, which will be used in case the sub-logger itself becomes parent
    * to a (sub-)sub-logger.
    */
-  inline LocalLogger<LocalLogger<BaseLoggerType> > subLogger(const std::string & new_prefix,
-                                                             const std::string & new_glue)
+  inline LocalLogger<LocalLogger<BaseLoggerType> > subLogger(std::string new_prefix,
+                                                             std::string new_glue)
   {
-    return LocalLogger<LocalLogger<BaseLoggerType> >(new_prefix, new_glue, *this);
+    return LocalLogger<LocalLogger<BaseLoggerType> >(std::move(new_prefix), std::move(new_glue), *this);
   }
   /** \brief Create a sub-logger
    *
@@ -1996,9 +1820,9 @@ public:
    * The origin parameter is automatically set, and is not specified here.
    */
   template<int Level, typename... Args>
-  inline void log(Args... args)
+  inline void log(Args && ... args)
   {
-    Base_::template log<Level>("", args...);
+    Base_::template log<Level>("", std::forward<Args>(args)...);
   }
 
 
@@ -2020,11 +1844,11 @@ public:
   }
 
   //! Emit a log by relaying to the base logger
-  inline void emitLog(int level, const char * origin, const std::string& msg)
+  inline void emitLog(int level, const char * origin, std::string msg)
   {
     // this might also be called if we have a sublogger. In that case, if we have a
     // sublogger, then use their prefix.
-    _baselogger.emitLog(level, getSubOrigin(origin).c_str(), msg);
+    _baselogger.emitLog(level, getSubOrigin(origin).c_str(), std::move(msg));
   }
 
   //! Get the base logger's set level.
@@ -2060,30 +1884,34 @@ public:
  * As in the example above, you may use \ref TOMO_ORIGIN as the origin argument.
  */
 template<typename BaseLoggerType>
-inline LocalLogger<BaseLoggerType> makeLocalLogger(const std::string & origin_fn_name, BaseLoggerType & baselogger)
+inline LocalLogger<BaseLoggerType> makeLocalLogger(std::string origin_fn_name,
+                                                   BaseLoggerType & baselogger)
 {
-  return LocalLogger<BaseLoggerType>(origin_fn_name, baselogger);
+  return LocalLogger<BaseLoggerType>(std::move(origin_fn_name), baselogger);
 }
 
 /** \brief Create a local logger
  *
- * This function overload provides the same functionality as \ref makeLocalLogger(const
- * std::string&,BaseLoggerType&), but simply calls the other corresponding constructor.
+ * This function overload provides the same functionality as \ref
+ * makeLocalLogger(std::string,BaseLoggerType&), but simply calls the other corresponding
+ * constructor.
  */
 template<typename BaseLoggerType>
-inline LocalLogger<BaseLoggerType> makeLocalLogger(const std::string & origin_prefix, const std::string & glue,
-					    BaseLoggerType & baselogger)
+inline LocalLogger<BaseLoggerType> makeLocalLogger(std::string origin_prefix, std::string glue,
+                                                   BaseLoggerType & baselogger)
 {
-  return LocalLogger<BaseLoggerType>(origin_prefix, glue, baselogger);
+  return LocalLogger<BaseLoggerType>(std::move(origin_prefix), std::move(glue), baselogger);
 }
 
 /** \brief Create a local logger
  *
- * This function overload provides the same functionality as \ref makeLocalLogger(const
- * std::string&,BaseLoggerType&), but simply calls the other corresponding constructor.
+ * This function overload provides the same functionality as \ref
+ * makeLocalLogger(std::string,BaseLoggerType&), but simply calls the other corresponding
+ * constructor.
  */
 template<typename BaseLoggerType>
-inline LocalLogger<BaseLoggerType> makeLocalLogger(const LocalLoggerOriginSpec & spec, BaseLoggerType & baselogger)
+inline LocalLogger<BaseLoggerType> makeLocalLogger(const LocalLoggerOriginSpec & spec,
+                                                   BaseLoggerType & baselogger)
 {
   return LocalLogger<BaseLoggerType>(spec, baselogger);
 }

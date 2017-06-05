@@ -117,6 +117,8 @@ struct DummyLoggerImplementation : public Tomographer::Logger::LoggerBase<Derive
 
 
 
+DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerBasic, );
+
 DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinSeverity, enum {
     IsThreadSafe = 0,
     StaticMinimumSeverityLevel = Tomographer::Logger::WARNING,
@@ -134,6 +136,15 @@ DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerOriginFilter, enum {
     HasOwnGetLevel = 0,
     HasFilterByOrigin = 1
   });
+
+
+// helpers
+#define ERROR_INT_S std::to_string(Tomographer::Logger::ERROR)
+#define WARNING_INT_S std::to_string(Tomographer::Logger::WARNING)
+#define INFO_INT_S std::to_string(Tomographer::Logger::INFO)
+#define DEBUG_INT_S std::to_string(Tomographer::Logger::DEBUG)
+#define LONGDEBUG_INT_S std::to_string(Tomographer::Logger::LONGDEBUG)
+
 
 
 // -----------------------------------------------------------------------------
@@ -285,6 +296,165 @@ BOOST_AUTO_TEST_CASE(basiclogging)
                                           "[origin3] info message\n"
                                           "[origin4] warning message\n"
                                           "[origin5] error message\n"));
+}
+
+BOOST_AUTO_TEST_CASE(levelsareright)
+{
+  { std::string recorded;
+    DummyLoggerBasic logger(Tomographer::Logger::LONGDEBUG, &recorded);
+    logger.longdebug("ld", "long debug message %d", 1);
+    logger.longdebug("ld", std::string("long debug message"));
+    logger.longdebug("ld", [&](std::ostream & stream) { stream << "long debug message using stream"; });
+    logger.debug("d", "debug message %d", 1);
+    logger.debug("d", std::string("debug message"));
+    logger.debug("d", [&](std::ostream & stream) { stream << "debug message using stream"; });
+    logger.info("i", "info message %d", 1);
+    logger.info("i", std::string("info message"));
+    logger.info("i", [&](std::ostream & stream) { stream << "info message using stream"; });
+    logger.warning("w", "warning message %d", 1);
+    logger.warning("w", std::string("warning message"));
+    logger.warning("w", [&](std::ostream & stream) { stream << "warning message using stream"; });
+    logger.error("e", "error message %d", 1);
+    logger.error("e", std::string("error message"));
+    logger.error("e", [&](std::ostream & stream) { stream << "error message using stream"; });
+
+    BOOST_CHECK_EQUAL(recorded,
+                      "emitLog(level="+LONGDEBUG_INT_S+", origin=\"ld\", msg=\"long debug message 1\")\n"
+                      "emitLog(level="+LONGDEBUG_INT_S+", origin=\"ld\", msg=\"long debug message\")\n"
+                      "emitLog(level="+LONGDEBUG_INT_S+", origin=\"ld\", msg=\"long debug message using stream\")\n"
+                      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message 1\")\n"
+                      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message\")\n"
+                      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message using stream\")\n"
+                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message 1\")\n"
+                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message\")\n"
+                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message using stream\")\n"
+                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message 1\")\n"
+                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message\")\n"
+                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message using stream\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message 1\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message using stream\")\n"
+      );
+  }
+
+  { std::string recorded;
+    DummyLoggerBasic logger(Tomographer::Logger::DEBUG, &recorded);
+    logger.longdebug("ld", "long debug message %d", 1);
+    logger.longdebug("ld", std::string("long debug message"));
+    logger.longdebug("ld", [&](std::ostream & stream) { stream << "long debug message using stream"; });
+    logger.debug("d", "debug message %d", 1);
+    logger.debug("d", std::string("debug message"));
+    logger.debug("d", [&](std::ostream & stream) { stream << "debug message using stream"; });
+    logger.info("i", "info message %d", 1);
+    logger.info("i", std::string("info message"));
+    logger.info("i", [&](std::ostream & stream) { stream << "info message using stream"; });
+    logger.warning("w", "warning message %d", 1);
+    logger.warning("w", std::string("warning message"));
+    logger.warning("w", [&](std::ostream & stream) { stream << "warning message using stream"; });
+    logger.error("e", "error message %d", 1);
+    logger.error("e", std::string("error message"));
+    logger.error("e", [&](std::ostream & stream) { stream << "error message using stream"; });
+
+    BOOST_CHECK_EQUAL(recorded,
+                      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message 1\")\n"
+                      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message\")\n"
+                      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message using stream\")\n"
+                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message 1\")\n"
+                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message\")\n"
+                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message using stream\")\n"
+                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message 1\")\n"
+                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message\")\n"
+                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message using stream\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message 1\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message using stream\")\n"
+      );
+  }
+
+  { std::string recorded;
+    DummyLoggerBasic logger(Tomographer::Logger::INFO, &recorded);
+    logger.longdebug("ld", "long debug message %d", 1);
+    logger.longdebug("ld", std::string("long debug message"));
+    logger.longdebug("ld", [&](std::ostream & stream) { stream << "long debug message using stream"; });
+    logger.debug("d", "debug message %d", 1);
+    logger.debug("d", std::string("debug message"));
+    logger.debug("d", [&](std::ostream & stream) { stream << "debug message using stream"; });
+    logger.info("i", "info message %d", 1);
+    logger.info("i", std::string("info message"));
+    logger.info("i", [&](std::ostream & stream) { stream << "info message using stream"; });
+    logger.warning("w", "warning message %d", 1);
+    logger.warning("w", std::string("warning message"));
+    logger.warning("w", [&](std::ostream & stream) { stream << "warning message using stream"; });
+    logger.error("e", "error message %d", 1);
+    logger.error("e", std::string("error message"));
+    logger.error("e", [&](std::ostream & stream) { stream << "error message using stream"; });
+
+    BOOST_CHECK_EQUAL(recorded,
+                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message 1\")\n"
+                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message\")\n"
+                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message using stream\")\n"
+                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message 1\")\n"
+                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message\")\n"
+                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message using stream\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message 1\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message using stream\")\n"
+      );
+  }
+
+  { std::string recorded;
+    DummyLoggerBasic logger(Tomographer::Logger::WARNING, &recorded);
+    logger.longdebug("ld", "long debug message %d", 1);
+    logger.longdebug("ld", std::string("long debug message"));
+    logger.longdebug("ld", [&](std::ostream & stream) { stream << "long debug message using stream"; });
+    logger.debug("d", "debug message %d", 1);
+    logger.debug("d", std::string("debug message"));
+    logger.debug("d", [&](std::ostream & stream) { stream << "debug message using stream"; });
+    logger.info("i", "info message %d", 1);
+    logger.info("i", std::string("info message"));
+    logger.info("i", [&](std::ostream & stream) { stream << "info message using stream"; });
+    logger.warning("w", "warning message %d", 1);
+    logger.warning("w", std::string("warning message"));
+    logger.warning("w", [&](std::ostream & stream) { stream << "warning message using stream"; });
+    logger.error("e", "error message %d", 1);
+    logger.error("e", std::string("error message"));
+    logger.error("e", [&](std::ostream & stream) { stream << "error message using stream"; });
+
+    BOOST_CHECK_EQUAL(recorded,
+                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message 1\")\n"
+                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message\")\n"
+                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message using stream\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message 1\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message using stream\")\n"
+      );
+  }
+
+  { std::string recorded;
+    DummyLoggerBasic logger(Tomographer::Logger::ERROR, &recorded);
+    logger.longdebug("ld", "long debug message %d", 1);
+    logger.longdebug("ld", std::string("long debug message"));
+    logger.longdebug("ld", [&](std::ostream & stream) { stream << "long debug message using stream"; });
+    logger.debug("d", "debug message %d", 1);
+    logger.debug("d", std::string("debug message"));
+    logger.debug("d", [&](std::ostream & stream) { stream << "debug message using stream"; });
+    logger.info("i", "info message %d", 1);
+    logger.info("i", std::string("info message"));
+    logger.info("i", [&](std::ostream & stream) { stream << "info message using stream"; });
+    logger.warning("w", "warning message %d", 1);
+    logger.warning("w", std::string("warning message"));
+    logger.warning("w", [&](std::ostream & stream) { stream << "warning message using stream"; });
+    logger.error("e", "error message %d", 1);
+    logger.error("e", std::string("error message"));
+    logger.error("e", [&](std::ostream & stream) { stream << "error message using stream"; });
+
+    BOOST_CHECK_EQUAL(recorded,
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message 1\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message\")\n"
+                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message using stream\")\n"
+      );
+  }
+
 }
 
 BOOST_AUTO_TEST_CASE(formats)
