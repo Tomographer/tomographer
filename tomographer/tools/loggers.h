@@ -473,6 +473,76 @@ public:
   {
   }
 
+
+  /** \brief Check whether the logger is statically disabled for some levels
+   *
+   * \tparam Level the log level to test for.
+   *
+   * \return \c false if the logger was explicitly disabled for the level \a Level via
+   * LoggerTraits<Derived>::StaticMinimumSeverityLevel, otherwise returns \c true.
+   *
+   * If \c true was returned, this does not yet mean that a log message at the given level
+   * will necessarily be produced; in this case, rather, the message is not expliclty
+   * discarded and the logger's level set at run-time will be tested (see \ref
+   * enabledFor()).
+   */
+  static inline bool staticallyEnabledFor(int level)
+  {
+    return ( isAtLeastOfSeverity(level, StaticMinimumSeverityLevel) );
+  }
+
+  /** \brief Static version of staticallyEnabledFor()
+   *
+   */
+  template<int Level>
+  static inline constexpr bool staticallyEnabledFor()
+  {
+    return ( StaticIsAtLeastOfSeverity<
+	          Level,
+	          StaticMinimumSeverityLevel
+	          >::value ) ;
+  }
+
+  /** \brief Check whether messages at the given log level are enabled
+   *
+   * This function returns \c true if a message at the given level will be emitted, i.e. 
+   * transmitted to the underlying logger implementation.
+   *
+   * The condition for a log message to be emitted is that the message's log level not be
+   * explicitly disabled by LoggerTraits::StaticMinimumSeverityLevel, and that the
+   * message's log level be at least as important as the current level set for this logger
+   * (see \ref level()).
+   */
+  inline bool enabledFor(int level_) const
+  {
+    return staticallyEnabledFor(level_) &&
+      isAtLeastOfSeverity(level_, getLevel());
+  };
+
+#ifdef TOMOGRAPHER_PARSED_BY_DOXYGEN
+  // this method is actually implemented by the base class LoggerRuntimeLevel, and is only
+  // exposed in the case where the logger doesn't define its own method. This is important
+  // to avoid "ambiguous calls to `level()`".
+
+  /** \brief Get the log level set for this logger
+   *
+   * This is the log level given to the constructor at run-time, or set with the protected
+   * \c setLogLevel() method.
+   *
+   * This method is provided for if your own derived class doesn't provide it already,
+   * i.e. if the logger traits of your derived class declares \a HasOwnGetLevel to \c 0 or
+   * doesn't declare it. If you call this function with \a HasOwnGetLevel set to \c 1,
+   * then the derived class' method will be called. So if you override this method in the
+   * derived class with \c HasOwnGetLevel=1, then don't call the base implementation!
+   */
+  inline int level() const
+  {
+  }
+#endif
+  
+
+
+
   /** \brief emit an error message
    *
    * Call this method to report an error.
@@ -480,6 +550,7 @@ public:
    * See \ref debug(const char *, const char *, ...) for information about the function
    * arguments.
    */
+  TOMOGRAPHER_ENABLED_IF(staticallyEnabledFor<ERROR>())
   PRINTF3_ARGS_SAFE
   inline void error(const char * origin, const char * fmt, ...)
   {
@@ -496,6 +567,7 @@ public:
    * See \ref debug(const char *, std::string) for information about the function
    * arguments.
    */
+  TOMOGRAPHER_ENABLED_IF(staticallyEnabledFor<ERROR>())
   inline void error(const char * origin, std::string msg)
   {
     log<ERROR>(origin, std::move(msg));
@@ -507,11 +579,17 @@ public:
    *
    * See \ref debug(const char *, Fn) for information about the function arguments.
    */
-  template<typename Fn, TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  template<typename Fn,
+           TOMOGRAPHER_ENABLED_IF_TMPL(staticallyEnabledFor<ERROR>() &&
+                                       tomo_internal::IsOstreamArgCallable<Fn>::value)>
   inline void error(const char * origin, Fn && f)
   {
     log<ERROR>(origin, std::forward<Fn>(f));
   }
+
+  //! Special-case implementation for messages which are known to be discarded at compile time
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(!staticallyEnabledFor<ERROR>()), typename... Args>
+  inline void error(Args && ... ) { }
 
   /** \brief emit a warning message
    *
@@ -520,6 +598,7 @@ public:
    * See \ref debug(const char *, const char *, ...) for information about the function
    * arguments.
    */
+  TOMOGRAPHER_ENABLED_IF(staticallyEnabledFor<WARNING>())
   PRINTF3_ARGS_SAFE
   inline void warning(const char * origin, const char * fmt, ...)
   {
@@ -536,6 +615,7 @@ public:
    * See \ref debug(const char*, std::string) for information about the function
    * arguments.
    */
+  TOMOGRAPHER_ENABLED_IF(staticallyEnabledFor<WARNING>())
   inline void warning(const char * origin, std::string msg)
   {
     log<WARNING>(origin, std::move(msg));
@@ -547,11 +627,17 @@ public:
    *
    * See \ref debug(const char *, Fn) for information about the function arguments.
    */
-  template<typename Fn, TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  template<typename Fn,
+           TOMOGRAPHER_ENABLED_IF_TMPL(staticallyEnabledFor<WARNING>() &&
+                                       tomo_internal::IsOstreamArgCallable<Fn>::value)>
   inline void warning(const char * origin, Fn && f)
   {
     log<WARNING>(origin, std::forward<Fn>(f));
   }
+
+  //! Special-case implementation for messages which are known to be discarded at compile time
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(!staticallyEnabledFor<WARNING>()), typename... Args>
+  inline void warning(Args && ... ) { }
 
   /** \brief emit an information/notice message
    *
@@ -560,6 +646,7 @@ public:
    * See \ref debug(const char *, const char *, ...) for information about the function
    * arguments.
    */
+  TOMOGRAPHER_ENABLED_IF(staticallyEnabledFor<INFO>())
   PRINTF3_ARGS_SAFE
   inline void info(const char * origin, const char * fmt, ...)
   {
@@ -576,6 +663,7 @@ public:
    * See \ref debug(const char*, std::string) for information about the function
    * arguments.
    */
+  TOMOGRAPHER_ENABLED_IF(staticallyEnabledFor<INFO>())
   inline void info(const char * origin, std::string msg)
   {
     log<INFO>(origin, std::move(msg));
@@ -586,11 +674,18 @@ public:
    *
    * See \ref debug(const char *, Fn) for information about the function arguments.
    */
-  template<typename Fn, TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  template<typename Fn,
+           TOMOGRAPHER_ENABLED_IF_TMPL(staticallyEnabledFor<INFO>() &&
+                                       tomo_internal::IsOstreamArgCallable<Fn>::value)>
   inline void info(const char * origin, Fn && f)
   {
     log<INFO>(origin, std::forward<Fn>(f));
   }
+
+  //! Special-case implementation for messages which are known to be discarded at compile time
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(!staticallyEnabledFor<INFO>()), typename... Args>
+  inline void info(Args && ... ) { }
+
 
   /** \brief emit an debug message
    *
@@ -609,6 +704,7 @@ public:
    * \param fmt A \c printf format string
    * \param ... additional arguments for the \c printf formatting string.
    */
+  TOMOGRAPHER_ENABLED_IF(staticallyEnabledFor<DEBUG>())
   PRINTF3_ARGS_SAFE
   inline void debug(const char * origin, const char * fmt, ...)
   {
@@ -634,6 +730,7 @@ public:
    * specify the name of the function with its class (e.g. \c "MyClass::my_method()").
    * \param msg the log message to produce.
    */
+  TOMOGRAPHER_ENABLED_IF(staticallyEnabledFor<DEBUG>())
   inline void debug(const char * origin, std::string msg)
   {
     log<DEBUG>(origin, std::move(msg));
@@ -667,11 +764,17 @@ public:
    * before transmitting it to the underlying logger implementation. (But don't rely on
    * this!)
    */
-  template<typename Fn, TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  template<typename Fn,
+           TOMOGRAPHER_ENABLED_IF_TMPL(staticallyEnabledFor<DEBUG>() &&
+                                       tomo_internal::IsOstreamArgCallable<Fn>::value)>
   inline void debug(const char * origin, Fn && f)
   {
     log<DEBUG>(origin, std::forward<Fn>(f));
   }
+
+  //! Special-case implementation for messages which are known to be discarded at compile time
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(!staticallyEnabledFor<DEBUG>()), typename... Args>
+  inline void debug(Args && ... ) { }
 
   /** \brief emit a very verbose debugging message
    *
@@ -680,6 +783,7 @@ public:
    * See \ref debug(const char *, const char *, ...) for information about the function
    * arguments.
    */
+  TOMOGRAPHER_ENABLED_IF(staticallyEnabledFor<LONGDEBUG>())
   PRINTF3_ARGS_SAFE
   inline void longdebug(const char * origin, const char * fmt, ...)
   {
@@ -696,6 +800,7 @@ public:
    * See \ref debug(const char*, std::string) for information about the function
    * arguments.
    */
+  TOMOGRAPHER_ENABLED_IF(staticallyEnabledFor<LONGDEBUG>())
   inline void longdebug(const char * origin, std::string msg)
   {
     log<LONGDEBUG>(origin, std::move(msg));
@@ -706,11 +811,17 @@ public:
    *
    * See \ref debug(const char *, Fn) for information about the function arguments.
    */
-  template<typename Fn, TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::IsOstreamArgCallable<Fn>::value)>
+  template<typename Fn,
+           TOMOGRAPHER_ENABLED_IF_TMPL(staticallyEnabledFor<LONGDEBUG>() &&
+                                       tomo_internal::IsOstreamArgCallable<Fn>::value)>
   inline void longdebug(const char * origin, Fn && f)
   {
     log<LONGDEBUG>(origin, std::forward<Fn>(f));
   }
+
+  //! Special-case implementation for messages which are known to be discarded at compile time
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(!staticallyEnabledFor<LONGDEBUG>()), typename... Args>
+  inline void longdebug(Args && ... ) { }
 
 
   /** \brief emit a log message at the given log level.
@@ -769,7 +880,7 @@ public:
    * See \ref debug(const char *, const char *, ...) for information about the
    * function arguments.
    */
-  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value)>
+  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(staticallyEnabledFor<Level>())>
   PRINTF3_ARGS_SAFE
   inline void log(const char * origin, const char * fmt, ...)
   {
@@ -778,10 +889,6 @@ public:
     _do_log(Level, origin, fmt, ap);
     va_end(ap);
   }
-  //! Special-case implementation for messages which are known to be discarded at compile time
-  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(!StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value)>
-  PRINTF3_ARGS_SAFE
-  inline void log(const char * , const char * , ...) { }
 
   /** \brief emit a log message at the given log level.
    *
@@ -792,14 +899,11 @@ public:
    * of \c ... . The format string and argument list are expected to be the same as for
    * \ref log(const char * origin, const char * fmt, ...) .
    */
-  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value)>
+  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(staticallyEnabledFor<Level>())>
   inline void log(const char * origin, const char * fmt, va_list ap)
   {
     _do_log(Level, origin, fmt, ap);
   }
-  //! Special-case implementation for messages which are known to be discarded at compile time
-  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(!StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value)>
-  inline void log(const char * , const char * , va_list ) { }
 
   /** \brief emit a log message at the given log level.
    *
@@ -809,14 +913,11 @@ public:
    * Otherwise, see \ref debug(const char*, std::string) for information about the
    * function arguments.
    */
-  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value)>
+  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(staticallyEnabledFor<Level>())>
   inline void log(const char * origin, std::string msg)
   {
     _do_log(Level, origin, std::move(msg));
   }
-  //! Special-case implementation for messages which are known to be discarded at compile time
-  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(!StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value)>
-  inline void log(const char * , std::string ) { }
 
   /** \brief emit a log message at the given log level.
    *
@@ -827,85 +928,18 @@ public:
    * arguments.
    */
   template<int Level, typename Fn,
-           TOMOGRAPHER_ENABLED_IF_TMPL(StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value &&
+           TOMOGRAPHER_ENABLED_IF_TMPL(staticallyEnabledFor<Level>() &&
                                        tomo_internal::IsOstreamArgCallable<Fn>::value)>
   inline void log(const char * origin, Fn f)
   {
     _do_log(Level, origin, f);
   }
+
   //! Special-case implementation for messages which are known to be discarded at compile time
-  template<int Level, typename Fn,
-           TOMOGRAPHER_ENABLED_IF_TMPL(!StaticIsAtLeastOfSeverity<Level,StaticMinimumSeverityLevel>::value &&
-                                       tomo_internal::IsOstreamArgCallable<Fn>::value)>
-  inline void log(const char * , Fn ) { }
+  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(!staticallyEnabledFor<Level>()), typename ... Args>
+  inline void log(Args && ...) { }
 
 
-  /** \brief Check whether the logger is statically disabled for some levels
-   *
-   * \tparam Level the log level to test for.
-   *
-   * \return \c false if the logger was explicitly disabled for the level \a Level via
-   * LoggerTraits<Derived>::StaticMinimumSeverityLevel, otherwise returns \c true.
-   *
-   * If \c true was returned, this does not yet mean that a log message at the given level
-   * will necessarily be produced; in this case, rather, the message is not expliclty
-   * discarded and the logger's level set at run-time will be tested (see \ref
-   * enabledFor()).
-   */
-  static inline bool staticallyEnabledFor(int level)
-  {
-    return ( isAtLeastOfSeverity(level, StaticMinimumSeverityLevel) );
-  }
-
-  /** \brief Static version of staticallyEnabledFor()
-   *
-   */
-  template<int Level>
-  static inline bool staticallyEnabledFor()
-  {
-    return ( StaticIsAtLeastOfSeverity<
-	          Level,
-	          StaticMinimumSeverityLevel
-	          >::value ) ;
-  }
-
-  /** \brief Check whether messages at the given log level are enabled
-   *
-   * This function returns \c true if a message at the given level will be emitted, i.e. 
-   * transmitted to the underlying logger implementation.
-   *
-   * The condition for a log message to be emitted is that the message's log level not be
-   * explicitly disabled by LoggerTraits::StaticMinimumSeverityLevel, and that the
-   * message's log level be at least as important as the current level set for this logger
-   * (see \ref level()).
-   */
-  inline bool enabledFor(int level_) const
-  {
-    return staticallyEnabledFor(level_) &&
-      isAtLeastOfSeverity(level_, getLevel());
-  };
-
-#ifdef TOMOGRAPHER_PARSED_BY_DOXYGEN
-  // this method is actually implemented by the base class LoggerRuntimeLevel, and is only
-  // exposed in the case where the logger doesn't define its own method. This is important
-  // to avoid "ambiguous calls to `level()`".
-
-  /** \brief Get the log level set for this logger
-   *
-   * This is the log level given to the constructor at run-time, or set with the protected
-   * \c setLogLevel() method.
-   *
-   * This method is provided for if your own derived class doesn't provide it already,
-   * i.e. if the logger traits of your derived class declares \a HasOwnGetLevel to \c 0 or
-   * doesn't declare it. If you call this function with \a HasOwnGetLevel set to \c 1,
-   * then the derived class' method will be called. So if you override this method in the
-   * derived class with \c HasOwnGetLevel=1, then don't call the base implementation!
-   */
-  inline int level() const
-  {
-  }
-#endif
-  
 
 protected:
 

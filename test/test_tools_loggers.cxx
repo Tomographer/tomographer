@@ -137,13 +137,113 @@ DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerOriginFilter, enum {
     HasFilterByOrigin = 1
   });
 
+DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinSevLONGDEBUG, enum {
+    IsThreadSafe = 0,
+    StaticMinimumSeverityLevel = Tomographer::Logger::LONGDEBUG,
+    HasOwnGetLevel = 0,
+    HasFilterByOrigin = 0
+  });
+DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinSevDEBUG, enum {
+    IsThreadSafe = 0,
+    StaticMinimumSeverityLevel = Tomographer::Logger::DEBUG,
+    HasOwnGetLevel = 0,
+    HasFilterByOrigin = 0
+  });
+DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinSevINFO, enum {
+    IsThreadSafe = 0,
+    StaticMinimumSeverityLevel = Tomographer::Logger::INFO,
+    HasOwnGetLevel = 0,
+    HasFilterByOrigin = 0
+  });
+DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinSevWARNING, enum {
+    IsThreadSafe = 0,
+    StaticMinimumSeverityLevel = Tomographer::Logger::WARNING,
+    HasOwnGetLevel = 0,
+    HasFilterByOrigin = 0
+  });
+DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinSevERROR, enum {
+    IsThreadSafe = 0,
+    StaticMinimumSeverityLevel = Tomographer::Logger::ERROR,
+    HasOwnGetLevel = 0,
+    HasFilterByOrigin = 0
+  });
 
-// helpers
-#define ERROR_INT_S std::to_string(Tomographer::Logger::ERROR)
-#define WARNING_INT_S std::to_string(Tomographer::Logger::WARNING)
-#define INFO_INT_S std::to_string(Tomographer::Logger::INFO)
-#define DEBUG_INT_S std::to_string(Tomographer::Logger::DEBUG)
-#define LONGDEBUG_INT_S std::to_string(Tomographer::Logger::LONGDEBUG)
+
+// ------------------------------------------------------------------------------
+
+
+template<typename DummyLoggerType>
+void check_logs_at_level(int InitLevel, int level)
+{
+  // InitLevel = argument to DummyLoggerType constructor
+  // level = level at which the logger is expected to log; this is what we check here
+
+  BOOST_TEST_MESSAGE("Testing " << typeid(DummyLoggerType).name() << "("<<InitLevel<<")"
+                     << " for logging at level " << level) ;
+
+  std::string recorded;
+  DummyLoggerType logger(InitLevel, &recorded);
+  logger.longdebug("ld", "long debug message %d", 1);
+  logger.longdebug("ld", std::string("long debug message"));
+  logger.longdebug("ld", [&](std::ostream & stream) { stream << "long debug message using stream"; });
+  logger.debug("d", "debug message %d", 1);
+  logger.debug("d", std::string("debug message"));
+  logger.debug("d", [&](std::ostream & stream) { stream << "debug message using stream"; });
+  logger.info("i", "info message %d", 1);
+  logger.info("i", std::string("info message"));
+  logger.info("i", [&](std::ostream & stream) { stream << "info message using stream"; });
+  logger.warning("w", "warning message %d", 1);
+  logger.warning("w", std::string("warning message"));
+  logger.warning("w", [&](std::ostream & stream) { stream << "warning message using stream"; });
+  logger.error("e", "error message %d", 1);
+  logger.error("e", std::string("error message"));
+  logger.error("e", [&](std::ostream & stream) { stream << "error message using stream"; });
+
+  std::string ERROR_INT_S = std::to_string(Tomographer::Logger::ERROR);
+  std::string WARNING_INT_S = std::to_string(Tomographer::Logger::WARNING);
+  std::string INFO_INT_S = std::to_string(Tomographer::Logger::INFO);
+  std::string DEBUG_INT_S = std::to_string(Tomographer::Logger::DEBUG);
+  std::string LONGDEBUG_INT_S = std::to_string(Tomographer::Logger::LONGDEBUG);
+
+  std::string correct_recorded;
+  if (isAtLeastOfSeverity(Tomographer::Logger::LONGDEBUG, level)) {
+    correct_recorded +=
+      "emitLog(level="+LONGDEBUG_INT_S+", origin=\"ld\", msg=\"long debug message 1\")\n"
+      "emitLog(level="+LONGDEBUG_INT_S+", origin=\"ld\", msg=\"long debug message\")\n"
+      "emitLog(level="+LONGDEBUG_INT_S+", origin=\"ld\", msg=\"long debug message using stream\")\n"
+      ;
+  }
+  if (isAtLeastOfSeverity(Tomographer::Logger::DEBUG, level)) {
+    correct_recorded +=
+      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message 1\")\n"
+      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message\")\n"
+      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message using stream\")\n"
+      ;
+  }
+  if (isAtLeastOfSeverity(Tomographer::Logger::INFO, level)) {
+    correct_recorded +=
+      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message 1\")\n"
+      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message\")\n"
+      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message using stream\")\n"
+      ;
+  }
+  if (isAtLeastOfSeverity(Tomographer::Logger::WARNING, level)) {
+    correct_recorded +=
+      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message 1\")\n"
+      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message\")\n"
+      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message using stream\")\n"
+      ;
+  }
+  if (isAtLeastOfSeverity(Tomographer::Logger::ERROR, level)) {
+    correct_recorded +=
+      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message 1\")\n"
+      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message\")\n"
+      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message using stream\")\n"
+      ;
+  }
+
+  BOOST_CHECK_EQUAL(recorded, correct_recorded);
+}
 
 
 
@@ -300,161 +400,41 @@ BOOST_AUTO_TEST_CASE(basiclogging)
 
 BOOST_AUTO_TEST_CASE(levelsareright)
 {
-  { std::string recorded;
-    DummyLoggerBasic logger(Tomographer::Logger::LONGDEBUG, &recorded);
-    logger.longdebug("ld", "long debug message %d", 1);
-    logger.longdebug("ld", std::string("long debug message"));
-    logger.longdebug("ld", [&](std::ostream & stream) { stream << "long debug message using stream"; });
-    logger.debug("d", "debug message %d", 1);
-    logger.debug("d", std::string("debug message"));
-    logger.debug("d", [&](std::ostream & stream) { stream << "debug message using stream"; });
-    logger.info("i", "info message %d", 1);
-    logger.info("i", std::string("info message"));
-    logger.info("i", [&](std::ostream & stream) { stream << "info message using stream"; });
-    logger.warning("w", "warning message %d", 1);
-    logger.warning("w", std::string("warning message"));
-    logger.warning("w", [&](std::ostream & stream) { stream << "warning message using stream"; });
-    logger.error("e", "error message %d", 1);
-    logger.error("e", std::string("error message"));
-    logger.error("e", [&](std::ostream & stream) { stream << "error message using stream"; });
+  check_logs_at_level<DummyLoggerBasic>(Tomographer::Logger::LONGDEBUG, Tomographer::Logger::LONGDEBUG);
+  check_logs_at_level<DummyLoggerBasic>(Tomographer::Logger::DEBUG, Tomographer::Logger::DEBUG);
+  check_logs_at_level<DummyLoggerBasic>(Tomographer::Logger::INFO, Tomographer::Logger::INFO);
+  check_logs_at_level<DummyLoggerBasic>(Tomographer::Logger::WARNING, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerBasic>(Tomographer::Logger::ERROR, Tomographer::Logger::ERROR);
 
-    BOOST_CHECK_EQUAL(recorded,
-                      "emitLog(level="+LONGDEBUG_INT_S+", origin=\"ld\", msg=\"long debug message 1\")\n"
-                      "emitLog(level="+LONGDEBUG_INT_S+", origin=\"ld\", msg=\"long debug message\")\n"
-                      "emitLog(level="+LONGDEBUG_INT_S+", origin=\"ld\", msg=\"long debug message using stream\")\n"
-                      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message 1\")\n"
-                      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message\")\n"
-                      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message using stream\")\n"
-                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message 1\")\n"
-                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message\")\n"
-                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message using stream\")\n"
-                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message 1\")\n"
-                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message\")\n"
-                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message using stream\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message 1\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message using stream\")\n"
-      );
-  }
+  check_logs_at_level<DummyLoggerMinSevLONGDEBUG>(Tomographer::Logger::LONGDEBUG, Tomographer::Logger::LONGDEBUG);
+  check_logs_at_level<DummyLoggerMinSevLONGDEBUG>(Tomographer::Logger::DEBUG, Tomographer::Logger::DEBUG);
+  check_logs_at_level<DummyLoggerMinSevLONGDEBUG>(Tomographer::Logger::INFO, Tomographer::Logger::INFO);
+  check_logs_at_level<DummyLoggerMinSevLONGDEBUG>(Tomographer::Logger::WARNING, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevLONGDEBUG>(Tomographer::Logger::ERROR, Tomographer::Logger::ERROR);
 
-  { std::string recorded;
-    DummyLoggerBasic logger(Tomographer::Logger::DEBUG, &recorded);
-    logger.longdebug("ld", "long debug message %d", 1);
-    logger.longdebug("ld", std::string("long debug message"));
-    logger.longdebug("ld", [&](std::ostream & stream) { stream << "long debug message using stream"; });
-    logger.debug("d", "debug message %d", 1);
-    logger.debug("d", std::string("debug message"));
-    logger.debug("d", [&](std::ostream & stream) { stream << "debug message using stream"; });
-    logger.info("i", "info message %d", 1);
-    logger.info("i", std::string("info message"));
-    logger.info("i", [&](std::ostream & stream) { stream << "info message using stream"; });
-    logger.warning("w", "warning message %d", 1);
-    logger.warning("w", std::string("warning message"));
-    logger.warning("w", [&](std::ostream & stream) { stream << "warning message using stream"; });
-    logger.error("e", "error message %d", 1);
-    logger.error("e", std::string("error message"));
-    logger.error("e", [&](std::ostream & stream) { stream << "error message using stream"; });
+  check_logs_at_level<DummyLoggerMinSevDEBUG>(Tomographer::Logger::LONGDEBUG, Tomographer::Logger::DEBUG);
+  check_logs_at_level<DummyLoggerMinSevDEBUG>(Tomographer::Logger::DEBUG, Tomographer::Logger::DEBUG);
+  check_logs_at_level<DummyLoggerMinSevDEBUG>(Tomographer::Logger::INFO, Tomographer::Logger::INFO);
+  check_logs_at_level<DummyLoggerMinSevDEBUG>(Tomographer::Logger::WARNING, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevDEBUG>(Tomographer::Logger::ERROR, Tomographer::Logger::ERROR);
 
-    BOOST_CHECK_EQUAL(recorded,
-                      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message 1\")\n"
-                      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message\")\n"
-                      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message using stream\")\n"
-                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message 1\")\n"
-                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message\")\n"
-                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message using stream\")\n"
-                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message 1\")\n"
-                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message\")\n"
-                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message using stream\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message 1\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message using stream\")\n"
-      );
-  }
+  check_logs_at_level<DummyLoggerMinSevINFO>(Tomographer::Logger::LONGDEBUG, Tomographer::Logger::INFO);
+  check_logs_at_level<DummyLoggerMinSevINFO>(Tomographer::Logger::DEBUG, Tomographer::Logger::INFO);
+  check_logs_at_level<DummyLoggerMinSevINFO>(Tomographer::Logger::INFO, Tomographer::Logger::INFO);
+  check_logs_at_level<DummyLoggerMinSevINFO>(Tomographer::Logger::WARNING, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevINFO>(Tomographer::Logger::ERROR, Tomographer::Logger::ERROR);
 
-  { std::string recorded;
-    DummyLoggerBasic logger(Tomographer::Logger::INFO, &recorded);
-    logger.longdebug("ld", "long debug message %d", 1);
-    logger.longdebug("ld", std::string("long debug message"));
-    logger.longdebug("ld", [&](std::ostream & stream) { stream << "long debug message using stream"; });
-    logger.debug("d", "debug message %d", 1);
-    logger.debug("d", std::string("debug message"));
-    logger.debug("d", [&](std::ostream & stream) { stream << "debug message using stream"; });
-    logger.info("i", "info message %d", 1);
-    logger.info("i", std::string("info message"));
-    logger.info("i", [&](std::ostream & stream) { stream << "info message using stream"; });
-    logger.warning("w", "warning message %d", 1);
-    logger.warning("w", std::string("warning message"));
-    logger.warning("w", [&](std::ostream & stream) { stream << "warning message using stream"; });
-    logger.error("e", "error message %d", 1);
-    logger.error("e", std::string("error message"));
-    logger.error("e", [&](std::ostream & stream) { stream << "error message using stream"; });
+  check_logs_at_level<DummyLoggerMinSevWARNING>(Tomographer::Logger::LONGDEBUG, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevWARNING>(Tomographer::Logger::DEBUG, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevWARNING>(Tomographer::Logger::INFO, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevWARNING>(Tomographer::Logger::WARNING, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevWARNING>(Tomographer::Logger::ERROR, Tomographer::Logger::ERROR);
 
-    BOOST_CHECK_EQUAL(recorded,
-                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message 1\")\n"
-                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message\")\n"
-                      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message using stream\")\n"
-                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message 1\")\n"
-                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message\")\n"
-                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message using stream\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message 1\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message using stream\")\n"
-      );
-  }
-
-  { std::string recorded;
-    DummyLoggerBasic logger(Tomographer::Logger::WARNING, &recorded);
-    logger.longdebug("ld", "long debug message %d", 1);
-    logger.longdebug("ld", std::string("long debug message"));
-    logger.longdebug("ld", [&](std::ostream & stream) { stream << "long debug message using stream"; });
-    logger.debug("d", "debug message %d", 1);
-    logger.debug("d", std::string("debug message"));
-    logger.debug("d", [&](std::ostream & stream) { stream << "debug message using stream"; });
-    logger.info("i", "info message %d", 1);
-    logger.info("i", std::string("info message"));
-    logger.info("i", [&](std::ostream & stream) { stream << "info message using stream"; });
-    logger.warning("w", "warning message %d", 1);
-    logger.warning("w", std::string("warning message"));
-    logger.warning("w", [&](std::ostream & stream) { stream << "warning message using stream"; });
-    logger.error("e", "error message %d", 1);
-    logger.error("e", std::string("error message"));
-    logger.error("e", [&](std::ostream & stream) { stream << "error message using stream"; });
-
-    BOOST_CHECK_EQUAL(recorded,
-                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message 1\")\n"
-                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message\")\n"
-                      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message using stream\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message 1\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message using stream\")\n"
-      );
-  }
-
-  { std::string recorded;
-    DummyLoggerBasic logger(Tomographer::Logger::ERROR, &recorded);
-    logger.longdebug("ld", "long debug message %d", 1);
-    logger.longdebug("ld", std::string("long debug message"));
-    logger.longdebug("ld", [&](std::ostream & stream) { stream << "long debug message using stream"; });
-    logger.debug("d", "debug message %d", 1);
-    logger.debug("d", std::string("debug message"));
-    logger.debug("d", [&](std::ostream & stream) { stream << "debug message using stream"; });
-    logger.info("i", "info message %d", 1);
-    logger.info("i", std::string("info message"));
-    logger.info("i", [&](std::ostream & stream) { stream << "info message using stream"; });
-    logger.warning("w", "warning message %d", 1);
-    logger.warning("w", std::string("warning message"));
-    logger.warning("w", [&](std::ostream & stream) { stream << "warning message using stream"; });
-    logger.error("e", "error message %d", 1);
-    logger.error("e", std::string("error message"));
-    logger.error("e", [&](std::ostream & stream) { stream << "error message using stream"; });
-
-    BOOST_CHECK_EQUAL(recorded,
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message 1\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message\")\n"
-                      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message using stream\")\n"
-      );
-  }
-
+  check_logs_at_level<DummyLoggerMinSevERROR>(Tomographer::Logger::LONGDEBUG, Tomographer::Logger::ERROR);
+  check_logs_at_level<DummyLoggerMinSevERROR>(Tomographer::Logger::DEBUG, Tomographer::Logger::ERROR);
+  check_logs_at_level<DummyLoggerMinSevERROR>(Tomographer::Logger::INFO, Tomographer::Logger::ERROR);
+  check_logs_at_level<DummyLoggerMinSevERROR>(Tomographer::Logger::WARNING, Tomographer::Logger::ERROR);
+  check_logs_at_level<DummyLoggerMinSevERROR>(Tomographer::Logger::ERROR, Tomographer::Logger::ERROR);
 }
 
 BOOST_AUTO_TEST_CASE(formats)
