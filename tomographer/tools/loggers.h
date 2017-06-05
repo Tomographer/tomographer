@@ -1792,30 +1792,35 @@ public:
    *
    * The origin parameter is automatically set, and is not specified here.
    */
+  TOMOGRAPHER_ENABLED_IF(Base_::template staticallyEnabledFor<LONGDEBUG>())
   PRINTF2_ARGS_SAFE inline void longdebug(const char * fmt, ...)
   { va_list ap; va_start(ap, fmt);  log<LONGDEBUG>(fmt, ap); va_end(ap); }
   /** \brief Generate a log message with level \ref Logger::DEBUG (printf-like syntax)
    *
    * The origin parameter is automatically set, and is not specified here.
    */
+  TOMOGRAPHER_ENABLED_IF(Base_::template staticallyEnabledFor<DEBUG>())
   PRINTF2_ARGS_SAFE inline void debug(const char * fmt, ...)
   { va_list ap; va_start(ap, fmt);  log<DEBUG>(fmt, ap); va_end(ap); }
   /** \brief Generate a log message with level \ref Logger::INFO (printf-like syntax)
    *
    * The origin parameter is automatically set, and is not specified here.
    */
+  TOMOGRAPHER_ENABLED_IF(Base_::template staticallyEnabledFor<INFO>())
   PRINTF2_ARGS_SAFE inline void info(const char * fmt, ...)
   { va_list ap; va_start(ap, fmt);  log<INFO>(fmt, ap); va_end(ap); }
   /** \brief Generate a log message with level \ref Logger::WARNING (printf-like syntax)
    *
    * The origin parameter is automatically set, and is not specified here.
    */
+  TOMOGRAPHER_ENABLED_IF(Base_::template staticallyEnabledFor<WARNING>())
   PRINTF2_ARGS_SAFE inline void warning(const char * fmt, ...)
   { va_list ap; va_start(ap, fmt);  log<WARNING>(fmt, ap); va_end(ap); }
   /** \brief Generate a log message with level \ref Logger::ERROR (printf-like syntax)
    *
    * The origin parameter is automatically set, and is not specified here.
    */
+  TOMOGRAPHER_ENABLED_IF(Base_::template staticallyEnabledFor<ERROR>())
   PRINTF2_ARGS_SAFE inline void error(const char * fmt, ...)
   { va_list ap; va_start(ap, fmt);  log<ERROR>(fmt, ap); va_end(ap); }
 
@@ -1823,42 +1828,75 @@ public:
    *
    * The origin parameter is automatically set, and is not specified here.
    */
-  template<typename... Args>
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(Base_::template staticallyEnabledFor<LONGDEBUG>()),
+           typename... Args>
   inline void longdebug(Args &&... a) { log<Tomographer::Logger::LONGDEBUG>(std::forward<Args>(a)...); }
   /** \brief Generate a log message with level \ref Logger::DEBUG
    *
    * The origin parameter is automatically set, and is not specified here.
    */
-  template<typename... Args>
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(Base_::template staticallyEnabledFor<DEBUG>()),
+           typename... Args>
   inline void debug(Args &&... a) { log<Tomographer::Logger::DEBUG>(std::forward<Args>(a)...); }
   /** \brief Generate a log message with level \ref Logger::INFO
    *
    * The origin parameter is automatically set, and is not specified here.
    */
-  template<typename... Args>
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(Base_::template staticallyEnabledFor<INFO>()),
+           typename... Args>
   inline void info(Args &&... a) { log<Tomographer::Logger::INFO>(std::forward<Args>(a)...); }
   /** \brief Generate a log message with level \ref Logger::WARNING
    *
    * The origin parameter is automatically set, and is not specified here.
    */
-  template<typename... Args>
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(Base_::template staticallyEnabledFor<WARNING>()),
+           typename... Args>
   inline void warning(Args &&... a) { log<Tomographer::Logger::WARNING>(std::forward<Args>(a)...); }
   /** \brief Generate a log message with level \ref Logger::ERROR
    *
    * The origin parameter is automatically set, and is not specified here.
    */
-  template<typename... Args>
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(Base_::template staticallyEnabledFor<ERROR>()),
+           typename... Args>
   inline void error(Args &&... a) { log<Tomographer::Logger::ERROR>(std::forward<Args>(a)...); }
 
   /** \brief Generate a log message with level \a Level
    *
    * The origin parameter is automatically set, and is not specified here.
    */
-  template<int Level, typename... Args>
+  template<int Level,
+           TOMOGRAPHER_ENABLED_IF_TMPL(Base_::template staticallyEnabledFor<Level>()),
+           typename... Args>
   inline void log(Args && ... args)
   {
     Base_::template log<Level>("", std::forward<Args>(args)...);
   }
+
+
+  //! Statically optimized call if we know at compile time that the message will be discarded
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(!Base_::template staticallyEnabledFor<LONGDEBUG>()),
+           typename... Args>
+  inline void longdebug(Args &&... ) { }
+  //! Statically optimized call if we know at compile time that the message will be discarded
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(!Base_::template staticallyEnabledFor<DEBUG>()),
+           typename... Args>
+  inline void debug(Args &&... ) { }
+  //! Statically optimized call if we know at compile time that the message will be discarded
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(!Base_::template staticallyEnabledFor<INFO>()),
+           typename... Args>
+  inline void info(Args &&... ) { }
+  //! Statically optimized call if we know at compile time that the message will be discarded
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(!Base_::template staticallyEnabledFor<WARNING>()),
+           typename... Args>
+  inline void warning(Args &&... ) { }
+  //! Statically optimized call if we know at compile time that the message will be discarded
+  template<TOMOGRAPHER_ENABLED_IF_TMPL(!Base_::template staticallyEnabledFor<ERROR>()),
+           typename... Args>
+  inline void error(Args &&... ) { }
+  //! Statically optimized call if we know at compile time that the message will be discarded
+  template<int Level, TOMOGRAPHER_ENABLED_IF_TMPL(!Base_::template staticallyEnabledFor<Level>()),
+           typename... Args>
+  inline void log(Args &&... ) { }
 
 
   // relay calls to base logger
