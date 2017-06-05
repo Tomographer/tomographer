@@ -625,6 +625,7 @@ BOOST_AUTO_TEST_CASE(minseverity)
   BOOST_CHECK(!DummyLoggerMinSeverity::staticallyEnabledFor<Tomographer::Logger::INFO>());
   BOOST_CHECK(!DummyLoggerMinSeverity::staticallyEnabledFor<Tomographer::Logger::DEBUG>());
   BOOST_CHECK(!DummyLoggerMinSeverity::staticallyEnabledFor<Tomographer::Logger::LONGDEBUG>());
+
   BOOST_CHECK(DummyLoggerMinSeverity::staticallyEnabledFor(Tomographer::Logger::ERROR));
   BOOST_CHECK(DummyLoggerMinSeverity::staticallyEnabledFor(Tomographer::Logger::WARNING));
   BOOST_CHECK(!DummyLoggerMinSeverity::staticallyEnabledFor(Tomographer::Logger::INFO));
@@ -894,7 +895,52 @@ BOOST_AUTO_TEST_CASE(basic)
       );
 }
 
+BOOST_AUTO_TEST_CASE(static_severity)
+{
+  typedef Tomographer::Logger::LocalLogger<DummyLoggerMinSeverity> LoggerType;
+  
+  BOOST_CHECK_EQUAL((int)Tomographer::Logger::LoggerTraits<LoggerType>::StaticMinimumSeverityLevel,
+                    (int)Tomographer::Logger::WARNING); // what we declared above
 
+  BOOST_CHECK(LoggerType::staticallyEnabledFor<Tomographer::Logger::ERROR>());
+  BOOST_CHECK(LoggerType::staticallyEnabledFor<Tomographer::Logger::WARNING>());
+  BOOST_CHECK(!LoggerType::staticallyEnabledFor<Tomographer::Logger::INFO>());
+  BOOST_CHECK(!LoggerType::staticallyEnabledFor<Tomographer::Logger::DEBUG>());
+  BOOST_CHECK(!LoggerType::staticallyEnabledFor<Tomographer::Logger::LONGDEBUG>());
+
+  BOOST_CHECK(LoggerType::staticallyEnabledFor(Tomographer::Logger::ERROR));
+  BOOST_CHECK(LoggerType::staticallyEnabledFor(Tomographer::Logger::WARNING));
+  BOOST_CHECK(!LoggerType::staticallyEnabledFor(Tomographer::Logger::INFO));
+  BOOST_CHECK(!LoggerType::staticallyEnabledFor(Tomographer::Logger::DEBUG));
+  BOOST_CHECK(!LoggerType::staticallyEnabledFor(Tomographer::Logger::LONGDEBUG));
+
+  std::string rec;
+  DummyLoggerMinSeverity baselogger(Tomographer::Logger::DEBUG, &rec);
+  LoggerType logger("BaseOrigin", baselogger);
+
+  BOOST_CHECK(logger.enabledFor(Tomographer::Logger::ERROR));
+  BOOST_CHECK(logger.enabledFor(Tomographer::Logger::WARNING));
+  BOOST_CHECK(!logger.enabledFor(Tomographer::Logger::INFO));
+  BOOST_CHECK(!logger.enabledFor(Tomographer::Logger::DEBUG));
+  BOOST_CHECK(!logger.enabledFor(Tomographer::Logger::LONGDEBUG));
+
+  // statically optimized out -- you can check assembly code :-)
+  logger.debug("Hey, %s", "You!");
+
+  logger.warning("Hey, %s", "Y'all!");
+
+  BOOST_CHECK_EQUAL(
+      rec,
+      // only two of the above enabledFor() should have called the custom level()
+      // method, for LONGDEBUG, DEBUG and INFO we already know at compile-time that the
+      // logger is disabled
+      "level()\n"
+      "level()\n"
+      // the call to warning() should issue another call to the custom level() getter.
+      "level()\n"
+      "emitLog(level="+std::to_string(Tomographer::Logger::WARNING)+", origin=\"BaseOrigin\", msg=\"Hey, Y'all!\")\n"
+      ) ;
+}
 
 BOOST_AUTO_TEST_SUITE_END() // locallogger
 
