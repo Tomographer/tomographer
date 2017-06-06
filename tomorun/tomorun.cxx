@@ -116,20 +116,28 @@ inline int defaultNumRepeat() { return (int)std::thread::hardware_concurrency();
 #include "tomorun_dispatch.h"
 
 
-Tomographer::Logger::FileLogger rootlogger(stdout, Tomographer::Logger::INFO, false);
-
-
 // ------------------------------------------------------------------------------
 
 
 int main(int argc, char **argv)
 {
+  Tomographer::Logger::FileLogger filelogger(stdout, Tomographer::Logger::INFO, false);
+#ifdef TOMORUN_MAX_LOG_LEVEL
+  using BaseLoggerType =
+    Tomographer::Logger::MinimumSeverityLogger<Tomographer::Logger::FileLogger,
+                                               Tomographer::Logger:: TOMORUN_MAX_LOG_LEVEL >;
+  BaseLoggerType baselogger(filelogger);
+#else
+  using BaseLoggerType = Tomographer::Logger::FileLogger;
+  auto & baselogger = filelogger;
+#endif
+
   ProgOptions opt;
 
-  Tomographer::Logger::LocalLogger<decltype(rootlogger)> logger("main()", rootlogger);
+  auto logger = Tomographer::Logger::makeLocalLogger("main()", baselogger);
 
   try {
-    parse_options(&opt, argc, argv, logger.parentLogger());
+    parse_options(&opt, argc, argv, baselogger, filelogger);
   } catch (const bad_options& e) {
     fprintf(stderr, "%s\n", e.what());
     return 127;
@@ -180,6 +188,17 @@ int main(int argc, char **argv)
   // Do some preliminary checks
   // ---------------------------------------------------------------------------
   //
+
+  // warn if log level is below statically discarded messages
+  if ( ! logger.parentLogger().staticallyEnabledFor(opt.loglevel) ) {
+    logger.warning([&](std::ostream & stream) {
+        stream << "Required log level " << opt.loglevel << " is more verbose than maximum "
+               << "verbosity tomorun was compiled for ("
+               << Tomographer::Logger::LogLevel(BaseLoggerType::StaticMinimumSeverityLevel).levelName()
+               << ")";
+      });
+  }
+
 
   // warn the user if the last binning level comprises too few samples.
   //
@@ -256,9 +275,6 @@ int main(int argc, char **argv)
 
   // Maybe use statically instantiated size for some predefined sizes.
 
-  //  Logger::MinimumSeverityLogger<Logger::FileLogger, Logger::INFO> mlog(logger);
-  auto & mlog = logger.parentLogger();
-
   try {
     // some special cases where we can avoid dynamic memory allocation for Eigen matrices
     // by using compile-time sizes
@@ -278,7 +294,7 @@ int main(int argc, char **argv)
 		 TOMORUN_CUSTOM_FIXED_DIM, TOMORUN_CUSTOM_FIXED_MAX_DIM,
                  TOMORUN_CUSTOM_MAX_POVM_EFFECTS, Eigen::Dynamic);
     tomorun_dispatch_st<TOMORUN_CUSTOM_FIXED_DIM,TOMORUN_CUSTOM_FIXED_MAX_DIM,
-                        TOMORUN_CUSTOM_MAX_POVM_EFFECTS>(dim, &opt, matf, mlog);
+                        TOMORUN_CUSTOM_MAX_POVM_EFFECTS>(dim, &opt, matf, logger.parentLogger());
 
     (void)n_povms; // silence unused variable warning
 
@@ -291,11 +307,11 @@ int main(int argc, char **argv)
     // for small matrices for common system sizes (e.g. a single qubit)
     //
     if (dim == 2) {
-      tomorun_dispatch_st<2, 2, Eigen::Dynamic>(dim, &opt, matf, mlog);
+      tomorun_dispatch_st<2, 2, Eigen::Dynamic>(dim, &opt, matf, logger.parentLogger());
     } else if (dim == 4) { // two-qubit systems are also common
-      tomorun_dispatch_st<4, 4, Eigen::Dynamic>(dim, &opt, matf, mlog);
+      tomorun_dispatch_st<4, 4, Eigen::Dynamic>(dim, &opt, matf, logger.parentLogger());
     } else {
-      tomorun_dispatch_st<Eigen::Dynamic, Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, mlog);
+      tomorun_dispatch_st<Eigen::Dynamic, Eigen::Dynamic, Eigen::Dynamic>(dim, &opt, matf, logger.parentLogger());
     }
 
 #endif

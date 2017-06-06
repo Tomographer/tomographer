@@ -128,6 +128,10 @@ static std::string prog_version_info_features()
 #if TOMORUN_USE_DEVICE_SEED
   featconfig.push_back(Tomographer::Tools::fmts("rng-seed-from-device=%s", TOMORUN_RANDOM_DEVICE ""));
 #endif
+#if defined(TOMORUN_MAX_LOG_LEVEL)
+  featconfig.push_back("max-log-level=" +
+                       Tomographer::Logger::LogLevel(Tomographer::Logger:: TOMORUN_MAX_LOG_LEVEL ).levelName());
+#endif
   // join feature items together into a config string
   features_str += "Config: ";
   for (std::size_t k = 0; k < featconfig.size(); ++k) {
@@ -246,13 +250,14 @@ inline void ensure_valid_input(bool condition, std::string msg) {
 
 
 
-template<typename LoggerType>
-void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselogger)
+template<typename BaseLoggerType>
+void parse_options(ProgOptions * opt, int argc, char **argv,
+                   BaseLoggerType & baselogger, Tomographer::Logger::FileLogger & filelogger)
 {
   // read the options
   using namespace boost::program_options;
 
-  Tomographer::Logger::LocalLogger<LoggerType> logger("parse_options()", baselogger);
+  auto logger = Tomographer::Logger::makeLocalLogger("parse_options()", baselogger);
 
   std::string flogname;
   bool flogname_from_config_file_name = false;
@@ -589,8 +594,8 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
   // --------------------
 
   // set up level and verbosity
-  baselogger.setLevel(opt->loglevel);
-  baselogger.setDisplayOrigin(opt->verbose_log_info);
+  filelogger.setLevel(opt->loglevel);
+  filelogger.setDisplayOrigin(opt->verbose_log_info);
   // maybe set up log file name from config file name
   if (flogname_from_config_file_name) {
     if (!configfname.size()) {
@@ -625,7 +630,7 @@ void parse_options(ProgOptions * opt, int argc, char **argv, LoggerType & baselo
         curdtstr
         );
 
-    baselogger.setFp(opt->flog);
+    filelogger.setFp(opt->flog);
     logger.info("Output is now being redirected to %s.", flogname.c_str());
   }
 

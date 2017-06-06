@@ -40,6 +40,11 @@ set_property(TARGET tomorun PROPERTY CXX_STANDARD 11)
 # include our tomographer headers
 target_include_directories(tomorun PRIVATE "..")  # relative path for automatic dependency detection
 
+# custom compilation options just for tomorun (e.g. -DTOMORUN_*** config defines)
+set(TOMORUN_CXX_FLAGS "" CACHE STRING
+  "Additional custom compilation flags for tomorun (use this to add -DTOMORUN_*=* defines).")
+target_compile_options(tomorun PRIVATE "${TOMORUN_CXX_FLAGS}")
+
 # for <tomographer/tomographer_version.h> which was auto-generated in the binary
 # dir tree, and is not yet installed.
 target_include_directories(tomorun PRIVATE "${CMAKE_BINARY_DIR}")

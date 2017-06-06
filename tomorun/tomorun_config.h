@@ -162,6 +162,18 @@ typedef std::mt19937 TomorunBaseRngType;
 #endif
 
 
+/* TOMORUN_MAX_LOG_LEVEL
+ *
+ * Value (if defined): one of LONGDEBUG, DEBUG, INFO, WARNING, ERROR.
+ *
+ * If defined, will compile out all log messages of level strictly less severe than the
+ * level provided here.
+ */
+//#define TOMORUN_MAX_LOG_LEVEL   DEBUG
+
+
+
+
 
 
 
