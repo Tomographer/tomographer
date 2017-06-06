@@ -1578,7 +1578,7 @@ struct LoggerTraits<LocalLogger<BaseLoggerType_> > : public LoggerTraits<BaseLog
  * etc.).
  *
  * You may also nest these loggers, yielding an automatic nested origin string following
- * C++ names.  See method \ref subLogger(const std::string&) for more info.  In case of
+ * C++ names.  See method \ref subLogger(std::string) for more info.  In case of
  * nesting, what happens is that the \a BaseLoggerType is a LocalLogger itself.
  *
  * A very handy shorthand is \ref makeLocalLogger(), which allows to spare some typing
@@ -1769,7 +1769,7 @@ public:
   }
   /** \brief Create a sub-logger
    *
-   * See \ref subLogger(const std::string &).  This overload allows to specify the new
+   * See \ref subLogger(std::string).  This overload allows to specify the new
    * object's glue string, which will be used in case the sub-logger itself becomes parent
    * to a (sub-)sub-logger.
    */
@@ -1780,7 +1780,7 @@ public:
   }
   /** \brief Create a sub-logger
    *
-   * See \ref subLogger(const std::string &).  This overload is called when the macro \ref
+   * See \ref subLogger(std::string).  This overload is called when the macro \ref
    * TOMO_ORIGIN is specified.
    */
   inline LocalLogger<LocalLogger<BaseLoggerType> > subLogger(const LocalLoggerOriginSpec & spec)

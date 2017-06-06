@@ -13,13 +13,12 @@ and which significantly simplifies your task.  Also, all Python objects defined
 in the Tomographer Python Interface are available via C++.
 
 We use the nice `pybind11 <https://github.com/pybind/pybind11>`_ tool for
-interfacing C++ with Python. It includes out-of-the-box interfacing NumPy with
-Eigen. Learn its basic usage before carrying on too far.
+interfacing C++ with Python. It includes out-of-the-box interfacing of NumPy
+with Eigen. Learn its basic usage before carrying on too far here.
 
 Here is minimal but entirely self-contained and fully functional template to get
-started with your custom C++/Python module.
-
-Create a directory called ``my_custom_module``, and place the two files
+started with your custom C++/Python module. Create a directory called
+``my_custom_module``, and place the two files
 :download:`my_custom_module/my_custom_module.cxx` and
 :download:`my_custom_module/setup.py` in there.  Enter that directory, and run
 compile the Python module::
@@ -48,20 +47,35 @@ classes from the :tomocxx:`Tomographer framework </>`.
 
 Most of the useful generic classes in the Tomographer framework are instantiated
 with standard template arguments and exposed to Python.  See :tomocxx:`the tpy
-namespace <namespacetpy.html>` for the API documentation.
+namespace <namespacetpy.html>` for the full API documentation.
 
-A set of :tomocxx:`C++ typedefs are provided
-<namespacetpy.html#typedef-members>`, which are already exposed to Python via
-the `tomographer` module.  You'll find the types ``tpy::RealType`` and
-``tpy::CountIntType`` (by default, ``double`` and ``int``, respectively) which
-serve as template arguments for most classes.  For instance, the template class
-:tomocxx:`Histogram <class_tomographer_1_1_histogram.html>` is typedef'ed as
-:tomocxx:`tpy::Histogram <namespacetpy.html#a695433d4c090bebbf94083b96f36b5be>`.
+The `tpy` namespace most importantly contains a set of :tomocxx:`C++ typedefs
+<namespacetpy.html#typedef-members>`, which are types which are already exposed
+as Python objects via the `tomographer` module.  For instance, the template
+class :tomocxx:`MHRWParams <struct_tomographer_1_1_m_h_r_w_params.html>` is
+typedef'ed as :tomocxx:`tpy::MHRWParams
+<namespacetpy.html#a94b6e199d4b59e18713b380fa4daa784>`.  You'll also find the
+types ``tpy::RealType`` and ``tpy::CountIntType`` which serve as template
+arguments for most classes (by default, ``double`` and ``int``, respectively).
 
-These classes are then exposed to Python in the `tomographer` module.  When
-writing your own custom module, you can take advantage of these existing tools
-so that you don't have to expose all these helper types yourself; rather they
-can be transparently passed between Python to/from C++.
+Note that some classes have slightly different implementations and aren't just a
+typedef---for instance, :tomocxx:`tpy::Histogram <classtpy_1_1_histogram.html>`
+is re-implemented to use `NumPy` objects, so it can store any data type, but at
+the same type provides almost transparent conversion to and from
+:tomocxx:`Tomographer::Histogram <class_tomographer_1_1_histogram.html>`.
+
+The classes in the `tpy` namespace are already exposed to Python in the
+`tomographer` module.  When writing your own custom module, you can take
+advantage of these existing tools so that you don't have to expose all these
+helper types yourself; rather they can be transparently passed between Python
+to/from C++.  For instance, you can straightforwardly return a `tpy::Histogram`
+from a C++ function exposed to Python, and the result will be accessible from
+Python as a :py:class:`tomographer.Histogram` object.
+
+.. note:: In order to set up the Tomographer Python API properly, you must call
+          :tomocxx:`tpy::import_tomographer()
+          <namespacetpy.html#a85146271201de94c995aa16c99ed9952>` at the
+          beginning of your C++ module initialization function.
 
 
 The Python ``setup.py`` file
@@ -88,3 +102,15 @@ Note that if you need to find other custom libraries or include headers, you can
 use the utilities :py:func:`tomographer.include.find_include_dir()` or
 :py:func:`tomographer.include.find_lib()`.
 
+.. note:: You might be tempted to move the import statements for ``pybind11``,
+   ``numpy``, etc. inside a function, and add those modules as ``setup(...,
+   setup_requires=...)`` and/or ``setup(..., install_requires=)``.  You'll
+   realize that this doesn't work with PIP (``install_requires`` installs the
+   package too late, and ``setup_requires`` does not know about PIP---it uses
+   only `easy_install`---and the package might not be installed properly).  It's
+   a mess.  Try it yourself, waste about a full day on that, but after that
+   don't waste any more time and revert your changes back to how it was if you
+   don't want to go insane as I almost did.  Conclusion: Let's avoid any
+   unnecessary casualties, and stick to making sure the requirements are already
+   installed from the start of the ``setup.py`` script; we just need to document
+   this properly.
