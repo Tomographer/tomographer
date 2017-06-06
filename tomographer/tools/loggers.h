@@ -35,11 +35,12 @@
 #include <sstream> // std::stringstream
 #include <iostream>
 #include <functional> // std::function
-#include <type_traits> // std::enable_if, std::true_type
+#include <type_traits> // std::true_type
 #include <map>
 
 #include <boost/algorithm/string.hpp> // to_upper()
 
+#include <tomographer/tools/cxxdefs.h>
 #include <tomographer/tools/fmt.h>
 #include <tomographer/tools/conststr.h>
 
@@ -1288,9 +1289,8 @@ public:
   }
 
   //! If relevant for the base logger, filter the messages by origin from the base logger.
-  template<bool dummy = true>
-  inline std::enable_if<dummy && LoggerTraits<BaseLogger>::HasFilterByOrigin, bool>
-  filterByOrigin(int level, const char * origin)
+  TOMOGRAPHER_ENABLED_IF(LoggerTraits<BaseLogger>::HasFilterByOrigin)
+  inline bool filterByOrigin(int level, const char * origin)
   {
     return baselogger.filterByOrigin(level, origin);
   }
