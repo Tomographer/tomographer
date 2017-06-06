@@ -1270,7 +1270,7 @@ struct TOMOGRAPHER_EXPORT StatusProvider<MHRWMovingAverageAcceptanceRatioStatsCo
   static inline std::string getStatusLine(const MHRWMovingAverageAcceptanceRatioStatsCollector<CountIntType_> * obj)
   {
     if (obj->hasMovingAverageAcceptanceRatio()) {
-      return Tools::fmts("acceptance ratio = %.2g (over last %d samples)",
+      return Tools::fmts("acceptance ratio = %.2g (over last %d iter)",
                          (double)obj->movingAverageAcceptanceRatio(),
                          (int)obj->bufferSize());
     }
