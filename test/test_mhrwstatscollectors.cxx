@@ -238,6 +238,7 @@ BOOST_AUTO_TEST_CASE(init)
   BOOST_CHECK(d.init_called);
   BOOST_CHECK(e.init_called);
 }
+
 BOOST_AUTO_TEST_CASE(thermalizing_done)
 {
   mult.thermalizingDone();
@@ -299,6 +300,18 @@ BOOST_AUTO_TEST_CASE(raw_move)
   check(c.raw_move_call_data);
   check(d.raw_move_call_data);
   check(e.raw_move_call_data);
+}
+
+
+BOOST_AUTO_TEST_CASE(mkfunc)
+{
+  auto mult2 = Tomographer::mkMultipleMHRWStatsCollectors(a, b, c, d, e);
+  mult2.init();
+  BOOST_CHECK(a.init_called);
+  BOOST_CHECK(b.init_called);
+  BOOST_CHECK(c.init_called);
+  BOOST_CHECK(d.init_called);
+  BOOST_CHECK(e.init_called);
 }
 
 
@@ -432,6 +445,28 @@ BOOST_FIXTURE_TEST_CASE(simple, TestStatsCollectorFixture)
   BOOST_CHECK_EQUAL( statcoll.histogram().bins(3) ,  0) ; // [3,4[
 }
 
+BOOST_FIXTURE_TEST_CASE(mkfunc, TestStatsCollectorFixture)
+{
+  MyMinimalistValueCalculator valcalc;
+  Tomographer::Logger::BoostTestLogger logger;
+
+  auto statcoll = Tomographer::mkValueHistogramMHRWStatsCollector(
+      Tomographer::HistogramParams<>(0,4,4), valcalc, logger
+      );
+
+  run_dummy_rw(statcoll);
+
+  // for ValueHistogramMHRWStatsCollector, the ResultType is the histogram itself, simply
+  BOOST_CHECK( (statcoll.histogram().bins == statcoll.getResult().bins).all() ) ;
+  // check the histogram
+  BOOST_MESSAGE("The collected histogram is:\n" << statcoll.histogram().prettyPrint()) ;
+  BOOST_CHECK_EQUAL( (int)statcoll.histogram().bins.sum(), (int)num_samples) ;
+  BOOST_CHECK_EQUAL( statcoll.histogram().bins(0) ,  1) ; // [0,1[
+  BOOST_CHECK_EQUAL( statcoll.histogram().bins(1) ,  5) ; // [1,2[
+  BOOST_CHECK_EQUAL( statcoll.histogram().bins(2) ,  10); // [2,3[
+  BOOST_CHECK_EQUAL( statcoll.histogram().bins(3) ,  0) ; // [3,4[
+}
+
 // BOOST_FIXTURE_TEST_CASE(customhistogramtype, TestStatsCollectorFixture)
 // {
 //   // checks necessary?
@@ -477,7 +512,7 @@ BOOST_FIXTURE_TEST_CASE(simple, TestStatsCollectorFixture)
   MY_BOOST_CHECK_FLOATS_EQUAL( fhist.delta(3) ,  0.0000 , 0.001 );
 
   // binning error analysis information
-  const auto & result = statcoll.getResult();
+  auto result = statcoll.stealResult();
   BOOST_MESSAGE( "error_levels = \n" << result.error_levels ) ;
   // just make sure the info is there with correct shape; the values themselves should be
   // tested when testing our binning analysis mechanism (test_mhrw_bin_err.cxx)
@@ -494,6 +529,49 @@ BOOST_FIXTURE_TEST_CASE(simple, TestStatsCollectorFixture)
   //  BOOST_CHECK( (result.converged_status ==
   //                Eigen::ArrayXi::Constant(4, MyStatsCollector::BinningAnalysisParamsType::UNKNOWN_CONVERGENCE)).all() ) ;
 }
+
+BOOST_FIXTURE_TEST_CASE(simple_mkfunc, TestStatsCollectorFixture)
+{
+  MyMinimalistValueCalculator valcalc;
+  Tomographer::Logger::BoostTestLogger logger;
+
+  auto statcoll = Tomographer::mkValueHistogramWithBinningMHRWStatsCollector(
+      Tomographer::HistogramParams<>(0,4,4),
+      valcalc,
+      2, // number of binning levels
+      logger);
+
+  run_dummy_rw(statcoll);
+
+  // check the base histogram
+  BOOST_MESSAGE("The collected histogram is:\n" << statcoll.histogram().prettyPrint()) ;
+  BOOST_CHECK_EQUAL( (int)statcoll.histogram().bins.sum(), (int)num_samples) ;
+  BOOST_CHECK_EQUAL( statcoll.histogram().bins(0) ,  1) ; // [0,1[
+  BOOST_CHECK_EQUAL( statcoll.histogram().bins(1) ,  5) ; // [1,2[
+  BOOST_CHECK_EQUAL( statcoll.histogram().bins(2) ,  10); // [2,3[
+  BOOST_CHECK_EQUAL( statcoll.histogram().bins(3) ,  0) ; // [3,4[
+  // check the histogram with error bars
+  const auto & fhist = statcoll.getResult().histogram;
+  BOOST_MESSAGE("The full histogram is:\n" << fhist.prettyPrint()) ;
+  MY_BOOST_CHECK_FLOATS_EQUAL( fhist.bins(0) ,  1 / 16.0 , tol );
+  MY_BOOST_CHECK_FLOATS_EQUAL( fhist.bins(1) ,  5 / 16.0 , tol );
+  MY_BOOST_CHECK_FLOATS_EQUAL( fhist.bins(2) ,  10 / 16.0 , tol );
+  MY_BOOST_CHECK_FLOATS_EQUAL( fhist.bins(3) ,  0 / 16.0 , tol );
+  MY_BOOST_CHECK_FLOATS_EQUAL( fhist.delta(0) ,  0.0625 , 0.001 );
+  MY_BOOST_CHECK_FLOATS_EQUAL( fhist.delta(1) ,  0.1875 , 0.001 );
+  MY_BOOST_CHECK_FLOATS_EQUAL( fhist.delta(2) ,  0.2165 , 0.001 );
+  MY_BOOST_CHECK_FLOATS_EQUAL( fhist.delta(3) ,  0.0000 , 0.001 );
+
+  // binning error analysis information
+  auto result = statcoll.stealResult();
+  BOOST_MESSAGE( "error_levels = \n" << result.error_levels ) ;
+  // just make sure the info is there with correct shape; the values themselves should be
+  // tested when testing our binning analysis mechanism (test_mhrw_bin_err.cxx)
+  BOOST_CHECK_EQUAL(result.error_levels.rows(), 4);
+  BOOST_CHECK_EQUAL(result.error_levels.cols(), 3); // two levels of binning
+}
+
+
 
 BOOST_AUTO_TEST_CASE(convergence_summary)
 {
