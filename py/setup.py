@@ -131,10 +131,14 @@ vv.setDefault('EIGEN3_INCLUDE_DIR',
               lambda : find_include_dir('eigen3', pkgnames=['eigen','eigen3'],
                                         return_with_suffix='eigen3'))
 
-# Defaults: Mac OS X C++ flags
 #
-# ### Wait... since each client compiles the module locally, there is no need for these.
-#vv.setDefault('MACOSX_CXX_FLAGS', '-stdlib=libc++ -mmacosx-version-min=10.7')
+# Default: C++ flags for Mac OS X
+#
+def dflt_cxxflags():
+    if sys.platform == 'darwin':
+        return "-stdlib=libc++"
+    return ""
+vv.setDefault('CXX_FLAGS', dflt_cxxflags)
 
 
 
@@ -289,9 +293,6 @@ class BuildExt(build_ext):
         'unix': [],
     }
 
-    #if sys.platform == 'darwin':
-    #    c_opts['unix'] += shlex.split(vv.get('MACOSX_CXX_FLAGS'))
-
     def build_extensions(self):
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
@@ -312,6 +313,9 @@ class BuildExt(build_ext):
             opts.append(cpp_flag(self.compiler))
 
         for cflg in glob_cflags:
+            opts.append(cflg)
+
+        for cflg in shlex.split(vv.get('CXX_FLAGS')):
             opts.append(cflg)
 
         for cflg in shlex.split(vv.get('OPTIMIZATION_CXX_FLAGS')):
