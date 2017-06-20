@@ -3,6 +3,23 @@ Change Log
 ==========
 
 
+## v5.1 (TBD)
+
+  * Documentation updates
+
+  * Some small internal clean-ups
+  
+  * Add static minimum logging level compilation configuration option for
+    `tomorun` to improve run speed for custom builds;
+    added
+    [documentation for custom `tomorun` build configurations][tomorun_custom_build]
+    
+  * Python package installation: Fix compilation flags (add `-stdlib=libc++` by
+    default on Mac OS X)
+
+[tomorun_custom_build]: https://tomographer.github.io/tomographer/api-doc/current/html/page_tomorun_config_build.html
+    
+
 ## v5.0 (2017-05-27)
 
   * Added "light jumps" random walk algorithm. The new algorithm chooses

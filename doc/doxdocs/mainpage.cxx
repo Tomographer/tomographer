@@ -175,6 +175,7 @@
  * Topics:
  *
  *   - \subpage pageTomorun
+ *   - \ref pageTomorunConfigBuild
  *   - \ref pageTomorunNewFigureOfMerit
  *   - \ref pageCustomTomorunExe
  *

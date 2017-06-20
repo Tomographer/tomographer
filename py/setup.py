@@ -117,6 +117,7 @@ vv = Vars([
     'EIGEN3_INCLUDE_DIR',
     'PYBIND11_CPP_STANDARD',
     'OPTIMIZATION_CXX_FLAGS',
+    'CXX_FLAGS',
 #    'MACOSX_CXX_FLAGS',
 ], cachefile=cmake_cache_file)
 

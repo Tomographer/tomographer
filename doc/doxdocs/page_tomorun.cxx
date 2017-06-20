@@ -50,10 +50,154 @@
  * which provides a very minimal implementation of tomorun for a specific
  * example&mdash;it may be more convenient for you to modify that program.
  *
+ *   - \subpage pageTomorunConfigBuild
+ * 
  *   - \subpage pageTomorunNewFigureOfMerit
  *
  *   - \subpage pageCustomTomorunExe
  */
+
+
+
+
+/** \page pageTomorunConfigBuild Tomorun optimized custom build configuration
+ *
+ * You may compile a custom version of \a tomorun, which will better suit your
+ * needs and be better adapted your specific computer architecture compared to
+ * the generic binary releases of Tomographer/Tomorun.
+ *
+ * Proceed <a
+ * href="https://tomographer.github.io/tomographer/download/#downloading--installing-tomorun-from-source"
+ * target="_blank">as described here</a>.  When you arrive at the step where you
+ * run \c cmake, make sure you specify the options which are relevant to you
+ * using the \c -DTOMORUN_CXX_FLAGS=... option.
+ *
+ * For instance, if you will only run \a tomorun on two-qubit systems:
+ * \code
+ *     build> cmake .. -DTOMORUN_CXX_FLAGS="-DTOMORUN_CUSTOM_FIXED_DIM=4 -DTOMORUN_CUSTOM_FIXED_MAX_DIM=4 -DTOMORUN_CUSTOM_MAX_POVM_EFFECTS=Eigen::Dynamic"
+ * \endcode
+ *
+ * Or, for instance, if you're sure you will not need very verbose log messages
+ * (LONGDEBUG messages will be unconditionally discarded, with a slight runtime
+ * speed-up):
+ * \code
+ *     build> cmake .. -DTOMORUN_CXX_FLAGS="-DTOMORUN_MAX_LOG_LEVEL=DEBUG"
+ * \endcode
+ *
+ * Or, for instance, if you would like to compile \a tomorun using types with
+ * less precision, in order to gain speed (at the loss of precision though!)
+ * \code
+ *     build> cmake .. -DTOMORUN_CXX_FLAGS="-DTOMORUN_INT=int -DTOMORUN_REAL=float"
+ * \endcode
+ *
+ *
+ * The possible compile-time options you can set are documented here:
+ *
+ * - \c TOMORUN_INT
+ *
+ *   Value: a integer type
+ *
+ *   The main integer type. Used to count a number of iterations, the sweep size, etc.
+ *
+ * - \c TOMORUN_REAL
+ *
+ *   Value: a floating-point type (e.g., \c float, \c double, <code>long double</code>)
+ *
+ *   The main floating-point type. Used for everything, from the matrix elements
+ *   of the quantum state to the step size of the random walk.  You may try to
+ *   go to <code>long double</code> if you have trouble with precision --- but
+ *   beware, I haven't tested this and there might still be some hard-coded
+ *   values at some places (1e-8 epsilons etc.). Beware and please report issues
+ *   to me!
+ *
+ * - \c TOMORUN_CUSTOM_FIXED_DIM, \c TOMORUN_CUSTOM_FIXED_MAX_DIM, \c
+ *   TOMORUN_CUSTOM_MAX_POVM_EFFECTS
+ *
+ *   You may define these to fixed values to specialize the tomorun problem to a
+ *   specific fixed dimension and a specific maximum number of POVM effects.
+ *   You may set to \c Eigen::Dynamic to always use dynamic size matrices which
+ *   may allow any size at run-time.  Leave these symbols undefined to have a
+ *   selection of common values of fixed-size matrices with a fallback to
+ *   dynamic-size.
+ *
+ *   \warning You need to define all three macros, not just one or two of them.
+ *
+ *   \c TOMORUN_CUSTOM_FIXED_DIM fixes the dimension of the system to a
+ *   compile-time fixed value which cannot be changed at run-time.  Use
+ *   \c Eigen::Dynamic if you want tomorun to work with different system sizes.
+ *   \c TOMORUN_CUSTOM_FIXED_MAX_DIM specifies a maximum dimension for the
+ *   dimension of the quantum system; the latter may at run-time take any value
+ *   up to this limit; use \c Eigen::Dynamic for no limit.
+ *
+ *   If these are not defined (the default), then some common cases are provided
+ *   with a fallback to all-dynamic specified at runtime. (See bottom of
+ *   tomorun.cxx)
+ *
+ * - \c TOMORUN_MAX_LOG_LEVEL
+ *
+ *   Value: one of \c LONGDEBUG, \c DEBUG, \c INFO, \c WARNING, \c ERROR.
+ *
+ *   If defined, will compile out all log messages of level strictly less severe
+ *   than the level provided here.
+ *   
+ *
+ * - \c TOMORUN_RNG_CLASS
+ *
+ *   Value: C++ pseudo random number generator name (e.g. \c std::mt19937)
+ *
+ *   The random number generator algorithm to use for the random walk, given as
+ *   a C++ class name (see C++11's \c <random>).
+ *
+ * - \c TOMORUN_USE_DEVICE_SEED
+ *
+ *   Set to a nonzero value to seed the pseudo-random number generators with a
+ *   seed taken from a physical random device (see also \c TOMORUN_RANDOM_DEVICE).
+ *
+ *   Set to zero to not attempt to access any random device (the code won't even
+ *   refer to \c std::random_device).  The pseudo-rng's will be seeded using
+ *   consecutive seeds starting from a base seed derived from the current time.
+ *   
+ *
+ * - \c TOMORUN_RANDOM_DEVICE
+ *
+ *   The name of the physical random device (see C++ \c std::random_device
+ *   constructor) to use to seed the pseudo-RNG.
+ *
+ *   This setting doesn't have any effect unless \c TOMORUN_USE_DEVICE_SEED is
+ *   set.
+ *
+ *   You may leave an empty macro definition to use the default constructor and
+ *   use the default device.
+ *
+ *
+ *
+ *
+ * Less important options which probably shouldn't be specified:
+ *
+ * - \c TOMORUN_DO_SLOW_POVM_CONSISTENCY_CHECKS
+ *
+ *   Value: \c true | \c false
+ *
+ *   If defined, will make sure that all POVM effects read from the input file
+ *   are positive semidefinite and nonzero.  This doesn't affect the random walk
+ *   at all, it's only a constant overhead at start-up.
+ *
+ *   This option is on by default.
+ *
+ * - \c TOMORUN_TIMERCLOCK
+ *
+ *   Value: C++ clock class name (std::chrono::...) [default: \c
+ *          std::chrono::high_resolution_clock ]
+ *
+ *   C++ clock type to use when timing the duration of the computation.  This
+ *   option is really historical and was meant to allow compilation with older
+ *   compilers such as G++ 4.6 which don't support the new C++ clock types.
+ *
+ */
+
+
+
+
 
 
 /** \page pageTomorunNewFigureOfMerit Tomorun and custom figures of merit
