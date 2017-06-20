@@ -43,8 +43,16 @@ import shlex
 
 # build-time requirements -- Apparently, PIP cannot install these automatically -- so make
 # sure we get a hard failure if they aren't present
-import numpy
-import pybind11
+try:
+    import numpy
+    import pybind11
+except ImportError as e:
+    sys.stderr.write(
+        "\n"
+        "*** ERROR: Please install packages `numpy' and `pybind11' prior to installing `tomographer' ***\n"
+        "    [for instance: pip install numpy pybind11 ]\n"
+        "\n")
+    raise
 
 def require_mod_version(mod, modver, minver, fix=None):
     if LooseVersion(modver) < LooseVersion(minver):
