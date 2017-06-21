@@ -1141,20 +1141,36 @@ struct TOMOGRAPHER_EXPORT MHRWStatusReport : public MultiProc::TaskStatusReport
       accept_ratio = rw.acceptanceRatio();
       warn_accept_ratio = (accept_ratio > MHRWAcceptanceRatioRecommendedMax ||
                            accept_ratio < MHRWAcceptanceRatioRecommendedMin);
-      accept_ratio_msg = std::string("[") + (warn_accept_ratio ? "!!** " : "") +
+      accept_ratio_msg = std::string("  [") + (warn_accept_ratio ? "!!** " : "") +
         std::string("accept ratio=") + Tools::fmts("%.2f", accept_ratio) +
         (warn_accept_ratio ? " **!!" : "") + "]";
     }
-    std::string msg = Tools::fmts(
-        "%s %lu/(%lu=%lu*(%lu+%lu)) : %5.2f%% done  %s",
-        ( ! is_thermalizing
-          ? "iteration"
-          : "[therm.] "),
-        (unsigned long)kreal, (unsigned long)totiters, (unsigned long)rw.nSweep(),
-        (unsigned long)rw.nTherm(), (unsigned long)rw.nRun(),
-        fdone*100.0,
-        accept_ratio_msg.c_str()
-        );
+    // "iteration 1756062/(2851884=63*(12500+32768)) : 61.58% done  [!!** accept ratio=0.47 **!!]"
+    // "therm. sweep NNN/NNN [+rn:NNN]: XX.XX% done
+    // "run sweep    NNN/NNN [+th:NNN]: XX.XX% done [accept ratio=0.25]
+    //
+    std::string msg;
+    if (is_thermalizing) {
+      msg = "therm. sweep " + std::to_string(k / rw.nSweep()) + "/" + std::to_string(rw.nTherm())
+        + " [+rn:" + std::to_string(rw.nRun()) + "]";
+    } else {
+      msg = "run sweep    " + std::to_string(k / rw.nSweep()) + "/" + std::to_string(rw.nRun())
+        + " [+th:" + std::to_string(rw.nTherm()) + "]";
+    }
+    msg += " : " + Tools::fmts("%5.2f", fdone*100.0) + "% done";
+    if (accept_ratio_msg.size()) {
+      msg += accept_ratio_msg;
+    }
+    // std::string msg = Tools::fmts(
+    //     "%s %lu/(%lu=%lu*(%lu+%lu)) : %5.2f%% done  %s",
+    //     ( ! is_thermalizing
+    //       ? "iteration"
+    //       : "[therm.] "),
+    //     (unsigned long)kreal, (unsigned long)totiters, (unsigned long)rw.nSweep(),
+    //     (unsigned long)rw.nTherm(), (unsigned long)rw.nRun(),
+    //     fdone*100.0,
+    //     accept_ratio_msg.c_str()
+    //     );
     const std::string nlindent = "\n    ";
     if (Tools::StatusQuery<MHRWStatsCollectorType>::CanProvideStatusLine) {
       const std::string s = Tools::StatusQuery<MHRWStatsCollectorType>::getStatusLine(&stats_collector);
