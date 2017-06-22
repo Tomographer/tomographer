@@ -1133,7 +1133,7 @@ struct TOMOGRAPHER_EXPORT MHRWStatusReport : public MultiProc::TaskStatusReport
     IterCountIntType totiters = rw.nSweep()*(rw.nTherm()+rw.nRun());
     // k restarts at zero after thermalization, so account for that:
     IterCountIntType kreal = is_thermalizing ? k : k + rw.nSweep()*rw.nTherm();
-    double fdone = (double)kreal/totiters;
+    double fdone = ( is_thermalizing ? (double)k : (double)k + rw.nSweep()*rw.nTherm() ) / (double)totiters;
     double accept_ratio = std::numeric_limits<double>::quiet_NaN();
     bool warn_accept_ratio = false;
     std::string accept_ratio_msg;
@@ -1145,9 +1145,9 @@ struct TOMOGRAPHER_EXPORT MHRWStatusReport : public MultiProc::TaskStatusReport
         std::string("accept ratio=") + Tools::fmts("%.2f", accept_ratio) +
         (warn_accept_ratio ? " **!!" : "") + "]";
     }
-    // "iteration 1756062/(2851884=63*(12500+32768)) : 61.58% done  [!!** accept ratio=0.47 **!!]"
-    // "therm. sweep NNN/NNN [+rn:NNN]: XX.XX% done
-    // "run sweep    NNN/NNN [+th:NNN]: XX.XX% done [accept ratio=0.25]
+    //
+    // "therm. sweep NNN/NNN [+rn:NNN]: XX.XX% done"
+    // "run sweep    NNN/NNN [+th:NNN]: XX.XX% done [accept ratio=0.25]"
     //
     std::string msg;
     if (is_thermalizing) {
