@@ -3,7 +3,7 @@ Change Log
 ==========
 
 
-## v5.1 (TBD)
+## v5.1 (2017-06-24)
 
   * Python package installation: Fix compilation flags (add `-stdlib=libc++` by
     default on Mac OS X)
