@@ -120,11 +120,14 @@ os.mkdir(os.path.join(tomo_name_w_ver, builddirname))
 
 # CMAKE COMMAND HERE
 do_run([e.cmake, '..',
+
         # compilers
         '-DCMAKE_C_COMPILER='+C_COMPILER,
         '-DCMAKE_CXX_COMPILER='+CXX_COMPILER,
+
         # build type
         '-DCMAKE_BUILD_TYPE=Release',
+
         # 3rd party libraries
         '-DEIGEN3_INCLUDE_DIR='+EIGEN3_INCLUDE,
         '-DMATIO_INCLUDE_DIR='+MATIO_INCLUDE,
@@ -134,22 +137,30 @@ do_run([e.cmake, '..',
         '-DZLIB_LIBRARY_RELEASE='+ZLIB_LIB,
         '-DBoost_PROGRAM_OPTIONS_LIBRARY='+Boost_PROGRAM_OPTIONS_LIB,
         '-DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE='+Boost_PROGRAM_OPTIONS_LIB,
+
         # Tomorun: use OpenMP not C++ threads
-        '-DTOMORUN_MULTIPROC=openmp',
+        #'-DTOMORUN_MULTIPROC=openmp',
+        '-DTOMORUN_MULTIPROC=cxxthreads', # I seem to be having a bug with openmp with
+                                          # progress reports--just use C++threads for now
+
         # optimizations & architecture: don't include too many optimizations, so that the
         # binary can run on other machines. Intel Core 2 should be a good common ground.
         '-DTARGET_ARCHITECTURE=core',
-        # additional C++ compiler flags
+
+        # C++ compiler flags
         '-DCMAKE_CXX_FLAGS_RELEASE=-O3 -mmacosx-version-min=10.6 -UNDEBUG', # *keep* assertions
+
         # OS X Deployment target:
         # gets include dirs wrong:
         #'-DCMAKE_OSX_DEPLOYMENT_TARGET=10.8',
         #'-DCMAKE_OSX_SYSROOT=/Applications/Xcode.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX10.8.sdk',
         # linker flags
         #'-DCMAKE_EXE_LINKER_FLAGS=-L/usr/local/opt/llvm/lib',
+
         # Finally, our install prefix for packaging,
         '-DCMAKE_INSTALL_PREFIX='+fullinstallpath
         ],
+
        cwd=fullbuildpath,
        env=dict(os.environ), #env=dict(os.environ, LDFLAGS=LDFLAGS)
        )

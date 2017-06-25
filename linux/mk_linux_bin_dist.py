@@ -118,29 +118,38 @@ do_run([e.cmake, '..',
         # compilers
         '-DCMAKE_C_COMPILER='+C_COMPILER,
         '-DCMAKE_CXX_COMPILER='+CXX_COMPILER,
+
         # build type
         '-DCMAKE_BUILD_TYPE=Release',
+
         # 3rd party libraries
         '-DEIGEN3_INCLUDE_DIR='+EIGEN3_INCLUDE,
         '-DMATIO_INCLUDE_DIR='+MATIO_INCLUDE,
         '-DMATIO_LIBRARY='+MATIO_LIB,
+
         #'-DMATIO_LIBRARY_RELEASE='+MATIO_LIB,
         '-DZLIB_LIBRARY='+ZLIB_LIB,
         '-DZLIB_LIBRARY_RELEASE='+ZLIB_LIB,
         '-DBoost_PROGRAM_OPTIONS_LIBRARY='+Boost_PROGRAM_OPTIONS_LIB,
         '-DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE='+Boost_PROGRAM_OPTIONS_LIB,
+
         # Tomorun: use OpenMP not C++ threads
-        '-DTOMORUN_MULTIPROC=openmp',
+        #'-DTOMORUN_MULTIPROC=openmp',
+        '-DTOMORUN_MULTIPROC=cxxthreads',
+
         # optimizations & architecture: don't include too many optimizations, so that the
         # binary can run on other machines.
         '-DTARGET_ARCHITECTURE=none',
         #'-DUSE_SSE2=on', # but enable sse2 which is available virtually everywhere ## DOESN'T WORK -- WHY??
-        # additional C++ compiler flags
+
+        # C++ compiler flags
         '-DCMAKE_CXX_FLAGS_RELEASE=-O3 -msse2',
+
         # linker flags: RPath stuff etc. ### THESE ARE NOT NECESSARY, WE OVERRIDE THE LINK COMMAND ANYWAY....
 #        '-DCMAKE_SKIP_BUILD_RPATH=true',
 #        '-DCMAKE_BUILD_WITH_INSTALL_RPATH=false',
 #        '-DCMAKE_INSTALL_RPATH=\$ORIGIN/../lib',
+
         # Finally, our install prefix for packaging,
         '-DCMAKE_INSTALL_PREFIX='+fullinstallpath
         ], cwd=fullbuildpath)
