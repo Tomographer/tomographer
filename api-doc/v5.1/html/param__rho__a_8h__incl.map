@@ -1,0 +1,7 @@
+<map id="tomographer/densedm/param_rho_a.h" name="tomographer/densedm/param_rho_a.h">
+<area shape="rect" id="node4" href="$dmtypes_8h.html" title="C++ types for describing dense density matrices in various parameterizations. " alt="" coords="152,92,307,131"/>
+<area shape="rect" id="node8" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="459,179,640,204"/>
+<area shape="rect" id="node19" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="785,99,978,124"/>
+<area shape="rect" id="node15" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="227,252,416,277"/>
+<area shape="rect" id="node17" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="587,252,776,277"/>
+</map>

@@ -1,0 +1,15 @@
+<map id="tomographer/mhrwtasks.h" name="tomographer/mhrwtasks.h">
+<area shape="rect" id="node7" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="835,392,997,417"/>
+<area shape="rect" id="node28" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="1647,392,1918,417"/>
+<area shape="rect" id="node30" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="948,152,1092,177"/>
+<area shape="rect" id="node35" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="341,312,507,337"/>
+<area shape="rect" id="node42" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="1661,79,1890,104"/>
+<area shape="rect" id="node16" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="2460,472,2641,497"/>
+<area shape="rect" id="node24" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="2265,545,2454,571"/>
+<area shape="rect" id="node26" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="500,545,689,571"/>
+<area shape="rect" id="node31" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="992,312,1179,337"/>
+<area shape="rect" id="node34" href="$statusprovider_8h_source.html" title="tomographer/tools/statusprovider.h" alt="" coords="2484,232,2711,257"/>
+<area shape="rect" id="node37" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1697,225,1855,264"/>
+<area shape="rect" id="node38" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="2499,392,2692,417"/>
+<area shape="rect" id="node45" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="2195,312,2365,337"/>
+</map>

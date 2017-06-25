@@ -1,0 +1,9 @@
+<map id="tomographer/multiprocomp.h" name="tomographer/multiprocomp.h">
+<area shape="rect" id="node6" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="1123,85,1310,111"/>
+<area shape="rect" id="node25" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="481,239,661,264"/>
+<area shape="rect" id="node30" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="212,165,483,191"/>
+<area shape="rect" id="node32" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="264,85,430,111"/>
+<area shape="rect" id="node16" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="341,312,529,337"/>
+<area shape="rect" id="node21" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="966,165,1128,191"/>
+<area shape="rect" id="node28" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="1183,312,1373,337"/>
+</map>

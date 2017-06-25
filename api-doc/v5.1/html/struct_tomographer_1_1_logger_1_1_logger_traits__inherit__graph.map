@@ -1,0 +1,9 @@
+<map id="Tomographer::Logger::LoggerTraits&lt; LoggerType &gt;" name="Tomographer::Logger::LoggerTraits&lt; LoggerType &gt;">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_logger_1_1_logger_traits.html" title="Tomographer::Logger\l::LoggerTraits\&lt; BaseLogger \&gt;" alt="" coords="385,184,583,223"/>
+<area shape="rect" id="node7" href="$struct_tomographer_1_1_logger_1_1_logger_traits.html" title="Tomographer::Logger\l::LoggerTraits\&lt; BaseLogger\lType_ \&gt;" alt="" coords="391,291,577,343"/>
+<area shape="rect" id="node3" href="$struct_tomographer_1_1_logger_1_1_logger_traits_3_01_minimum_severity_logger_3_01_base_logger_00_01_level_01_4_01_4.html" title="Specialized Traits for MinimumSeverityLogger – see LoggerTraits. " alt="" coords="646,5,862,57"/>
+<area shape="rect" id="node4" href="$struct_tomographer_1_1_logger_1_1_logger_traits_3_01_multi_proc_1_1_cxx_threads_1_1_thread_sanitb4e4ff0abba6a39822cce1c99e885e9a.html" title="Specialized Traits for Tomographer::MultiProc::OMP::ThreadSanitizerLogger&lt;typename BaseLogger&gt; – see..." alt="" coords="632,81,876,147"/>
+<area shape="rect" id="node5" href="$struct_tomographer_1_1_logger_1_1_logger_traits_3_01_multi_proc_1_1_o_m_p_1_1_thread_sanitizer_l7f0064bd162e246a0e99630591611d67.html" title="Specialized Traits for Tomographer::MultiProc::OMP::ThreadSanitizerLogger&lt;typename BaseLogger&gt; – see..." alt="" coords="653,171,855,236"/>
+<area shape="rect" id="node6" href="$struct_tomographer_1_1_logger_1_1_logger_traits_3_01_origin_filtered_logger_3_01_base_logger_01_4_01_4.html" title="Specialized Logger Traits for OriginFilteredLogger – see LoggerTraits. " alt="" coords="657,260,851,312"/>
+<area shape="rect" id="node8" href="$struct_tomographer_1_1_logger_1_1_logger_traits_3_01_local_logger_3_01_base_logger_type___01_4_01_4.html" title="Specialized Traits for LocalLogger. See LoggerTraits&lt;BaseLoggerType_&gt; " alt="" coords="660,336,848,388"/>
+</map>

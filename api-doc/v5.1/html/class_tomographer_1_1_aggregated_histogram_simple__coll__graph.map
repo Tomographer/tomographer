@@ -1,0 +1,18 @@
+<map id="Tomographer::AggregatedHistogramSimple&lt; HistogramType_, CountRealType_ &gt;" name="Tomographer::AggregatedHistogramSimple&lt; HistogramType_, CountRealType_ &gt;">
+<area shape="rect" id="node3" href="$class_tomographer_1_1_averaged_histogram.html" title="Tomographer::AveragedHistogram\l\&lt; HistogramType, CountRealType \&gt;" alt="" coords="3138,252,3371,291"/>
+<area shape="rect" id="node4" href="$class_tomographer_1_1_histogram_with_error_bars.html" title="Tomographer::HistogramWith\lErrorBars\&lt; HistogramType\l ::Scalar, CountRealType \&gt;" alt="" coords="2429,209,2624,261"/>
+<area shape="rect" id="node5" href="$class_tomographer_1_1_histogram.html" title="Tomographer::Histogram\l\&lt; HistogramType ::Scalar,\l CountRealType \&gt;" alt="" coords="2021,163,2195,215"/>
+<area shape="rect" id="node6" href="$struct_tomographer_1_1_histogram_params.html" title="Tomographer::HistogramParams\l\&lt; HistogramType ::Scalar \&gt;" alt="" coords="1572,5,1786,44"/>
+<area shape="rect" id="node7" href="$struct_tomographer_1_1_histogram_params.html" title="The parameters of a Histogram. " alt="" coords="1141,57,1355,96"/>
+<area shape="rect" id="node20" href="$struct_tomographer_1_1_histogram_params.html" title="Tomographer::HistogramParams\l\&lt; HistogramType_::Scalar \&gt;" alt="" coords="1572,120,1786,159"/>
+<area shape="rect" id="node9" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1Array.html" title="Eigen::Array\&lt; CountType,\l Eigen::Dynamic, 1 \&gt;" alt="" coords="1161,281,1336,320"/>
+<area shape="rect" id="node14" href="$class_tomographer_1_1_histogram.html" title="Stores a histogram. " alt="" coords="1595,321,1764,360"/>
+<area shape="rect" id="node16" href="$class_tomographer_1_1_histogram_with_error_bars.html" title="Stores a histogram along with error bars. " alt="" coords="1995,352,2221,391"/>
+<area shape="rect" id="node18" href="$class_tomographer_1_1_histogram_with_error_bars.html" title="Tomographer::HistogramWith\lErrorBars\&lt; HistogramType\l_::Scalar, RealAvgType \&gt;" alt="" coords="2429,327,2624,379"/>
+<area shape="rect" id="node19" href="$class_tomographer_1_1_histogram.html" title="Tomographer::Histogram\l\&lt; HistogramType_::Scalar,\l RealAvgType \&gt;" alt="" coords="2019,245,2197,297"/>
+<area shape="rect" id="node10" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Array\&lt; CountType, Eigen\l::Dynamic, 1, _Options, \l_MaxRows, _MaxCols \&gt; \&gt;" alt="" coords="595,296,776,361"/>
+<area shape="rect" id="node11" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Derived \&gt;" alt="" coords="5,268,167,307"/>
+<area shape="rect" id="node13" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1PlainObjectBase.html" title="Eigen::PlainObjectBase\l\&lt; Array\&lt; _Scalar, _Rows,\l _Cols, _Options, _MaxRows,\l _MaxCols \&gt; \&gt;" alt="" coords="374,219,571,284"/>
+<area shape="rect" id="node12" href="/Users/philippe/Research/projects/tomographer/doc/Eigen.doxytags$classEigen_1_1Array.html" title="Eigen::Array\&lt; _Scalar,\l _Rows, _Cols, _Options,\l _MaxRows, _MaxCols \&gt;" alt="" coords="800,235,972,287"/>
+<area shape="rect" id="node17" href="$class_tomographer_1_1_averaged_histogram.html" title="Combines several histograms (with same parameters) into an averaged histogram. " alt="" coords="2673,289,2901,328"/>
+</map>

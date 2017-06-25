@@ -1,0 +1,4 @@
+var struct_tomographer_1_1_tools_1_1_status_provider_3_01_value_histogram_with_binning_m_h_r_w_statsbf3e77f187f2dbafdbe8e0e00c89d8c1 =
+[
+    [ "MHRWStatsCollector", "struct_tomographer_1_1_tools_1_1_status_provider_3_01_value_histogram_with_binning_m_h_r_w_statsbf3e77f187f2dbafdbe8e0e00c89d8c1.html#a2bf27a20401694a687871ca12d894879", null ]
+];

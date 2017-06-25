@@ -1,0 +1,4 @@
+var structtpy_1_1_py_status_report_add_worker_data_fields_3_01_tomographer_1_1_m_h_r_w_tasks_1_1_m_hc3aa0bf498c92a6d5aa321f181274958 =
+[
+    [ "TaskStatusReportType", "structtpy_1_1_py_status_report_add_worker_data_fields_3_01_tomographer_1_1_m_h_r_w_tasks_1_1_m_hc3aa0bf498c92a6d5aa321f181274958.html#a1fa4025f851c32e81e70f3bdd895942f", null ]
+];

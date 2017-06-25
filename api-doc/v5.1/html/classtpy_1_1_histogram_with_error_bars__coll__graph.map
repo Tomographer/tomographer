@@ -1,0 +1,5 @@
+<map id="tpy::HistogramWithErrorBars" name="tpy::HistogramWithErrorBars">
+<area shape="rect" id="node2" href="$classtpy_1_1_histogram.html" title="Histogram class like Tomographer::Histogram, but with NumPy arrays storage. " alt="" coords="59,305,166,331"/>
+<area shape="rect" id="node3" href="$struct_tomographer_1_1_histogram_params.html" title="Tomographer::HistogramParams\l\&lt; RealType \&gt;" alt="" coords="5,205,219,244"/>
+<area shape="rect" id="node4" href="$struct_tomographer_1_1_histogram_params.html" title="The parameters of a Histogram. " alt="" coords="5,105,219,144"/>
+</map>

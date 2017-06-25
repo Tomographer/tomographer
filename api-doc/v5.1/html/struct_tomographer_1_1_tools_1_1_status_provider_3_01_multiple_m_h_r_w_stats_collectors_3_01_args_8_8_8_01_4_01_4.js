@@ -1,0 +1,5 @@
+var struct_tomographer_1_1_tools_1_1_status_provider_3_01_multiple_m_h_r_w_stats_collectors_3_01_args_8_8_8_01_4_01_4 =
+[
+    [ "MHRWStatsCollector", "struct_tomographer_1_1_tools_1_1_status_provider_3_01_multiple_m_h_r_w_stats_collectors_3_01_args_8_8_8_01_4_01_4.html#a7e48d2fdceffc68b8cc57fffab586159", null ],
+    [ "StatusableObject", "struct_tomographer_1_1_tools_1_1_status_provider_3_01_multiple_m_h_r_w_stats_collectors_3_01_args_8_8_8_01_4_01_4.html#ac6fd1492d09c544765ad8de8f6dd4cf6", null ]
+];

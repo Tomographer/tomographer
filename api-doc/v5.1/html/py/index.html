@@ -1,0 +1,177 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Tomographer Python Interface (v5.1) &#8212; Tomographer Python Interface v5.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v5.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="&lt;no title&gt;" href="tomographer.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="tomographer-python-interface-version">
+<h1>Tomographer Python Interface (v5.1)<a class="headerlink" href="#tomographer-python-interface-version" title="Permalink to this headline">¶</a></h1>
+<p>The <cite>tomographer</cite> package provides tools for practical and reliable error bars
+in quantum tomography.</p>
+<p>These Python bindings provide an easy-to-use interface to the underlying C++
+routines.  If you are interested, <a class="reference external" href="../index.html">here is the API documentation for
+the Tomographer C++ framework</a>.</p>
+<p>Please note that the Python interface is not meant to cover the entire extent of
+the C++ API.  Rather, we aim to provide a high-level access to core tasks
+implemented in optimized C++ routines.  We provide specific types (such as for
+handling histograms, receiving a status report or passing parameters of a random
+walk) in order to interact with those core tasks. The Python interface is
+designed to allow a seamless integration of our tomography procedure into an
+existing experimental workflow.  Currently, there is only one &#8220;core task&#8221;
+implemented, <a class="reference internal" href="tomographer.tomorun.html#tomographer.tomorun.tomorun" title="tomographer.tomorun.tomorun"><code class="xref py py-func docutils literal"><span class="pre">tomographer.tomorun.tomorun()</span></code></a>, which is an alternative
+to the <cite>tomorun</cite> executable program.</p>
+<p>Observe that some classes may be loaded and dumped using the <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>
+module.  You may find this useful for caching intermediate results or for saving
+the result of a computation.  Classes which can be <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>d are
+documented as such.</p>
+<p>If you are developing a new C++ extension module using Tomographer, then you
+might have a look at <a class="reference internal" href="tomographer.include.html#tomographer.include.get_include" title="tomographer.include.get_include"><code class="xref py py-func docutils literal"><span class="pre">tomographer.include.get_include()</span></code></a> and
+<a class="reference internal" href="tomographer.version.html#tomographer.version.compile_info" title="tomographer.version.compile_info"><code class="xref py py-data docutils literal"><span class="pre">tomographer.version.compile_info['cflags']</span></code></a>.</p>
+<div class="section" id="modules-and-classes">
+<h2>Modules and classes<a class="headerlink" href="#modules-and-classes" title="Permalink to this headline">¶</a></h2>
+<div class="toctree-wrapper compound">
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._hist_classes.html">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.multiproc.html">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.densedm.html">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tomorun.html">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.mhrwtasks.html">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.querrorbars.html">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tools.html">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="tomographer.tools.html#module-tomographer.tools.densedm">Simulating Measurements, and More (<cite>tomographer.tools.densedm</cite>)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tomographer.tools.html#module-tomographer.tools.densedm.mle">Maximum Likelihood Estimation (<cite>tomographer.tools.densedm.mle</cite>)</a></li>
+</ul>
+</li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.jpyutil.html">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.include.html">Utilities for compiling other modules (<cite>tomographer.include</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.version.html">Version and compilation information (<cite>tomographer.version</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_module.html">Writing Special-Purpose C++ Code with a Python Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="custom_module.html#the-c-source-file-s">The C++ Source File(s)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="custom_module.html#the-python-setup-py-file">The Python <code class="docutils literal"><span class="pre">setup.py</span></code> file</a></li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+<div class="section" id="indices-and-tables">
+<h2>Indices and tables<a class="headerlink" href="#indices-and-tables" title="Permalink to this headline">¶</a></h2>
+<ul class="simple">
+<li><a class="reference internal" href="genindex.html"><span class="std std-ref">Index</span></a></li>
+<li><a class="reference internal" href="py-modindex.html"><span class="std std-ref">Module Index</span></a></li>
+<li><a class="reference internal" href="search.html"><span class="std std-ref">Search Page</span></a></li>
+</ul>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="#">Tomographer Python Interface</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._hist_classes.html">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.multiproc.html">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.densedm.html">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tomorun.html">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.mhrwtasks.html">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.querrorbars.html">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tools.html">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.jpyutil.html">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.include.html">Utilities for compiling other modules (<cite>tomographer.include</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.version.html">Version and compilation information (<cite>tomographer.version</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_module.html">Writing Special-Purpose C++ Code with a Python Interface</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="#">Documentation overview</a><ul>
+      <li>Next: <a href="tomographer.html" title="next chapter">&lt;no title&gt;</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Philippe Faist.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/index.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

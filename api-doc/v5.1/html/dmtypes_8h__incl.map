@@ -1,0 +1,5 @@
+<map id="tomographer/densedm/dmtypes.h" name="tomographer/densedm/dmtypes.h">
+<area shape="rect" id="node5" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="534,92,714,117"/>
+<area shape="rect" id="node12" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="75,165,264,191"/>
+<area shape="rect" id="node14" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="1004,165,1194,191"/>
+</map>

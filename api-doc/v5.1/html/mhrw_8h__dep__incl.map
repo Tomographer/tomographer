@@ -1,0 +1,12 @@
+<map id="tomographer/mhrw.h" name="tomographer/mhrw.h">
+<area shape="rect" id="node2" href="$tspacellhwalker_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="5,79,161,117"/>
+<area shape="rect" id="node3" href="$mhrwacceptratiowalkerparamscontroller_8h.html" title="Tools for automatically and dynamically adjusting the step size of the random walk. " alt="" coords="235,172,582,197"/>
+<area shape="rect" id="node4" href="$mhrwstepsizecontroller_8h.html" title="Tools for automatically and dynamically adjusting the step size of the random walk. " alt="" coords="285,259,532,284"/>
+<area shape="rect" id="node5" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="583,85,812,111"/>
+<area shape="rect" id="node7" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Multiprocessing Task Interfaces) for parallel Metropolis&#45;Hasting..." alt="" coords="1075,172,1251,197"/>
+<area shape="rect" id="node8" href="$pymhrwtasks_8h_source.html" title="py/cxx/tomographerpy\l/pymhrwtasks.h" alt="" coords="1180,252,1333,291"/>
+<area shape="rect" id="node9" href="$pymultiproc_8h_source.html" title="py/cxx/tomographerpy\l/pymultiproc.h" alt="" coords="1356,252,1509,291"/>
+<area shape="rect" id="node10" href="$mhrwvalueerrorbinsconvergedcontroller_8h.html" title="Tools for automatically stopping the random walk when enough samples have been taken to make all binn..." alt="" coords="706,172,1052,197"/>
+<area shape="rect" id="node11" href="$pymhrw_8h_source.html" title="py/cxx/tomographerpy\l/pymhrw.h" alt="" coords="1325,165,1478,204"/>
+<area shape="rect" id="node6" href="$mhrw__valuehist__tools_8h.html" title="Tools for collecting a histogram of values during a Metropolis&#45;Hastings random walk using the tools o..." alt="" coords="768,252,961,291"/>
+</map>

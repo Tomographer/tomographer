@@ -1,0 +1,442 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Histogram Classes (tomographer) &#8212; Tomographer Python Interface v5.1 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v5.1',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Metropolis-Hastings Random Walk related classes (tomographer)" href="tomographer._mhrw_classes.html" />
+    <link rel="prev" title="&lt;no title&gt;" href="tomographer.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="histogram-classes-tomographer">
+<h1>Histogram Classes (<cite>tomographer</cite>)<a class="headerlink" href="#histogram-classes-tomographer" title="Permalink to this headline">¶</a></h1>
+<p>This collection of classes take care of recording, storing and manipulating a histogram.
+Typically such a class would be returned by a core task such as
+<a class="reference internal" href="tomographer.tomorun.html#tomographer.tomorun.tomorun" title="tomographer.tomorun.tomorun"><code class="xref py py-func docutils literal"><span class="pre">tomographer.tomorun.tomorun()</span></code></a>.</p>
+<p class="rubric">Skip to:</p>
+<ul class="simple">
+<li><a class="reference internal" href="#tomographer.HistogramParams" title="tomographer.HistogramParams"><code class="xref py py-class docutils literal"><span class="pre">tomographer.HistogramParams</span></code></a></li>
+<li><a class="reference internal" href="#tomographer.Histogram" title="tomographer.Histogram"><code class="xref py py-class docutils literal"><span class="pre">tomographer.Histogram</span></code></a></li>
+<li><a class="reference internal" href="#tomographer.HistogramWithErrorBars" title="tomographer.HistogramWithErrorBars"><code class="xref py py-class docutils literal"><span class="pre">tomographer.HistogramWithErrorBars</span></code></a></li>
+</ul>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 5.0: </span>The histogram classes now use NumPy internal arrays for storing their data, so that the
+count data type is not statically fixed.  The <cite>HistogramReal</cite> class has been deprecated.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 5.0: </span>The <cite>AveragedSimpleHistogram</cite>, <cite>AveragedSimpleRealHistogram</cite> and
+<cite>AveragedErrorBarHistogram</cite> classes have been deprecated.  The logic is that they
+aren&#8217;t really needed especially on the Python side, and if we wish to make this
+functionality available it would make more sense to do so via the
+<a class="reference external" href="../class_tomographer_1_1_aggregated_histogram_simple.html">AggregatedHistogram classes</a>.</p>
+</div>
+<p class="rubric">Deprecated Aliases</p>
+<p>The following aliases are provided for compatibility with older versions of Tomographer
+(before Tomographer 5): <cite>UniformBinsHistogramParams</cite>, <cite>UniformBinsHistogram</cite>,
+<cite>UniformBinsRealHistogram</cite>, and <cite>UniformBinsHistogramWithErrorBars</cite>.</p>
+<span class="target" id="module-tomographer"></span><dl class="class">
+<dt id="tomographer.HistogramParams">
+<em class="property">class </em><code class="descclassname">tomographer.</code><code class="descname">HistogramParams</code><a class="headerlink" href="#tomographer.HistogramParams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pybind11_builtins.pybind11_object_48</span></code></p>
+<p>Specify histogram bins parameters: the minimum value, the maximum value, and the number of bins. The interval <cite>[min,max[</cite> is split into <cite>num_bins</cite> equally spaced bins.</p>
+<p>This class is <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>able.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">This python class interfaces its corresponding <a class="reference external" href="../struct_tomographer_1_1_uniform_bins_histogram_params.html">C++ class Tomographer::HistogramParams</a>, with the template parameter <cite>Scalar=double</cite>.</p>
+</div>
+<dl class="function">
+<dt id="tomographer.HistogramParams.HistogramParams">
+<code class="descname">HistogramParams</code><span class="sig-paren">(</span><em>min=0.0</em>, <em>max=1.0</em>, <em>num_bins=50</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.HistogramParams.HistogramParams" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a histogram parameters configuration.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.HistogramParams.min">
+<code class="descname">min</code><a class="headerlink" href="#tomographer.HistogramParams.min" title="Permalink to this definition">¶</a></dt>
+<dd><p>The lower bound on the range of values covered by the histogram. (Read-write attribute)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.HistogramParams.max">
+<code class="descname">max</code><a class="headerlink" href="#tomographer.HistogramParams.max" title="Permalink to this definition">¶</a></dt>
+<dd><p>The (strict) upper bound on the range of values covered by the histogram. (Read-write attribute)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.HistogramParams.num_bins">
+<code class="descname">num_bins</code><a class="headerlink" href="#tomographer.HistogramParams.num_bins" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of bins the range <cite>[min,max]</cite> is divided into, defining the bins. (Read-write attribute)</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.HistogramParams.values_center">
+<code class="descname">values_center</code><a class="headerlink" href="#tomographer.HistogramParams.values_center" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read-only attribute returning a vector (NumPy array) of values corresponding to each bin center value.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.HistogramParams.values_lower">
+<code class="descname">values_lower</code><a class="headerlink" href="#tomographer.HistogramParams.values_lower" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read-only attribute returning a vector (NumPy array) of values corresponding to each bin lower value.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.HistogramParams.values_upper">
+<code class="descname">values_upper</code><a class="headerlink" href="#tomographer.HistogramParams.values_upper" title="Permalink to this definition">¶</a></dt>
+<dd><p>Read-only attribute returning a vector (NumPy array) of values corresponding to each bin upper value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.HistogramParams.binCenterValue">
+<code class="descname">binCenterValue</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.HistogramParams.binCenterValue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value which a given bin index represents (center bin value).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.HistogramParams.binIndex">
+<code class="descname">binIndex</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.HistogramParams.binIndex" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the index of the bin in which the given value would be saved in. Indexes are of course zero-based.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.HistogramParams.binLowerValue">
+<code class="descname">binLowerValue</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.HistogramParams.binLowerValue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value which a given bin index represents (lower bin value limit).</p>
+<p>Raise a <a class="reference internal" href="tomographer._exc_classes.html#tomographer.TomographerCxxError" title="tomographer.TomographerCxxError"><code class="xref py py-exc docutils literal"><span class="pre">TomographerCxxError</span></code></a> if the index is invalid.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.HistogramParams.binResolution">
+<code class="descname">binResolution</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.HistogramParams.binResolution" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the width of a bin.  This is simply <span class="math">\((\mathit{max} - \mathit{min})/\mathit{num_bins}\)</span>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.HistogramParams.binUpperValue">
+<code class="descname">binUpperValue</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.HistogramParams.binUpperValue" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the value which a given bin index represents (upper bin value limit).</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.HistogramParams.isWithinBounds">
+<code class="descname">isWithinBounds</code><span class="sig-paren">(</span><em>value</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.HistogramParams.isWithinBounds" title="Permalink to this definition">¶</a></dt>
+<dd><p>Check whether the given <cite>value</cite> is within the bounds of the histogram, that is, in the range <cite>[min, max[</cite>.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.Histogram">
+<em class="property">class </em><code class="descclassname">tomographer.</code><code class="descname">Histogram</code><a class="headerlink" href="#tomographer.Histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal"><span class="pre">pybind11_builtins.pybind11_object_48</span></code></p>
+<p>A histogram object.  An interval <cite>[min,max]</cite> is divided into <cite>num_bins</cite> bins, each of same width. Each time a new value is to be recorded, the corresponding bin&#8217;s counter is incremented.</p>
+<p>This class is <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>able.</p>
+<div class="admonition seealso">
+<p class="first admonition-title">See also</p>
+<p class="last">This python class mirrors the C++ class <a class="reference external" href="../class_tomographer_1_1_uniform_bins_histogram.html">Tomographer::HistogramParams</a>.  See the C++ class documentation for more information.  However, the Python implementation uses NumPy arrays internally, so it can transparently store different bin count types.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 4.1: </span>Replaced the class static attribute <cite>HasErrorBars</cite> by the property <cite>has_error_bars</cite>.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 5.0: </span>This class no longer has a fixed storage type, now using a NumPy array internally. The     <cite>HistogramReal</cite> has been deprecated.</p>
+</div>
+<dl class="function">
+<dt id="tomographer.Histogram.Histogram">
+<code class="descname">Histogram</code><span class="sig-paren">(</span><span class="optional">[</span><em>params=HistogramParams()</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.Histogram.Histogram" title="Permalink to this definition">¶</a></dt>
+<dd><p>Construct a new histogram object with the given histogram parameters.</p>
+</dd></dl>
+
+<dl class="function">
+<dt>
+<code class="descname">Histogram</code><span class="sig-paren">(</span><em>min</em>, <em>max</em>, <em>num_bins</em><span class="sig-paren">)</span></dt>
+<dd><p>Alternative call syntax; the effect is the same as the other constructor.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.Histogram.params">
+<code class="descname">params</code><a class="headerlink" href="#tomographer.Histogram.params" title="Permalink to this definition">¶</a></dt>
+<dd><p>The <a class="reference internal" href="#tomographer.HistogramParams" title="tomographer.HistogramParams"><code class="xref py py-class docutils literal"><span class="pre">HistogramParams</span></code></a> object which stores the current histogram parameters.  This attribute is read-only.  The parameters are specified to the constructor, and cannot be changed.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.Histogram.values_center">
+<code class="descname">values_center</code><a class="headerlink" href="#tomographer.Histogram.values_center" title="Permalink to this definition">¶</a></dt>
+<dd><p>A shorthand for <cite>params.values_center</cite>. See <a class="reference internal" href="#tomographer.HistogramParams" title="tomographer.HistogramParams"><code class="xref py py-class docutils literal"><span class="pre">HistogramParams</span></code></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.Histogram.values_lower">
+<code class="descname">values_lower</code><a class="headerlink" href="#tomographer.Histogram.values_lower" title="Permalink to this definition">¶</a></dt>
+<dd><p>A shorthand for <cite>params.values_lower</cite>. See <a class="reference internal" href="#tomographer.HistogramParams" title="tomographer.HistogramParams"><code class="xref py py-class docutils literal"><span class="pre">HistogramParams</span></code></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.Histogram.values_upper">
+<code class="descname">values_upper</code><a class="headerlink" href="#tomographer.Histogram.values_upper" title="Permalink to this definition">¶</a></dt>
+<dd><p>A shorthand for <cite>params.values_upper</cite>. See <a class="reference internal" href="#tomographer.HistogramParams" title="tomographer.HistogramParams"><code class="xref py py-class docutils literal"><span class="pre">HistogramParams</span></code></a>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.Histogram.bins">
+<code class="descname">bins</code><a class="headerlink" href="#tomographer.Histogram.bins" title="Permalink to this definition">¶</a></dt>
+<dd><p>The histogram bin counts, interfaced as a <cite>NumPy</cite> array object storing integers.  This attribute is readable and writable, although you may not change the size or type of the array.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.Histogram.off_chart">
+<code class="descname">off_chart</code><a class="headerlink" href="#tomographer.Histogram.off_chart" title="Permalink to this definition">¶</a></dt>
+<dd><p>The number of recorded data points which were beyond the histogram range <cite>[params.min, params.max[</cite>.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.Histogram.has_error_bars">
+<code class="descname">has_error_bars</code><a class="headerlink" href="#tomographer.Histogram.has_error_bars" title="Permalink to this definition">¶</a></dt>
+<dd><p>The constant <cite>False</cite>.  Note that, by contrast to the correpsonding C++ class, this is an instance property and not a class property.  (This is because in Python, you don&#8217;t usually have natural direct access to the type, only to the instance.)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.Histogram.add">
+<code class="descname">add</code><span class="sig-paren">(</span><em>bins</em><span class="optional">[</span>, <em>off_chart=0</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.Histogram.add" title="Permalink to this definition">¶</a></dt>
+<dd><p>Add a number of counts to each bin, specifed by a vector of values <cite>bins</cite> which is expected to be a <cite>NumPy</cite> array. If <cite>off_chart</cite> is specified, the current <cite>off_chart</cite> count is increased by this number, otherwise it is left to its current value.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.Histogram.count">
+<code class="descname">count</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.Histogram.count" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns the number of counts in the bin indexed by <cite>index</cite>.  Indexes start at zero.  Raises <a class="reference internal" href="tomographer._exc_classes.html#tomographer.TomographerCxxError" title="tomographer.TomographerCxxError"><code class="xref py py-exc docutils literal"><span class="pre">TomographerCxxError</span></code></a> if index is out of range.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.Histogram.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>bins</em><span class="optional">[</span>, <em>off_chart=0</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.Histogram.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load bin values from the vector of values <cite>bins</cite>, which is expected to be a <cite>NumPy</cite> array. If <cite>off_chart</cite> is specified, the current <cite>off_chart</cite> count is also set to the given value; otherwise it is reset to zero.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.Histogram.normalization">
+<code class="descname">normalization</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.Histogram.normalization" title="Permalink to this definition">¶</a></dt>
+<dd><p>Calculate the normalization factor for the histogram.  This corresponds to the total number of weight-1 data points, where the weight of a data point may be specified as a second argument to <a class="reference internal" href="#tomographer.Histogram.record" title="tomographer.Histogram.record"><code class="xref py py-meth docutils literal"><span class="pre">record()</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.Histogram.normalized">
+<code class="descname">normalized</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.Histogram.normalized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a normalized version of this histogram. The bin counts as well as the off_chart counts are divided by <a class="reference internal" href="#tomographer.Histogram.normalization" title="tomographer.Histogram.normalization"><code class="xref py py-meth docutils literal"><span class="pre">normalization()</span></code></a>.  The returned object is a <a class="reference internal" href="#tomographer.Histogram" title="tomographer.Histogram"><code class="xref py py-class docutils literal"><span class="pre">Histogram</span></code></a> instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.Histogram.normalizedCounts">
+<code class="descname">normalizedCounts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.Histogram.normalizedCounts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a version of this histogram, normalized by total counts.  See <a class="reference external" href="../class_tomographer_1_1_histogram.html#a51e60cfa1f7f111787ee015805aac93c">the doc for the corresponding C++ function</a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.Histogram.numBins">
+<code class="descname">numBins</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.Histogram.numBins" title="Permalink to this definition">¶</a></dt>
+<dd><p>A shorthand for <cite>params.num_bins</cite>.  See <a class="reference internal" href="#tomographer.HistogramParams" title="tomographer.HistogramParams"><code class="xref py py-class docutils literal"><span class="pre">HistogramParams</span></code></a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.Histogram.prettyPrint">
+<code class="descname">prettyPrint</code><span class="sig-paren">(</span><span class="optional">[</span><em>max_width=0</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.Histogram.prettyPrint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produce a human-readable representation of the histogram, with horizontal visual bars, which is suitable to be displayed in a terminal (for instance).  The formatted histogram is returned as a string.  If <cite>max_width</cite> is specified and nonzero, the output is designed to fit into a terminal display of the given number of characters wide, otherwise a default width is used.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.Histogram.record">
+<code class="descname">record</code><span class="sig-paren">(</span><em>value</em><span class="optional">[</span>, <em>weight=1</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.Histogram.record" title="Permalink to this definition">¶</a></dt>
+<dd><p>Record a new data sample. This increases the corresponding bin count by one, or by <cite>weight</cite> if the latter argument is provided.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.Histogram.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.Histogram.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clears the current histogram counts (including <cite>off_chart</cite> counts) to zero.  The histogram parameters in <cite>params</cite> are kept intact.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.Histogram.totalCounts">
+<code class="descname">totalCounts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.Histogram.totalCounts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Return the total number of histogram counts (no normalization)</p>
+<p>This returns the sum of all <cite>bins</cite> contents, plus the <cite>off_chart</cite> counts. This does not account for the normalization and completely ignores the x-axis scaling.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.HistogramWithErrorBars">
+<em class="property">class </em><code class="descclassname">tomographer.</code><code class="descname">HistogramWithErrorBars</code><a class="headerlink" href="#tomographer.HistogramWithErrorBars" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tomographer.Histogram" title="tomographer.Histogram"><code class="xref py py-class docutils literal"><span class="pre">tomographer.Histogram</span></code></a></p>
+<p>A histogram (with uniform bin size), with error bars associated to each bin.</p>
+<p>This class internally inherits <a class="reference internal" href="#tomographer.Histogram" title="tomographer.Histogram"><code class="xref py py-class docutils literal"><span class="pre">Histogram</span></code></a>, and all those methods are exposed in this class, except for <cite>add()</cite>. In addition, the <cite>reset()</cite> method also clears the error bar values, and the <cite>normalized()</cite> method returns a histogram with the appropriate error  bars on the normalized histogram.</p>
+<p>This class is <a class="reference external" href="https://docs.python.org/3.6/library/pickle.html#module-pickle" title="(in Python v3.6)"><code class="xref py py-mod docutils literal"><span class="pre">pickle</span></code></a>able.</p>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 4.1: </span>Replaced the class static attribute <cite>HasErrorBars</cite> by the property <cite>has_error_bars</cite>.</p>
+</div>
+<div class="versionchanged">
+<p><span class="versionmodified">Changed in version 5.0: </span>This class no longer has a fixed storage type, now using NumPy arrays internally.</p>
+</div>
+<p>In addition to the members inherited from <a class="reference internal" href="#tomographer.Histogram" title="tomographer.Histogram"><code class="xref py py-class docutils literal"><span class="pre">Histogram</span></code></a>, the following members are available:</p>
+<dl class="attribute">
+<dt id="tomographer.HistogramWithErrorBars.delta">
+<code class="descname">delta</code><a class="headerlink" href="#tomographer.HistogramWithErrorBars.delta" title="Permalink to this definition">¶</a></dt>
+<dd><p>The error bar values on each of the histogram bin counts, interfaced as a <cite>NumPy</cite> array object storing real values.  This attribute is readable and writable, although you may not change the size or type of the array.</p>
+</dd></dl>
+
+<dl class="attribute">
+<dt id="tomographer.HistogramWithErrorBars.has_error_bars">
+<code class="descname">has_error_bars</code><a class="headerlink" href="#tomographer.HistogramWithErrorBars.has_error_bars" title="Permalink to this definition">¶</a></dt>
+<dd><p>The constant <cite>True</cite>.  Note that, by contrast to the correpsonding C++ class, this is an instance property and not a class property.  (This is because in Python, you don&#8217;t usually have natural direct access to the type, only to the instance.)</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.HistogramWithErrorBars.errorBar">
+<code class="descname">errorBar</code><span class="sig-paren">(</span><em>index</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.HistogramWithErrorBars.errorBar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get the error bar value associated to the bin of the given <cite>index</cite>. Raises <a class="reference internal" href="tomographer._exc_classes.html#tomographer.TomographerCxxError" title="tomographer.TomographerCxxError"><code class="xref py py-exc docutils literal"><span class="pre">TomographerCxxError</span></code></a> if index is out of range.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.HistogramWithErrorBars.load">
+<code class="descname">load</code><span class="sig-paren">(</span><em>y</em>, <em>yerr</em><span class="optional">[</span>, <em>off_chart=0</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.HistogramWithErrorBars.load" title="Permalink to this definition">¶</a></dt>
+<dd><p>Load data into the histogram. The array <cite>y</cite> specifies the bin counts, and <cite>yerr</cite> specifies the error bars on those bin counts.  The off-chart counter is set to <cite>off_chart</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.HistogramWithErrorBars.normalized">
+<code class="descname">normalized</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.HistogramWithErrorBars.normalized" title="Permalink to this definition">¶</a></dt>
+<dd><p>Returns a normalized version of this histogram, including the error bars. The bin counts, the error bars and the off_chart counts are divided by <a class="reference internal" href="#tomographer.Histogram.normalization" title="tomographer.Histogram.normalization"><code class="xref py py-meth docutils literal"><span class="pre">normalization()</span></code></a>.  The returned object is again a <a class="reference internal" href="#tomographer.HistogramWithErrorBars" title="tomographer.HistogramWithErrorBars"><code class="xref py py-class docutils literal"><span class="pre">HistogramWithErrorBars</span></code></a> instance.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.HistogramWithErrorBars.normalizedCounts">
+<code class="descname">normalizedCounts</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.HistogramWithErrorBars.normalizedCounts" title="Permalink to this definition">¶</a></dt>
+<dd><p>Get a version of this histogram, normalized by total counts.  See <a class="reference external" href="../class_tomographer_1_1_histogram.html#a51e60cfa1f7f111787ee015805aac93c">the doc for the corresponding C++ function</a>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.HistogramWithErrorBars.prettyPrint">
+<code class="descname">prettyPrint</code><span class="sig-paren">(</span><span class="optional">[</span><em>max_width=0</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.HistogramWithErrorBars.prettyPrint" title="Permalink to this definition">¶</a></dt>
+<dd><p>Produce a human-readable representation of the histogram, with horizontal visual bars, which is suitable to be displayed in a terminal (for instance).  The formatted histogram is returned as a string.  If <cite>max_width</cite> is specified and nonzero, the output is designed to fit into a terminal display of the given number of characters wide, otherwise a default width is used.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.HistogramWithErrorBars.reset">
+<code class="descname">reset</code><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.HistogramWithErrorBars.reset" title="Permalink to this definition">¶</a></dt>
+<dd><p>Clears the current histogram counts (including <cite>off_chart</cite> counts) to zero.  The histogram parameters in <cite>params</cite> are kept intact.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Tomographer Python Interface</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.multiproc.html">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.densedm.html">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tomorun.html">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.mhrwtasks.html">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.querrorbars.html">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tools.html">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.jpyutil.html">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.include.html">Utilities for compiling other modules (<cite>tomographer.include</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.version.html">Version and compilation information (<cite>tomographer.version</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_module.html">Writing Special-Purpose C++ Code with a Python Interface</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="tomographer.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="tomographer.html" title="previous chapter">&lt;no title&gt;</a></li>
+      <li>Next: <a href="tomographer._mhrw_classes.html" title="next chapter">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Philippe Faist.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/tomographer._hist_classes.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

@@ -1,0 +1,6 @@
+<map id="Tomographer::MultiProc::CxxThreads::TaskDispatcher&lt; TaskType_, TaskCData_, LoggerType_, TaskCountIntType_ &gt;::thread_shared_data::StatusReport" name="Tomographer::MultiProc::CxxThreads::TaskDispatcher&lt; TaskType_, TaskCData_, LoggerType_, TaskCountIntType_ &gt;::thread_shared_data::StatusReport">
+<area shape="rect" id="node2" href="/Users/philippe/Research/projects/tomographer/doc/cppreference-doxygen-web.tag.xml$cpp/utility/functional/function.html" title="std::function\&lt; void\l(const FullStatusReportType &amp;)\&gt;" alt="" coords="5,105,220,144"/>
+<area shape="rect" id="node3" href="/Users/philippe/Research/projects/tomographer/doc/cppreference-doxygen-web.tag.xml$cpp/utility/functional/function.html" title="std::function" alt="" coords="66,5,159,31"/>
+<area shape="rect" id="node4" href="/Users/philippe/Research/projects/tomographer/doc/cppreference-doxygen-web.tag.xml$cpp/thread/mutex.html" title="std::mutex" alt="" coords="243,112,326,137"/>
+<area shape="rect" id="node5" href="/Users/philippe/Research/projects/tomographer/doc/cppreference-doxygen-web.tag.xml$cpp/utility/program/sig_atomic_t.html" title="std::sig_atomic_t" alt="" coords="351,112,472,137"/>
+</map>
