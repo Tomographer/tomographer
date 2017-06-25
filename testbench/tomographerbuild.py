@@ -125,6 +125,8 @@ def timeit_call(args, cwd, repeat=3, number=1):
     timeit_call.args = args
     timeit_call.cwd = cwd
 
+    print("timeit_call(args={!r}, cwd={!r}, repeat={}, number={}".format(args, cwd, repeat, number))
+
     xx = timeit.repeat('subprocess.check_call(args, cwd=cwd)',
                       setup="""
 import subprocess

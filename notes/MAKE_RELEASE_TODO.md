@@ -14,7 +14,10 @@ Checklist For Releasing a New Version of Tomographer
       
 - [ ] Make sure `python setup.py sdist` and `python setup.py bdist_wheel` work
       for both `python2` and `python3`; if changes were made to the setup file,
-      upload and test via TestPyPi first.
+      upload and test via [TestPyPi][testpypi] first.
+
+[testpypi]: https://wiki.python.org/moin/TestPyPI
+
 
 **PERFORMING THE RELEASE:**
 
