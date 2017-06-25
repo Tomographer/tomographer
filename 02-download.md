@@ -66,12 +66,12 @@ location. For a system-wide install, simply symlink the `tomorun` executable to,
 
 ### Windows
 
-Unpack the archive anywhere on your system, such as inside `C:`. It will create a single
-folder named `tomographer-{{ site.tomographer_latest_version }}-win-mingw32`.
+Unpack the archive anywhere on your system, such as inside `C:\MySoftware`. It will create
+a single folder named `tomographer-{{ site.tomographer_latest_version }}-win-mingw32`.
 
 You can then access the `tomorun` executable, using the command-line DOS prompt, as
 
-    >C:\tomographer-{{ site.tomographer_latest_version }}-win-mingw32\bin\tomorun.exe [options]
+    >C:\MySoftware\tomographer-{{ site.tomographer_latest_version }}-win-mingw32\bin\tomorun.exe [options]
 
 
 Downloading & Installing Tomorun From Source
