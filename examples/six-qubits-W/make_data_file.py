@@ -30,8 +30,8 @@ matEmn[:,:,1] = np.eye(64) - proj_W
 Emn = [ proj_W,
         np.eye(64) - proj_W ]
 
-# let's plug in some simulated data, with ~10^7 measurements
-Nm = [ 9991020, 8980 ]
+# let's plug in some simulated data, with ~10^9 measurements
+Nm = [ 999102090, 899910 ]
 matNm = np.array([Nm]).T
 
 if __name__ == '__main__':

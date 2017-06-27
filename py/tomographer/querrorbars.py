@@ -196,13 +196,27 @@ def guess_fitparams_from_data(histogram, ftox_fn):
     gamma = 2*np.absolute((x0p + x0m) / 2.0 - x0)
 
     #logger.debug("xvals={}".format(xvals))
-    #logger.debug("firstidxabove={},lastidxabove={},x0m={},x0p={},f0={},Delta={},gamma={}".format(firstidxabove,lastidxabove,x0m,x0p,f0,Delta,gamma))
 
-    (a2,a1,m,c) = reskew_logmu_curve(*qu_error_bars_to_deskewed_c(ftox_fn, f0, Delta, gamma, y0=y0))
+    logger.debug(("guess_fitparams_from_data(): "
+                  "firstidxabove={},lastidxabove={},x0m={},x0p={},f0={},Delta={},gamma={}")
+                 .format(firstidxabove,lastidxabove,x0m,x0p,f0,Delta,gamma))
 
-    if a2 < 0 or m < 0:
+    def guess_the_fit_params(f0, Delta, gamma):
+        for niter in range(10):
+            (a2,a1,m,c) = reskew_logmu_curve(*qu_error_bars_to_deskewed_c(ftox_fn, f0, Delta, gamma, y0=y0))
+            logger.debug(("guess_fitparams_from_data(): "
+                          "f0={},Delta={},gamma={} -> a2={},a1={},m={},c={}")
+                         .format(f0,Delta,gamma, a2,a1,m,c))
+            if a2 > 0 and m > 0:
+                # all set
+                return (a2,a1,m,c)
+            # try with different (smaller) gamma's, in case we guessed gamma incorrectly
+            gamma /= 2
         logger.info("Having trouble guessing fit parameters graphically, resorting to generic guess")
         return (500.0, 100.0, 20., 0)
+
+
+    (a2,a1,m,c) = guess_the_fit_params(f0, Delta, gamma)
 
     return (a2, a1, m, c)
 

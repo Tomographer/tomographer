@@ -32,11 +32,11 @@ binning-analysis-num-levels=12
 value-type=obs-value:proj_W
 
 # Histogram range:  MINVALUE:MAXVALUE/NUMBEROFBINS
-value-hist=0.6:0.9/200
+value-hist=0.99908:0.99911/200
 
-control-binning-converged-max-not-converged=5
-control-binning-converged-max-unknown=16
-control-binning-converged-max-unknown-notisolated=8
+control-binning-converged-max-not-converged=20
+control-binning-converged-max-unknown-notisolated=20
+control-binning-converged-max-unknown=30
 
 
 
