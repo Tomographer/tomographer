@@ -89,7 +89,8 @@ OR: you can compile from source, in which case you'll need:
 In any case a recent C++ compiler is required as some C++11 features and
 elements of its standard library are used.
 
-Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
+Tomorun is tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).  The python
+package is tested on Linux and Mac OS X.
 
 Note: OpenMP is now no longer needed if your compiler supports C++ threads
 (std::thread).  This is the case for many compilers, including Apple's `clang`.

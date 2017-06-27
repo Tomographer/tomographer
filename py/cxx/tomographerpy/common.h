@@ -108,6 +108,11 @@ typedef Eigen::Matrix<CountIntType, Eigen::Dynamic, 1> CountIntVectorType;
  * function also ensures that the same versions of tomographer and of pybind11 are being
  * used between the compiled tomographer module and the available tomographerpy headers.
  *
+ * In particular, this function make sure that the version of the \c tomographer Python
+ * module is exactly the same as the headers which are currently available.  Same for \a
+ * pybind11.
+ *
+ * \return The \a py::module object representing the \a tomographer Python module.
  */
 inline py::module import_tomographer()
 {

@@ -117,6 +117,8 @@ struct DummyLoggerImplementation : public Tomographer::Logger::LoggerBase<Derive
 
 
 
+DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerBasic, );
+
 DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinSeverity, enum {
     IsThreadSafe = 0,
     StaticMinimumSeverityLevel = Tomographer::Logger::WARNING,
@@ -134,6 +136,115 @@ DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerOriginFilter, enum {
     HasOwnGetLevel = 0,
     HasFilterByOrigin = 1
   });
+
+DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinSevLONGDEBUG, enum {
+    IsThreadSafe = 0,
+    StaticMinimumSeverityLevel = Tomographer::Logger::LONGDEBUG,
+    HasOwnGetLevel = 0,
+    HasFilterByOrigin = 0
+  });
+DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinSevDEBUG, enum {
+    IsThreadSafe = 0,
+    StaticMinimumSeverityLevel = Tomographer::Logger::DEBUG,
+    HasOwnGetLevel = 0,
+    HasFilterByOrigin = 0
+  });
+DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinSevINFO, enum {
+    IsThreadSafe = 0,
+    StaticMinimumSeverityLevel = Tomographer::Logger::INFO,
+    HasOwnGetLevel = 0,
+    HasFilterByOrigin = 0
+  });
+DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinSevWARNING, enum {
+    IsThreadSafe = 0,
+    StaticMinimumSeverityLevel = Tomographer::Logger::WARNING,
+    HasOwnGetLevel = 0,
+    HasFilterByOrigin = 0
+  });
+DEFINE_DUMMY_LOGGER_WITH_TRAITS(DummyLoggerMinSevERROR, enum {
+    IsThreadSafe = 0,
+    StaticMinimumSeverityLevel = Tomographer::Logger::ERROR,
+    HasOwnGetLevel = 0,
+    HasFilterByOrigin = 0
+  });
+
+
+// ------------------------------------------------------------------------------
+
+
+template<typename DummyLoggerType>
+void check_logs_at_level(int InitLevel, int level)
+{
+  // InitLevel = argument to DummyLoggerType constructor
+  // level = level at which the logger is expected to log; this is what we check here
+
+  BOOST_TEST_MESSAGE("Testing " << typeid(DummyLoggerType).name() << "("<<InitLevel<<")"
+                     << " for logging at level " << level) ;
+
+  std::string recorded;
+  DummyLoggerType logger(InitLevel, &recorded);
+  logger.longdebug("ld", "long debug message %d", 1);
+  logger.longdebug("ld", std::string("long debug message"));
+  logger.longdebug("ld", [&](std::ostream & stream) { stream << "long debug message using stream"; });
+  logger.debug("d", "debug message %d", 1);
+  logger.debug("d", std::string("debug message"));
+  logger.debug("d", [&](std::ostream & stream) { stream << "debug message using stream"; });
+  logger.info("i", "info message %d", 1);
+  logger.info("i", std::string("info message"));
+  logger.info("i", [&](std::ostream & stream) { stream << "info message using stream"; });
+  logger.warning("w", "warning message %d", 1);
+  logger.warning("w", std::string("warning message"));
+  logger.warning("w", [&](std::ostream & stream) { stream << "warning message using stream"; });
+  logger.error("e", "error message %d", 1);
+  logger.error("e", std::string("error message"));
+  logger.error("e", [&](std::ostream & stream) { stream << "error message using stream"; });
+
+  std::string ERROR_INT_S = std::to_string(Tomographer::Logger::ERROR);
+  std::string WARNING_INT_S = std::to_string(Tomographer::Logger::WARNING);
+  std::string INFO_INT_S = std::to_string(Tomographer::Logger::INFO);
+  std::string DEBUG_INT_S = std::to_string(Tomographer::Logger::DEBUG);
+  std::string LONGDEBUG_INT_S = std::to_string(Tomographer::Logger::LONGDEBUG);
+
+  std::string correct_recorded;
+  if (isAtLeastOfSeverity(Tomographer::Logger::LONGDEBUG, level)) {
+    correct_recorded +=
+      "emitLog(level="+LONGDEBUG_INT_S+", origin=\"ld\", msg=\"long debug message 1\")\n"
+      "emitLog(level="+LONGDEBUG_INT_S+", origin=\"ld\", msg=\"long debug message\")\n"
+      "emitLog(level="+LONGDEBUG_INT_S+", origin=\"ld\", msg=\"long debug message using stream\")\n"
+      ;
+  }
+  if (isAtLeastOfSeverity(Tomographer::Logger::DEBUG, level)) {
+    correct_recorded +=
+      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message 1\")\n"
+      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message\")\n"
+      "emitLog(level="+DEBUG_INT_S+", origin=\"d\", msg=\"debug message using stream\")\n"
+      ;
+  }
+  if (isAtLeastOfSeverity(Tomographer::Logger::INFO, level)) {
+    correct_recorded +=
+      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message 1\")\n"
+      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message\")\n"
+      "emitLog(level="+INFO_INT_S+", origin=\"i\", msg=\"info message using stream\")\n"
+      ;
+  }
+  if (isAtLeastOfSeverity(Tomographer::Logger::WARNING, level)) {
+    correct_recorded +=
+      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message 1\")\n"
+      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message\")\n"
+      "emitLog(level="+WARNING_INT_S+", origin=\"w\", msg=\"warning message using stream\")\n"
+      ;
+  }
+  if (isAtLeastOfSeverity(Tomographer::Logger::ERROR, level)) {
+    correct_recorded +=
+      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message 1\")\n"
+      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message\")\n"
+      "emitLog(level="+ERROR_INT_S+", origin=\"e\", msg=\"error message using stream\")\n"
+      ;
+  }
+
+  BOOST_CHECK_EQUAL(recorded, correct_recorded);
+}
+
 
 
 // -----------------------------------------------------------------------------
@@ -285,6 +396,45 @@ BOOST_AUTO_TEST_CASE(basiclogging)
                                           "[origin3] info message\n"
                                           "[origin4] warning message\n"
                                           "[origin5] error message\n"));
+}
+
+BOOST_AUTO_TEST_CASE(levelsareright)
+{
+  check_logs_at_level<DummyLoggerBasic>(Tomographer::Logger::LONGDEBUG, Tomographer::Logger::LONGDEBUG);
+  check_logs_at_level<DummyLoggerBasic>(Tomographer::Logger::DEBUG, Tomographer::Logger::DEBUG);
+  check_logs_at_level<DummyLoggerBasic>(Tomographer::Logger::INFO, Tomographer::Logger::INFO);
+  check_logs_at_level<DummyLoggerBasic>(Tomographer::Logger::WARNING, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerBasic>(Tomographer::Logger::ERROR, Tomographer::Logger::ERROR);
+
+  check_logs_at_level<DummyLoggerMinSevLONGDEBUG>(Tomographer::Logger::LONGDEBUG, Tomographer::Logger::LONGDEBUG);
+  check_logs_at_level<DummyLoggerMinSevLONGDEBUG>(Tomographer::Logger::DEBUG, Tomographer::Logger::DEBUG);
+  check_logs_at_level<DummyLoggerMinSevLONGDEBUG>(Tomographer::Logger::INFO, Tomographer::Logger::INFO);
+  check_logs_at_level<DummyLoggerMinSevLONGDEBUG>(Tomographer::Logger::WARNING, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevLONGDEBUG>(Tomographer::Logger::ERROR, Tomographer::Logger::ERROR);
+
+  check_logs_at_level<DummyLoggerMinSevDEBUG>(Tomographer::Logger::LONGDEBUG, Tomographer::Logger::DEBUG);
+  check_logs_at_level<DummyLoggerMinSevDEBUG>(Tomographer::Logger::DEBUG, Tomographer::Logger::DEBUG);
+  check_logs_at_level<DummyLoggerMinSevDEBUG>(Tomographer::Logger::INFO, Tomographer::Logger::INFO);
+  check_logs_at_level<DummyLoggerMinSevDEBUG>(Tomographer::Logger::WARNING, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevDEBUG>(Tomographer::Logger::ERROR, Tomographer::Logger::ERROR);
+
+  check_logs_at_level<DummyLoggerMinSevINFO>(Tomographer::Logger::LONGDEBUG, Tomographer::Logger::INFO);
+  check_logs_at_level<DummyLoggerMinSevINFO>(Tomographer::Logger::DEBUG, Tomographer::Logger::INFO);
+  check_logs_at_level<DummyLoggerMinSevINFO>(Tomographer::Logger::INFO, Tomographer::Logger::INFO);
+  check_logs_at_level<DummyLoggerMinSevINFO>(Tomographer::Logger::WARNING, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevINFO>(Tomographer::Logger::ERROR, Tomographer::Logger::ERROR);
+
+  check_logs_at_level<DummyLoggerMinSevWARNING>(Tomographer::Logger::LONGDEBUG, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevWARNING>(Tomographer::Logger::DEBUG, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevWARNING>(Tomographer::Logger::INFO, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevWARNING>(Tomographer::Logger::WARNING, Tomographer::Logger::WARNING);
+  check_logs_at_level<DummyLoggerMinSevWARNING>(Tomographer::Logger::ERROR, Tomographer::Logger::ERROR);
+
+  check_logs_at_level<DummyLoggerMinSevERROR>(Tomographer::Logger::LONGDEBUG, Tomographer::Logger::ERROR);
+  check_logs_at_level<DummyLoggerMinSevERROR>(Tomographer::Logger::DEBUG, Tomographer::Logger::ERROR);
+  check_logs_at_level<DummyLoggerMinSevERROR>(Tomographer::Logger::INFO, Tomographer::Logger::ERROR);
+  check_logs_at_level<DummyLoggerMinSevERROR>(Tomographer::Logger::WARNING, Tomographer::Logger::ERROR);
+  check_logs_at_level<DummyLoggerMinSevERROR>(Tomographer::Logger::ERROR, Tomographer::Logger::ERROR);
 }
 
 BOOST_AUTO_TEST_CASE(formats)
@@ -475,6 +625,7 @@ BOOST_AUTO_TEST_CASE(minseverity)
   BOOST_CHECK(!DummyLoggerMinSeverity::staticallyEnabledFor<Tomographer::Logger::INFO>());
   BOOST_CHECK(!DummyLoggerMinSeverity::staticallyEnabledFor<Tomographer::Logger::DEBUG>());
   BOOST_CHECK(!DummyLoggerMinSeverity::staticallyEnabledFor<Tomographer::Logger::LONGDEBUG>());
+
   BOOST_CHECK(DummyLoggerMinSeverity::staticallyEnabledFor(Tomographer::Logger::ERROR));
   BOOST_CHECK(DummyLoggerMinSeverity::staticallyEnabledFor(Tomographer::Logger::WARNING));
   BOOST_CHECK(!DummyLoggerMinSeverity::staticallyEnabledFor(Tomographer::Logger::INFO));
@@ -744,7 +895,52 @@ BOOST_AUTO_TEST_CASE(basic)
       );
 }
 
+BOOST_AUTO_TEST_CASE(static_severity)
+{
+  typedef Tomographer::Logger::LocalLogger<DummyLoggerMinSeverity> LoggerType;
+  
+  BOOST_CHECK_EQUAL((int)Tomographer::Logger::LoggerTraits<LoggerType>::StaticMinimumSeverityLevel,
+                    (int)Tomographer::Logger::WARNING); // what we declared above
 
+  BOOST_CHECK(LoggerType::staticallyEnabledFor<Tomographer::Logger::ERROR>());
+  BOOST_CHECK(LoggerType::staticallyEnabledFor<Tomographer::Logger::WARNING>());
+  BOOST_CHECK(!LoggerType::staticallyEnabledFor<Tomographer::Logger::INFO>());
+  BOOST_CHECK(!LoggerType::staticallyEnabledFor<Tomographer::Logger::DEBUG>());
+  BOOST_CHECK(!LoggerType::staticallyEnabledFor<Tomographer::Logger::LONGDEBUG>());
+
+  BOOST_CHECK(LoggerType::staticallyEnabledFor(Tomographer::Logger::ERROR));
+  BOOST_CHECK(LoggerType::staticallyEnabledFor(Tomographer::Logger::WARNING));
+  BOOST_CHECK(!LoggerType::staticallyEnabledFor(Tomographer::Logger::INFO));
+  BOOST_CHECK(!LoggerType::staticallyEnabledFor(Tomographer::Logger::DEBUG));
+  BOOST_CHECK(!LoggerType::staticallyEnabledFor(Tomographer::Logger::LONGDEBUG));
+
+  std::string rec;
+  DummyLoggerMinSeverity baselogger(Tomographer::Logger::DEBUG, &rec);
+  LoggerType logger("BaseOrigin", baselogger);
+
+  BOOST_CHECK(logger.enabledFor(Tomographer::Logger::ERROR));
+  BOOST_CHECK(logger.enabledFor(Tomographer::Logger::WARNING));
+  BOOST_CHECK(!logger.enabledFor(Tomographer::Logger::INFO));
+  BOOST_CHECK(!logger.enabledFor(Tomographer::Logger::DEBUG));
+  BOOST_CHECK(!logger.enabledFor(Tomographer::Logger::LONGDEBUG));
+
+  // statically optimized out -- you can check assembly code :-)
+  logger.debug("Hey, %s", "You!");
+
+  logger.warning("Hey, %s", "Y'all!");
+
+  BOOST_CHECK_EQUAL(
+      rec,
+      // only two of the above enabledFor() should have called the custom level()
+      // method, for LONGDEBUG, DEBUG and INFO we already know at compile-time that the
+      // logger is disabled
+      "level()\n"
+      "level()\n"
+      // the call to warning() should issue another call to the custom level() getter.
+      "level()\n"
+      "emitLog(level="+std::to_string(Tomographer::Logger::WARNING)+", origin=\"BaseOrigin\", msg=\"Hey, Y'all!\")\n"
+      ) ;
+}
 
 BOOST_AUTO_TEST_SUITE_END() // locallogger
 

@@ -950,6 +950,56 @@ public:
 };
 
 
+/** \brief Helper to easily instantiate a \ref ValueHistogramMHRWStatsCollector
+ *
+ */
+template<typename ValueCalculator_, typename LoggerType = Logger::VacuumLogger,
+         typename HistogramType_ = Histogram<typename ValueCalculator_::ValueType> >
+inline
+ValueHistogramMHRWStatsCollector<ValueCalculator_, LoggerType, HistogramType_>
+mkValueHistogramMHRWStatsCollector(
+    typename HistogramType_::Params hist_params,
+    ValueCalculator_ valcalc,
+    LoggerType & logger
+    )
+{
+  return ValueHistogramMHRWStatsCollector<ValueCalculator_, LoggerType, HistogramType_>(
+      std::move(hist_params),
+      std::move(valcalc), 
+      logger
+      ) ;
+}
+
+
+/** \brief Helper to easily instantiate a \ref ValueHistogramWithBinningMHRWStatsCollector
+ *
+ */
+template<typename ValueCalculator_, typename CountIntType_ = int,
+         typename CountRealAvgType_ = double, int NumTrackValues_ = Eigen::Dynamic,
+         int NumLevels_ = Eigen::Dynamic,
+         typename LoggerType = Tomographer::Logger::VacuumLogger>
+inline
+ValueHistogramWithBinningMHRWStatsCollector<
+  ValueHistogramWithBinningMHRWStatsCollectorParams<ValueCalculator_, CountIntType_,
+                                                    CountRealAvgType_, NumTrackValues_,
+                                                    NumLevels_>,
+  LoggerType
+  >
+mkValueHistogramWithBinningMHRWStatsCollector(
+    HistogramParams<typename ValueCalculator_::ValueType> hist_params,
+    ValueCalculator_ valcalc,
+    int num_binning_levels,
+    LoggerType & logger
+    )
+{
+  return
+    ValueHistogramWithBinningMHRWStatsCollector<
+      ValueHistogramWithBinningMHRWStatsCollectorParams<ValueCalculator_, CountIntType_,
+                                                        CountRealAvgType_, NumTrackValues_,
+                                                        NumLevels_>,
+      LoggerType
+    >(std::move(hist_params), std::move(valcalc), num_binning_levels, logger) ;
+}
 
 
 
@@ -1220,7 +1270,7 @@ struct TOMOGRAPHER_EXPORT StatusProvider<MHRWMovingAverageAcceptanceRatioStatsCo
   static inline std::string getStatusLine(const MHRWMovingAverageAcceptanceRatioStatsCollector<CountIntType_> * obj)
   {
     if (obj->hasMovingAverageAcceptanceRatio()) {
-      return Tools::fmts("acceptance ratio = %.2g (over last %d samples)",
+      return Tools::fmts("acceptance ratio = %.2g (over last %d iter)",
                          (double)obj->movingAverageAcceptanceRatio(),
                          (int)obj->bufferSize());
     }

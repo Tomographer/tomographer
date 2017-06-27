@@ -92,8 +92,9 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
         hist_params,
         p.attr("get")("binning_num_levels", 7).cast<int>(),
         CxxMHRWParamsType(
-            // mhrw_params.get('step_size', 0.1):
-            mhrw_params.mhwalker_params.attr("get")("step_size", 0.1).cast<tpy::RealType>(),
+            tpy::pyMHWalkerParamsFromPyObj<Tomographer::MHWalkerParamsStepSize<tpy::RealType> >(
+                mhrw_params.mhwalker_params
+                ),
             mhrw_params.n_sweep,
             mhrw_params.n_therm,
             mhrw_params.n_run ),

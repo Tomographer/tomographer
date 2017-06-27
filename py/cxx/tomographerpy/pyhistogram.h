@@ -53,8 +53,9 @@ typedef Tomographer::HistogramParams<RealType> HistogramParams;
 
 
 //! Histogram class like \ref Tomographer::Histogram, but with NumPy arrays storage
-struct Histogram
+class Histogram
 {
+public:
   Histogram(HistogramParams params_)
     : params(params_),
       bins(py::cast(Eigen::VectorXd::Zero(params_.num_bins))),
@@ -144,8 +145,9 @@ struct Histogram
 
 
 //! A Histogram with real counts and error bars. See \ref Tomographer::HistogramWithErrorBars
-struct HistogramWithErrorBars : Histogram
+class HistogramWithErrorBars : public Histogram
 {
+public:
   HistogramWithErrorBars(HistogramParams params_)
     : Histogram(params_),
       delta(py::cast(Eigen::VectorXd::Zero(params_.num_bins)))

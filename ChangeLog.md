@@ -3,6 +3,31 @@ Change Log
 ==========
 
 
+## v5.1 (2017-06-24)
+
+  * Python package installation: Fix compilation flags (add `-stdlib=libc++` by
+    default on Mac OS X)
+
+  * More meaningful iteration/sweep progress display:
+  
+        run sweep    19822/32768 [+th:512] : 61.10% done
+    
+    replaces
+    
+        iteration 2060800/(3328000=100*(512+32768)) : 61.92% done
+
+  * Documentation updates
+
+  * Some small internal clean-ups
+  
+  * Add static minimum logging level compilation configuration option for
+    `tomorun` to improve run speed for custom builds;
+    added
+    [documentation for custom `tomorun` build configurations][tomorun_custom_build]
+    
+[tomorun_custom_build]: https://tomographer.github.io/tomographer/api-doc/current/html/page_tomorun_config_build.html
+    
+
 ## v5.0 (2017-05-27)
 
   * Added "light jumps" random walk algorithm. The new algorithm chooses

@@ -41,5 +41,7 @@ Version and compilation information (`tomographer.version`)
        `tomographer` Python extension module.
 
        .. versionadded:: 4.1
+          
+          Added key 'pybind11'
 
      

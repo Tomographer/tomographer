@@ -64,15 +64,26 @@ typedef Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>
   ValueCalculator;
 
 //
+// The base CData object we use.  See Tomographer:::MHRWTasks::ValueHistogramTools::CDataBase.
+//
+typedef Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
+  ValueCalculator, // our value calculator
+  true, // use binning analysis
+  Tomographer::MHWalkerParamsStepSize<double>, // MHWalkerParams
+  std::mt19937::result_type, // RngSeedType
+  long, // IterCountIntType
+  double, // CountRealType
+  int // HistCountIntType
+  >
+  BaseCData;
+
+//
 // We need to define a class which adds the capacity of creating the "master"
 // random walk object to the engine in
 // Tomographer::MHRWTasks::ValueHistogramTools, which take care of running the
 // random walks etc. as needed.
 //
-struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
-  ValueCalculator, // our value calculator
-  true // use binning analysis
-  >
+struct OurCData : public BaseCData
 {
   OurCData(const DenseLLH & llh_, // data from the the tomography experiment
 	   ValueCalculator valcalc, // the figure-of-merit calculator
@@ -80,15 +91,15 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
 	   int binning_num_levels, // number of binning levels in the binning analysis
 	   MHRWParamsType mhrw_params, // parameters of the random walk
 	   RngSeedType base_seed) // a random seed to initialize the random number generator
-    : CDataBase<ValueCalculator,true>(valcalc, hist_params, binning_num_levels,
-                                      mhrw_params, base_seed),
+    : BaseCData(valcalc, hist_params, binning_num_levels,
+                mhrw_params, base_seed),
       llh(llh_)
   {
   }
 
   const DenseLLH llh;
 
-  // the result of a task run -- just use the default StatsResults type provided
+  // The result of a task run -- just use the default StatsResults type provided
   // by ValueHistogramTools.  If we had several stats collectors set, we would
   // need to pick out the result corresponding to the
   // value-histogram-stats-collector (see "minimal_tomorun_controlled.cxx" for
