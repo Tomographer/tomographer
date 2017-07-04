@@ -238,9 +238,9 @@ BOOST_FIXTURE_TEST_CASE(simple, check_cdata_types<false>)
   BOOST_CHECK_EQUAL(cdat.histogram_params.num_bins, 2u);
 
   MY_BOOST_CHECK_FLOATS_EQUAL(cdat.mhrw_params.mhwalker_params.step_size, 0.1f, tol_f);
-  BOOST_CHECK_EQUAL(cdat.mhrw_params.n_sweep, 1024);
-  BOOST_CHECK_EQUAL(cdat.mhrw_params.n_therm, 500);
-  BOOST_CHECK_EQUAL(cdat.mhrw_params.n_run, 32768);
+  BOOST_CHECK_EQUAL(cdat.mhrw_params.n_sweep, 1024u);
+  BOOST_CHECK_EQUAL(cdat.mhrw_params.n_therm, 500u);
+  BOOST_CHECK_EQUAL(cdat.mhrw_params.n_run, 32768u);
 
   BOOST_CHECK_EQUAL(cdat.base_seed, 999u);
 
@@ -301,11 +301,11 @@ BOOST_FIXTURE_TEST_CASE(binning_types, check_cdata_types<true>)
   BOOST_CHECK_EQUAL(cdat.binningNumLevels.value, 12) ;
 
   MY_BOOST_CHECK_FLOATS_EQUAL(cdat.mhrw_params.mhwalker_params.step_size, 0.1f, tol_f);
-  BOOST_CHECK_EQUAL(cdat.mhrw_params.n_sweep, 1024);
-  BOOST_CHECK_EQUAL(cdat.mhrw_params.n_therm, 500);
-  BOOST_CHECK_EQUAL(cdat.mhrw_params.n_run, 32768);
+  BOOST_CHECK_EQUAL(cdat.mhrw_params.n_sweep, 1024u);
+  BOOST_CHECK_EQUAL(cdat.mhrw_params.n_therm, 500u);
+  BOOST_CHECK_EQUAL(cdat.mhrw_params.n_run, 32768u);
 
-  BOOST_CHECK_EQUAL(cdat.base_seed, 999);
+  BOOST_CHECK_EQUAL(cdat.base_seed, 999u);
 
   // aggregated histograms
 

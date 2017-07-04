@@ -48,7 +48,6 @@
 #  include <mingw.thread.h>
 #  include <mingw.mutex.h>
 #endif
-#include <atomic>
 
 
 

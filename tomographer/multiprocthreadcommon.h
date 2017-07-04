@@ -221,7 +221,7 @@ protected:
       bool in_preparation;
       bool ready;
       int periodic_interval;
-      int num_reports_received;
+      int num_waiting_reports;
       
       FullStatusReportType full_report;
       FullStatusReportCallbackType user_fn;
@@ -241,7 +241,7 @@ protected:
         : in_preparation(false),
           ready(false),
           periodic_interval(-1),
-          num_reports_received(0),
+          num_waiting_reports(0),
           full_report(),
           user_fn(),
           event_counter_user(0),
@@ -253,7 +253,7 @@ protected:
         : in_preparation(x.in_preparation),
           ready(x.ready),
           periodic_interval(x.periodic_interval),
-          num_reports_received(x.num_reports_received),
+          num_waiting_reports(x.num_waiting_reports),
           full_report(std::move(x.full_report)),
           user_fn(std::move(x.user_fn)),
           event_counter_user(x.event_counter_user),
@@ -402,7 +402,7 @@ protected:
             shared_data->status_report.full_report.workers_running.resize((std::size_t)num_threads, false);
             shared_data->status_report.full_report.workers_reports.resize((std::size_t)num_threads);
 
-            shared_data->status_report.num_reports_received = 0;
+            shared_data->status_report.num_waiting_reports = shared_data->schedule.num_active_working_threads;
 
             logger.debug([&](std::ostream & stream) {
                 stream << "vectors resized to workers_running.size()="
@@ -420,15 +420,15 @@ protected:
     inline void _master_send_status_report()
     {
       auto logger = llogger.subLogger("/TaskManagerIface::statusReportRequested()");
-      logger.longdebug("Status report is ready.");
+      logger.longdebug("Status report is ready, sending to user function.");
 
       locker.critical_status_report_and_user_fn([&](){
           // call user-defined status report handler
           shared_data->status_report.user_fn(std::move(shared_data->status_report.full_report));
           // all reports received: done --> reset our status_report flags
-          shared_data->status_report.num_reports_received = 0;
           shared_data->status_report.in_preparation = false;
           shared_data->status_report.ready = false;
+          shared_data->status_report.num_waiting_reports = 0;
           shared_data->status_report.full_report.workers_running.clear();
           shared_data->status_report.full_report.workers_reports.clear();
         }) ;
@@ -442,8 +442,8 @@ protected:
       llogger.longdebug([&](std::ostream & stream) {
           stream << "status report received for thread #" << thread_id
                  << ", treating it ...  "
-                 << "num_reports_received="
-                 << shared_data->status_report.num_reports_received
+                 << "number of reports still expected="
+                 << shared_data->status_report.num_waiting_reports
                  << " num_active_working_threads="
                  << shared_data->schedule.num_active_working_threads ;
         });
@@ -463,10 +463,9 @@ protected:
       shared_data->status_report.full_report.workers_reports[(std::size_t)thread_id] = report;
 
       locker.critical_status_report_and_schedule([&]() {
-          int num_received = ++ shared_data->status_report.num_reports_received ;
+          int num_waiting =  -- shared_data->status_report.num_waiting_reports ;
 
-          if (num_received == shared_data->schedule.num_active_working_threads) {
-            //
+          if (num_waiting <= 0) {
             // The report is ready to be transmitted to the user.  But don't send it
             // directly quite yet, let the master thread send it.  We add this
             // guarantee so that the status report handler can do things which only
@@ -541,12 +540,22 @@ protected:
     private_data.locker.critical_status_report_and_schedule([&]() {
         -- shared_data.schedule.num_active_working_threads;
         if (shared_data.status_report.in_preparation) {
-          // we're just leaving the game in the middle of a status report
-          // preparation moment -- so make sure we flag the full-status-report as
-          // ready if we're the last reporting thread everyone's waiting for
-          if (shared_data.status_report.num_reports_received
-              == shared_data.schedule.num_active_working_threads) {
-            shared_data.status_report.ready = true;
+          // we're just leaving the game in the middle of a status report preparation
+          // moment -- so make sure we don't mess up with the status reporting
+          // accounting.
+          if (private_data.local_status_report_event_counter
+              != shared_data.status_report.event_counter_master) {
+            // We haven't sent in our report yet.  No problem, but just flag the
+            // full-status-report as ready if we're the last reporting thread
+            // everyone's waiting for
+            if (shared_data.status_report.num_waiting_reports == 1) {
+              // it's our report they're waiting for -- leave the thread as idle
+              shared_data.status_report.num_waiting_reports = 0;
+              shared_data.status_report.ready = true;
+            }
+          } else {
+            // Report has already been sent in, no problem, as
+            // num_waiting_reports is still accurate
           }
         }
       });
@@ -633,9 +642,8 @@ protected:
   {
     do {
       
-      // TODO maybe one day: estimate the overhead of preparing the report
-      // itself, and substract it from the sleep time
-      TOMOGRAPHER_SLEEP_FOR_MS( std::min(shared_data.status_report.periodic_interval, 250) );
+      // check if we need to send a status report every 100ms
+      TOMOGRAPHER_SLEEP_FOR_MS( 100 ) ;
 
       try {
 
