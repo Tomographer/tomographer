@@ -25,3 +25,7 @@ value-type=obs-value:EntglWitness
 
 # Histogram range:  MINVALUE:MAXVALUE/NUMBEROFBINS
 value-hist=1.5:2/100
+
+control-binning-converged-max-not-converged=1
+control-binning-converged-max-unknown-notisolated=1
+control-binning-converged-max-unknown=2

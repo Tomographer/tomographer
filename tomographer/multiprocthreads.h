@@ -37,6 +37,7 @@
 #include <tomographer/tools/cxxutil.h> // tomographer_assert()
 #include <tomographer/tools/needownoperatornew.h>
 #include <tomographer/multiproc.h>
+#include <tomographer/multiprocthreadcommon.h>
 
 #include <thread>
 #include <mutex>
@@ -47,6 +48,7 @@
 #  include <mingw.thread.h>
 #  include <mingw.mutex.h>
 #endif
+#include <atomic>
 
 
 
@@ -237,26 +239,6 @@ namespace CxxThreads {
  *      scope (and given as constructor argument here) to which messages should be logged
  *      to.
  *
- * <li> \a TaskLoggerType is the type of the logger which will be provided to tasks inside
- *      the parallel section. Such logger should ensure that the logging is
- *      thread-safe. By default \a TaskLoggerType is nothing else than an appropriate \ref
- *      ThreadSanitizerLogger.
- *
- *      (Note that if the originally given \c logger is thread-safe (see \ref
- *      Logger::LoggerTraits), then \ref ThreadSanitizerLogger directly relays calls
- *      without wrapping them into mutex locking blocks.)
- *
- *      For each task, a new \a TaskLoggerType will be created. The constructor is expected
- *      to accept the following arguments:
- *      \code
- *         TaskLoggerType(LoggerType & baselogger, const TaskCData * pcdata, CountIntType thread_id)
- *      \endcode
- *      where \a baselogger is the logger given to the \a TaskDispatcher constructor,
- *      \a pcdata is the constant shared data pointer also given to the constructor, and
- *      \a k is the thread ID number (which may range from 0 to the total number of
- *      threads minus one). The task logger is NOT constructed in a thread-safe code
- *      region.
- *
  * <li> \a TaskCountIntType should be a type to use to count the number of tasks. Usually
  *      there's no reason not to use an \c int.
  *
@@ -266,361 +248,86 @@ namespace CxxThreads {
 template<typename TaskType_, typename TaskCData_,
          typename LoggerType_, typename TaskCountIntType_ = int>
 class TOMOGRAPHER_EXPORT TaskDispatcher
+  : public Tomographer::MultiProc::ThreadCommon::TaskDispatcherBase<TaskType_, TaskCountIntType_>
 {
 public:
+  //! Base class, provides common functionality to all thread-based MutliProc implementations
+  typedef Tomographer::MultiProc::ThreadCommon::TaskDispatcherBase<TaskType_, TaskCountIntType_> Base;
+
   //! The task type
-  typedef TaskType_ TaskType;
+  using typename Base::TaskType;
   //! The task result type
-  typedef typename TaskType::ResultType TaskResultType;
+  using typename Base::TaskResultType;
   //! The type used by a single task when providing a status report
-  typedef typename TaskType::StatusReportType TaskStatusReportType;
+  using typename Base::TaskStatusReportType;
+  //! Integer type used to count the number of tasks to run (or running)
+  using typename Base::TaskCountIntType;
+  //! The type to use to generate a full status report of all running tasks
+  using typename Base::FullStatusReportType;
+
   //! The type which stores constant, shared data for all tasks to access
   typedef TaskCData_ TaskCData;
+
   //! The logger type specified to the dispatcher (not necessarily thread-safe)
   typedef LoggerType_ LoggerType;
-  //! Integer type used to count the number of tasks to run (or running)
-  typedef TaskCountIntType_ TaskCountIntType;
+
   //! A thread-safe logger type which is passed on to the child tasks
   typedef ThreadSanitizerLogger<LoggerType_> TaskLoggerType;
-  //! The type to use to generate a full status report of all running tasks
-  typedef FullStatusReport<TaskStatusReportType,TaskCountIntType> FullStatusReportType;
 
   /** \brief The relevant type for a callback function (or callable) which is provided
    *         with the full status report
    *
    * See \ref setStatusReportHandler().
    */
-  typedef std::function<void(const FullStatusReportType&)> FullStatusReportCallbackType;
+  using typename Base::FullStatusReportCallbackType;
 
 private:
 
-  typedef
-#if defined(__GNUC__) && __GNUC__ == 4 && __GNUC_MINOR__ <= 6 && !defined(__clang__)
-    std::chrono::monotonic_clock // for GCC/G++ 4.6
-#else
-    std::chrono::steady_clock
-#endif
-    StdClockType;
+  typedef typename Base::template ThreadSharedData<TaskCData, LoggerType, std::atomic<int> >
+    ThreadSharedDataType;
 
-  struct TaskInterruptedInnerException : public std::exception {
-    std::string msg;
-  public:
-    TaskInterruptedInnerException() : msg("Task Interrupted") { }
-    virtual ~TaskInterruptedInnerException() throw() { };
-    const char * what() const throw() { return msg.c_str(); }
-  };
-  struct TaskInnerException : public std::exception {
-    std::string msg;
-  public:
-    TaskInnerException(std::string msgexc) : msg("Task raised an exception: "+msgexc) { }
-    virtual ~TaskInnerException() throw() { };
-    const char * what() const throw() { return msg.c_str(); }
-  };
+  ThreadSharedDataType shared_data;
 
-  //! thread-shared variables
-  struct thread_shared_data {
-    thread_shared_data(const TaskCData * pcdata_, LoggerType & logger_,
-                       TaskCountIntType num_total_runs, int num_threads)
-      : pcdata(pcdata_),
-        user_mutex(),
-        results(),
-        logger(logger_),
-        time_start(),
-        schedule(num_total_runs, num_threads),
-        status_report()
-    { }
+  struct CriticalSectionManager {
+    //! Mutex for IO, as well as interface user interaction (status report callback fn, etc.)
+    std::mutex user_mutex;
+    std::mutex schedule_mutex;
+    std::mutex status_report_mutex;
 
-    thread_shared_data(thread_shared_data && x)
-      : pcdata(x.pcdata),
-        user_mutex(),
-        results(std::move(x.results)),
-        logger(x.logger),
-        time_start(std::move(x.time_start)),
-        schedule(std::move(x.schedule)),
-        status_report(std::move(x.status_report))
-    { }
-
-    const TaskCData * pcdata;
-    std::mutex user_mutex; // mutex for IO, as well as interface user interaction (status report callback fn, etc.)
-
-    // Apparently it's better if the elements are aligned in memory:
-    // http://stackoverflow.com/a/41387941/1694896
-    std::vector<TaskResultType*> results;
-    // std::mutex results_mutex; // don't need mutex for accessing different elements of a std::vector
-
-    LoggerType & logger;
-
-    StdClockType::time_point time_start;
-
-    struct Schedule {
-      const int num_threads;
-      TaskCountIntType num_active_working_threads;
-
-      const TaskCountIntType num_total_runs;
-      TaskCountIntType num_completed;
-      TaskCountIntType num_launched;
-
-      volatile std::sig_atomic_t interrupt_requested;
-      std::string inner_exception;
-
-      std::mutex mutex;
-
-      Schedule(TaskCountIntType num_total_runs_, int num_threads_)
-        : num_threads(num_threads_),
-          num_active_working_threads(0),
-          num_total_runs(num_total_runs_),
-          num_completed(0),
-          num_launched(0),
-          interrupt_requested(0),
-          inner_exception(),
-          mutex()
-      {
-      }
-      Schedule(Schedule && x)
-        : num_threads(std::move(x.num_threads)),
-          num_active_working_threads(x.num_active_working_threads),
-          num_total_runs(x.num_total_runs),
-          num_completed(x.num_completed),
-          num_launched(x.num_launched),
-          interrupt_requested(x.interrupt_requested),
-          inner_exception(std::move(x.inner_exception)),
-          mutex()
-      {
-      }
-    };
-    Schedule schedule;
-
-    struct StatusReport {
-      bool underway;
-      bool initialized;
-      bool ready;
-      int periodic_interval;
-      TaskCountIntType numreportsrecieved;
-      FullStatusReportType full_report;
-      FullStatusReportCallbackType user_fn;
-
-      volatile std::sig_atomic_t counter_user;
-      volatile std::sig_atomic_t counter_periodic;
-
-      std::mutex mutex;
-
-      StatusReport()
-        : underway(false),
-          initialized(false),
-          ready(false),
-          periodic_interval(-1),
-          numreportsrecieved(0),
-          full_report(),
-          user_fn(),
-          counter_user(0),
-          counter_periodic(0),
-          mutex()
-      {
-      }
-      StatusReport(StatusReport && x)
-        : underway(x.underway),
-          initialized(x.initialized),
-          ready(x.ready),
-          periodic_interval(x.periodic_interval),
-          numreportsrecieved(x.numreportsrecieved),
-          full_report(std::move(x.full_report)),
-          user_fn(std::move(x.user_fn)),
-          counter_user(x.counter_user),
-          counter_periodic(x.counter_periodic),
-          mutex()
-      {
-      }
-    };
-    StatusReport status_report;
-
-    template<typename Struct, typename Fn>
-    void with_lock(Struct & s, Fn fn) {
-      std::lock_guard<std::mutex> lock(s.mutex);
-      fn(s);
+    template<typename Fn>
+    inline void critical_status_report(Fn && fn) {
+      std::lock_guard<std::mutex> lck(status_report_mutex);
+      fn();
+    }
+    template<typename Fn>
+    inline void critical_status_report_and_user_fn(Fn && fn) {
+      std::lock(status_report_mutex, user_mutex);
+      std::lock_guard<std::mutex> lck1(status_report_mutex, std::adopt_lock);
+      std::lock_guard<std::mutex> lck2(user_mutex, std::adopt_lock);
+      fn();
+    }
+    template<typename Fn>
+    inline void critical_status_report_and_schedule(Fn && fn) {
+      std::lock(status_report_mutex, schedule_mutex);
+      std::lock_guard<std::mutex> lck1(status_report_mutex, std::adopt_lock);
+      std::lock_guard<std::mutex> lck2(schedule_mutex, std::adopt_lock);
+      fn();
+    }
+    template<typename Fn>
+    inline void critical_schedule(Fn && fn) {
+      std::lock_guard<std::mutex> lck(schedule_mutex);
+      fn();
     }
   };
 
-  //! thread-local variables and stuff &mdash; also serves as TaskManagerIface
-  struct thread_private_data
-  {
-    const int thread_id;
-
-    thread_shared_data * shared_data;
-
-    TaskLoggerType & logger;
-
-    TaskCountIntType task_id;
-    int local_status_report_counter_user;
-    int local_status_report_counter_periodic;
-
-    thread_private_data(int thread_id_, thread_shared_data * shared_data_, TaskLoggerType & logger_)
-      : thread_id(thread_id_),
-        shared_data(shared_data_),
-        logger(logger_),
-        task_id(-1),
-        local_status_report_counter_user(0),
-        local_status_report_counter_periodic(0)
-    {
-    }
-
-    inline bool statusReportRequested() const
-    {
-      if (shared_data->schedule.interrupt_requested) {
-        logger.longdebug("CxxThreads::thread_private_data::statusReportRequested()",
-                         "tasks interrupt has been requested");
-        throw TaskInterruptedInnerException();
-      }
-
-      //
-      // if we're the master thread, we have some admin to do.
-      //      
-      if (thread_id == 0) {
-        // Update the status_report_counter according to whether
-        // we should provoke a periodic status report
-        if (shared_data->status_report.periodic_interval > 0 && shared_data->status_report.user_fn) {
-          _master_thread_update_status_report_periodic_interval_counter();
-        }
-
-        // if we're the master thread, then also check if there is a status report ready
-        // to be sent.
-        if (shared_data->status_report.ready) {
-          logger.longdebug("Tomographer::MultiProc::CxxThreads::thread_private_data::statusReportRequested()",
-                           "Status report is ready.");
-
-          // guard this block for status_report access
-          std::lock(shared_data->status_report.mutex, shared_data->user_mutex);
-          std::lock_guard<std::mutex> lck1(shared_data->status_report.mutex, std::adopt_lock);
-          std::lock_guard<std::mutex> lck2(shared_data->user_mutex, std::adopt_lock);
-
-          // call user-defined status report handler
-          shared_data->status_report.user_fn(std::move(shared_data->status_report.full_report));
-          // all reports recieved: done --> reset our status_report flags
-          shared_data->status_report.numreportsrecieved = 0;
-          shared_data->status_report.underway = false;
-          shared_data->status_report.initialized = false;
-          shared_data->status_report.ready = false;
-          shared_data->status_report.full_report.workers_running.clear();
-          shared_data->status_report.full_report.workers_reports.clear();
-        }
-      } // master thread
-
-      return local_status_report_counter_user != (int)shared_data->status_report.counter_user ||
-        local_status_report_counter_periodic != (int)shared_data->status_report.counter_periodic;
-    }
-
-    // internal use only:
-    inline void _master_thread_update_status_report_periodic_interval_counter() const
-    {
-      shared_data->status_report.counter_periodic = (std::sig_atomic_t) (
-          std::chrono::duration_cast<std::chrono::milliseconds>(
-              StdClockType::now().time_since_epoch()
-              ).count()  /  shared_data->status_report.periodic_interval
-          ) ;
-    }
-
-    inline void submitStatusReport(const TaskStatusReportType &statreport)
-    {
-      if (local_status_report_counter_user == (int)shared_data->status_report.counter_user &&
-          local_status_report_counter_periodic == (int)shared_data->status_report.counter_periodic) {
-        // error: task submitted unsollicited report
-        logger.warning("CxxThreads TaskDispatcher/taskmanageriface", "Task submitted unsollicited status report");
-        return;
-      }
-
-      std::lock_guard<std::mutex> lockguard(shared_data->status_report.mutex) ;
-
-      // we've reacted to the given "signal"
-      local_status_report_counter_user = shared_data->status_report.counter_user;
-      local_status_report_counter_periodic = shared_data->status_report.counter_periodic;
-          
-      // access to the local logger is fine as a different mutex is used
-      logger.longdebug("CxxThreads TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
-          stream << "status report received for thread #" << thread_id << ", treating it ...  "
-                 << "numreportsrecieved=" << shared_data->status_report.numreportsrecieved
-                 << " num_active_working_threads=" << shared_data->schedule.num_active_working_threads ;
-        });
-
-      //
-      // If we're the first reporting thread, we need to initiate the status reporing
-      // procedure and initialize the general data
-      //
-      if (!shared_data->status_report.initialized) {
-
-        //
-        // Check that we indeed have to submit a status report.
-        //
-        if (shared_data->status_report.underway) {
-          // status report already underway!
-          logger.warning("CxxThreads TaskDispatcher/taskmanageriface", "status report already underway!");
-          return;
-        }
-        if (!shared_data->status_report.user_fn) {
-          // no user handler set
-          logger.warning("CxxThreads TaskDispatcher/taskmanageriface",
-                         "no user status report handler set! Call setStatusReportHandler() first.");
-          return;
-        }
-
-        shared_data->status_report.underway = true;
-        shared_data->status_report.initialized = true;
-        shared_data->status_report.ready = false;
-              
-        // initialize status report object & overall data
-        shared_data->status_report.full_report = FullStatusReportType();
-        shared_data->status_report.full_report.num_completed = shared_data->schedule.num_completed;
-        shared_data->status_report.full_report.num_total_runs = shared_data->schedule.num_total_runs;
-        shared_data->status_report.full_report.elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
-            StdClockType::now() - shared_data->time_start
-            ).count() * 1e-3;
-        int num_threads = shared_data->schedule.num_threads;
-              
-        // initialize task-specific reports
-        // fill our lists with default-constructed values & set all running to false.
-        shared_data->status_report.full_report.workers_running.clear();
-        shared_data->status_report.full_report.workers_reports.clear();
-        shared_data->status_report.full_report.workers_running.resize((std::size_t)num_threads, false);
-        shared_data->status_report.full_report.workers_reports.resize((std::size_t)num_threads);
-
-        shared_data->status_report.numreportsrecieved = 0;
-
-        logger.debug("CxxThreads TaskDispatcher/taskmanageriface", [&](std::ostream & stream) {
-            stream << "vectors resized to workers_running.size()="
-                   << shared_data->status_report.full_report.workers_running.size()
-                   << " and workers_reports.size()="
-                   << shared_data->status_report.full_report.workers_reports.size()
-                   << ".";
-          });
-      } // status_report.initialized
-
-      //
-      // Report the data corresponding to this thread.
-      //
-      logger.debug("CxxThreads TaskDispatcher/taskmanageriface", "thread_id=%ld, workers_reports.size()=%ld",
-                   (long)thread_id, (long)shared_data->status_report.full_report.workers_reports.size());
-
-      tomographer_assert(0 <= thread_id &&
-                         (std::size_t)thread_id < shared_data->status_report.full_report.workers_reports.size());
-
-      shared_data->status_report.full_report.workers_running[(std::size_t)thread_id] = true;
-      shared_data->status_report.full_report.workers_reports[(std::size_t)thread_id] = statreport;
-
-      ++ shared_data->status_report.numreportsrecieved;
-
-      if (shared_data->status_report.numreportsrecieved == shared_data->schedule.num_active_working_threads) {
-        //
-        // the report is ready to be transmitted to the user: go!
-        //
-        // Don't send it quite yet, queue it for the master thread to send.  We add
-        // this guarantee so that the status report handler can do things which only
-        // the master thread can do (e.g. in Python, call PyErr_CheckSignals()).
-        shared_data->status_report.ready = true;
-      }
-
-    } // submitStatusReport()
-
-  }; // thread_private_data
-
-  thread_shared_data shared_data;
+  CriticalSectionManager critical;
+  
+  typedef typename Base::template ThreadPrivateData<
+    ThreadSharedDataType,
+    Tomographer::Logger::LocalLogger<TaskLoggerType>,
+    CriticalSectionManager
+    >
+    ThreadPrivateDataType;
 
 public:
   /** \brief Task dispatcher constructor
@@ -634,25 +341,21 @@ public:
    *                 to the different task instances are provided by the TaskCData's
    *                 getTaskInput() method (see \ref pageInterfaceTaskCData).
    */
-  TaskDispatcher(TaskCData * pcdata_, LoggerType & logger_,
-                 TaskCountIntType num_total_runs_,
-                 int num_threads_ = (int)std::thread::hardware_concurrency())
-    : shared_data(pcdata_, logger_, num_total_runs_, num_threads_)
+  TaskDispatcher(TaskCData * pcdata, LoggerType & logger,
+                 TaskCountIntType num_total_runs,
+                 int num_threads = (int)std::thread::hardware_concurrency())
+    : shared_data(pcdata, logger, num_total_runs, num_threads)
   {
   }
 
   TaskDispatcher(TaskDispatcher && other)
     : shared_data(std::move(other.shared_data))
+    // critical(std::move(other.critical)) -- mutexes are not movable, so just use new ones...  ugly :(
   {
   }
 
   ~TaskDispatcher()
   {
-    for (auto r : shared_data.results) {
-      if (r != NULL) {
-        delete r;
-      }
-    }
   }
 
   /** \brief Run the specified tasks
@@ -661,36 +364,33 @@ public:
    */
   void run()
   {
-    shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "Let's go!");
-    shared_data.time_start = StdClockType::now();
+    auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, shared_data.logger);
+    logger.debug("Let's go!");
 
-    shared_data.results.resize((std::size_t)shared_data.schedule.num_total_runs, NULL);
+    shared_data.time_start = Base::StdClockType::now();
     
-    shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "preparing for parallel runs");
-
-    typedef typename thread_shared_data::Schedule Schedule;
+    logger.debug("Preparing for parallel runs");
 
     auto worker_fn_id = [&](const int thread_id) noexcept(true) {
       
       // construct a thread-safe logger we can use
-      TaskLoggerType threadsafelogger(shared_data.logger, & shared_data.user_mutex);
-      
-      thread_private_data privdat(thread_id, & shared_data, threadsafelogger);
+      TaskLoggerType threadsafelogger(shared_data.logger, & critical.user_mutex);
 
-      // not sure an std::ostream would be safe here threadwise...?
-      privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::run()",
-                               "Thread #%d: thread-safe logger and private thread data set up", thread_id);
+      Tomographer::Logger::LocalLogger<TaskLoggerType> locallogger(
+          logger.originPrefix()+logger.glue()+"worker",
+          threadsafelogger);
+      
+      ThreadPrivateDataType private_data(thread_id, & shared_data, locallogger, critical);
+
+      locallogger.longdebug([&](std::ostream & stream) {
+          stream << "Thread #" << thread_id << ": thread-safe logger and private thread data set up";
+        }) ;
       
       {
-        // active working region. This thread takes care of handling tasks.
-        
-        shared_data.with_lock(shared_data.schedule, [](Schedule & schedule) {
-            ++ schedule.num_active_working_threads;
-          });
-        auto _f0 = Tools::finally([&](){
-            shared_data.with_lock(shared_data.schedule, [](Schedule & schedule) {
-                -- schedule.num_active_working_threads;
-              });
+        // active working region. This thread now takes care of handling tasks.
+        Base::run_worker_enter(private_data, shared_data);
+        auto _f0 = Tools::finally([&]() {
+            Base::run_worker_exit(private_data, shared_data);
           });
 
         for ( ;; ) {
@@ -701,50 +401,23 @@ public:
           }
 
           // get new task to perform
-          shared_data.with_lock(shared_data.schedule, [&privdat](Schedule & schedule) {
-              if (schedule.num_launched == schedule.num_total_runs) {
-                privdat.task_id = -1; // all tasks already launched -> nothing else to do
+          critical.critical_schedule([&]() {
+              if (shared_data.schedule.num_launched == shared_data.schedule.num_total_runs) {
+                private_data.task_id = -1; // all tasks already launched -> nothing else to do
                 return;
               }
-              privdat.task_id = schedule.num_launched;
-              ++ schedule.num_launched ;
+              private_data.task_id = shared_data.schedule.num_launched;
+              ++ shared_data.schedule.num_launched ;
             }) ;
 
-          if ( privdat.task_id < 0 ) {
+          if ( private_data.task_id < 0 ) {
             // all tasks already launched -> nothing else to do
             break;
           }
 
           // run this task.
 
-          {
-            std::lock_guard<std::mutex> lk2(shared_data.status_report.mutex);
-            privdat.local_status_report_counter_user = shared_data.status_report.counter_user;
-            privdat.local_status_report_counter_periodic = shared_data.status_report.counter_periodic;
-          }
-
-          try {
-
-            _run_task(privdat, shared_data) ;
-
-          } catch (TaskInterruptedInnerException & exc) {
-            privdat.logger.debug("CxxThreads::run()/worker", "Tasks interrupted.") ;
-            std::lock_guard<std::mutex> lk(shared_data.schedule.mutex) ;
-            shared_data.schedule.interrupt_requested = true;
-            break;
-          } catch (...) {
-            privdat.logger.debug("CxxThreads::run()/worker", "Exception caught inside task! "
-                                 + boost::current_exception_diagnostic_information()) ;
-            std::lock_guard<std::mutex> lk(shared_data.schedule.mutex) ;
-            shared_data.schedule.interrupt_requested = true;
-            shared_data.schedule.inner_exception += std::string("Exception caught inside task: ")
-              + boost::current_exception_diagnostic_information() + "\n";
-            break;
-          }
-
-          { std::lock_guard<std::mutex> lk(shared_data.schedule.mutex) ;
-            ++ shared_data.schedule.num_completed;
-          }
+          Base::run_task(private_data, shared_data) ;
 
         } // for(;;)
 
@@ -754,24 +427,8 @@ public:
       // only master thread should make sure it continues to serve status report requests
       if (thread_id == 0 && !shared_data.schedule.interrupt_requested) {
 
-        const int sleep_val = std::max(shared_data.status_report.periodic_interval, 200);
+        Base::master_continue_monitoring_status(private_data, shared_data) ;
 
-        while (shared_data.schedule.num_active_working_threads > 0) {
-
-          std::this_thread::sleep_for(std::chrono::milliseconds(sleep_val)) ;
-          try {
-            privdat.statusReportRequested();
-          } catch (...) {
-            privdat.logger.debug("CxxThreads::run()", "[master] Exception caught inside task!") ;
-            std::lock_guard<std::mutex> lk(shared_data.schedule.mutex) ;
-            shared_data.schedule.interrupt_requested = true;
-            shared_data.schedule.inner_exception += std::string("Exception caught inside task: ")
-              + boost::current_exception_diagnostic_information() + "\n";
-            privdat.logger.debug("CxxThreads::run()", "[master] Exception caught inside task -- handled.") ;
-            break;
-          }
-
-        }
       }
       
     } ; // worker_fn_id
@@ -796,19 +453,12 @@ public:
 
     std::for_each(threads.begin(), threads.end(), [](std::thread & thread) { thread.join(); }) ;
 
-    shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "Threads finished");
+    logger.debug("Threads finished");
 
-    if (shared_data.schedule.inner_exception.size()) {
-      // interrupt was requested because of an inner exception, not an explicit interrupt request
-      throw std::runtime_error(shared_data.schedule.inner_exception);
-    }
-    
-    // if tasks were interrupted, throw the corresponding exception
-    if (shared_data.schedule.interrupt_requested) {
-      throw TasksInterruptedException();
-    }
+    Base::run_epilog(shared_data);
 
-    shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "Done.");
+    logger.debug("All done.");
+
   } // run()
 
   
@@ -835,54 +485,6 @@ public:
   }
 
 
-private:
-  void _run_task(thread_private_data & privdat, thread_shared_data & shared_data)
-    TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
-  {
-
-    // do not execute task if an interrupt was requested.
-    if (shared_data.schedule.interrupt_requested) {
-      return;
-    }
-
-    // not sure an std::ostream would be safe here threadwise...?
-    privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()",
-                             "Run #%lu: querying CData for task input", (unsigned long)privdat.task_id);
-
-    // See OMP implementation: getTaskInput() is not thread protected
-    //
-    // const auto input = [](thread_shared_data & x, task_id) {
-    //   std::lock_guard<std::mutex> lck(x.user_mutex);
-    //   return x.pcdata->getTaskInput(task_id);
-    // } (shared_data, privdat.task_id);
-    const auto input = shared_data.pcdata->getTaskInput(privdat.task_id);
-
-    // not sure an std::ostream would be safe here threadwise...?
-    privdat.logger.debug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()",
-                         "Running task #%lu ...", (unsigned long)privdat.task_id);
-      
-    // construct a new task instance
-    TaskType t(input, shared_data.pcdata, privdat.logger);
-      
-    // not sure an std::ostream would be safe here threadwise...?
-    privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()",
-                             "Task #%lu set up.", (unsigned long)privdat.task_id);
-      
-    // and run it
-    t.run(shared_data.pcdata, privdat.logger, &privdat);
-
-    privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()",
-                             "Task #%lu finished, about to collect result.", (unsigned long)privdat.task_id);
-    
-    // collect result
-    shared_data.results[(std::size_t)privdat.task_id] = new TaskResultType(t.stealResult());
-
-    privdat.logger.longdebug("Tomographer::MultiProc::CxxThreads::TaskDispatcher::_run_task()", "task done") ;
-  }
-
-
-public:
-
   /** \brief assign a callable to be called whenever a status report is requested
    *
    * This function remembers the given \a fnstatus callable, so that each time that \ref
@@ -895,7 +497,7 @@ public:
    */
   inline void setStatusReportHandler(FullStatusReportCallbackType fnstatus)
   {
-    std::lock_guard<std::mutex> lck(shared_data.status_report.mutex) ;
+    std::lock_guard<std::mutex> lck(critical.status_report_mutex) ;
     shared_data.status_report.user_fn = fnstatus;
   }
 
@@ -919,7 +521,7 @@ public:
     // So just increment an atomic int.
     //
 
-    ++ shared_data.status_report.counter_user;
+    ++ shared_data.status_report.event_counter_user;
   }
 
   /** \brief Request a periodic status report
@@ -931,7 +533,7 @@ public:
    */
   inline void requestPeriodicStatusReport(int milliseconds)
   {
-    std::lock_guard<std::mutex> lck(shared_data.status_report.mutex) ;
+    std::lock_guard<std::mutex> lck(critical.status_report_mutex) ;
     shared_data.status_report.periodic_interval = milliseconds;
   }
 
@@ -951,9 +553,9 @@ public:
     // set the atomic int
     shared_data.interrupt_requested = 1;
   }
-
     
 }; // class TaskDispatcher
+
 
 
 template<typename TaskType_, typename TaskCData_,

@@ -23,3 +23,7 @@ value-type=fidelity:rho_ref
 
 # Histogram range:  MINVALUE:MAXVALUE/NUMBEROFBINS
 value-hist=0.9:1/50
+
+control-binning-converged-max-not-converged=1
+control-binning-converged-max-unknown-notisolated=1
+control-binning-converged-max-unknown=2

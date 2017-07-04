@@ -65,6 +65,22 @@ typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes> DenseLLH;
 typedef Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes>
   ValueCalculator;
 
+
+//
+// Integer type used to count individual iterations
+//
+typedef long IterCountIntType;
+
+//
+// Integer type used for frequency counts in each histogram bin
+//
+typedef int HistCountIntType;
+
+//
+// Real (floating-point) type used to count average histogram counts in each bin
+//
+typedef double CountRealType;
+
 //
 // The base CData object we use.  See Tomographer:::MHRWTasks::ValueHistogramTools::CDataBase.
 //
@@ -73,9 +89,9 @@ typedef Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   true, // use binning analysis
   Tomographer::MHWalkerParamsStepSize<double>, // MHWalkerParams
   std::mt19937::result_type, // RngSeedType
-  long, // IterCountIntType
-  double, // CountRealType
-  int // HistCountIntType
+  IterCountIntType, // IterCountIntType
+  CountRealType, // CountRealType
+  HistCountIntType // HistCountIntType
   >
   BaseCData;
 
@@ -133,14 +149,14 @@ struct OurCData : public BaseCData
   inline void setupRandomWalkAndRun(Rng & rng, LoggerType & logger, ExecFn run) const
   {
     auto val_stats_collector = createValueStatsCollector(logger);
-    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<> movavg_accept_stats;
+    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<IterCountIntType> movavg_accept_stats;
     auto stats_collectors =
       Tomographer::mkMultipleMHRWStatsCollectors(val_stats_collector, movavg_accept_stats);
 
     auto therm_step_controller =
       Tomographer::mkMHRWStepSizeController<MHRWParamsType>(movavg_accept_stats, logger);
     auto numsamples_controller =
-      Tomographer::mkMHRWValueErrorBinsConvergedController(val_stats_collector, logger);
+      Tomographer::mkMHRWValueErrorBinsConvergedController<IterCountIntType>(val_stats_collector, logger);
 
     auto controllers = Tomographer::mkMHRWMultipleControllers(therm_step_controller, numsamples_controller);
 

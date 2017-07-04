@@ -45,20 +45,7 @@ inline constexpr int omp_get_num_threads() { return 1; }
 #include <tomographer/tools/cxxutil.h> // tomographer_assert()
 #include <tomographer/tools/needownoperatornew.h>
 #include <tomographer/multiproc.h>
-
-#ifdef TOMOGRAPHER_USE_WINDOWS_SLEEP
-// use MS Window's Sleep() function
-#  include <windows.h>
-#  define TOMOGRAPHER_SLEEP_FOR_MS(x) Sleep((x))
-#else
-// normal C++11 API function, not available on mingw32 w/ win threads
-#  include <thread>
-#  ifdef TOMOGRAPHER_USE_MINGW_STD_THREAD
-#    include <mingw.thread.h>
-#  endif
-#  define TOMOGRAPHER_SLEEP_FOR_MS(x)				\
-  std::this_thread::sleep_for(std::chrono::milliseconds((x)))
-#endif
+#include <tomographer/multiprocthreadcommon.h>
 
 
 /** \file multiprocomp.h
