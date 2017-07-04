@@ -584,6 +584,19 @@ py::object py_tomorun(
       stream << "Value calculator set up with fig_of_merit=" << py::repr(fig_of_merit).cast<std::string>();
     });
 
+  // some validity checks
+  if (hist_params.num_bins < 1) {
+    throw py::value_error("Invalid hist_params: must have num_bins >= 1") ;
+  }
+  if (mhrw_params.n_sweep < 1) {
+    throw py::value_error("Invalid mhrw_params: must have n_sweep >= 1") ;
+  }
+  if (mhrw_params.n_therm < 0) {
+    throw py::value_error("Invalid mhrw_params: must have n_therm >= 0") ;
+  }
+  if (mhrw_params.n_run < 0) {
+    throw py::value_error("Invalid mhrw_params: must have n_run >= 0") ;
+  }
 
   // prepare the random walk tasks
 
@@ -639,6 +652,10 @@ py::object py_tomorun(
     }) ;
 
   tpy::GilProtectedPyLogger logger_with_gil(logger.parentLogger(), false);
+
+  if (num_repeats < 1) {
+    throw py::value_error("num_repeats must be >= 1") ;
+  }
 
   Tomographer::MultiProc::CxxThreads::TaskDispatcher<OurMHRandomWalkTask,OurCData,tpy::GilProtectedPyLogger>
     tasks(
