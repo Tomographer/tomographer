@@ -659,7 +659,16 @@ py::object py_tomorun(
 
     try {
       tasks.run();
+    } catch (tpy::PyFetchedException & pyerr) {
+
+      // acquire GIL for PyErr_Restore()
+      py::gil_scoped_acquire gil_acquire;
+
+      pyerr.restorePyException();
+      throw py::error_already_set();
+      
     } catch (Tomographer::MultiProc::TasksInterruptedException & e) {
+
       // Tasks interrupted
       logger.debug("Tasks interrupted.");
       // acquire GIL for PyErr_Occurred()
@@ -670,7 +679,9 @@ py::object py_tomorun(
       }
       // no Python exception set?? -- set a RuntimeError via pybind11
       throw;
+
     } catch (std::exception & e) {
+
       // another exception
       logger.debug("Inner exception: %s", e.what());
       // acquire GIL for PyErr_Occurred()

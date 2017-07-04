@@ -36,6 +36,7 @@
 #include <tomographer/mhrwtasks.h>
 
 #include <tomographerpy/pymhrw.h>
+#include <tomographerpy/exc.h>
 
 
 namespace tpy {
@@ -212,7 +213,7 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, py::object pr
 
     if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
       //fprintf(stderr, "DEBUG:: error set, throwing\n") ;
-      throw py::error_already_set();
+      throw tpy::PyFetchedException();
     }
     // call the python progress callback:
     if (!progress_fn.is_none()) {
@@ -221,7 +222,7 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, py::object pr
       progress_fn(py::cast(r));
       if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
         fprintf(stderr, "DEBUG:: error set, throwing\n") ;
-        throw py::error_already_set();
+        throw tpy::PyFetchedException();
       }
       //fprintf(stderr, "DEBUG:: py callback done\n") ;
     }

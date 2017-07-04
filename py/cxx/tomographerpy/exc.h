@@ -108,6 +108,42 @@ tomo_internal::ExceptionWithDocstring<CppException> & registerExceptionWithDocst
   return ex;
 }
 
+
+
+/** \brief Helper for catching exceptions in a thread and re-raising them
+ */
+class PyFetchedException : public std::exception
+{
+private:
+  PyObject *ptype;
+  PyObject *pvalue;
+  PyObject *ptraceback;
+public:
+
+  PyFetchedException()
+    : ptype(NULL), pvalue(NULL), ptraceback(NULL)
+  {
+    PyErr_Fetch(&ptype, &pvalue, &ptraceback) ;
+  }
+
+  PyFetchedException(const PyFetchedException & copy)
+    : ptype(copy.ptype),
+      pvalue(copy.pvalue),
+      ptraceback(copy.ptraceback)
+  {
+  }
+
+  void restorePyException()
+  {
+    PyErr_Restore(ptype, pvalue, ptraceback);
+    ptype = NULL;
+    pvalue = NULL;
+    ptraceback = NULL;
+  }
+};
+
+
+
 } // namespace tpy
 
 

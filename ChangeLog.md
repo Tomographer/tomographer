@@ -3,6 +3,14 @@ Change Log
 ==========
 
 
+## v5.2 (TBD)
+
+  * Consolidated some thread-related code in order to address some bugs in
+    status reporting
+
+  * Better handling of Python exceptions inside C++ threads
+
+
 ## v5.1 (2017-06-24)
 
   * Python package installation: Fix compilation flags (add `-stdlib=libc++` by

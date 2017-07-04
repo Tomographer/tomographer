@@ -74,14 +74,14 @@ struct TOMOGRAPHER_EXPORT PyMHWalkerParamsToDict<Tomographer::MHWalkerParamsStep
   }
   static Tomographer::MHWalkerParamsStepSize<tpy::RealType> fromPyObj(py::object d)
   {
+    if ( d.is_none() ) {
+      // None: let the underlying mhwalker decide what to do with this
+      return 0;
+    }
     if ( py::hasattr(d, "__getitem__") ) {
       // dict or dict-like, go. If key doesn't exist, send in zero and let the underlying
       // mhwalker handle it
       return d.attr("get")("step_size", 0).cast<tpy::RealType>();
-    }
-    if ( d.is_none() ) {
-      // None: let the underlying mhwalker decide what to do with this
-      return 0;
     }
     // try to iterpret the object itself as a float
     return d.cast<tpy::RealType>();

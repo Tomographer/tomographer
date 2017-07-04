@@ -475,7 +475,7 @@ public:
 
     logger.debug("Threads finished");
 
-    Base::run_epilog(shared_data);
+    Base::run_epilog(shared_data, logger);
 
     logger.debug("All done.");
 

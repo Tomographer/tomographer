@@ -133,13 +133,6 @@ protected:
     virtual ~TaskInterruptedInnerException() throw() { };
     const char * what() const throw() { return msg.c_str(); }
   };
-  struct TaskInnerException : public std::exception {
-    std::string msg;
-  public:
-    TaskInnerException(std::string msgexc) : msg("Task raised an exception: "+msgexc) { }
-    virtual ~TaskInnerException() throw() { };
-    const char * what() const throw() { return msg.c_str(); }
-  };
 
   //! thread-shared variables
   template<typename TaskCData, typename LoggerType>
@@ -192,7 +185,7 @@ protected:
       TaskCountIntType num_launched;
 
       volatile std::sig_atomic_t interrupt_requested;
-      std::string inner_exception;
+      std::vector<std::exception_ptr> inner_exception;
 
       Schedule(TaskCountIntType num_total_runs_, int num_threads_)
         : num_threads(num_threads_),
@@ -456,13 +449,26 @@ protected:
                  << shared_data->status_report.full_report.workers_reports.size();
         }) ;
 
-      tomographer_assert(0 <= thread_id &&
-                         (std::size_t)thread_id < shared_data->status_report.full_report.workers_reports.size());
-
-      shared_data->status_report.full_report.workers_running[(std::size_t)thread_id] = true;
-      shared_data->status_report.full_report.workers_reports[(std::size_t)thread_id] = report;
-
       locker.critical_status_report_and_schedule([&]() {
+
+          // do all of this inside critical section, to make sure the
+          // worker_reports vector is memory-updated from the master thread
+
+          if (thread_id < 0 ||
+              thread_id >= (int)shared_data->status_report.full_report.workers_reports.size()) {
+            fprintf(
+                stderr,
+                "Tomographer::MultiProc::ThreadCommon::TaskDispatcherBase::TaskPrivateData::submitStatusReport(): "
+                "Internal inconsistency: thread_id=%d out of range [0,%d]\n",
+                thread_id, (int)shared_data->status_report.full_report.workers_reports.size()
+                ) ;
+            -- shared_data->status_report.num_waiting_reports ;
+            return;
+          }
+
+          shared_data->status_report.full_report.workers_running[(std::size_t)thread_id] = true;
+          shared_data->status_report.full_report.workers_reports[(std::size_t)thread_id] = report;
+
           int num_waiting =  -- shared_data->status_report.num_waiting_reports ;
 
           if (num_waiting <= 0) {
@@ -476,11 +482,11 @@ protected:
 
     } // submitStatusReport()
 
-    inline void _interrupt_with_inner_exception(std::string exc_msg)
+    inline void _interrupt_with_inner_exception(std::exception_ptr exc)
     {
       locker.critical_schedule([&]() {
           shared_data->schedule.interrupt_requested = 1;
-          shared_data->schedule.inner_exception += std::string("Exception in task: ")+std::move(exc_msg);
+          shared_data->schedule.inner_exception.push_back(exc);
         });
     }
 
@@ -627,8 +633,7 @@ protected:
       
     } catch (...) {
 
-      std::string exc_msg = boost::current_exception_diagnostic_information();
-      private_data._interrupt_with_inner_exception(std::move(exc_msg));
+      private_data._interrupt_with_inner_exception(std::current_exception());
       return;
 
     }
@@ -657,8 +662,7 @@ protected:
       } catch (...) {
 
         private_data.llogger.debug("[master] Exception caught inside task!") ;
-        std::string exc_msg = boost::current_exception_diagnostic_information();
-        private_data._interrupt_with_inner_exception( std::move(exc_msg) );
+        private_data._interrupt_with_inner_exception( std::current_exception() );
         private_data.llogger.debug("[master] Exception caught inside task -- handled.") ;
         return;
 
@@ -671,12 +675,15 @@ protected:
   /** \brief To be called after all workers are done, to e.g. throw proper
    *         exception if an error occurred.
    */
-  template<typename ThreadSharedDataType>
-  void run_epilog(ThreadSharedDataType & shared_data)
+  template<typename ThreadSharedDataType, typename LocalLoggerType>
+  void run_epilog(ThreadSharedDataType & shared_data, LocalLoggerType & llogger)
   {
     if (shared_data.schedule.inner_exception.size()) {
       // interrupt was requested because of an inner exception, not an explicit interrupt request
-      throw std::runtime_error(shared_data.schedule.inner_exception);
+      if (shared_data.schedule.inner_exception.size() > 1) {
+        llogger.warning("Multiple exceptions caught in tasks, only the first one is re-thrown");
+      }
+      std::rethrow_exception(shared_data.schedule.inner_exception[0]);
     }
     
     // if tasks were interrupted, throw the corresponding exception

@@ -488,7 +488,7 @@ public:
 
     logger.debug("OpenMP parallel section finished");
     
-    Base::run_epilog(shared_data) ;
+    Base::run_epilog(shared_data, logger) ;
 
     logger.debug("Done.");
   }
