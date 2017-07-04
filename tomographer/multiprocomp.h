@@ -446,13 +446,16 @@ public:
       private_data.shared_data = shdat;
       private_data.task_id = -1;
 
+      // master thread sets shared_data.schedule.num_threads ...
 #pragma omp master
       {
-#pragma omp critical
-        {
-          shdat->schedule.num_threads = omp_get_num_threads();
-        }
+        shdat->schedule.num_threads = omp_get_num_threads();
       }
+
+      // ... while other threads wait for master to be done
+#pragma omp barrier
+#pragma omp flush
+
 
       //
       // Register new parallel worker
