@@ -53,3 +53,13 @@ build_g18a0196_GCC6_optim_release_noasserts_tomorunconfig = TomographerBuild('v5
     '-DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE=/opt/boost-1_64_0-gcc6/lib/libboost_program_options.a',
     '-DTOMORUN_MULTIPROC=openmp',
     ])
+
+# merged common thread stuff in MultiProc::ThreadCommon
+
+build_v5_1_10_g42e5603_GCC6_optim_release = TomographerBuild('v5.1-10-g42e5603', cmake_release_opts + [
+    '-DCMAKE_C_COMPILER=/usr/local/opt/gcc/bin/gcc-6',
+    '-DCMAKE_CXX_COMPILER=/usr/local/opt/gcc/bin/g++-6',
+    '-DBoost_INCLUDE_DIR=/opt/boost-1_64_0-gcc6/include',
+    '-DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE=/opt/boost-1_64_0-gcc6/lib/libboost_program_options.a',
+    '-DTOMORUN_MULTIPROC=openmp',
+    ])
