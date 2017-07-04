@@ -402,9 +402,9 @@ public:
       
       {
         // active working region. This thread now takes care of handling tasks.
-        Base::run_worker_enter(private_data, shared_data);
+        this->run_worker_enter(private_data, shared_data);
         auto _f0 = Tools::finally([&]() {
-            Base::run_worker_exit(private_data, shared_data);
+            this->run_worker_exit(private_data, shared_data);
           });
 
         for ( ;; ) {
@@ -433,7 +433,7 @@ public:
 
           // run this task.
 
-          Base::run_task(private_data, shared_data) ;
+          this->run_task(private_data, shared_data) ;
 
         } // for(;;)
 
@@ -444,7 +444,7 @@ public:
       // requests
       if (thread_id == 0 && !shared_data.schedule.interrupt_requested) {
 
-        Base::master_continue_monitoring_status(private_data, shared_data) ;
+        this->master_continue_monitoring_status(private_data, shared_data) ;
 
       }
       
@@ -475,7 +475,7 @@ public:
 
     logger.debug("Threads finished");
 
-    Base::run_epilog(shared_data, logger);
+    this->run_epilog(shared_data, logger);
 
     logger.debug("All done.");
 

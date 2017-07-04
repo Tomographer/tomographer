@@ -460,7 +460,7 @@ public:
       //
       // Register new parallel worker
       //
-      Base::run_worker_enter(private_data, *shdat);
+      this->run_worker_enter(private_data, *shdat);
 
       //
       // The main, parallel FOR loop:
@@ -470,25 +470,25 @@ public:
 
         private_data.task_id = k;
 
-        Base::run_task(private_data, shared_data);
+        this->run_task(private_data, shared_data);
           
       } // omp for
 
       //
       // De-register parallel worker
       //
-      Base::run_worker_exit(private_data, *shdat);
+      this->run_worker_exit(private_data, *shdat);
 
 #pragma omp master
       {
-        Base::master_continue_monitoring_status(private_data, *shdat) ;
+        this->master_continue_monitoring_status(private_data, *shdat) ;
       }
       
     } // omp parallel
 
     logger.debug("OpenMP parallel section finished");
     
-    Base::run_epilog(shared_data, logger) ;
+    this->run_epilog(shared_data, logger) ;
 
     logger.debug("Done.");
   }
