@@ -142,7 +142,7 @@ protected:
   };
 
   //! thread-shared variables
-  template<typename TaskCData, typename LoggerType, typename AtomicIntUseType>
+  template<typename TaskCData, typename LoggerType>
   struct ThreadSharedData {
     ThreadSharedData(const TaskCData * pcdata_, LoggerType & logger_,
                      TaskCountIntType num_total_runs, int num_threads)
@@ -184,8 +184,8 @@ protected:
     StdClockType::time_point time_start;
 
     struct Schedule {
-      const int num_threads;
-      AtomicIntUseType num_active_working_threads;
+      int num_threads;
+      int num_active_working_threads;
 
       const TaskCountIntType num_total_runs;
       TaskCountIntType num_completed;
@@ -221,7 +221,7 @@ protected:
       bool in_preparation;
       bool ready;
       int periodic_interval;
-      AtomicIntUseType num_reports_received;
+      int num_reports_received;
       
       FullStatusReportType full_report;
       FullStatusReportCallbackType user_fn;
@@ -440,9 +440,12 @@ protected:
           
       // use protected logger
       llogger.longdebug([&](std::ostream & stream) {
-          stream << "status report received for thread #" << thread_id << ", treating it ...  "
-                 << "num_reports_received=" << shared_data->status_report.num_reports_received
-                 << " num_active_working_threads=" << shared_data->schedule.num_active_working_threads ;
+          stream << "status report received for thread #" << thread_id
+                 << ", treating it ...  "
+                 << "num_reports_received="
+                 << shared_data->status_report.num_reports_received
+                 << " num_active_working_threads="
+                 << shared_data->schedule.num_active_working_threads ;
         });
 
       //

@@ -123,16 +123,16 @@ public:
 
   /** \brief Constructor
    *
-   * This constructor accepts arbitrary more arguments and ignores them.  The reason is
-   * because the task dispatcher does not know for sure which type the task-logger is (you
-   * can specify your custom type), and will always invoke the constructor with additional
-   * parameters such as a pointer to the \a TaskCData.  Here we don't need those so we can
-   * just ignore any additional args.
+   * This constructor accepts arbitrary more arguments and ignores them.  The
+   * reason is because the task dispatcher does not know for sure which type the
+   * task-logger is (you can specify your custom type), and will always invoke
+   * the constructor with additional parameters such as a pointer to the \a
+   * TaskCData.  Here we don't need those so we can just ignore any additional
+   * args.
    */
-  template<typename... MoreArgs>
   ThreadSanitizerLogger(BaseLogger & logger, std::mutex * mutex)
-    // NOTE: pass the baselogger's level on here. The ThreadSanitizerLogger's level is
-    // this one, and is fixed and cannot be changed while running.
+    // NOTE: pass the baselogger's level on here. The ThreadSanitizerLogger's
+    // level is this one, and is fixed and cannot be changed while running.
     : Logger::LoggerBase<ThreadSanitizerLogger<BaseLogger> >(logger.level()),
     _baselogger(logger),
     _mutex(mutex)
@@ -183,8 +183,9 @@ public:
 
 namespace Logger {
 /** \brief Specialized Traits for \ref
- *         Tomographer::MultiProc::OMP::ThreadSanitizerLogger<typename BaseLogger> --
- *         see \ref Tomographer::Logger::LoggerTraits<typename LoggerType>
+ *         Tomographer::MultiProc::OMP::ThreadSanitizerLogger<typename
+ *         BaseLogger> -- see \ref Tomographer::Logger::LoggerTraits<typename
+ *         LoggerType>
  *
  * Logger traits for \ref MultiProc::OMP::ThreadSanitizerLogger.
  */
@@ -194,8 +195,8 @@ struct TOMOGRAPHER_EXPORT LoggerTraits<MultiProc::CxxThreads::ThreadSanitizerLog
 {
   /** \brief Special flags for this logger */
   enum {
-    /** \brief explicitly require our logger instance to store its level. The level cannot be
-     *         changed */
+    /** \brief explicitly require our logger instance to store its level. The
+     *         level cannot be changed */
     HasOwnGetLevel = 0,
     /** \brief Obviously this logger is now always thread-safe */
     IsThreadSafe = 1
@@ -223,24 +224,24 @@ namespace CxxThreads {
  *
  * <ul>
  *
- * <li> \a TaskType must be a \ref pageInterfaceTask compliant type.  This type specifies
- *      the task which has to be run.  Objects of this type will be instantiated within
- *      separate threads to run the tasks.
+ * <li> \a TaskType must be a \ref pageInterfaceTask compliant type.  This type
+ *      specifies the task which has to be run.  Objects of this type will be
+ *      instantiated within separate threads to run the tasks.
  *
  * <li> \a TaskCData should conform to the \ref pageInterfaceTaskCData.
  *
  *      \a TaskCData may be any struct which contains all the information which
- *      needs to be accessed by the task. It should be read-only, i.e. the task should
- *      not need to write to this information. (This typically encodes the data of the
- *      problem, ie. experimental measurement results.)
+ *      needs to be accessed by the task. It should be read-only, i.e. the task
+ *      should not need to write to this information. (This typically encodes
+ *      the data of the problem, ie. experimental measurement results.)
  *
- * <li> \a LoggerType is a logger type derived from \ref Logger::LoggerBase, for example
- *      \ref Logger::FileLogger. This is the type of a logger defined in the caller's
- *      scope (and given as constructor argument here) to which messages should be logged
- *      to.
+ * <li> \a LoggerType is a logger type derived from \ref Logger::LoggerBase, for
+ *      example \ref Logger::FileLogger. This is the type of a logger defined in
+ *      the caller's scope (and given as constructor argument here) to which
+ *      messages should be logged to.
  *
- * <li> \a TaskCountIntType should be a type to use to count the number of tasks. Usually
- *      there's no reason not to use an \c int.
+ * <li> \a TaskCountIntType should be a type to use to count the number of
+ *      tasks. Usually there's no reason not to use an \c int.
  *
  * </ul>
  *
@@ -248,7 +249,10 @@ namespace CxxThreads {
 template<typename TaskType_, typename TaskCData_,
          typename LoggerType_, typename TaskCountIntType_ = int>
 class TOMOGRAPHER_EXPORT TaskDispatcher
-  : public Tomographer::MultiProc::ThreadCommon::TaskDispatcherBase<TaskType_, TaskCountIntType_>
+  : public Tomographer::MultiProc::ThreadCommon::TaskDispatcherBase<
+      TaskType_,
+      TaskCountIntType_
+    >
 {
 public:
   //! Base class, provides common functionality to all thread-based MutliProc implementations
@@ -283,15 +287,20 @@ public:
 
 private:
 
-  typedef typename Base::template ThreadSharedData<TaskCData, LoggerType, std::atomic<int> >
+  typedef typename Base::template ThreadSharedData<TaskCData, LoggerType>
     ThreadSharedDataType;
 
   ThreadSharedDataType shared_data;
 
   struct CriticalSectionManager {
-    //! Mutex for IO, as well as interface user interaction (status report callback fn, etc.)
+    /** \brief Mutex for IO, as well as interface user interaction (status
+     *         report callback fn, etc.) */
     std::mutex user_mutex;
+    
+    /** \brief Mutex for the \a schedule part of \a shared_data */
     std::mutex schedule_mutex;
+    
+    /** \brief Mutex for the \a status_report part of \a shared_data */
     std::mutex status_report_mutex;
 
     template<typename Fn>
@@ -332,14 +341,16 @@ private:
 public:
   /** \brief Task dispatcher constructor
    *
-   * \param pcdata_  The constant shared data, which will be accessible by all tasks
+   * \param pcdata_  The constant shared data, which will be accessible by all
+   *                 tasks
    *
-   * \param logger_  The logger instance to use to log messages.  This logger does not need
-   *                 to be thread safe.
+   * \param logger_  The logger instance to use to log messages.  This logger
+   *                 does not need to be thread safe.
    *
-   * \param num_total_runs_ The number of tasks to run in total.  Recall that the inputs
-   *                 to the different task instances are provided by the TaskCData's
-   *                 getTaskInput() method (see \ref pageInterfaceTaskCData).
+   * \param num_total_runs_ The number of tasks to run in total.  Recall that
+   *                 the inputs to the different task instances are provided by
+   *                 the TaskCData's getTaskInput() method (see \ref
+   *                 pageInterfaceTaskCData).
    */
   TaskDispatcher(TaskCData * pcdata, LoggerType & logger,
                  TaskCountIntType num_total_runs,
@@ -350,7 +361,8 @@ public:
 
   TaskDispatcher(TaskDispatcher && other)
     : shared_data(std::move(other.shared_data))
-    // critical(std::move(other.critical)) -- mutexes are not movable, so just use new ones...  ugly :(
+    // critical(std::move(other.critical)) -- mutexes are not movable, so just
+    //                                        use new ones...  ugly :(
   {
   }
 
@@ -364,7 +376,8 @@ public:
    */
   void run()
   {
-    auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, shared_data.logger);
+    auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN,
+                                                       shared_data.logger);
     logger.debug("Let's go!");
 
     shared_data.time_start = Base::StdClockType::now();
@@ -380,10 +393,12 @@ public:
           logger.originPrefix()+logger.glue()+"worker",
           threadsafelogger);
       
-      ThreadPrivateDataType private_data(thread_id, & shared_data, locallogger, critical);
+      ThreadPrivateDataType private_data(thread_id, & shared_data, locallogger,
+                                         critical);
 
       locallogger.longdebug([&](std::ostream & stream) {
-          stream << "Thread #" << thread_id << ": thread-safe logger and private thread data set up";
+          stream << "Thread #" << thread_id
+                 << ": thread-safe logger and private thread data set up";
         }) ;
       
       {
@@ -402,8 +417,10 @@ public:
 
           // get new task to perform
           critical.critical_schedule([&]() {
-              if (shared_data.schedule.num_launched == shared_data.schedule.num_total_runs) {
-                private_data.task_id = -1; // all tasks already launched -> nothing else to do
+              if (shared_data.schedule.num_launched ==
+                  shared_data.schedule.num_total_runs) {
+                private_data.task_id = -1; // all tasks already launched ->
+                                           // nothing else to do
                 return;
               }
               private_data.task_id = shared_data.schedule.num_launched;
@@ -424,7 +441,8 @@ public:
       } // end of active working region, thread on longer serves to run tasks
         // (--num_active_working_threads is executed at this point)
 
-      // only master thread should make sure it continues to serve status report requests
+      // only master thread should make sure it continues to serve status report
+      // requests
       if (thread_id == 0 && !shared_data.schedule.interrupt_requested) {
 
         Base::master_continue_monitoring_status(private_data, shared_data) ;
@@ -437,13 +455,15 @@ public:
     // now, prepare & launch the workers
     //
 
-    shared_data.logger.debug("MultiProc::CxxThreads::TaskDispatcher::run()", "About to launch threads");
+    logger.debug("About to launch threads");
 
     std::vector<std::thread> threads;
 
     // thread_id = 0 is reserved for ourselves.
-    for (int thread_id = 1; thread_id < shared_data.schedule.num_threads; ++thread_id) {
-      threads.push_back( std::thread( [thread_id,worker_fn_id]() { // do NOT capture thread_id by reference!
+    for (int thread_id = 1; thread_id < shared_data.schedule.num_threads;
+         ++thread_id) {
+      // NOTE: do NOT capture thread_id by reference!
+      threads.push_back( std::thread( [thread_id,worker_fn_id]() {
             worker_fn_id(thread_id);
           } ) );
     }
@@ -451,7 +471,8 @@ public:
     // also run stuff as master thread
     worker_fn_id(0);
 
-    std::for_each(threads.begin(), threads.end(), [](std::thread & thread) { thread.join(); }) ;
+    std::for_each(threads.begin(), threads.end(),
+                  [](std::thread & thread) { thread.join(); }) ;
 
     logger.debug("Threads finished");
 
@@ -485,15 +506,16 @@ public:
   }
 
 
-  /** \brief assign a callable to be called whenever a status report is requested
+  /** \brief assign a callable to be called whenever a status report is
+   *         requested
    *
-   * This function remembers the given \a fnstatus callable, so that each time that \ref
-   * requestStatusReport() is called at any later point, then this callback will be
-   * invoked.
+   * This function remembers the given \a fnstatus callable, so that each time
+   * that \ref requestStatusReport() is called at any later point, then this
+   * callback will be invoked.
    *
-   * The callback, when invoked, will be called with a single parameter of type \ref
-   * FullStatusReport "FullStatusReport<TaskStatusReportType>".  It is guaranteed to be
-   * called from within the main thread.
+   * The callback, when invoked, will be called with a single parameter of type
+   * \ref FullStatusReport "FullStatusReport<TaskStatusReportType>".  It is
+   * guaranteed to be called from within the main thread.
    */
   inline void setStatusReportHandler(FullStatusReportCallbackType fnstatus)
   {
@@ -501,22 +523,23 @@ public:
     shared_data.status_report.user_fn = fnstatus;
   }
 
-  /** \brief Request a status report
+  /** \brief Request a one-time status report
    *
-   * This function makes a note that a status report has been requested.  Subsequently,
-   * the tasks should notice it (provided they regularly query for status report requests
-   * as described on the page \ref pageInterfaceTask), and provide status reports.  When
-   * all the reports have been received from all running threads, the full status report
-   * is passed on to the callback set with \ref setStatusReportHandler().
+   * This function makes a note that a status report has been requested.
+   * Subsequently, the tasks should notice it (provided they regularly query for
+   * status report requests as described on the page \ref pageInterfaceTask),
+   * and provide status reports.  When all the reports have been received from
+   * all running threads, the full status report is passed on to the callback
+   * set with \ref setStatusReportHandler().
    *
    * \note This function is safe to be called from within a signal handler.
    */
   inline void requestStatusReport()
   {
     //
-    // This function can be called from a signal handler. We essentially can't do
-    // anything here because the state of the program can be pretty much anything,
-    // including inside a malloc() or thread lock.
+    // This function can be called from a signal handler. We essentially can't
+    // do anything here because the state of the program can be pretty much
+    // anything, including inside a malloc() or thread lock.
     //
     // So just increment an atomic int.
     //
@@ -526,8 +549,8 @@ public:
 
   /** \brief Request a periodic status report
    *
-   * The status report function callback set with \ref setStatusReportHandler() will be
-   * called every \a milliseconds milliseconds with a status report.
+   * The status report function callback set with \ref setStatusReportHandler()
+   * will be called every \a milliseconds milliseconds with a status report.
    *
    * Pass \a -1 as argument to milliseconds to disable periodic status reports.
    */
@@ -539,19 +562,21 @@ public:
 
   /** \brief Request an immediate interruption of the tasks.
    *
-   * Execution inside the function \ref run() will stop as soon as each workers notices
-   * the interrupt request, and will emit the \ref TasksInterruptedException.
+   * Execution inside the function \ref run() will stop as soon as each workers
+   * notices the interrupt request, and will emit the \ref
+   * TasksInterruptedException.
    *
-   * The periodic check on the tasks' side is implemented in each tasks' check for a
-   * status report, so that any \ref pageInterfaceTask -compliant type which periodically
-   * checks for status reports is automatically interruptible.
+   * The periodic check on the tasks' side is implemented in each tasks' check
+   * for a status report, so that any \ref pageInterfaceTask -compliant type
+   * which periodically checks for status reports is automatically
+   * interruptible.
    *
    * \note This function is safe to be called from within a signal handler.
    */
   inline void requestInterrupt()
   {
     // set the atomic int
-    shared_data.interrupt_requested = 1;
+    shared_data.schedule.interrupt_requested = 1;
   }
     
 }; // class TaskDispatcher
