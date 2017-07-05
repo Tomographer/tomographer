@@ -1,11 +1,12 @@
 
 import itertools
 import os.path
+import collections
 import datetime
 
 from pkg_resources import parse_version
 
-import tomographerbuild
+from tomographerbuild import TomographerBuild, timeit_call
 
 
 cmake_release_opts = [
@@ -50,6 +51,8 @@ settings_matrix = {
 }
 
 
+SettingValue = collections.namedtuple('SettingValue', ('valname','value',))
+
 
 def get_settings_list(settings_matrix):
     """
@@ -80,7 +83,7 @@ def get_settings_list(settings_matrix):
         return ( (v,v) for v in vals_dict_or_list )
 
     each_setting_as_list = [
-        [(k,(valname,val)) for valname, val in itervals(vals)]
+        [(k,SettingValue(valname=valname,value=val)) for valname, val in itervals(vals)]
         for k,vals in settings_matrix.items()
     ]
 
@@ -90,12 +93,12 @@ def get_settings_list(settings_matrix):
 
 def get_tomographer_build(settings):
     
-    cc, cxx = settings['compiler'][1]
+    cc, cxx = settings['compiler'].value
 
-    rawversion = settings['version'][1][1:]  # e.g., "4.0"
+    rawversion = settings['version'].value[1:]  # e.g., "4.0"
 
     if ( parse_version(rawversion) < parse_version('4.0')
-         and settings['multiproc'][0]=='cxxthreads' ):
+         and settings['multiproc'].valname == 'cxxthreads' ):
         # no support for C++11 threads in Tomographer < 4.0
         return None
 
@@ -103,14 +106,14 @@ def get_tomographer_build(settings):
         '-DCMAKE_BUILD_TYPE=Release',
         '-DCMAKE_C_COMPILER='+cc,
         '-DCMAKE_CXX_COMPILER='+cxx,
-        '-DTOMORUN_MULTIPROC='+settings['multiproc'],
-        '-DTARGET_ARCHITECTURE='+settings['target_arch'],
-        '-DCMAKE_CXX_FLAGS_RELEASE={} {}'.format(settings['optim'], settings['asserts']),
+        '-DTOMORUN_MULTIPROC='+settings['multiproc'].value,
+        '-DTARGET_ARCHITECTURE='+settings['target_arch'].value,
+        '-DCMAKE_CXX_FLAGS_RELEASE={} {}'.format(settings['optim'].value, settings['asserts'].value),
         # Don't use -DTOMORUN_CXX_FLAGS so that this works for earlier versions of tomographer
-        '-DCMAKE_CXX_FLAGS=-Wall -Wextra '+settings['tomorun_static'],
+        '-DCMAKE_CXX_FLAGS=-Wall -Wextra '+settings['tomorun_static'].value,
     ]
 
-    build = TomographerBuild(settings['version'], cmakeopts)
+    build = TomographerBuild(settings['version'].value, cmakeopts)
 
     if parse_version(rawversion) < parse_version('3.0a0'):
         build.tomorun_exe = os.path.abspath(
@@ -154,7 +157,7 @@ for n in range(len(builds)):
         continue
 
     no_ctrl_options = ['--no-control-step-size', '--no-control-binning-converged',]
-    if parse_version(settings['version'][1][1:]) < parse_version('5.0a1'):
+    if parse_version(settings['version'].value[1:]) < parse_version('5.0a1'):
         # options --no-control* introduced in Tomographer 5.0
         no_ctrl_options = []
 
