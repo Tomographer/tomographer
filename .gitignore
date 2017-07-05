@@ -1,0 +1,11 @@
+*~
+.DS_Store
+*.py[ocd]
+__pycache__
+testbench/_benchwork
+tomographer-tomorun*.tar.gz
+tomographer-tomorun*.tar.bz2
+tomographer-tomorun*.zip
+src/tomographer*.tar.gz
+src/tomographer*.tar.bz2
+src/tomographer*.zip
