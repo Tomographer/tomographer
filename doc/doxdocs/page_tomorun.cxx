@@ -110,6 +110,9 @@
  *   values at some places (1e-8 epsilons etc.). Beware and please report issues
  *   to me!
  *
+ *   \note: Using \c float here apparently significantly reduces the precision of the
+ *          resulting histogram.  Make sure you know what you are doing.
+ *
  * - \c TOMORUN_CUSTOM_FIXED_DIM, \c TOMORUN_CUSTOM_FIXED_MAX_DIM, \c
  *   TOMORUN_CUSTOM_MAX_POVM_EFFECTS
  *
