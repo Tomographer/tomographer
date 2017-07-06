@@ -146,5 +146,6 @@ cwd = timeit_call.cwd
 
     return {
         'best': best,
-        'avg': sum([ float(x)/number for x in xx]) / repeat
+        'avg': sum([ float(x)/number for x in xx]) / repeat,
+        'times': [ float(x)/number for x in xx]
     }
