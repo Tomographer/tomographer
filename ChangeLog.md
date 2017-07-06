@@ -10,6 +10,10 @@ Change Log
 
   * Better handling of Python exceptions inside C++ threads
 
+  * Small enhancements
+    
+    - minor optimization in MultiplexorValueCalculator
+
 
 ## v5.1 (2017-06-24)
 
