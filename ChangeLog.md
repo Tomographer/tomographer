@@ -5,12 +5,12 @@ Change Log
 
 ## v5.2 (TBD)
 
+  * Better handling of Python exceptions inside C++ threads
+
   * Consolidated some thread-related code in order to address some bugs in
     status reporting
 
-  * Better handling of Python exceptions inside C++ threads
-
-  * Small enhancements
+  * Other small enhancements
     
     - minor optimization in MultiplexorValueCalculator
 
