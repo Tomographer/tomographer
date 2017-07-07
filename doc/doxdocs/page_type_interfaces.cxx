@@ -359,7 +359,8 @@
  *    pageInterfaceMHWalker) stored in \a params (it should update the params in place).
  *    As convenience a reference to the \ref pageInterfaceMHWalker (\a mhwalker) and to
  *    the \ref Tomographer::MHRandomWalk instance (\a mhrw), as well as the iteration
- *    number \a iter_k, are provided.
+ *    number \a iter_k, are provided.  The iteration number \a iter_k is reset to zero
+ *    after thermalization runs.
  *
  * \par
  *    The template parameter \a IsThermalizing is set to \a true during the thermalization
@@ -406,6 +407,8 @@
  *    return value is \c true, then the random walk ends.  If the return value is \c
  *    false, then the random walk continues to run and process samples, while calling \a
  *    allowDoneRuns() again after each sweep, until it returns \c true, before finishing.
+ *    The iteration number \a iter_k counts the run iterations only, not the
+ *    thermalization ones.
  *
  * \par
  *    This function is not allowed to modify the \a params.  [Rationale: see \ref

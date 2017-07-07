@@ -91,6 +91,8 @@ private:
   const Eigen::Index max_allowed_unknown_notisolated;
   const Eigen::Index max_allowed_not_converged;
 
+  const double max_add_run_iters;
+
   Logger::LocalLogger<BaseLoggerType> llogger;
 
 public:
@@ -105,7 +107,8 @@ public:
       IterCountIntType check_frequency_sweeps_ = 1024,
       Eigen::Index max_allowed_unknown_ = 0,
       Eigen::Index max_allowed_unknown_notisolated_ = 0,
-      Eigen::Index max_allowed_not_converged_ = 0
+      Eigen::Index max_allowed_not_converged_ = 0,
+      double max_add_run_iters_ = 1.5
       )
     : value_stats_collector(value_stats_collector_),
       check_frequency_sweeps(check_frequency_sweeps_),
@@ -113,6 +116,7 @@ public:
       max_allowed_unknown(max_allowed_unknown_),
       max_allowed_unknown_notisolated(max_allowed_unknown_notisolated_),
       max_allowed_not_converged(max_allowed_not_converged_),
+      max_add_run_iters(max_add_run_iters_),
       llogger("Tomographer::MHRWValueErrorBinsConvergedAdjuster", baselogger_)
   {
   }
@@ -146,6 +150,17 @@ public:
         (iter_k-last_forbidden_iter_number) < params.n_sweep*check_frequency_sweeps) {
       // not enough new samples since last time we rejected to finish the random walk
       return false;
+    }
+
+    // if we have exceeded the maximum number of run iterations, emit a warning
+    // and stop (max_add_run_iters < 0 disables this feature)
+    if (max_add_run_iters > 0 && iter_k > max_add_run_iters * params.n_run) {
+      logger.warning([&](std::ostream & stream) {
+          stream << "Ending random walk after reaching maximum sweep number "
+                 << iter_k/params.n_sweep <<" ("
+                 << 100.0*iter_k/(params.n_sweep*params.n_run) << "% of set run length)";
+        }) ;
+      return true;
     }
 
     // re-check if the error bars have converged
@@ -204,7 +219,8 @@ mkMHRWValueErrorBinsConvergedController(
     IterCountIntType_ check_frequency_sweeps_ = 1024,
     Eigen::Index max_allowed_unknown_ = 0,
     Eigen::Index max_allowed_unknown_notisolated_ = 0,
-    Eigen::Index max_allowed_not_converged_ = 0
+    Eigen::Index max_allowed_not_converged_ = 0,
+    double max_add_run_iters = 1.5
     )
 {
   return MHRWValueErrorBinsConvergedController<ValueHistogramWithBinningMHRWStatsCollectorType_,
@@ -215,7 +231,8 @@ mkMHRWValueErrorBinsConvergedController(
                                                    check_frequency_sweeps_,
                                                    max_allowed_unknown_,
                                                    max_allowed_unknown_notisolated_,
-                                                   max_allowed_not_converged_
+                                                   max_allowed_not_converged_,
+                                                   max_add_run_iters
                                                    ) ;
 }
 

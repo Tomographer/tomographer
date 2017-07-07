@@ -198,7 +198,9 @@ class analytical_known_example_tomorun(unittest.TestCase):
             hist_params=hist_params,
             ctrl_converged_params={'max_allowed_unknown': 2,
                                    'max_allowed_unknown_notisolated': 2,
-                                   'max_allowed_not_converged': 0},
+                                   'max_allowed_not_converged': 0,
+                                   # run as long as necessary
+                                   'max_add_run_iters': -1},
             progress_fn=lambda report: print(report.getHumanReport()),
             progress_interval_ms=50
         )
@@ -547,7 +549,9 @@ class analytical_known_example_tomorun(unittest.TestCase):
             ctrl_converged_params={'enabled': True,
                                    'max_allowed_unknown': 1,
                                    'max_allowed_unknown_notisolated': 1,
-                                   'max_allowed_not_converged': 1},
+                                   'max_allowed_not_converged': 1,
+                                   # run as long as is necessary
+                                   'max_add_run_iters': -1 },
         )
 
         for runres in r['runs_results']:

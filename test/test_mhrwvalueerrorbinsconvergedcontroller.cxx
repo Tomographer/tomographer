@@ -160,7 +160,7 @@ BOOST_FIXTURE_TEST_CASE(keepsrunning, TestStatsCollectorFixture2)
   typedef Tomographer::MHRWValueErrorBinsConvergedController<MyStatsCollector,int,
                                                              Tomographer::Logger::BoostTestLogger>
     CtrlType;
-  CtrlType ctrl(statcoll, logger, 1 /*check_frequency_sweeps*/, 0, 0, 0);
+  CtrlType ctrl(statcoll, logger, 1 /*check_frequency_sweeps*/, 0, 0, 0, -1); // don't stop prematurely
 
   BOOST_CHECK_EQUAL( (unsigned int) CtrlType::AdjustmentStrategy,
                      (unsigned int) Tomographer::MHRWControllerDoNotAdjust ) ;
@@ -216,6 +216,69 @@ BOOST_FIXTURE_TEST_CASE(keepsrunning, TestStatsCollectorFixture2)
   logger.debug("keepsrunning test case", [&](std::ostream & stream) {
       result.dumpConvergenceAnalysis(stream);
     }) ;
+}
+
+BOOST_FIXTURE_TEST_CASE(stops_prematurely_for_long_runs, TestStatsCollectorFixture2)
+{
+  MeeselfValueCalculator valcalc;
+  Tomographer::Logger::BoostTestLogger logger;
+  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<MeeselfValueCalculator> VHWBParams;
+  typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<VHWBParams, Tomographer::Logger::BoostTestLogger>
+    MyStatsCollector;
+
+  const int bin_num_levels = 4;
+
+  MyStatsCollector statcoll(MyStatsCollector::HistogramParams(0,10,10),
+                            valcalc,
+                            bin_num_levels,
+                            logger);
+
+  struct DummyMHWalker {};
+  DummyMHWalker dmhwalker;
+  
+  Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<double>,int> p(0.1, 2, 2, 8) ; // n_run = 8 sweeps
+
+  typedef Tomographer::MHRWValueErrorBinsConvergedController<MyStatsCollector,int,
+                                                             Tomographer::Logger::BoostTestLogger>
+    CtrlType;
+  CtrlType ctrl(statcoll, logger, 1/*check_frequency_sweeps*/,
+                0, 0, 0, // require all converged exactly
+                1.1); // don't go more that 1.1x number of runs
+
+  BOOST_CHECK_EQUAL( (unsigned int) CtrlType::AdjustmentStrategy,
+                     (unsigned int) Tomographer::MHRWControllerDoNotAdjust ) ;
+
+  ctrl.init(p, dmhwalker, mhrw);
+
+  run_dummy_rw_init(statcoll);
+
+  BOOST_CHECK( ctrl.allowDoneThermalization(p, dmhwalker, 4, mhrw) ) ; // should never return false
+  ctrl.thermalizingDone(p, dmhwalker, mhrw);
+
+  run_dummy_rw_runs(statcoll, 10); // some runs -- not enough to make bars converge, but
+                                   // enough to exceed max_add_run_iters
+
+  // the bins should not have converged
+  { auto binmeans = statcoll.binMeans();
+    auto errlvls = statcoll.getBinningAnalysis().calcErrorLevels(binmeans);
+    auto conv_st = statcoll.getBinningAnalysis().determineErrorConvergence(errlvls);
+    auto summary = Tomographer::BinningErrorBarConvergenceSummary::fromConvergedStatus(conv_st);
+    logger.debug("keepsrunning test case", [&](std::ostream & stream) {
+        stream << "Bins convergence : " << summary << "\n";
+        stream << "# samples @ last level: " << coll_samples / (1<<bin_num_levels) ;
+      });
+  
+    BOOST_CHECK_EQUAL(summary.n_bins, 10u);
+    BOOST_CHECK_EQUAL(summary.n_converged, 9u);
+    BOOST_CHECK_EQUAL(summary.n_unknown, 0u);
+    BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0u);
+    BOOST_CHECK_EQUAL(summary.n_not_converged, 1u);
+  }
+
+  // now the bins have not yet converged, but rw should end because we exceeded
+  // max_add_run_iters=1.2 (9 sweeps vs 8 set)
+  BOOST_CHECK( ctrl.allowDoneRuns(p, dmhwalker, iter_k, mhrw) ) ;
+
 }
 
 BOOST_AUTO_TEST_SUITE_END()

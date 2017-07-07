@@ -131,7 +131,8 @@ struct TomorunCData : public CDataBaseType_
       ctrl_moving_avg_samples(opt->control_step_size_moving_avg_samples),
       ctrl_max_allowed_unknown(opt->control_binning_converged_max_unknown),
       ctrl_max_allowed_unknown_notisolated(opt->control_binning_converged_max_unknown_notisolated),
-      ctrl_max_allowed_not_converged(opt->control_binning_converged_max_not_converged)
+      ctrl_max_allowed_not_converged(opt->control_binning_converged_max_not_converged),
+      ctrl_max_add_run_iters(opt->control_binning_converged_max_add_run_iters)
   {
   }
 
@@ -147,7 +148,8 @@ struct TomorunCData : public CDataBaseType_
       ctrl_moving_avg_samples(opt->control_step_size_moving_avg_samples),
       ctrl_max_allowed_unknown(opt->control_binning_converged_max_unknown),
       ctrl_max_allowed_unknown_notisolated(opt->control_binning_converged_max_unknown_notisolated),
-      ctrl_max_allowed_not_converged(opt->control_binning_converged_max_not_converged)
+      ctrl_max_allowed_not_converged(opt->control_binning_converged_max_not_converged),
+      ctrl_max_add_run_iters(opt->control_binning_converged_max_add_run_iters)
   {
   }
 
@@ -157,7 +159,7 @@ struct TomorunCData : public CDataBaseType_
   const Eigen::Index ctrl_max_allowed_unknown;
   const Eigen::Index ctrl_max_allowed_unknown_notisolated;
   const Eigen::Index ctrl_max_allowed_not_converged;
-
+  const double ctrl_max_add_run_iters;
 
   template<typename RngType, typename LoggerType,
            TOMOGRAPHER_ENABLED_IF_TMPL(!UseTSpaceLLHWalkerLight)>
@@ -220,7 +222,8 @@ struct TomorunCData : public CDataBaseType_
           value_stats, logger, 1024,
           ctrl_max_allowed_unknown,
           ctrl_max_allowed_unknown_notisolated,
-          ctrl_max_allowed_not_converged
+          ctrl_max_allowed_not_converged,
+          ctrl_max_add_run_iters
           );
 
     auto stats = Tomographer::mkMultipleMHRWStatsCollectors(value_stats);
@@ -250,7 +253,8 @@ struct TomorunCData : public CDataBaseType_
           value_stats, logger, 1024,
           ctrl_max_allowed_unknown,
           ctrl_max_allowed_unknown_notisolated,
-          ctrl_max_allowed_not_converged
+          ctrl_max_allowed_not_converged,
+          ctrl_max_add_run_iters
           );
     // combined to a:
     auto ctrl_combined =

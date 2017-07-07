@@ -214,6 +214,7 @@ struct ProgOptions
   Eigen::Index control_binning_converged_max_not_converged{0};
   Eigen::Index control_binning_converged_max_unknown{2};
   Eigen::Index control_binning_converged_max_unknown_notisolated{0};
+  double control_binning_converged_max_add_run_iters{1.5};
 
   int Nrepeats{defaultNumRepeat()};
   int Nchunk{1};
@@ -360,6 +361,13 @@ void parse_options(ProgOptions * opt, int argc, char **argv,
      "If control-binning-converged is set, then do not finish the random walk before there being "
      "no more than this number of error bars for which the convergence is uncertain and which are "
      "adjacent to other error bars which have not converged or whose convergence status is unknown.")
+    ("control-binning-converged-max-add-run-iters",
+     value<double>(& opt->control_binning_converged_max_add_run_iters )
+     ->default_value(opt->control_binning_converged_max_add_run_iters),
+     "If control-binning-converged is set, then end the random walk after a certain amount runs "
+     "regardless of bins error bars convergence status. Specify the amount as a fraction of the set "
+     "number of run sweeps, e.g. a value of 1.5 prolongs the random walk by at most 50% of the run "
+     "sweeps. Set to a negative value to run as long as needed to make error bars converge as requested.")
 
     ("step-size", value<TomorunReal>(& opt->step_size)->default_value(opt->step_size),
      "the step size for the region")

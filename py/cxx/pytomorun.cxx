@@ -390,6 +390,7 @@ public:
 
     int check_frequency_sweeps = 0;
     Eigen::Index max_allowed[3] = {0};
+    double max_add_run_iters = 1.5;
     {
       py::gil_scoped_acquire gilacq;
       if (ctrl_converged_params.attr("get")("enabled", true).cast<bool>()) {
@@ -401,11 +402,14 @@ public:
           ctrl_converged_params.attr("get")("max_allowed_unknown_notisolated", 0).cast<Eigen::Index>();
         max_allowed[2] =
           ctrl_converged_params.attr("get")("max_allowed_not_converged", 0).cast<Eigen::Index>();
+        max_add_run_iters =
+          ctrl_converged_params.attr("get")("max_add_run_iters", 1.5).cast<double>();
       } else {
         check_frequency_sweeps = 0;
         max_allowed[0] = std::numeric_limits<Eigen::Index>::max();
         max_allowed[1] = std::numeric_limits<Eigen::Index>::max();
         max_allowed[2] = std::numeric_limits<Eigen::Index>::max();
+        max_add_run_iters = -1.0;
       }
     }
 
@@ -414,7 +418,8 @@ public:
       Tomographer::mkMHRWValueErrorBinsConvergedController(
           value_stats, baselogger,
           check_frequency_sweeps,
-          max_allowed[0], max_allowed[1], max_allowed[2]
+          max_allowed[0], max_allowed[1], max_allowed[2],
+          max_add_run_iters
           );
 
     logger.debug("Created bins convergence controller.") ;
@@ -908,6 +913,11 @@ void py_tomo_tomorun(py::module rootmodule)
         "                random walk be allowed to finish.\n\n"
         "              - 'check_frequency_sweeps': How often to check for the convergence\n"
         "                of the binning analysis error bars (in number of sweeps).\n\n"
+        "              - 'max_add_run_iters': End the random walk after a certain amount runs\n"
+        "                regardless of bins error bars convergence status. Specify the amount as\n"
+        "                a fraction of the set number of run sweeps, e.g. a value of 1.5 prolongs\n"
+        "                the random walk by at most 50% of the run sweeps. Set to a negative value\n"
+        "                to run as long as necessary to make error bars converge as requested.\n\n"
         "            See also :tomocxx:`this doc of the corresponding\n"
         "            C++ controller class <class_tomographer_1_1_m_h_r_w_value_error_bins_converged_controller.html>`.\n"
         "\n"
