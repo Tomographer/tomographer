@@ -178,8 +178,8 @@ void py_tomo_densedm(py::module rootmodule)
       .def(py::init<tpy::DMTypes>(), "dmt"_a)
       .def_readonly("dmt", & Kl::dmt )
       .def_property_readonly("numEffects", & Kl::numEffects )
-      .def("Exn", [](const Kl& l) -> Eigen::MatrixXd { return l.Exn(); })
-      .def("Exn", [](const Kl& l, int k) -> Eigen::VectorXd { return l.Exn(k); }, "k"_a,
+      .def("Exn", [](const Kl& l) -> tpy::RealMatrixType { return l.Exn(); })
+      .def("Exn", [](const Kl& l, int k) -> tpy::RealVectorType { return l.Exn(k); }, "k"_a,
            "Exn([k])"
            "\n\n"
            "If `k` is not specified, then return the matrix of all POVM effects in X-parameterization.  Each "
@@ -190,7 +190,7 @@ void py_tomo_densedm(py::module rootmodule)
            "\n\n"
            "In any case, the returned value is a `numpy.array` object."
           )
-      .def("Nx", [](const Kl& l) -> Eigen::VectorXi { return l.Nx(); })
+      .def("Nx", [](const Kl& l) -> tpy::CountIntVectorType { return l.Nx(); })
       .def("Nx", [](const Kl& l, int k) -> tpy::CountIntType { return l.Nx(k); }, "k"_a,
            "Nx([k])"
            "\n\n"
@@ -206,7 +206,7 @@ void py_tomo_densedm(py::module rootmodule)
            "Forget any stored POVM effects.  The internal `Exn` and `Nx` objects are cleared.  You may "
            "start adding POVM effects with :py:meth:`setMeas()` or :py:meth:`addMeasEffect()`."
           )
-      .def("addMeasEffect", [](Kl & l, Eigen::MatrixXcd E_x_or_m, tpy::CountIntType n, bool check_validity) {
+      .def("addMeasEffect", [](Kl & l, tpy::CplxMatrixType E_x_or_m, tpy::CountIntType n, bool check_validity) {
           if (E_x_or_m.cols() == 1) {
             // it is a X-param vector
             tomographer_assert( E_x_or_m.imag().norm() < 1e-6
@@ -244,7 +244,7 @@ void py_tomo_densedm(py::module rootmodule)
           }
           for (std::size_t k = 0; k < len; ++k) {
 
-            Eigen::MatrixXcd E_x_or_m = E[py::cast(k)].cast<Eigen::MatrixXcd>();
+            tpy::CplxMatrixType E_x_or_m = E[py::cast(k)].cast<tpy::CplxMatrixType>();
             tpy::CountIntType Nk = Nx[py::cast(k)].cast<tpy::CountIntType>();
             // if (PyErr_Occurred() != NULL) {
             //   // tell pybind11 that the exception is already set
@@ -285,7 +285,7 @@ void py_tomo_densedm(py::module rootmodule)
         "If `check_validity` is `True`, then some consistency checks are performed on the POVM effects, "
         "such as verifying them for positive semidefiniteness."
           )
-      .def("logLikelihoodX", [](const Kl& l, Eigen::VectorXd x) {
+      .def("logLikelihoodX", [](const Kl& l, tpy::RealVectorType x) {
           // no need to test if x has imaginary components, the conversion to
           // Eigen::VectorXd would have failed.
           return l.logLikelihoodX(x);
@@ -297,7 +297,7 @@ void py_tomo_densedm(py::module rootmodule)
         ":math:`\\ln\\Lambda(\\rho) = \\sum_k N_k \\ln\\operatorname{tr}(E_k\\cdot\\rho)`, where "
         ":math:`E_k` is the POVM effect indexed by `k` and :math:`N_k` is the corresponding frequency."
           )
-      .def("logLikelihoodRho", [](const Kl& l, Eigen::MatrixXcd rho) {
+      .def("logLikelihoodRho", [](const Kl& l, tpy::CplxMatrixType rho) {
           return l.logLikelihoodX(Tomographer::DenseDM::ParamX<tpy::DMTypes>(l.dmt).HermToX(rho));
         }, "x"_a,
         "logLikelihoodRho(rho)"

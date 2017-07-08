@@ -910,14 +910,12 @@ public:
  * The argument \a logger must be a \ref Tomographer::Logger::LocalLogger (with
  * some meaningful origin set) where warnings will be emitted.
  */
-template<typename MHRWParamsType, typename LocalLoggerType>
+template<typename IterCountIntType, typename LocalLoggerType>
 inline int sanitizeBinningLevels(int binning_num_levels,
-                                 MHRWParamsType mhrw_params,
-                                 typename MHRWParamsType::CountIntType samples_last_level,
+                                 IterCountIntType n_run,
+                                 IterCountIntType samples_last_level,
                                  LocalLoggerType & logger)
 {
-  typedef typename MHRWParamsType::CountIntType IterCountIntType;
-
   if (binning_num_levels > 0) {
     // provided manual value
     if (binning_num_levels < 4) {
@@ -930,7 +928,7 @@ inline int sanitizeBinningLevels(int binning_num_levels,
     // choose automatically. Make sure that the last level has
     // ~samples_last_level samples to calculate std deviation.
     binning_num_levels = (int)(
-        std::floor(std::log(mhrw_params.n_run/samples_last_level)
+        std::floor(std::log(n_run/samples_last_level)
                    / std::log(2)) + 1e-3
         ) ;
     if (binning_num_levels < 1) {
@@ -945,7 +943,7 @@ inline int sanitizeBinningLevels(int binning_num_levels,
     }
   }
   const IterCountIntType binning_last_level_num_samples =
-    (IterCountIntType) std::ldexp((double)mhrw_params.n_run, - binning_num_levels);
+    (IterCountIntType) std::ldexp((double)n_run, - binning_num_levels);
 
   logger.debug([&](std::ostream & stream) {
       stream << "Binning analysis: " << binning_num_levels << " levels, with "

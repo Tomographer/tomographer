@@ -86,8 +86,8 @@ namespace tpy {
 
 //! Real type for template arguments (double)
 typedef double RealType;
-//! Integer type for template arguments (int)
-typedef int CountIntType;
+//! Integer type for template arguments (`long' in case of long random walks)
+typedef long CountIntType;
 
 //! Shorthand, a 1-D Eigen::Matrix of RealType's
 typedef Eigen::Matrix<RealType, Eigen::Dynamic, 1> RealVectorType;

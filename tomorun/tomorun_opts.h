@@ -205,7 +205,7 @@ struct ProgOptions
   bool light_jumps{false};
 
   bool binning_analysis_error_bars{true};
-  int binning_analysis_num_levels{8};
+  int binning_analysis_num_levels{-1};
 
   bool control_step_size{true};
   TomorunInt control_step_size_moving_avg_samples{2048};
@@ -314,21 +314,23 @@ void parse_options(ProgOptions * opt, int argc, char **argv,
      ->default_value(opt->binning_analysis_num_levels),
      ("Number of levels of coarse-graining in the binning analysis. See --binning-analysis-error-bars. "
       "Choose this number such that (n-run)/(2^(<binning-num-levels>)) is a sufficiently decent sample size "
-      "(say ~"+std::to_string(last_binning_level_warn_min_samples)+").").c_str())
+      "(say ~"+std::to_string(last_binning_level_warn_min_samples)+").  Set to a negative value to "
+      "choose level automatically.").c_str())
     ("control-step-size", bool_switch(& control_step_size_set)->default_value(false),
-     Tomographer::Tools::fmts("Dynamically adjust the step size during thermalization runs in order to "
-                              "keep the acceptance ratio approximately within the range [%.2f,%.2f] (but "
-                              "in any case within [%.2f,%.2f]). The sweep size "
-                              "is automatically adjusted so that step_size*sweep_size remains constant. "
-                              "Furthermore the thermalization runs will be prolonged as necessary to "
-                              "ensure that at least %.2f*n_therm thermalization sweeps have passed after "
-                              "the last time the step size was adjusted. This option is enabled by "
-                              "default.",
-                              Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::DesiredAcceptanceRatioMin,
-                              Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::DesiredAcceptanceRatioMax,
-                              Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::AcceptableAcceptanceRatioMin,
-                              Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::AcceptableAcceptanceRatioMax,
-                              Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::EnsureNThermFixedParamsFraction
+     Tomographer::Tools::fmts(
+         "Dynamically adjust the step size during thermalization runs in order to "
+         "keep the acceptance ratio approximately within the range [%.2f,%.2f] (but "
+         "in any case within [%.2f,%.2f]). The sweep size "
+         "is automatically adjusted so that step_size*sweep_size remains constant. "
+         "Furthermore the thermalization runs will be prolonged as necessary to "
+         "ensure that at least %.2f*n_therm thermalization sweeps have passed after "
+         "the last time the step size was adjusted. This option is enabled by "
+         "default.",
+         Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::DesiredAcceptanceRatioMin,
+         Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::DesiredAcceptanceRatioMax,
+         Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::AcceptableAcceptanceRatioMin,
+         Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::AcceptableAcceptanceRatioMax,
+         Tomographer::MHRWAcceptRatioWalkerParamsControllerDefaults::EnsureNThermFixedParamsFraction
          ).c_str())
     ("no-control-step-size", bool_switch(& no_control_step_size_set)->default_value(false),
      "Do not dynamically adjust the step size during thermalization.")

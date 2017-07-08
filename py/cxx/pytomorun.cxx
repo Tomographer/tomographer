@@ -233,14 +233,7 @@ typedef Tomographer::MultiplexorValueCalculator<
   > ValueCalculator;
 
 
-
-
-//
-// We need to define a class which adds the capacity of creating the "master" random walk
-// object to the engine in Tomographer::MHRWTasks::ValueHistogramTools, which take care of
-// running the random walks etc. as needed.
-//
-struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
+typedef Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   ValueCalculator, // our value calculator
   true, // use binning analysis
   Tomographer::MHWalkerParamsStepSize<tpy::RealType>, // MHWalkerParams
@@ -249,6 +242,15 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   tpy::RealType, // CountRealType
   tpy::CountIntType // HistCountIntType
   >
+  CDataBaseType;
+
+
+//
+// We need to define a class which adds the capacity of creating the "master" random walk
+// object to the engine in Tomographer::MHRWTasks::ValueHistogramTools, which take care of
+// running the random walks etc. as needed.
+//
+struct OurCData : public CDataBaseType
 {
 public:
 
@@ -262,7 +264,7 @@ public:
            py::dict ctrl_step_size_params_, // parameters for step size controller
            py::dict ctrl_converged_params_ // parameters for value bins converged controller
       )
-    : CDataBase<ValueCalculator,true>(
+    : CDataBaseType(
         valcalc, hist_params, binning_num_levels,
         tpy::CxxMHRWParamsType(
             tpy::pyMHWalkerParamsFromPyObj<Tomographer::MHWalkerParamsStepSize<tpy::RealType>>(mhrw_params.mhwalker_params),
@@ -617,8 +619,8 @@ py::object py_tomorun(
 
 
   // number of renormalization levels in the binning analysis
-  const int recommended_num_samples_last_level = 128;
-  binning_num_levels = Tomographer::sanitizeBinningLevels(binning_num_levels, mhrw_params,
+  const tpy::CountIntType recommended_num_samples_last_level = 128;
+  binning_num_levels = Tomographer::sanitizeBinningLevels(binning_num_levels, mhrw_params.n_run,
                                                           recommended_num_samples_last_level,
                                                           logger) ;
 

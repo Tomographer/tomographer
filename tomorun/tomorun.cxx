@@ -200,26 +200,10 @@ int main(int argc, char **argv)
   }
 
 
-  // warn the user if the last binning level comprises too few samples.
-  //
-  // # of samples at last level is = Nrun/(2^{num_binning_levels}).
-  // [note: std::ldexp(x,e) := x * 2^{e} ]
-  //
-  const TomorunInt last_level_num_samples
-    = (TomorunInt)std::ldexp((TomorunReal)opt.Nrun, - opt.binning_analysis_num_levels);
-  logger.debug([&](std::ostream & stream) {
-      stream << "last_level_num_samples = " << last_level_num_samples;
-    }) ;
-  //
-  if ( opt.binning_analysis_error_bars &&
-       ( last_level_num_samples < (TomorunInt)last_binning_level_warn_min_samples ) ) {
-    logger.warning([&](std::ostream & stream) {
-        stream << "Few samples in the last binning level of binning analysis : "
-               << "Nrun=" << opt.Nrun << ", # of levels=" << opt.binning_analysis_num_levels
-               << " --> " << last_level_num_samples
-               << " samples. [Recommended >= " << last_binning_level_warn_min_samples << "]";
-      });
-  }
+  opt.binning_analysis_num_levels =
+    Tomographer::sanitizeBinningLevels(opt.binning_analysis_num_levels,
+                                       last_binning_level_warn_min_samples,
+                                       opt.Nrun, logger) ;
 
   // warn the user if they specified control-binning-convergence but don't have binning
   // analysis enabled

@@ -214,7 +214,7 @@ BOOST_AUTO_TEST_CASE(works)
 
   // to avoid commas in the arguments of macro BOOST_CHECK_EQUAL
   auto runsanitize = [&](int n) {
-    return Tomographer::sanitizeBinningLevels(n, mhrw_params, 128, logger);
+    return Tomographer::sanitizeBinningLevels(n, mhrw_params.n_run, 128, logger);
   };
   BOOST_CHECK_EQUAL(runsanitize(1), 1);
   BOOST_CHECK_EQUAL(runsanitize(2), 2);
@@ -234,7 +234,7 @@ BOOST_AUTO_TEST_CASE(works)
     Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<double>,int> mhrw_params2(0.05,20,1024,1024);
     Tomographer::Logger::BufferLogger buflg(Tomographer::Logger::WARNING) ;
     auto logger = Tomographer::Logger::makeLocalLogger("testcase", buflg) ;
-    int bin_num_levels = Tomographer::sanitizeBinningLevels(3, mhrw_params2, 128, logger);
+    int bin_num_levels = Tomographer::sanitizeBinningLevels(3, mhrw_params2.n_run, 128, logger);
     BOOST_CHECK_EQUAL( bin_num_levels, 3 );
     BOOST_TEST_MESSAGE(buflg.getContents()) ;
     BOOST_CHECK( buflg.getContents().size() > 50 ) ; // warning emitted
@@ -245,7 +245,7 @@ BOOST_AUTO_TEST_CASE(works)
     Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<double>,int> mhrw_params2(0.05,20,1024,1024);
     Tomographer::Logger::BufferLogger buflg(Tomographer::Logger::WARNING) ;
     auto logger = Tomographer::Logger::makeLocalLogger("testcase", buflg) ;
-    int bin_num_levels = Tomographer::sanitizeBinningLevels(0, mhrw_params2, 128, logger);
+    int bin_num_levels = Tomographer::sanitizeBinningLevels(0, mhrw_params2.n_run, 128, logger);
     BOOST_CHECK_EQUAL( bin_num_levels, 3 );
     BOOST_TEST_MESSAGE(buflg.getContents()) ;
     BOOST_CHECK( buflg.getContents().size() > 50 ) ; // warning emitted
@@ -256,7 +256,7 @@ BOOST_AUTO_TEST_CASE(works)
     Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<double>,int> mhrw_params2(0.05,20,1024,1024);
     Tomographer::Logger::BufferLogger buflg(Tomographer::Logger::WARNING) ;
     auto logger = Tomographer::Logger::makeLocalLogger("testcase", buflg) ;
-    int bin_num_levels = Tomographer::sanitizeBinningLevels(8, mhrw_params2, 128, logger);
+    int bin_num_levels = Tomographer::sanitizeBinningLevels(8, mhrw_params2.n_run, 128, logger);
     BOOST_CHECK_EQUAL( bin_num_levels, 8 );
     BOOST_TEST_MESSAGE(buflg.getContents()) ;
     BOOST_CHECK( buflg.getContents().size() > 50 ) ; // warning emitted
