@@ -603,6 +603,10 @@ py::object py_tomorun(
     throw py::value_error("Invalid mhrw_params: must have n_run >= 0") ;
   }
 
+  if (num_repeats < 1) {
+    throw py::value_error("num_repeats must be >= 1") ;
+  }
+
   // prepare the random walk tasks
 
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, RngType>  OurMHRandomWalkTask;
@@ -614,42 +618,12 @@ py::object py_tomorun(
 
   // number of renormalization levels in the binning analysis
   const int recommended_num_samples_last_level = 128;
-  if (binning_num_levels <= 0) {
-    // choose automatically. Make sure that the last level has ~128 samples to calculate std deviation.
-    binning_num_levels = (int)(std::floor(std::log(mhrw_params.n_run/recommended_num_samples_last_level)
-                                          / std::log(2)) + 1e-3) ;
-    if (binning_num_levels < 1) {
-      binning_num_levels = 1;
-    }
-  }
-  if (binning_num_levels < 4) {
-    logger.warning([&](std::ostream & stream) {
-        stream << "You are using few binning levels = " << binning_num_levels
-               << " (perhaps because n_run is low), and the resulting error bars "
-               << "might not be reliable." ;
-      });
-  }
-  const tpy::CountIntType binning_last_level_num_samples =
-    (tpy::CountIntType)std::ldexp((double)mhrw_params.n_run, - binning_num_levels);
-  logger.debug([&](std::ostream & stream) {
-      stream << "Binning analysis: " << binning_num_levels << " levels, with "
-             << binning_last_level_num_samples << " samples at last level";
-    });
-  // warn if number of samples @ last level is below recommended value
-  if (binning_last_level_num_samples < recommended_num_samples_last_level) {
-    logger.warning([&](std::ostream & stream) {
-        stream << "The number of samples (" << binning_last_level_num_samples
-               << ") at the last binning level is below the recommended value ("
-               << recommended_num_samples_last_level << ").  Consider increasing n_run "
-               << "or decreasing binning_num_levels.";
-      });
-  }
+  binning_num_levels = Tomographer::sanitizeBinningLevels(binning_num_levels, mhrw_params,
+                                                          recommended_num_samples_last_level,
+                                                          logger) ;
 
   OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params,
                     base_seed, jumps_method, ctrl_step_size_params, ctrl_converged_params);
-
-  typedef std::chrono::steady_clock StdClockType;
-  StdClockType::time_point time_start;
 
   logger.debug([&](std::ostream & stream) {
       stream << "about to create the task dispatcher.  this pid = " << getpid() << "; this thread id = "
@@ -657,10 +631,6 @@ py::object py_tomorun(
     }) ;
 
   tpy::GilProtectedPyLogger logger_with_gil(logger.parentLogger(), false);
-
-  if (num_repeats < 1) {
-    throw py::value_error("num_repeats must be >= 1") ;
-  }
 
   Tomographer::MultiProc::CxxThreads::TaskDispatcher<OurMHRandomWalkTask,OurCData,tpy::GilProtectedPyLogger>
     tasks(
@@ -670,6 +640,9 @@ py::object py_tomorun(
         );
 
   tpy::setTasksStatusReportPyCallback(tasks, progress_fn, progress_interval_ms, true /* GIL */);
+
+  typedef std::chrono::steady_clock StdClockType;
+  StdClockType::time_point time_start;
 
   {
     logger_with_gil.requireGilAcquisition(true);

@@ -202,6 +202,70 @@ BOOST_AUTO_TEST_CASE(no_bin_means)
 BOOST_AUTO_TEST_SUITE_END()
 
 
+
+BOOST_AUTO_TEST_SUITE(sanitize_num_levels)
+
+BOOST_AUTO_TEST_CASE(works)
+{
+  Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<double>,int> mhrw_params(0.05,20,1024,8192);
+
+  Tomographer::Logger::BoostTestLogger baselogger(Tomographer::Logger::INFO) ;
+  auto logger = Tomographer::Logger::makeLocalLogger("testcase", baselogger) ;
+
+  // to avoid commas in the arguments of macro BOOST_CHECK_EQUAL
+  auto runsanitize = [&](int n) {
+    return Tomographer::sanitizeBinningLevels(n, mhrw_params, 128, logger);
+  };
+  BOOST_CHECK_EQUAL(runsanitize(1), 1);
+  BOOST_CHECK_EQUAL(runsanitize(2), 2);
+  BOOST_CHECK_EQUAL(runsanitize(3), 3);
+  BOOST_CHECK_EQUAL(runsanitize(4), 4);
+  BOOST_CHECK_EQUAL(runsanitize(5), 5);
+  BOOST_CHECK_EQUAL(runsanitize(6), 6);
+  BOOST_CHECK_EQUAL(runsanitize(7), 7);
+  BOOST_CHECK_EQUAL(runsanitize(8), 8);
+              
+  // auto-detect
+  BOOST_CHECK_EQUAL(runsanitize(0), 6);
+  BOOST_CHECK_EQUAL(runsanitize(-1), 6);
+
+  // test warning emitted if too few levels, manually given number of levels
+  {
+    Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<double>,int> mhrw_params2(0.05,20,1024,1024);
+    Tomographer::Logger::BufferLogger buflg(Tomographer::Logger::WARNING) ;
+    auto logger = Tomographer::Logger::makeLocalLogger("testcase", buflg) ;
+    int bin_num_levels = Tomographer::sanitizeBinningLevels(3, mhrw_params2, 128, logger);
+    BOOST_CHECK_EQUAL( bin_num_levels, 3 );
+    BOOST_TEST_MESSAGE(buflg.getContents()) ;
+    BOOST_CHECK( buflg.getContents().size() > 50 ) ; // warning emitted
+  }
+
+  // test warning emitted if too few levels, automatically determined number of levels
+  {
+    Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<double>,int> mhrw_params2(0.05,20,1024,1024);
+    Tomographer::Logger::BufferLogger buflg(Tomographer::Logger::WARNING) ;
+    auto logger = Tomographer::Logger::makeLocalLogger("testcase", buflg) ;
+    int bin_num_levels = Tomographer::sanitizeBinningLevels(0, mhrw_params2, 128, logger);
+    BOOST_CHECK_EQUAL( bin_num_levels, 3 );
+    BOOST_TEST_MESSAGE(buflg.getContents()) ;
+    BOOST_CHECK( buflg.getContents().size() > 50 ) ; // warning emitted
+  }
+  
+  // test warning emitted if too few samples at last level
+  {
+    Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<double>,int> mhrw_params2(0.05,20,1024,1024);
+    Tomographer::Logger::BufferLogger buflg(Tomographer::Logger::WARNING) ;
+    auto logger = Tomographer::Logger::makeLocalLogger("testcase", buflg) ;
+    int bin_num_levels = Tomographer::sanitizeBinningLevels(8, mhrw_params2, 128, logger);
+    BOOST_CHECK_EQUAL( bin_num_levels, 8 );
+    BOOST_TEST_MESSAGE(buflg.getContents()) ;
+    BOOST_CHECK( buflg.getContents().size() > 50 ) ; // warning emitted
+  }
+}
+
+BOOST_AUTO_TEST_SUITE_END() // MHRWParamsType
+
+
 // =============================================================================
 
 BOOST_AUTO_TEST_SUITE_END()

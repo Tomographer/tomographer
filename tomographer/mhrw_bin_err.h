@@ -894,6 +894,81 @@ public:
 
 
 
+/** \brief Utility for sanitizing/determining number of binning levels
+ *
+ * If \a binning_num_levels is <= 0, then we determine the number of binning
+ * levels so that there are at least \a samples_last_level at the last level of
+ * the binning analysis; this will be returned.  If binning_num_levels is > 0,
+ * then that number will be return.
+ *
+ * In addition, a warning message is produced if there are too few binning
+ * levels, which might cause the error bars not to be reliable.
+ *
+ * In addition, a warning message is produced if the number of samples at the
+ * last level of the binning analysis is less than \samples_last_level.
+ *
+ * The argument \a logger must be a \ref Tomographer::Logger::LocalLogger (with
+ * some meaningful origin set) where warnings will be emitted.
+ */
+template<typename MHRWParamsType, typename LocalLoggerType>
+inline int sanitizeBinningLevels(int binning_num_levels,
+                                 MHRWParamsType mhrw_params,
+                                 typename MHRWParamsType::CountIntType samples_last_level,
+                                 LocalLoggerType & logger)
+{
+  typedef typename MHRWParamsType::CountIntType IterCountIntType;
+
+  if (binning_num_levels > 0) {
+    // provided manual value
+    if (binning_num_levels < 4) {
+      logger.warning([&](std::ostream & stream) {
+          stream << "You are using few binning levels = " << binning_num_levels
+                 << " and the resulting error bars might not be reliable." ;
+      });
+    }
+  } else {
+    // choose automatically. Make sure that the last level has
+    // ~samples_last_level samples to calculate std deviation.
+    binning_num_levels = (int)(
+        std::floor(std::log(mhrw_params.n_run/samples_last_level)
+                   / std::log(2)) + 1e-3
+        ) ;
+    if (binning_num_levels < 1) {
+      binning_num_levels = 1;
+    }
+    if (binning_num_levels < 4) {
+      logger.warning([&](std::ostream & stream) {
+          stream << "Because n_run is small, you will be using few binning levels = "
+                 << binning_num_levels << ", and the resulting error bars "
+                 << "might not be reliable." ;
+        });
+    }
+  }
+  const IterCountIntType binning_last_level_num_samples =
+    (IterCountIntType) std::ldexp((double)mhrw_params.n_run, - binning_num_levels);
+
+  logger.debug([&](std::ostream & stream) {
+      stream << "Binning analysis: " << binning_num_levels << " levels, with "
+             << binning_last_level_num_samples << " samples at last level";
+    });
+
+  // warn if number of samples @ last level is below recommended value
+  if (binning_last_level_num_samples < samples_last_level) {
+    logger.warning([&](std::ostream & stream) {
+        stream << "The number of samples (" << binning_last_level_num_samples
+               << ") at the last binning level is below the recommended value ("
+               << samples_last_level << ").  Consider increasing n_run "
+               << "or decreasing binning_num_levels.";
+      });
+  }
+  return binning_num_levels;
+}
+
+
+
+
+
+
 } // namespace Tomographer
 
 

@@ -118,10 +118,12 @@ private:
   PyObject *ptype;
   PyObject *pvalue;
   PyObject *ptraceback;
+  const std::string msg;
 public:
 
   PyFetchedException()
-    : ptype(NULL), pvalue(NULL), ptraceback(NULL)
+    : ptype(NULL), pvalue(NULL), ptraceback(NULL),
+      msg("<catch tpy::PyFetchedException and call restorePyException() to set Python exception>")
   {
     PyErr_Fetch(&ptype, &pvalue, &ptraceback) ;
   }
@@ -140,6 +142,8 @@ public:
     pvalue = NULL;
     ptraceback = NULL;
   }
+
+  const char * what() const noexcept { return msg.c_str(); }
 };
 
 
