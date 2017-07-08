@@ -152,9 +152,14 @@ public:
       return false;
     }
 
+    logger.longdebug([&](std::ostream & stream) {
+        stream << "params=" << params << ", iter_k=" << iter_k
+               << ", max_add_run_iters=" << max_add_run_iters;
+      });
+
     // if we have exceeded the maximum number of run iterations, emit a warning
     // and stop (max_add_run_iters < 0 disables this feature)
-    if (max_add_run_iters > 0 && iter_k > max_add_run_iters * params.n_run) {
+    if (max_add_run_iters > 0 && iter_k > max_add_run_iters * params.n_run * params.n_sweep) {
       logger.warning([&](std::ostream & stream) {
           stream << "Ending random walk after reaching maximum sweep number "
                  << iter_k/params.n_sweep <<" ("

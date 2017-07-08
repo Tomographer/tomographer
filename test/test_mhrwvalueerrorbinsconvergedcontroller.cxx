@@ -60,10 +60,14 @@ struct TestStatsCollectorFixture2
   int iter_k;
   int coll_samples;
 
+  //
+  // The point sequence has been tuned to get just the right properties. DO NOT CHANGE IT!
+  //
+
   TestStatsCollectorFixture2()
     : mhrw(),
       pt_seq((Eigen::ArrayXi(64*2)
-              // the test cases depends on this exact point sequences
+              // The test cases depends on this exact point sequences DO NOT CHANGE
               << 0, 1, 2, 1, 3, 4, 5, 4, 5, 3, 7, 9, 8, 7, 5, 4,
               3, 1, 2, 1, 3, 4, 5, 4, 5, 6, 6, 9, 8, 7, 5, 4, // ... 32
               0, 1, 2, 1, 3, 4, 5, 4, 5, 6, 7, 9, 8, 7, 5, 4,
@@ -100,10 +104,34 @@ struct TestStatsCollectorFixture2
 
   }
 
+  //
+  // Go through the point sequence once.
+  //
+  // `step` is the step with which to stride through the point sequence,
+  // effectively generating a permutation of the points.
+  //
+  // WARNING: To this effect we must choose odd `step` in order to be prime with
+  //          `pt_seq.size`!
+  //
+  // WARNING: We have assumed that n_sweep=2 !!
+  //
   template<typename StatsColl>
-  void run_dummy_rw_runs(StatsColl & statcoll, int step = 1) // must choose odd step in order to be prime with pt_seq.size
+  void run_dummy_rw_runs(StatsColl & statcoll, int step = 1)
+  {
+    run_dummy_sweeps(statcoll, -1, step);
+  }
+
+  //
+  // Same as run_dummy_rw_runs(), but stop after exactly num_sweeps
+  // sweeps. Sweep size is hard-coded at value == 2.
+  //
+  template<typename StatsColl>
+  void run_dummy_sweeps(StatsColl & statcoll, int num_sweeps, int step = 7)
   {
     for (int k = 0; k < pt_seq.size(); ++k) {
+      if (num_sweeps > 0 && k/2 >= num_sweeps) {
+        return;
+      }
       ++iter_k;
       const auto idx = (k*step)% pt_seq.size();
       statcoll.rawMove(iter_k, false, (iter_k%2==0), true, 1.0,
@@ -114,9 +142,7 @@ struct TestStatsCollectorFixture2
       }
       last_pt = pt_seq(idx);
     }
- 
   }
-
 };
 
 
@@ -155,7 +181,7 @@ BOOST_FIXTURE_TEST_CASE(keepsrunning, TestStatsCollectorFixture2)
   struct DummyMHWalker {};
   DummyMHWalker dmhwalker;
   
-  Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<double>,int> p(0.1, 2, 2, 32) ;
+  Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<double>,int> p(0.1, 2, 2, 128/2) ;
 
   typedef Tomographer::MHRWValueErrorBinsConvergedController<MyStatsCollector,int,
                                                              Tomographer::Logger::BoostTestLogger>
@@ -221,7 +247,8 @@ BOOST_FIXTURE_TEST_CASE(keepsrunning, TestStatsCollectorFixture2)
 BOOST_FIXTURE_TEST_CASE(stops_prematurely_for_long_runs, TestStatsCollectorFixture2)
 {
   MeeselfValueCalculator valcalc;
-  Tomographer::Logger::BoostTestLogger logger;
+  Tomographer::Logger::BoostTestLogger baselogger(Tomographer::Logger::LONGDEBUG);
+  auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, baselogger) ;
   typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<MeeselfValueCalculator> VHWBParams;
   typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollector<VHWBParams, Tomographer::Logger::BoostTestLogger>
     MyStatsCollector;
@@ -231,22 +258,19 @@ BOOST_FIXTURE_TEST_CASE(stops_prematurely_for_long_runs, TestStatsCollectorFixtu
   MyStatsCollector statcoll(MyStatsCollector::HistogramParams(0,10,10),
                             valcalc,
                             bin_num_levels,
-                            logger);
+                            logger.parentLogger());
 
   struct DummyMHWalker {};
   DummyMHWalker dmhwalker;
   
-  Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<double>,int> p(0.1, 2, 2, 8) ; // n_run = 8 sweeps
+  Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<double>,int> p(0.1, 2, 2, 128/2) ;
 
   typedef Tomographer::MHRWValueErrorBinsConvergedController<MyStatsCollector,int,
                                                              Tomographer::Logger::BoostTestLogger>
     CtrlType;
-  CtrlType ctrl(statcoll, logger, 1/*check_frequency_sweeps*/,
+  CtrlType ctrl(statcoll, logger.parentLogger(), 1/*check_frequency_sweeps*/,
                 0, 0, 0, // require all converged exactly
-                1.1); // don't go more that 1.1x number of runs
-
-  BOOST_CHECK_EQUAL( (unsigned int) CtrlType::AdjustmentStrategy,
-                     (unsigned int) Tomographer::MHRWControllerDoNotAdjust ) ;
+                1.2); // don't go more that 1.2x number of runs
 
   ctrl.init(p, dmhwalker, mhrw);
 
@@ -255,28 +279,59 @@ BOOST_FIXTURE_TEST_CASE(stops_prematurely_for_long_runs, TestStatsCollectorFixtu
   BOOST_CHECK( ctrl.allowDoneThermalization(p, dmhwalker, 4, mhrw) ) ; // should never return false
   ctrl.thermalizingDone(p, dmhwalker, mhrw);
 
-  run_dummy_rw_runs(statcoll, 10); // some runs -- not enough to make bars converge, but
-                                   // enough to exceed max_add_run_iters
+  logger.longdebug("iter_k=%d", (int)iter_k) ;
+
+  run_dummy_rw_runs(statcoll, 5); // set of runs -- not enough to make bars converge, not
+                                  // yet enough to exceed max_add_run_iters
 
   // the bins should not have converged
   { auto binmeans = statcoll.binMeans();
     auto errlvls = statcoll.getBinningAnalysis().calcErrorLevels(binmeans);
     auto conv_st = statcoll.getBinningAnalysis().determineErrorConvergence(errlvls);
     auto summary = Tomographer::BinningErrorBarConvergenceSummary::fromConvergedStatus(conv_st);
-    logger.debug("keepsrunning test case", [&](std::ostream & stream) {
+    logger.debug([&](std::ostream & stream) {
         stream << "Bins convergence : " << summary << "\n";
         stream << "# samples @ last level: " << coll_samples / (1<<bin_num_levels) ;
       });
   
     BOOST_CHECK_EQUAL(summary.n_bins, 10u);
-    BOOST_CHECK_EQUAL(summary.n_converged, 9u);
+    BOOST_CHECK_EQUAL(summary.n_converged, 6u);
     BOOST_CHECK_EQUAL(summary.n_unknown, 0u);
     BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0u);
-    BOOST_CHECK_EQUAL(summary.n_not_converged, 1u);
+    BOOST_CHECK_EQUAL(summary.n_not_converged, 4u);
   }
 
+  logger.longdebug("********************************************************************************\n"
+                   "allowDoneRuns -- first check, iter_k=%d", (int)iter_k) ;
+
+  // the bins have not yet converged, we should not end yet
+  BOOST_CHECK( ! ctrl.allowDoneRuns(p, dmhwalker, iter_k, mhrw) ) ;
+
+  run_dummy_sweeps(statcoll, 13, 3); // some more sweeps -- still not enough to make bars
+                                     // converge, but enough to exceed max_add_run_iters
+
+  // the bins should not have converged
+  { auto binmeans = statcoll.binMeans();
+    auto errlvls = statcoll.getBinningAnalysis().calcErrorLevels(binmeans);
+    auto conv_st = statcoll.getBinningAnalysis().determineErrorConvergence(errlvls);
+    auto summary = Tomographer::BinningErrorBarConvergenceSummary::fromConvergedStatus(conv_st);
+    logger.debug([&](std::ostream & stream) {
+        stream << "Bins convergence : " << summary << "\n";
+        stream << "# samples @ last level: " << coll_samples / (1<<bin_num_levels) ;
+      });
+  
+    BOOST_CHECK_EQUAL(summary.n_bins, 10u);
+    BOOST_CHECK_EQUAL(summary.n_converged, 5u);
+    BOOST_CHECK_EQUAL(summary.n_unknown, 1u);
+    BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0u);
+    BOOST_CHECK_EQUAL(summary.n_not_converged, 4u);
+  }
+
+  logger.longdebug("********************************************************************************\n"
+                   "allowDoneRuns -- second check") ;
+
   // now the bins have not yet converged, but rw should end because we exceeded
-  // max_add_run_iters=1.2 (9 sweeps vs 8 set)
+  // max_add_run_iters=1.2 (reached 64+13 sweeps vs n_run=64 [with 1.2*64==64+12.8])
   BOOST_CHECK( ctrl.allowDoneRuns(p, dmhwalker, iter_k, mhrw) ) ;
 
 }
