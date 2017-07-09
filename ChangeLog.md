@@ -10,16 +10,18 @@ Change Log
   * Consolidated some thread-related code in order to address some bugs in
     status reporting
 
+  * added maximum run time for binning-converged controller to prevent
+    excessively long runs (`tomorun` option `--control-binning-converged-max-add-run-iters`)
+  
+  * `tomorun` executable is able to auto-detect number of binning levels, like
+    the Python interface
+
   * Other small enhancements
     
     - minor optimization in MultiplexorValueCalculator
     
-    - added maximum run time for binning-converged controller to prevent
-      excessively long runs (`tomorun` option `--control-binning-converged-max-add-run-iters`)
-  
-    - `tomorun` executable is able to auto-detect number of binning levels, like
-      the Python interface
-
+    - detect if iteration count will exceed capacity of integer type used
+    
 
 ## v5.1 (2017-06-24)
 

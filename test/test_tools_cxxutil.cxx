@@ -53,6 +53,72 @@ struct teiA {
 };
 
 
+
+template<typename IntType, bool enable>
+struct test_addition_will_overflow_pos {
+  static inline void go()
+  {
+    { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+          IntType(-10), IntType(-250)) ;
+      BOOST_CHECK(!yn) ; }
+    { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+          IntType(10), IntType(-250)) ;
+      BOOST_CHECK(!yn) ; }
+    { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+          IntType(10), std::numeric_limits<IntType>::min() ) ;
+      BOOST_CHECK(!yn) ; }
+
+    { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+          std::numeric_limits<IntType>::min(), IntType(+1)) ;
+      BOOST_CHECK(!yn) ; }
+    { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+          std::numeric_limits<IntType>::max(), IntType(-1)) ;
+      BOOST_CHECK(!yn) ; }
+    { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+          std::numeric_limits<IntType>::min(), IntType(-1)) ;
+      BOOST_CHECK(yn) ; }
+  }
+};
+template<typename IntType>
+struct test_addition_will_overflow_pos<IntType,false> { static inline void go() { } }; // no-op for unsigned
+
+template<typename IntType>
+void test_addition_will_overflow()
+{
+  { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+        IntType(153), IntType(102)) ; // still safe on 8 bits
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+        IntType(0), std::numeric_limits<IntType>::max()) ;
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+        IntType(1), std::numeric_limits<IntType>::max()) ;
+    BOOST_CHECK(yn) ; }
+
+  { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+        IntType(0), IntType(1), IntType(3), IntType(10), IntType(std::numeric_limits<IntType>::max()-14)) ;
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+        IntType(0), IntType(2), IntType(3), IntType(10), IntType(std::numeric_limits<IntType>::max()-14)) ;
+    BOOST_CHECK(yn) ; }
+
+  { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+        std::numeric_limits<IntType>::max()/2, std::numeric_limits<IntType>::max()/2) ;
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+        IntType(std::numeric_limits<IntType>::max()/2+1), IntType(1), std::numeric_limits<IntType>::max()/2) ;
+    BOOST_CHECK(yn) ; }
+
+  { constexpr auto yn = Tomographer::Tools::additionWillOverflow<IntType>(
+        std::numeric_limits<IntType>::min(), std::numeric_limits<IntType>::max()) ;
+    BOOST_CHECK(!yn) ; }
+
+  test_addition_will_overflow_pos<IntType, std::is_signed<IntType>::value>::go() ;
+};
+
+
+
+
 // test cases
 
 BOOST_AUTO_TEST_SUITE(test_tools_cxxutil)
@@ -229,6 +295,109 @@ BOOST_AUTO_TEST_CASE(isPositive)
   BOOST_CHECK(Tomographer::Tools::isPositive(1.0)) ;
   BOOST_CHECK(!Tomographer::Tools::isPositive(-1)) ;
   BOOST_CHECK(!Tomographer::Tools::isPositive(-1.0)) ;
+}
+
+BOOST_AUTO_TEST_CASE(additionWillOverflow)
+{
+  test_addition_will_overflow<int8_t>();
+  test_addition_will_overflow<uint8_t>();
+  test_addition_will_overflow<int32_t>();
+  test_addition_will_overflow<uint32_t>();
+  test_addition_will_overflow<int64_t>();
+  test_addition_will_overflow<uint64_t>();
+}
+
+BOOST_AUTO_TEST_CASE(multiplicationWillOverflow)
+{
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        18394, 12345) ;
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        0, std::numeric_limits<int32_t>::max() ) ;
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        1, std::numeric_limits<int32_t>::max() ) ;
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        std::numeric_limits<int32_t>::max(), 0 ) ;
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        std::numeric_limits<int32_t>::max(), 1 ) ;
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        std::numeric_limits<int16_t>::max()-1,std::numeric_limits<int16_t>::max() );
+    BOOST_CHECK(!yn) ; }
+
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        (int32_t)std::numeric_limits<int16_t>::max(),(int32_t)std::numeric_limits<int16_t>::max() );
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        (int32_t)std::numeric_limits<uint16_t>::max(),
+        (int32_t)std::numeric_limits<uint16_t>::max() );
+    BOOST_CHECK(yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        (int32_t)std::numeric_limits<int16_t>::max()+1323928,(int32_t)std::numeric_limits<int16_t>::max()+1 );
+    BOOST_CHECK(yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        (int32_t)std::numeric_limits<int32_t>::max(), 2 );
+    BOOST_CHECK(yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        std::numeric_limits<int32_t>::max()-1,std::numeric_limits<int32_t>::max()-1 );
+    BOOST_CHECK(yn) ; }
+
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<uint32_t>(
+        18394, 123456) ;
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<uint32_t>(
+        0, std::numeric_limits<uint32_t>::max() ) ;
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<uint32_t>(
+        1, std::numeric_limits<uint32_t>::max() ) ;
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<uint32_t>(
+        std::numeric_limits<uint32_t>::max(), 0 ) ;
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<uint32_t>(
+        std::numeric_limits<uint32_t>::max(), 1 ) ;
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<uint32_t>(
+        std::numeric_limits<int16_t>::max()-1,std::numeric_limits<int16_t>::max() );
+    BOOST_CHECK(!yn) ; }
+
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<uint32_t>(
+        (uint32_t)(std::numeric_limits<uint16_t>::max()+1),
+        (uint32_t)(std::numeric_limits<uint16_t>::max()+1) );
+    BOOST_CHECK(yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<uint32_t>(
+        (uint32_t)(std::numeric_limits<uint16_t>::max()+1),
+        (uint32_t)std::numeric_limits<uint16_t>::max() );
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<uint32_t>(
+        (uint32_t)std::numeric_limits<uint32_t>::max(), 2 );
+    BOOST_CHECK(yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<uint32_t>(
+        std::numeric_limits<uint32_t>::max()-1,std::numeric_limits<uint32_t>::max()-1 );
+    BOOST_CHECK(yn) ; }
+
+  
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        std::numeric_limits<int32_t>::min(),-1 );
+    BOOST_CHECK(yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        std::numeric_limits<int32_t>::min(),0 );
+    BOOST_CHECK(!yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        -std::numeric_limits<int32_t>::max(), 2 );
+    BOOST_CHECK(yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        std::numeric_limits<int32_t>::min()/2, -3 );
+    BOOST_CHECK(yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        -2, std::numeric_limits<int32_t>::max() );
+    BOOST_CHECK(yn) ; }
+  { constexpr auto yn = Tomographer::Tools::multiplicationWillOverflow<int32_t>(
+        -1, std::numeric_limits<int32_t>::max() );
+    BOOST_CHECK(!yn) ; }
 }
 
 

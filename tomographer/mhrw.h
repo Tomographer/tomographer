@@ -1011,6 +1011,21 @@ public:
   {
     _init();
 
+    // make sure that the iteration counter will not overflow.
+    if (Tomographer::Tools::multiplicationWillOverflow(_n.n_sweep, _n.n_therm) ||
+        Tomographer::Tools::multiplicationWillOverflow(_n.n_sweep, _n.n_run)) {
+      std::string msg = streamstr(
+          "Error: integer type " << boost::core::demangle(typeid(CountIntType).name())
+          << " cannot be used to represent number of iterations, will overflow with given params "
+          << _n
+          );
+      _logger.error([&](std::ostream & stream) {
+          stream << msg;
+        });
+      // this is an error, cannot continue.
+      throw std::runtime_error(msg);
+    }
+
     CountIntType k;
 
     _logger.longdebug([&](std::ostream & s) {

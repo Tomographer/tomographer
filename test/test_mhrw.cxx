@@ -172,6 +172,46 @@ BOOST_AUTO_TEST_CASE(mhrandomwalk)
 }
 
 
+BOOST_AUTO_TEST_CASE(mhrandomwalk_overflow_protection)
+{
+  typedef Tomographer::Logger::VacuumLogger LoggerType;
+  LoggerType logger;
+
+  typedef std::mt19937 Rng;
+  Rng rng(0);
+
+  typedef Tomographer::MHRandomWalk<Rng, TestMHWalker, Tomographer::MultipleMHRWStatsCollectors<>,
+                                    Tomographer::MHRWNoController,
+                                    LoggerType, int32_t>
+    MHRandomWalkType;
+
+  {
+    const int32_t ntherm = 1;
+    const int32_t nrun = std::numeric_limits<int32_t>::max() / 128; // oops!
+    const int32_t nsweep = 256; // oops!
+
+    TestMHWalker mhwalker(nsweep, ntherm, nrun, rng);
+    Tomographer::MultipleMHRWStatsCollectors<> nostats;
+    Tomographer::MHRWNoController noctrl;
+    MHRandomWalkType rw(2, nsweep, ntherm, nrun, mhwalker, nostats, noctrl, rng, logger);
+
+    BOOST_CHECK_THROW( rw.run() , std::exception );
+  }
+
+  {
+    const int32_t ntherm = std::numeric_limits<int32_t>::max() / 128; // oops!
+    const int32_t nrun = 1;
+    const int32_t nsweep = 256; // oops!
+
+    TestMHWalker mhwalker(nsweep, ntherm, nrun, rng);
+    Tomographer::MultipleMHRWStatsCollectors<> nostats;
+    Tomographer::MHRWNoController noctrl;
+    MHRandomWalkType rw(2, nsweep, ntherm, nrun, mhwalker, nostats, noctrl, rng, logger);
+
+    BOOST_CHECK_THROW( rw.run() , std::exception );
+  }
+}
+
 BOOST_AUTO_TEST_SUITE(mhrandomwalk_control_iface)
 
 BOOST_FIXTURE_TEST_CASE(ThRnIt,

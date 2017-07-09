@@ -47,6 +47,16 @@
 #include <tomographer/tools/cxxdefs.h>
 #include <tomographer/tools/conststr.h>
 
+// get a demangle() function from Boost, either with boost::core::demangle() (boost >=
+// 1.56) or boost::units::detail::demangle() (boost before that)
+#include <boost/version.hpp>
+#if BOOST_VERSION >= 105600
+#include <boost/core/demangle.hpp>
+#else
+#include <boost/units/detail/utility.hpp>
+namespace boost { namespace core {  using boost::units::detail::demangle; } }
+#endif
+
 #include <Eigen/Core>
 
 // -----------------------------------------------
@@ -370,6 +380,91 @@ inline bool isFinite(const X val)
 {
   return std::isfinite(val);
 }
+
+
+
+/** \brief Test whether the sum of two integers will cause an overflow/underflow
+ *         for that integer type
+ *
+ * Return \a true if the sum <code>a+b</code> cannot be represented using \a
+ * IntType, \a false otherwise.
+ *
+ * Works for signed and unsigned integer types.
+ */
+template<typename IntType>
+inline constexpr bool additionWillOverflow(IntType a, IntType b)
+{
+  // see https://stackoverflow.com/a/1514309/1694896
+  TOMO_STATIC_ASSERT_EXPR(std::numeric_limits<IntType>::is_integer) ;
+  return (b > 0 && a > std::numeric_limits<IntType>::max() - b) ||
+    (b < 0 && a < std::numeric_limits<IntType>::min() - b) ;
+}
+
+/** \brief Test whether the sum of several integers will cause an
+ *         overflow/underflow for that integer type
+ *
+ * Provided for convenience. See \ref additionWillOverflow(IntType,IntType)
+ */
+template<typename IntType, typename ... IntTypes>
+inline constexpr bool additionWillOverflow(IntType a, IntType b, IntType c, IntTypes ... rest)
+{
+  return additionWillOverflow(a, b) || additionWillOverflow(IntType(a + b), c, IntTypes(rest)...) ;
+}
+
+
+// namespace tomo_internal {
+// template<typename IntType>
+// struct mult_will_overflow_helper {
+//   constexpr int NumBits = std::numeric_limits<IntType>::digits();
+//   constexpr int HalfNumBits = NumBits/2;
+//   constexpr IntType LoHalfBitsMask = (IntType(1) << HalfNumBits) - 1 ;
+//   inline constexpr bool calc(IntType a, IntType b)
+//   {
+//     return ( isPositive(a)
+//              ? ( isPositive(b)
+//                  // a >= 0, b >= 0
+//                  ? calc_parts(a >> HalfNumBits, a & LoHalfBitsMask,
+//                               b >> HalfNumBits, b & LoHalfBitsMask)
+//                  // a >= 0, b < 0
+//                  : calc_parts(a >> HalfNumBits, a & LoHalfBitsMask,
+//                               -(b / (2 << HalfNumBits)), b % (2 << HalfNumBits), true )
+//   }
+//   inline constexpr bool calc_parts(IntType ahi, IntType alo, IntType bhi, IntType blo, bool isneg = false)
+//   {
+//     return (!isneg
+//             ?  ( (alo*bhi >= 1) ||
+//                  additionWillOverflow((alo*bhi) << HalfNumBits, (ahi*blo) << HalfNumBits, alo*blo) )
+//             : ( ((alo*bhi > 0) &&
+//                  additionWillOverflow((alo*bhi) << HalfNumBits, (ahi*blo) << HalfNumBits, alo*blo - 1) ||
+//                  (alo*bhi ........??????????????
+//   }
+// };
+// }
+
+/** \brief Test whether a multiplication of two integers will cause an
+ *         overflow/underflow for that integer type
+ *
+ * Return \a true if the multiplication <code>a*b</code> cannot be represented using \a
+ * IntType, \a false otherwise.
+ *
+ * Works for signed and unsigned integer types.
+ */
+template<typename IntType>
+inline constexpr bool multiplicationWillOverflow(IntType a, IntType b)
+{
+  TOMO_STATIC_ASSERT_EXPR(std::numeric_limits<IntType>::is_integer) ;
+  // see https://www.securecoding.cert.org/confluence/display/CINT/INT32-C.+Ensure+that+operations+on+signed+integers+do+not+result+in+overflow
+  return (
+      (a > 0)
+      ? ( (b > 0)
+          ? (a > std::numeric_limits<IntType>::max() / b)
+          : (b < std::numeric_limits<IntType>::min() / a) )
+      : ( (b > 0)
+          ? (a < std::numeric_limits<IntType>::min() / b)
+          : ((a != 0) && (b < std::numeric_limits<IntType>::max() / a)) )
+      ) ;
+}
+
 
 
 

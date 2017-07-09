@@ -267,7 +267,8 @@ public:
     : CDataBaseType(
         valcalc, hist_params, binning_num_levels,
         tpy::CxxMHRWParamsType(
-            tpy::pyMHWalkerParamsFromPyObj<Tomographer::MHWalkerParamsStepSize<tpy::RealType>>(mhrw_params.mhwalker_params),
+            tpy::pyMHWalkerParamsFromPyObj<Tomographer::MHWalkerParamsStepSize<tpy::RealType> >(
+                mhrw_params.mhwalker_params),
             mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run),
         base_seed),
       llh(llh_),
@@ -374,11 +375,11 @@ public:
       }
     }
 
-    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<>
+    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<tpy::CountIntType>
       movavg_accept_stats(mvavg_numsamples);
 
     auto ctrl_step = 
-      Tomographer::mkMHRWStepSizeController<MHRWParamsType>(
+      Tomographer::mkMHRWStepSizeController<tpy::CxxMHRWParamsType>(
           movavg_accept_stats,
           baselogger,
           ar_params[0],
@@ -417,7 +418,7 @@ public:
 
     // value error bins convergence controller
     auto ctrl_convergence = 
-      Tomographer::mkMHRWValueErrorBinsConvergedController(
+      Tomographer::mkMHRWValueErrorBinsConvergedController<tpy::CountIntType>(
           value_stats, baselogger,
           check_frequency_sweeps,
           max_allowed[0], max_allowed[1], max_allowed[2],
