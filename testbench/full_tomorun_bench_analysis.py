@@ -167,7 +167,8 @@ def simple_subset_plot(subd, spacings=[1,1],
     mklabelcolor = _MkLabel(subd.lbl_dict, colorsettings)
 
     barcolors = [ ]
-    legends_for_sett = {}
+    legends = []
+    seen = []
     for j in range(len(subd.sett)):
         
         if subd.resbest[j] is None:
@@ -179,9 +180,9 @@ def simple_subset_plot(subd, spacings=[1,1],
         barcolors.append( thiscolor )
 
         settdicfs = frozenset(settdic.items())
-        if settdicfs not in legends_for_sett:
-            legends_for_sett[settdicfs] = mpatches.Patch(color=thiscolor, label=mklabelcolor(settdic, valaccess=lambda x: x))
-            
+        if settdicfs not in seen:
+            legends.append( mpatches.Patch(color=thiscolor, label=mklabelcolor(settdic, valaccess=lambda x: x)) )
+            seen.append( settdicfs )
 
     #print('barcolors=',barcolors)
 
@@ -190,7 +191,7 @@ def simple_subset_plot(subd, spacings=[1,1],
 
     #print("Legend..ary:\n", list(zip(* legends_for_sett.items() )), sep='')
 
-    ax.legend(handles=list(legends_for_sett.values()))
+    ax.legend(handles=legends)
 
     ax.bar(xpos, subd.resbest, align='center', color=barcolors, alpha=0.8)
     ax.set_xticks(xpos)
