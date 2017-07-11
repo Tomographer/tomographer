@@ -400,11 +400,14 @@ public:
         check_frequency_sweeps =
           ctrl_converged_params.attr("get")("check_frequency_sweeps", 1024).cast<int>();
         max_allowed[0] =
-          ctrl_converged_params.attr("get")("max_allowed_unknown", 2).cast<Eigen::Index>();
+          ctrl_converged_params.attr("get")("max_allowed_unknown",
+                                            1+2*histogram_params.num_bins/100).template cast<Eigen::Index>();
         max_allowed[1] =
-          ctrl_converged_params.attr("get")("max_allowed_unknown_notisolated", 0).cast<Eigen::Index>();
+          ctrl_converged_params.attr("get")("max_allowed_unknown_notisolated",
+                                            1+histogram_params.num_bins/100).template cast<Eigen::Index>();
         max_allowed[2] =
-          ctrl_converged_params.attr("get")("max_allowed_not_converged", 0).cast<Eigen::Index>();
+          ctrl_converged_params.attr("get")("max_allowed_not_converged",
+                                            1+histogram_params.num_bins/200).template cast<Eigen::Index>();
         max_add_run_iters =
           ctrl_converged_params.attr("get")("max_add_run_iters", 1.5).cast<double>();
       } else {
@@ -886,7 +889,10 @@ void py_tomo_tomorun(py::module rootmodule)
         "              - 'max_allowed_unknown', 'max_allowed_unknown_notisolated', 'max_allowed_not_converged':\n"
         "                The maximum allowed number of bins for which the error bars via binning analysis have \n"
         "                the respective convergence status.  Only after all these requirements are met will the\n"
-        "                random walk be allowed to finish.\n\n"
+        "                random walk be allowed to finish (or until 'max_add_run_iters' faction of run sweeps is\n"
+        "                exceeded).  Default: `max_allowed_unknown = 1 + 2% of num_bins`,\n"
+        "                `max_allowed_unknown_notisolated = 1 + 1% of bins` and\n"
+        "                `max_allowed_not_converged = 1 + .5% of bins`.\n\n"
         "              - 'check_frequency_sweeps': How often to check for the convergence\n"
         "                of the binning analysis error bars (in number of sweeps).\n\n"
         "              - 'max_add_run_iters': End the random walk after a certain amount runs\n"
