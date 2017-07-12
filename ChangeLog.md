@@ -17,11 +17,17 @@ Change Log
     the Python interface
 
   * Other small enhancements
+  
+    - Factor common code out of thread-based MultiProc implementations →
+      `Tomographer::MultiProc::ThreadCommon`
     
     - minor optimization in MultiplexorValueCalculator
     
     - detect if iteration count will exceed capacity of integer type used
     
+    - `tomographer.tomorun.tomorun()` uses better defaults for max number of
+      unconverged bin error bars
+
 
 ## v5.1 (2017-06-24)
 

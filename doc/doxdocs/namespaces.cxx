@@ -136,6 +136,16 @@
  */
 
 
+/** \namespace Tomographer::MultiProc::ThreadCommon
+ *
+ * \brief Common definitions for thread-based MultiProc implementations
+ *
+ * \since This namespace was introduced in %Tomographer 5.2
+ *
+ */
+
+
+
 /** \namespace Tomographer::Tools
  *
  * \brief Various useful tools.

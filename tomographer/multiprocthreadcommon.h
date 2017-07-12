@@ -77,7 +77,7 @@ namespace ThreadCommon {
  *
  * \since This class was introduced in %Tomographer 5.2
  *
- * \seealso \ref Tomographer::MultiProc::CxxThreads, \ref Tomographer::MultiProc::OMP
+ * See also \ref Tomographer::MultiProc::CxxThreads, \ref Tomographer::MultiProc::OMP.
  *
  * <ul>
  *
