@@ -10,7 +10,6 @@ import inspect
 import numpy as np
 import scipy
 import scipy.optimize as sciopt
-import matplotlib.pyplot as matplt
 
 import logging
 logger=logging.getLogger(__name__)
@@ -22,19 +21,62 @@ class _Ns:
 
 
 
-def fit_fn_default(x, a2, a1, m, c):
+def fit_fn_a2(x, a2, a1, m, c):
     """
-    The default fit model for the logarithm of the histogram data.  The `x`-values are not
-    directly the figure of merit, but may be possibly transformed via a `f`-to-`x`
-    transformation (see :py:class:`HistogramAnalysis`).
+    The default fit model for the logarithm of the histogram data.  The
+    `x`-values are not directly the figure of merit, but may be possibly
+    transformed via a `f`-to-`x` transformation (see
+    :py:class:`HistogramAnalysis`).
 
-    Returns the value :math:`-a_2\\,x^2 - a_1\\,x + m\\log(x) + c`, which is the default
-    fit model.  If a `NumPy` vector is specified as `x`, the function is evaluated for all
-    the given values and the values are returned as a vector.
+    Returns the value :math:`y(x) = -a_2\\,x^2 - a_1\\,x + m\\log(x) + c`, which
+    is the default fit model.  If a `NumPy` vector is specified as `x`, the
+    function is evaluated for all the given values and the values are returned
+    as a vector.
+
+    .. since: 
     """
     return -a2*np.square(x) - a1*x + m*np.log(x) + c
 
-QuantumErrorBars = collections.namedtuple('QuantumErrorBars', ('f0', 'Delta', 'gamma') )
+
+def fit_fn_default(x, a2, a1, m, c):
+    """
+    The default fit model.  This is currently an alias for :py:func:`fit_fn_a2`,
+    but this might change in a future version of `tomographer`.
+    """
+    return fit_fn_a2(x, a2, a1, m, c)
+
+
+def zm(w, m):
+    """
+    Returns the "skewing" portion of :math:`y(x)`.
+
+    The function is defined as :math:`z_m(w) = \frac{m}{2} w^2 - 2m\,w + m \ln w
+    + \frac{3m}{2}`, and relates to the difference of our fit model with its
+    deskewed version as :math:`y(x) - y_{\mathrm{deskewed}}(x) = z_m(x/x_0)`.
+    """
+    return m*np.square(w)/2 - 2*m*w + m*np.log(w) + 3*m/2
+
+def fit_fn_direct(x, a, x0, y0, m):
+    """
+    The new "direct" fit model for the logarithm of the histogram data.  The `x`-values
+    are not directly the figure of merit, but may be possibly transformed via a `f`-to-`x`
+    transformation (see :py:class:`HistogramAnalysis`).
+
+    The fit model is exactly the same as :math:`y(x)` given by
+    :py:func:`fit_fn_a2()`, except that it is parametrized in a different way in
+    the hope that the fit optimization is more stable.  Namely, the fit function
+    is rewritten as a function of :math:`(a, x_0, y_0, m)` as:
+
+    .. math::
+
+         y(x) = - a (x - x_0)^2 + y_0 + z_m(x / x_0)\ .
+    """
+    return -a*np.square(x - x0) + y0 + zm(np.divide(x,x0), m)
+
+
+QuantumErrorBars = collections.namedtuple('QuantumErrorBars', ('f0', 'Delta', 'gamma', 'y0') )
+
+QuantumErrorBarsX = collections.namedtuple('QuantumErrorBarsX', ('x0', 'Delta', 'gamma', 'y0') )
 
 
 def fit_histogram(normalized_histogram, fit_fn, ftox, **kwopts):
@@ -112,6 +154,9 @@ def fit_histogram(normalized_histogram, fit_fn, ftox, **kwopts):
 
 def deskew_logmu_curve(a2, a1, m, c):
     """
+    .. deprecated:: 5.2
+       Use :py:class:`FitParamToQuErrorBars_a2` instead.
+
     De-skew the fit model to obtain a second order approximation at the peak maximum (see
     details of how to calculate the quantum error bars in our paper).
 
@@ -128,6 +173,10 @@ def deskew_logmu_curve(a2, a1, m, c):
 
 
 def reskew_logmu_curve(m, a, x0, y0):
+    """
+    .. deprecated:: 5.2
+       Use :py:class:`FitParamToQuErrorBars_a2` instead.
+    """
     a2 = a - m / (2 * np.square(x0))
     a1 = (a2*m - 2*np.square(a2)*np.square(x0)) / (a2*x0)
     c = y0 + a2*np.square(x0) + a1*x0 - m*np.log(x0)
@@ -135,6 +184,10 @@ def reskew_logmu_curve(m, a, x0, y0):
 
 
 def qu_error_bars_from_deskewed(xtof, m, a, x0, y0):
+    """
+    .. deprecated:: 5.2
+       Use :py:class:`FitParamToQuErrorBars_a2` instead.
+    """
     f0 = xtof(x0)
     Delta = 1/np.sqrt(a)
     gamma = m / (6 * np.square(a) * np.power(x0,3))
@@ -142,10 +195,142 @@ def qu_error_bars_from_deskewed(xtof, m, a, x0, y0):
 
 
 def qu_error_bars_to_deskewed_c(ftox, f0, Delta, gamma, y0=1):
+    """
+    .. deprecated:: 5.2
+       Use :py:class:`FitParamToQuErrorBars_a2` instead.
+    """
     a = 1.0 / np.square(Delta)
     x0 = ftox(f0)
     m = gamma * 6 * np.square(a) * np.power(x0,3)
     return (m, a, x0, y0)
+
+
+
+class FitParamToQuErrorBarsBase(object):
+    """
+    Base class for converters between fit parameters for a specific fit model,
+    and (standard) quantum error bars.
+    """
+
+    def fitParamBounds(self):
+        """
+        Return the bounds the fit parameters should be constrained to by default.
+        (In a format suitable for `scipy.curve_fit`, see also
+        `HistogramAnalysis` constructor.)
+        """
+        return None
+
+    def guessFitParamsFromQuErrorBarsX(self, qu_err_bars):
+        """
+        Return a tuple of fit parameters corresponding to the given quantum error
+        bars `qu_err_bars`, given as a :py:class:`QuantumErrorBarsX` instance
+        (i.e., parameters `x0`, `Delta`, `gamma`, along with the offset `y0`).
+        """
+        return None
+
+    def calcQuantumErrorBarsX(self, fit_params):
+        """
+        Return the quantum error bars (as a :py:class`QuantumErrorBarsX` instance,
+        i.e., specifying the parameters `x0`, `Delta`, `gamma` and `y0`)
+        corresponding to the given fit parameters `fit_params`.
+        """
+        return QuantumErrorBarsX(None, None, None, None)
+
+
+class FitParamToQuErrorBars_a2(FitParamToQuErrorBarsBase):
+    """
+    Quantum error bars calculator for fit parameters resulting from fitting to
+    the fit model function :py:func:`fit_fn_a2()`.
+    """
+
+    # params: (a2, a1, m, c)
+
+    def fitParamBounds(self):
+        return ( (0, -np.inf, 0, -np.inf), np.inf, )
+
+    def fitParamsFromQuErrorBarsX(self, x0, Delta, gamma, y0):
+        
+        a = 1.0 / np.square(Delta)
+        m = gamma * 6 * np.square(a) * np.power(x0,3)
+
+        a2 = a - m / (2 * np.square(x0))
+        a1 = (a2*m - 2*np.square(a2)*np.square(x0)) / (a2*x0)
+        c = y0 + a2*np.square(x0) + a1*x0 - m*np.log(x0)
+
+        return (a2, a1, m, c)
+
+    def guessFitParamsFromQuErrorBarsX(self, q, educated_guess=True):
+
+        if not educated_guess:
+            return fitParamsFromQuErrorBarsX(*q)
+
+        (x0, Delta, gamma, y0) = q
+
+        # we might have to try with different gamma's
+        for niter in range(10):
+
+            (a2, a1, m, c) = self.fitParamsFromQuErrorBarsX(x0, Delta, gamma, y0)
+
+            logger.debug(("FitParamToQuErrorBars_a2.fitParamsFromQuErrorBarsX(): "
+                          "x0={},Delta={},gamma={} -> a2={},a1={},m={},c={}")
+                         .format(q.x0,q.Delta,gamma, a2,a1,m,c))
+
+            if a2 > 0 and m > 0:
+                # all set
+                return (a2,a1,m,c)
+
+            # try with different (smaller) gamma's, in case we guessed gamma incorrectly
+            gamma /= 2
+
+        logger.info("Having trouble guessing fit parameters graphically, resorting to generic guess")
+        return (500.0, 100.0, 20., 0)
+
+
+    def calcQuantumErrorBarsX(self, p):
+        (a2, a1, m, c) = p
+        x0 = (np.sqrt(np.square(a1) + 8*a2*m) - a1) / (4*a2)
+        y0 = -a2*np.square(x0) - a1*x0 + m*np.log(x0) + c
+        a = a2 + m / (2 * np.square(x0))
+        Delta = 1/np.sqrt(a)
+        gamma = m / (6 * np.square(a) * np.power(x0,3))
+        return QuantumErrorBarsX(x0, Delta, gamma, y0)
+
+
+class FitParamToQuErrorBars_direct(FitParamToQuErrorBarsBase):
+    """
+    Quantum error bars calculator for fit parameters resulting from fitting to
+    the fit model function :py:func:`fit_fn_direct()`.
+    """
+
+    # params: (a, x0, y0, m)
+
+    def fitParamBounds(self):
+        return ( (0, 0, -np.inf, 0), np.inf, )
+
+    def guessFitParamsFromQuErrorBarsX(self, q):
+        a = 1/np.square(q.Delta)
+        return ( a,
+                 q.x0,
+                 q.y0,
+                 q.gamma * (6 * np.square(a) * np.power(q.x0,3)) )
+
+    def calcQuantumErrorBarsX(self, p):
+        (a, x0, y0, m) = p
+        return QuantumErrorBarsX(
+            x0= x0,
+            Delta= 1/np.sqrt(a),
+            gamma= m / (6 * np.square(a) * np.power(x0,3)),
+            y0= y0
+        )
+
+        
+FitModelSpec = collections.namedtuple('FitModelSpec', ('fn', 'converter',))
+
+
+fit_models = {
+    'a2': FitModelSpec(fit_fn_a2, FitParamToQuErrorBars_a2()),
+    'direct': FitModelSpec(fit_fn_direct, FitParamToQuErrorBars_direct()),
+}
 
 
 def calc_redchi2(x, y, dy, theo_fn, num_fit_params):
@@ -159,7 +344,7 @@ def calc_redchi2(x, y, dy, theo_fn, num_fit_params):
     return redchi2
 
 
-def guess_fitparams_from_data(histogram, ftox_fn):
+def guess_querrorbarsx_from_data(histogram, ftox_fn):
     # read off graphically x0, y0, Delta, and gamma from the data -- just a rough guess
     # with absolutely no garantees
     
@@ -197,28 +382,14 @@ def guess_fitparams_from_data(histogram, ftox_fn):
 
     #logger.debug("xvals={}".format(xvals))
 
-    logger.debug(("guess_fitparams_from_data(): "
-                  "firstidxabove={},lastidxabove={},x0m={},x0p={},f0={},Delta={},gamma={}")
-                 .format(firstidxabove,lastidxabove,x0m,x0p,f0,Delta,gamma))
+    logger.debug(("guess_querrorbarsx_from_data(): "
+                  "firstidxabove={},lastidxabove={},x0m={},x0p={},x0={},f0={},Delta={},gamma={}")
+                 .format(firstidxabove,lastidxabove,x0m,x0p,x0,f0,Delta,gamma))
 
-    def guess_the_fit_params(f0, Delta, gamma):
-        for niter in range(10):
-            (a2,a1,m,c) = reskew_logmu_curve(*qu_error_bars_to_deskewed_c(ftox_fn, f0, Delta, gamma, y0=y0))
-            logger.debug(("guess_fitparams_from_data(): "
-                          "f0={},Delta={},gamma={} -> a2={},a1={},m={},c={}")
-                         .format(f0,Delta,gamma, a2,a1,m,c))
-            if a2 > 0 and m > 0:
-                # all set
-                return (a2,a1,m,c)
-            # try with different (smaller) gamma's, in case we guessed gamma incorrectly
-            gamma /= 2
-        logger.info("Having trouble guessing fit parameters graphically, resorting to generic guess")
-        return (500.0, 100.0, 20., 0)
+    return QuantumErrorBarsX(x0=x0, Delta=Delta, gamma=gamma, y0=y0)
 
 
-    (a2,a1,m,c) = guess_the_fit_params(f0, Delta, gamma)
 
-    return (a2, a1, m, c)
 
 
 class HistogramAnalysis(object):
@@ -228,9 +399,11 @@ class HistogramAnalysis(object):
     tomography data, while collecting a histogram of a figure of merit.
 
     Arguments to the constructor:
+
       - `final_histogram`: the final histogram returned by the random walks
         procedure.  It is expected to be a
         `tomographer.HistogramWithErrorBars`.
+
       - `ftox`: Specify how to transform the figure of merit value `f` into
         the `x` coordinate for fit. Specify the transformation as a pair of
         values `(h, s)` in the relation `x = s*(f-h)` or `f=s*x+h`, where h
@@ -239,7 +412,16 @@ class HistogramAnalysis(object):
         `ftox=(0,1)`.  For the fidelity, you should use `x = 1-f`
         (`ftox=(1,-1)`). For an entanglement witness, you might use `x = 2-f`
         (`ftox=(2,-1)`) for example.
-      - `fit_fn`: a function which serves as fit model (for the log of the data)
+
+      - `fit_fn`: a function which serves as fit model (for the log of the
+        data).  Specify None (the default fit model), the strings 'a2' or
+        'direct', or a custom callable to use as fit model.  The 'a2' model is
+        the "straightforward" one, using :py:func:`fit_fn_a2()`, while the
+        'direct' model (the default) is aimed at better fit optimization
+        stability, using :py:func:`fit_fn_direct()`.  If a custom callable is
+        used, the quantum error bars cannot be automatically calculated and a
+        call to :py:meth:`quantumErrorBars()` will fail.
+
       - additional named arguments in `kwopts` are passed on to :py:func:`fit_histogram`.
     """
     def __init__(self, final_histogram, ftox=(0,1), fit_fn=None, **kwopts):
@@ -249,18 +431,31 @@ class HistogramAnalysis(object):
             raise ValueError("Invalid value of `s` in `ftox=(h,s)`: s=%r"%(ftox[1]))
         self.ftox_hs = ftox
 
-        if fit_fn:
-            # User specified custom fit function
+        if callable(fit_fn):
+            # User specified custom callable fit function
             self.custom_fit_fn = True
             self.fit_fn = fit_fn
+            self.fit_fn_name = "<custom fit function>"
         else:
             self.custom_fit_fn = False
-            self.fit_fn = fit_fn_default
+
+            if fit_fn is None:
+                fit_fn = 'direct'
+
+            if fit_fn not in fit_models:
+                raise ValueError("Invalid fit model name: {}".format(fit_fn))
+
+            self.fit_fn_name = fit_fn
+            self.fit_fn = fit_models[fit_fn].fn
+            self.fit_converter = fit_models[fit_fn].converter
+
             if 'bounds' not in kwopts:
                 # a2, a1, m, c
-                kwopts['bounds'] = ( (0, -np.inf, 0, -np.inf), np.inf, )
+                kwopts['bounds'] = self.fit_converter.fitParamBounds()
+
             if 'p0' not in kwopts:
-                kwopts['p0'] = guess_fitparams_from_data(self.normalized_histogram, self.ftox)
+                qxguess = guess_querrorbarsx_from_data(self.normalized_histogram, self.ftox)
+                kwopts['p0'] = self.fit_converter.guessFitParamsFromQuErrorBarsX(qxguess)
                 logger.debug("Guessing initial fit params = {!r}".format(kwopts['p0']))
 
         self.FitParamsType = collections.namedtuple('FitParamsType', inspect.getargspec(self.fit_fn).args[1:])
@@ -305,7 +500,7 @@ class HistogramAnalysis(object):
         """
         Return the parameters of the fit.  The return value type is a named tuple whose fields
         are the argument names of the fit model `fit_fn` specified to the constructor.
-        For example, for the default fit model :py:func:`fit_fn_default`, the fields are
+        For example, for the default fit model :py:func:`fit_fn_a2`, the fields are
         `(a2, a1, m, c)`.
         """
         return self.fit_params
@@ -342,8 +537,9 @@ class HistogramAnalysis(object):
         """
         Calculate the quantum error bars.
 
-        This function is only available if you use the default fit model (i.e., if you
-        didn't specify the `fit_fn` argument to the constructor).
+        This function is only available if you use the default fit model or one
+        of the predefined fit models (i.e., if you didn't specify a custom
+        callable to the `fit_fn` argument in the constructor).
 
         Returns a :py:class:`QuantumErrorBars` named tuple.
         """
@@ -351,12 +547,10 @@ class HistogramAnalysis(object):
         if self.custom_fit_fn:
             raise RuntimeError("You cannot call quantumErrorBars() when you specify a custom fit model.")
 
-        (f0, Delta, gamma) = qu_error_bars_from_deskewed(
-            self.xtof,
-            self.fit_params.m,
-            *deskew_logmu_curve(*self.fit_params)
-        )
-        return QuantumErrorBars(f0, Delta, gamma)
+        qx = self.fit_converter.calcQuantumErrorBarsX(self.fit_params)
+
+        return QuantumErrorBars(self.xtof(qx.x0), qx.Delta, qx.gamma, qx.y0)
+
 
     def printQuantumErrorBars(self, print_func=print):
         """
@@ -404,9 +598,11 @@ class HistogramAnalysis(object):
         an alias for `matplotlib.pyplot.show()`.
         """
         
+        import matplotlib.pyplot as plt
+
         d = _Ns()
 
-        d.fig = matplt.figure()
+        d.fig = plt.figure()
 
         d.ax = d.fig.add_subplot(111)
 
@@ -426,14 +622,17 @@ class HistogramAnalysis(object):
         d.ax.plot(fvals, np.exp(self.fit_fn(self.ftox(fvals), *self.fit_params)), c='r', label='fit')
         if plot_deskewed_gaussian:
             if self.custom_fit_fn:
-                raise RuntimeError("Cannot plot deskewed gaussian with a custom fit; use plot_deskewed_gaussian=False.")
-            (a, x0, y0) = deskew_logmu_curve(self.fit_params.a2, self.fit_params.a1, self.fit_params.m, self.fit_params.c)
-            d.ax.plot(fvals, np.exp(-a*(self.ftox(fvals)-x0)**2 + y0), c='g', label='deskewed Gaussian')
+                raise RuntimeError("Cannot plot deskewed gaussian with a custom fit; "
+                                   "please use plot_deskewed_gaussian=False.")
+            qf = self.quantumErrorBars()
+            logging.debug("using quantum error bars = {!r}".format(qf))
+            d.ax.plot(fvals, np.exp( -np.square(self.ftox(fvals)-self.ftox(qf.f0))/np.square(qf.Delta) + qf.y0 ),
+                      c='g', label='deskewed Gaussian')
 
         if show_plot:
-            matplt.show()
+            plt.show()
         else:
-            d.show = matplt.show
+            d.show = plt.show
 
         return d;
         

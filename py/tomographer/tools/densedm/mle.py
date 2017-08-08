@@ -13,6 +13,10 @@ import scipy.sparse as sp
 
 import tomographer.densedm
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 
 class _Ns: pass
 
@@ -72,7 +76,7 @@ def find_mle(llh, solver_opts=None):
     dimtri = (dim2 - dim) / 2
 
     if llh.numEffects == 0:
-        logging.getLogger(__name__).warning("No measurements given, did you forget to populate the llh object?")
+        logger.warning("No measurements given, did you forget to populate the llh object?")
         return None
 
     rho_R = cvxpy.Symmetric(dim, dim)
@@ -131,6 +135,6 @@ def find_mle(llh, solver_opts=None):
 
     if (problem.status != 'optimal'):
         rho_MLE = None
-        logging.getLogger(__name__).warning("Error: couldn't solve the MLE problem. Status = "+str(problem.status))
-
+        logger.warning("Error: couldn't solve the MLE problem. Status = "+str(problem.status))
+        
     return (rho_MLE, d)
