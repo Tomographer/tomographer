@@ -288,7 +288,13 @@ class FitParamToQuErrorBars_a2(FitParamToQuErrorBarsBase):
 
     def calcQuantumErrorBarsX(self, p):
         (a2, a1, m, c) = p
-        x0 = (np.sqrt(np.square(a1) + 8*a2*m) - a1) / (4*a2)
+        if a2 < 0:
+            raise ValueError("Invalid value of a2: {} <= 0".format(a2))
+        if a2 < 1e-6:
+            # if a2 == 0:
+            x0 = m / a1
+        else:
+            x0 = (np.sqrt(np.square(a1) + 8*a2*m) - a1) / (4*a2)
         y0 = -a2*np.square(x0) - a1*x0 + m*np.log(x0) + c
         a = a2 + m / (2 * np.square(x0))
         Delta = 1/np.sqrt(a)
@@ -316,6 +322,12 @@ class FitParamToQuErrorBars_direct(FitParamToQuErrorBarsBase):
 
     def calcQuantumErrorBarsX(self, p):
         (a, x0, y0, m) = p
+        a2 = a - m/(2*x0*x0)
+        if a2 < 0:
+            logger.warning(
+                "Fit parameters: invalid value for a={}; corresponding a2={} should be >= 0"
+                .format(a, a2))
+
         return QuantumErrorBarsX(
             x0= x0,
             Delta= 1/np.sqrt(a),
@@ -415,14 +427,21 @@ class HistogramAnalysis(object):
 
       - `fit_fn`: a function which serves as fit model (for the log of the
         data).  Specify None (the default fit model), the strings 'a2' or
-        'direct', or a custom callable to use as fit model.  The 'a2' model is
-        the "straightforward" one, using :py:func:`fit_fn_a2()`, while the
-        'direct' model (the default) is aimed at better fit optimization
-        stability, using :py:func:`fit_fn_direct()`.  If a custom callable is
-        used, the quantum error bars cannot be automatically calculated and a
-        call to :py:meth:`quantumErrorBars()` will fail.
+        'direct', or a custom callable to use as fit model.  The 'a2' model (the
+        default) is the "straightforward" one, using :py:func:`fit_fn_a2()`,
+        while the 'direct' model is aimed at better fit optimization stability,
+        using :py:func:`fit_fn_direct()`.  If a custom callable is used, the
+        quantum error bars cannot be automatically calculated and a call to
+        :py:meth:`quantumErrorBars()` will fail.
 
-      - additional named arguments in `kwopts` are passed on to :py:func:`fit_histogram`.
+        .. note:: for the 'direct' fit model, it is currently not possible to
+           enforce the condition that :math:`a - m/(2 x_0^2) \geq 0` (required
+           from :math:`a_2 \geq 0`), so this condition must be checked manually.
+           A warning will be issued if you call `quantumErrorBars()` in this
+           case.
+
+      - additional named arguments in `kwopts` are passed on to
+        :py:func:`fit_histogram`.
     """
     def __init__(self, final_histogram, ftox=(0,1), fit_fn=None, **kwopts):
         self.final_histogram = final_histogram
@@ -440,7 +459,7 @@ class HistogramAnalysis(object):
             self.custom_fit_fn = False
 
             if fit_fn is None:
-                fit_fn = 'direct'
+                fit_fn = 'a2'
 
             if fit_fn not in fit_models:
                 raise ValueError("Invalid fit model name: {}".format(fit_fn))
