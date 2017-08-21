@@ -134,8 +134,8 @@ do_run([e.cmake, '..',
         '-DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE='+Boost_PROGRAM_OPTIONS_LIB,
 
         # Tomorun: use OpenMP not C++ threads
-        #'-DTOMORUN_MULTIPROC=openmp',
-        '-DTOMORUN_MULTIPROC=cxxthreads',
+        '-DTOMORUN_MULTIPROC=openmp',
+        #'-DTOMORUN_MULTIPROC=cxxthreads',
 
         # optimizations & architecture: don't include too many optimizations, so that the
         # binary can run on other machines.
@@ -143,7 +143,7 @@ do_run([e.cmake, '..',
         #'-DUSE_SSE2=on', # but enable sse2 which is available virtually everywhere ## DOESN'T WORK -- WHY??
 
         # C++ compiler flags
-        '-DCMAKE_CXX_FLAGS_RELEASE=-O3 -msse2',
+        '-DCMAKE_CXX_FLAGS_RELEASE=-O3 -msse -msse2',
 
         # linker flags: RPath stuff etc. ### THESE ARE NOT NECESSARY, WE OVERRIDE THE LINK COMMAND ANYWAY....
 #        '-DCMAKE_SKIP_BUILD_RPATH=true',
