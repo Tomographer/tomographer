@@ -23,17 +23,23 @@ class _Ns:
 
 def fit_fn_a2(x, a2, a1, m, c):
     """
-    The default fit model for the logarithm of the histogram data.  The
+    A standard fit model for the logarithm of the histogram data.  The
     `x`-values are not directly the figure of merit, but may be possibly
     transformed via a `f`-to-`x` transformation (see
     :py:class:`HistogramAnalysis`).
 
-    Returns the value :math:`y(x) = -a_2\\,x^2 - a_1\\,x + m\\log(x) + c`, which
-    is the default fit model.  If a `NumPy` vector is specified as `x`, the
+    Returns the value
+
+    .. math::
+    
+        y(x) = -a_2\\,x^2 - a_1\\,x + m\\log(x) + c \\ ,
+
+    which is the default fit model.  If a `NumPy` array is specified as `x`, the
     function is evaluated for all the given values and the values are returned
     as a vector.
 
-    .. since: 
+    .. versionadded:: 5.2
+
     """
     return -a2*np.square(x) - a1*x + m*np.log(x) + c
 
@@ -50,9 +56,16 @@ def zm(w, m):
     """
     Returns the "skewing" portion of :math:`y(x)`.
 
-    The function is defined as :math:`z_m(w) = \frac{m}{2} w^2 - 2m\,w + m \ln w
-    + \frac{3m}{2}`, and relates to the difference of our fit model with its
-    deskewed version as :math:`y(x) - y_{\mathrm{deskewed}}(x) = z_m(x/x_0)`.
+    The function is defined as
+
+    .. math::
+        z_m(w) = \\frac{m}{2} w^2 - 2m\\,w + m \\ln w + \\frac{3m}{2} \\ ,
+
+    and relates to the difference of our fit model with its deskewed version as
+    :math:`y(x) - y_{\\mathrm{deskewed}}(x) = z_m(x/x_0)`.
+
+    .. versionadded:: 5.2
+
     """
     return m*np.square(w)/2 - 2*m*w + m*np.log(w) + 3*m/2
 
@@ -70,18 +83,38 @@ def fit_fn_direct(x, a, x0, y0, m):
     .. math::
 
          y(x) = - a (x - x_0)^2 + y_0 + z_m(x / x_0)\ .
+
+    .. versionadded:: 5.2
+
     """
     return -a*np.square(x - x0) + y0 + zm(np.divide(x,x0), m)
 
 
 QuantumErrorBars = collections.namedtuple('QuantumErrorBars', ('f0', 'Delta', 'gamma', 'y0') )
+"""
+A named tuple to store the quantum error bars.
+"""
 
 QuantumErrorBarsX = collections.namedtuple('QuantumErrorBarsX', ('x0', 'Delta', 'gamma', 'y0') )
+"""
+A named tuple to store the quantum error bars, but where `x0` is used
+instead of `f0`, i.e., the figure of merit is not transformed according to the
+`xtof` transformation specified to the :py:class:`HistogramAnalysis`
+constructor.
 
+This class should only be used internally.
+
+.. versionadded:: 5.2
+"""
 
 def fit_histogram(normalized_histogram, fit_fn, ftox, **kwopts):
     """
     Fit the histogram data to a model function.
+
+    You should prefer to use the higher-level :py:class:`HistogramAnalysis`
+    class directly, which calls this function internally and automatically.
+    Only call this function if you are implementing very specific functionality
+    and you know what you are doing.
 
     :param normalized_histogram: the final histogram data, provided as a
         :py:class:`tomographer.HistogramWithErrorBars` class (or a subclass
@@ -210,6 +243,13 @@ class FitParamToQuErrorBarsBase(object):
     """
     Base class for converters between fit parameters for a specific fit model,
     and (standard) quantum error bars.
+
+    The members of this base class do not do anything.  This class should be
+    overridden to provide functionality.  See for instance
+    :py:class:`FitParamToQuErrorBars_a2` and
+    :py:class:`FitParamToQuErrorBars_direct`.
+
+    .. versionadded:: 5.2
     """
 
     def fitParamBounds(self):
@@ -241,6 +281,8 @@ class FitParamToQuErrorBars_a2(FitParamToQuErrorBarsBase):
     """
     Quantum error bars calculator for fit parameters resulting from fitting to
     the fit model function :py:func:`fit_fn_a2()`.
+
+    .. versionadded:: 5.2
     """
 
     # params: (a2, a1, m, c)
@@ -306,6 +348,8 @@ class FitParamToQuErrorBars_direct(FitParamToQuErrorBarsBase):
     """
     Quantum error bars calculator for fit parameters resulting from fitting to
     the fit model function :py:func:`fit_fn_direct()`.
+
+    .. versionadded:: 5.2
     """
 
     # params: (a, x0, y0, m)
@@ -337,12 +381,28 @@ class FitParamToQuErrorBars_direct(FitParamToQuErrorBarsBase):
 
         
 FitModelSpec = collections.namedtuple('FitModelSpec', ('fn', 'converter',))
+"""
+Type used to specify a fit model function along with a "converter"
+implementation.
+
+See :py:data:`fit_models`.
+
+.. versionadded:: 5.2
+"""
 
 
 fit_models = {
     'a2': FitModelSpec(fit_fn_a2, FitParamToQuErrorBars_a2()),
     'direct': FitModelSpec(fit_fn_direct, FitParamToQuErrorBars_direct()),
 }
+"""
+Dictionary of known, built-in fit models.  The key is the the built-in name
+(e.g., 'a2'), and the value is a :py:class:`FitModelSpec` named tuple type with
+information about the function to use as fit model as well as a converter
+implementation allowing to convert the fit parameters to quantum error bars.
+
+.. versionadded:: 5.2
+"""
 
 
 def calc_redchi2(x, y, dy, theo_fn, num_fit_params):
@@ -439,6 +499,9 @@ class HistogramAnalysis(object):
            from :math:`a_2 \geq 0`), so this condition must be checked manually.
            A warning will be issued if you call `quantumErrorBars()` in this
            case.
+
+        .. versionchanged:: 5.2
+           Support for additional built-in fit models.
 
       - additional named arguments in `kwopts` are passed on to
         :py:func:`fit_histogram`.
@@ -660,16 +723,21 @@ class HistogramAnalysis(object):
 
 def load_tomorun_csv_histogram_file(fn):
     """
-    Load a histogram data file produced by executing the `tomorun` executable program
-    (instead of via the `tomographer.tomorun` python module).
+    Load a histogram data file produced by executing the `tomorun` executable
+    program (instead of via the :py:mod:`tomographer.tomorun` python module).
 
-    The argument `fn` is the file name. It is expected to be a TAB-separated CSV file
-    where the first row (header) is blindly discarded.  Any fourth column is disregarded.
+    The argument `fn` is the file name. It is expected to be a TAB-separated CSV
+    file where the first row (header) is blindly discarded.  Any fourth column
+    is disregarded.
 
-    Note: We blindly assume, without checking, that the first column is a list of linearly
-    spaced values.
+    .. note:: This function blindly assumes, without checking, that the first
+              column is a list of linearly spaced values (which is what the
+              `tomorun` executable always produces currently).
 
-    The returned value is simply a :py:class:`tomographer.HistogramWithErrorBars` object.
+    The returned value is simply a
+    :py:class:`tomographer.HistogramWithErrorBars` object.
+
+    .. versionadded:: 5.0
     """
     import tomographer
     
