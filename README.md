@@ -62,8 +62,8 @@ github and send me pull requests, or to contact me if you have questions.
 Prerequisites
 -------------
 
-If you're lucky and there's a binary release for your system, you won't need
-anything else.
+To run `tomorun`: If you're lucky and there's a binary release for your system,
+you won't need anything else.
 
 To compile `tomorun` from source, you'll need:
 
