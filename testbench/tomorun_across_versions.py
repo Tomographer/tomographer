@@ -75,6 +75,7 @@ from tomorun import build_v1_0_optim_release, build_v4_1_optim_release, \
 #     [
 #         os.path.abspath(os.path.join(build_v5_0aaa_15_g287a5ae_GCC6_optim_release.work_tomographer_build,
 #                                      'tomorun', 'tomorun')),
+#         '--nice=0',
 #         '--config',
 #         'tomorun-config-EntglWitness',
 #         '--no-control-step-size',
@@ -84,17 +85,17 @@ from tomorun import build_v1_0_optim_release, build_v4_1_optim_release, \
 #     cwd='examples/two-qubits-Bell')
 
 
-timeit_call(
-    [
-        os.path.abspath(os.path.join(build_v5_0_GCC6_optim_release.work_tomographer_build,
-                                     'tomorun', 'tomorun')),
-        '--config',
-        'tomorun-config-EntglWitness',
-        '--no-control-step-size',
-        '--no-control-binning-converged',
-#        '--no-binning-analysis',
-    ],
-    cwd='examples/two-qubits-Bell')
+# timeit_call(
+#     [
+#         os.path.abspath(os.path.join(build_v5_0_GCC6_optim_release.work_tomographer_build,
+#                                      'tomorun', 'tomorun')),
+#         '--config',
+#         'tomorun-config-EntglWitness',
+#         '--no-control-step-size',
+#         '--no-control-binning-converged',
+# #        '--no-binning-analysis',
+#     ],
+#     cwd='examples/two-qubits-Bell')
 
 # timeit_call(
 #     [
@@ -127,6 +128,7 @@ timeit_call(
 #     [
 #         os.path.abspath(os.path.join(build_v5_1_10_g42e5603_GCC6_optim_release.work_tomographer_build,
 #                                      'tomorun', 'tomorun')),
+#         '--nice=0',
 #         '--config',
 #         'tomorun-config-EntglWitness',
 #         '--no-control-step-size',
@@ -134,3 +136,16 @@ timeit_call(
 # #        '--no-binning-analysis',
 #     ],
 #     cwd='examples/two-qubits-Bell')
+
+
+timeit_call(
+    [
+        os.path.abspath(os.path.join('..', '..', 'tomographer', 'build-testbench',
+                                     'tomorun', 'tomorun')),
+        '--nice=0',
+        '--config',
+        'tomorun-config-EntglWitness',
+        '--no-control-step-size',
+        '--no-control-binning-converged',
+    ],
+    cwd='examples/two-qubits-Bell')
