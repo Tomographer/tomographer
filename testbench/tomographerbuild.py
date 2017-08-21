@@ -139,7 +139,13 @@ cwd = timeit_call.cwd
           "\targs=%r\n"
           "\tcwd=%r"%(repeat, number, args, cwd))
     for x in xx:
-        print("Time: %.3g s"%(x/number))
-    print("Best time: ", min([ x/number for x in xx]), "s")
+        print("Time: %.3g s"%(float(x)/number))
+    best = min([ float(x)/number for x in xx])
+    print("Best time: ", best, "s")
     print("\n")
 
+    return {
+        'best': best,
+        'avg': sum([ float(x)/number for x in xx]) / repeat,
+        'times': [ float(x)/number for x in xx]
+    }
