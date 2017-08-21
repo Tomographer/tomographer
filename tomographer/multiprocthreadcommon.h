@@ -573,8 +573,8 @@ protected:
    *
    */
   template<typename ThreadPrivateDataType, typename ThreadSharedDataType>
-  void run_task(ThreadPrivateDataType & private_data, ThreadSharedDataType & shared_data)
-    TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
+  void TOMOGRAPHER_CXX_STACK_FORCE_REALIGN
+  run_task(ThreadPrivateDataType & private_data, ThreadSharedDataType & shared_data)
   {
     auto & logger = private_data.llogger;
     //... = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, private_data.llogger.parentLogger());
