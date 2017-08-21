@@ -146,11 +146,30 @@ def get_tomographer_build(settings):
 
 settings_list = get_settings_list(settings_matrix)
 
+print(
+    ("\n\n"
+     "================================================================================\n"
+     "TOMOGRAPHER/TOMORUN BENCHMARKS\n"
+     "================================================================================\n"
+     "\n\n"
+     "Started on {}\n\n"
+     "================================================================================\n")
+    .format(datetime.datetime.now().isoformat(' '))
+)
+
 # build everything first
 builds = [
     (settings, get_tomographer_build(settings))
     for settings in settings_list
 ]
+
+print(
+    ("\n\n"
+     "--------------------------------------------------------------------------------\n"
+     "TOMORUN BUILDS COMPLETED, STARTING BENCHMARKS AT {}\n"
+     "--------------------------------------------------------------------------------\n\n")
+    .format(datetime.datetime.now().isoformat(' '))
+)
 
 fresults = open('_full_bench_results/res_{}.txt'.format(datetime.datetime.now().strftime("%Y%m%d-%H%M%S")), 'w')
 
@@ -189,3 +208,10 @@ for n in range(len(builds)):
 
 fresults.close()
 
+print(
+    ("\n\n"
+     "--------------------------------------------------------------------------------\n"
+     "TOMORUN BENCHMARKS COMPLETED AT {}\n"
+     "--------------------------------------------------------------------------------\n\n")
+    .format(datetime.datetime.now().isoformat(' '))
+)
