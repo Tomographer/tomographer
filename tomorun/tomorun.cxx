@@ -202,8 +202,9 @@ int main(int argc, char **argv)
 
   opt.binning_analysis_num_levels =
     Tomographer::sanitizeBinningLevels(opt.binning_analysis_num_levels,
+                                       opt.Nrun,
                                        last_binning_level_warn_min_samples,
-                                       opt.Nrun, logger) ;
+                                       logger) ;
 
   // warn the user if they specified control-binning-convergence but don't have binning
   // analysis enabled

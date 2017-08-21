@@ -905,7 +905,7 @@ public:
  * levels, which might cause the error bars not to be reliable.
  *
  * In addition, a warning message is produced if the number of samples at the
- * last level of the binning analysis is less than \samples_last_level.
+ * last level of the binning analysis is less than \a samples_last_level.
  *
  * The argument \a logger must be a \ref Tomographer::Logger::LocalLogger (with
  * some meaningful origin set) where warnings will be emitted.

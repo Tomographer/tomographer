@@ -17,7 +17,8 @@ Change Log
   * The `tomorun` executable is able to auto-detect number of binning levels,
     like the Python interface;
     
-  * Better calculation of the quantum error bars in some degenerate cases;
+  * Better calculation of the quantum error bars in some degenerate cases
+    (in Python module `tomographer.querrorbars`);
 
   * Other small enhancements:
   
