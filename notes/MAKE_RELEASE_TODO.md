@@ -16,6 +16,9 @@ Checklist For Releasing a New Version of Tomographer
       for both `python2` and `python3`; if changes were made to the setup file,
       upload and test via [TestPyPi][testpypi] first (install on Mac and Linux).
 
+- [ ] Scroll through the diff from last stable version, make sure nothing
+      suspicious got committed
+
 [testpypi]: https://wiki.python.org/moin/TestPyPI
 
 

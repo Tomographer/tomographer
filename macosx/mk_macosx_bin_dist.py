@@ -139,8 +139,8 @@ do_run([e.cmake, '..',
         '-DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE='+Boost_PROGRAM_OPTIONS_LIB,
 
         # Tomorun: use OpenMP not C++ threads
-        #'-DTOMORUN_MULTIPROC=openmp',
-        '-DTOMORUN_MULTIPROC=cxxthreads', # I seem to be having a bug with openmp with
+        '-DTOMORUN_MULTIPROC=openmp',
+        #'-DTOMORUN_MULTIPROC=cxxthreads', # I seem to be having a bug with openmp with
                                           # progress reports--just use C++threads for now
 
         # optimizations & architecture: don't include too many optimizations, so that the
