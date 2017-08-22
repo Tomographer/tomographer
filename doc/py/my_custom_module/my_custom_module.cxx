@@ -60,12 +60,8 @@ typedef Tomographer::DenseDM::TSpace::ObservableValueCalculator<tpy::DMTypes>
 typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<tpy::RealType>,
                                 tpy::CountIntType>  CxxMHRWParamsType;
 
-//
-// We need to define a class which adds the capacity of creating the "master" random walk
-// object to the engine in Tomographer::MHRWTasks::ValueHistogramTools, which take care of
-// running the random walks etc. as needed.
-//
-struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
+
+typedef Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   ValueCalculator, // our value calculator
   true, // use binning analysis
   Tomographer::MHWalkerParamsStepSize<tpy::RealType>, // MHWalkerParams
@@ -73,7 +69,14 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   tpy::CountIntType, // IterCountIntType
   tpy::RealType, // CountRealType
   tpy::CountIntType // HistCountIntType
-  >
+  >  CDataBase;
+
+//
+// We need to define a class which adds the capacity of creating the "master" random walk
+// object to the engine in Tomographer::MHRWTasks::ValueHistogramTools, which take care of
+// running the random walks etc. as needed.
+//
+struct OurCData : public CDataBase
 {
   //
   // Construct the CData object. Note that here, the GIL is still held so we
@@ -85,7 +88,7 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
            tpy::MHRWParams mhrw_params, // parameters of the random walk
            py::dict p // various optional further user-given parameters
       )
-    : CDataBase<ValueCalculator,true>(
+    : CDataBase(
         // parameters for Tomographer::MHRWTasks::ValueHistogramTools::CDataBase
         // cosntructor:
         valcalc,
@@ -148,7 +151,9 @@ struct OurCData : public Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
     // A handy macro is TPY_EXPR_WITH_GIL( expression ), which evaluates the
     // given expression while holding the GIL and returns the result,
     // immediately re-releasing the GIL. So a simple methodology is to simply
-    // surround any Python-related calls with that macro.
+    // surround any Python-related calls with that macro.  Longer pieces of code
+    // may be surrounded by a code block with a "py::gil_scoped_acquire tmp;"
+    // local guard.
     //
 
     // the MHWalker type
