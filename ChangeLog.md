@@ -3,7 +3,7 @@ Change Log
 ==========
 
 
-## v5.2 (TBD)
+## v5.2 (2017-08-22)
 
   * Better handling of Python exceptions inside C++ threads
 
