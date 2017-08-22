@@ -5,29 +5,29 @@ Change Log
 
 ## v5.2 (TBD)
 
-  * Better handling of Python exceptions inside C++ threads;
+  * Better handling of Python exceptions inside C++ threads
 
   * Consolidated some thread-related code in order to address some bugs in
-    status reporting;
+    status reporting
 
   * Added maximum run time for binning-converged controller to prevent
     excessively long runs (`tomorun` option
-    `--control-binning-converged-max-add-run-iters`);
+    `--control-binning-converged-max-add-run-iters`)
   
   * The `tomorun` executable is able to auto-detect number of binning levels,
-    like the Python interface;
+    like the Python interface
     
-  * Better calculation of the quantum error bars in some degenerate cases
-    (in Python module `tomographer.querrorbars`);
+  * Better built-in fit models, and support for calculation of the quantum error
+    bars in some degenerate cases (Python module `tomographer.querrorbars`)
 
   * Other small enhancements:
   
-    - minor optimization in MultiplexorValueCalculator;
+    - minor optimization in MultiplexorValueCalculator
     
-    - detect if iteration count will exceed capacity of integer type used;
+    - detect if iteration count will exceed capacity of integer type used
     
     - `tomographer.tomorun.tomorun()` uses better defaults for max number of
-      unconverged bin error bars.
+      unconverged bin error bars
 
 
 ## v5.1 (2017-06-24)
