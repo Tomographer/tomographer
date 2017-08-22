@@ -453,7 +453,9 @@ public:
 
 private:
 
-  /** \brief The array in which we store samples that arrive from the simulation.
+  // private not picked up by doxygen anyway
+
+  /*   * \brief The array in which we store samples that arrive from the simulation.
    *
    * This array has size \a samplesSize() (for each tracking value). Once this array is
    * filled, it is <em>flushed</em>, i.e. the values are processed and stored as
@@ -465,18 +467,18 @@ private:
 
   // where we store the flushed values
   
-  /** \brief Number of samples seen.
+  /*  * \brief Number of samples seen.
    *
    * This is equal to the number of times \ref processNewValues() was called.
    */
   CountIntType n_samples;
-  /** \brief Number of flushes.
+  /*  * \brief Number of flushes.
    *
    * A flush corresponds to having filled all the samples in the sample vector (of size \a
    * samplesSize()), and pushing new values into \ref bin_sum and \ref bin_sumsq.
    */
   CountIntType n_flushes;
-  /** \brief Sum of all values seen.
+  /*  * \brief Sum of all values seen.
    *
    * This is a column vector of \a numTrackingValues() entries.
    *
@@ -489,7 +491,7 @@ private:
    * bin_sumsq.
    */
   Tools::StoreIfEnabled<BinSumArray, StoreBinSums> bin_sum;
-  /** \brief Sum of the squares of all flushed & processed values, at different binning
+  /*  * \brief Sum of the squares of all flushed & processed values, at different binning
    * levels.
    *
    * This is a matrix of \a numTrackingValues() rows and <em>numLevels()+1</em>
@@ -498,7 +500,7 @@ private:
    */
   BinSumSqArray bin_sumsq;
 
-  //! Just a boring logger...
+  //  ! Just a boring logger...
   LoggerType & logger;
 
 

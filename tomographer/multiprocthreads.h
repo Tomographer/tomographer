@@ -182,9 +182,8 @@ public:
 
 namespace Logger {
 /** \brief Specialized Traits for \ref
- *         Tomographer::MultiProc::OMP::ThreadSanitizerLogger<typename
- *         BaseLogger> -- see \ref Tomographer::Logger::LoggerTraits<typename
- *         LoggerType>
+ *         Tomographer::MultiProc::OMP::ThreadSanitizerLogger<BaseLogger> -- see \ref
+ *         Tomographer::Logger::LoggerTraits<LoggerType>
  *
  * Logger traits for \ref MultiProc::OMP::ThreadSanitizerLogger.
  */
@@ -340,16 +339,19 @@ private:
 public:
   /** \brief Task dispatcher constructor
    *
-   * \param pcdata_  The constant shared data, which will be accessible by all
-   *                 tasks
+   * \param pcdata  The constant shared data, which will be accessible by all
+   *                tasks
    *
-   * \param logger_  The logger instance to use to log messages.  This logger
-   *                 does not need to be thread safe.
+   * \param logger  The logger instance to use to log messages.  This logger
+   *                does not need to be thread safe.
    *
-   * \param num_total_runs_ The number of tasks to run in total.  Recall that
-   *                 the inputs to the different task instances are provided by
-   *                 the TaskCData's getTaskInput() method (see \ref
-   *                 pageInterfaceTaskCData).
+   * \param num_total_runs The number of tasks to run in total.  Recall that
+   *                the inputs to the different task instances are provided by
+   *                the TaskCData's getTaskInput() method (see \ref
+   *                pageInterfaceTaskCData).
+   *
+   * \param num_threads The number of parallel threads to use as workers.
+   *
    */
   TaskDispatcher(TaskCData * pcdata, LoggerType & logger,
                  TaskCountIntType num_total_runs,

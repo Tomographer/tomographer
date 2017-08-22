@@ -144,7 +144,7 @@ struct multistatscoll_result_type_helper2 {
  *   // will relay the callbacks to all the given stat collectors `statcoll*'.
  * \endcode
  *
- * This class also implements the \ref pageInterfaceResultable interface, providing a \ref
+ * This class also implements the \ref pageInterfaceResultable interface, providing a \a
  * ResultType member type which is a tuple of, for each stats collector, either its \a
  * ResultType, or an empty type if the stats collector doesn't have a \a ResultType
  * member.

@@ -149,7 +149,7 @@
  *   Value: C++ pseudo random number generator name (e.g. \c std::mt19937)
  *
  *   The random number generator algorithm to use for the random walk, given as
- *   a C++ class name (see C++11's \c <random>).
+ *   a C++ class name (see C++11's \c \<random>).
  *
  * - \c TOMORUN_USE_DEVICE_SEED
  *

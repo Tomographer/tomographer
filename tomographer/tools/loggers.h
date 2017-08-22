@@ -578,7 +578,7 @@ public:
    *
    * Call this method to report an error.
    *
-   * See \ref debug(const char *, Fn) for information about the function arguments.
+   * See \ref debug(const char *, Fn&&) for information about the function arguments.
    */
   template<typename Fn,
            TOMOGRAPHER_ENABLED_IF_TMPL(staticallyEnabledFor<ERROR>() &&
@@ -626,7 +626,7 @@ public:
    *
    * Call this method to report a warning.
    *
-   * See \ref debug(const char *, Fn) for information about the function arguments.
+   * See \ref debug(const char *, Fn&&) for information about the function arguments.
    */
   template<typename Fn,
            TOMOGRAPHER_ENABLED_IF_TMPL(staticallyEnabledFor<WARNING>() &&
@@ -673,7 +673,7 @@ public:
    *
    * Call this method to report an information/notice message.
    *
-   * See \ref debug(const char *, Fn) for information about the function arguments.
+   * See \ref debug(const char *, Fn&&) for information about the function arguments.
    */
   template<typename Fn,
            TOMOGRAPHER_ENABLED_IF_TMPL(staticallyEnabledFor<INFO>() &&
@@ -810,7 +810,7 @@ public:
    *
    * Call this method to report debugging messages which are emitted very often.
    *
-   * See \ref debug(const char *, Fn) for information about the function arguments.
+   * See \ref debug(const char *, Fn&&) for information about the function arguments.
    */
   template<typename Fn,
            TOMOGRAPHER_ENABLED_IF_TMPL(staticallyEnabledFor<LONGDEBUG>() &&
@@ -863,7 +863,7 @@ public:
    * choice. (Mind that messages logged here may not be statically removed if a static
    * minimum level is set.)
    *
-   * Otherwise, see \ref debug(const char *, Fn) for information about the function
+   * Otherwise, see \ref debug(const char *, Fn&&) for information about the function
    * arguments.
    */
   template<typename Fn, TOMOGRAPHER_ENABLED_IF_TMPL(tomo_internal::IsOstreamArgCallable<Fn>::value)>
@@ -925,7 +925,7 @@ public:
    * The log level is given statically. You shouldn't need to call this method directly,
    * it's probably more readable to use \ref debug(), \ref warning(), etc.
    *
-   * Otherwise, see \ref debug(const char *, Fn) for information about the function
+   * Otherwise, see \ref debug(const char *, Fn&&) for information about the function
    * arguments.
    */
   template<int Level, typename Fn,
@@ -1659,9 +1659,9 @@ public:
   }
   /** \brief Construct a local logger
    *
-   * See \ref LocalLogger(const std::string&, BaseLoggerType&).  This overload allows you
-   * to also specify the glue to use when concatenating origins for sub-loggers, see \ref
-   * glue() and \ref subLogger().
+   * See \ref LocalLogger(std::string, BaseLoggerType&).  This overload allows you to also
+   * specify the glue to use when concatenating origins for sub-loggers, see \ref glue()
+   * and \ref subLogger().
    */
   LocalLogger(std::string origin_prefix, std::string glue, BaseLoggerType & logger_)
     : Base_(), _origin_prefix(std::move(origin_prefix)), _glue(std::move(glue)), _baselogger(logger_)
@@ -1670,8 +1670,8 @@ public:
   }
   /** \brief Construct a local logger
    *
-   * See \ref LocalLogger(const std::string&, BaseLoggerType&).  This overload is the one
-   * which is called if you use the macro \ref TOMO_ORIGIN for the first argument.
+   * See \ref LocalLogger(std::string, BaseLoggerType&).  This overload is the one which
+   * is called if you use the macro \ref TOMO_ORIGIN for the first argument.
    */
   LocalLogger(const LocalLoggerOriginSpec & spec, BaseLoggerType & logger_)
     : Base_(), _origin_prefix(spec.origin_prefix.to_string()+spec.origin_prefix_add.to_string()),

@@ -111,7 +111,8 @@ public:
   /** \brief The relevant type for a callback function (or callable) which is provided
    *         with the full status report
    *
-   * See \ref setStatusReportHandler().
+   * This is the type used as argument to a subclass' \a setStatusReportHandler()
+   * method (see \ref pageInterfaceTaskDispatcher).
    */
   typedef std::function<void(const FullStatusReportType&)> FullStatusReportCallbackType;
 
@@ -495,16 +496,8 @@ protected:
 
   
 
-  /** \brief Task dispatcher constructor
+  /** \brief Basic constructor
    *
-   * \param pcdata_  The constant shared data, which will be accessible by all tasks
-   *
-   * \param logger_  The logger instance to use to log messages.  This logger does not need
-   *                 to be thread safe.
-   *
-   * \param num_total_runs_ The number of tasks to run in total.  Recall that the inputs
-   *                 to the different task instances are provided by the TaskCData's
-   *                 getTaskInput() method (see \ref pageInterfaceTaskCData).
    */
   TaskDispatcherBase()
   {
