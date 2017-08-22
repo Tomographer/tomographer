@@ -66,5 +66,5 @@ MATLAB and the `tomorun` program are not needed.
 The files are located in the `py/` subdirectory. The example is formatted as a Jupyter
 notebook (http://jupyter.org/). Jupyter is a convenient environment for interactively
 running Python code, and can be installed using Python's `pip`. If you don't want to use
-Jupyter, you can run the script `py_code_export.py` instead; it contains the same code
+Jupyter, you can run the script `run_example.py` instead; it contains the same code
 formatted into a usual python script file.

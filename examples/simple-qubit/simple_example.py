@@ -32,7 +32,7 @@ with tomographer.jpyutil.RandWalkProgressBar() as prg:
         fig_of_merit="obs-value",
         observable=np.array([[1, 0], [0, 0]]),
         # histogram parameters
-        hist_params=tomographer.UniformBinsHistogramParams(min=0.9,max=1.0,num_bins=40),
+        hist_params=tomographer.HistogramParams(min=0.9,max=1.0,num_bins=40),
         # settings of the random walk
         mhrw_params=tomographer.MHRWParams(
             step_size=0.035, # adjust such that accept. ratio ~ 0.25

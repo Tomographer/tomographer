@@ -32,6 +32,7 @@ def do_numerics():
                                    'max_allowed_unknown': 4,
                                    'max_allowed_unknown_notisolated': 4},
             progress_fn=prg.progress_fn,
+            progress_interval_ms=2000,
         )
         prg.displayFinalInfo(r['final_report_runs'])
 
