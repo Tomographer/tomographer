@@ -89,12 +89,13 @@ You'll need:
   - [MatIO library](https://sourceforge.net/projects/matio/)
 
 A recent C++ compiler is required as some C++11 features and elements of its
-standard library are used. Also, make sure it supports OpenMP or you won't
-benefit from parallelization. If you use LLVM/Clang++ on linux, you might need
-to install additional packages for OpenMP (e.g. `libomp`).
+standard library are used. If you use LLVM/Clang++ on linux, you might need to
+install additional packages for OpenMP (e.g. `libomp`).
 
 Tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).
 
+Note: OpenMP is now no longer needed if your compiler supports C++ threads
+(`std::thread`). This is the case for many compilers, including Apple's `clang`.
 
 Download
 --------
@@ -104,20 +105,22 @@ You may download the source in either of two ways:
 - [Obtain a stable source distribution (TAR.GZ archive).](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.tar.gz){:target="_blank"}
   (alternative formats: [ZIP](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.zip){:target="_blank"}, [TAR.BZ2](https://github.com/Tomographer/tomographer/releases/download/{{ site.tomographer_latest_version }}/tomographer-{{ site.tomographer_latest_version }}.tar.bz2){:target="_blank"})
 
-  If you're not too familiar with GIT and don't plan to modify Tomographer itself, this is
-  what you should download. Unpack the archive anywhere you want and continue with the
-  installation instructions below.
+  If you're not too familiar with `git` and don't plan to modify Tomographer
+  itself, this is what you should download. Unpack the archive anywhere you want
+  and continue with the installation instructions below.
 
-- [Clone the git repository.](https://github.com/Tomographer/tomographer){:target="_blank"} Do this if you
-  know a bit of GIT, if you wish to keep up-to-date with future updates, or if you wish to
-  contribute to the development of Tomographer itself.
+- [Clone the git repository.](https://github.com/Tomographer/tomographer){:target="_blank"}
+  Do this if you know a bit of `git`, if you wish to keep up-to-date with future
+  updates, or if you wish to contribute to the development of Tomographer
+  itself.
 
   If you plan to contribute and are willing to send changes back (yes please!), go ahead
-  and fork the repo in github, and send me pull requests.  Don't hesitate to contact me
+  and fork the repo on *github*, and send me pull requests.  Don't hesitate to contact me
   for questions and for mid-term or longer-term plans, especially for the APIs.
 
-Note: do NOT use github's automatic "download ZIP" feature, as you'll either miss out on
-GIT meta-information, or on auto-generated files in the source distributions.
+Note: do NOT use github's automatic "download ZIP" or "download source code"
+feature, as you'll either miss out on `git` meta-information, or on
+auto-generated files in the official source distributions.
 
 Installation from Source
 ------------------------
