@@ -153,7 +153,10 @@ int main(int argc, char **argv)
 	;
     });
 
-  display_parameters(&opt, logger.parentLogger());
+  logger.debug([](std::ostream & str) {
+      str << "Tomorun features activated:\n"
+	  << prog_version_info_features();
+    });
 
   //
   // Renice the program, if requested
@@ -176,12 +179,6 @@ int main(int argc, char **argv)
     logger.warning("nice() is not supported on this system, and option --nice-level was ignored.");
 #endif
   }
-
-  logger.debug([](std::ostream & str) {
-      str << "Features activated:\n"
-	  << prog_version_info_features();
-    });
-
 
   //
   // ---------------------------------------------------------------------------
@@ -222,6 +219,15 @@ int main(int argc, char **argv)
       stream << "Obsolete --n-chunk option has no effect.";
       });
   }
+
+  //
+  // ---------------------------------------------------------------------------
+  // Display parameters, and run
+  // ---------------------------------------------------------------------------
+  //
+
+  display_parameters(&opt, logger.parentLogger());
+
 
   //
   // ---------------------------------------------------------------------------
