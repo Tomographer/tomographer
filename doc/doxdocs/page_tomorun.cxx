@@ -110,8 +110,8 @@
  *   values at some places (1e-8 epsilons etc.). Beware and please report issues
  *   to me!
  *
- *   \note: Using \c float here apparently significantly reduces the precision of the
- *          resulting histogram.  Make sure you know what you are doing.
+ *   \note Using \c float here apparently significantly reduces the precision of the
+ *         resulting histogram.  Make sure you know what you are doing.
  *
  * - \c TOMORUN_CUSTOM_FIXED_DIM, \c TOMORUN_CUSTOM_FIXED_MAX_DIM, \c
  *   TOMORUN_CUSTOM_MAX_POVM_EFFECTS
@@ -194,7 +194,7 @@
  *
  *   C++ clock type to use when timing the duration of the computation.  This
  *   option is really historical and was meant to allow compilation with older
- *   compilers such as G++ 4.6 which don't support the new C++ clock types.
+ *   compilers such as G++ 4.6 which didn't yet support the new C++ clock types.
  *
  */
 

@@ -2,7 +2,7 @@
 import numpy as np
 
 import logging
-logging.basicConfig(level=logging.DEBUG) # uncomment for debug messages
+#logging.basicConfig(level=logging.DEBUG) # uncomment for debug messages
 
 # import Tomographer & utilities
 import tomographer

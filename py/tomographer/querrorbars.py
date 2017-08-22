@@ -734,8 +734,8 @@ def load_tomorun_csv_histogram_file(fn):
               column is a list of linearly spaced values (which is what the
               `tomorun` executable always produces currently).
 
-    The returned value is simply a
-    :py:class:`tomographer.HistogramWithErrorBars` object.
+    The returned value is a :py:class:`tomographer.HistogramWithErrorBars`
+    object.
 
     .. versionadded:: 5.0
     """
