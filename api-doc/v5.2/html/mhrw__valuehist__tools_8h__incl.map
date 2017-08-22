@@ -1,0 +1,16 @@
+<map id="tomographer/mhrw_valuehist_tools.h" name="tomographer/mhrw_valuehist_tools.h">
+<area shape="rect" id="node4" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="1938,399,2126,424"/>
+<area shape="rect" id="node22" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="1042,559,1222,584"/>
+<area shape="rect" id="node30" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="1375,479,1646,504"/>
+<area shape="rect" id="node32" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="1352,165,1581,191"/>
+<area shape="rect" id="node49" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Multiprocessing Task Interfaces) for parallel Metropolis&#45;Hasting..." alt="" coords="2423,92,2598,117"/>
+<area shape="rect" id="node13" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="1347,639,1536,664"/>
+<area shape="rect" id="node18" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="2246,479,2408,504"/>
+<area shape="rect" id="node26" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="2387,639,2576,664"/>
+<area shape="rect" id="node36" href="$statusprovider_8h_source.html" title="tomographer/tools/statusprovider.h" alt="" coords="1072,319,1299,344"/>
+<area shape="rect" id="node37" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="722,399,892,424"/>
+<area shape="rect" id="node44" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="2066,239,2209,264"/>
+<area shape="rect" id="node48" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1322,312,1481,351"/>
+<area shape="rect" id="node41" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="469,479,662,504"/>
+<area shape="rect" id="node46" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="2798,399,2964,424"/>
+</map>

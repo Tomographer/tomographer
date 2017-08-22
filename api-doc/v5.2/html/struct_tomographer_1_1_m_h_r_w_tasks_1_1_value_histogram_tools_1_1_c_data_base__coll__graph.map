@@ -1,0 +1,8 @@
+<map id="Tomographer::MHRWTasks::ValueHistogramTools::CDataBase&lt; ValueCalculator_, UseBinningAnalysis_, MHWalkerParams_, RngSeedType_, IterCountIntType_, CountRealType_, HistCountIntType_ &gt;" name="Tomographer::MHRWTasks::ValueHistogramTools::CDataBase&lt; ValueCalculator_, UseBinningAnalysis_, MHWalkerParams_, RngSeedType_, IterCountIntType_, CountRealType_, HistCountIntType_ &gt;">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_m_h_r_w_tasks_1_1_c_data_base.html" title="Data needed to be accessible to the working code. " alt="" coords="1221,28,1474,80"/>
+<area shape="rect" id="node3" href="$struct_tomographer_1_1_m_h_r_w_params.html" title="Tomographer::MHRWParams\l\&lt; MHWalkerParams, IterCountInt\lType \&gt;" alt="" coords="789,28,1007,80"/>
+<area shape="rect" id="node4" href="$struct_tomographer_1_1_m_h_r_w_params.html" title="Specify the parameters of a Metropolis&#45;Hastings random walk. " alt="" coords="302,35,556,73"/>
+<area shape="rect" id="node8" href="$struct_tomographer_1_1_tools_1_1_store_if_enabled.html" title="Tomographer::Tools\l::StoreIfEnabled\&lt; int,\l UseBinningAnalysis \&gt;" alt="" coords="1270,167,1424,219"/>
+<area shape="rect" id="node9" href="$struct_tomographer_1_1_tools_1_1_store_if_enabled.html" title="Utility that stores a data type if a compile&#45;time flag is enabled. " alt="" coords="829,167,967,219"/>
+<area shape="rect" id="node10" href="$struct_tomographer_1_1_histogram_params.html" title="The parameters of a Histogram. " alt="" coords="1240,243,1454,281"/>
+</map>

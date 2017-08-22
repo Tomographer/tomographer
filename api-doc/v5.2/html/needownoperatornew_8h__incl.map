@@ -1,0 +1,5 @@
+<map id="tomographer/tools/needownoperatornew.h" name="tomographer/tools/needownoperatornew.h">
+<area shape="rect" id="node4" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="484,79,665,104"/>
+<area shape="rect" id="node12" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="559,159,748,184"/>
+<area shape="rect" id="node14" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="1281,159,1471,184"/>
+</map>

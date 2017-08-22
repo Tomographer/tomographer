@@ -1,0 +1,5 @@
+<map id="tomographer/mathtools/pos_semidef_util.h" name="tomographer/mathtools/pos_semidef_util.h">
+<area shape="rect" id="node4" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="466,92,646,117"/>
+<area shape="rect" id="node13" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="671,172,860,197"/>
+<area shape="rect" id="node15" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="1281,172,1471,197"/>
+</map>

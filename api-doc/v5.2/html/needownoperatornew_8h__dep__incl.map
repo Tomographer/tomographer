@@ -1,0 +1,25 @@
+<map id="tomographer/tools/needownoperatornew.h" name="tomographer/tools/needownoperatornew.h">
+<area shape="rect" id="node2" href="$indepmeasllh_8h.html" title="C++ types and functions for calculating the log&#45;likelihood for independent measurements. " alt="" coords="5,79,161,117"/>
+<area shape="rect" id="node4" href="$tspacefigofmerit_8h.html" title="Implement some standard figures of merit for when integrating in T space densely represented density ..." alt="" coords="185,79,341,117"/>
+<area shape="rect" id="node5" href="$tspacellhwalker_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="772,252,927,291"/>
+<area shape="rect" id="node6" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="1610,172,1780,197"/>
+<area shape="rect" id="node8" href="$mhrw__valuehist__tools_8h.html" title="Tools for collecting a histogram of values during a Metropolis&#45;Hastings random walk using the tools o..." alt="" coords="1212,425,1405,464"/>
+<area shape="rect" id="node9" href="$mhrwacceptratiowalkerparamscontroller_8h.html" title="Tools for automatically and dynamically adjusting the step size of the random walk. " alt="" coords="516,345,863,371"/>
+<area shape="rect" id="node10" href="$mhrwstepsizecontroller_8h.html" title="Tools for automatically and dynamically adjusting the step size of the random walk. " alt="" coords="461,432,708,457"/>
+<area shape="rect" id="node11" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Multiprocessing Task Interfaces) for parallel Metropolis&#45;Hasting..." alt="" coords="1407,345,1583,371"/>
+<area shape="rect" id="node14" href="$mhrwvalueerrorbinsconvergedcontroller_8h.html" title="Tools for automatically stopping the random walk when enough samples have been taken to make all binn..." alt="" coords="886,345,1232,371"/>
+<area shape="rect" id="node16" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="1277,172,1420,197"/>
+<area shape="rect" id="node18" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1181,79,1340,117"/>
+<area shape="rect" id="node19" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="1907,85,2073,111"/>
+<area shape="rect" id="node20" href="$multiprocomp_8h.html" title="Multiprocessing with OpenMP parallel multithreading. " alt="" coords="2235,259,2427,284"/>
+<area shape="rect" id="node21" href="$multiprocthreadcommon_8h.html" title="Basic multiprocessing templates for thread&#45;based Tomographer::MultiProc implementations. " alt="" coords="2200,172,2454,197"/>
+<area shape="rect" id="node22" href="$multiprocthreads_8h.html" title="Multiprocessing with native C++11 threads. " alt="" coords="2001,259,2211,284"/>
+<area shape="rect" id="node24" href="$valuecalculator_8h.html" title="Some elementary definitions which relate to the ValueCalculator Interface. " alt="" coords="2530,85,2730,111"/>
+<area shape="rect" id="node3" href="$pydensedm_8h_source.html" title="py/cxx/tomographerpy\l/pydensedm.h" alt="" coords="7,165,159,204"/>
+<area shape="rect" id="node7" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="1103,259,1332,284"/>
+<area shape="rect" id="node15" href="$pyhistogram_8h_source.html" title="py/cxx/tomographerpy\l/pyhistogram.h" alt="" coords="1884,339,2037,377"/>
+<area shape="rect" id="node12" href="$pymhrwtasks_8h_source.html" title="py/cxx/tomographerpy\l/pymhrwtasks.h" alt="" coords="1720,425,1873,464"/>
+<area shape="rect" id="node13" href="$pymultiproc_8h_source.html" title="py/cxx/tomographerpy\l/pymultiproc.h" alt="" coords="1429,425,1582,464"/>
+<area shape="rect" id="node17" href="$pymhrw_8h_source.html" title="py/cxx/tomographerpy\l/pymhrw.h" alt="" coords="1607,339,1759,377"/>
+<area shape="rect" id="node23" href="$signal__status__report_8h.html" title="Basic common code for intercepting a signal to print status information of a task manager..." alt="" coords="1906,165,2073,204"/>
+</map>

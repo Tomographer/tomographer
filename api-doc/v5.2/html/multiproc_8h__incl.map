@@ -1,0 +1,7 @@
+<map id="tomographer/multiproc.h" name="tomographer/multiproc.h">
+<area shape="rect" id="node6" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="464,79,626,104"/>
+<area shape="rect" id="node28" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="1040,79,1311,104"/>
+<area shape="rect" id="node15" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="1021,152,1202,177"/>
+<area shape="rect" id="node22" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="793,232,982,257"/>
+<area shape="rect" id="node24" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="529,232,718,257"/>
+</map>

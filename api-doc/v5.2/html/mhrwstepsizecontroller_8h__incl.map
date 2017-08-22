@@ -1,0 +1,16 @@
+<map id="tomographer/mhrwstepsizecontroller.h" name="tomographer/mhrwstepsizecontroller.h">
+<area shape="rect" id="node9" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="1361,385,1548,411"/>
+<area shape="rect" id="node22" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="984,465,1146,491"/>
+<area shape="rect" id="node26" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="2458,545,2638,571"/>
+<area shape="rect" id="node34" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="435,465,706,491"/>
+<area shape="rect" id="node36" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="1519,225,1662,251"/>
+<area shape="rect" id="node45" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="1987,152,2216,177"/>
+<area shape="rect" id="node49" href="$mhrwacceptratiowalkerparamscontroller_8h.html" title="Tools for automatically and dynamically adjusting the step size of the random walk. " alt="" coords="1489,79,1836,104"/>
+<area shape="rect" id="node19" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="1982,625,2170,651"/>
+<area shape="rect" id="node30" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="1717,625,1907,651"/>
+<area shape="rect" id="node37" href="$statusprovider_8h_source.html" title="tomographer/tools/statusprovider.h" alt="" coords="2535,305,2761,331"/>
+<area shape="rect" id="node38" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="264,385,430,411"/>
+<area shape="rect" id="node40" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1979,299,2138,337"/>
+<area shape="rect" id="node41" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="2374,465,2567,491"/>
+<area shape="rect" id="node48" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="2255,385,2425,411"/>
+</map>

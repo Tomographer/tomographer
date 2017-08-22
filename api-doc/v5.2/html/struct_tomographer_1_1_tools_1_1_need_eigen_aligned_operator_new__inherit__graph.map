@@ -1,0 +1,5 @@
+<map id="Tomographer::Tools::NeedEigenAlignedOperatorNew&lt; ReallyNeeded &gt;" name="Tomographer::Tools::NeedEigenAlignedOperatorNew&lt; ReallyNeeded &gt;">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_tools_1_1_need_eigen_aligned_operator_new.html" title="Tomographer::Tools\l::NeedEigenAlignedOperator\lNew\&lt;!(MaxRows==Eigen::Dynamic\|\l\|MaxCols==Eigen::Dynamic)\&gt;" alt="" coords="405,64,640,129"/>
+<area shape="rect" id="node3" href="$struct_tomographer_1_1_tools_1_1_need_own_operator_new_3_01_eigen_1_1_array_3_01_scalar_00_01_fi27964185ced34fb5bd18fb7694a848ef.html" title="Specialize NeedOwnOperatorNew for Eigen types. " alt="" coords="690,5,909,84"/>
+<area shape="rect" id="node4" href="$struct_tomographer_1_1_tools_1_1_need_own_operator_new_3_01_eigen_1_1_matrix_3_01_scalar_00_01_f562600b42153070dc34daa2aedab201e.html" title="Specialize NeedOwnOperatorNew for Eigen types. " alt="" coords="690,108,909,187"/>
+</map>

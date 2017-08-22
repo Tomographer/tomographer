@@ -1,0 +1,6 @@
+<map id="tomographer/densedm/param_herm_x.h" name="tomographer/densedm/param_herm_x.h">
+<area shape="rect" id="node2" href="$indepmeasllh_8h.html" title="C++ types and functions for calculating the log&#45;likelihood for independent measurements. " alt="" coords="5,92,161,131"/>
+<area shape="rect" id="node3" href="$pydensedm_8h_source.html" title="py/cxx/tomographerpy\l/pydensedm.h" alt="" coords="64,179,217,217"/>
+<area shape="rect" id="node4" href="$tspacefigofmerit_8h.html" title="Implement some standard figures of merit for when integrating in T space densely represented density ..." alt="" coords="235,92,390,131"/>
+<area shape="rect" id="node5" href="$tspacellhwalker_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="415,92,570,131"/>
+</map>
