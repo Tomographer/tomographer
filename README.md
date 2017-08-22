@@ -77,6 +77,9 @@ To install the Python `tomographer` package, you'll need:
 
   - `pip`, the Python package manager — you probably already have it (≥ 7.1)
   - a recent C++ compiler (g++ ≥ 4.8, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.3)
+  - *Optional: you can also install `tomographer` in
+    a [conda](https://www.continuum.io/downloads) environment, which can
+    automatically provide both above requirements*
   
 OR: you can compile from source, in which case you'll need:
 
@@ -93,11 +96,13 @@ Tomorun is tested on Linux/Ubuntu, Mac OS X and Windows (MinGW32).  The python
 package is tested on Linux and Mac OS X.
 
 Note: OpenMP is now no longer needed if your compiler supports C++ threads
-(std::thread).  This is the case for many compilers, including Apple's `clang`.
+(`std::thread`).  This is the case for many compilers, including Apple's
+`clang`.
 
 Tip: On Apple Mac OS X with [homebrew](https://brew.sh), the following commands
 will get you started with all the prerequisites for compiling both `tomorun` and
-the Python `tomographer` package, using Homebrew's python3.
+the Python `tomographer` package, using Homebrew's python3.  For python, you
+should also consider using [*conda*](https://www.continuum.io/downloads).
 
     > brew tap homebrew/science
     > brew install python3 boost eigen libmatio pybind11
@@ -235,22 +240,39 @@ Here is an overview:
 
 ### Install using PIP — the easy way
 
-The simplest way to install the `tomographer` Python package is to use `pip`:
+First, make sure you install the prerequisites.  (You do have to install the
+`numpy` and `pybind11` dependencies manually before installing `tomographer`.
+This is because `pip` apparently doesn't know how to correctly handle build-time
+dependencies.)
 
-    > sudo -H pip install numpy pybind11
-    > sudo -H pip install tomographer
-
-Or, for a user installation which is not system-wide:
+    # If using *conda*:
     
-    > pip install numpy pybind11 --user
-    > pip install tomographer --user
+    > conda install numpy gcc
+    > conda install -c conda-forge pybind11
+    
+    # OR: if using *pip* by itself:
+    
+    > pip install numpy pybind11
+    
+All `pip` commands (e.g. `pip install SOMEPACKAGE`) might have to be prefixed by
+`sudo -H` (e.g. `sudo -H pip install SOMEPACKAGE`) if you need administrator
+priviledges, or you can use the option `--user` to install into a user directory
+(e.g. `pip install SOMEPACKAGE --user`).
+
+Now, install `tomographer` itself, using `pip` (this also works within a *conda*
+environment):
+
+    # for both *conda* and *pip* users:
+    > pip install tomographer
 
 When installing `tomographer` using `pip`, you don't need the Eigen and Boost
 prerequisites, as they are bundled along with the `tomographer` python package.
 
-*Note: You do have to install the `numpy` and `pybind11` dependencies manually
-before installing `tomographer`.  This is because `pip` apparently doesn't know
-how to correctly handle build-time dependencies.*
+**Important for conda users: You must use the same version of GCC as the
+libraries bundled in conda itself.** Conda itself provides a version of gcc
+(`conda install gcc`), and you might have to specify this explicitly:
+
+    > CC=path-to-conda/bin/gcc CXX=path-to-conda/bin/g++ pip install tomographer
 
 
 ### Install from source — advanced
@@ -261,10 +283,11 @@ python packages:
 
     tomographer/py> python setup.py install
 
-If tomographer's C++ library dependencies aren't installed in standard paths, you
-may need to specify them directly to the `setup.py` script in the form of
+If tomographer's C++ library dependencies aren't installed in standard paths,
+you may need to specify them directly to the `setup.py` script in the form of
 environment variables (they can also be read from a CMake cache file). Check the
-output of `setup.py` for more info.
+output of `setup.py` for more info.  Compilers may be specified using the
+environment variables `CC=/path/to/gcc` and `CXX=/path/to/g++`.
 
 
 ### Using the Python Interface
