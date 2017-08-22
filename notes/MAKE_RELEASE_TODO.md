@@ -18,6 +18,8 @@ Checklist For Releasing a New Version of Tomographer
 
 - [ ] Scroll through the diff from last stable version, make sure nothing
       suspicious got committed
+      
+- [ ] Make sure API doc builds all ok
 
 [testpypi]: https://wiki.python.org/moin/TestPyPI
 
