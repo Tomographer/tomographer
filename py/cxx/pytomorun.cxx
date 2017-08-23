@@ -915,6 +915,7 @@ void py_tomo_tomorun(py::module rootmodule)
         "            base seed is generated based on the current time.  Each different run of the random walk\n"
         "            is seeded with incremental seeds starting with the base seed (e.g., if the base seed is \n"
         "            910533, the different tasks are given the seeds 910533, 910534, 910535, ...).\n"
+        "            *New in version 5.3: added `rng_base_seed` argument.*\n"
         "\n"
         "\n"
         ".. rubric:: Figures of merit"
