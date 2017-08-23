@@ -58,6 +58,7 @@ def run_main():
     parser.add_argument("--no-further-checks", action='store_true', default=False)
     parser.add_argument("--check-histogram-file", action='store', default=None)
     parser.add_argument("--check-binning-vs-naive", action='store_true', default=None)
+    parser.add_argument("--bin-rel-weight-threshold", action='store', type=float, default=0.01)
     parser.add_argument("--check-qeb", action='store', type=check_qeb_args)
     parser.add_argument("--ftox", action='store', type=ftox_pair, default=(0,1,))
     parser.add_argument("--redchi2-range-ok", action='store', type=range_type, default=(0.1, 2))
@@ -141,7 +142,7 @@ def do_check_binning_vs_naive(hfile, args):
     # check third & fourth columns -- they should be similar for values above a certain threshold
     diffs = []
     for k in range(datalen):
-        if hdata[k,1] > 0.01: # at least 1% of points in this bin
+        if hdata[k,1] > args.bin_rel_weight_threshold: # at least X% of points in this bin
             rldiff = (np.absolute(hdata[k,2] - hdata[k,3]) /
                       np.maximum(np.absolute(hdata[k,2]), np.absolute(hdata[k,3])))
             diffs.append(rldiff)
@@ -149,6 +150,7 @@ def do_check_binning_vs_naive(hfile, args):
     #
     diffs.sort()
 
+    # We require that 90% of the bins have less than 20% relative diff error between binning and naive
     fraction_in_range = 0.9
     maxreldiff = 0.2
 
