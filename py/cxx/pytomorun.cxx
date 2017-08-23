@@ -465,7 +465,8 @@ py::object py_tomorun(
     int progress_interval_ms,
     std::string jumps_method,
     py::dict ctrl_step_size_params,
-    py::dict ctrl_converged_params
+    py::dict ctrl_converged_params,
+    py::object rng_base_seed // an integer (actually RngType::result_type) or None
     )
 {
   Tomographer::Logger::LocalLogger<tpy::PyLogger> logger(TOMO_ORIGIN, *tpy::logger);
@@ -618,9 +619,16 @@ py::object py_tomorun(
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, RngType>  OurMHRandomWalkTask;
 
   // seed for random number generator
-  RngType::result_type base_seed =
-    (RngType::result_type)std::chrono::system_clock::now().time_since_epoch().count();
+  RngType::result_type base_seed = 0;
+  if (rng_base_seed.is_none()) {
+    base_seed = (RngType::result_type)std::chrono::system_clock::now().time_since_epoch().count();
+  } else {
+    base_seed = rng_base_seed.cast<RngType::result_type>();
+  }
 
+  logger.longdebug([&](std::ostream & stream) {
+      stream << "Got base RNG seed = " << base_seed << "\n";
+    }) ;
 
   // number of renormalization levels in the binning analysis
   const tpy::CountIntType recommended_num_samples_last_level = 128;
@@ -812,6 +820,7 @@ void py_tomo_tomorun(py::module rootmodule)
       "jumps_method"_a = py::str("full"),
       "ctrl_step_size_params"_a = py::dict(),
       "ctrl_converged_params"_a = py::dict(),
+      "rng_base_seed"_a = py::none(),
       // doc
       ( "tomorun(dim, ...)\n"
         "\n"

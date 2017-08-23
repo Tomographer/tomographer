@@ -144,6 +144,21 @@ BOOST_AUTO_TEST_CASE(constr)
   BOOST_CHECK_EQUAL(cdata.mhrw_params.n_run, 500);
 }
 
+BOOST_AUTO_TEST_CASE(get_task_inputs_incremental_base_seed)
+{
+  const Tomographer::MHRWTasks::CDataBase<double,int,unsigned int>
+    cdata(Tomographer::MHRWParams<double, int>(0.1, 128, 50, 500), 100);
+
+  BOOST_MESSAGE( cdata.getBasicCDataMHRWInfo() );
+
+  // make sure base_seed is used !
+
+  for (int k = 0; k < 1024; ++k) {
+    BOOST_CHECK_EQUAL( cdata.getTaskInput(k), 100 + k );
+  }
+}
+
+
 BOOST_AUTO_TEST_CASE(get_task_inputs)
 {
   const Tomographer::MHRWTasks::CDataBase<double,int,unsigned int>
@@ -167,6 +182,7 @@ BOOST_AUTO_TEST_CASE(get_task_inputs)
   BOOST_CHECK(last == inputs.end());
   BOOST_CHECK_EQUAL(inputs.size(), 1024u);
 }
+
 
 BOOST_AUTO_TEST_SUITE_END(); // cdatabase
 

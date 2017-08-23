@@ -203,7 +203,7 @@ struct TOMOGRAPHER_EXPORT CDataBase
   {
     // empirically it's noticeably better to feed the RNG sequential numbers rather than
     // try to shuffle bits around (!!)
-    return (RngSeedType)k;
+    return base_seed + (RngSeedType)k;
   }
 
 
