@@ -674,6 +674,55 @@ class analytical_known_example_tomorun(unittest.TestCase):
 
 
 
+    def test_base_seed(self):
+
+        print("test_base_seed()")
+
+        hist_params = tomographer.HistogramParams(0.985, 1, 50)
+
+        samples = []
+        def save_sample(T):
+            samples.append(T)
+            return 0
+
+        # momentarily disable warnings because tomorun will warn about binning levels too low
+        oldlevel = logging.getLogger("tomographer").level
+        try:
+            logging.getLogger("tomographer").level = logging.ERROR
+
+            runs_samples = []
+            for n in range(64):
+                # reset samples list, go
+                print("Tomorun run #", n)
+                samples = []
+                res = tomographer.tomorun.tomorun(
+                    dim=2,
+                    Emn=self.Emn,
+                    Nm=self.Nm,
+                    fig_of_merit=save_sample,
+                    num_repeats=1,
+                    mhrw_params=tomographer.MHRWParams(
+                        step_size=0.04,
+                        n_sweep=25,
+                        n_therm=500,
+                        n_run=1024,),
+                    hist_params=hist_params,
+                    ctrl_step_size_params={'enabled': False},
+                    ctrl_converged_params={'enabled': False},
+                    rng_base_seed=n
+                )
+                runs_samples.append(samples[100])
+        finally:
+            logging.getLogger("tomographer").level = oldlevel
+
+
+        avgT = sum( runs_samples ) / len(runs_samples)
+        print("avgT = ", repr(avgT))
+        spread = np.prod( [npl.norm( T - avgT ) for T in runs_samples] )
+        print("spread = ", repr(spread))
+
+        self.assertGreater(spread, 0.2)
+
 
 # normally, this is not needed as we are being run via pyruntest.py, but it might be
 # useful if we want to run individually picked tests
