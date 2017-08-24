@@ -45,31 +45,9 @@ steps to get started and analyze data from your experiment:
         > pip install numpy pybind11
         > pip install tomographer
 
-    If the installation fails because of a compilation error, then run `pip`
-    with the `--verbose` option, and look at which settings are detected by the
-    setup script for variables such as `CXX_FLAGS`. You may override these using
-    environment variables, for instance: `CXX_FLAGS="-stdlib=libc++"
-    OPTIMIZATION_CXX_FLAGS="" pip install tomographer`. Consider submitting a
-    [bug
-    report](https://github.com/Tomographer/tomographer/issues){:target="_blank"}
-    if you think it's an issue.
-
-    *Note: You have to install the `numpy` and `pybind11` dependencies manually
-    before installing `tomographer`.  This is because `pip` apparently doesn't
-    know how to correctly handle build-time dependencies.*
-
-    **Important note for conda users: You must use the same C/C++ compiler as
-    for the python libraries bundled in conda itself.** On Linux, you should use
-    the version of gcc which *conda* provides (`conda install gcc`), and which
-    you might have to specify explicitly:
-
-        > CC=path-to-conda/bin/gcc CXX=path-to-conda/bin/g++ pip install tomographer
-    
-    On Mac OS X, it appears that *conda*'s python is built using Apple's *clang*, so
-    you should use:
-
-        > CC=clang CXX=clang++ pip install tomographer
-
+    In case of trouble, you should [seek additional information and instructions
+    in the README
+    file](https://github.com/Tomographer/tomographer/blob/master/README.md#installing-and-using-the-python-package){:target="_blank"}.
 
 2.  Open your favorite Python environment (e.g. edit a Python script or open an IPython or
     Jupyter notebook session), and start off with [this one-qubit
