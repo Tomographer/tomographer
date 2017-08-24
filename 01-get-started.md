@@ -24,8 +24,8 @@ steps to get started and analyze data from your experiment:
 1.  Install the necessary Python packages.
 
     First, install `tomographer`'s dependencies.  Depending on whether you're
-    using [*conda*](https://www.continuum.io/downloads) or *pip* by itself, you
-    should run the following commands:
+    using [*conda*](https://www.continuum.io/downloads){:target="_blank"} or
+    *pip* by itself, you should run the following commands:
 
         # for *conda* users
         > conda install numpy
@@ -50,8 +50,9 @@ steps to get started and analyze data from your experiment:
     setup script for variables such as `CXX_FLAGS`. You may override these using
     environment variables, for instance: `CXX_FLAGS="-stdlib=libc++"
     OPTIMIZATION_CXX_FLAGS="" pip install tomographer`. Consider submitting a
-    [bug report](https://github.com/Tomographer/tomographer/issues) if you think
-    it's an issue.
+    [bug
+    report](https://github.com/Tomographer/tomographer/issues){:target="_blank"}
+    if you think it's an issue.
 
     *Note: You have to install the `numpy` and `pybind11` dependencies manually
     before installing `tomographer`.  This is because `pip` apparently doesn't
