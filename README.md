@@ -234,9 +234,8 @@ For more information on how to run the histogram analyzer/fitter, run:
 Installing and Using the Python Package
 ---------------------------------------
 
-You may want to check out the [online quick start
+For an overview, you may want to check out the [online quick start
 page](https://tomographer.github.io/tomographer/get-started/#python-version).
-Here is an overview:
 
 ### Install using PIP — the easy way
 
@@ -260,8 +259,8 @@ prefixed by `sudo -H` (e.g. `sudo -H pip install SOMEPACKAGE`) if you need
 administrator priviledges, or you can use the option `--user` to install into a
 user directory (e.g. `pip install SOMEPACKAGE --user`).
 
-Now, install `tomographer` itself, using `pip` (this is also supposed to work
-within a *conda* environment):
+Now, install `tomographer` itself, using `pip` (this should also work within a
+*conda* environment):
 
     # for both *conda* and *pip* users:
     > pip install tomographer
