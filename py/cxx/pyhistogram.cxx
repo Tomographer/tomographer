@@ -51,7 +51,7 @@ static void check_pickle_tuple_size(std::size_t expect, int given)
   }
 }
 
-static inline std::string fmt_hist_param_float(tpy::RealType val)
+static inline std::string fmt_hist_param_float(tpy::RealScalar val)
 {
   return Tomographer::Tools::fmts("%.3g", (double)val);
 }
@@ -110,9 +110,9 @@ void py_tomo_histogram(py::module rootmodule)
             "\n\n"
             "    Read-only attribute returning a vector (NumPy array) of values corresponding to each bin upper value."
             "\n\n"
-            "\n\n", boost::core::demangle(typeid(tpy::RealType).name()).c_str(),
+            "\n\n", boost::core::demangle(typeid(tpy::HistogramParams::Scalar).name()).c_str(),
             Kl().min, Kl().max, (long)Kl().num_bins).c_str())
-      .def(py::init<tpy::RealType,tpy::RealType,Eigen::Index>(),
+      .def(py::init<tpy::HistogramParams::Scalar,tpy::HistogramParams::Scalar,Eigen::Index>(),
            "min"_a=Kl().min, "max"_a=Kl().max, "num_bins"_a=Kl().num_bins)
       .def_readwrite("min", & Kl::min)
       .def_readwrite("max", & Kl::max)
@@ -152,7 +152,8 @@ void py_tomo_histogram(py::module rootmodule)
           return py::make_tuple(p.min, p.max, p.num_bins) ;
         })
       .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl, tpy::RealType, tpy::RealType, Eigen::Index>(p, t);
+          tpy::internal::unpack_tuple_and_construct<Kl, tpy::HistogramParams::Scalar,
+                                                    tpy::HistogramParams::Scalar, Eigen::Index>(p, t);
         })
       ;
   }
@@ -209,7 +210,7 @@ void py_tomo_histogram(py::module rootmodule)
         // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
-      .def(py::init<tpy::RealType, tpy::RealType, Eigen::Index>(),
+      .def(py::init<tpy::HistogramParams::Scalar, tpy::HistogramParams::Scalar, Eigen::Index>(),
           "min"_a, "max"_a, "num_bins"_a)
       .def_property_readonly("params", [](const Kl & h) -> tpy::HistogramParams { return h.params; })
       .def_property_readonly("values_center", [](const Kl & p) -> tpy::RealVectorType { return p.params.valuesCenter(); })
@@ -226,7 +227,7 @@ void py_tomo_histogram(py::module rootmodule)
         "Clears the current histogram counts (including `off_chart` counts) to zero.  The histogram "
         "parameters in `params` are kept intact.")
       .def("load", & Kl::load,
-           "bins"_a, "off_chart"_a = tpy::CountIntType(0),
+           "bins"_a, "off_chart"_a = tpy::HistCountIntType(0),
            // doc
            "load(bins[, off_chart=0])\n\n"
            "Load bin values from the vector of values `bins`, which is expected to be a `NumPy` array. If "
@@ -256,12 +257,12 @@ void py_tomo_histogram(py::module rootmodule)
         "Raises :py:exc:`TomographerCxxError` if index is out of range.")
       .def("record", [](Kl & h, py::object value, py::object w) {
           auto np = py::module::import("numpy");
-          if ( ! h.params.isWithinBounds(value.cast<tpy::RealType>()) ) {
+          if ( ! h.params.isWithinBounds(value.cast<tpy::HistogramParams::Scalar>()) ) {
             h.off_chart = np.attr("add")(h.off_chart, w);
             return (Eigen::Index)(-1);
           }
           // calling bin_index_unsafe because we have already checked that value is in range.
-          const Eigen::Index index = h.params.binIndexUnsafe(value.cast<tpy::RealType>());
+          const Eigen::Index index = h.params.binIndexUnsafe(value.cast<tpy::HistogramParams::Scalar>());
           np.attr("add").attr("at")(h.bins, py::cast(index), w);
           return index;
         },
@@ -305,7 +306,7 @@ void py_tomo_histogram(py::module rootmodule)
         "corresponding C++ function <class_tomographer_1_1_histogram.html#a51e60cfa1f7f111787ee015805aac93c>`.")
       .def("prettyPrint", [](const Kl & h, int max_width) {
           return Tomographer::histogramPrettyPrint(
-              h.toCxxHistogram<tpy::RealType,tpy::RealType>(),
+              h.toCxxHistogram<tpy::HistogramParams::Scalar,tpy::HistogramParams::Scalar>(),
               max_width
               );
         },
@@ -380,7 +381,7 @@ void py_tomo_histogram(py::module rootmodule)
         // , py::metaclass()  -- deprecated as of pybind 2.1
         )
       .def(py::init<tpy::HistogramParams>(), "params"_a=tpy::HistogramParams())
-      .def(py::init<tpy::RealType, tpy::RealType, Eigen::Index>())
+      .def(py::init<tpy::HistogramParams::Scalar, tpy::HistogramParams::Scalar, Eigen::Index>())
       .def_property("delta", [](const Kl & h) { return h.delta; }, & Kl::set_delta )
       .def_property_readonly("has_error_bars", [](py::object) { return true; })
       .def("reset", [](Kl & h) {
@@ -392,7 +393,7 @@ void py_tomo_histogram(py::module rootmodule)
         "Clears the current histogram counts (including `off_chart` counts) to zero.  The histogram "
         "parameters in `params` are kept intact.")
       .def("load", & Kl::load,
-           "y"_a, "yerr"_a, "off_chart"_a = tpy::RealType(0),
+           "y"_a, "yerr"_a, "off_chart"_a = tpy::HistogramParams::Scalar(0),
            // doc
            "load(y, yerr[, off_chart=0])"
            "\n\n"
@@ -440,7 +441,7 @@ void py_tomo_histogram(py::module rootmodule)
         "corresponding C++ function <class_tomographer_1_1_histogram.html#a51e60cfa1f7f111787ee015805aac93c>`.")
       .def("prettyPrint", [](const Kl & h, int max_width) {
           return Tomographer::histogramPrettyPrint(
-              h.toCxxHistogram<tpy::RealType,tpy::RealType>(),
+              h.toCxxHistogram<tpy::HistogramParams::Scalar,tpy::HistogramParams::Scalar>(),
               max_width
               );          
         },
@@ -464,7 +465,7 @@ void py_tomo_histogram(py::module rootmodule)
         })
       .def("__setstate__", [](py::object self, py::tuple t) {
           // allow 5
-          if (py::len(t) < 4 || py::len(t) > 5) {
+          if (py::len(t) < 4 || py::len(t) > 5) { // see below for possible 5th argument to ignore silently
             throw tpy::TomographerCxxError(streamstr("Invalid pickle state: expected 4, got "
                                                      << py::len(t)));
           }
@@ -481,198 +482,6 @@ void py_tomo_histogram(py::module rootmodule)
         })
        ;
   }
-
-  /* These won't be useful -- they are deprecated.  If anything, we should
-     expose the AggregatedHistogram classes .......
-
-  logger.debug("AveragedSimpleHistogram...");
-  // AveragedSimpleHistogram
-  {
-    typedef tpy::AveragedSimpleHistogram Kl;
-    py::class_<tpy::AveragedSimpleHistogram, tpy::HistogramWithErrorBars>(
-        rootmodule,
-        "AveragedSimpleHistogram",
-        "A :py:class:`HistogramWithErrorBars` which results from the "
-        "averaging of several :py:class:`Histogram` histograms."
-        "\n\n"
-        "Add histograms to average together using the :py:meth:`addHistogram()` method, and "
-        "then call :py:meth:`finalize()`. Then, the data stored in the current object will "
-        "correspond to the averaged histogram. (See :tomocxx:`here the theory about how this is "
-        "implemented <page_theory_averaged_histogram.html>`.)"
-        "\n\n"
-        "This histogram object inherits :py:class:`HistogramWithErrorBars`, so all the "
-        "methods exposed in that class are available to access the averaged histogram data."
-        "\n\n"
-        "|picklable|"
-        "\n\n"
-        ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
-        "histogram data.  The data stored in the current "
-        "histogram object is UNDEFINED before having calling `finalize()`."
-        "\n\n"
-        ".. py:attribute:: num_histograms\n\n"
-        "    The number of histograms currently stored (read-only). This property may be "
-        "    accessed at any time, also before having called :py:meth:`finalize()`."
-        )
-      .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
-      .def(py::init<tpy::RealType, tpy::RealType, tpy::CountIntType>(),
-           "min"_a, "max"_a, "num_bins"_a)
-      .def_property_readonly("num_histograms", [](const Kl & h) { return h.num_histograms; })
-      .def("addHistogram",
-           [](Kl & h, const tpy::Histogram & o) { h.addHistogram(o); },
-           "histogram"_a,
-           "addHistogram(histogram)\n\n"
-           "Add a new histogram to the average with the others.")
-      .def("reset",
-           [](Kl & h) { h.reset(); }
-          )
-      .def("reset",
-           [](Kl & h, const tpy::HistogramParams & param) { h.reset(param); },
-           "reset([param])\n\n"
-           "Clear all stored histograms and start a new averaging sequence. The "
-           "histogram parameters are changed to `param` if you specify `param`, otherwise "
-           "they are left unchanged. After calling this function, the averaged histogram class "
-           "is in the same state as a freshly constructed averaged histogram object: you may call "
-           ":py:meth:`addHistogram()` to add histograms to the average, after which you must call "
-           ":py:meth:`finalize()` to finalize the averaging procedure."
-           )
-      .def("finalize", [](Kl & h) { h.finalize(); },
-           "finalize()\n\n"
-           "Call this function after all the histograms have been added with calls to :py:meth:`addHistogram()`. Only "
-           "after calling this function may you access the averaged histogram in the current histogram object.")
-      .def("__repr__", [](const Kl& p) {
-          return streamstr("AveragedSimpleHistogram(min="
-                           << fmt_hist_param_float(p.params.min) << ",max="
-                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
-        })
-      .def("__getstate__", avghistogram_pickle<Kl>::getstate)
-      .def("__setstate__", avghistogram_pickle<Kl>::setstate)
-      ;
-  }
-  logger.debug("AveragedSimpleRealHistogram...");
-  // AveragedSimpleRealHistogram
-  {
-    typedef tpy::AveragedSimpleRealHistogram Kl;
-    py::class_<tpy::AveragedSimpleRealHistogram,tpy::HistogramWithErrorBars>(
-        rootmodule,
-        "AveragedSimpleRealHistogram",
-        "A :py:class:`HistogramWithErrorBars` which results from the "
-        "averaging of several :py:class:`HistogramReal` histograms."
-        "\n\n"
-        "This class is identical in functionality to :py:class:`AveragedSimpleHistogram`, except "
-        "that the histograms which are to be averaged are :py:class:`HistogramReal` "
-        "objects."
-        "\n\n"
-        "|picklable|"
-        "\n\n"
-        ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
-        "histogram data.  The data stored in the current "
-        "histogram object is UNDEFINED before having calling `finalize()`."
-        "\n\n"
-        ".. py:attribute:: num_histograms\n\n"
-        "    The number of histograms currently stored (read-only). This property may be "
-        "    accessed at any time, also before having called :py:meth:`finalize()`."
-        )
-      .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
-      .def(py::init<tpy::RealType, tpy::RealType, tpy::CountIntType>(),
-          "min"_a, "max"_a, "num_bins"_a)
-      .def_property_readonly("num_histograms", [](const Kl & h) { return h.num_histograms; })
-      .def("addHistogram",
-           [](Kl & h, const tpy::HistogramReal & o) { h.addHistogram(o); },
-           "histogram"_a,
-           "addHistogram(histogram)\n\n"
-           "Add a new histogram to the average with the others.")
-      .def("reset",
-           [](Kl & h) { h.reset(); }
-          )
-      .def("reset",
-           [](Kl & h, const tpy::HistogramParams & param) { h.reset(param); },
-           "reset([param])\n\n"
-           "Clear all stored histograms and start a new averaging sequence. The "
-           "histogram parameters are changed to `param` if you specify `param`, otherwise "
-           "they are left unchanged. After calling this function, the averaged histogram class "
-           "is in the same state as a freshly constructed averaged histogram object: you may call "
-           ":py:meth:`addHistogram()` to add histograms to the average, after which you must call "
-           ":py:meth:`finalize()` to finalize the averaging procedure."
-           )
-      .def("finalize", [](Kl & h) { h.finalize(); },
-           "finalize()\n\n"
-           "Call this function after all the histograms have been added with calls to :py:meth:`addHistogram()`. Only "
-           "after calling this function may you access the averaged histogram in the current histogram object.")
-      .def("__repr__", [](const Kl& p) {
-          return streamstr("AveragedSimpleRealHistogram(min="
-                           << fmt_hist_param_float(p.params.min) << ",max="
-                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
-        })
-      .def("__getstate__", avghistogram_pickle<Kl>::getstate)
-      .def("__setstate__", avghistogram_pickle<Kl>::setstate)
-      ;
-  }
-  logger.debug("AveragedErrorBarHistogram...");
-  // AveragedErrorBarHistogram
-  {
-    typedef tpy::AveragedErrorBarHistogram Kl;
-    py::class_<tpy::AveragedErrorBarHistogram,tpy::HistogramWithErrorBars>(
-        rootmodule,
-        "AveragedErrorBarHistogram",
-        "A :py:class:`HistogramWithErrorBars` which results from the "
-        "averaging of several :py:class:`HistogramWithErrorBars` histograms."
-        "\n\n"
-        "This class is essentially identical in functionality to "
-        ":py:class:`AveragedSimpleHistogram` and :py:class:`AveragedSimpleRealHistogram`, except "
-        "that the histograms which are to be averaged are "
-        " :py:class:`HistogramWithErrorBars` "
-        "objects, i.e. each histogram added already has information about error bars.  Those "
-        "error bars are then combined appropriately, as described in :tomocxx:`the theory about "
-        "how this class is implemented <page_theory_averaged_histogram.html>`."
-        "\n\n"
-        "|picklable|"
-        "\n\n"
-        ".. warning:: You must not forget to call `finalize()` before accessing the averaged "
-        "histogram data.  The data stored in the current "
-        "histogram object is UNDEFINED before having calling `finalize()`."
-        "\n\n"
-        ".. py:attribute:: num_histograms\n\n"
-        "    The number of histograms currently stored (read-only). This property may be "
-        "    accessed at any time, also before having called :py:meth:`finalize()`."
-        )
-      .def(py::init<tpy::HistogramParams>(), "params"_a = tpy::HistogramParams())
-      .def(py::init<tpy::RealType, tpy::RealType, tpy::CountIntType>(),
-          "min"_a, "max"_a, "num_bins"_a)
-      .def_property_readonly("num_histograms", [](const Kl & h) { return h.num_histograms; })
-      .def("addHistogram",
-           [](Kl & h, const tpy::HistogramWithErrorBars & o) {
-             h.addHistogram(o);
-           },
-           "histogram"_a,
-           "addHistogram(histogram)\n\n"
-           "Add a new histogram to the average with the others.")
-      .def("reset",
-           [](Kl & h) { h.reset(); }
-          )
-      .def("reset",
-           [](Kl & h, const tpy::HistogramParams & param) { h.reset(param); },
-           "reset([param])\n\n"
-           "Clear all stored histograms and start a new averaging sequence. The "
-           "histogram parameters are changed to `param` if you specify `param`, otherwise "
-           "they are left unchanged. After calling this function, the averaged histogram class "
-           "is in the same state as a freshly constructed averaged histogram object: you may call "
-           ":py:meth:`addHistogram()` to add histograms to the average, after which you must call "
-           ":py:meth:`finalize()` to finalize the averaging procedure."
-           )
-      .def("finalize", [](Kl & h) { h.finalize(); },
-           "finalize()\n\n"
-           "Call this function after all the histograms have been added with calls to :py:meth:`addHistogram()`. Only "
-           "after calling this function may you access the averaged histogram in the current histogram object.")
-      .def("__repr__", [](const Kl& p) {
-          return streamstr("AveragedErrorBarHistogram(min="
-                           << fmt_hist_param_float(p.params.min) << ",max="
-                           << fmt_hist_param_float(p.params.max) << ",num_bins=" << p.params.num_bins << ")");
-        })
-      .def("__getstate__", avghistogram_pickle<Kl>::getstate)
-      .def("__setstate__", avghistogram_pickle<Kl>::setstate)
-      ;
-  }
-  */
 
 
   // deprecated aliases

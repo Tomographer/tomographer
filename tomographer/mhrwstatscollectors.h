@@ -351,7 +351,7 @@ public:
 
   //! Returns true after enough samples have been collected to fill the internal buffer
   inline bool hasMovingAverageAcceptanceRatio() const {
-    return ( pos >= accept_buffer.size() );
+    return ( pos >= (IterCountIntType)accept_buffer.size() );
   }
 
 
@@ -385,7 +385,7 @@ public:
     // Strategy: update the item in the array at position pos%num_samples, and increment
     // pos. This way we remove the oldest samples and replace them by the new ones.
 
-    accept_buffer[ pos % accept_buffer.size() ] = (int)accepted;
+    accept_buffer[ (Eigen::Index)(pos % (IterCountIntType)accept_buffer.size()) ] = (int)accepted;
     ++pos;
   }
 

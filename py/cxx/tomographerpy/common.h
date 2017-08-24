@@ -86,22 +86,53 @@ namespace py = pybind11;
 
 namespace tpy {
 
-//! Real type for template arguments (double)
+//! Real type for general calculation precisions (density matrix elements, log-likelihood value calculation, etc.)
+typedef double RealScalar;
+//! Real type for averaged and/or normalized histograms
+typedef double CountRealType;
+
+//! A shorthand for std::complex<RealScalar>
+typedef std::complex<RealScalar> ComplexScalar;
+
+//! Integer type used for histogram counts
+typedef int HistCountIntType;
+//! Integer type used for iteration counts in the random walk
+typedef long IterCountIntType;
+//! Integer type used for counting the number of tasks
+typedef int TaskCountIntType;
+//! Integer type used for counting the number of measurement outcomes
+typedef int FreqCountIntType;
+
+
+/** \brief Floating-point type for template arguments -- deprecated
+ *
+ * \deprecated Since %Tomographer 5.3, this type is deprecated in favor of the more
+ *             versatile \ref RealScalar (along with \ref ComplexScalar) and \ref
+ *             CountRealType.
+ */
 typedef double RealType;
-//! Integer type for template arguments (`long' in case of long random walks)
+
+/** \brief Integer type for template arguments (`long' in case of long random walks) --
+ *         deprecated
+ *
+ * \deprecated Since %Tomographer 5.3, this type is deprecated in favor of the more
+ *             versatile \ref HistCountIntType, \ref IterCountIntType, \ref
+ *             TaskCountIntType, and \ref FreqCountIntType.
+ */
 typedef long CountIntType;
 
-//! Shorthand, a 1-D Eigen::Matrix of RealType's
-typedef Eigen::Matrix<RealType, Eigen::Dynamic, 1> RealVectorType;
-//! Shorthand, a 2-D Eigen::Matrix of RealType's
-typedef Eigen::Matrix<RealType, Eigen::Dynamic, Eigen::Dynamic> RealMatrixType;
-//! Shorthand, a 1-D Eigen::Matrix of std::complex<RealType>'s
-typedef Eigen::Matrix<std::complex<RealType>, Eigen::Dynamic, 1> CplxVectorType;
-//! Shorthand, a 2-D Eigen::Matrix of std::complex<RealType>'s
-typedef Eigen::Matrix<std::complex<RealType>, Eigen::Dynamic, Eigen::Dynamic> CplxMatrixType;
+//! Shorthand, a 1-D Eigen::Matrix of RealScalar's
+typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, 1> RealVectorType;
+//! Shorthand, a 2-D Eigen::Matrix of RealScalar's
+typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, Eigen::Dynamic> RealMatrixType;
+//! Shorthand, a 1-D Eigen::Matrix of ComplexScalar's
+typedef Eigen::Matrix<ComplexScalar, Eigen::Dynamic, 1> CplxVectorType;
+//! Shorthand, a 2-D Eigen::Matrix of ComplexScalar's
+typedef Eigen::Matrix<ComplexScalar, Eigen::Dynamic, Eigen::Dynamic> CplxMatrixType;
 
-//! Shorthand, a 1-D Eigen::Matrix of CountIntType's
+//! Shorthand, a 1-D Eigen::Matrix of CountIntType's -- deprecated
 typedef Eigen::Matrix<CountIntType, Eigen::Dynamic, 1> CountIntVectorType;
+
 
 /** \brief Import tomographer definitions into other Python modules
  *

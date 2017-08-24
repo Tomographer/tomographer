@@ -113,7 +113,7 @@ inline std::ostream & operator<<(std::ostream & stream, MHWalkerParamsStepSize<S
  * runs, sweep size, number of live runs, step size).
  *
  * \since
- * Changed in Tomographer 5.0: This class now stores an arbitrary type for the parameters
+ * Changed in %Tomographer 5.0: This class now stores an arbitrary type for the parameters
  * of the MHWalker type. Note the new template parameter order!!
  */
 template<typename MHWalkerParams_ = MHWalkerParamsStepSize<double>, typename CountIntType_ = int >
@@ -122,10 +122,19 @@ struct TOMOGRAPHER_EXPORT MHRWParams
   typedef MHWalkerParams_ MHWalkerParams;
   typedef CountIntType_ CountIntType;
 
+  /** \brief default constructor -- sets values to zero and default-initializes the \ref
+   *         mhwalker_params
+   */
   explicit MHRWParams()
     : mhwalker_params(), n_sweep(0), n_therm(0), n_run(0)
   {
   }
+
+  /** \brief standard constructor -- initializes fields to given values
+   *
+   * The first argument may be anything which can be forwarded to the constructor of \ref
+   * mhwalker_params.
+   */ 
   template<typename MHWalkerParamsInit>
   MHRWParams(MHWalkerParamsInit && mhwalker_params_,
              CountIntType n_sweep_, CountIntType n_therm_, CountIntType n_run_)
@@ -134,6 +143,8 @@ struct TOMOGRAPHER_EXPORT MHRWParams
   {
   }
 
+  /** \brief copy constructor
+   */ 
   template<typename MHWalkerParamsOtherType, typename CountIntOtherType>
   MHRWParams(const MHRWParams<MHWalkerParamsOtherType, CountIntOtherType> & copy)
     : mhwalker_params(copy.mhwalker_params),

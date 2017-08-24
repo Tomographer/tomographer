@@ -724,6 +724,30 @@ class analytical_known_example_tomorun(unittest.TestCase):
         self.assertGreater(spread, 0.2)
 
 
+    def test_chokes_on_extra_args(self):
+
+        # just make sure that tomorun() raises an exception if unexpected arguments are
+        # provided.
+        with self.assertRaises(tomographer.tomorun.TomorunInvalidInputError):
+            res = tomographer.tomorun.tomorun(
+                dim=2,
+                Emn=self.Emn,
+                Nm=self.Nm,
+                fig_of_merit='obs-value',
+                observable=self.rho_ref,
+                num_repeats=1,
+                mhrw_params=tomographer.MHRWParams(
+                    step_size=0.04,
+                    n_sweep=25,
+                    n_therm=500,
+                    n_run=1024,),
+                hist_params=tomographer.HistogramParams(),
+                base_seed=1234567890, # misspelled
+                abc_wrong={'x': 'y'} # just an additional arg
+            )
+
+            
+
 # normally, this is not needed as we are being run via pyruntest.py, but it might be
 # useful if we want to run individually picked tests
 if __name__ == '__main__':

@@ -25,6 +25,7 @@
  * SOFTWARE.
  */
 
+#include <limits.h>  // CHAR_BIT
 
 #include <tomographerpy/common.h>
 #include "common_p.h"
@@ -157,6 +158,8 @@ PYBIND11_PLUGIN(_tomographer_cxx)
     compiler_info["desc"_s] = py::cast(TOMOGRAPHER_COMPILER_INFO_STR);
     compile_info["compiler"_s] = compiler_info;
 
+    // dependency versions: eigen, boost & pybind11
+
     compile_info["eigen"_s] = Tomographer::Tools::fmts("Eigen %d.%d.%d (SIMD: %s)\n", EIGEN_WORLD_VERSION,
                                                        EIGEN_MAJOR_VERSION, EIGEN_MINOR_VERSION,
                                                        Eigen::SimdInstructionSetsInUse()) ;
@@ -169,6 +172,30 @@ PYBIND11_PLUGIN(_tomographer_cxx)
                                                                         PYBIND11_VERSION_MINOR,
                                                                         PYBIND11_VERSION_PATCH) ) ;
 
+    // also add information about the C++ types in use
+    py::dict cxx_types_dic;
+    // ---
+#define ADD_DIC_TYPE_INFO(Tname, T)                                     \
+    { py::dict d;                                                       \
+      d["cxxtype"_s] = py::cast(boost::core::demangle(typeid(T).name())) ; \
+      d["bits"_s] = py::cast(sizeof(T)*CHAR_BIT) ;                      \
+      if (std::is_integral<T>::value) {                                 \
+        d["signed"_s] = py::cast(std::is_signed<T>::value) ;            \
+      }                                                                 \
+      cxx_types_dic[Tname] = d;                                         \
+    }
+    // ---
+    ADD_DIC_TYPE_INFO("RealScalar"_s, tpy::RealScalar) ;
+    ADD_DIC_TYPE_INFO("CountRealType"_s, tpy::CountRealType) ;
+    ADD_DIC_TYPE_INFO("HistCountIntType"_s, tpy::HistCountIntType) ;
+    ADD_DIC_TYPE_INFO("IterCountIntType"_s, tpy::IterCountIntType) ;
+    ADD_DIC_TYPE_INFO("TaskCountIntType"_s, tpy::TaskCountIntType) ;
+    ADD_DIC_TYPE_INFO("FreqCountIntType"_s, tpy::FreqCountIntType) ;
+    //
+
+    compile_info["cxx_types"_s] = cxx_types_dic;
+    // --> tomographer.version.compile_info['cxx_types']['cxxtype' | 'bits']['IterCountIntType']
+    
     versionmodule.attr("compile_info") = compile_info;
   }
 

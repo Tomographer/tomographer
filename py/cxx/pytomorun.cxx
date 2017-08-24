@@ -74,17 +74,17 @@ namespace tpy {
 class CallableValueCalculator
 {
 public:
-  typedef tpy::RealType ValueType;
+  typedef tpy::RealScalar ValueType;
   
   CallableValueCalculator(py::object fn_)
     : fn(fn_)
   {
   }
 
-  tpy::RealType getValue(const Eigen::Ref<const tpy::CplxMatrixType> & T) const
+  tpy::RealScalar getValue(const Eigen::Ref<const tpy::CplxMatrixType> & T) const
   {
     py::gil_scoped_acquire gil_acquire;
-    return fn(py::cast(T)).cast<tpy::RealType>();
+    return fn(py::cast(T)).cast<tpy::RealScalar>();
   }
 
 
@@ -93,9 +93,10 @@ private:
 };
 
 
-typedef Tomographer::DenseDM::DMTypes<Eigen::Dynamic, tpy::RealType> DMTypes;
+typedef Tomographer::DenseDM::DMTypes<Eigen::Dynamic, tpy::RealScalar> DMTypes;
 
-typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<tpy::RealType>, tpy::CountIntType>
+typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<tpy::RealScalar>,
+                                tpy::IterCountIntType>
   CxxMHRWParamsType;
 
 
@@ -124,7 +125,7 @@ class LLH_MHWalker
 public:
   typedef DMTypes::MatrixType PointType;
 
-  typedef Tomographer::MHWalkerParamsStepSize<tpy::RealType> WalkerParams;
+  typedef Tomographer::MHWalkerParamsStepSize<tpy::RealScalar> WalkerParams;
 
   typedef typename DenseLLHType::LLHValueType FnValueType;
 
@@ -140,7 +141,8 @@ public:
       (int)Tomographer::DenseDM::TSpace::LLHMHWalkerLight<DenseLLHType,RngType,LoggerType>::UseFnSyntaxType
       == (int)Tomographer::MHUseFnLogValue ) ;
 
-  LLH_MHWalker(LLH_MHWalker_Which which_, const DenseLLHType & llh_, RngType & rng_, LoggerType & baselogger)
+  LLH_MHWalker(LLH_MHWalker_Which which_, const DenseLLHType & llh_,
+               RngType & rng_, LoggerType & baselogger)
     : which(which_),
       llh(llh_),
       rng(rng_),
@@ -224,10 +226,10 @@ typedef std::mt19937 RngType;
 
 
 typedef Tomographer::MultiplexorValueCalculator<
-  tpy::RealType,
-  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, tpy::RealType>,
-  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, tpy::RealType>,
-  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, tpy::RealType>,
+  tpy::RealScalar,
+  Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, tpy::RealScalar>,
+  Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, tpy::RealScalar>,
+  Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, tpy::RealScalar>,
   Tomographer::DenseDM::TSpace::ObservableValueCalculator<tpy::DMTypes>,
   tpy::CallableValueCalculator
   > ValueCalculator;
@@ -236,11 +238,11 @@ typedef Tomographer::MultiplexorValueCalculator<
 typedef Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   ValueCalculator, // our value calculator
   true, // use binning analysis
-  Tomographer::MHWalkerParamsStepSize<tpy::RealType>, // MHWalkerParams
+  Tomographer::MHWalkerParamsStepSize<tpy::RealScalar>, // MHWalkerParams
   RngType::result_type, // RngSeedType
-  tpy::CountIntType, // IterCountIntType
-  tpy::RealType, // CountRealType
-  tpy::CountIntType // HistCountIntType
+  tpy::IterCountIntType, // IterCountIntType
+  tpy::CountRealType, // CountRealType
+  tpy::HistCountIntType // HistCountIntType
   >
   CDataBaseType;
 
@@ -260,19 +262,19 @@ public:
 	   int binning_num_levels, // number of binning levels in the binning analysis
 	   tpy::MHRWParams mhrw_params, // parameters of the random walk
 	   RngType::result_type base_seed, // a random seed to initialize the random number generator
-           std::string jumps_method_, // "light" or "full"
+           tpy::LLH_MHWalker_Which jumps_method_which_, // enum value (LLH_MHWalker_Which)
            py::dict ctrl_step_size_params_, // parameters for step size controller
            py::dict ctrl_converged_params_ // parameters for value bins converged controller
       )
     : CDataBaseType(
         valcalc, hist_params, binning_num_levels,
         tpy::CxxMHRWParamsType(
-            tpy::pyMHWalkerParamsFromPyObj<Tomographer::MHWalkerParamsStepSize<tpy::RealType> >(
+            tpy::pyMHWalkerParamsFromPyObj<Tomographer::MHWalkerParamsStepSize<tpy::RealScalar> >(
                 mhrw_params.mhwalker_params),
             mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run),
         base_seed),
       llh(llh_),
-      jumps_method(jumps_method_),
+      jumps_method_which(jumps_method_which_),
       ctrl_step_size_params(ctrl_step_size_params_),
       ctrl_converged_params(ctrl_converged_params_)
   {
@@ -280,7 +282,7 @@ public:
 
   const DenseLLH llh;
 
-  const std::string jumps_method;
+  const tpy::LLH_MHWalker_Which jumps_method_which;
   const py::dict ctrl_step_size_params;
   const py::dict ctrl_converged_params;
 
@@ -322,9 +324,7 @@ public:
     //
 
     tpy::LLH_MHWalker<DenseLLH,Rng,LoggerType> mhwalker(
-        ( jumps_method == "light" ? tpy::LLH_MHWalker_Light
-          : (jumps_method == "full" ? tpy::LLH_MHWalker_Full
-             : throw TomorunInvalidInputError("Invalid jumps method: '" + jumps_method + "'"))) ,
+        jumps_method_which,
 	llh,
 	rng,
 	baselogger
@@ -375,7 +375,7 @@ public:
       }
     }
 
-    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<tpy::CountIntType>
+    Tomographer::MHRWMovingAverageAcceptanceRatioStatsCollector<tpy::IterCountIntType>
       movavg_accept_stats(mvavg_numsamples);
 
     auto ctrl_step = 
@@ -391,14 +391,14 @@ public:
 
     logger.debug("Created auto step size controller.") ;
 
-    int check_frequency_sweeps = 0;
+    tpy::IterCountIntType check_frequency_sweeps = 0;
     Eigen::Index max_allowed[3] = {0};
     double max_add_run_iters = 1.5;
     {
       py::gil_scoped_acquire gilacq;
       if (ctrl_converged_params.attr("get")("enabled", true).cast<bool>()) {
         check_frequency_sweeps =
-          ctrl_converged_params.attr("get")("check_frequency_sweeps", 1024).cast<int>();
+          ctrl_converged_params.attr("get")("check_frequency_sweeps", 1024).cast<tpy::IterCountIntType>();
         max_allowed[0] =
           ctrl_converged_params.attr("get")("max_allowed_unknown",
                                             1+2*histogram_params.num_bins/100).template cast<Eigen::Index>();
@@ -421,7 +421,7 @@ public:
 
     // value error bins convergence controller
     auto ctrl_convergence = 
-      Tomographer::mkMHRWValueErrorBinsConvergedController<tpy::CountIntType>(
+      Tomographer::mkMHRWValueErrorBinsConvergedController<tpy::IterCountIntType>(
           value_stats, baselogger,
           check_frequency_sweeps,
           max_allowed[0], max_allowed[1], max_allowed[2],
@@ -445,46 +445,69 @@ public:
 
 
 
-
-
+template<typename T, typename LocalLoggerType>
+inline T dict_pop_type_or_warning(py::dict dict, std::string key, LocalLoggerType & logger,
+                                  std::string warningmsg, const T & default_val)
+{
+  if (!dict.contains(py::cast(key))) {
+    logger.warning(warningmsg);
+    return default_val;
+  }
+  return dict.attr("pop")(py::cast(std::move(key))).cast<T>();
+}
+template<typename T, typename LocalLoggerType>
+inline T dict_pop_type_or_warning(py::dict dict, std::string key, LocalLoggerType & logger,
+                                  std::string warningmsg) // uses default-constructed T() as default
+{
+  return dict_pop_type_or_warning(std::move(dict), std::move(key), logger, std::move(warningmsg), T()) ;
+}
+                      
 
 
 py::object py_tomorun(
-    int dim,
-    const Eigen::MatrixXd& Exn,
-    const py::list& Emn,
-    const Eigen::VectorXi& Nm,
-    py::object fig_of_merit,
-    const Eigen::MatrixXcd& ref_state,
-    const Eigen::MatrixXcd& observable,
-    const tpy::HistogramParams& hist_params,
-    const tpy::MHRWParams& mhrw_params,
-    int binning_num_levels,
-    int num_repeats,
-    py::object progress_fn,
-    int progress_interval_ms,
-    std::string jumps_method,
-    py::dict ctrl_step_size_params,
-    py::dict ctrl_converged_params,
-    py::object rng_base_seed // an integer (actually RngType::result_type) or None
+    const int dim,
+    py::kwargs kwargs
     )
 {
   Tomographer::Logger::LocalLogger<tpy::PyLogger> logger(TOMO_ORIGIN, *tpy::logger);
 
   logger.debug("py_tomorun()");
 
+  //
+  // first, read out the POVM effects & frequencies from kwargs
+  //
+
   typedef tpy::DMTypes::MatrixType MatrixType;
+  //typedef Eigen::Matrix<tpy::DMTypes::ComplexScalar,Eigen::Dynamic,Eigen::Dynamic> DynCMatType;
+  typedef Eigen::Matrix<tpy::DMTypes::RealScalar,Eigen::Dynamic,Eigen::Dynamic> DynRMatType;
+  typedef Eigen::Matrix<DenseLLH::IntFreqType,Eigen::Dynamic,1> NmType;
 
   tpy::DMTypes dmt(dim);
 
   // prepare llh object
   DenseLLH llh(dmt);
 
-  if (Exn.rows()) { // use Exn
-    if (py::len(Emn)) { // error: both Exn & Emn specified
+  if (!kwargs.contains("Emn"_s) && !kwargs.contains("Exn"_s)) {
+    throw TomorunInvalidInputError("No measurements specified. Please specify either the `Emn' "
+                                   "or the `Exn' argument");
+  }
+  if (!kwargs.contains("Nm"_s)) {
+    throw TomorunInvalidInputError("No measurement outcome counts specified. "
+                                   "Please specify the `Nm' argument.");
+  }
+
+  NmType Nm = kwargs.attr("pop")("Nm"_s).cast<NmType>();
+
+  if (kwargs.contains("Exn"_s)) {
+    // use Exn
+    const DynRMatType Exn = kwargs.attr("pop")("Exn"_s).cast<DynRMatType>();
+    if (kwargs.contains("Emn"_s)) { // error: both Exn & Emn specified
       throw TomorunInvalidInputError("You can't specify both Exn and Emn arguments");
     }
-    // use Exn
+    if (Exn.cols() != dmt.dim2()) {
+      throw TomorunInvalidInputError("Exn argument is expected to have exactly dim^2 = "
+                                     + std::to_string(dmt.dim2()) + " columns");
+    }
     if (Exn.rows() != Nm.rows()) {
       throw TomorunInvalidInputError("Mismatch in number of measurements: Exn.rows()="
                                      + std::to_string(Exn.rows()) + " but Nm.rows()="
@@ -493,27 +516,28 @@ py::object py_tomorun(
     for (Eigen::Index k = 0; k < Nm.rows(); ++k) {
       llh.addMeasEffect(Exn.row(k).transpose(), Nm(k), true);
     }
-  } else if (py::len(Emn)) {
+  } else {
     // use Emn
-    if (py::len(Emn) != (std::size_t)Nm.rows()) {
+    tomographer_assert(kwargs.contains("Emn"_s)) ; // we did this check already before
+
+    py::object Emn = kwargs.attr("pop")("Emn"_s);
+    
+    const std::size_t len_Emn = py::len(Emn);
+    if (len_Emn != (std::size_t)Nm.rows()) {
       throw TomorunInvalidInputError("Mismatch in number of measurements: len(Emn)="
-                                     + std::to_string(py::len(Emn)) +
+                                     + std::to_string(len_Emn) +
                                      " but Nm.rows()=" + std::to_string(Nm.rows()));
     }
     for (Eigen::Index k = 0; k < Nm.rows(); ++k) {
-      MatrixType POVMeffect = Emn[(std::size_t)k].cast<MatrixType>();
+      MatrixType POVMeffect = Emn[py::cast(k)].cast<MatrixType>();
       llh.addMeasEffect(POVMeffect, Nm(k), true);
     }
-  } else {
-    // no measurements specified
-    throw TomorunInvalidInputError("No measurements specified. Please specify either the `Exn' "
-                                   "or the `Emn' argument");
   }
 
   logger.debug([&](std::ostream & ss) {
-      ss << "\n\nExn: size="<<llh.Exn().size()<<"\n"
+      ss << "\n\nllh.Exn: size="<<llh.Exn().size()<<"\n"
 	 << llh.Exn() << "\n";
-      ss << "\n\nNx: size="<<llh.Nx().size()<<"\n"
+      ss << "\n\nllh.Nx: size="<<llh.Nx().size()<<"\n"
 	 << llh.Nx() << "\n";
     });
 
@@ -523,6 +547,15 @@ py::object py_tomorun(
   MatrixType T_ref(dmt.initMatrixType());
   MatrixType rho_ref(dmt.initMatrixType());
   MatrixType A(dmt.initMatrixType());
+
+  py::object fig_of_merit = py::none();
+  if (kwargs.contains("fig_of_merit")) {
+    fig_of_merit = kwargs.attr("pop")("fig_of_merit"_s);
+  } else {
+    logger.warning("The `fig_of_merit' argument wasn't specified. I'm assuming `fig_of_merit=\"obs-value\"', "
+                   "and will expect an `observable=' argument.");
+    fig_of_merit = "obs-value"_s;
+  }
 
   bool fig_of_merit_callable = py::hasattr(fig_of_merit, "__call__");
   std::string fig_of_merit_s;
@@ -534,9 +567,21 @@ py::object py_tomorun(
 
   if (fig_of_merit_s == "fidelity" || fig_of_merit_s == "tr-dist" || fig_of_merit_s == "purif-dist") {
 
+    if (!kwargs.contains("ref_state"_s)) {
+      throw TomorunInvalidInputError("Expected `ref_state=' argument for figure of merit '"+fig_of_merit_s+"'");
+    }
+    MatrixType ref_state = kwargs.attr("pop")("ref_state"_s).cast<MatrixType>();
+    
+    // allow the user to also specify observable=, but warn that the argument will be ignored
+    if (kwargs.contains("observable"_s)) {
+      kwargs.attr("pop")("observable"_s);
+      logger.warning("Ignoring additional argument `observable=' which is not used for "
+                     "figure of merit '"+fig_of_merit_s+"'");
+    }
+
     if (ref_state.rows() != dmt.dim() || ref_state.cols() != dmt.dim()) {
       throw TomorunInvalidInputError(streamstr("Expected " << dmt.dim() << " x " << dmt.dim() << " complex matrix as "
-                                               "'ref_state' argument for fig_of_merit='"<<fig_of_merit_s<<"'")) ;
+                                               "`ref_state=' argument for fig_of_merit='"<<fig_of_merit_s<<"'")) ;
     }
 
     Eigen::SelfAdjointEigenSolver<MatrixType> eig(ref_state);
@@ -548,26 +593,50 @@ py::object py_tomorun(
   
     Tomographer::MathTools::forcePosVecKeepSum<RealVectorType>(
         d,
-        Eigen::NumTraits<tpy::RealType>::dummy_precision()
+        Eigen::NumTraits<tpy::RealScalar>::dummy_precision()
         );
-  
-    // TODO: ensure that something was given
 
     rho_ref = U * d.asDiagonal() * U.adjoint();
     T_ref = U * d.cwiseSqrt().asDiagonal() * U.adjoint();
 
   } else if (fig_of_merit_s == "obs-value") {
 
+    if (!kwargs.contains("observable"_s)) {
+      throw TomorunInvalidInputError("Expected `observable=' argument for figure of merit '"+fig_of_merit_s+"'");
+    }
+    // allow the user to also specify ref_state=, but warn that the argument will be ignored
+    if (kwargs.contains("ref_state"_s)) {
+      kwargs.attr("pop")("ref_state"_s);
+      logger.warning("Ignoring additional argument `ref_state=' which is not used for "
+                     "figure of merit '"+fig_of_merit_s+"'");
+    }
+
+    MatrixType observable = kwargs.attr("pop")("observable"_s).cast<MatrixType>();
+    
     if (observable.rows() != dmt.dim() || observable.cols() != dmt.dim()) {
       throw TomorunInvalidInputError(streamstr("Expected " << dmt.dim() << " x " << dmt.dim() << " complex matrix as "
-                                               "'observable' argument for fig_of_merit='obs-value'")) ;
+                                               "`observable=' argument for fig_of_merit='obs-value'")) ;
     }
 
     A = observable;
     
   } else if (fig_of_merit_callable) {
 
-    // custom callable
+    // ok, custom callable
+    logger.debug("Using custom callable as figure of merit.");
+
+    // allow the user to also specify observable= and/or ref_state=, but warn that those
+    // arguments will be ignored
+    if (kwargs.contains("ref_state"_s)) {
+      kwargs.attr("pop")("ref_state"_s);
+      logger.warning("Ignoring additional argument `ref_state=' which is not used for "
+                     "a custom callable figure of merit");
+    }
+    if (kwargs.contains("observable"_s)) {
+      kwargs.attr("pop")("observable"_s);
+      logger.warning("Ignoring additional argument `observable=' which is not used for "
+                     "a custom callable figure of merit");
+    }
 
   } else {
     throw TomorunInvalidInputError(std::string("Invalid figure of merit: ") +
@@ -585,9 +654,9 @@ py::object py_tomorun(
                                           + py::repr(fig_of_merit).cast<std::string>())
               ))))),
         // the valuecalculator instances which are available:
-      [&]() { return new Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, tpy::RealType>(T_ref); },
-      [&]() { return new Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, tpy::RealType>(T_ref); },
-      [&]() { return new Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, tpy::RealType>(rho_ref); },
+      [&]() { return new Tomographer::DenseDM::TSpace::FidelityToRefCalculator<tpy::DMTypes, tpy::RealScalar>(T_ref); },
+      [&]() { return new Tomographer::DenseDM::TSpace::PurifDistToRefCalculator<tpy::DMTypes, tpy::RealScalar>(T_ref); },
+      [&]() { return new Tomographer::DenseDM::TSpace::TrDistToRefCalculator<tpy::DMTypes, tpy::RealScalar>(rho_ref); },
       [&]() { return new Tomographer::DenseDM::TSpace::ObservableValueCalculator<tpy::DMTypes>(dmt, A); },
       [&]() { return new tpy::CallableValueCalculator(fig_of_merit); }
         );
@@ -596,22 +665,42 @@ py::object py_tomorun(
       stream << "Value calculator set up with fig_of_merit=" << py::repr(fig_of_merit).cast<std::string>();
     });
 
-  // some validity checks
-  if (hist_params.num_bins < 1) {
-    throw py::value_error("Invalid hist_params: must have num_bins >= 1") ;
-  }
-  if (mhrw_params.n_sweep < 1) {
-    throw py::value_error("Invalid mhrw_params: must have n_sweep >= 1") ;
-  }
-  if (mhrw_params.n_therm < 0) {
-    throw py::value_error("Invalid mhrw_params: must have n_therm >= 0") ;
-  }
-  if (mhrw_params.n_run < 0) {
-    throw py::value_error("Invalid mhrw_params: must have n_run >= 0") ;
+  //
+  // Get the params for the histogram and the mhrw
+  //
+  const tpy::HistogramParams hist_params =
+    dict_pop_type_or_warning<tpy::HistogramParams>(
+        kwargs, "hist_params", logger,
+        "`hist_params=' argument not specified, using possibly meaningless default params.");
+
+  if (!kwargs.contains("mhrw_params"_s)) {
+    throw TomorunInvalidInputError("Please specify the parameters of the random walk using the "
+                                   "`mrhw_params=' argument.");
   }
 
+  const tpy::MHRWParams mhrw_params =
+    kwargs.attr("pop")("mhrw_params"_s).cast<tpy::MHRWParams>();
+  
+  // some validity checks
+  if (hist_params.num_bins < 1) {
+    throw TomorunInvalidInputError("Invalid hist_params: must have num_bins >= 1") ;
+  }
+  if (mhrw_params.n_sweep < 1) {
+    throw TomorunInvalidInputError("Invalid mhrw_params: must have n_sweep >= 1") ;
+  }
+  if (mhrw_params.n_therm < 0) {
+    throw TomorunInvalidInputError("Invalid mhrw_params: must have n_therm >= 0") ;
+  }
+  if (mhrw_params.n_run < 0) {
+    throw TomorunInvalidInputError("Invalid mhrw_params: must have n_run >= 0") ;
+  }
+
+  // get number of repetitions of the random walk task -- defaults to number of available cores
+  const tpy::TaskCountIntType num_repeats =
+    kwargs.attr("pop")("num_repeats"_s, std::thread::hardware_concurrency()).cast<tpy::TaskCountIntType>();
+
   if (num_repeats < 1) {
-    throw py::value_error("num_repeats must be >= 1") ;
+    throw TomorunInvalidInputError("num_repeats must be >= 1") ;
   }
 
   // prepare the random walk tasks
@@ -620,8 +709,13 @@ py::object py_tomorun(
 
   // seed for random number generator
   RngType::result_type base_seed = 0;
+  py::object rng_base_seed = py::none();
+  if (kwargs.contains("rng_base_seed"_s)) {
+    rng_base_seed = kwargs.attr("pop")("rng_base_seed"_s);
+  }
   if (rng_base_seed.is_none()) {
-    base_seed = (RngType::result_type)std::chrono::system_clock::now().time_since_epoch().count();
+    // argument not given, or given but passed `None'
+    base_seed = (RngType::result_type) std::chrono::system_clock::now().time_since_epoch().count();
   } else {
     base_seed = rng_base_seed.cast<RngType::result_type>();
   }
@@ -630,14 +724,52 @@ py::object py_tomorun(
       stream << "Got base RNG seed = " << base_seed << "\n";
     }) ;
 
+
   // number of renormalization levels in the binning analysis
-  const tpy::CountIntType recommended_num_samples_last_level = 128;
+  // Defaults to -1 --> autodetect
+  int binning_num_levels = kwargs.attr("pop")("binning_num_levels"_s, -1).cast<int>();
+  
+  const tpy::IterCountIntType recommended_num_samples_last_level = 128;
   binning_num_levels = Tomographer::sanitizeBinningLevels(binning_num_levels, mhrw_params.n_run,
                                                           recommended_num_samples_last_level,
                                                           logger) ;
 
+  const std::string jumps_method = kwargs.attr("pop")("jumps_method"_s, "full"_s).cast<std::string>();
+  tpy::LLH_MHWalker_Which jumps_method_which = tpy::LLH_MHWalker_Full;
+
+  if (jumps_method == "light") {
+    jumps_method_which = tpy::LLH_MHWalker_Light;
+  } else if (jumps_method == "full") {
+    jumps_method_which = tpy::LLH_MHWalker_Full;
+  } else {
+    throw TomorunInvalidInputError("Invalid jumps method: '" + jumps_method + "'");
+  }
+
+  // controller parameters -- default to empty dictionaries
+  py::dict ctrl_step_size_params =
+    kwargs.attr("pop")("ctrl_step_size_params"_s, py::dict()).cast<py::dict>() ;
+  py::dict ctrl_converged_params =
+    kwargs.attr("pop")("ctrl_converged_params"_s, py::dict()).cast<py::dict>() ;
+
+  py::object progress_fn = kwargs.attr("pop")("progress_fn"_s, py::none());
+  int progress_interval_ms = kwargs.attr("pop")("progress_interval_ms"_s, 500).cast<int>();
+
+  //
+  // At this point, we should have consumed all our arguments. Anything left in `kwargs'
+  // is an error.
+  //
+  if (py::len(kwargs)) {
+    // put together error message
+    throw TomorunInvalidInputError("Unknown extra arguments given: " +
+                                   (", "_s.attr("join")(kwargs.attr("keys")())).cast<std::string>()) ;
+  }
+
+  //
+  // Prepare task dispatcher, do some GIL management, and run the tasks.
+  //
+
   OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params,
-                    base_seed, jumps_method, ctrl_step_size_params, ctrl_converged_params);
+                    base_seed, jumps_method_which, ctrl_step_size_params, ctrl_converged_params);
 
   logger.debug([&](std::ostream & stream) {
       stream << "about to create the task dispatcher.  this pid = " << getpid() << "; this thread id = "
@@ -646,7 +778,8 @@ py::object py_tomorun(
 
   tpy::GilProtectedPyLogger logger_with_gil(logger.parentLogger(), false);
 
-  Tomographer::MultiProc::CxxThreads::TaskDispatcher<OurMHRandomWalkTask,OurCData,tpy::GilProtectedPyLogger>
+  Tomographer::MultiProc::CxxThreads::TaskDispatcher<OurMHRandomWalkTask,OurCData,tpy::GilProtectedPyLogger,
+                                                     tpy::TaskCountIntType>
     tasks(
         &taskcdat, // constant data
         logger_with_gil, // the main logger object -- automatically acquires the GIL for emitting messages
@@ -805,22 +938,6 @@ void py_tomo_tomorun(py::module rootmodule)
       "tomorun", // function name
       &py_tomorun, // fn pointer
       "dim"_a,
-      "Exn"_a = Eigen::MatrixXd(),
-      "Emn"_a = py::list(),
-      "Nm"_a = Eigen::VectorXi(),
-      "fig_of_merit"_a = "obs-value"_s,
-      "ref_state"_a = Eigen::MatrixXcd(),
-      "observable"_a = Eigen::MatrixXcd(),
-      "hist_params"_a = tpy::HistogramParams(),
-      "mhrw_params"_a = tpy::MHRWParams(),
-      "binning_num_levels"_a = -1,
-      "num_repeats"_a = std::thread::hardware_concurrency(),
-      "progress_fn"_a = py::none(),
-      "progress_interval_ms"_a = (int)500,
-      "jumps_method"_a = py::str("full"),
-      "ctrl_step_size_params"_a = py::dict(),
-      "ctrl_converged_params"_a = py::dict(),
-      "rng_base_seed"_a = py::none(),
       // doc
       ( "tomorun(dim, ...)\n"
         "\n"

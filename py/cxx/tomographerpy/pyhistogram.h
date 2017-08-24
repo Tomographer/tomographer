@@ -35,20 +35,15 @@
 #include <tomographer/tools/cxxutil.h>
 
 
-// namespace Tomographer { namespace Tools {
-// template<>
-// inline bool isFinite<py::float_>(py::object o)
-// {
-//   auto numpy = py::module::import("numpy");
-//   return numpy.attr("isfinite")(o).cast<bool>();
-// }
-// } } // Tomographer::Tools
-
-
 namespace tpy {
 
-//! Histogram Params. See \ref Tomographer::HistogramParams
-typedef Tomographer::HistogramParams<RealType> HistogramParams;
+/** \brief Histogram Params. See \ref Tomographer::HistogramParams
+ *
+ * Note that we use \ref RealScalar here and not \ref CountRealType -- this is the
+ * "scalar", i.e., x-axis of this histogram which corresponds to some value of the figure
+ * of merit; this is *not* the counting type.
+ */
+typedef Tomographer::HistogramParams<RealScalar> HistogramParams;
 
 
 
@@ -63,7 +58,7 @@ public:
   {
   }
 
-  Histogram(tpy::RealType min, tpy::RealType max, Eigen::Index num_bins)
+  Histogram(tpy::RealScalar min, tpy::RealScalar max, Eigen::Index num_bins)
     : params(min, max, num_bins),
       bins(py::cast(Eigen::VectorXd::Zero(num_bins))),
       off_chart(py::cast(0.0))
@@ -154,7 +149,7 @@ public:
   {
   }
 
-  HistogramWithErrorBars(tpy::RealType min, tpy::RealType max, Eigen::Index num_bins)
+  HistogramWithErrorBars(tpy::RealScalar min, tpy::RealScalar max, Eigen::Index num_bins)
     : Histogram(min, max, num_bins),
       delta(py::cast(Eigen::VectorXd::Zero(num_bins)))
   {

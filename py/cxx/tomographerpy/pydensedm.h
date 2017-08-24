@@ -40,10 +40,13 @@
 namespace tpy {
 
 //! The \ref Tomographer::DenseDM::DMTypes we should use by default, with dynamic sized matrices
-typedef Tomographer::DenseDM::DMTypes<Eigen::Dynamic, RealType> DMTypes;
+typedef Tomographer::DenseDM::DMTypes<Eigen::Dynamic, RealScalar> DMTypes;
 
 //! The \ref Tomographer::DenseDM::IndepMeasLLH type we should use by default, with dynamic sized matrices
-typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes, RealType, CountIntType> IndepMeasLLH;
+typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes, RealScalar, FreqCountIntType> IndepMeasLLH;
+
+//! A vector of frequencies (using Eigen::Matrix instead of Eigen::Array as in Tomographer::DenseDM::IndepMeasLLH)
+typedef Eigen::Matrix<FreqCountIntType, Eigen::Dynamic, 1> FreqCountIntVectorType;
 
 //! A \ref Tomographer::DenseDM::ParamX set with our dynamic-sized types
 typedef Tomographer::DenseDM::ParamX<DMTypes> ParamX;

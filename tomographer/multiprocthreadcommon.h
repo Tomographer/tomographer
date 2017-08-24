@@ -88,6 +88,9 @@ namespace ThreadCommon {
  * <li> \a TaskCountIntType should be a type to use to count the number of tasks. Usually
  *      there's no reason not to use an \c int.
  *
+ *      <b>NOTE</b>: \a TaskCountIntType must be a signed integer type, because we might
+ *      need to set the special value \a -1
+ *
  * </ul>
  *
  */
@@ -116,6 +119,9 @@ public:
    */
   typedef std::function<void(const FullStatusReportType&)> FullStatusReportCallbackType;
 
+  // \a TaskCountIntType must be a signed integer type, because we might need to set the
+  // special value \a -1
+  TOMO_STATIC_ASSERT_EXPR(std::is_signed<TaskCountIntType>::value) ;
   
 protected:
 

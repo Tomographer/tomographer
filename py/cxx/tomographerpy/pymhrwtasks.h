@@ -44,7 +44,7 @@ namespace tpy {
 
 namespace tomo_internal {
 struct TOMOGRAPHER_EXPORT DummyValueCalculator {
-  typedef RealType ValueType;
+  typedef RealScalar ValueType;
   template<typename PointType>
   inline ValueType getValue(const PointType & ) const { return 0; }
 };
@@ -55,7 +55,7 @@ struct TOMOGRAPHER_EXPORT DummyValueCalculator {
  *         this is basically a combination of a histogram and an error analysis
  */
 typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<
-    tomo_internal::DummyValueCalculator, CountIntType, RealType, Eigen::Dynamic, Eigen::Dynamic
+    tomo_internal::DummyValueCalculator, HistCountIntType, CountRealType, Eigen::Dynamic, Eigen::Dynamic
   >::Result
   ValueHistogramWithBinningMHRWStatsCollectorResult;
 
@@ -70,7 +70,7 @@ typedef Tomographer::ValueHistogramWithBinningMHRWStatsCollectorParams<
  *
  */
 typedef Tomographer::MHRWTasks::MHRandomWalkTaskResult<
-  py::object, CountIntType, py::object
+  py::object, IterCountIntType, py::object
   >
   MHRandomWalkTaskResult;
 

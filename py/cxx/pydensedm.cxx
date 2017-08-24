@@ -190,8 +190,8 @@ void py_tomo_densedm(py::module rootmodule)
            "\n\n"
            "In any case, the returned value is a `numpy.array` object."
           )
-      .def("Nx", [](const Kl& l) -> tpy::CountIntVectorType { return l.Nx(); })
-      .def("Nx", [](const Kl& l, int k) -> tpy::CountIntType { return l.Nx(k); }, "k"_a,
+      .def("Nx", [](const Kl& l) -> tpy::FreqCountIntVectorType { return l.Nx(); })
+      .def("Nx", [](const Kl& l, int k) -> tpy::FreqCountIntType { return l.Nx(k); }, "k"_a,
            "Nx([k])"
            "\n\n"
            "If `k` is not specified, then return a list of frequencies associated to each row of "
@@ -206,7 +206,7 @@ void py_tomo_densedm(py::module rootmodule)
            "Forget any stored POVM effects.  The internal `Exn` and `Nx` objects are cleared.  You may "
            "start adding POVM effects with :py:meth:`setMeas()` or :py:meth:`addMeasEffect()`."
           )
-      .def("addMeasEffect", [](Kl & l, tpy::CplxMatrixType E_x_or_m, tpy::CountIntType n, bool check_validity) {
+      .def("addMeasEffect", [](Kl & l, tpy::CplxMatrixType E_x_or_m, tpy::FreqCountIntType n, bool check_validity) {
           if (E_x_or_m.cols() == 1) {
             // it is a X-param vector
             tomographer_assert( E_x_or_m.imag().norm() < 1e-6
@@ -245,7 +245,7 @@ void py_tomo_densedm(py::module rootmodule)
           for (std::size_t k = 0; k < len; ++k) {
 
             tpy::CplxMatrixType E_x_or_m = E[py::cast(k)].cast<tpy::CplxMatrixType>();
-            tpy::CountIntType Nk = Nx[py::cast(k)].cast<tpy::CountIntType>();
+            tpy::FreqCountIntType Nk = Nx[py::cast(k)].cast<tpy::FreqCountIntType>();
             // if (PyErr_Occurred() != NULL) {
             //   // tell pybind11 that the exception is already set
             //   throw py::error_already_set();
