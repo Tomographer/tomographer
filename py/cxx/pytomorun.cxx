@@ -759,7 +759,6 @@ py::object py_tomorun(
   // is an error.
   //
   if (py::len(kwargs)) {
-    // put together error message
     throw TomorunInvalidInputError("Unknown extra arguments given: " +
                                    (", "_s.attr("join")(kwargs.attr("keys")())).cast<std::string>()) ;
   }
