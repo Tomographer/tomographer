@@ -27,11 +27,14 @@ steps to get started and analyze data from your experiment:
     using [*conda*](https://www.continuum.io/downloads){:target="_blank"} or
     *pip* by itself, you should run the following commands:
 
-        # for *conda* users
+        # for *conda* users:
+
         > conda install numpy
         > conda install gcc # don't need this on Mac OS X, skip this command
         > conda install -c conda-forge pybind11
-        # for *pip* users
+
+        # OR, for *pip* users:
+
         > pip install numpy pybind11
 
     All `pip install` commands (e.g. `pip install SOMEPACKAGE`) might have to be
@@ -39,10 +42,9 @@ steps to get started and analyze data from your experiment:
     administrator priviledges, or you can use the option `--user` to install
     into a user directory (e.g. `pip install SOMEPACKAGE --user`).
 
-    Now, install `tomographer` itself, using `pip` (this is also supposed to
-    work within a *conda* environment):
+    Now, install `tomographer` itself, using `pip` (this should also work within
+    a *conda* environment):
     
-        > pip install numpy pybind11
         > pip install tomographer
 
     In case of trouble, you should [seek additional information and instructions
