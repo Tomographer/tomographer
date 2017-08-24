@@ -371,7 +371,6 @@ if (BUILD_TOMORUN)
       COMMAND "${PYTHON_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/test/tomorun/test_tomorun_run.py"
       "--setpath=${CMAKE_BINARY_DIR}/py:${CMAKE_SOURCE_DIR}/py:__TOMOGRAPHER_PYTHONPATH__"
       --check-histogram-file=out2-histogram.csv "--check-qeb=(0.0377,0.013,0.0014),10%" "--ftox=(0,1)"
-      # "--check-fitparams=(722.8,319.6,14.09,63.00)"  "--ftox=(0,1)"
       --
       "$<TARGET_FILE:tomorun>" "--data-file-name=${CMAKE_SOURCE_DIR}/examples/two-qubits-Bell/thedata.mat"
       --write-histogram=out2 --n-run=32768 --n-repeats=8 "--value-type=tr-dist:rho_MLE" "--value-hist=0.:0.2/50"

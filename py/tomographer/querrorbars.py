@@ -557,7 +557,7 @@ class HistogramAnalysis(object):
         self.redchi2 = calc_redchi2(xok, logpok, errlogpok,
                                     lambda x: self.fit_fn(x, *self.fit_params), num_fit_params=4)
         
-        redchi2_warn_threshold = kwopts.get('redchi2_warn_threshold', 1.4)
+        redchi2_warn_threshold = kwopts.get('redchi2_warn_threshold', 2.0)
 
         if self.redchi2 > redchi2_warn_threshold :
             logger.warning(("Reduced chi-squared statistic = {:.4g}. It could be that the fit "

@@ -1,7 +1,7 @@
 
 # coding: utf-8
 
-# In[3]:
+# In[1]:
 
 import itertools # product()
 import numpy as np
@@ -14,7 +14,7 @@ import tomographer.jpyutil
 from IPython.display import display, Markdown
 
 
-# In[4]:
+# In[2]:
 
 rho_target_Bell = qutip.states.ket2dm(qutip.Qobj(np.array([0,1,1j,0]/np.sqrt(2))))
 display(Markdown('rho_target_Bell = '))
@@ -25,7 +25,7 @@ display(Markdown('rho_sim = '))
 display(rho_sim)
 
 
-# In[5]:
+# In[3]:
 
 # All POVM effects when measuring Pauli X, Y, or Z on a single qubit
 MeasEffects1Qubit = tomographer.tools.densedm.PauliMeasEffectsQubit
@@ -55,7 +55,7 @@ Nm = np.array([
 ]);
 
 
-# In[6]:
+# In[4]:
 
 # An entanglement witness which is appropriate for our target state, as a qutip.Qobj
 EntglWitness = (- qutip.qeye(4)
@@ -66,13 +66,13 @@ EntglWitness = (- qutip.qeye(4)
 display(EntglWitness)
 
 
-# In[7]:
+# In[5]:
 
 # Value for rho_target_Bell maximally entangled state: +2
 display(qutip.expect(EntglWitness, rho_target_Bell))
 
 
-# In[8]:
+# In[6]:
 
 # but you can show that for any separable state this value is <= 0. For example:
 display(qutip.expect(EntglWitness, qutip.qeye(4)/4))
@@ -81,7 +81,7 @@ display(qutip.expect(EntglWitness, 0.5*qutip.ket2dm(qutip.Qobj(np.array([0,1,0,0
              + 0.5*qutip.ket2dm(qutip.Qobj(np.array([0,0,1,0])))))
 
 
-# In[9]:
+# In[13]:
 
 # Now, we're ready to run our tomography procedure. We'll be estimating
 # the expectation value of the entanglement witness.
@@ -98,7 +98,7 @@ with tomographer.jpyutil.RandWalkProgressBar() as prg:
         # Histogram: values in [1.6, 2.0] split into 50 bins
         hist_params=tomographer.UniformBinsHistogramParams(1.6,2,50),
         # Random Walk parameters: step size, sweep size, number of thermalization sweeps, number of live sweeps
-        mhrw_params=tomographer.MHRWParams(0.009,120,500,32768),
+        mhrw_params=tomographer.MHRWParams(0.009,240,2048,32768),
         # figure of merit:
         fig_of_merit="obs-value",
         observable=EntglWitness.data.toarray(),
@@ -108,13 +108,13 @@ with tomographer.jpyutil.RandWalkProgressBar() as prg:
     prg.displayFinalInfo(r['final_report_runs'])
 
 
-# In[11]:
+# In[14]:
 
 # Collect the histogram
 final_histogram = r['final_histogram']
 
 
-# In[12]:
+# In[15]:
 
 # Do the analysis and get the quantum error bars
 analysis = tomographer.querrorbars.HistogramAnalysis(final_histogram, ftox=(2,-1))
