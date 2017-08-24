@@ -143,6 +143,10 @@ vv.setDefault('EIGEN3_INCLUDE_DIR',
 #
 # Default: C++ flags for Mac OS X
 #
+# ### but don't add -stdlib=libc++ on gcc... so what we do is that below, we test each of
+# ### the specified flags and only keep those which are supported by the compiler (ugly
+# ### hack!)
+#
 def dflt_cxxflags():
     if sys.platform == 'darwin':
         return "-stdlib=libc++"
@@ -325,7 +329,11 @@ class BuildExt(build_ext):
             opts.append(cflg)
 
         for cflg in shlex.split(vv.get('CXX_FLAGS')):
-            opts.append(cflg)
+            if has_flag(self.compiler, cflg):
+                opts.append(cflg)
+            else:
+                print("WARNING: not using flag '"+cflg+"' because it is not supported by the "
+                      "compiler. [Hack: if you wish to persist, set it as part of OPTIMIZATION_CXX_FLAGS]")
 
         for cflg in shlex.split(vv.get('OPTIMIZATION_CXX_FLAGS')):
             opts.append(cflg)
