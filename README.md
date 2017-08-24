@@ -270,10 +270,18 @@ When installing `tomographer` using `pip`, you don't need the Eigen and Boost
 libraries (which are otherwise prerequisites), as they are bundled along with
 the `tomographer` PyPI python package.
 
-**Important for conda users: You must use the same C/C++ compiler as for the
-python libraries bundled in conda itself.** On Linux, you should use the version
-of gcc which *conda* provides (`conda install gcc`), and which you might have to
-specify explicitly:
+If the installation fails because of a compilation error, then run `pip` with
+the `--verbose` option, and look at which settings are detected by the setup
+script for variables such as `CXX_FLAGS`. You may override these using
+environment variables, for instance: `CXX_FLAGS="-stdlib=libc++"
+OPTIMIZATION_CXX_FLAGS="" pip install tomographer`. Consider submitting
+a [bug report](https://github.com/Tomographer/tomographer/issues) if you think
+it's an issue.
+
+**Important note for conda users: You must use the same C/C++ compiler as for
+the python libraries bundled in conda itself.** On Linux, you should use the
+version of gcc which *conda* provides (`conda install gcc`), and which you might
+have to specify explicitly:
 
     > CC=path-to-conda/bin/gcc CXX=path-to-conda/bin/g++ pip install tomographer
     

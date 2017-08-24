@@ -411,7 +411,6 @@ tomographer_include_files = (
 
 
 
-
 def readfile(x):
     with open(os.path.join(thisdir, x)) as f:
         return f.read()
@@ -520,7 +519,9 @@ setup(
     #
     # Our customized build procedure
     #
-    cmdclass={ 'build_ext': BuildExt },
+    cmdclass={
+        'build_ext': BuildExt,
+    },
     
     #
     # Not safe for keeping in a ZIP file (because of our extension)
