@@ -390,7 +390,9 @@ public:
                    LoggerType & logger)
     : _seed(inputseed), result(NULL)
   {
-    logger.longdebug("MHRandomWalkTask", [&](std::ostream & stream) { stream << "() inputseed=" << inputseed; });
+    logger.longdebug("MHRandomWalkTask", [&](std::ostream & stream) {
+        stream << "inputseed=" << inputseed;
+      });
   }
 
   ~MHRandomWalkTask()
@@ -494,6 +496,10 @@ public:
   {
     auto logger = Logger::makeLocalLogger("Tomographer::MHRWTasks::MHRandomWalkTask::run()", baselogger) ;
 
+    logger.debug([&](std::ostream & stream) {
+        stream << "Starting random walk, using rng seed = " << _seed;
+      });
+    
     Rng rng(_seed); // seeded random number generator
 
     RunInnerCallable<LoggerType, TaskManagerIface> run_object(pcdata, rng, baselogger, tmgriface, &result);

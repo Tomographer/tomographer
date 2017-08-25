@@ -9,7 +9,7 @@ import numpy.linalg as npl
 import numpy.testing as npt
 
 import logging
-#logging.basicConfig(level=logging.DEBUG)
+logging.basicConfig(level=logging.DEBUG)
 
 import unittest
 
@@ -53,7 +53,7 @@ class AnalyticalSolutionFn(object):
             sumwsqdiff += ((valln - theo_valln) / errln) ** 2
             numpts += 1
 
-            #print("Point {:03d}: theoln={:.3g} valln={:.3g} errln={:.3g}".format(numpts, theo_valln, valln, errln))
+            print("Point {:03d}: theoln={:.3g} valln={:.3g} errln={:.3g}".format(numpts, theo_valln, valln, errln))
            
         chi2_red = sumwsqdiff / (numpts - 1)
         print("chi2_red={:.4g} ; sumwsqdiff={:.3g}, numpts={}".format(chi2_red, sumwsqdiff, numpts))

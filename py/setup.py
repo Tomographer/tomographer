@@ -369,7 +369,7 @@ static inline py::dict tomographerpy_compileinfo_get_compiler() {
 
         # get more verbose logging info even in quiet mode
         def log_and_spawn(self, cmd, spawn_fn=self.compiler.spawn):
-            print("Running:", " ".join([shlex.quote(x) for x in cmd]))
+            print("Running:", " ".join([shellquote(x) for x in cmd]))
             spawn_fn(cmd)
         # bind log_and_spawn as the "spawn" method of self.compiler
         self.compiler.spawn = types.MethodType(log_and_spawn, self.compiler)
