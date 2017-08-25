@@ -62,17 +62,20 @@ def get_version_info(version):
 
 
 
-def setup_sources(thisdir, vv):
-
+def is_tomographer_sources(thisdir):
     if not os.path.exists(os.path.join(thisdir, '..', 'tomographer', 'tomographer_version.h.in')):
         # we use ../tomographer/tomographer_version.h.in to see if we are being run in an
         # original Tomographer source checkout (not necessarily git, but full project
         # checked out as opposed to a python sdist pacakge)
         print("Running from Python packaged source")
         return False
+    return True
 
+def setup_sources(thisdir, vv):
+    #
     # We are being run from checked out Tomographer project sources.  Prepare the python
     # sources correctly.
+    #
 
     #
     # setup the VERSION file
@@ -110,7 +113,8 @@ def setup_sources(thisdir, vv):
         def __call__(self, d, files):
             return [ f
                      for f in files
-                     if (not os.path.isdir(os.path.join(self.thisdir,d,f)) and not f.endswith('.h') and not f.endswith('.hpp')
+                     if (not os.path.isdir(os.path.join(self.thisdir,d,f))
+                         and not f.endswith('.h') and not f.endswith('.hpp')
                          and not f in self.but_keep) ]
 
     #
@@ -144,7 +148,11 @@ def setup_sources(thisdir, vv):
 
     if (not vv.get('Boost_INCLUDE_DIR') or
         os.path.realpath(vv.get('Boost_INCLUDE_DIR')).startswith(os.path.realpath(target_tomographer_include_deps))):
+        #
         raise ValueError("Invalid Boost_INCLUDE_DIR: "+repr(vv.get('Boost_INCLUDE_DIR')))
+
+    if not vv.get('BCP'):
+        raise ValueError("Please specify the path to `bcp' using the BCP environment variable.")
 
     target_tomographer_include_deps_boost = os.path.join(target_tomographer_include_deps, 'boost')
     if os.path.exists(target_tomographer_include_deps_boost):

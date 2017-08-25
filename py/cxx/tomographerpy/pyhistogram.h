@@ -189,8 +189,8 @@ public:
       throw py::type_error("Expected 1-D NumPy array for assignment to HistogramWithErrorBars.delta");
     }
     if ((Eigen::Index)py::len(newdelta) != params.num_bins) {
-      throw py::type_error(streamstr("Expected "<<params.num_bins<<" elements for assignment to HistogramWithErrorBars.delta,"
-                                     " got "<<py::len(newdelta)));
+      throw py::type_error(streamstr("Expected " << params.num_bins << " elements for assignment to "
+                                     "HistogramWithErrorBars.delta, got " << py::len(newdelta)));
     }
     delta = newdelta;
   }

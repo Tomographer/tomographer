@@ -40,6 +40,11 @@ import re
 import glob
 import shutil
 import shlex
+import types
+try:
+    from shlex import quote as shellquote
+except ImportError:
+    from pipes import quote as shellquote
 
 # build-time requirements -- Apparently, PIP cannot install these automatically -- so make
 # sure we get a hard failure if they aren't present
@@ -72,30 +77,6 @@ require_mod_version("PyBind11", pybind11.__version__, "2.1",
 
 
 
-#
-# POSSIBLE ENVIRONMENT VARIABLES WHICH CAN BE SET: -- doc printed on standard output anyway
-#
-# handled natively by setup.py:
-# CC=/path/to/compiler/gcc
-#
-# handled by us: (can be found in CMake cache)
-# GIT=/path/to/git
-# Boost_INCLUDE_DIR=/path/to/boost/headers
-# EIGEN3_INCLUDE_DIR=/path/to/eigen/headers
-# PYBIND11_CPP_STANDARD=-std=c++14
-#
-# handled by us (not in CMake cache):
-# BCP=/path/to/bcp  (Boost packaging tool)
-# OPTIMIZATION_CXX_FLAGS=-UNDEBUG -march=native -O3
-#                        (compiler SIMD instruction sets & other optimizations)
-#
-# To read the above variables from cache:
-# CMAKE_CACHE_FILE=path/to/CMakeCache.txt
-#
-
-
-
-
 thisdir = os.path.dirname(os.path.realpath(os.path.abspath(__file__)))
 print("Tomographer py dir = {}; cwd = {}".format(thisdir, os.getcwd()))
 
@@ -105,40 +86,47 @@ sys.path.insert(0, os.path.join(thisdir, 'tomographer'))
 # tomographer.include:
 from include import find_include_dir, find_lib, Vars, ensure_str   # beurk!!
 
-            
+# our setup_sources utilities to set up our python source package & bundle in eigen/boost
+# dependencies
+import setup_sources
 
+IsTomographerSources = setup_sources.is_tomographer_sources(thisdir)
+print("IsTomographerSources = {!r}".format(IsTomographerSources))
 
-
-cmake_cache_file = os.environ.get('CMAKE_CACHE_FILE', None)
-vv = Vars([
-    'GIT',
-    'BCP',
-    'Boost_INCLUDE_DIR',
-    'EIGEN3_INCLUDE_DIR',
+varlist = [
     'PYBIND11_CPP_STANDARD',
     'OPTIMIZATION_CXX_FLAGS',
     'CXX_FLAGS',
-#    'MACOSX_CXX_FLAGS',
-], cachefile=cmake_cache_file)
+]
+if IsTomographerSources:
+    # prepend sources-required settings
+    varlist = [
+        'GIT',
+        'BCP',
+        'Boost_INCLUDE_DIR',
+        'EIGEN3_INCLUDE_DIR',
+    ] + varlist
+    
+cmake_cache_file = os.environ.get('CMAKE_CACHE_FILE', None)
+vv = Vars(varlist, cachefile=cmake_cache_file)
 
-# Defaults: programs (git, bcp)
-vv.setDefault('GIT', lambda : find_executable('git'))
-vv.setDefault('BCP', lambda : find_executable('bcp'))
+if IsTomographerSources:
+    # Defaults: programs (git, bcp)
+    vv.setDefault('GIT', lambda : find_executable('git'))
+    vv.setDefault('BCP', lambda : find_executable('bcp'))
+    # Defaults: Boost stuff
+    vv.setDefault('Boost_INCLUDE_DIR',
+                  lambda : find_include_dir('boost', pkgnames=['boost']))
+    # Defaults: Eigen3
+    vv.setDefault('EIGEN3_INCLUDE_DIR',
+                  lambda : find_include_dir('eigen3', pkgnames=['eigen','eigen3'],
+                                            return_with_suffix='eigen3'))
 
-# Defaults: flags
+# Defaults: optimization flags
 #
 # DO NOT USE -fvisibility=hidden OR -flto. (Event with visibility attributes set I
 # couldn't get other modules which use the python tomographer API to load properly)
 vv.setDefault('OPTIMIZATION_CXX_FLAGS', '-UNDEBUG -march=native -O3')
-
-# Defaults: Boost stuff
-vv.setDefault('Boost_INCLUDE_DIR',
-              lambda : find_include_dir('boost', pkgnames=['boost']))
-
-# Defaults: Eigen3
-vv.setDefault('EIGEN3_INCLUDE_DIR',
-              lambda : find_include_dir('eigen3', pkgnames=['eigen','eigen3'],
-                                        return_with_suffix='eigen3'))
 
 #
 # Default: C++ flags for Mac OS X
@@ -148,9 +136,13 @@ vv.setDefault('EIGEN3_INCLUDE_DIR',
 # ### hack!)
 #
 def dflt_cxxflags():
+    flags = [ ]
+
     if sys.platform == 'darwin':
-        return "-stdlib=libc++"
-    return ""
+        flags.append("-stdlib=libc++")
+
+    return " ".join([shellquote(f) for f in flags])
+
 vv.setDefault('CXX_FLAGS', dflt_cxxflags)
 
 
@@ -159,11 +151,9 @@ vv.setDefault('CXX_FLAGS', dflt_cxxflags)
 # PREPARE THE PYTHON SOURCES
 #
 
-import setup_sources
+if IsTomographerSources:
+    setup_sources.setup_sources(thisdir, vv)
 
-IsTomographerSources = setup_sources.setup_sources(thisdir, vv)
-
-print("IsTomographerSources = {!r}".format(IsTomographerSources))
 
 #
 # Read version info
@@ -184,9 +174,9 @@ print("""
 """.format(version=version, version_for_pip=version_for_pip))
 
 print("""\
-  The `tomographer` python package requires some external C++ libraries. You may
-  need to specify their location with the use of environment variables. Current
-  values (detected or specified manually) are:
+  The `tomographer` python package requires some settings for compiling the C++
+  modules. You may need to specify their location with the use of environment
+  variables. Current values (detected or specified manually) are:
 
 {}""".format("\n".join([ "    {}={}".format(k,v) for k,v in vv.d.items() ])))
 
@@ -195,7 +185,7 @@ if IsTomographerSources and not cmake_cache_file:
   You may also read variables from a CMakeCache.txt file with
   CMAKE_CACHE_FILE=path/to/CMakeCache.txt
 """)
-else:
+elif IsTomographerSources or cmake_cache_file:
     print("""
   (read cache file {})
 """.format(cmake_cache_file))
@@ -205,21 +195,13 @@ if IsTomographerSources and sys.platform == 'darwin':
     print("""\
   To get started on Mac OS X with homebrew, you may run for instance:
 
-    > brew install eigen3 boost pybind11
+    > brew install eigen3 boost boost-bcp pybind11
 """)
 
 
 #
 # Set up the compilation options
 #
-
-glob_cflags = [
-    # no longer needed -- now we create tomographer_version.h
-    # '-DTOMOGRAPHER_VERSION=\"{}\"'.format(version),
-    # '-DTOMOGRAPHER_VERSION_MAJ={}'.format(version_maj),
-    # '-DTOMOGRAPHER_VERSION_MIN={}'.format(version_min),
-    '-DEIGEN_DONT_PARALLELIZE',
-]
 
 cxxfiles = [ os.path.join('cxx', x) for x in [
     "tomographerpy.cxx",
@@ -268,13 +250,15 @@ def has_flag(compiler, flagname):
     with tempfile.NamedTemporaryFile('w', suffix='.cpp') as f:
         f.write('int main (int argc, char **argv) { return 0; }')
         try:
+            print("Testing whether compiler supports", flagname, "...")
             compiler.compile([f.name], extra_postargs=[flagname])
+            print("... Ok")
         except setuptools.distutils.errors.CompileError:
             return False
     return True
 
 
-def cpp_flag(compiler):
+def cpp_standard_flag(compiler):
     """Return the -std=c++[11/14] compiler flag.
     The c++14 is prefered over c++11 (when it is available).
     """
@@ -301,32 +285,38 @@ def escape_c_utf8_str(s):
 
 class BuildExt(build_ext):
     """A custom build extension for adding compiler-specific options."""
+
     c_opts = {
         'msvc': ['/EHsc'],
         'unix': [],
     }
 
+    def defppflag(self, symbol, value=None):
+        s = symbol
+        if value is not None:
+            s += '='+str(value)
+
+        if self.compiler.compiler_type == 'msvc':
+            return '/D'+s
+
+        return '-D'+s # -DSYMBOL=Value
+
+    def includepathflag(self, path):
+        if self.compiler.compiler_type == 'msvc':
+            return '/I'+str(path)
+        return '-I'+str(path) # -I/include/path
+    
     def build_extensions(self):
         ct = self.compiler.compiler_type
         opts = self.c_opts.get(ct, [])
-
-        def defpp(sym, val=None):
-            s = sym
-            if val is not None:
-                s += '='+str(val)
-            if ct == 'msvc':
-                return '/D'+s
-            # -DSYMBOL=Value
-            return '-D'+s
 
         stdcpp = vv.get('PYBIND11_CPP_STANDARD')
         if stdcpp:
             opts.append(stdcpp)
         else:
-            opts.append(cpp_flag(self.compiler))
+            opts.append(cpp_standard_flag(self.compiler))
 
-        for cflg in glob_cflags:
-            opts.append(cflg)
+        opts.append(self.defppflag('EIGEN_DONT_PARALLELIZE'))
 
         for cflg in shlex.split(vv.get('CXX_FLAGS')):
             if has_flag(self.compiler, cflg):
@@ -367,16 +357,23 @@ static inline py::dict tomographerpy_compileinfo_get_compiler() {
     'compiler_link_path': escape_c_utf8_str(self.compiler.linker_so[0]),
 }
             )
-            opts.append(defpp("TOMOGRAPHERPY_HAVE_COMPILEINFO"))
-            opts.append("-I"+os.path.join(thisdir,'tmp'))
+            opts.append(self.defppflag("TOMOGRAPHERPY_HAVE_COMPILEINFO"))
+            opts.append(self.includepathflag(os.path.join(thisdir,'tmp')))
 
         # don't include VERSION_INFO in the compileinfo header file
-        opts.append(defpp('VERSION_INFO', '"%s"'%self.distribution.get_version()))
-        opts.append(defpp('_tomographer_cxx_EXPORTS'))
+        opts.append(self.defppflag('VERSION_INFO', '"%s"'%self.distribution.get_version()))
+        opts.append(self.defppflag('_tomographer_cxx_EXPORTS'))
 
         for ext in self.extensions:
             ext.extra_compile_args = opts
 
+        # get more verbose logging info even in quiet mode
+        def log_and_spawn(self, cmd, spawn_fn=self.compiler.spawn):
+            print("Running:", " ".join([shlex.quote(x) for x in cmd]))
+            spawn_fn(cmd)
+        # bind log_and_spawn as the "spawn" method of self.compiler
+        self.compiler.spawn = types.MethodType(log_and_spawn, self.compiler)
+            
         build_ext.build_extensions(self)
 
 

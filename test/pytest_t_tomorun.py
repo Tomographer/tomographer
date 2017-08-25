@@ -124,7 +124,9 @@ class test_tomorun(unittest.TestCase):
         # now, check the actual values of the result
         pok = AnalyticalSolutionFn(np.sum(self.Nm))
 
-        self.assertLess(pok.get_histogram_chi2_red(final_histogram), 1.5)
+        # can't be too picky on chi2, because this test will run many times (so it's bound
+        # to fail at some point!)
+        self.assertLess(pok.get_histogram_chi2_red(final_histogram), 5)
         npt.assert_array_almost_equal(final_histogram.bins, simple_final_histogram.bins)
 
 
@@ -172,7 +174,9 @@ class test_tomorun(unittest.TestCase):
         # now, check the actual values of the result
         pok = AnalyticalSolutionFn(np.sum(self.Nm))
 
-        self.assertLess(pok.get_histogram_chi2_red(final_histogram), 1.5)
+        # can't be too picky on chi2, because this test will run many times (so it's bound
+        # to fail at some point!)
+        self.assertLess(pok.get_histogram_chi2_red(final_histogram), 5)
         npt.assert_array_almost_equal(final_histogram.bins, simple_final_histogram.bins)
 
 
@@ -704,7 +708,7 @@ class test_tomorun(unittest.TestCase):
                     mhrw_params=tomographer.MHRWParams(
                         step_size=0.04,
                         n_sweep=25,
-                        n_therm=1024,
+                        n_therm=10, # don't let it thermalize too much
                         n_run=1024,),
                     hist_params=hist_params,
                     ctrl_step_size_params={'enabled': False},
