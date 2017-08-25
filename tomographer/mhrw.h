@@ -29,9 +29,11 @@
 #define _TOMOGRAPHER_MHRW_H
 
 #include <cstddef>
+#include <cmath>
 
 #include <limits>
 #include <random>
+#include <sstream>
 #include <iomanip>
 #include <type_traits>
 
@@ -1171,32 +1173,31 @@ struct TOMOGRAPHER_EXPORT MHRWStatusReport : public MultiProc::TaskStatusReport
         std::string("accept ratio=") + Tools::fmts("%.2f", accept_ratio) +
         (warn_accept_ratio ? " **!!" : "") + "]";
     }
+
     //
     // "therm. sweep NNN/NNN [+rn:NNN]: XX.XX% done"
     // "run sweep    NNN/NNN [+th:NNN]: XX.XX% done [accept ratio=0.25]"
     //
-    std::string msg;
+    std::stringstream msgstr;
+
+    // number of digits needed to represent n_run and n_therm
+    int ndigrw = (int)(std::ceil(std::log10(std::max(rw.nTherm(), rw.nRun())))+0.01) ;
     if (is_thermalizing) {
-      msg = "therm. sweep " + std::to_string(k / rw.nSweep()) + "/" + std::to_string(rw.nTherm())
-        + " [+rn:" + std::to_string(rw.nRun()) + "]";
+      msgstr << "therm. sweep " << std::setw(ndigrw) << (k / rw.nSweep()) << "/"
+             << std::setw(ndigrw) << rw.nTherm()
+             << " [+rn:" << rw.nRun() << "]";
     } else {
-      msg = "run sweep    " + std::to_string(k / rw.nSweep()) + "/" + std::to_string(rw.nRun())
-        + " [+th:" + std::to_string(rw.nTherm()) + "]";
+      msgstr << "run sweep    " << std::setw(ndigrw) << (k / rw.nSweep()) << "/"
+             << std::setw(ndigrw) << rw.nRun()
+             << " [+th:" << rw.nTherm() << "]";
     }
-    msg += " : " + Tools::fmts("%5.2f", fdone*100.0) + "% done";
+    msgstr << " : " << Tools::fmts("%5.2f", fdone*100.0) << "% done";
     if (accept_ratio_msg.size()) {
-      msg += accept_ratio_msg;
+      msgstr << accept_ratio_msg;
     }
-    // std::string msg = Tools::fmts(
-    //     "%s %lu/(%lu=%lu*(%lu+%lu)) : %5.2f%% done  %s",
-    //     ( ! is_thermalizing
-    //       ? "iteration"
-    //       : "[therm.] "),
-    //     (unsigned long)kreal, (unsigned long)totiters, (unsigned long)rw.nSweep(),
-    //     (unsigned long)rw.nTherm(), (unsigned long)rw.nRun(),
-    //     fdone*100.0,
-    //     accept_ratio_msg.c_str()
-    //     );
+
+    std::string msg = msgstr.str();
+
     const std::string nlindent = "\n    ";
     if (Tools::StatusQuery<MHRWStatsCollectorType>::CanProvideStatusLine) {
       const std::string s = Tools::StatusQuery<MHRWStatsCollectorType>::getStatusLine(&stats_collector);

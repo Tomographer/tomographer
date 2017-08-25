@@ -61,7 +61,9 @@ def run_main():
     parser.add_argument("--bin-rel-weight-threshold", action='store', type=float, default=0.01)
     parser.add_argument("--check-qeb", action='store', type=check_qeb_args)
     parser.add_argument("--ftox", action='store', type=ftox_pair, default=(0,1,))
-    parser.add_argument("--redchi2-range-ok", action='store', type=range_type, default=(0.1, 3))
+    # can't do close tests on the chi2, because it's statistical!!! over 1000s of tests,
+    # we'll have one or the other failure. So choose loose bounds
+    parser.add_argument("--redchi2-range-ok", action='store', type=range_type, default=(0.01, 10))
     parser.add_argument("--check-fitparams", action='store', type=fitparams_type)
     parser.add_argument("--check-percent-within-range", action='append', type=percent_within_range_type)
 

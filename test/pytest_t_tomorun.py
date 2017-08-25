@@ -60,7 +60,7 @@ class AnalyticalSolutionFn(object):
         return chi2_red
 
 
-class analytical_known_example_tomorun(unittest.TestCase):
+class test_tomorun(unittest.TestCase):
 
     def setUp(self):
 
@@ -98,7 +98,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
                 step_size=0.04,
                 n_sweep=25,
                 n_run=32768,
-                n_therm=500),
+                n_therm=1024),
             jumps_method="full",
             hist_params=hist_params,
             progress_fn=lambda report: print(report.getHumanReport()),
@@ -146,7 +146,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
                 step_size=0.04,
                 n_sweep=25,
                 n_run=32768,
-                n_therm=500),
+                n_therm=1024),
             jumps_method="light",
             hist_params=hist_params,
             progress_fn=lambda report: print(report.getHumanReport()),
@@ -194,7 +194,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
                 step_size=0.04,
                 n_sweep=25,
                 n_run=8192, # controller will keep running as necessary
-                n_therm=500),
+                n_therm=1024),
             hist_params=hist_params,
             ctrl_converged_params={'max_allowed_unknown': 2,
                                    'max_allowed_unknown_notisolated': 2,
@@ -244,7 +244,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
                 step_size=0.04,
                 n_sweep=25,
                 n_run=8192,
-                n_therm=500),
+                n_therm=1024),
             hist_params=hist_params,
             progress_fn=lambda report: print(report.getHumanReport()),
             progress_interval_ms=100
@@ -266,7 +266,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
             step_size=0.04,
             n_sweep=25,
             n_run=8192,
-            n_therm=500
+            n_therm=1024
         )
 
         class Ns: pass
@@ -362,7 +362,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
             ref_state=self.rho_ref,
             num_repeats=num_repeats,
             # understands step size given as keyword argument? ---
-            mhrw_params=tomographer.MHRWParams(step_size=0.04, n_sweep=25, n_therm=500, n_run=1024),
+            mhrw_params=tomographer.MHRWParams(step_size=0.04, n_sweep=25, n_therm=1024, n_run=1024),
             # ---
             hist_params=hist_params,
             ctrl_step_size_params={'enabled':False},
@@ -472,7 +472,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
                 step_size=0.04,
                 n_sweep=25,
                 n_run=4*32768,
-                n_therm=500),
+                n_therm=1024),
             hist_params=hist_params,
             progress_fn=progress_callback,
             progress_interval_ms=intvl_ms,
@@ -517,7 +517,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
                     step_size=0.04,
                     n_sweep=25,
                     n_run=4*32768,
-                    n_therm=500),
+                    n_therm=1024),
                 hist_params=hist_params,
                 progress_fn=progress_callback,
                 progress_interval_ms=intvl_ms,
@@ -704,7 +704,7 @@ class analytical_known_example_tomorun(unittest.TestCase):
                     mhrw_params=tomographer.MHRWParams(
                         step_size=0.04,
                         n_sweep=25,
-                        n_therm=500,
+                        n_therm=1024,
                         n_run=1024,),
                     hist_params=hist_params,
                     ctrl_step_size_params={'enabled': False},
@@ -739,10 +739,10 @@ class analytical_known_example_tomorun(unittest.TestCase):
                 mhrw_params=tomographer.MHRWParams(
                     step_size=0.04,
                     n_sweep=25,
-                    n_therm=500,
+                    n_therm=1024,
                     n_run=1024,),
                 hist_params=tomographer.HistogramParams(),
-                base_seed=1234567890, # misspelled
+                base_seed=1234567890, # misspelled, should be "rng_base_seed"
                 abc_wrong={'x': 'y'} # just an additional arg
             )
 
