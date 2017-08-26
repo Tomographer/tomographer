@@ -87,10 +87,11 @@ class test_tomorun(unittest.TestCase):
 
         print("test_values_full()")
 
-        logging.getLogger().setLevel(1)
-        tomographer.cxxlogger.level = 1
+        # For debugging --
+        #logging.getLogger().setLevel(1)
+        #tomographer.cxxlogger.level = 1
 
-        num_repeats = 1#8
+        num_repeats = 8
         hist_params = tomographer.HistogramParams(0.985, 1, 200)
 
         r = tomographer.tomorun.tomorun(
@@ -112,7 +113,6 @@ class test_tomorun(unittest.TestCase):
             ctrl_converged_params={'max_allowed_not_converged': 1,
                                    'max_allowed_unknown_notisolated': 1,
                                    'max_allowed_unknown': 3,},
-            rng_base_seed=1503713401187827723+2
         )
         print("Final report of runs :\n{}".format(r['final_report_runs']))
         print("Final report of everything :\n{}".format(r['final_report']))
@@ -128,10 +128,11 @@ class test_tomorun(unittest.TestCase):
             runres = r['runs_results'][k]
             self.assertTrue(isinstance(runres, tomographer.mhrwtasks.MHRandomWalkTaskResult))
 
-        for k in range(num_repeats):
-            print("Worker #", k, ":", sep='')
-            print(repr(r['runs_results'][k].stats_results.histogram))
-            print(r['runs_results'][k].stats_results.error_levels)
+        ##For debugging --
+        #for k in range(num_repeats):
+        #    print("Worker #", k, ":", sep='')
+        #    print(repr(r['runs_results'][k].stats_results.histogram))
+        #    print(r['runs_results'][k].stats_results.error_levels)
 
         # now, check the actual values of the result
         pok = AnalyticalSolutionFn(np.sum(self.Nm))

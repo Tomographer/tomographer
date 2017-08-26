@@ -162,6 +162,13 @@ public:
       return false;
     }
 
+    if (iter_k % (params.n_sweep*check_frequency_sweeps) != 0) {
+      // Make sure we only interrupt on an exact multiple of
+      // check_frequency_sweeps.  This is needed because we want to make sure
+      // the binning analysis has processed exactly all the samples
+      return false;
+    }
+
     logger.longdebug([&](std::ostream & stream) {
         stream << "params=" << params << ", iter_k=" << iter_k
                << ", max_add_run_iters=" << max_add_run_iters;
@@ -195,6 +202,7 @@ public:
         conv_summary.n_unknown > max_allowed_unknown ||
         (conv_summary.n_unknown-conv_summary.n_unknown_isolated) > max_allowed_unknown_notisolated) {
       // too many unconverged error bars, continue running
+      last_forbidden_iter_number = iter_k;
       return false;
     }
 
