@@ -734,7 +734,7 @@ py::object py_tomorun(
       logger.warning([&](std::ostream & stream) {
           stream << "Too large integer given as `rng_base_seed' -- only the "
                  << sizeof(RngType::result_type)*CHAR_BIT
-                 << " lower-weight bits will be used.";
+                 << " lower-weight bits will be used (value is platform-dependent).";
         }) ;
       pyop mask = ( pyop(py::int_(1)) << py::int_(sizeof(RngType::result_type)*CHAR_BIT) ) - py::int_(1);
       base_seed_int = (pyop(base_seed_int) & mask).object();
@@ -762,7 +762,7 @@ py::object py_tomorun(
   // whole binning analysis
   const auto binning_samples_size = 1 << binning_num_levels;
   if ( (mhrw_params.n_run % binning_samples_size) != 0) {
-    llogger.warning([&](std::ostream & stream) {
+    logger.warning([&](std::ostream & stream) {
         stream << "The number of run sweeps (="<<mhrw_params.n_run<<") is not a multiple of the "
                << "binning analysis sample size (="<<binning_samples_size<<"), this could lead to samples "
                << "being ignored by the error analysis (you should avoid this)! Please strongly consider "

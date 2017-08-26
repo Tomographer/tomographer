@@ -121,7 +121,8 @@ public:
       max_add_run_iters(max_add_run_iters_),
       llogger("Tomographer::MHRWValueErrorBinsConvergedAdjuster", baselogger_)
   {
-    if (check_frequency_sweeps % value_stats_collector.getBinningAnalysis().effectiveSampleSize() != 0) {
+    const auto binning_samples_size = value_stats_collector.getBinningAnalysis().effectiveSampleSize();
+    if ((check_frequency_sweeps % binning_samples_size) != 0) {
       llogger.warning([&](std::ostream & stream) {
           stream << "check_frequency_sweeps (="<<check_frequency_sweeps_<<") is not a multiple of the "
                  << "binning analysis sample size (="<<binning_samples_size<<"), this could lead to samples "
@@ -216,8 +217,9 @@ public:
 private:
   // ensure that check_frequency_sweeps is a multiple of the binning analysis sample size
   inline static IterCountIntType maybeadjust_check_freq_seeps(
-      ValueHistogramWithBinningMHRWStatsCollectorType & valstats,
-      IterCountIntType check_frequency_sweeps_, BaseLoggerType & logger)
+      IterCountIntType check_frequency_sweeps_,
+      const ValueHistogramWithBinningMHRWStatsCollectorType & valstats,
+      BaseLoggerType & logger)
   {
     if (check_frequency_sweeps_ == 0) {
       return 0; // all ok
