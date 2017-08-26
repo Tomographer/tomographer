@@ -310,6 +310,84 @@ class test_tomorun(unittest.TestCase):
         self.assertGreaterEqual(glob.saw_parallel_runs, 2)
 
 
+    def test_verbose_logging(self):
+
+        print("test_verbose_logging()")
+
+        oldlevel = tomographer.cxxlogger.level
+        try:
+            logging.getLogger().setLevel(1) # LONGDEBUG
+            tomographer.cxxlogger.level = 1 # LONGDEBUG
+            
+            def prg_fn(report):
+                logging.getLogger("prg_fn").debug(report.getHumanReport())
+
+            r = tomographer.tomorun.tomorun(
+                dim=2,
+                Emn=self.Emn,
+                Nm=self.Nm,
+                fig_of_merit=lambda T: npl.norm(np.dot(T,T.T.conj())), # purity
+                ref_state=self.rho_ref,
+                num_repeats = 4,
+                hist_params = tomographer.HistogramParams(0.99, 1, 20),
+                mhrw_params = tomographer.MHRWParams(
+                    step_size=0.04,
+                    # keep it REAL SHORT because we'll have tons of messages
+                    n_sweep=5,
+                    n_run=10, 
+                    n_therm=20),
+                progress_fn=prg_fn,
+                progress_interval_ms=50,
+                ctrl_step_size_params={'enabled':False},
+            )
+
+        finally:
+            # restore level
+            logging.getLogger().setLevel(oldlevel)
+            tomographer.cxxlogger.level = oldlevel
+            
+
+    def test_verbose_logging_2(self):
+
+        print("test_verbose_logging_2()")
+
+        oldlevel = tomographer.cxxlogger.level
+        try:
+            logging.getLogger().setLevel(1) # LONGDEBUG
+            tomographer.cxxlogger.level = 1 # LONGDEBUG
+
+            def raise_stop_iter(T):
+                raise StopIteration
+
+            def prg_fn(report):
+                logging.getLogger("prg_fn").debug(report.getHumanReport())
+
+            # test: gets interrupted (test fix for some SEGFAULT I'm getting?)
+            with self.assertRaises(StopIteration):
+                r = tomographer.tomorun.tomorun(
+                    dim=2,
+                    Emn=self.Emn,
+                    Nm=self.Nm,
+                    fig_of_merit=raise_stop_iter,
+                    num_repeats = 4,
+                    hist_params = tomographer.HistogramParams(0.99, 1, 20),
+                    mhrw_params = tomographer.MHRWParams(
+                        step_size=0.04,
+                        # keep it REAL SHORT because we'll have tons of messages
+                        n_sweep=5,
+                        n_run=10, 
+                        n_therm=20),
+                    progress_fn=prg_fn,
+                    progress_interval_ms=50,
+                    ctrl_step_size_params={'enabled':False},
+                )
+        finally:
+            # restore level
+            logging.getLogger().setLevel(oldlevel)
+            tomographer.cxxlogger.level = oldlevel
+            
+
+
     def test_too_few_runs(self):
 
         print("test_too_few_runs()")
@@ -590,8 +668,8 @@ class test_tomorun(unittest.TestCase):
             num_repeats=num_repeats,
             mhrw_params=tomographer.MHRWParams(
                 step_size=0.1, # too high
-                n_sweep=1000,
-                n_run=8192, # some ok amount, not too much
+                n_sweep=10, # really little
+                n_run=500, # little.
                 n_therm=100),
             hist_params=hist_params,
             progress_fn=check_prg,
@@ -715,7 +793,7 @@ class test_tomorun(unittest.TestCase):
                     ctrl_converged_params={'enabled': False},
                     rng_base_seed=n
                 )
-                runs_samples.append(samples[100])
+                runs_samples.append(samples[10])
         finally:
             logging.getLogger("tomographer").level = oldlevel
 

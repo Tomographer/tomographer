@@ -368,7 +368,7 @@ protected:
             
             // report already in preparation, ignore this request
             if (shared_data->status_report.in_preparation) {
-              logger.debug("Still working on previous status report, ignoring new report due");
+              logger.longdebug("Still working on previous status report, ignoring new report due");
               return; // no new status report, we're still working on previous one
             }
 
@@ -404,7 +404,7 @@ protected:
 
             shared_data->status_report.num_waiting_reports = shared_data->schedule.num_active_working_threads;
 
-            logger.debug([&](std::ostream & stream) {
+            logger.longdebug([&](std::ostream & stream) {
                 stream << "vectors resized to workers_running.size()="
                        << shared_data->status_report.full_report.workers_running.size()
                        << " and workers_reports.size()="
@@ -445,14 +445,8 @@ protected:
                  << "number of reports still expected="
                  << shared_data->status_report.num_waiting_reports
                  << " num_active_working_threads="
-                 << shared_data->schedule.num_active_working_threads ;
-        });
-
-      //
-      // Report the data corresponding to this thread.
-      //
-      llogger.debug([&](std::ostream & stream) {
-          stream << "thread_id=" << thread_id << ", workers_reports.size()="
+                 << shared_data->schedule.num_active_working_threads
+                 << " workers_reports.size()="
                  << shared_data->status_report.full_report.workers_reports.size();
         }) ;
 
