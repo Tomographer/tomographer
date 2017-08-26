@@ -301,22 +301,14 @@ option(TOMOGRAPHER_ENABLE_TESTS "Build Tomographer/Tomorun tests" off)
 
 if(TOMOGRAPHER_ENABLE_TESTS)
 
-# we will selectively only enable those tests for which we have built all
-# components (but we will add a failing test if a component is not built, to
-# make sure we don't miss anything)
-#
-#  if(NOT BUILD_TOMORUN OR NOT BUILD_TOMOPY)
-#    message(FATAL_ERROR "You can only build the tests if you are building both tomorun and the Python interface library.")
-#  endif()
-
-  #if(NOT Boost_UNIT_TEST_FRAMEWORK_LIBRARY)
   find_package(Boost 1.40 COMPONENTS unit_test_framework REQUIRED)
-  #endif()
+
+  # not hard requirement, will just have a failing test if MPI is not enabled
+  find_package(MPI)
+  find_package(Boost 1.40 COMPONENTS mpi serialization) # not required
   
   # LAPACK is required in some tests (but not for tomorun)
-  #if(NOT LAPACK_FOUND)
   find_package(LAPACK REQUIRED)
-  #endif(NOT LAPACK_FOUND)
 
 
   option(TOMOGRAPHER_TEST_SETUPPY_BUILD "Add tests for python module built separately with setup.py bdist_egg" off)

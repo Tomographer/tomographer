@@ -100,6 +100,9 @@ macro(addTomographerTest test_cxx NeedsList)
   # tomographer headers
   target_include_directories(${test_name} PRIVATE "..")
 
+  set(_generate_dummy_fail_test false)
+
+
   # NOTE: no SYSTEM includes because if the path happens to be e.g. /usr/include, it messes
   # up the system include paths (and gcc 6 e.g. can't find "math.h" or "stdlib.h")
   #
@@ -129,8 +132,18 @@ macro(addTomographerTest test_cxx NeedsList)
     endif()
   endif()
 
+  if (";${NeedsList};" MATCHES ";mpi;")
+    if (MPI_FOUND)
+      target_include_directories(${test_name} PRIVATE ${MPI_INCLUDE_PATH})
+      target_link_libraries(${test_name} PRIVATE
+        ${Boost_MPI_LIBRARY} ${Boost_SERIALIZATION_LIBRARY} ${MPI_LIBRARIES})
+    else()
+      set(_generate_dummy_fail_test "MPI not found on this system -- test disabled")
+    endif()
+  endif()
+
   target_compile_definitions(${test_name} PRIVATE "-DBOOST_TEST_MODULE=${test_name}")
-  target_include_directories(${test_name}  PRIVATE ${MATIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
+  target_include_directories(${test_name} PRIVATE ${MATIO_INCLUDE_DIR} ${Boost_INCLUDE_DIR} ${ZLIB_INCLUDE_DIRS})
 
   if (";${NeedsList};" MATCHES ";LAPACK;")
     target_link_libraries(${test_name}
@@ -145,6 +158,12 @@ macro(addTomographerTest test_cxx NeedsList)
   if (";${NeedsList};" MATCHES ";matio;")
     target_link_libraries(${test_name} PRIVATE ${MATIO_LIBRARIES})
     target_link_libraries(${test_name} PRIVATE ${ZLIB_LIBRARIES})
+  endif()
+
+  if(_generate_dummy_fail_test)
+    add_test(NAME ${test_name}
+      COMMAND echo "${_generate_dummy_fail_test}" >&2 && false)
+    return()
   endif()
 
   add_test(NAME ${test_name} 
@@ -198,6 +217,7 @@ addTomographerTest(test_mhrw_valuehist_tools.cxx  "")
 addTomographerTest(test_multiprocthreads.cxx  "cxxthreads")
 addTomographerTest(test_multiproc.cxx  "openmp") # openmp needed for testing the status report feature
 addTomographerTest(test_multiprocomp.cxx  "openmp")
+addTomographerTest(test_mpi_multiprocmpi.cxx  "mpi")
 # only works with g++ because we do exact comparison of the output histogram data, and
 # other compilers may have small differences:
 #addTomographerTest(test_zzzcombinations.cxx "openmp")
