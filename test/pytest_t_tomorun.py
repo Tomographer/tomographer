@@ -90,7 +90,7 @@ class test_tomorun(unittest.TestCase):
         logging.getLogger().setLevel(1)
         tomographer.cxxlogger.level = 1
 
-        num_repeats = 8
+        num_repeats = 1#8
         hist_params = tomographer.HistogramParams(0.985, 1, 200)
 
         r = tomographer.tomorun.tomorun(
@@ -99,7 +99,7 @@ class test_tomorun(unittest.TestCase):
             Nm=self.Nm,
             fig_of_merit="fidelity",
             ref_state=self.rho_ref,
-            num_repeats=1,#num_repeats,
+            num_repeats=num_repeats,
             mhrw_params=tomographer.MHRWParams(
                 step_size=0.04,
                 n_sweep=25,

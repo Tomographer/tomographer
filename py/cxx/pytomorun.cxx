@@ -28,6 +28,9 @@
 
 #include "tomographerpy/common.h"
 
+#include "py_operators_p.h"
+
+#include <limits.h> // CHAR_BIT
 #include <exception>
 #include <stdexcept>
 #include <limits>
@@ -461,7 +464,10 @@ inline T dict_pop_type_or_warning(py::dict dict, std::string key, LocalLoggerTyp
 {
   return dict_pop_type_or_warning(std::move(dict), std::move(key), logger, std::move(warningmsg), T()) ;
 }
-                      
+
+
+
+
 
 
 py::object py_tomorun(
@@ -717,7 +723,25 @@ py::object py_tomorun(
     // argument not given, or given but passed `None'
     base_seed = (RngType::result_type) std::chrono::system_clock::now().time_since_epoch().count();
   } else {
-    base_seed = rng_base_seed.cast<RngType::result_type>();
+    // go through py::int_ first, in case the given integer is too large to represent on
+    // RngType::result_type
+    py::int_ base_seed_int = rng_base_seed.cast<py::int_>();
+
+    if (pyop(base_seed_int) > py::int_(std::numeric_limits<RngType::result_type>::max())) {
+      // in case the specified integer is too large, keep only the N lower
+      // weight bits -- Do this from the python side with arbitrary precision,
+      // to avoid headaches with overflow in C/C++
+      logger.warning([&](std::ostream & stream) {
+          stream << "Too large integer given as `rng_base_seed' -- only the "
+                 << sizeof(RngType::result_type)*CHAR_BIT
+                 << " lower-weight bits will be used.";
+        }) ;
+      pyop mask = ( pyop(py::int_(1)) << py::int_(sizeof(RngType::result_type)*CHAR_BIT) ) - py::int_(1);
+      base_seed_int = (pyop(base_seed_int) & mask).object();
+    }
+
+    // finally, get the seed as a RngType::result_type
+    base_seed = base_seed_int.cast<RngType::result_type>();
   }
 
   logger.longdebug([&](std::ostream & stream) {
@@ -733,6 +757,18 @@ py::object py_tomorun(
   binning_num_levels = Tomographer::sanitizeBinningLevels(binning_num_levels, mhrw_params.n_run,
                                                           recommended_num_samples_last_level,
                                                           logger) ;
+
+  // make sure n_run is a multiple of the number of samples needed to flush the
+  // whole binning analysis
+  const auto binning_samples_size = 1 << binning_num_levels;
+  if ( (mhrw_params.n_run % binning_samples_size) != 0) {
+    llogger.warning([&](std::ostream & stream) {
+        stream << "The number of run sweeps (="<<mhrw_params.n_run<<") is not a multiple of the "
+               << "binning analysis sample size (="<<binning_samples_size<<"), this could lead to samples "
+               << "being ignored by the error analysis (you should avoid this)! Please strongly consider "
+               << "adjusting `mhrw_params.n_run' or `binning_num_levels'.";
+      }) ;
+  }
 
   const std::string jumps_method = kwargs.attr("pop")("jumps_method"_s, "full"_s).cast<std::string>();
   tpy::LLH_MHWalker_Which jumps_method_which = tpy::LLH_MHWalker_Full;
