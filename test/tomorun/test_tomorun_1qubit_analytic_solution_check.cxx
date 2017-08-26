@@ -183,7 +183,13 @@ int main(int argc, char **argv)
             << "chi2 = " << sumwsqdiff << "\n"
             << "chi2_red = " << chi2_red << "\n\n";
 
-  if (!std::isfinite(chi2_red) || chi2_red > 1.5) {
+  // We can't choose chi2 tolerance to be too low, because the value we get is statistical
+  // and we're running these tests tons of times -- even if the chance of failure is 1%
+  // it's bound to fail one time or another pretty soon!
+  double chi2_red_threshold = 5;
+  //double chi2_red_threshold = 1.5;
+
+  if (!std::isfinite(chi2_red) || chi2_red > chi2_red_threshold) {
     std::cerr << "Error: !!! Fit doesn't seem good... !!!\n";
     return 1;
   }
