@@ -668,9 +668,9 @@ class test_tomorun(unittest.TestCase):
             num_repeats=num_repeats,
             mhrw_params=tomographer.MHRWParams(
                 step_size=0.1, # too high
-                n_sweep=10, # really little
-                n_run=500, # little.
-                n_therm=100),
+                n_sweep=100,
+                n_run=1024, # little
+                n_therm=1024), # little
             hist_params=hist_params,
             progress_fn=check_prg,
             progress_interval_ms=1,
