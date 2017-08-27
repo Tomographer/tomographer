@@ -77,6 +77,10 @@ def setup_sources(thisdir, vv):
     # sources correctly.
     #
 
+    import distutils.log
+
+    print("Setting up sources:")
+
     #
     # setup the VERSION file
     #
@@ -124,6 +128,7 @@ def setup_sources(thisdir, vv):
     target_tomographer_include = os.path.join(thisdir, 'tomographer', 'include')
     if os.path.exists(os.path.join(target_tomographer_include, 'tomographer')):
         shutil.rmtree(os.path.join(target_tomographer_include, 'tomographer'))
+    print("Copying tomographer headers ...")
     shutil.copytree(src_tomographer_include,
                     os.path.join(target_tomographer_include, 'tomographer'),
                     ignore=ignore_not_header(thisdir))
@@ -135,6 +140,7 @@ def setup_sources(thisdir, vv):
     target_tomographer_include_tomographerpy = os.path.join(thisdir, 'tomographer', 'include', 'tomographerpy')
     if os.path.exists(os.path.join(target_tomographer_include_tomographerpy)):
         shutil.rmtree(os.path.join(target_tomographer_include_tomographerpy))
+    print("Copying tomographerpy headers ...")
     shutil.copytree(src_tomographerpy_include,
                     os.path.join(target_tomographer_include_tomographerpy),
                     ignore=ignore_not_header(thisdir))
@@ -167,10 +173,16 @@ def setup_sources(thisdir, vv):
     if not os.path.exists(os.path.join(thisdir,'tmp','boost_dir','boost')):
         os.symlink(os.path.join(vv.get('Boost_INCLUDE_DIR'), 'boost'), # source
                    os.path.join(thisdir,'tmp','boost_dir','boost')) # link_name
+    #
 
-    subprocess.check_output([vv.get('BCP'), '--boost='+os.path.join(thisdir,'tmp','boost_dir')] +
-                             BOOST_DEPS_COMPONENTS +
-                             [target_tomographer_include_deps_boost ])
+    print("Copying boost headers ...")
+    bcp_output = subprocess.check_output(
+        [ vv.get('BCP'), '--boost='+os.path.join(thisdir,'tmp','boost_dir')] +
+        BOOST_DEPS_COMPONENTS +
+        [target_tomographer_include_deps_boost ],
+        stderr=subprocess.STDOUT
+    )
+    distutils.log.debug(bcp_output)
 
     if (not vv.get('EIGEN3_INCLUDE_DIR') or
         os.path.realpath(vv.get('EIGEN3_INCLUDE_DIR')).startswith(os.path.realpath(target_tomographer_include_deps))):
@@ -180,6 +192,7 @@ def setup_sources(thisdir, vv):
     if os.path.exists(target_tomographer_include_deps_eigen3):
         shutil.rmtree(target_tomographer_include_deps_eigen3)
     os.mkdir(target_tomographer_include_deps_eigen3)
+    print("Copying eigen headers ...")
     shutil.copytree(os.path.join(vv.get('EIGEN3_INCLUDE_DIR'), 'Eigen'),
                     os.path.join(target_tomographer_include_deps_eigen3, 'Eigen'),
                     ) # no ignore! Public headers don't have an extension, e.g. "#include <Eigen/Core>"
@@ -192,45 +205,22 @@ def setup_sources(thisdir, vv):
     #
     # create tomographer_version.h
     #
-    tomographer_version_h_content = """\
-/* This file is part of the Tomographer project, which is distributed under the
- * terms of the MIT license.
- *
- * The MIT License (MIT)
- *
- * Copyright (c) 2016 ETH Zurich, Institute for Theoretical Physics, Philippe Faist
- * Copyright (c) 2017 Caltech, Institute for Quantum Information and Matter, Philippe Faist
- *
- * Permission is hereby granted, free of charge, to any person obtaining a copy
- * of this software and associated documentation files (the "Software"), to deal
- * in the Software without restriction, including without limitation the rights
- * to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
- * copies of the Software, and to permit persons to whom the Software is
- * furnished to do so, subject to the following conditions:
- *
- * The above copyright notice and this permission notice shall be included in
- * all copies or substantial portions of the Software.
- *
- * THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
- * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
- * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
- * AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
- * LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
- * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
- * SOFTWARE.
- */
-
-#ifndef zzzTOMOGRAPHER_VERSION_H_
-#define zzzTOMOGRAPHER_VERSION_H_
-
-#define TOMOGRAPHER_VERSION "{version}"
-#define TOMOGRAPHER_VERSION_MAJ {version_maj}
-#define TOMOGRAPHER_VERSION_MIN {version_min}
-
-#endif
-""".format(version=version,version_maj=version_maj,version_min=version_min)
+    print("Creating tomographer_version.h ...")
+    tomographer_version_h_in_content = None
+    # read tomographer_version.h.in
+    with open(os.path.join(src_tomographer_include, 'tomographer_version.h.in'), 'r') as f:
+        tomographer_version_h_in_content = ensure_str(f.read())
+    # do the variable replacements
+    version_vars = dict(TOMOGRAPHER_VERSION=version,
+                        TOMOGRAPHER_VERSION_MAJ=str(version_maj),
+                        TOMOGRAPHER_VERSION_MIN=str(version_min))
+    tomographer_version_h_content = re.sub( r'\@(?P<varname>[A-Za-z0-9_]+)\@',
+                                            lambda m: version_vars[m.group('varname')],
+                                            tomographer_version_h_in_content )
     with open(os.path.join(thisdir, 'tomographer', 'include', 'tomographer', 'tomographer_version.h'), 'w') as f:
         f.write(tomographer_version_h_content)
+
+    print("Creating README and LICENSE files ...")
 
     #
     # include LICENSE file in this directory
@@ -256,6 +246,7 @@ They are located in the source package directory ``tomographer/include/deps/``.
         fw.write(readme_content)
         fw.write(NOTE_PKG_DEPS)
 
+    print("Sources set up.")
     
     #
     # All set.

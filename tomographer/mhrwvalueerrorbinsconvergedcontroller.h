@@ -111,7 +111,9 @@ public:
       double max_add_run_iters_ = 1.5
       )
     : value_stats_collector(value_stats_collector_),
-      check_frequency_sweeps(check_frequency_sweeps_),
+      check_frequency_sweeps( maybeadjust_check_freq_seeps(check_frequency_sweeps_,
+                                                           value_stats_collector,
+                                                           baselogger_) ),
       last_forbidden_iter_number(0),
       max_allowed_unknown(max_allowed_unknown_),
       max_allowed_unknown_notisolated(max_allowed_unknown_notisolated_),
@@ -119,6 +121,14 @@ public:
       max_add_run_iters(max_add_run_iters_),
       llogger("Tomographer::MHRWValueErrorBinsConvergedAdjuster", baselogger_)
   {
+    const auto binning_samples_size = value_stats_collector.getBinningAnalysis().effectiveSampleSize();
+    if ((check_frequency_sweeps % binning_samples_size) != 0) {
+      llogger.warning([&](std::ostream & stream) {
+          stream << "check_frequency_sweeps (="<<check_frequency_sweeps_<<") is not a multiple of the "
+                 << "binning analysis sample size (="<<binning_samples_size<<"), this could lead to samples "
+                 << "being ignored by the error analysis (avoid this)!";
+        }) ;
+    }
   }
   
   template<typename MHRWParamsType, typename MHWalker, typename MHRandomWalkType>
@@ -149,6 +159,13 @@ public:
     if (last_forbidden_iter_number > 0 &&
         (iter_k-last_forbidden_iter_number) < params.n_sweep*check_frequency_sweeps) {
       // not enough new samples since last time we rejected to finish the random walk
+      return false;
+    }
+
+    if (iter_k % (params.n_sweep*check_frequency_sweeps) != 0) {
+      // Make sure we only interrupt on an exact multiple of
+      // check_frequency_sweeps.  This is needed because we want to make sure
+      // the binning analysis has processed exactly all the samples
       return false;
     }
 
@@ -185,6 +202,7 @@ public:
         conv_summary.n_unknown > max_allowed_unknown ||
         (conv_summary.n_unknown-conv_summary.n_unknown_isolated) > max_allowed_unknown_notisolated) {
       // too many unconverged error bars, continue running
+      last_forbidden_iter_number = iter_k;
       return false;
     }
 
@@ -202,6 +220,30 @@ public:
   inline void done(MHRWParamsType & /*params*/, const MHWalker & /*mhwalker*/,
                    const MHRandomWalkType & /*mhrw*/) const
   {
+  }
+
+private:
+  // ensure that check_frequency_sweeps is a multiple of the binning analysis sample size
+  inline static IterCountIntType maybeadjust_check_freq_seeps(
+      IterCountIntType check_frequency_sweeps_,
+      const ValueHistogramWithBinningMHRWStatsCollectorType & valstats,
+      BaseLoggerType & logger)
+  {
+    if (check_frequency_sweeps_ == 0) {
+      return 0; // all ok
+    }
+    IterCountIntType binning_samples_size = (IterCountIntType)valstats.getBinningAnalysis().effectiveSampleSize();
+    if ((check_frequency_sweeps_ % binning_samples_size) == 0) {
+      // all ok
+      return check_frequency_sweeps_;
+    }
+    // ensure that `check_frequency_sweeps_' is a multiple of `binning_samples_size'
+    IterCountIntType corrected = ( check_frequency_sweeps_ / binning_samples_size + 1) * binning_samples_size;
+    logger.debug("Tomographer::MHRWValueErrorBinsConvergedController", [&](std::ostream & stream) {
+        stream << "check_frequency_sweeps (="<<check_frequency_sweeps_<<") is not a multiple of the "
+          "binning analysis sample size (="<<binning_samples_size<<"), correcting to " << corrected;
+          });
+    return corrected;
   }
 };
 

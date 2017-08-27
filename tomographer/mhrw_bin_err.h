@@ -631,6 +631,24 @@ public:
   }
 
 
+  /** \brief Number of samples required to flush all levels of the binning analysis
+   *
+   * Make sure the random walk gathers a number of samples which is a multiple
+   * of \a effectiveSampleSize(), to make sure that the binning analysis has
+   * taken into account *each and every sample*.  Otherwise, the binning
+   * analysis could ignore the last few samples, and, for instance, you could
+   * have an error bar exactly equal to zero (if no samples up to then were
+   * observed), but a bin count with one sample.  This really bad for a fit, for
+   * instance, where the error bar is used to calculate the relevant \f$ \chi^2
+   * \f$ quantity.
+   *
+   * \since Added in %Tomographer 5.3.
+   */
+  inline Eigen::Index effectiveSampleSize() const
+  {
+    return samplesSize();
+  }
+
 
 private:
 

@@ -307,7 +307,7 @@ BOOST_FIXTURE_TEST_CASE(stops_prematurely_for_long_runs, TestStatsCollectorFixtu
   // the bins have not yet converged, we should not end yet
   BOOST_CHECK( ! ctrl.allowDoneRuns(p, dmhwalker, iter_k, mhrw) ) ;
 
-  run_dummy_sweeps(statcoll, 13, 3); // some more sweeps -- still not enough to make bars
+  run_dummy_sweeps(statcoll, 16, 3); // some more sweeps -- still not enough to make bars
                                      // converge, but enough to exceed max_add_run_iters
 
   // the bins should not have converged
@@ -321,17 +321,17 @@ BOOST_FIXTURE_TEST_CASE(stops_prematurely_for_long_runs, TestStatsCollectorFixtu
       });
   
     BOOST_CHECK_EQUAL(summary.n_bins, 10u);
-    BOOST_CHECK_EQUAL(summary.n_converged, 5u);
-    BOOST_CHECK_EQUAL(summary.n_unknown, 1u);
-    BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0u);
-    BOOST_CHECK_EQUAL(summary.n_not_converged, 4u);
+    BOOST_CHECK_EQUAL(summary.n_converged, 7u);
+    BOOST_CHECK_EQUAL(summary.n_unknown, 2u);
+    BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 1u);
+    BOOST_CHECK_EQUAL(summary.n_not_converged, 1u);
   }
 
   logger.longdebug("********************************************************************************\n"
                    "allowDoneRuns -- second check") ;
 
   // now the bins have not yet converged, but rw should end because we exceeded
-  // max_add_run_iters=1.2 (reached 64+13 sweeps vs n_run=64 [with 1.2*64==64+12.8])
+  // max_add_run_iters=1.2 (reached 64+16 sweeps vs n_run=64 [with 1.2*64==64+12.8])
   BOOST_CHECK( ctrl.allowDoneRuns(p, dmhwalker, iter_k, mhrw) ) ;
 
 }

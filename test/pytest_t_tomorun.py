@@ -38,6 +38,8 @@ class AnalyticalSolutionFn(object):
         sumwsqdiff = 0
         numpts = 0
 
+        print(hist.bins)
+
         for k in range(hist.numBins()):
             # ignore (near-)zero data points
             if hist.count(k) < 1e-12:
@@ -53,7 +55,8 @@ class AnalyticalSolutionFn(object):
             sumwsqdiff += ((valln - theo_valln) / errln) ** 2
             numpts += 1
 
-            print("Point {:03d}: theoln={:.3g} valln={:.3g} errln={:.3g}".format(numpts, theo_valln, valln, errln))
+            print("Point {:03d}: k={:03d} hist:{:.3g}+-{:.3g} theoln={:.3g} valln={:.3g} errln={:.3g}"
+                  .format(numpts, k, hist.count(k), hist.errorBar(k), theo_valln, valln, errln))
            
         chi2_red = sumwsqdiff / (numpts - 1)
         print("chi2_red={:.4g} ; sumwsqdiff={:.3g}, numpts={}".format(chi2_red, sumwsqdiff, numpts))
@@ -84,6 +87,10 @@ class test_tomorun(unittest.TestCase):
 
         print("test_values_full()")
 
+        # For debugging --
+        #logging.getLogger().setLevel(1)
+        #tomographer.cxxlogger.level = 1
+
         num_repeats = 8
         hist_params = tomographer.HistogramParams(0.985, 1, 200)
 
@@ -105,7 +112,7 @@ class test_tomorun(unittest.TestCase):
             progress_interval_ms=500,
             ctrl_converged_params={'max_allowed_not_converged': 1,
                                    'max_allowed_unknown_notisolated': 1,
-                                   'max_allowed_unknown': 3,}
+                                   'max_allowed_unknown': 3,},
         )
         print("Final report of runs :\n{}".format(r['final_report_runs']))
         print("Final report of everything :\n{}".format(r['final_report']))
@@ -120,6 +127,12 @@ class test_tomorun(unittest.TestCase):
         for k in range(num_repeats):
             runres = r['runs_results'][k]
             self.assertTrue(isinstance(runres, tomographer.mhrwtasks.MHRandomWalkTaskResult))
+
+        ##For debugging --
+        #for k in range(num_repeats):
+        #    print("Worker #", k, ":", sep='')
+        #    print(repr(r['runs_results'][k].stats_results.histogram))
+        #    print(r['runs_results'][k].stats_results.error_levels)
 
         # now, check the actual values of the result
         pok = AnalyticalSolutionFn(np.sum(self.Nm))

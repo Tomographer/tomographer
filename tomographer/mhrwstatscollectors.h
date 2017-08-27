@@ -555,7 +555,10 @@ public:
 
     _logger.longdebug("ValueHistogramMHRWStatsCollector", [&](std::ostream & stream) {
 	stream << "in processSample(): "
-	       << "k=" << k << ", n=" << n << ", val=" << val
+	       << "k=" << k << ", n=" << n << ", val=" << val << " -> bin # "
+               << ( _histogram.params.isWithinBounds(val)
+                    ? std::to_string(_histogram.params.binIndexUnsafe(val))
+                    : std::string("<off-chart>") )
 	       << " [with ValueType=" << typeid(ValueType).name() << "]" ;
       });
 

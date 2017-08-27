@@ -24,6 +24,7 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 
+from __future__ import print_function
 
 from distutils.spawn import find_executable
 from distutils.version import LooseVersion
@@ -71,15 +72,13 @@ def require_mod_version(mod, modver, minver, fix=None):
 require_mod_version("NumPy", numpy.__version__, "1.8",
                     fix='running "pip install numpy --upgrade"')
 
-# Very recent Pybind11, need >= 2.1 for automatic py::metaclass()
+# Recent Pybind11, need >= 2.1 for automatic py::metaclass()
 require_mod_version("PyBind11", pybind11.__version__, "2.1",
                     fix='running "pip install pybind11 --upgrade"')
 
 
 
 thisdir = os.path.dirname(os.path.realpath(os.path.abspath(__file__)))
-print("Tomographer py dir = {}; cwd = {}".format(thisdir, os.getcwd()))
-
 
 
 sys.path.insert(0, os.path.join(thisdir, 'tomographer'))
@@ -91,7 +90,10 @@ from include import find_include_dir, find_lib, Vars, ensure_str   # beurk!!
 import setup_sources
 
 IsTomographerSources = setup_sources.is_tomographer_sources(thisdir)
-print("IsTomographerSources = {!r}".format(IsTomographerSources))
+if IsTomographerSources:
+    print("Will set up sources with package dependencies etc.")
+    print(("Tomographer/py dir = {}\n"
+           "               cwd = {}").format(thisdir, os.getcwd()))
 
 varlist = [
     'PYBIND11_CPP_STANDARD',
@@ -180,15 +182,16 @@ print("""\
 
 {}""".format("\n".join([ "    {}={}".format(k,v) for k,v in vv.d.items() ])))
 
-if IsTomographerSources and not cmake_cache_file:
+if cmake_cache_file:
+    print("""
+  (read cache file {})
+""".format(cmake_cache_file))
+elif IsTomographerSources:
     print("""
   You may also read variables from a CMakeCache.txt file with
   CMAKE_CACHE_FILE=path/to/CMakeCache.txt
 """)
-elif IsTomographerSources or cmake_cache_file:
-    print("""
-  (read cache file {})
-""".format(cmake_cache_file))
+
 
 
 if IsTomographerSources and sys.platform == 'darwin':

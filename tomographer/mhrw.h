@@ -1001,13 +1001,15 @@ private:
   }
   inline bool _controller_allow_therm_done(CountIntType iter_k)
   {
-    return MHRWControllerInvokerType::template invokeAllowDoneThermalization(
+    return (iter_k % _n.n_sweep == 0) &&
+      MHRWControllerInvokerType::template invokeAllowDoneThermalization(
         _mhrw_controller, _n, _mhwalker, iter_k, *this
         );
   }
   inline bool _controller_allow_runs_done(CountIntType iter_k)
   {
-    return MHRWControllerInvokerType::template invokeAllowDoneRuns(
+    return (iter_k % _n.n_sweep == 0) &&
+      MHRWControllerInvokerType::template invokeAllowDoneRuns(
         _mhrw_controller, _n, _mhwalker, iter_k, *this
         );
   }
