@@ -88,6 +88,9 @@ namespace MPI {
  * - \a TaskCountIntType should be a type to use to count the number of tasks. Usually
  *   there's no reason not to use an \c int.
  *
+ *   <b>NOTE</b>: \a TaskCountIntType must be a \b signed integer type, because we might
+ *   need to use the special value \a -1
+ *
  */
 template<typename TaskType_, typename TaskCData_, typename BaseLoggerType_,
          typename TaskCountIntType_ = int>
@@ -106,42 +109,135 @@ public:
 
   typedef std::function<void(const FullStatusReportType&)> FullStatusReportCallbackType;
 
+  TOMO_STATIC_ASSERT_EXPR(std::is_signed<TaskCountIntType>::value) ;
+
 private:
   
   typedef std::chrono::steady_clock StdClockType;
 
+  struct FullTaskResult
+  {
+    FullTaskResult(TaskResultType * t = NULL, std::string errmsg = std::string())
+      : task_result(t), error_msg(errmsg) { }
 
-  struct Schedule {
-    Schedule()
-      : num_total_runs(0),
+    TaskResultType * task_result; // NULL if task was interrupted
+    std::string error_msg;
+
+  private:
+    friend boost::serialization::access;
+    template<typename Archive>
+    void serialize(Archive & a, unsigned int /*version*/)
+    {
+      a & task_result;
+      a & error_msg;
+    }
+  };
+
+  struct MasterWorkersController {
+    MasterWorkersController(TaskCountIntType num_total_runs_)
+      : num_total_runs(num_total_runs_),
         num_completed(0),
         num_launched(0),
+        num_workers_running(0),
+        workers_running(),
+        tasks_start_time(),
         interrupt_requested(0),
-        tasks_start_time(StdClockType::now())
+        interrupt_reacted(0),
+        full_task_results(),
+        task_results()
     {
+    }
+
+    inline void start()
+    {
+      // everything is left to do
+      num_completed = 0;
+      num_launched = 0;
+      num_workers_running = 0;
+      workers_running.resize((std::size_t)comm.size(), 0);
+      // interruption flag
+      interrupt_requested = 0;
+      interrupt_reacted = 0;
+      // resize to # of processes
+      full_task_results.resize((std::size_t)num_total_runs, NULL);
+      task_results.resize((std::size_t)num_total_runs, NULL);
+      // et ... top chrono
+      tasks_start_time = StdClockType::now();
+    }
+
+    inline TaskCountIntType pop_task()
+    {
+      if (num_launched >= num_total_runs) {
+        return -1;
+      }
+      TaskCountIntType task_id = num_launched;
+      ++num_launched;
+      return task_id; // or, as a C guy would say, return num_launched++
+    }
+
+    bool get_interrupt_event_and_react()
+    {
+      if (interrupt_requested) {
+        interrupt_reacted = 1;
+        return true;
+      }
+      return false;
     }
 
     const TaskCountIntType num_total_runs;
     TaskCountIntType num_completed;
     TaskCountIntType num_launched;
 
-    volatile std::sig_atomic_t interrupt_requested; // could be written to by signal handler
+    int num_workers_running;
+    std::vector<int> workers_running;
 
-    const StdClockType::time_point tasks_start_time;
+    StdClockType::time_point tasks_start_time;
+
+    volatile std::sig_atomic_t interrupt_requested; // could be written to by signal handler
+    std::sig_atomic_t interrupt_reacted;
+
+    std::vector<FullTaskResult*> full_task_results;
+    std::vector<TaskResultType*> task_results; // for convenience, same as full_task_results[k].task_result's
   };
 
-  struct StatusReport {
-    StatusReport()
-      : requested(0),
+  struct MasterStatusReportController {
+    MasterStatusReportController()
+      : event_counter(0),
+        reacted_event_counter(0),
         user_fn(),
         last_report(StdClockType::now()),
         periodic_interval(0)
     {
     }
 
-    volatile std::sig_atomic_t requested; // could be written to by signal handler
+    bool get_event_and_react() {
+      if (in_preparation) {
+        return false;
+      }
+      if (event_counter != reacted_event_counter) {
+        reacted_event_counter = event_counter;
+        return true;
+      }
+      return false;
+    }
+
+    void reset() {
+      in_preparation = false;
+      full_report = FullStatusReportType();
+      num_reports_waiting = 0;
+    }
+
+    volatile std::sig_atomic_t event_counter; // could be written to by signal handler
+    std::sig_atomic_t reacted_event_counter;
+
+    bool in_preparation;
+
+    FullStatusReportType full_report;
+    int num_reports_waiting;
+
+    StdClockType::time_point last_report_time;
+
     FullStatusReportCallbackType user_fn;
-    StdClockType::time_point last_report;
     StdClockType::duration periodic_interval;
   };
 
@@ -149,17 +245,17 @@ private:
     TaskMgrIface(TaskDispatcher * dispatcher_)
       : dispatcher(dispatcher_)
     {
+      tomographer_assert(dispatcher != NULL) ;
     }
 
     inline bool statusReportRequested() const
     {
-      return false;
-      // TODO .......
+      return dispatcher->do_bookkeeping();
     }
 
     inline void submitStatusReport(const TaskStatusReportType &statreport)
     {
-      // TODO: communicate report to master process...
+      dispatcher->submit_status_report(statreport);
     }
 
   private:
@@ -168,23 +264,38 @@ private:
   };
 
   enum {
-    TAG_RESULT = 100,
-    TAG_REQUEST_STATUS_REPORT,
-    TAG_REQUEST_INTERRUPT,
-    TAG_SUBMIT_STATUS_REPORT
+    _TAG_offset_number = 199, // our tag #s start from 200
+
+    TAG_WORKER_REQUEST_NEW_TASK_ID,
+    TAG_MASTER_DELIVER_NEW_TASK_ID,
+
+    TAG_MASTER_ORDER_INTERRUPT,
+    TAG_MASTER_ORDER_STATUS_REPORT,
+
+    TAG_WORKER_SUBMIT_STATUS_REPORT,
+    TAG_WORKER_SUBMIT_IDLE_STATUS_REPORT,
+    TAG_WORKER_SUBMIT_RESULT
   };
 
   TaskCData * pcdata;
   mpi::communicator & comm;
   const bool is_master;
-  std::vector<TaskResultType*> results;
+
   Tomographer::Logger::LocalLogger<BaseLoggerType> llogger;
 
-  Schedule schedule;
-  StatusReport status_report;
+  MasterWorkersController * ctrl;
+  MasterStatusReportController * status_report_ctrl;
 
   TaskMgrIface mgriface;
   
+  class interrupt_tasks : public std::exception
+  {
+    std::string msg;
+  public:
+    interrupt_tasks(std::string msg_ = "Task Interrupted") : msg(msg_) { }
+    virtual ~interrupt_tasks() throw() { }
+    const char * what() const throw() { return msg.c_str(); }
+  };
 
 public:
   /** \brief Construct the task dispatcher around the given MPI communicator
@@ -200,8 +311,14 @@ public:
       is_master(comm_.rank() == 0),
       results(),
       llogger("Tomographer::MultiProc::MPI::TaskDispatcher", logger_),
+      ctrl(NULL),
+      status_report_ctrl(NULL),
       mgriface(this)
   {
+    if (is_master) {
+      ctrl = new MasterWorkersController(num_task_runs) ;
+      status_report_ctrl = new MasterStatusReportController;
+    }
   }
   ~TaskDispatcher()
   {
@@ -234,20 +351,34 @@ public:
     logger.longdebug("pcdata is now broadcast; is_master=%c", (is_master?'y':'n'));
 
     if (is_master) {
-      results.resize((std::size_t)comm.size(), NULL); // resize to # of processes
+      tomographer_assert(ctrl != NULL) ;
+      tomographer_assert(status_report_ctrl != NULL) ;
+      ctrl->start()
+    } else {
+      tomographer_assert(ctrl == NULL) ;
+      tomographer_assert(status_report_ctrl == NULL) ;
     }
 
-    const auto mpi_rank = comm.rank();
+    const auto worker_id = comm.rank();
 
-    logger.debug([&](std::ostream & stream) { stream << "Task running in process #" << mpi_rank << " ..."; });
+    logger.debug([&](std::ostream & stream) {
+        stream << "Task running in process #" << worker_id << " ...";
+      });
     
-    auto input = pcdata->getTaskInput(mpi_rank);
-    
-    // construct a new task instance
-    TaskType t(std::move(input), pcdata, logger.parentLogger());
+    std::string error_msg;
 
-    // and run it
-    t.run(pcdata, logger.parentLogger(), &mgriface);
+    try {
+
+      run_worker();
+
+    } catch (interrupt_tasks & e) {
+      // tasks were interrupted, sorry.
+      error_msg = e.what();
+    }
+
+    if (is_master && error_msg.size()) {
+      master_order_interrupt();
+    }
     
     //
     // gather the results to the master process
@@ -257,26 +388,23 @@ public:
       logger.debug("master done here, waiting for other processes to finish");
 
       tomographer_assert(results.size() > 0);
-      
-      results[0] = new TaskResultType(std::move(t.stealResult()));
 
-      while ( std::find(results.begin(), results.end(), (TaskResultType*)NULL) != results.end() ) {
+      while ( ctrl->num_workers_running ) {
         // continue monitoring running processes and gathering results
-        _master_regular_bookkeeping();
+        try {
+          do_bookkeeping();
+        } catch(interrupt_tasks & e) {
+          master_order_interrupt();
+          // nothing to do but wait for others to finish...
+        }
         // and sleep a bit
         TOMOGRAPHER_SLEEP_FOR_MS( 100 ) ;
       }
 
-    } else {
-      
-      // all good, task done.  Send our result to the master process.
-      logger.debug("worker done here, sending result to master");
+    }
 
-      auto task_result = t.stealResult();
-
-      comm.send(0, // destination
-                TAG_RESULT,
-                task_result);
+    if (error_msg) {
+      throw TasksInterruptedException(error_msg);
     }
 
     // all done
@@ -284,31 +412,353 @@ public:
   }
 
 private:
-  void _master_regular_bookkeeping()
+  friend class TaskMgrIface;
+
+  inline bool do_bookkeeping() // return TRUE if a status report was requested
+  {
+    bool status_report_requested = false;
+
+    if (is_master) {
+      
+      if (ctrl->get_interrupt_event_and_react()) {
+
+        // quit our main loop first, then we'll order other workers to do the same
+        throw interrupt_tasks();
+
+      }
+
+      if (!ctrl->interrupt_requested) {
+
+        // as master, we could still be asked to do some monitoring after an
+        // interrupt was requested, so be careful about this.
+
+        if ( ctrl_status_report->get_event_and_react()) {
+
+          master_initiate_status_report();
+          status_report_requested = true;
+
+        }  else if ( ctrl_status_report->periodic_interval > 0 &&
+                     ( std::chrono::duration_cast<std::chrono::milliseconds>(
+                         StdClockType::now() - ctrl_status_report->last_report_time
+                         ).count()  >  ctrl_status_report->periodic_interval ) ) {
+          // enough time has passed since last status report, generate new one
+          master_initiate_status_report();
+          status_report_requested = true;
+
+        }
+
+      }
+
+      master_regular_worker_monitoring();
+
+    } else {
+
+      // normal worker -- just check for interrupt or status reports from master
+      // (source rank == 0)
+
+      auto maybeorderinterruptmsg = comm.iprobe(0, TAG_MASTER_ORDER_INTERRUPT);
+      if (maybeorderinterruptmsg) {
+        // got an order -- react
+        tomographer_assert(msg.tag() == TAG_MASTER_ORDER_INTERRUPT);
+        tomographer_assert(msg.source() == 0);
+        logger.longdebug("Receiving an interrupt order from master ... ");
+        comm.recv(msg.source(), msg.tag());
+
+        throw interrupt_tasks();
+      }
+
+      auto maybeorderstatreportmsg = comm.iprobe(0, TAG_MASTER_ORDER_STATUS_REPORT);
+      if (maybeorderstatreportmsg) {
+        // got an order -- react
+        tomographer_assert(msg.tag() == TAG_MASTER_ORDER_STATUS_REPORT);
+        tomographer_assert(msg.source() == 0);
+        logger.longdebug("Receiving an status report order from master ... ");
+        comm.recv(msg.source(), msg.tag());
+
+        // we need to send in a status report.
+        status_report_requested = true;
+
+      }
+
+    }
+
+    return status_report_requested;
+  }
+
+  inline void submit_status_report(const TaskStatusReportType &statreport)
+  {
+    if (is_master) {
+      // just handle our own status report
+      master_handle_incoming_worker_status_report(0, statreport);
+    } else {
+      // with isend() we would have to monitor the MPI request (return value) I guess...
+      comm.send(0, // report to master
+                TAG_WORKER_SUBMIT_STATUS_REPORT,
+                statreport) ;
+    }
+  }
+
+
+  inline void master_initiate_status_report()
+  {
+    tomographer_assert(is_master) ;
+
+    ctrl_status_report->in_preparation = true;
+    ctrl_status_report->num_reports_waiting = 0;
+    ctrl_status_report->full_report = FullStatusReportType();
+    ctrl_status_report->full_report.num_completed = shared_data->schedule.num_completed;
+    ctrl_status_report->full_report.num_total_runs = shared_data->schedule.num_total_runs;
+    ctrl_status_report->full_report.elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+        StdClockType::now() - ctrl->tasks_start_time
+        ).count() * 1e-3;
+    std::size_t num_workers = (std::size_t)comm.size();
+    // initialize task-specific reports
+    // fill our lists with default-constructed values & set all running to false.
+    ctrl_status_report->full_report.workers_running.clear();
+    ctrl_status_report->full_report.workers_reports.clear();
+    ctrl_status_report->full_report.workers_running.resize(num_threads, false);
+    ctrl_status_report->full_report.workers_reports.resize(num_threads);
+
+    // order all workers to report on their status
+    for (int worker_id = 1; worker_id < comm.size(); ++worker_id) {
+      if (ctrl->workers_running[worker_id]) {
+        // if this worker is running, send it a status report order
+        comm.send(worker_id, TAG_MASTER_ORDER_STATUS_REPORT) ;
+        ++ ctrl_status_report->num_reports_waiting;
+      }
+    }
+    if (ctrl->workers_running[0]) {
+      // make num_reports_waiting account for master's own status report
+      ++ ctrl_status_report->num_reports_waiting;
+    }
+  }
+
+  inline void master_order_interrupt()
+  {
+    tomographer_assert(is_master) ;
+
+    // We stopped because an interrupt exception was caught in the master
+    // process, or a worker reported to the master process that they had failed.
+    // Order all workers to stop now.
+    for (int k = 1; k < comm.size(); ++k) {
+      if (ctrl->workers_running[k]) {
+        comm.send(k, TAG_MASTER_ORDER_INTERRUPT) ;
+      }
+    }
+  }
+
+  inline void master_regular_worker_monitoring()
   {
     auto logger = llogger.subLogger(TOMO_ORIGIN) ;
     tomographer_assert(is_master) ;
 
-    // see if there is any task results incoming of tasks which have finished
-    auto mayberesultmsg = comm.iprobe(mpi::any_source, TAG_RESULT);
-    if (mayberesultmsg) { // got something
-      logger.debug("Treating a message ... ");
-      auto msg = *mayberesultmsg;
-      tomographer_assert(msg.tag() == TAG_RESULT);
+    // see if we have to deliver a new task to someone
+    auto maybenewtaskmsg = comm.iprobe(mpi::any_source, TAG_WORKER_REQUEST_NEW_TASK_ID);
+    if (maybenewtaskmsg) {
+      logger.debug("Treating a new task id request message ... ");
+      auto msg = *maybenewtaskmsg;
+      tomographer_assert(msg.tag() == TAG_WORKER_REQUEST_NEW_TASK_ID);
+      comm.recv(msg.source(), msg.tag());
 
-      TaskResultType * taskresult = new TaskResultType;
-      logger.debug("Receiving a message from #%d with tag %d ... ", msg.source(), msg.tag());
-      comm.recv(msg.source(), msg.tag(), *taskresult);
-
-      logger.debug("Got message.");
-
-      tomographer_assert(msg.source() > 0 && msg.source() < results.size()) ;
-      results[msg.source()] = taskresult;
-      logger.debug("Saved into results.");
+      // send the worker a new task id
+      TaskCountIntType task_id = master_get_new_task_id(msg.source());
+      comm.send(msg.source(), TAG_MASTER_DELIVER_NEW_TASK_ID, task_id);
     }
 
-    // see if there is any status reports incoming
-    // TODO......
+    // see if there is any task results incoming of tasks which have finished
+    auto mayberesultmsg = comm.iprobe(mpi::any_source, TAG_WORKER_SUBMIT_RESULT);
+    if (mayberesultmsg) { // got something
+      logger.debug("Treating a result message ... ");
+      auto msg = *mayberesultmsg;
+      tomographer_assert(msg.tag() == TAG_WORKER_SUBMIT_RESULT);
+
+      FullTaskResult * result = new FullTaskResult;
+      logger.debug("Receiving a worker's result from #%d ... ", msg.source());
+      comm.recv(msg.source(), msg.tag(), *result);
+
+      logger.debug("Got result.");
+
+      master_store_task_result(msg.source(), workerresult)
+    }
+
+    // see if there is any task results incoming of tasks which have finished
+    auto maybestatmsg = comm.iprobe(mpi::any_source, TAG_WORKER_SUBMIT_STATUS_REPORT);
+    if (maybestatmsg) { // got something
+      logger.debug("Treating a status report message ... ");
+      auto msg = *mayberesultmsg;
+      tomographer_assert(msg.tag() == TAG_WORKER_SUBMIT_STATUS_REPORT);
+
+      TaskStatusReportType stat;
+      logger.debug("Receiving a worker's status report from #%d ... ", msg.source());
+      comm.recv(msg.source(), msg.tag(), stat);
+
+      master_handle_incoming_worker_status_report(msg.source(), stat);
+    }
+
+  }
+
+  inline TaskCountIntType master_get_new_task_id(int worker_id)
+  {
+    auto logger = llogger.subLogger(TOMO_ORIGIN) ;
+
+    tomographer_assert(is_master) ;
+
+    // this worker is now working
+    ctrl->workers_running[worker_id] = 1;
+    ++ ctrl->num_workers_running;
+
+    TaskCountIntType task_id = ctrl->pop_task();
+    logger([&](std::ostream & stream) {
+        stream <<  "Got new task_id = " << task_id << " for worker #" << worker_id;
+      }) ;
+    return task_id;
+  }
+
+  // we're stealing the pointer here
+  inline void master_store_task_result(int worker_id, FullTaskResult * result)
+  {
+    auto logger = llogger.subLogger(TOMO_ORIGIN) ;
+    tomographer_assert(is_master) ;
+
+    tomographer_assert(result != NULL) ;
+    tomographer_assert(worker_id > 0 && worker_id < ctrl->full_task_results.size()) ;
+    tomographer_assert(ctrl->full_task_results.size() == ctrl->task_results.size()) ;
+
+    ctrl->full_task_results[worker_id] = result;
+    ctrl->task_results[worker_id] = result.task_result;
+
+
+    .......handle task error & interrupt if needed..........
+
+
+    // this worker is now (momentarily) no longer working
+    ctrl->workers_running[worker_id] = 0;
+    -- ctrl->num_workers_running;
+
+    logger.debug("Saved into results.");
+  }
+
+  inline void master_handle_incoming_worker_status_report(int worker_id, TaskStatusReportType * stat)
+  {
+    auto logger = llogger.subLogger(TOMO_ORIGIN) ;
+    tomographer_assert(is_master) ;
+
+    --ctrl_status_report->num_reports_waiting;
+
+    if (stat != NULL) {
+      ctrl_status_report->full_report.workers_running[worker_id] = true;
+      ctrl_status_report->full_report.workers_reports[worker_id] = stat;
+    } else {
+      // leave the data in the workers_[running|reports] to the
+      // default-initialized values, meaning that the worker is in an IDLE state
+    }
+    
+    if (num_reports_waiting <= 0) {
+      // report is ready, send it.
+      ctrl_status_report->user_fn(ctrl_status_report->full_report) ;
+      // reset data
+      ctrl_status_report->reset();
+      ctrl_status_report->last_report_time = StdClockType::now();
+    }
+  }
+
+
+  inline void run_worker()
+  {
+    auto logger = llogger.subLogger(TOMO_ORIGIN) ;
+
+    TaskCountIntType new_task_id = -1;
+    for (;;) {
+
+      if (is_master) {
+        // we can get our task id directly
+        new_task_id = master_get_new_task_id(0);
+      } else {
+        // ask our master for a new task
+        comm.send(0, // destination: master
+                  TAG_WORKER_REQUEST_NEW_TASK_ID);
+        comm.recv(0, // from master
+                  TAG_MASTER_DELIVER_NEW_TASK_ID,
+                  new_task_id);
+      }
+
+      if (new_task_id < 0) {
+        // we're done, we shouldn't run any more tasks
+        break;
+      }
+
+      // run the given task
+      run_task(task_id);
+    }
+  }
+
+  inline void run_task(TaskCountIntType task_id)
+  {
+    auto logger = llogger.subLogger(TOMO_ORIGIN) ;
+
+    std::string error_msg;
+
+    try {
+
+      auto input = pcdata->getTaskInput(task_id);
+    
+      // construct a new task instance
+      TaskType t(std::move(input), pcdata, logger.parentLogger());
+
+      // and run it
+      t.run(pcdata, logger.parentLogger(), &mgriface);
+    
+    } catch (interrupt_tasks & ) {
+      throw;
+    } catch (...) {
+      ...
+      throw interrupt_tasks("exception ... ") ;
+    }
+
+    // collect the task result, and gather it to the master process
+
+    if (is_master) {
+
+      FullTaskResult * wresult = new FullTaskResult(t.stealResult());
+
+      // just store our own result
+      master_store_task_result(0, wresult);
+
+    } else {
+
+      // all good, task done.  Send our result to the master process.
+      logger.debug("worker done here, sending result to master");
+
+      auto task_result = t.stealResult();
+
+      FullTaskResult wresult(task_result);
+
+      comm.send(0, // destination
+                TAG_RESULT,
+                wresult);
+
+      // we won't be needing this any longer, it's been serialized & transmitted
+      // to master
+      delete task_result;
+
+      // make sure there is no pending status report order which we could pick up
+      // when starting the next task
+    
+      auto maybeorderstatreportmsg = comm.iprobe(0, TAG_MASTER_ORDER_STATUS_REPORT);
+      if (maybeorderstatreportmsg) {
+        // got an order -- we can't ignore it, because the master is waiting for
+        // our report
+        tomographer_assert(msg.tag() == TAG_MASTER_ORDER_STATUS_REPORT);
+        tomographer_assert(msg.source() == 0);
+        logger.longdebug("Receiving an status report order from master ... ");
+        comm.recv(msg.source(), msg.tag());
+
+        // report that we're idling for now
+        comm.send(0, // report to master
+                  TAG_WORKER_SUBMIT_IDLE_STATUS_REPORT);
+      }
+    }
+
   }
 
 
