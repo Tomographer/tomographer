@@ -160,7 +160,7 @@ private:
       // everything is left to do
       num_completed = 0;
       num_launched = 0;
-      num_workers_running = 0;
+      num_workers_running = num_workers;
       workers_running.resize((std::size_t)num_workers, 0);
       // interruption flag
       interrupt_requested = 0;
@@ -284,7 +284,9 @@ private:
 
     TAG_WORKER_SUBMIT_STATUS_REPORT,
     TAG_WORKER_SUBMIT_IDLE_STATUS_REPORT,
-    TAG_WORKER_SUBMIT_RESULT
+    TAG_WORKER_SUBMIT_RESULT,
+
+    TAG_WORKER_HELL_YEAH_IM_OUTTA_HERE
   };
 
   TaskCData * pcdata;
@@ -399,6 +401,9 @@ public:
 
       logger.debug("master done here, waiting for other processes to finish");
 
+      // we stopped working ourselves
+      -- ctrl->num_workers_running;
+
       while ( ctrl->num_workers_running ) {
         // continue monitoring running processes and gathering results
         logger.longdebug("num_workers_running = %d", ctrl->num_workers_running);
@@ -417,6 +422,11 @@ public:
           error_msg += "\nIn Worker #" + std::to_string(k) + ":\n" + r->error_msg;
         }
       }
+
+    } else {
+
+      // Notify master that we're outta here
+      comm.send(0, TAG_WORKER_HELL_YEAH_IM_OUTTA_HERE);
 
     }
 
@@ -580,7 +590,7 @@ private:
     // see if we have to deliver a new task to someone
     { auto maybenewtaskmsg = comm.iprobe(mpi::any_source, TAG_WORKER_REQUEST_NEW_TASK_ID);
       if (maybenewtaskmsg) {
-        logger.debug("Treating a new task id request message ... ");
+        logger.longdebug("Treating a new task id request message ... ");
         auto msg = *maybenewtaskmsg;
         tomographer_assert(msg.tag() == TAG_WORKER_REQUEST_NEW_TASK_ID);
         comm.recv(msg.source(), msg.tag());
@@ -594,15 +604,15 @@ private:
     // see if there is any task results incoming of tasks which have finished
     { auto mayberesultmsg = comm.iprobe(mpi::any_source, TAG_WORKER_SUBMIT_RESULT);
       if (mayberesultmsg) { // got something
-        logger.debug("Treating a result message ... ");
+        logger.longdebug("Treating a result message ... ");
         auto msg = *mayberesultmsg;
         tomographer_assert(msg.tag() == TAG_WORKER_SUBMIT_RESULT);
 
         FullTaskResult * result = new FullTaskResult;
-        logger.debug("Receiving a worker's result from #%d ... ", msg.source());
+        logger.longdebug("Receiving a worker's result from #%d ... ", msg.source());
         comm.recv(msg.source(), msg.tag(), *result);
 
-        logger.debug("Got result.");
+        logger.longdebug("Got result.");
 
         master_store_task_result(msg.source(), result);
       }
@@ -611,12 +621,12 @@ private:
     // see if there is any task results incoming
     { auto maybestatmsg = comm.iprobe(mpi::any_source, TAG_WORKER_SUBMIT_STATUS_REPORT);
       if (maybestatmsg) { // got something
-        logger.debug("Treating a status report message ... ");
+        logger.longdebug("Treating a status report message ... ");
         auto msg = *maybestatmsg;
         tomographer_assert(msg.tag() == TAG_WORKER_SUBMIT_STATUS_REPORT);
 
         TaskStatusReportType stat;
-        logger.debug("Receiving a worker's status report from #%d ... ", msg.source());
+        logger.longdebug("Receiving a worker's status report from #%d ... ", msg.source());
         comm.recv(msg.source(), msg.tag(), stat);
 
         master_handle_incoming_worker_status_report(msg.source(), &stat);
@@ -626,16 +636,32 @@ private:
     // see if there is any task results incoming reporting idle
     { auto maybeistatmsg = comm.iprobe(mpi::any_source, TAG_WORKER_SUBMIT_IDLE_STATUS_REPORT);
       if (maybeistatmsg) { // got something
-        logger.debug("Treating a status report message ... ");
+        logger.longdebug("Treating a status report message ... ");
         auto msg = *maybeistatmsg;
         tomographer_assert(msg.tag() == TAG_WORKER_SUBMIT_IDLE_STATUS_REPORT);
 
-        logger.debug("Receiving a worker's idle status report from #%d ... ", msg.source());
+        logger.longdebug("Receiving a worker's idle status report from #%d ... ", msg.source());
         comm.recv(msg.source(), msg.tag());
 
         master_handle_incoming_worker_status_report(msg.source(), NULL);
       }
     }
+
+    // worker finished
+    { auto mmsg = comm.iprobe(mpi::any_source, TAG_WORKER_HELL_YEAH_IM_OUTTA_HERE);
+      if (mmsg) { // got something
+        logger.longdebug("Treating a worker's farewell message ... ");
+        auto msg = *mmsg;
+        tomographer_assert(msg.tag() == TAG_WORKER_HELL_YEAH_IM_OUTTA_HERE);
+
+        comm.recv(msg.source(), msg.tag());
+        logger.debug("Received worker #%d's farewell message. Bye, you were great!", msg.source());
+
+        // we got one less worker running
+        -- ctrl->num_workers_running;
+      }
+    }
+
 
   }
 
@@ -650,7 +676,6 @@ private:
     if (task_id >= 0) {
       // worker got new task_id, will start running again
       ctrl->workers_running[(std::size_t)worker_id] = 1;
-      ++ ctrl->num_workers_running;
     }
 
     logger.debug([&](std::ostream & stream) {
@@ -693,7 +718,6 @@ private:
 
     // this worker is now (momentarily) no longer working
     ctrl->workers_running[(std::size_t)worker_id] = 0;
-    -- ctrl->num_workers_running;
 
     logger.longdebug([&](std::ostream & stream) {
         stream << "num_workers_running now = " << ctrl->num_workers_running
@@ -773,6 +797,11 @@ private:
         break;
       }
 
+      // do some bookkeeping here as well -- just in case the task doesn't call
+      // status-report-handling stuff (even though it's supposed to, you can't
+      // ever trust those classes)
+      do_bookkeeping();
+
       // run the given task
       run_task(new_task_id);
     }
@@ -839,8 +868,10 @@ private:
 
     } else {
 
+      int worker_id = comm.rank();
+
       // all good, task done.  Send our result to the master process.
-      logger.debug("worker done here, sending result to master");
+      logger.debug("worker #%d done here, sending result to master", worker_id);
 
       FullTaskResult wresult(task_id, task_result, error_msg);
 

@@ -262,7 +262,7 @@ BOOST_FIXTURE_TEST_CASE(tasks_run, test_task_dispatcher_MPI_fixture)
   mpi::environment env;
   mpi::communicator world;
 
-  Tomographer::Logger::FileLogger filelogger(stderr, Tomographer::Logger::LONGDEBUG);
+  Tomographer::Logger::FileLogger filelogger(stderr, Tomographer::Logger::DEBUG);//LONGDEBUG);
   typedef Tomographer::Logger::OriginPrefixedLogger<Tomographer::Logger::FileLogger>
     LoggerType;
 
