@@ -477,12 +477,12 @@ struct TestMHRWController
 
     // +3's and +4's: when allowDoneThermalization() / allowDonwRuns() were refused
     BOOST_CHECK_EQUAL( adjust_therm_called ,
-                       Th*It*(params.n_therm*params.n_sweep+3) ) ; // no samples
+                       Th*It*((params.n_therm+3)*params.n_sweep) ) ; // no samples
     BOOST_CHECK_EQUAL( adjust_run_called ,
-                       Rn*(It*(params.n_run*params.n_sweep+4) + Sm*params.n_run) ) ;
+                       Rn*(It*((params.n_run+4)*params.n_sweep) + Sm*(params.n_run+4)) ) ;
     BOOST_CHECK_EQUAL( adjust_iter_called ,
-                       It*(Th*(params.n_therm*params.n_sweep+3) + Rn*(params.n_run*params.n_sweep+4)) ) ;
-    BOOST_CHECK_EQUAL( adjust_sample_called , Sm*Rn*params.n_run ) ;
+                       It*(Th*((params.n_therm+3)*params.n_sweep) + Rn*((params.n_run+4)*params.n_sweep)) ) ;
+    BOOST_CHECK_EQUAL( adjust_sample_called , Sm*Rn*(params.n_run+4) ) ;
   }
 
 

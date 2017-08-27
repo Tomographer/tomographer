@@ -232,7 +232,7 @@ private:
     if (check_frequency_sweeps_ == 0) {
       return 0; // all ok
     }
-    IterCountIntType binning_samples_size = valstats.getBinningAnalysis().effectiveSampleSize();
+    IterCountIntType binning_samples_size = (IterCountIntType)valstats.getBinningAnalysis().effectiveSampleSize();
     if ((check_frequency_sweeps_ % binning_samples_size) == 0) {
       // all ok
       return check_frequency_sweeps_;

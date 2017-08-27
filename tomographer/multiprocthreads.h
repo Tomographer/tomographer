@@ -30,6 +30,7 @@
 
 #include <chrono>
 #include <stdexcept>
+#include <algorithm> // std::min
 
 #include <boost/exception/diagnostic_information.hpp>
 
@@ -350,13 +351,16 @@ public:
    *                the TaskCData's getTaskInput() method (see \ref
    *                pageInterfaceTaskCData).
    *
-   * \param num_threads The number of parallel threads to use as workers.
+   * \param num_threads The number of parallel threads to use as workers.  Specify the
+   *                value zero to auto-detect the number of processor cores.
    *
    */
   TaskDispatcher(TaskCData * pcdata, LoggerType & logger,
                  TaskCountIntType num_total_runs,
-                 int num_threads = (int)std::thread::hardware_concurrency())
-    : shared_data(pcdata, logger, num_total_runs, num_threads)
+                 int num_threads = 0)
+    : shared_data(pcdata, logger, num_total_runs,
+                  ((num_threads > 0) ? num_threads
+                   : (int)std::min(num_total_runs, (TaskCountIntType)std::thread::hardware_concurrency())) )
   {
   }
 

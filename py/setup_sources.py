@@ -77,6 +77,10 @@ def setup_sources(thisdir, vv):
     # sources correctly.
     #
 
+    import distutils.log
+
+    print("Setting up sources:")
+
     #
     # setup the VERSION file
     #
@@ -124,6 +128,7 @@ def setup_sources(thisdir, vv):
     target_tomographer_include = os.path.join(thisdir, 'tomographer', 'include')
     if os.path.exists(os.path.join(target_tomographer_include, 'tomographer')):
         shutil.rmtree(os.path.join(target_tomographer_include, 'tomographer'))
+    print("Copying tomographer headers ...")
     shutil.copytree(src_tomographer_include,
                     os.path.join(target_tomographer_include, 'tomographer'),
                     ignore=ignore_not_header(thisdir))
@@ -135,6 +140,7 @@ def setup_sources(thisdir, vv):
     target_tomographer_include_tomographerpy = os.path.join(thisdir, 'tomographer', 'include', 'tomographerpy')
     if os.path.exists(os.path.join(target_tomographer_include_tomographerpy)):
         shutil.rmtree(os.path.join(target_tomographer_include_tomographerpy))
+    print("Copying tomographerpy headers ...")
     shutil.copytree(src_tomographerpy_include,
                     os.path.join(target_tomographer_include_tomographerpy),
                     ignore=ignore_not_header(thisdir))
@@ -167,10 +173,16 @@ def setup_sources(thisdir, vv):
     if not os.path.exists(os.path.join(thisdir,'tmp','boost_dir','boost')):
         os.symlink(os.path.join(vv.get('Boost_INCLUDE_DIR'), 'boost'), # source
                    os.path.join(thisdir,'tmp','boost_dir','boost')) # link_name
+    #
 
-    subprocess.check_output([vv.get('BCP'), '--boost='+os.path.join(thisdir,'tmp','boost_dir')] +
-                             BOOST_DEPS_COMPONENTS +
-                             [target_tomographer_include_deps_boost ])
+    print("Copying boost headers ...")
+    bcp_output = subprocess.check_output(
+        [ vv.get('BCP'), '--boost='+os.path.join(thisdir,'tmp','boost_dir')] +
+        BOOST_DEPS_COMPONENTS +
+        [target_tomographer_include_deps_boost ],
+        stderr=subprocess.STDOUT
+    )
+    distutils.log.debug(bcp_output)
 
     if (not vv.get('EIGEN3_INCLUDE_DIR') or
         os.path.realpath(vv.get('EIGEN3_INCLUDE_DIR')).startswith(os.path.realpath(target_tomographer_include_deps))):
@@ -180,6 +192,7 @@ def setup_sources(thisdir, vv):
     if os.path.exists(target_tomographer_include_deps_eigen3):
         shutil.rmtree(target_tomographer_include_deps_eigen3)
     os.mkdir(target_tomographer_include_deps_eigen3)
+    print("Copying eigen headers ...")
     shutil.copytree(os.path.join(vv.get('EIGEN3_INCLUDE_DIR'), 'Eigen'),
                     os.path.join(target_tomographer_include_deps_eigen3, 'Eigen'),
                     ) # no ignore! Public headers don't have an extension, e.g. "#include <Eigen/Core>"
@@ -192,6 +205,7 @@ def setup_sources(thisdir, vv):
     #
     # create tomographer_version.h
     #
+    print("Creating tomographer_version.h ...")
     tomographer_version_h_content = """\
 /* This file is part of the Tomographer project, which is distributed under the
  * terms of the MIT license.
@@ -232,6 +246,8 @@ def setup_sources(thisdir, vv):
     with open(os.path.join(thisdir, 'tomographer', 'include', 'tomographer', 'tomographer_version.h'), 'w') as f:
         f.write(tomographer_version_h_content)
 
+    print("Creating README and LICENSE files ...")
+
     #
     # include LICENSE file in this directory
     #
@@ -256,6 +272,7 @@ They are located in the source package directory ``tomographer/include/deps/``.
         fw.write(readme_content)
         fw.write(NOTE_PKG_DEPS)
 
+    print("Sources set up.")
     
     #
     # All set.
