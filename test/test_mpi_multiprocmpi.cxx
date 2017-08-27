@@ -121,7 +121,58 @@ private:
 };
 
 
-typedef TestTaskBase<TestBasicCDataMPI, SimpleTestTaskResultType> TestTaskMPI;
+struct TestTaskMPI {
+  //
+  // A very simple task.  The task is to calculate the sum of two inputs, "a" and "b", and
+  // multiply the result by some common number "c" stored in TestBasicCData.
+  //
+
+  typedef TestBasicCDataMPI TestCDataType;
+
+  typedef MyTaskInput Input;
+
+  typedef Tomographer::MultiProc::TaskStatusReport StatusReportType;
+
+  typedef SimpleTestTaskResultType ResultType;
+  
+  template<typename LoggerType>
+  TestTaskMPI(Input input, const TestCDataType * , LoggerType & logger)
+    : _input(input), _result(-1)
+  {
+    logger.debug("TestTask::TestTask", "constructor called") ;
+  }
+
+  template<typename LoggerType, typename TaskManagerIface>
+  void run(const TestCDataType * pcdata, LoggerType & logger, TaskManagerIface * mgriface)
+  {
+    //BOOST_MESSAGE("Running task.") ; // BOOST_TEST_MESSAGE may not be thread-safe!!!!!
+    logger.info("TestTask::run", "Running task.") ;
+    logger.debug("TestTask::run", "running task.");
+
+    const int NN = 1000000;
+
+    for (int i = 0; i < NN; ++i) {
+      _result.value = ( _input.a + _input.b ) * pcdata->c ;
+      _result.msg = Tomographer::Tools::fmts("((a=%d)+(b=%d))*(c=%d) == %d",
+                                             _input.a, _input.b, pcdata->c, _result.value);
+
+      if (i % 1000 == 0 && mgriface->statusReportRequested()) {
+        mgriface->submitStatusReport(StatusReportType((double)i/NN, "working very hard..."));
+      }
+
+    }
+
+    logger.info("TestTask::run", "Task finished.") ;
+    //    BOOST_MESSAGE("Task finished.") ;
+  }
+
+  inline ResultType getResult() const { return _result; }
+  inline ResultType stealResult() { return std::move(_result); }
+
+  Input _input;
+  ResultType _result;
+  
+};
 
 
 

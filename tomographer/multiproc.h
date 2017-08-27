@@ -34,6 +34,8 @@
 #include <chrono>
 #include <exception>
 
+#include <boost/serialization/base_object.hpp>
+
 #include <tomographer/tools/fmt.h>
 #include <tomographer/tools/needownoperatornew.h>
 
@@ -74,6 +76,15 @@ struct TOMOGRAPHER_EXPORT TaskStatusReport
 
   double fraction_done;
   std::string msg;
+
+private:
+  friend class boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /*version*/)
+  {
+    a & fraction_done;
+    a & msg;
+  }
 };
 
     
@@ -188,6 +199,19 @@ struct TOMOGRAPHER_EXPORT FullStatusReport
     }
     ss << "=====================================================================================\n";
     return ss.str();
+  }
+
+
+private:
+  friend class boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /*version*/)
+  {
+    a & num_completed;
+    a & num_total_runs;
+    a & workers_running;
+    a & workers_reports;
+    a & elapsed;
   }
 };
 
