@@ -32,6 +32,8 @@
 #include <random>
 
 #include <boost/math/constants/constants.hpp>
+#include <boost/serialization/base_object.hpp>
+#include <boost/serialization/string.hpp>
 
 // definitions for Tomographer test framework -- this must be included before any
 // <Eigen/...> or <tomographer/...> header
@@ -39,12 +41,162 @@
 
 #include <tomographer/mpi/multiprocmpi.h>
 
+#include <tomographer/tools/boost_test_logger.h>
 
 #include "test_multi_tasks_common.h"
 
 
+
 // -----------------------------------------------------------------------------
-// fixture(s)
+// fixture(s) and helper(s)
+
+
+// serialization for MyTaskInput
+
+namespace boost {
+namespace serialization {
+template<class Archive>
+void serialize(Archive & ar, MyTaskInput & x, const unsigned int /*version*/)
+{
+  ar & x.a;
+  ar & x.b;
+}
+} // namespace serialization
+} // namespace boost
+namespace boost { namespace mpi {
+  template <>
+  struct is_mpi_datatype<MyTaskInput> : mpl::true_ { };
+} }
+
+
+//
+// simple result type which is serializable & default-constructible
+//
+struct SimpleTestTaskResultType {
+  SimpleTestTaskResultType(int value_ = -1) : msg(), value(value_) { }
+  std::string msg;
+  int value;
+};
+
+namespace boost {
+namespace serialization {
+template<class Archive>
+void serialize(Archive & ar, SimpleTestTaskResultType & x, const unsigned int /*version*/)
+{
+  ar & x.msg;
+  ar & x.value;
+}
+} // namespace serialization
+} // namespace boost
+// namespace boost { namespace mpi {
+//   template <>
+//   struct is_mpi_datatype<SimpleTestTaskResultType> : mpl::true_ { };
+// } }
+
+
+
+//
+// TestBasicCDataMPI must have default constructor, and must be serializable
+//
+struct TestBasicCDataMPI {
+
+  TestBasicCDataMPI(int c_ = -1) : c(c_), inputs() { }
+  int c;
+
+  std::vector<MyTaskInput> inputs;
+
+  template<typename IntType>
+  MyTaskInput getTaskInput(IntType k) const {
+    return inputs[(std::size_t)k];
+  }
+
+private:
+  friend class boost::serialization::access;
+  template<class Archive>
+  inline void serialize(Archive & ar, const unsigned int /*version*/)
+  {
+    ar & c;
+    ar & inputs;
+  }
+};
+
+
+typedef TestTaskBase<TestBasicCDataMPI, SimpleTestTaskResultType> TestTaskMPI;
+
+
+
+struct test_task_dispatcher_MPI_fixture {
+  TestBasicCDataMPI cData;
+  const int num_runs;
+
+  const std::vector<int> correct_result_values;
+  
+  test_task_dispatcher_MPI_fixture()
+    : cData(1000),
+      num_runs(10),
+      correct_result_values(mkvec<int>()
+                            <<3000
+                            <<30000
+                            <<3000
+                            <<9000
+                            <<3000
+                            <<20000
+                            <<3000
+                            <<3000
+                            <<17000
+                            <<3000)
+  {
+    cData.inputs = mkvec<MyTaskInput>()
+      << MyTaskInput(1, 2)
+      << MyTaskInput(10, 20)
+      << MyTaskInput(1, 2)
+      << MyTaskInput(4, 5)
+      << MyTaskInput(1, 2)
+      << MyTaskInput(-1, 21)
+      << MyTaskInput(1, 2)
+      << MyTaskInput(1, 2)
+      << MyTaskInput(8, 9)
+      << MyTaskInput(1, 2);
+  }
+
+  template<typename LocalLoggerType>
+  void check_correct_results(const std::vector<TestTaskMPI::ResultType*> & results,
+                             LocalLoggerType & logger)
+  {
+    BOOST_CHECK_EQUAL(correct_result_values.size(), results.size()) ;
+    for (std::size_t k = 0; k < results.size(); ++k) {
+      logger.debug("checking results[%zu]=%p", k, results[k]);
+      BOOST_CHECK_EQUAL(results[k]->value, correct_result_values[k]) ;
+    }
+  }
+
+  template<typename TaskDispatcherType, typename LoggerType>
+  void check_correct_results_collected(const TaskDispatcherType & task_dispatcher,
+                                       LoggerType & baselogger)
+  {
+    auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, baselogger);
+
+    // collectedTaskResults()
+    const std::vector<TestTaskMPI::ResultType*> results = task_dispatcher.collectedTaskResults();
+
+    logger.debug("checking that results are correct... results.size()=%zu", results.size()) ;
+    check_correct_results(results, logger);
+
+    logger.debug("using numTaskRuns()...") ;
+    // numTaskRuns()
+    BOOST_CHECK_EQUAL(results.size(), (std::size_t)task_dispatcher.numTaskRuns());
+
+    logger.debug("using collectedTaskResult()...") ;
+    // collectedTaskResult(k)
+    const std::size_t N = (std::size_t)task_dispatcher.numTaskRuns();
+    for (std::size_t k = 0; k < N; ++k) {
+      BOOST_CHECK_EQUAL(task_dispatcher.collectedTaskResult(k).value, correct_result_values[k]) ;
+    }
+
+    logger.debug("done");
+  }
+};
+
 
 
 
@@ -54,14 +206,28 @@
 
 BOOST_AUTO_TEST_SUITE(test_mpi_multiprocmpi)
 
-BOOST_FIXTURE_TEST_CASE(tasks_run, test_task_dispatcher_fixture)
+BOOST_FIXTURE_TEST_CASE(tasks_run, test_task_dispatcher_MPI_fixture)
 {
   mpi::environment env;
   mpi::communicator world;
 
-  Tomographer::Logger::BoostTestLogger logger(Tomographer::Logger::LONGDEBUG);
-  Tomographer::MultiProc::MPI::TaskDispatcher<TestTask, TestBasicCData,
-                                              Tomographer::Logger::BoostTestLogger, long>
+  Tomographer::Logger::FileLogger filelogger(stderr, Tomographer::Logger::LONGDEBUG);
+  typedef Tomographer::Logger::OriginPrefixedLogger<Tomographer::Logger::FileLogger>
+    LoggerType;
+
+  LoggerType logger(filelogger, streamstr(world.rank() << "/" << world.size()<<"|"));
+
+
+  TestBasicCDataMPI * pcdata;
+  if (world.rank() == 0) {
+    pcdata = &cData;
+  } else {
+    pcdata = new TestBasicCDataMPI;
+  }
+
+
+  Tomographer::MultiProc::MPI::TaskDispatcher<TestTaskMPI, TestBasicCDataMPI,
+                                              LoggerType, long>
     task_dispatcher(world.rank() == 0 ? &cData : NULL, world, logger, num_runs);
 
   BOOST_MESSAGE("About to run MPI tasks");
@@ -69,7 +235,9 @@ BOOST_FIXTURE_TEST_CASE(tasks_run, test_task_dispatcher_fixture)
   task_dispatcher.run();
 
   if (world.rank() == 0) {
-    check_correct_results_collected(task_dispatcher);
+    logger.debug("test case", "about to collect & check results") ;
+    check_correct_results_collected(task_dispatcher, logger);
+    logger.debug("test case", "collect & checked results done.") ;
   } else {
     // should generate tomographer_assert failure (eigen_assert)
     EigenAssertTest::setting_scope settingvariable(true); // eigen_assert() should throw an exception.

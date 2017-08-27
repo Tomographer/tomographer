@@ -136,7 +136,7 @@ macro(addTomographerTest test_cxx NeedsList)
     if (MPI_FOUND)
       target_include_directories(${test_name} PRIVATE ${MPI_INCLUDE_PATH})
       target_link_libraries(${test_name} PRIVATE
-        ${Boost_MPI_LIBRARY} ${Boost_SERIALIZATION_LIBRARY} ${MPI_LIBRARIES})
+        ${Boost_MPI_LIBRARIES} ${Boost_SERIALIZATION_LIBRARIES} ${MPI_LIBRARIES})
     else()
       set(_generate_dummy_fail_test "MPI not found on this system -- test disabled")
     endif()

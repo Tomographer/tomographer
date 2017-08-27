@@ -2,6 +2,11 @@
 dist: trusty
 sudo: required
 
+branches:
+  except:
+  - mpi # still working on this one, tests won't pass
+
+
 # Enable C++ support
 language: cpp
 

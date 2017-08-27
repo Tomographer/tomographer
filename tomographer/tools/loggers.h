@@ -1297,6 +1297,77 @@ public:
 };
 
 
+
+
+
+template<typename> class OriginPrefixedLogger;
+/** \brief Specialized Traits for \ref OriginPrefixedLogger -- see \ref LoggerTraits
+ */
+template<typename BaseLogger>
+struct LoggerTraits<OriginPrefixedLogger<BaseLogger> > : public LoggerTraits<BaseLogger>
+{
+  //! Overridden values. see \ref DefaultLoggerTraits.
+  enum {
+    //! Logger will delegate calls for current level() to base logger
+    HasOwnGetLevel = 1
+  };
+};
+
+/** \brief Logger which prepends to each \a origin string a fixed prefix
+ *
+ * This logger interfaces another logger of type \a BaseLogger.
+ *
+ * If \a BaseLogger is thread-safe, then this logger is also thread-safe.
+ *
+ * If the \a BaseLogger implements by-origin filtering, then the filtering is still
+ * honored, using the *unmodified origin string*.
+ */
+template<typename BaseLogger>
+class TOMOGRAPHER_EXPORT OriginPrefixedLogger : public LoggerBase<OriginPrefixedLogger<BaseLogger> >
+{
+  //! Keep reference to the base logger, to which we relay calls
+  BaseLogger & baselogger;
+
+  //! The string to prepend to all origin's
+  std::string prefix;
+
+public:
+  /** \brief Constructor from a base logger
+   *
+   * You must provide a reference to an instance of a logger, to which we will relay
+   * relevant calls.
+   */
+  OriginPrefixedLogger(BaseLogger & baselogger_, std::string prefix_)
+    : LoggerBase<OriginPrefixedLogger<BaseLogger> >(),
+      baselogger(baselogger_),
+      prefix(prefix_)
+  {
+  }
+
+  //! Emit a log by relaying to the base logger
+  inline void emitLog(int level, const char * origin, std::string msg)
+  {
+    std::string neworigin = prefix + origin;
+    baselogger.emitLog(level, neworigin.c_str(), std::move(msg));
+  }
+
+  //! Get the base logger's set level.
+  inline int level() const
+  {
+    return baselogger.level();
+  }
+
+  //! If relevant for the base logger, filter the messages by origin from the base logger.
+  TOMOGRAPHER_ENABLED_IF(LoggerTraits<BaseLogger>::HasFilterByOrigin)
+  inline bool filterByOrigin(int level, const char * origin)
+  {
+    return baselogger.filterByOrigin(level, origin); // unmodified origin here for by-origin filtering
+  }
+};
+
+
+
+
 namespace tomo_internal {
 
 /** \brief Determine length of overlap of two strings.

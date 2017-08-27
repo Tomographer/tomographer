@@ -87,7 +87,27 @@ struct TestBasicCData {
     return inputs[(std::size_t)k];
   }
 };
-struct TestTask {
+
+struct TestTaskResultType {
+  TestTaskResultType(int value_) : msg(), value(value_) { }
+  TestTaskResultType(int value_, std::string msg_) : msg(msg_), value(value_) { }
+
+  TestTaskResultType(TestTaskResultType && ) = default; // expressedly allow move construction
+
+  std::string msg;
+  int value;
+
+  // test that the multiproc implementation does not depend on these
+  TestTaskResultType(const TestTaskResultType & ) = delete;
+  TestTaskResultType & operator=(const TestTaskResultType & ) = delete;
+
+  TestTaskResultType explicitCopy() const { return TestTaskResultType(value, msg); }
+};
+
+
+
+template<typename TestCDataType, typename ResultType_ = TestTaskResultType>
+struct TestTaskBase {
   //
   // A very simple task.  The task is to calculate the sum of two inputs, "a" and "b", and
   // multiply the result by some common number "c" stored in TestBasicCData.
@@ -96,32 +116,18 @@ struct TestTask {
   typedef MyTaskInput Input;
 
   typedef Tomographer::MultiProc::TaskStatusReport StatusReportType;
+
+  typedef ResultType_ ResultType;
   
-  struct ResultType {
-    ResultType(int value_) : msg(), value(value_) { }
-    ResultType(int value_, std::string msg_) : msg(msg_), value(value_) { }
-
-    ResultType(ResultType && ) = default; // expressedly allow move construction
-
-    std::string msg;
-    int value;
-
-    // test that the multiproc implementation does not depend on these
-    ResultType(const ResultType & ) = delete;
-    ResultType & operator=(const ResultType & ) = delete;
-
-    ResultType explicitCopy() const { return ResultType(value, msg); }
-  };
-
   template<typename LoggerType>
-  TestTask(Input input, const TestBasicCData * , LoggerType & logger)
+  TestTaskBase(Input input, const TestCDataType * , LoggerType & logger)
     : _input(input), _result(-1)
   {
     logger.debug("TestTask::TestTask", "constructor called") ;
   }
 
   template<typename LoggerType, typename TaskManagerIface>
-  void run(const TestBasicCData * pcdata, LoggerType & logger, TaskManagerIface * )
+  void run(const TestCDataType * pcdata, LoggerType & logger, TaskManagerIface * )
   {
     //BOOST_MESSAGE("Running task.") ; // BOOST_TEST_MESSAGE may not be thread-safe!!!!!
     logger.info("TestTask::run", "Running task.") ;
@@ -141,45 +147,7 @@ struct TestTask {
   
 };
 
-// struct TestResultsCollector {
-//   TestResultsCollector(std::vector<TestTask::ResultType> check_correct_results_, int num_runs_,
-//                        const TestBasicCData * pcdata_)
-//     : init_called(0), collectres_called(0), runsfinished_called(0),
-//       num_runs(num_runs_), pcdata(pcdata_),
-//       check_correct_results(std::move(check_correct_results_))
-//   {
-//   }
-//   void init(int num_total_runs, int n_chunk, const TestBasicCData * pcdata_)
-//   {
-//     BOOST_CHECK_EQUAL(num_total_runs, num_runs) ;
-//     BOOST_CHECK_EQUAL(n_chunk, 1) ;
-//     BOOST_CHECK_EQUAL(pcdata, pcdata_) ;
-//     ++init_called;
-//   }
-//   template<typename ResultType>
-//   void collectResult(int task_no, const ResultType& taskresult, const TestBasicCData * pcdata_)
-//   {
-//     BOOST_CHECK_GE(task_no, 0); BOOST_CHECK_LT(task_no, (int)check_correct_results.size());
-//     BOOST_CHECK_EQUAL(taskresult.value, check_correct_results[task_no].value);
-//     BOOST_CHECK_EQUAL(pcdata, pcdata_) ;
-//     BOOST_TEST_MESSAGE("Collected result from task " << task_no << ": " << taskresult.msg) ;
-//     ++collectres_called;
-//   }
-//   void runsFinished(int num_total_runs, const TestBasicCData * pcdata_)
-//   {
-//     BOOST_CHECK_EQUAL(num_total_runs, num_runs) ;
-//     BOOST_CHECK_EQUAL(pcdata, pcdata_) ;
-//     ++runsfinished_called;
-//   }
-//
-//   int init_called;
-//   int collectres_called;
-//   int runsfinished_called;
-//   const int num_runs;
-//   const TestBasicCData * pcdata;
-//   const std::vector<TestTask::ResultType> check_correct_results;
-// };
-
+typedef TestTaskBase<TestBasicCData> TestTask;
 
 
 // http://stackoverflow.com/a/23036970/1694896

@@ -763,6 +763,43 @@ BOOST_AUTO_TEST_SUITE_END() // loggertraits
 
 
 
+BOOST_AUTO_TEST_SUITE(originprefixedlogger)
+
+BOOST_AUTO_TEST_CASE(works)
+{
+  Tomographer::Logger::BufferLogger b(Tomographer::Logger::DEBUG);
+
+  Tomographer::Logger::OriginPrefixedLogger<Tomographer::Logger::BufferLogger>
+    plogger(b, "The PREFIX-");
+
+  plogger.longdebug("origin 1", "message 1") ;
+  plogger.debug("origin 2", "message 2") ;
+  plogger.info("origin 3", "message 3") ;
+  plogger.warning("origin 4", "message 4") ;
+  plogger.error("origin 5", "message 5") ;
+
+  std::string contents = b.getContents();
+
+  BOOST_MESSAGE(contents);
+  BOOST_CHECK_EQUAL(contents,
+                    // skipped LONGDEBUG message #1
+                    "[The PREFIX-origin 2] message 2\n" // DEBUG
+                    "[The PREFIX-origin 3] message 3\n" // INFO
+                    "[The PREFIX-origin 4] message 4\n" // WARNING
+                    "[The PREFIX-origin 5] message 5\n" // ERROR
+      );
+
+}
+
+BOOST_AUTO_TEST_SUITE_END() // originprefixedlogger
+
+
+
+
+// -----------------------------------------------------------------------------
+
+
+
 BOOST_FIXTURE_TEST_SUITE(originfilteredlogger, fixture_originfilteredlogger)
 
 BOOST_AUTO_TEST_CASE(origin1)

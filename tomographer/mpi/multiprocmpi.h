@@ -33,10 +33,12 @@
 #include <string>
 #include <chrono>
 #include <exception>
+#include <algorithm>
 
 #include <tomographer/tools/fmt.h>
 #include <tomographer/tools/needownoperatornew.h>
 #include <tomographer/multiproc.h>
+#include <tomographer/multiprocthreadcommon.h> // TOMOGRAPHER_SLEEP_FOR_MS()
 
 #include <boost/mpi/environment.hpp>
 #include <boost/mpi/communicator.hpp>
@@ -87,7 +89,7 @@ namespace MPI {
  *   there's no reason not to use an \c int.
  *
  */
-template<typename TaskType_, typename TaskCData_, typename LoggerType_,
+template<typename TaskType_, typename TaskCData_, typename BaseLoggerType_,
          typename TaskCountIntType_ = int>
 class TOMOGRAPHER_EXPORT TaskDispatcher
 {
@@ -95,7 +97,7 @@ public:
   typedef TaskType_ TaskType;
   typedef typename TaskType::StatusReportType TaskStatusReportType;
   typedef TaskCData_ TaskCData;
-  typedef LoggerType_ LoggerType;
+  typedef BaseLoggerType_ BaseLoggerType;
   typedef TaskCountIntType_ TaskCountIntType;
 
   typedef typename TaskType::ResultType TaskResultType;
@@ -108,79 +110,61 @@ private:
   
   typedef std::chrono::steady_clock StdClockType;
 
-  struct TaskMgrIface {
-    TaskMgrIface(TaskDispatcher * dispatcher_)
-      : dispatcher(dispatcher_),
+
+  struct Schedule {
+    Schedule()
+      : num_total_runs(0),
+        num_completed(0),
+        num_launched(0),
         interrupt_requested(0),
-        status_report_requested(0),
-        status_report_user_fn(),
-        _tasks_start_time(StdClockType::now()),
-        _last_status_report(StdClockType::now()),
-        _status_report_periodic_interval(0)
+        tasks_start_time(StdClockType::now())
     {
     }
 
-  private:
-    TaskDispatcher * dispatcher;
+    const TaskCountIntType num_total_runs;
+    TaskCountIntType num_completed;
+    TaskCountIntType num_launched;
 
     volatile std::sig_atomic_t interrupt_requested; // could be written to by signal handler
-    volatile std::sig_atomic_t status_report_requested; // could be written to by signal handler
-    FullStatusReportCallbackType status_report_user_fn;
 
-    const StdClockType::time_point _tasks_start_time;
-    StdClockType::time_point _last_status_report;
-    StdClockType::duration _status_report_periodic_interval;
+    const StdClockType::time_point tasks_start_time;
+  };
 
-    friend class TaskDispatcher;
-
-    inline void _request_status_report()
+  struct StatusReport {
+    StatusReport()
+      : requested(0),
+        user_fn(),
+        last_report(StdClockType::now()),
+        periodic_interval(0)
     {
-      tomographer_assert(dispatcher != NULL);
-      tomographer_assert(dispatcher->is_master);
-      status_report_requested = 1;
-      // TODO: communicate to the world that we want a status report
-    }
-    inline void _request_interrupt()
-    {
-      tomographer_assert(dispatcher != NULL);
-      tomographer_assert(dispatcher->is_master);
-      interrupt_requested = 1;
-      // TODO: communicate to the world that we need to interrupt
-    }
-    template<typename IntType>
-    inline void _request_periodic_status_report(IntType milliseconds)
-    {
-      tomographer_assert(dispatcher != NULL);
-      tomographer_assert(dispatcher->is_master);
-      if ( milliseconds >= 0 ) {
-        _status_report_periodic_interval = std::chrono::duration_cast<StdClockType::duration>(
-            std::chrono::milliseconds(1+milliseconds)
-            );
-      } else {
-        _status_report_periodic_interval = StdClockType::duration(0);
-      }
     }
 
-  public:
+    volatile std::sig_atomic_t requested; // could be written to by signal handler
+    FullStatusReportCallbackType user_fn;
+    StdClockType::time_point last_report;
+    StdClockType::duration periodic_interval;
+  };
+
+  struct TaskMgrIface {
+    TaskMgrIface(TaskDispatcher * dispatcher_)
+      : dispatcher(dispatcher_)
+    {
+    }
+
     inline bool statusReportRequested() const
     {
-      if (interrupt_requested) {
-        throw TasksInterruptedException();
-      }
-      if (_status_report_periodic_interval.count() > 0
-          && (StdClockType::now() - (_last_status_report + _status_report_periodic_interval)).count() > 0) {
-        return true;
-      }
-      return (bool) status_report_requested;
+      return false;
+      // TODO .......
     }
 
     inline void submitStatusReport(const TaskStatusReportType &statreport)
     {
       // TODO: communicate report to master process...
-      status_report_requested = false;
-      _last_status_report = StdClockType::now();
     }
 
+  private:
+    TaskDispatcher * dispatcher;
+    friend class TaskDispatcher;
   };
 
   enum {
@@ -194,10 +178,14 @@ private:
   mpi::communicator & comm;
   const bool is_master;
   std::vector<TaskResultType*> results;
-  LoggerType & logger;
+  Tomographer::Logger::LocalLogger<BaseLoggerType> llogger;
+
+  Schedule schedule;
+  StatusReport status_report;
 
   TaskMgrIface mgriface;
   
+
 public:
   /** \brief Construct the task dispatcher around the given MPI communicator
    *
@@ -206,26 +194,14 @@ public:
    * other processes are required to pass \a NULL to the \a pcdata_ argument
    * here.
    */
-  TaskDispatcher(TaskCData * pcdata_, mpi::communicator & comm_, LoggerType & logger_, int num_task_runs)
+  TaskDispatcher(TaskCData * pcdata_, mpi::communicator & comm_, BaseLoggerType & logger_, int num_task_runs)
     : pcdata(pcdata_),
       comm(comm_),
       is_master(comm_.rank() == 0),
       results(),
-      logger(logger_),
+      llogger("Tomographer::MultiProc::MPI::TaskDispatcher", logger_),
       mgriface(this)
   {
-    // First, the pcdata should have been initialized by the master only.  Our
-    // first job is to broadcast the data to all processes.
-    if (is_master) {
-      tomographer_assert(pcdata != NULL) ;
-    } else {
-      tomographer_assert(pcdata == NULL) ;
-      pcdata = new TaskCData;
-    }
-    // broadcast pcdata...
-    mpi::broadcast(comm, *pcdata, 0);
-    // now, pcdata is initialized everywhere.
-
   }
   ~TaskDispatcher()
   {
@@ -241,36 +217,50 @@ public:
    */
   void run()
   {
+    auto logger = llogger.subLogger(TOMO_ORIGIN) ;
+
+    // First, the pcdata should have been initialized by the master only.  Our
+    // first job is to broadcast the data to all processes.
+    if (is_master) {
+      tomographer_assert(pcdata != NULL) ;
+    } else {
+      tomographer_assert(pcdata == NULL) ;
+      pcdata = new TaskCData;
+    }
+    // broadcast pcdata...
+    mpi::broadcast(comm, *pcdata, 0);
+    // now, pcdata is initialized everywhere.
+
+    logger.longdebug("pcdata is now broadcast; is_master=%c", (is_master?'y':'n'));
+
     if (is_master) {
       results.resize((std::size_t)comm.size(), NULL); // resize to # of processes
     }
 
     const auto mpi_rank = comm.rank();
 
-    logger.debug("Tomographer::MultiProc::MPI::TaskDispatcher::run()",
-                 [&](std::ostream & stream) { stream << "Task running in process #" << mpi_rank << " ..."; });
+    logger.debug([&](std::ostream & stream) { stream << "Task running in process #" << mpi_rank << " ..."; });
     
     auto input = pcdata->getTaskInput(mpi_rank);
     
     // construct a new task instance
-    TaskType t(std::move(input), pcdata, logger);
+    TaskType t(std::move(input), pcdata, logger.parentLogger());
 
     // and run it
-    t.run(pcdata, logger, &mgriface);
+    t.run(pcdata, logger.parentLogger(), &mgriface);
     
     //
     // gather the results to the master process
     //
     if (is_master) {
 
-      logger.debug("Tomographer::MultiProc::MPI::TaskDispatcher::run()",
-                   "master done here, waiting for other processes to finish");
+      logger.debug("master done here, waiting for other processes to finish");
 
       tomographer_assert(results.size() > 0);
       
       results[0] = new TaskResultType(std::move(t.stealResult()));
 
-      while ( results.find(NULL) != results.end() ) {
+      while ( std::find(results.begin(), results.end(), (TaskResultType*)NULL) != results.end() ) {
         // continue monitoring running processes and gathering results
         _master_regular_bookkeeping();
         // and sleep a bit
@@ -280,8 +270,7 @@ public:
     } else {
       
       // all good, task done.  Send our result to the master process.
-      logger.debug("Tomographer::MultiProc::MPI::TaskDispatcher::run()",
-                   "worker done here, sending result to master");
+      logger.debug("worker done here, sending result to master");
 
       auto task_result = t.stealResult();
 
@@ -291,23 +280,31 @@ public:
     }
 
     // all done
-    logger.debug("MultiProc::Sequential::TaskDispatcher::run()", "all done");
+    logger.debug("all done");
   }
 
 private:
   void _master_regular_bookkeeping()
   {
+    auto logger = llogger.subLogger(TOMO_ORIGIN) ;
+    tomographer_assert(is_master) ;
+
     // see if there is any task results incoming of tasks which have finished
     auto mayberesultmsg = comm.iprobe(mpi::any_source, TAG_RESULT);
     if (mayberesultmsg) { // got something
-      auto msg = std::move(*mayberesultmsg);
+      logger.debug("Treating a message ... ");
+      auto msg = *mayberesultmsg;
       tomographer_assert(msg.tag() == TAG_RESULT);
 
       TaskResultType * taskresult = new TaskResultType;
-      comm.recv(msg.source(), m.tag(), *taskresult);
+      logger.debug("Receiving a message from #%d with tag %d ... ", msg.source(), msg.tag());
+      comm.recv(msg.source(), msg.tag(), *taskresult);
+
+      logger.debug("Got message.");
 
       tomographer_assert(msg.source() > 0 && msg.source() < results.size()) ;
       results[msg.source()] = taskresult;
+      logger.debug("Saved into results.");
     }
 
     // see if there is any status reports incoming
@@ -328,7 +325,7 @@ public:
   inline TaskCountIntType numTaskRuns() const
   {
     tomographer_assert(is_master);
-    return num_total_runs;
+    return schedule.num_total_runs;
   }
 
   /** \brief Returns the results of all the tasks
@@ -364,7 +361,7 @@ public:
   inline void setStatusReportHandler(Fn fnstatus)
   {
     tomographer_assert(is_master);
-    mgriface.status_report_user_fn = fnstatus;
+    status_report.user_fn = fnstatus;
   }
   
   /** \brief Request a status report
@@ -380,7 +377,9 @@ public:
    */
   inline void requestStatusReport()
   {
-    mgriface._request_status_report();
+    tomographer_assert(is_master);
+    status_report.request_once();
+    // do communication magic ...
   }
 
   /** \brief Request a status report periodically
@@ -393,7 +392,9 @@ public:
   template<typename IntType>
   inline void requestPeriodicStatusReport(IntType milliseconds)
   {
-    mgriface._request_periodic_status_report(milliseconds);
+    tomographer_assert(is_master);
+    status_report.request_periodic(milliseconds);
+    // do communication magic ...
   }
 
   /** \brief Interrupt all tasks as soon as possible
@@ -404,7 +405,9 @@ public:
    */
   inline void requestInterrupt()
   {
-    mgriface._request_interrupt();
+    tomographer_assert(is_master);
+    schedule.interrupt_requested = 1;
+    // do communication magic ...
   }
   
 }; // class TaskDispatcher
