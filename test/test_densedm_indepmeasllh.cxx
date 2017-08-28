@@ -37,6 +37,10 @@
 #include "test_tomographer.h"
 
 #include <tomographer/densedm/indepmeasllh.h>
+#include <tomographer/tools/eigenutil.h>
+
+#include <boost/archive/text_oarchive.hpp>
+#include <boost/archive/text_iarchive.hpp>
 
 
 // -----------------------------------------------------------------------------
@@ -234,6 +238,7 @@ BOOST_AUTO_TEST_CASE(add_meas_checkmeas)
   }
   
 }
+
 
 BOOST_AUTO_TEST_SUITE_END()
 

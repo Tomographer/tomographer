@@ -191,7 +191,7 @@ int main()
   const MHRWParamsType mhrw_params(
       1e-8,
       1e8,
-      500, // # of thermalization sweeps
+      1024, // # of thermalization sweeps
       32768 // # of live sweeps in which samples are collected
       );
 

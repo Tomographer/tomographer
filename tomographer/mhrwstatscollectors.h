@@ -58,8 +58,18 @@ namespace Tomographer {
 
 /** \brief An empty struct used as a \a ResultType in MultipleMHRWStatsCollector for stats
  *         collectors which don't really produce results
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with Boost.Serialization.
  */
-struct TOMOGRAPHER_EXPORT MHRWStatsCollectorNoResult {};
+struct TOMOGRAPHER_EXPORT MHRWStatsCollectorNoResult
+{
+  // nothing.
+
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & /* a */, unsigned int /* version */) { }
+};
 
 
 namespace tomo_internal {
@@ -577,6 +587,9 @@ public:
  *
  * Stores a histogram with error bars, detailed information about error bars at different binning
  * levels, and information about the convergence of these error bars.
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with Boost.Serialization
+ *        (\a HistogramType needs to be serializable)
  */
 template<typename HistogramType_, typename BinningAnalysisParamsType_>
 struct TOMOGRAPHER_EXPORT ValueHistogramWithBinningMHRWStatsCollectorResult
@@ -685,6 +698,15 @@ struct TOMOGRAPHER_EXPORT ValueHistogramWithBinningMHRWStatsCollectorResult
     return ss.str();
   }
   
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & histogram;
+    a & error_levels;
+    a & converged_status;
+  }
 };
 
 

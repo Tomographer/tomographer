@@ -40,6 +40,9 @@
 #include <algorithm> // std::max
 
 #include <boost/math/constants/constants.hpp>
+// histogram types can be serialized with boost::serialization
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/base_object.hpp>
 
 #include <Eigen/Core>
 
@@ -62,6 +65,8 @@ namespace Tomographer {
 /** \brief The parameters of a \ref Histogram
  *
  * This is the \f$[\text{min},\text{max}]\f$ range along with the number of bins.
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with Boost.Serialization.
  */
 template<typename Scalar_ = double>
 struct TOMOGRAPHER_EXPORT HistogramParams
@@ -197,6 +202,16 @@ struct TOMOGRAPHER_EXPORT HistogramParams
   {
     return Eigen::Array<Scalar, Eigen::Dynamic, 1>::LinSpaced(num_bins, min+binResolution(), max);
   }
+
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & min;
+    a & max;
+    a & num_bins;
+  }
 };
 
 
@@ -208,6 +223,8 @@ struct TOMOGRAPHER_EXPORT HistogramParams
  * bins, and keeps counts of how many samples fell in which bin.
  * 
  * Does not store any form of error bars.
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with Boost.Serialization.
  */
 template<typename Scalar_, typename CountType_ = int>
 class TOMOGRAPHER_EXPORT Histogram
@@ -520,6 +537,16 @@ public:
     return histogramPrettyPrint(*this, max_width);
   }
 
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & params;
+    a & bins;
+    a & off_chart;
+  }
+
 };
 // static members:
 template<typename Scalar_, typename CountType_>
@@ -532,6 +559,8 @@ constexpr bool Histogram<Scalar_,CountType_>::HasErrorBars;
  *
  * Builds on top of \ref Histogram<Scalar,CountType> to store error bars
  * corresponding to each bin.
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with Boost.Serialization.
  */
 template<typename Scalar_, typename CountType_ = double>
 class TOMOGRAPHER_EXPORT HistogramWithErrorBars
@@ -727,6 +756,15 @@ public:
     return histogramPrettyPrint(*this, max_width);
   }
   
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & boost::serialization::base_object<Base_>(*this);
+    a & delta;
+  }
+
 };
 // static members:
 template<typename Scalar_, typename CountType_>
@@ -766,6 +804,8 @@ constexpr bool HistogramWithErrorBars<Scalar_,CountType_>::HasErrorBars;
  *         choose \c double here. This can be different from the underlying \ref
  *         HistogramType's CountType, because that may be an integer type and not suitable
  *         for holding an average.
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with Boost.Serialization.
  */
 template<typename HistogramType_, typename RealAvgType = double>
 class TOMOGRAPHER_EXPORT AveragedHistogram
@@ -979,6 +1019,15 @@ public:
     Base_::delta /= num_histograms;
   }
 
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & boost::serialization::base_object<Base_>(*this);
+    a & num_histograms;
+  }
+
 };
 
 
@@ -1007,6 +1056,8 @@ public:
  * histograms from a list.
  *
  * \since Added in %Tomographer 5.0.
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with Boost.Serialization.
  */
 template<typename HistogramType_, typename CountRealType_>
 class TOMOGRAPHER_EXPORT AggregatedHistogramSimple
@@ -1124,6 +1175,14 @@ public:
   }
 
 
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & final_histogram;
+  }
+  
 }; // class AggregatedHistogramSimple
 
 
@@ -1296,6 +1355,15 @@ public:
 	     << final_histogram.delta(kk) << sep
              << simple_final_histogram.delta(kk) << linesep;
     }
+  }
+
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & final_histogram;
+    a & simple_final_histogram;
   }
 
 

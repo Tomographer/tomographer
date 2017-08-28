@@ -37,6 +37,8 @@
 #include <iomanip>
 #include <type_traits>
 
+#include <boost/serialization/serialization.hpp>
+
 #include <tomographer/tools/loggers.h>
 #include <tomographer/tools/fmt.h>
 #include <tomographer/tools/cxxutil.h>
@@ -100,6 +102,14 @@ struct TOMOGRAPHER_EXPORT MHWalkerParamsStepSize
   MHWalkerParamsStepSize(StepRealType step_size_) : step_size(step_size_) { }
 
   StepRealType step_size;
+
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & step_size;
+  }
 };
 
 template<typename StepRealType>
@@ -111,12 +121,15 @@ inline std::ostream & operator<<(std::ostream & stream, MHWalkerParamsStepSize<S
 
 /** \brief Specify the parameters of a Metropolis-Hastings random walk
  *
- * Specifies the parameters of a Metropolis-Hastings random walk (number of thermalization
- * runs, sweep size, number of live runs, step size).
+ * Specifies the parameters of a Metropolis-Hastings random walk (number of
+ * thermalization runs, sweep size, number of live runs, step size).
  *
- * \since
- * Changed in %Tomographer 5.0: This class now stores an arbitrary type for the parameters
- * of the MHWalker type. Note the new template parameter order!!
+ * \since Changed in %Tomographer 5.0: This class now stores an arbitrary type
+ *        for the parameters of the MHWalker type. Note the new template
+ *        parameter order!!
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with
+ *        Boost.Serialization as long as \a MHWalkerParams can be serialized.
  */
 template<typename MHWalkerParams_ = MHWalkerParamsStepSize<double>, typename CountIntType_ = int >
 struct TOMOGRAPHER_EXPORT MHRWParams
@@ -127,7 +140,7 @@ struct TOMOGRAPHER_EXPORT MHRWParams
   /** \brief default constructor -- sets values to zero and default-initializes the \ref
    *         mhwalker_params
    */
-  explicit MHRWParams()
+  MHRWParams()
     : mhwalker_params(), n_sweep(0), n_therm(0), n_run(0)
   {
   }
@@ -169,6 +182,21 @@ struct TOMOGRAPHER_EXPORT MHRWParams
   /** \brief Number of live sweeps
    */
   CountIntType n_run;
+
+private:
+  friend boost::serialization::access;
+  template<typename Archive,
+           // this way, if MHWalkerParams is not serializable with boost, this declaration
+           // will fail only when it is explicitly requested:
+           typename MHWalkerParams2 = MHWalkerParams>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    MHWalkerParams2 & mhwalker_params_ref = mhwalker_params;
+    a & mhwalker_params_ref;
+    a & n_sweep;
+    a & n_therm;
+    a & n_run;
+  }
 };
 
 

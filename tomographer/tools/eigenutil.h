@@ -42,8 +42,9 @@
 #include <Eigen/Dense>
 #include <Eigen/StdVector>
 
-
-
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/split_free.hpp>
+#include <boost/serialization/complex.hpp>
 
 
 // -----------------------------------------------------------------------------
@@ -367,6 +368,96 @@ inline auto replicated(const Eigen::DenseBase<Derived> & x, int row_factor, int 
 
 } // namespace Tools
 } // namespace Tomographer
+
+
+
+
+
+// -----------------------------------------------------------------------------
+// Eigen Matrix/Array and boost::serialization
+// -----------------------------------------------------------------------------
+namespace boost {
+namespace serialization {
+
+template<typename Archive, typename Derived>
+void eigen_helper_save(Archive & a, const Derived & m, unsigned int /* version */)
+{
+  Eigen::Index rows = m.rows();
+  Eigen::Index cols = m.cols();
+  a << rows;
+  a << cols;
+  for (Eigen::Index i = 0; i < m.rows(); ++i) {
+    for (Eigen::Index j = 0; j < m.cols(); ++j) {
+      a << m(i,j);
+    }
+  }
+}
+
+template<typename Archive, typename Derived>
+void eigen_helper_load(Archive & a, Derived & m, unsigned int /* version */)
+{
+  Eigen::Index rows, cols;
+  a >> rows;
+  a >> cols;
+  m.resize(rows, cols); // legal also on fixed-size matrices
+  for (Eigen::Index i = 0; i < m.rows(); ++i) {
+    for (Eigen::Index j = 0; j < m.cols(); ++j) {
+      a >> m(i,j);
+    }
+  }
+
+}
+
+
+template<typename Archive,
+         typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
+void save(Archive & a, const Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> & m,
+          const unsigned int version)
+{
+  eigen_helper_save(a, m, version);
+}
+template<typename Archive,
+         typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
+void save(Archive & a, const Eigen::Array<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> & m,
+          const unsigned int version)
+{
+  eigen_helper_save(a, m, version);
+}
+template<typename Archive,
+         typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
+void load(Archive & a, Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> & m,
+          const unsigned int version)
+{
+  eigen_helper_load(a, m, version);
+}
+template<typename Archive,
+         typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
+void load(Archive & a, Eigen::Array<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> & m,
+          const unsigned int version)
+{
+  eigen_helper_load(a, m, version);
+}
+
+template<typename Archive,
+         typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
+inline void serialize(Archive & a, Eigen::Matrix<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> & m,
+                      const unsigned int version)
+{
+  split_free(a, m, version);
+}
+template<typename Archive,
+         typename _Scalar, int _Rows, int _Cols, int _Options, int _MaxRows, int _MaxCols>
+inline void serialize(Archive & a, Eigen::Array<_Scalar, _Rows, _Cols, _Options, _MaxRows, _MaxCols> & m,
+                      const unsigned int version)
+{
+  split_free(a, m, version);
+}
+
+
+} // serialization
+} // boost
+
+
 
 
 

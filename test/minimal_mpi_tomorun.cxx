@@ -28,6 +28,7 @@
 #include <iostream>
 
 #include <tomographer/tools/loggers.h>
+#include <tomographer/tools/eigenutil.h>
 #include <tomographer/densedm/dmtypes.h>
 #include <tomographer/densedm/indepmeasllh.h>
 #include <tomographer/densedm/tspacellhwalker.h>
@@ -35,8 +36,10 @@
 #include <tomographer/mhrw.h>
 #include <tomographer/mhrwtasks.h>
 #include <tomographer/mhrw_valuehist_tools.h>
-#include <tomographer/multiprocthreads.h>
 
+#include <tomographer/mpi/multiprocmpi.h>
+
+#include <boost/serialization/base_object.hpp>
 
 
 //
@@ -85,7 +88,7 @@ typedef Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
 //
 struct OurCData : public BaseCData
 {
-  OurCData(const DenseLLH & llh_, // data from the the tomography experiment
+  OurCData(DenseLLH * llh_, // data from the the tomography experiment
 	   ValueCalculator valcalc, // the figure-of-merit calculator
 	   HistogramParams hist_params, // histogram parameters
 	   int binning_num_levels, // number of binning levels in the binning analysis
@@ -97,7 +100,7 @@ struct OurCData : public BaseCData
   {
   }
 
-  const DenseLLH llh;
+  DenseLLH * llh;
 
   // The result of a task run -- just use the default StatsResults type provided
   // by ValueHistogramTools.  If we had several stats collectors set, we would
@@ -120,8 +123,8 @@ struct OurCData : public BaseCData
     auto val_stats_collector = createValueStatsCollector(logger);
 
     Tomographer::DenseDM::TSpace::LLHMHWalker<DenseLLH,Rng,LoggerType> mhwalker(
-            llh.dmt.initMatrixType(),
-            llh,
+            llh->dmt.initMatrixType(),
+            *llh,
             rng,
             logger
             );
@@ -129,6 +132,16 @@ struct OurCData : public BaseCData
     run(mhwalker, val_stats_collector);
   };
 
+private:
+  OurCData() : BaseCData(), llh(NULL) { } // for serialization
+
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & boost::serialization::base_object<BaseCData>(*this);
+    a & llh;
+  }
 };
 
 
@@ -136,7 +149,7 @@ struct OurCData : public BaseCData
 // The root logger which takes care of handling the log messages.  Here, we log to the
 // standard output (recall that stdout/stderr are seen as a "file").
 //
-// The level of the logger can be changed to one of Tomographer::Logger::LONGDEBUG,
+// The level of the logger can be set to one of Tomographer::Logger::LONGDEBUG,
 // Tomographer::Logger::DEBUG, Tomographer::Logger::INFO, Tomographer::Logger::WARNING or
 // Tomographer::Logger::ERROR.
 //
@@ -144,165 +157,194 @@ typedef Tomographer::Logger::FileLogger BaseLoggerType;
 BaseLoggerType rootlogger(stderr, Tomographer::Logger::DEBUG);
 
 
+// The task type, for the MultiProc interface
+typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>
+  OurMHRandomWalkTask;
+
+
 int main()
 {
   //
+  // MPI initializations
+  //
+  mpi::environment mpi_env;
+  mpi::communicator mpi_world;
+
+  const bool is_master = (mpi_world.rank() == 0);
+
+
+  //
   // Prepare the logger in which we can log debug/info/error messages.
   //
+  typedef Tomographer::Logger::OriginPrefixedLogger<decltype(rootlogger)> PrefixLoggerType;
+  PrefixLoggerType baselogger(rootlogger, streamstr(mpi_world.rank() << "/" << mpi_world.size()<<"|"));
 
-  auto logger = Tomographer::Logger::makeLocalLogger("main()", rootlogger);
+  auto logger = Tomographer::Logger::makeLocalLogger("main()", baselogger);
+
 
   logger.debug("starting up");
 
-  //
-  // Specify the dimension of the quantum tomography setting.
-  //
 
-  const int dim = 4; // two qubits
-  DMTypes dmt(dim);
+  DenseLLH * llh = NULL;
+  OurCData * taskcdat = NULL;
 
-  //
-  // Prepare data from the tomography experiment.
-  //
-  // In this hypothetical experiment, we assumed that the observables
-  // \sigma_x\otimes\sigma_x, \sigma_y\otimes\sigma_y and \sigma_z\otimes\sigma_z are each
-  // measured 100 times. Each measurement setting has two possible outcomes, +1 or -1, and
-  // hence there are in total 6 POVM effects.
-  //
+  if (is_master) {
+    //
+    // Master gets to prepare all the data.
+    //
+    
+    //
+    // Specify the dimension of the quantum tomography setting.
+    //
+    const int dim = 4; // two qubits
+    DMTypes dmt(dim);
 
-  DenseLLH llh(dmt);
+    //
+    // Prepare data from the tomography experiment.
+    //
+    // In this hypothetical experiment, we assumed that the observables
+    // \sigma_x\otimes\sigma_x, \sigma_y\otimes\sigma_y and \sigma_z\otimes\sigma_z are each
+    // measured 100 times. Each measurement setting has two possible outcomes, +1 or -1, and
+    // hence there are in total 6 POVM effects.
+    //
+
+    llh = new DenseLLH(dmt);
   
-  // POVM effects for  \sigma_x \otimes \sigma_x
+    // POVM effects for  \sigma_x \otimes \sigma_x
   
-  DMTypes::MatrixType Exxplus(dmt.initMatrixType());
-  Exxplus <<
-    0.5,    0,    0,  0.5,
-    0,    0.5,  0.5,    0,
-    0,    0.5,  0.5,    0,
-    0.5,    0,    0,  0.5;
+    DMTypes::MatrixType Exxplus(dmt.initMatrixType());
+    Exxplus <<
+      0.5,    0,    0,  0.5,
+      0,    0.5,  0.5,    0,
+      0,    0.5,  0.5,    0,
+      0.5,    0,    0,  0.5;
 
-  llh.addMeasEffect(Exxplus, 95);  // 95 counts of "+1" out of 100 for \sigma_x\otimes\sigma_x
+    llh->addMeasEffect(Exxplus, 95);  // 95 counts of "+1" out of 100 for \sigma_x\otimes\sigma_x
 
-  DMTypes::MatrixType Exxminus(dmt.initMatrixType());
-  Exxminus <<
-    0.5,    0,    0, -0.5,
-    0,    0.5, -0.5,    0,
-    0,   -0.5,  0.5,    0,
-    -0.5,   0,    0,  0.5;
+    DMTypes::MatrixType Exxminus(dmt.initMatrixType());
+    Exxminus <<
+      0.5,    0,    0, -0.5,
+      0,    0.5, -0.5,    0,
+      0,   -0.5,  0.5,    0,
+      -0.5,   0,    0,  0.5;
 
-  llh.addMeasEffect(Exxminus, 5);  // 95 counts of "-1" out of 100 for \sigma_x\otimes\sigma_x
+    llh->addMeasEffect(Exxminus, 5);  // 95 counts of "-1" out of 100 for \sigma_x\otimes\sigma_x
 
-  // POVM effects for  \sigma_y \otimes \sigma_y
+    // POVM effects for  \sigma_y \otimes \sigma_y
   
-  DMTypes::MatrixType Eyyplus(dmt.initMatrixType());
-  Eyyplus <<
-    0.5,    0,    0, -0.5,
-    0,    0.5,  0.5,    0,
-    0,    0.5,  0.5,    0,
-    -0.5,   0,    0,  0.5;
+    DMTypes::MatrixType Eyyplus(dmt.initMatrixType());
+    Eyyplus <<
+      0.5,    0,    0, -0.5,
+      0,    0.5,  0.5,    0,
+      0,    0.5,  0.5,    0,
+      -0.5,   0,    0,  0.5;
 
-  llh.addMeasEffect(Eyyplus, 8);  // 8 counts of "+1" out of 100 for \sigma_y\otimes\sigma_y
+    llh->addMeasEffect(Eyyplus, 8);  // 8 counts of "+1" out of 100 for \sigma_y\otimes\sigma_y
 
-  DMTypes::MatrixType Eyyminus(dmt.initMatrixType());
-  Eyyminus <<
-    0.5,    0,    0,  0.5,
-    0,    0.5, -0.5,    0,
-    0,   -0.5,  0.5,    0,
-    0.5,    0,    0,  0.5;
+    DMTypes::MatrixType Eyyminus(dmt.initMatrixType());
+    Eyyminus <<
+      0.5,    0,    0,  0.5,
+      0,    0.5, -0.5,    0,
+      0,   -0.5,  0.5,    0,
+      0.5,    0,    0,  0.5;
 
-  llh.addMeasEffect(Eyyminus, 92);  // 92 counts of "-1" out of 100 for \sigma_y\otimes\sigma_y
+    llh->addMeasEffect(Eyyminus, 92);  // 92 counts of "-1" out of 100 for \sigma_y\otimes\sigma_y
 
-  // POVM effects for  \sigma_z \otimes \sigma_z
+    // POVM effects for  \sigma_z \otimes \sigma_z
   
-  DMTypes::MatrixType Ezzplus(dmt.initMatrixType());
-  Ezzplus <<
-    1,   0,   0,   0,
-    0,   0,   0,   0,
-    0,   0,   0,   0,
-    0,   0,   0,   1;
+    DMTypes::MatrixType Ezzplus(dmt.initMatrixType());
+    Ezzplus <<
+      1,   0,   0,   0,
+      0,   0,   0,   0,
+      0,   0,   0,   0,
+      0,   0,   0,   1;
 
-  llh.addMeasEffect(Ezzplus, 98);  // 98 counts of "+1" out of 100 for \sigma_z\otimes\sigma_z
+    llh->addMeasEffect(Ezzplus, 98);  // 98 counts of "+1" out of 100 for \sigma_z\otimes\sigma_z
 
-  DMTypes::MatrixType Ezzminus(dmt.initMatrixType());
-  Ezzminus <<
-    0,   0,   0,   0,
-    0,   1,   0,   0,
-    0,   0,   1,   0,
-    0,   0,   0,   0;
+    DMTypes::MatrixType Ezzminus(dmt.initMatrixType());
+    Ezzminus <<
+      0,   0,   0,   0,
+      0,   1,   0,   0,
+      0,   0,   1,   0,
+      0,   0,   0,   0;
 
-  llh.addMeasEffect(Ezzminus, 2);  // 2 counts of "-1" out of 100 for \sigma_z\otimes\sigma_z
+    llh->addMeasEffect(Ezzminus, 2);  // 2 counts of "-1" out of 100 for \sigma_z\otimes\sigma_z
 
-  logger.debug("data entered OK");
+    logger.debug("data entered OK");
+
+    //
+    // Prepare the figure of merit calculator: Squared fidelity to the pure entangled Bell
+    // state |\Phi^+>
+    //
+
+    DMTypes::MatrixType phiplus(dmt.initMatrixType());
+    phiplus <<
+      0.5,    0,    0,   0.5,
+      0,      0,    0,     0,
+      0,      0,    0,     0,
+      0.5,    0,    0,   0.5;
+
+    // our main ValueCalculator instance, which is in fact an alias for the
+    // ObservableValueCalculator class. [If we wanted to choose which figure of merit to
+    // compute at run-time, then we should use a MultiplexorValueCalculator.]
+    ValueCalculator valcalc(dmt, phiplus);
+
+    // parameters of the histogram of the figure of merit: cover the range [0.75, 1.0] by
+    // dividing it into 50 bins
+    const OurCData::HistogramParams hist_params(0.7, 1.0, 50);
+
+    // parameters of the random walk
+    const OurCData::MHRWParamsType mhrw_params(
+        0.04, // step size (choose such that acceptance ratio ~ 0.25)
+        50, // sweep size (should be chosen such that  sweep_size*step_size >~ 1)
+        1024, // # of thermalization sweeps
+        32768 // # of live sweeps in which samples are collected
+        );
+
+    // seed for random number generator -- just use the current time
+    std::mt19937::result_type base_seed =
+      (std::mt19937::result_type)std::chrono::system_clock::now().time_since_epoch().count();
+
+    // number of levels for the binning analysis
+    const int binning_num_levels = 8;
+
+    // instantiate the class which stores the shared data.
+    taskcdat = new OurCData(llh, valcalc, hist_params, binning_num_levels,
+                            mhrw_params, base_seed);
+
+    logger.debug("Master here, data ready") ;
+  } else {
+    taskcdat = NULL;
+    logger.debug("Not master, skipping through all the init process") ;
+  }
 
   //
-  // Prepare the figure of merit calculator: Squared fidelity to the pure entangled Bell
-  // state |\Phi^+>
+  // Data is ready, prepare & launch the random walks.  Use MPI.
   //
 
-  DMTypes::MatrixType phiplus(dmt.initMatrixType());
-  phiplus <<
-    0.5,    0,    0,   0.5,
-    0,      0,    0,     0,
-    0,      0,    0,     0,
-    0.5,    0,    0,   0.5;
-
-  // our main ValueCalculator instance, which is in fact an alias for the
-  // ObservableValueCalculator class. [If we wanted to choose which figure of merit to
-  // compute at run-time, then we should use a MultiplexorValueCalculator.]
-  ValueCalculator valcalc(dmt, phiplus);
-
-  // parameters of the histogram of the figure of merit: cover the range [0.75, 1.0] by
-  // dividing it into 50 bins
-  const OurCData::HistogramParams hist_params(0.75, 1.0, 50);
-
-
-  //
-  // Data is ready, prepare & launch the random walks.  Use C++ Threads
-  // parallelization.
-  //
-
-
-  // The task type, for the MultiProc interface
-  typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, std::mt19937>
-    OurMHRandomWalkTask;
-
-  // parameters of the random walk
-  const OurCData::MHRWParamsType mhrw_params(
-      0.04, // step size (choose such that acceptance ratio ~ 0.25)
-      50, // sweep size (should be chosen such that  sweep_size*step_size >~ 1)
-      1024, // # of thermalization sweeps
-      32768 // # of live sweeps in which samples are collected
-      );
-
-  // seed for random number generator -- just use the current time
-  std::mt19937::result_type base_seed =
-    (std::mt19937::result_type)std::chrono::system_clock::now().time_since_epoch().count();
-
-  // number of levels for the binning analysis
-  const int binning_num_levels = 8;
-
-  // instantiate the class which stores the shared data.
-  OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels,
-                    mhrw_params, base_seed);
 
   // repeat the whole random walk this number of times.  These random walks will
   // run in parallel depending on the number of CPUs available.
-  const int num_repeats = 4;
+  const int num_repeats = 20;
 
-  // create the task manager/dispatcher, using the CxxThreads implementation
+  // create the task manager/dispatcher, using the MPI implementation !!
   auto tasks =
-    Tomographer::MultiProc::CxxThreads::mkTaskDispatcher<OurMHRandomWalkTask>(
-        &taskcdat, // constant data
+    Tomographer::MultiProc::MPI::mkTaskDispatcher<OurMHRandomWalkTask>(
+        taskcdat, // constant data
+        mpi_world,
         logger.parentLogger(), // the main logger object
         num_repeats // num_runs
         );
 
-  // get status reports every 500 milliseconds printed out on std::cout
-  tasks.setStatusReportHandler([&](decltype(tasks)::FullStatusReportType report) {
-      std::cout << "--- intermediate status report ---\n"
-                << report.getHumanReport() << "\n" ;
-    });
-  tasks.requestPeriodicStatusReport(500) ;
+  if (is_master) {
+    // only master gets to do this
+
+    // get status reports every X milliseconds printed out on std::cout
+    tasks.setStatusReportHandler([&](decltype(tasks)::FullStatusReportType report) {
+        std::cout << report.getHumanReport() << "\n" ;
+      });
+    tasks.requestPeriodicStatusReport(2000) ;
+  }
 
   //
   // Finally, run our tomo process
@@ -321,10 +363,16 @@ int main()
   // delta-time, formatted in hours, minutes, seconds and fraction of seconds
   std::string elapsed_s = Tomographer::Tools::fmtDuration(time_end - time_start);
 
+  if (!is_master) {
+    logger.debug("not master, we're done here.");
+    return 0;
+  }
+
+  // only master beyond this point
 
   const auto & task_results = tasks.collectedTaskResults();
 
-  auto aggregated_histogram = taskcdat.aggregateResultHistograms(task_results) ;
+  auto aggregated_histogram = taskcdat->aggregateResultHistograms(task_results) ;
 
   const auto & histogram = aggregated_histogram.final_histogram;
 
@@ -343,13 +391,17 @@ int main()
       // binning error bars, and the final histogram itself along with error bars
       Tomographer::MHRWTasks::ValueHistogramTools::printFinalReport(
           stream, // where to output
-          taskcdat, // the cdata
+          *taskcdat, // the cdata
           task_results, // the results
           aggregated_histogram // aggregated
           );
     });
 
 
+  delete llh;
+  delete taskcdat;
+
+  logger.debug("Finally, all done.");
 
   // success.
   return 0;

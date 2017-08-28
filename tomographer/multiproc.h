@@ -34,7 +34,8 @@
 #include <chrono>
 #include <exception>
 
-#include <boost/serialization/base_object.hpp>
+// task status reports etc. can be serialized with boost::serialization
+#include <boost/serialization/serialization.hpp>
 
 #include <tomographer/tools/fmt.h>
 #include <tomographer/tools/needownoperatornew.h>

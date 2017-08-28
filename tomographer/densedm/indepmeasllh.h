@@ -34,6 +34,8 @@
 
 #include <Eigen/Eigen>
 
+#include <boost/serialization/serialization.hpp>
+
 #include <tomographer/tools/cxxutil.h> // StaticOrDynamic, TOMOGRAPHER_ENABLED_IF
 #include <tomographer/tools/needownoperatornew.h>
 #include <tomographer/tools/fmt.h> // streamstr
@@ -53,10 +55,13 @@ namespace DenseDM {
 
 
 
-/** \brief C++ types and functions for calculating the log-likelihood for POVM effects
- * which can be written as a product of individual effects
+/** \brief C++ types and functions for calculating the log-likelihood for POVM
+ *         effects which can be written as a product of individual effects
  *
  * Implements the \ref pageInterfaceDenseLLH.
+ *
+ * \since Since %Tomographer 5.3, <em>a pointer to</em> this class can be
+ *        serialized with Boost.Serialization.
  */
 template<typename DMTypes_, typename LLHValueType_ = typename DMTypes_::RealScalar,
          typename IntFreqType_ = int, int FixedMaxParamList_ = Eigen::Dynamic,
@@ -403,6 +408,22 @@ private:
 
   //! Number by which to artificially amplify the frequency vector (for tests)
   Tomographer::Tools::StoreIfEnabled<LLHValueType, UseNMeasAmplifyFactor> _NMeasAmplifyFactor;
+
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, const unsigned int version)
+  {
+    a & _Exn;
+    a & _Nx;
+    maybe_serialize_nmeasamplifyfactor(a, version);
+  }
+  template<typename Archive, TOMOGRAPHER_ENABLED_IF_TMPL(UseNMeasAmplifyFactor)>
+  inline void maybe_serialize_nmeasamplifyfactor(Archive & a, const unsigned int /*version*/)
+  {
+    a & _NMeasAmplifyFactor.value;
+  }
+  template<typename Archive, TOMOGRAPHER_ENABLED_IF_TMPL(!UseNMeasAmplifyFactor)>
+  inline void maybe_serialize_nmeasamplifyfactor(Archive & , const unsigned int) { }
 };
 // define static members:
 template<typename DMTypes_, typename LLHValueType_,
@@ -421,12 +442,48 @@ template<typename DMTypes_, typename LLHValueType_,
 constexpr bool
 IndepMeasLLH<DMTypes_,LLHValueType_,IntFreqType_,FixedMaxParamList_,UseNMeasAmplifyFactor_>::UseNMeasAmplifyFactor;
 
-
-
-
-
 } // namespace DenseDM
 } // namespace Tomographer
+
+
+//
+// We need to work more for serializing IndepMeasLLH, because we need to provide it the
+// right constructor arguments
+//
+namespace boost {
+namespace serialization {
+template<typename Archive,
+         typename DMTypes_, typename LLHValueType_, typename IntFreqType_,
+         int FixedMaxParamList_, bool UseNMeasAmplifyFactor_>
+inline void save_construct_data(
+    Archive & a,
+    const Tomographer::DenseDM::IndepMeasLLH<DMTypes_, LLHValueType_, IntFreqType_,
+                                             FixedMaxParamList_, UseNMeasAmplifyFactor_> * t,
+    const unsigned int /*version*/)
+{
+  // save data required to construct instance
+  a << t->dmt.dim();
+}
+
+template<class Archive,
+         typename DMTypes_, typename LLHValueType_, typename IntFreqType_,
+         int FixedMaxParamList_, bool UseNMeasAmplifyFactor_>
+inline void load_construct_data(
+    Archive & a,
+    Tomographer::DenseDM::IndepMeasLLH<DMTypes_, LLHValueType_, IntFreqType_,
+                                       FixedMaxParamList_, UseNMeasAmplifyFactor_> * t,
+    const unsigned int /*version*/)
+{
+  typedef Tomographer::DenseDM::IndepMeasLLH<DMTypes_, LLHValueType_, IntFreqType_,
+                                             FixedMaxParamList_, UseNMeasAmplifyFactor_>  TheFreakinType;
+  // retrieve data from archive required to construct new instance
+  Eigen::Index dim;
+  a >> dim;
+  // invoke inplace constructor to initialize instance of our class
+  ::new(t) TheFreakinType(typename TheFreakinType::DMTypes(dim));
+}
+} // namespace serialization
+} // namespace boost
 
 
 

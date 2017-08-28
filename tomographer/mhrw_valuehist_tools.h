@@ -32,13 +32,15 @@
 #include <iostream>
 #include <iomanip>
 
+#include <boost/math/constants/constants.hpp>
+#include <boost/serialization/serialization.hpp>
+#include <boost/serialization/base_object.hpp>
+
 #include <tomographer/tools/loggers.h>
 #include <tomographer/tools/cxxutil.h> // tomographer_assert()
 #include <tomographer/tools/needownoperatornew.h>
 #include <tomographer/mhrwstatscollectors.h>
 #include <tomographer/mhrwtasks.h>
-
-#include <boost/math/constants/constants.hpp>
 
 
 /** \file mhrw_valuehist_tools.h
@@ -224,6 +226,9 @@ struct valuehist_types<CDataBaseType, true>
  *   ...
  * };
  * \endcode
+ *
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with Boost.Serialization.
  */
 template<typename ValueCalculator_,
          bool UseBinningAnalysis_ = true,
@@ -330,12 +335,33 @@ struct TOMOGRAPHER_EXPORT CDataBase
   {
   }
 
-  //! The value calculator instance
-  const ValueCalculator valcalc;
-  //! The parameters of the histogram that we are collecting
-  const HistogramParams histogram_params;
-  //! The number of levels in the binning analysis (only if we are using a binning analysis)
-  const Tools::StoreIfEnabled<int, UseBinningAnalysis> binningNumLevels;
+  //! Construct an invalid object -- ONLY for use with Boost.serialization
+  TOMOGRAPHER_ENABLED_IF(std::is_default_constructible<ValueCalculator>::value)
+  CDataBase() : Base(), valcalc(), histogram_params(), binningNumLevels() { }
+
+
+  /** \brief The value calculator instance
+   *
+   * \since In %Tomographer 5.3: Removed the \c const attribute (to make
+   *        serialization easier; anyway in multiprocessing implementations a
+   *        const pointer to this class is kept ensuring const-ness already)
+   */
+  ValueCalculator valcalc;
+  /** \brief The parameters of the histogram that we are collecting
+   *
+   * \since In %Tomographer 5.3: Removed the \c const attribute (to make
+   *        serialization easier; anyway in multiprocessing implementations a
+   *        const pointer to this class is kept ensuring const-ness already)
+   */
+  HistogramParams histogram_params;
+  /** \brief The number of levels in the binning analysis (only if we are using
+   *         a binning analysis)
+   *
+   * \since In %Tomographer 5.3: Removed the \c const attribute (to make
+   *        serialization easier; anyway in multiprocessing implementations a
+   *        const pointer to this class is kept ensuring const-ness already)
+   */
+  Tools::StoreIfEnabled<int, UseBinningAnalysis> binningNumLevels;
 
 
   /** \brief Create the stats collector (without binning analysis)
@@ -411,6 +437,26 @@ struct TOMOGRAPHER_EXPORT CDataBase
         });
   }
 
+
+private:
+  friend boost::serialization::access;
+  template<typename Archive,
+           typename ValueCalculator2 = ValueCalculator>
+  void serialize(Archive & a, const unsigned int version)
+  {
+    a & boost::serialization::base_object<Base>(*this);
+    ValueCalculator2 & valcalc_ref = valcalc;
+    a & valcalc_ref;
+    a & histogram_params;
+    maybe_serialize_binning(a, version);
+  }
+  template<typename Archive, TOMOGRAPHER_ENABLED_IF_TMPL(UseBinningAnalysis)>
+  void maybe_serialize_binning(Archive & a, const unsigned int /* version */)
+  {
+    a & binningNumLevels.value;
+  }
+  template<typename Archive, TOMOGRAPHER_ENABLED_IF_TMPL(!UseBinningAnalysis)>
+  void maybe_serialize_binning(Archive &, const unsigned int) { }
 
 };
 // define static members:

@@ -2,10 +2,6 @@
 dist: trusty
 sudo: required
 
-branches:
-  except:
-  - mpi # still working on this one, tests won't pass
-
 
 # Enable C++ support
 language: cpp
@@ -88,6 +84,7 @@ matrix:
             - libatlas-base-dev
             - libboost1.55-all-dev
             - libboost1.55-dev
+            - openmpi-bin
       env:
         - CMAKE_C_COMPILER=gcc-4.8
         - CMAKE_CXX_COMPILER=g++-4.8
@@ -114,6 +111,7 @@ matrix:
             - libatlas-base-dev
             - libboost1.55-all-dev
             - libboost1.55-dev
+            - openmpi-bin
       env:
         - CMAKE_C_COMPILER=gcc-5
         - CMAKE_CXX_COMPILER=g++-5
@@ -140,6 +138,7 @@ matrix:
             - libatlas-base-dev
             - libboost1.55-all-dev
             - libboost1.55-dev
+            - openmpi-bin
       env:
         - CMAKE_C_COMPILER=gcc-6
         - CMAKE_CXX_COMPILER=g++-6
@@ -165,6 +164,7 @@ matrix:
             - libatlas-base-dev
             - libboost1.55-all-dev
             - libboost1.55-dev
+            - openmpi-bin
       before_install:
         - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
         - sudo apt-add-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty main'
@@ -200,6 +200,7 @@ matrix:
             - libatlas-base-dev
             - libboost1.55-all-dev
             - libboost1.55-dev
+            - openmpi-bin
       before_install:
         - wget -O - http://llvm.org/apt/llvm-snapshot.gpg.key|sudo apt-key add -
         - sudo apt-add-repository 'deb http://apt.llvm.org/trusty/ llvm-toolchain-trusty main'

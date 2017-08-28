@@ -768,4 +768,35 @@ inline void tomographerEnsure(bool condition, std::string message) {
 
 
 
+//
+// boost.serialization of std::tuple -- needed e.g. in order to serialize
+// MultipleMHRWStatsCollector::ResultType
+//
+namespace boost {
+namespace serialization {
+
+template<typename Archive, typename... TupleArgs>
+struct serialize_tuple_helper {
+  template<int I, TOMOGRAPHER_ENABLED_IF_TMPL(I < sizeof...(TupleArgs))>
+  static void go(Archive & a, std::tuple<TupleArgs...> & tuple, const unsigned int version)
+  {
+    a & std::get<I>(tuple);
+    go<I+1>(a, tuple, version);
+  }
+  template<int I, TOMOGRAPHER_ENABLED_IF_TMPL(I >= sizeof...(TupleArgs))>
+  static void go(Archive & , std::tuple<TupleArgs...> & , const unsigned int)
+  {
+  }
+};
+
+template<typename Archive, typename... TupleArgs>
+void serialize(Archive & a, std::tuple<TupleArgs...> & tuple, const unsigned int version)
+{
+  serialize_tuple_helper<Archive, TupleArgs...>::go<0>(a, tuple, version);
+}
+
+} // serialization
+} // boost
+
+
 #endif

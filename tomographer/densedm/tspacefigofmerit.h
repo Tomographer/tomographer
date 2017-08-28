@@ -30,6 +30,8 @@
 #define TOMOGRAPHER_DENSEDM_TSPACEFIGOFMERIT_H
 
 
+#include <boost/serialization/serialization.hpp>
+
 #include <tomographer/tools/needownoperatornew.h>
 #include <tomographer/densedm/dmtypes.h>
 #include <tomographer/densedm/distmeasures.h>
@@ -53,6 +55,8 @@ namespace TSpace {
  * This calculates the "root" fidelity as per Nielsen & Chuang.
  *
  * \see fidelityT(rho,sigma)
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with Boost.Serialization.
  */
 template<typename DMTypes_, typename ValueType_ = double>
 class TOMOGRAPHER_EXPORT FidelityToRefCalculator
@@ -81,6 +85,18 @@ public:
   {
     return fidelityT<ValueType>(T, _ref_T);
   }
+
+
+  //! Construct an invalid object -- ONLY for use with Boost.serialization
+  FidelityToRefCalculator() : ref_T() { }
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & _ref_T;
+  }
+
 };
 
 
@@ -92,6 +108,8 @@ public:
  * \f[
  *   P\left(\rho,\sigma\right) = \sqrt{1 - F^2\left(\rho,\sigma\right)}\ .
  * \f]
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with Boost.Serialization.
  */
 template<typename DMTypes_, typename ValueType_ = double>
 class TOMOGRAPHER_EXPORT PurifDistToRefCalculator
@@ -124,10 +142,23 @@ public:
     }
     return std::sqrt(ValueType(1) - F*F);
   }
+
+
+  //! Construct an invalid object -- ONLY for use with Boost.serialization
+  PurifDistToRefCalculator() : _ref_T()  { }
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & _ref_T;
+  }
 };
 
 /** \brief Calculate the trace distance to a reference state for each sample
  *
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with Boost.Serialization.
  */
 template<typename DMTypes_, typename ValueType_ = double>
 class TOMOGRAPHER_EXPORT TrDistToRefCalculator
@@ -156,12 +187,24 @@ public:
   {
     return traceDistance<ValueType>(T*T.adjoint(), _ref_rho);
   }
+
+  //! Construct an invalid object -- ONLY for use with Boost.serialization
+  TrDistToRefCalculator() : _ref_rho()  { }
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & _ref_rho;
+  }
 };
 
 
 
 /** \brief Calculate expectation value of an observable for each sample
  *
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with Boost.Serialization.
  */
 template<typename DMTypes_>
 class TOMOGRAPHER_EXPORT ObservableValueCalculator
@@ -185,12 +228,16 @@ private:
   VectorParamType _A_x;
 
 public:
-  //! Constructor directly accepting \a A as a hermitian matrix
+  /** \brief Constructor directly accepting \a A as a hermitian matrix
+   *
+   */
   ObservableValueCalculator(DMTypes dmt, MatrixTypeConstRef A)
     : _param_x(dmt), _A_x(_param_x.HermToX(A))
   {
   }
-  //! Constructor directly accepting the X parameterization of \a A
+  /** \brief Constructor directly accepting the X parameterization of \a A
+   *
+   */
   ObservableValueCalculator(DMTypes dmt, VectorParamTypeConstRef A_x)
     : _param_x(dmt), _A_x(A_x)
   {
@@ -200,6 +247,18 @@ public:
   inline ValueType getValue(MatrixTypeConstRef T) const
   {
     return _A_x.transpose() * _param_x.HermToX(T*T.adjoint());
+  }
+
+
+  //! Construct an invalid object -- ONLY for use with Boost.serialization
+  ObservableValueCalculator() : _param_x(), _A_x() { }
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & _param_x;
+    a & _A_x;
   }
 };
 

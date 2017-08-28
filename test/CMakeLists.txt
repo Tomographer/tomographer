@@ -132,6 +132,10 @@ macro(addTomographerTest test_cxx NeedsList)
     endif()
   endif()
 
+  if (";${NeedsList};" MATCHES ";serialization;")
+    target_link_libraries(${test_name} PRIVATE ${Boost_SERIALIZATION_LIBRARIES})
+  endif()
+
   if (";${NeedsList};" MATCHES ";mpi;")
     if (MPI_FOUND)
       target_include_directories(${test_name} PRIVATE ${MPI_INCLUDE_PATH})
@@ -226,7 +230,7 @@ addTomographerTest(test_mpi_multiprocmpi.cxx  "mpi")
 # only works with g++ because we do exact comparison of the output histogram data, and
 # other compilers may have small differences:
 #addTomographerTest(test_zzzcombinations.cxx "openmp")
-
+addTomographerTest(test_z_serialization.cxx "serialization")
 
 
 #
@@ -291,6 +295,28 @@ target_include_directories(minimal_single_random_walk  PRIVATE ${Boost_INCLUDE_D
 add_test(NAME minimal_single_random_walk
   WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
   COMMAND "$<TARGET_FILE:minimal_tomorun>"
+  )
+
+#
+# check "minimal tomorun" with MPI example program compiles and runs
+#
+add_executable(minimal_mpi_tomorun
+  minimal_mpi_tomorun.cxx
+  )
+# Enable C++11
+set_property(TARGET minimal_mpi_tomorun PROPERTY CXX_STANDARD 11)
+# tomographer headers
+target_include_directories(minimal_mpi_tomorun PRIVATE "..")
+# dependency: Eigen
+target_include_directories(minimal_mpi_tomorun  PRIVATE ${EIGEN3_INCLUDE_DIR})
+target_compile_definitions(minimal_mpi_tomorun PRIVATE -DEIGEN_DONT_PARALLELIZE)
+# Boost and MPI stuff
+target_include_directories(minimal_mpi_tomorun PRIVATE ${Boost_INCLUDE_DIR} ${MPI_INCLUDE_PATH})
+target_link_libraries(minimal_mpi_tomorun PRIVATE
+  ${Boost_MPI_LIBRARIES} ${Boost_SERIALIZATION_LIBRARIES} ${MPI_LIBRARIES})
+add_test(NAME minimal_mpi_tomorun
+  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+  COMMAND "$<TARGET_FILE:minimal_mpi_tomorun>"
   )
 
 

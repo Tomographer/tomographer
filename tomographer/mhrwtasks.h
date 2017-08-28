@@ -42,6 +42,8 @@
 #include <random>
 #include <sstream>
 
+#include <boost/serialization/serialization.hpp>
+
 #include <tomographer/tools/fmt.h>
 #include <tomographer/tools/needownoperatornew.h>
 #include <tomographer/mhrw.h>
@@ -53,80 +55,19 @@ namespace Tomographer {
 namespace MHRWTasks {
 
 
-namespace tomo_internal {
-// template<typename UIntType>
-// struct bits_interleaved {
-//   // interleaves the first (lowest weight) HalfNBits of x and of y to yield a
-//   // (2*HalfNBits)-bit number
-//   template<int HalfNBits, int I = 0,
-//            TOMOGRAPHER_ENABLED_IF_TMPL(I < HalfNBits)>
-//   static inline constexpr UIntType interleave(const UIntType x, const UIntType y) {
-//     return ((x>>I)&0x1) | (((y>>I)&0x1)<<1) | interleave<HalfNBits, I+1>(x, y) << 2;
-//   }
-//   template<int HalfNBits, int I = 0,
-//            TOMOGRAPHER_ENABLED_IF_TMPL(I == HalfNBits)>
-//   static inline constexpr UIntType interleave(const UIntType , const UIntType ) {
-//     return 0;
-//   }
-// };
-// // generate a permutation of the bits of UIntType which maps integers 0...k to slightly
-// // better seeds for each task's rng (spanning more of the seed bits)
-// //
-// // Despite the name, the permutation is always the same.
-// template<typename UIntType, int NBits = sizeof(UIntType)*CHAR_BIT, typename = void>
-// struct kinda_random_bits_perm {
-//   TOMO_STATIC_ASSERT_EXPR(!std::is_signed<UIntType>::value) ;
-//   // take the NBits least significant digits and apply the permutation to them
-//   static inline constexpr UIntType apply(UIntType x);
-// };
-// // implementation for NBits=4
-// template<typename UIntType>
-// struct kinda_random_bits_perm<UIntType,4,void> {
-//   TOMO_STATIC_ASSERT_EXPR(!std::is_signed<UIntType>::value) ;
-//   static inline constexpr UIntType apply(UIntType x)
-//   {
-//     // take the NBits least significant digits and apply the permutation to them
-//     return  ( (x&0x1)<<2 | ((x>>1)&0x1)<<0 | ((x>>2)&0x1)<<3 | ((x>>3)&0x1)<<1 ) ;
-//   }
-// };
-// // implementation for NBits divisible by 8: apply the permutation to each halves of the
-// // number and interleave them
-// template<typename UIntType, int NBits>
-// struct kinda_random_bits_perm<UIntType, NBits, // NBits can be divided by 8:
-//                               typename std::enable_if<(NBits&(0x7))==0, void>::type>
-// {
-//   TOMO_STATIC_ASSERT_EXPR(!std::is_signed<UIntType>::value) ;
-//   // take the NBits least significant digits and apply the permutation to them
-//   static inline constexpr UIntType apply(UIntType x)
-//   {
-//     // // left block of bits of the number is given by x>>(NBits/2)  with NBits/2==NBits>>1
-//     // // right block of bits fo the number is given by x & MASK with MASK =  ((1<<HalfNBits)-1)
-//     // constexpr int HalfNBits = (NBits>>1);
-//     // constexpr UIntType x1 = kinda_random_bits_perm<UIntType,HalfNBits>::apply(x >> HalfNBits) ;
-//     // constexpr UIntType x2 = kinda_random_bits_perm<UIntType,HalfNBits>::apply(x & ((1<<HalfNBits)-1)) ;
-//     // // now, interleave the HalfNBits of x1 and of x2
-//     // return bits_interleaved<UIntType>::interleave<HalfNBits>(x1,x2);
-//     return bits_interleaved<UIntType>::template interleave<(NBits>>1)>(
-//         kinda_random_bits_perm<UIntType,(NBits>>1)>::apply(x >> (NBits>>1)) ,
-//         kinda_random_bits_perm<UIntType,(NBits>>1)>::apply(x & ((UIntType(1)<<(NBits>>1))-1))
-//         );
-//   }
-// };
-
-} // namespace tomo_internal
-
-
-
 
 
 /** \brief Data needed to be accessible to the working code
  *
- * This is only a base class for the actual CData. The actual CData must additionally
- * provide some methods, e.g. to create the random walk and stats collectors. See \ref
- * pageInterfaceMHRandomWalkTaskCData.
+ * This is only a base class for the actual CData. The actual CData must
+ * additionally provide some methods, e.g. to create the random walk and stats
+ * collectors. See \ref pageInterfaceMHRandomWalkTaskCData.
  *
  * Stores the parameters to the random walk.
  *
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with
+ *        Boost.Serialization.
  */
 template<typename MHWalkerParams_, typename IterCountIntType_ = int,
          typename RngSeedType_ = std::mt19937::result_type>
@@ -143,8 +84,8 @@ struct TOMOGRAPHER_EXPORT CDataBase
    */
   typedef RngSeedType_ RngSeedType;
 
-  /** \brief Type to store the parameters of the Metropolis-Hastings random walk (number of
-   *         runs, sweep size, etc.)
+  /** \brief Type to store the parameters of the Metropolis-Hastings random walk
+   *         (number of runs, sweep size, etc.)
    *
    * See \ref MHRWParams<MHWalkerParams,IterCountIntType>
    */
@@ -153,9 +94,9 @@ struct TOMOGRAPHER_EXPORT CDataBase
 
   /** \brief Constructor.
    *
-   * Make sure to initialize \a base_seed to something quite random (e.g. current time
-   * in seconds) so that independent runs of your program won't produce the exact same
-   * results.
+   * Make sure to initialize \a base_seed to something quite random
+   * (e.g. current time in seconds) so that independent runs of your program
+   * won't produce the exact same results.
    */
   template<typename MHRWParamsType>
   CDataBase(MHRWParamsType&& p, RngSeedType base_seed_)
@@ -164,14 +105,22 @@ struct TOMOGRAPHER_EXPORT CDataBase
   {
   }
 
+  //! Construct an invalid object -- ONLY for use with Boost.serialization
+  CDataBase() : mhrw_params(), base_seed() { }
+
+
   /** \brief Parameters of the random walk
    *
-   * Stores the number of iterations per sweep, the number of thermalizing sweeps, the
-   * number of "live" sweeps, and the step size of the random walk.
+   * Stores the number of iterations per sweep, the number of thermalizing
+   * sweeps, the number of "live" sweeps, and the step size of the random walk.
    *
    * See \ref MHRWParams<MHWalkerParams,IterCountIntType>
+   *
+   * \since In %Tomographer 5.3: Removed the \c const attribute (to make
+   *        serialization easier; anyway in multiprocessing implementations a
+   *        const pointer to this class is kept ensuring const-ness already)
    */
-  const MHRWParamsType mhrw_params;
+  MHRWParamsType mhrw_params;
 
   /** \brief A base random seed from which each run seed will be derived
    *
@@ -186,8 +135,12 @@ struct TOMOGRAPHER_EXPORT CDataBase
    * of a run. However, in order for your program not to output exactly the same thing
    * if it is run a second time, and to make sure the points are indeed random, you must
    * randomize \a base_seed, e.g. using the current time.
+   *
+   * \since In %Tomographer 5.3: Removed the \c const attribute (to make serialization
+   *        easier; anyway in multiprocessing implementations a const pointer to this
+   *        class is kept ensuring const-ness already)
    */
-  const RngSeedType base_seed;
+  RngSeedType base_seed;
 
   /** \brief Returns a random seed to seed the random number generator with for run
    * number \a k
@@ -227,8 +180,16 @@ struct TOMOGRAPHER_EXPORT CDataBase
     printBasicCDataMHRWInfo(ss);
     return ss.str();
   }
-};
 
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & mhrw_params;
+    a & base_seed;
+  }
+};
 
 
 
@@ -252,6 +213,9 @@ struct TOMOGRAPHER_EXPORT CDataBase
  *
  * \tparam MHWalkerParams the real type used to describe the step size.
  *
+ *
+ * \since Since %Tomographer 5.3, this class can be serialized with Boost.Serialization as
+ *        long as \a MHRWStatsResultsType can be serialized.
  */
 template<typename MHRWStatsResultsType_, typename IterCountIntType, typename MHWalkerParams>
 struct TOMOGRAPHER_EXPORT MHRandomWalkTaskResult
@@ -266,16 +230,7 @@ struct TOMOGRAPHER_EXPORT MHRandomWalkTaskResult
   /** \brief The type to use to store the parameters of the random walk
    */
   typedef MHRWParams<MHWalkerParams, IterCountIntType> MHRWParamsType;
-    
-  // /** \brief Construct an empty task result
-  //  *
-  //  */
-  // MHRandomWalkTaskResult()
-  //   : stats_results(), mhrw_params(),
-  //     acceptance_ratio(std::numeric_limits<double>::quiet_NaN())
-  // {
-  // }
-
+  
   /** \brief Constructor, initializes fields to the given values
    *
    * The first parameter is meant to be the \a ResultType of a \a MHRWStatsCollector
@@ -311,6 +266,12 @@ struct TOMOGRAPHER_EXPORT MHRandomWalkTaskResult
                        std::numeric_limits<double>::quiet_NaN())
   {
   }
+
+
+  //! Construct an invalid object -- ONLY for use with Boost.serialization
+  TOMOGRAPHER_ENABLED_IF(std::is_default_constructible<MHRWStatsResultsType>::value)
+  MHRandomWalkTaskResult() : stats_results(), mhrw_params(), acceptance_ratio() { }
+
     
   /** \brief The result(s) coming from stats collecting (may be processed, see \ref
    *         pageInterfaceMHRandomWalkTaskCData)
@@ -326,6 +287,18 @@ struct TOMOGRAPHER_EXPORT MHRandomWalkTaskResult
 
   MHRandomWalkTaskResult(MHRandomWalkTaskResult && ) = default;
   MHRandomWalkTaskResult(const MHRandomWalkTaskResult & ) = default;
+
+private:
+  friend boost::serialization::access;
+  template<typename Archive,
+           typename MHRWStatsResultsType2 = MHRWStatsResultsType>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    MHRWStatsResultsType2 & stats_results_ref = stats_results;
+    a & stats_results_ref;
+    a & mhrw_params;
+    a & acceptance_ratio;
+  }
 };
 
 

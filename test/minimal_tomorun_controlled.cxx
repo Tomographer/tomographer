@@ -315,13 +315,13 @@ int main()
       0.1,
       // sweep size -- will be automatically adjusted during thermalization
       // sweeps.  The only thing that matters here is that we choose it
-      // such that sweep_size*step_size ~ 1.  As the controller modifies
+      // such that sweep_size*step_size >~ 1.  As the controller modifies
       // the step size, it will adapt the sweep size to keep the product
       // sweep_size*step_size constant.
       10,
       // Number of thermalization sweeps -- might take longer if the step size
       // needs to be adapted a lot before finding the right acceptance ratio
-      500,
+      1024,
       // Number of live sweeps in which samples are collected -- might take
       // longer if the controller sees that the error bars haven't converged yet
       // and lets the random walk run for longer (so you shouldn't get surprised

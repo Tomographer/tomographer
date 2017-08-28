@@ -40,6 +40,7 @@
 #include <complex>
 
 #include <boost/math/constants/constants.hpp>
+#include <boost/serialization/serialization.hpp>
 
 #include <Eigen/Core>
 
@@ -69,7 +70,7 @@ public:
   /** \brief Constructor.  Just give it the DMTypes instance.
    *
    */
-  ParamX(DMTypes dmt) : _dmt(dmt) { }
+  ParamX(DMTypes dmt) : dim(dmt.dim()) { }
 
   /** \brief Get the X-parameterization corresponding to a given hermitian matrix
    *
@@ -80,17 +81,19 @@ public:
    */
   inline VectorParamType HermToX(MatrixTypeConstRef Herm) const
   {
+    DMTypes dmt(dim);
+
     // hope RVO kicks in
-    VectorParamType x(_dmt.initVectorParamType());
-    const IndexType dimtri = (_dmt.dim2() - _dmt.dim())/2;
+    VectorParamType x(dmt.initVectorParamType());
+    const IndexType dimtri = (dmt.dim2() - dmt.dim())/2;
 
-    tomographer_assert((IndexType)_dmt.dim() == Herm.cols()); // assert Herm is (dim x dim)
+    tomographer_assert((IndexType)dmt.dim() == Herm.cols()); // assert Herm is (dim x dim)
     
-    x.block(0,0,(IndexType)_dmt.dim(),1) = Herm.real().diagonal();
+    x.block(0,0,(IndexType)dmt.dim(),1) = Herm.real().diagonal();
 
-    IndexType k = (IndexType)_dmt.dim();
+    IndexType k = (IndexType)dmt.dim();
     IndexType n, m;
-    for (n = 1; n < (IndexType)_dmt.dim(); ++n) {
+    for (n = 1; n < (IndexType)dmt.dim(); ++n) {
       for (m = 0; m < n; ++m) {
         x(k)          = Herm(n,m).real() * boost::math::constants::root_two<RealScalar>();
         x(dimtri + k) = Herm(n,m).imag() * boost::math::constants::root_two<RealScalar>();
@@ -109,18 +112,20 @@ public:
   template<bool OnlyLowerTri = false>
   inline MatrixType XToHerm(VectorParamTypeConstRef x) const
   {
-    // should be optimized by compiler via RVO
-    MatrixType Herm(_dmt.initMatrixType());
-    
-    const IndexType dimtri = (IndexType)(_dmt.dim2()-_dmt.dim())/2;
-    tomographer_assert(x.rows() == (IndexType)_dmt.dim2() && x.cols() == 1); // assert x is (dim*dim x 1)
+    DMTypes dmt(dim);
 
-    Herm.diagonal().real() = x.block(0,0,(IndexType)_dmt.dim(),1);
+    // should be optimized by compiler via RVO
+    MatrixType Herm(dmt.initMatrixType());
+    
+    const IndexType dimtri = (IndexType)(dmt.dim2()-dmt.dim())/2;
+    tomographer_assert(x.rows() == (IndexType)dmt.dim2() && x.cols() == 1); // assert x is (dim*dim x 1)
+
+    Herm.diagonal().real() = x.block(0,0,(IndexType)dmt.dim(),1);
     Herm.diagonal().imag().setZero();
   
-    IndexType k = (IndexType)_dmt.dim();
+    IndexType k = (IndexType)dmt.dim();
     IndexType n, m;
-    for (n = 1; n < (IndexType)_dmt.dim(); ++n) {
+    for (n = 1; n < (IndexType)dmt.dim(); ++n) {
       for (m = 0; m < n; ++m) {
         Herm(n,m) = boost::math::constants::half_root_two<RealScalar>() * ComplexScalar(x(k), x(dimtri + k));
         if (!OnlyLowerTri) {
@@ -133,8 +138,21 @@ public:
     return Herm;
   }
   
+
+  /** \brief Construct an invalid ParamX object -- only for use with Boost.Serialization
+   */
+  ParamX() : dim(-1) { }
+
 protected:
-  const DMTypes _dmt;
+  Eigen::Index dim;
+
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void serialize(Archive & a, unsigned int /* version */)
+  {
+    a & dim;
+  }
 };
 
 
