@@ -160,11 +160,12 @@ BOOST_AUTO_TEST_CASE(trdisttorefcalculator)
 BOOST_AUTO_TEST_CASE(observablevaluecalculator)
 {
   typedef Tomographer::DenseDM::DMTypes<2> DMTypes;
+  DMTypes dmt;
   typedef Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes> TheType;
   DMTypes::MatrixType A;
   A << 2, std::complex<double>(0,-1),
     std::complex<double>(0,1), -1 ;
-  TheType a(A);
+  TheType a(dmt, A);
 
   TheType b;
   save_and_reload(a, b);
@@ -187,11 +188,12 @@ BOOST_AUTO_TEST_SUITE_END() // tspacefigofmerit
 BOOST_AUTO_TEST_CASE(valuehisttools_cdata)
 {
   typedef Tomographer::DenseDM::DMTypes<2> DMTypes;
+  DMTypes dmt;
   typedef Tomographer::DenseDM::TSpace::ObservableValueCalculator<DMTypes> ValCalc;
   DMTypes::MatrixType A;
   A << 2, std::complex<double>(0,-1),
     std::complex<double>(0,1), -1 ;
-  ValCalc valcalc(A);
+  ValCalc valcalc(dmt, A);
 
   typedef Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<ValCalc>  CDataBaseType;
 

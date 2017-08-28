@@ -462,7 +462,8 @@ inline void save_construct_data(
     const unsigned int /*version*/)
 {
   // save data required to construct instance
-  a << t->dmt.dim();
+  Eigen::Index dim = t->dmt.dim();
+  a << dim; // for some reason, boost serialization archives require to provide lvalues...
 }
 
 template<class Archive,

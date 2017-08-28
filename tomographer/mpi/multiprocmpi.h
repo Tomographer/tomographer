@@ -765,10 +765,9 @@ private:
       ctrl_status_report->full_report.workers_running[(std::size_t)worker_id] = 1;
       ctrl_status_report->full_report.workers_reports[(std::size_t)worker_id] = *stat;
     } else {
-      // leave the data in the workers_[running|reports] to zero values, meaning
-      // that the worker is in an IDLE state
+      // leave the data in the workers_[running|reports] to zero
+      // value/default-initialized, meaning that the worker is in an IDLE state
       ctrl_status_report->full_report.workers_running[(std::size_t)worker_id] = 0;
-      ctrl_status_report->full_report.workers_reports[(std::size_t)worker_id] = NULL;
     }
     
     if (ctrl_status_report->num_reports_waiting <= 0) {
