@@ -160,15 +160,20 @@ macro(addTomographerTest test_cxx NeedsList)
     target_link_libraries(${test_name} PRIVATE ${ZLIB_LIBRARIES})
   endif()
 
+  set(cmd_argv )
+  if (";${NeedsList};" MATCHES ";mpi;")
+    set(cmd_argv ${cmd_argv} "${MPIEXEC}")
+  endif()
+  set(cmd_argv ${cmd_argv} ${CMAKE_CURRENT_BINARY_DIR}/${test_name})
+
   if(_generate_dummy_fail_test)
-    add_test(NAME ${test_name}
-      COMMAND echo "${_generate_dummy_fail_test}" >&2 && false)
-    return()
+    # replace cmd with dummy command
+    set(cmd_argv echo "${_generate_dummy_fail_test}" >&2 && false)
   endif()
 
   add_test(NAME ${test_name} 
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
-    COMMAND ${CMAKE_CURRENT_BINARY_DIR}/${test_name}
+    COMMAND ${cmd_argv}
     )
 
   #message(STATUS "Added test ${test_name}")

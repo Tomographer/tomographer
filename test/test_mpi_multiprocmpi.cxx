@@ -157,7 +157,10 @@ struct TestTaskMPI {
                                              _input.a, _input.b, pcdata->c, _result.value);
 
       if (i % 1000 == 0 && mgriface->statusReportRequested()) {
-        mgriface->submitStatusReport(StatusReportType((double)i/NN, "working very hard..."));
+        mgriface->submitStatusReport(
+            StatusReportType((double)i/NN,
+                             streamstr("working very hard ... " << i << "/" << NN))
+            );
       }
 
     }
