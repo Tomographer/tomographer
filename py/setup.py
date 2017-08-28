@@ -29,6 +29,7 @@ from __future__ import print_function
 from distutils.spawn import find_executable
 from distutils.version import LooseVersion
 
+import setuptools
 from setuptools import setup, Extension
 from setuptools.command.build_ext import build_ext
 

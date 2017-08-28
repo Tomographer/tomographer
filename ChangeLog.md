@@ -5,15 +5,20 @@ Change Log
 
 ## v5.3 (TBD)
 
-  * Fix bug: MHRandomWalk would call allowDone*() on controllers after every iteration,
-    not after every sweep
+  * Fix bug: `MHRandomWalk` would call `allowDone*()` on controllers after every
+    iteration, not after every sweep
 
-  * Fix bug: MHRWValueErrorBinsConvergedController could previously interrupt not at a
-    multiple of the binning analysis sample size, causing some samples not to be taken
-    into account
+  * Fix bug: `MHRWValueErrorBinsConvergedController` could previously interrupt
+    not at a multiple of the binning analysis sample size, causing some samples
+    not to be taken into account
 
-  * Fix bug: the automatic base rng seed was ignored causing the rngs to always be seeded
-    with sequential seeds 0, 1, ... etc.
+  * Fix bug: the automatic base rng seed was ignored causing the rngs to always
+    be seeded with sequential seeds 0, 1, ... etc.
+
+  * `MHRWTasks::CDataBase` now accepts a list of random seeds to provide for
+    each task
+    
+  * Improved `tomorun`'s implementation of rng seeding using random device
 
 
 ## v5.2 (2017-08-22)
