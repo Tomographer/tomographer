@@ -153,8 +153,8 @@ BOOST_AUTO_TEST_CASE(get_task_inputs_incremental_base_seed)
 
   // make sure base_seed is used !
 
-  for (int k = 0; k < 1024; ++k) {
-    BOOST_CHECK_EQUAL( cdata.getTaskInput(k), 100 + k );
+  for (unsigned int k = 0; k < 1024; ++k) {
+    BOOST_CHECK_EQUAL( cdata.getTaskInput(k), 100u + k );
   }
 }
 

@@ -64,6 +64,15 @@ add_definitions(-DTOMOGRAPHER_TEST_DATA_DIR="${TOMOGRAPHER_TEST_DATA_DIR}")
 
 #set(LIST_OF_ALL_TESTS "")
 
+macro(generateDummyFailTest cmd_argv_var test_name_ msg_)
+  # replace cmd with dummy command
+  if (";${test_name_};" MATCHES ";${TOMOGRAPHER_TESTS_EXPECTED_TO_BE_SKIPPED_AND_FAIL};")
+    set(${cmd_argv_var} bash -c "echo '${msg_} -- AS EXPECTED' >&2 || true")
+  else()
+    set(${cmd_argv_var} bash -c "echo '${msg_}' >&2 && false")
+  endif()
+endmacro()
+
 macro(addTomographerTest test_cxx NeedsList)
 
   # file name without extension (NAME_WE)
@@ -142,7 +151,7 @@ macro(addTomographerTest test_cxx NeedsList)
       target_link_libraries(${test_name} PRIVATE
         ${Boost_MPI_LIBRARIES} ${Boost_SERIALIZATION_LIBRARIES} ${MPI_LIBRARIES})
     else()
-      set(_generate_dummy_fail_test "MPI not found on this system -- test disabled")
+      set(_generate_dummy_fail_test "MPI not found on this system -- test case not compiled")
     endif()
   endif()
 
@@ -171,8 +180,8 @@ macro(addTomographerTest test_cxx NeedsList)
   set(cmd_argv ${cmd_argv} ${CMAKE_CURRENT_BINARY_DIR}/${test_name})
 
   if(_generate_dummy_fail_test)
-    # replace cmd with dummy command
-    set(cmd_argv echo "${_generate_dummy_fail_test}" >&2 && false)
+    set_target_properties(${test_name} PROPERTIES EXCLUDE_FROM_ALL 1)
+    generateDummyFailTest(cmd_argv "${test_name}" "${_generate_dummy_fail_test}")
   endif()
 
   add_test(NAME ${test_name} 
@@ -300,25 +309,31 @@ add_test(NAME minimal_single_random_walk
 #
 # check "minimal tomorun" with MPI example program compiles and runs
 #
-add_executable(minimal_mpi_tomorun
-  minimal_mpi_tomorun.cxx
-  )
-# Enable C++11
-set_property(TARGET minimal_mpi_tomorun PROPERTY CXX_STANDARD 11)
-# tomographer headers
-target_include_directories(minimal_mpi_tomorun PRIVATE "..")
-# dependency: Eigen
-target_include_directories(minimal_mpi_tomorun  PRIVATE ${EIGEN3_INCLUDE_DIR})
-target_compile_definitions(minimal_mpi_tomorun PRIVATE -DEIGEN_DONT_PARALLELIZE)
-# Boost and MPI stuff
-target_include_directories(minimal_mpi_tomorun PRIVATE ${Boost_INCLUDE_DIR} ${MPI_INCLUDE_PATH})
-target_link_libraries(minimal_mpi_tomorun PRIVATE
-  ${Boost_MPI_LIBRARIES} ${Boost_SERIALIZATION_LIBRARIES} ${MPI_LIBRARIES})
-add_test(NAME minimal_mpi_tomorun
-  WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
-  COMMAND "$<TARGET_FILE:minimal_mpi_tomorun>"
-  )
-
+if(MPI_FOUND)
+  add_executable(minimal_mpi_tomorun
+    minimal_mpi_tomorun.cxx
+    )
+  # Enable C++11
+  set_property(TARGET minimal_mpi_tomorun PROPERTY CXX_STANDARD 11)
+  # tomographer headers
+  target_include_directories(minimal_mpi_tomorun PRIVATE "..")
+  # dependency: Eigen
+  target_include_directories(minimal_mpi_tomorun  PRIVATE ${EIGEN3_INCLUDE_DIR})
+  target_compile_definitions(minimal_mpi_tomorun PRIVATE -DEIGEN_DONT_PARALLELIZE)
+  # Boost and MPI stuff
+  target_include_directories(minimal_mpi_tomorun PRIVATE ${Boost_INCLUDE_DIR} ${MPI_INCLUDE_PATH})
+  target_link_libraries(minimal_mpi_tomorun PRIVATE
+    ${Boost_MPI_LIBRARIES} ${Boost_SERIALIZATION_LIBRARIES} ${MPI_LIBRARIES})
+  add_test(NAME minimal_mpi_tomorun
+    WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
+    COMMAND "$<TARGET_FILE:minimal_mpi_tomorun>"
+    )
+else()
+  generateDummyFailTest(cmd_argv "minimal_mpi_tomorun" "MPI not present -- test case not compiled")
+  add_test(NAME minimal_mpi_tomorun
+    COMMAND ${cmd_argv}
+    )
+endif()
 
 
 if (BUILD_TOMORUN)
