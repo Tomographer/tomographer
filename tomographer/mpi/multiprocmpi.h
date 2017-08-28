@@ -68,7 +68,7 @@ namespace MPI {
 
 /** \brief Handles parallel execution of tasks using MPI
  *
- * Plug into a given MPI communicator to run our tasks.
+ * Plug into a given MPI environment to run our tasks.
  *
  * The master process, i.e., the one with <code>comm.rank()==0</code>, is very
  * special.  Only this process has to provide the input data (the TaskCData
@@ -666,7 +666,7 @@ private:
         tomographer_assert(msg.tag() == TAG_WORKER_HELL_YEAH_IM_OUTTA_HERE);
 
         comm.recv(msg.source(), msg.tag());
-        logger.debug("Received worker #%d's farewell message. Bye, you were great!", msg.source());
+        logger.debug("Received worker #%d's farewell message. Bye, you did a great job!", msg.source());
 
         // we got one less worker running
         -- ctrl->num_workers_running;

@@ -15,10 +15,14 @@ Change Log
   * Fix bug: the automatic base rng seed was ignored causing the rngs to always
     be seeded with sequential seeds 0, 1, ... etc.
 
+  * New muliprocessing implementation based on [MPI][]
+
   * `MHRWTasks::CDataBase` now accepts a list of random seeds to provide for
     each task
     
   * Improved `tomorun`'s implementation of rng seeding using random device
+
+[MPI]: https://computing.llnl.gov/tutorials/mpi/
 
 
 ## v5.2 (2017-08-22)

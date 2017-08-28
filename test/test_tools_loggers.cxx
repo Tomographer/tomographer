@@ -791,6 +791,35 @@ BOOST_AUTO_TEST_CASE(works)
 
 }
 
+BOOST_AUTO_TEST_CASE(set_prefix)
+{
+  Tomographer::Logger::BufferLogger b(Tomographer::Logger::DEBUG);
+
+  Tomographer::Logger::OriginPrefixedLogger<Tomographer::Logger::BufferLogger>
+    plogger(b, "The PREFIX-");
+
+  plogger.longdebug("origin 1", "message 1") ;
+  plogger.debug("origin 2", "message 2") ;
+
+  plogger.setPrefix("zzz preeefiiix-");
+
+  plogger.info("origin 3", "message 3") ;
+  plogger.warning("origin 4", "message 4") ;
+  plogger.error("origin 5", "message 5") ;
+
+  std::string contents = b.getContents();
+
+  BOOST_MESSAGE(contents);
+  BOOST_CHECK_EQUAL(contents,
+                    // skipped LONGDEBUG message #1
+                    "[The PREFIX-origin 2] message 2\n" // DEBUG
+                    "[zzz preeefiiix-origin 3] message 3\n" // INFO
+                    "[zzz preeefiiix-origin 4] message 4\n" // WARNING
+                    "[zzz preeefiiix-origin 5] message 5\n" // ERROR
+      );
+
+}
+
 BOOST_AUTO_TEST_SUITE_END() // originprefixedlogger
 
 

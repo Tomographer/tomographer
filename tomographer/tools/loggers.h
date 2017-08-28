@@ -1321,6 +1321,8 @@ struct LoggerTraits<OriginPrefixedLogger<BaseLogger> > : public LoggerTraits<Bas
  *
  * If the \a BaseLogger implements by-origin filtering, then the filtering is still
  * honored, using the *unmodified origin string*.
+ *
+ * \since This class was introduced in %Tomographer 5.3.
  */
 template<typename BaseLogger>
 class TOMOGRAPHER_EXPORT OriginPrefixedLogger : public LoggerBase<OriginPrefixedLogger<BaseLogger> >
@@ -1343,6 +1345,13 @@ public:
       prefix(prefix_)
   {
   }
+
+  //! Change the prefix to a new value. Obviously not thread-safe.
+  inline void setPrefix(std::string prefix_)
+  {
+    prefix = prefix_;
+  }
+
 
   //! Emit a log by relaying to the base logger
   inline void emitLog(int level, const char * origin, std::string msg)
