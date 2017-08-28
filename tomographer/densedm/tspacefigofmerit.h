@@ -88,7 +88,7 @@ public:
 
 
   //! Construct an invalid object -- ONLY for use with Boost.serialization
-  FidelityToRefCalculator() : ref_T() { }
+  FidelityToRefCalculator() : _ref_T() { }
 private:
   friend boost::serialization::access;
   template<typename Archive>
