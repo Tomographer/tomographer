@@ -320,12 +320,28 @@ struct TOMOGRAPHER_EXPORT CDataBase
       binningNumLevels()
   {
   }
+  //! Constructor (use only without binning analysis), with full list of rng seeds
+  TOMOGRAPHER_ENABLED_IF(!UseBinningAnalysis)
+  CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_,
+	    MHRWParamsType p, std::vector<RngSeedType> seeds)
+    : Base(std::move(p), std::move(seeds)), valcalc(valcalc_), histogram_params(histogram_params_),
+      binningNumLevels()
+  {
+  }
 
   //! Constructor (use only with binning analysis)
   TOMOGRAPHER_ENABLED_IF(UseBinningAnalysis)
   CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_, int binning_num_levels_,
 	    MHRWParamsType p, RngSeedType base_seed = 0)
     : Base(std::move(p), base_seed), valcalc(valcalc_), histogram_params(histogram_params_),
+      binningNumLevels(binning_num_levels_)
+  {
+  }
+  //! Constructor (use only with binning analysis), with full list of rng seeds
+  TOMOGRAPHER_ENABLED_IF(UseBinningAnalysis)
+    CDataBase(const ValueCalculator & valcalc_, HistogramParams histogram_params_, int binning_num_levels_,
+	    MHRWParamsType p, std::vector<RngSeedType> seeds)
+    : Base(std::move(p), std::move(seeds)), valcalc(valcalc_), histogram_params(histogram_params_),
       binningNumLevels(binning_num_levels_)
   {
   }

@@ -354,6 +354,7 @@ if (BUILD_TOMORUN)
       --write-histogram=out --n-run=32768 --n-repeats=8 "--value-type=obs-value:rho_ref" "--value-hist=0.9:1/50"
       --light-jumps
       --periodic-status-report-ms=2000
+      --verbose --verbose-log-info
       )
     add_test(NAME test_tomorun_case_1b
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
@@ -365,6 +366,7 @@ if (BUILD_TOMORUN)
       --write-histogram=out1b --n-run=8192 --n-repeats=64 "--value-type=obs-value:rho_ref" "--value-hist=0.93:.980/20"
       --binning-analysis-error-bars --binning-analysis-num-levels=7
       --periodic-status-report-ms=2000
+      --verbose --verbose-log-info
       )
     add_test(NAME test_tomorun_case_2
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
@@ -376,6 +378,7 @@ if (BUILD_TOMORUN)
       --write-histogram=out2 --n-run=32768 --n-repeats=8 "--value-type=tr-dist:rho_MLE" "--value-hist=0.:0.2/50"
       --no-light-jumps
       --periodic-status-report-ms=2000 --no-control-binning-converged
+      --verbose --verbose-log-info
       )
     add_test(NAME test_tomorun_case_3
       WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}"
@@ -387,6 +390,7 @@ if (BUILD_TOMORUN)
       --write-histogram=out3 --n-run=32768 --n-repeats=8 "--value-type=obs-value:EntglWitness" "--value-hist=1.6:2.0/50"
       --no-light-jumps
       --periodic-status-report-ms=2000
+      --verbose --verbose-log-info
       )
 
     add_test(NAME test_tomorun_case_4
@@ -400,6 +404,7 @@ if (BUILD_TOMORUN)
       --write-histogram=out4 --n-run=32768 --n-repeats=8 "--value-type=purif-dist:rho_ref" "--value-hist=0.0:0.4/50"
       --no-light-jumps
       --periodic-status-report-ms=2000
+      --verbose --verbose-log-info
       )
     
   else()

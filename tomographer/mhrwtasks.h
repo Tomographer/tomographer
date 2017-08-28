@@ -41,6 +41,7 @@
 #include <limits>
 #include <random>
 #include <sstream>
+#include <stdexcept>
 
 #include <tomographer/tools/fmt.h>
 #include <tomographer/tools/needownoperatornew.h>
@@ -160,7 +161,23 @@ struct TOMOGRAPHER_EXPORT CDataBase
   template<typename MHRWParamsType>
   CDataBase(MHRWParamsType&& p, RngSeedType base_seed_)
     : mhrw_params(std::forward<MHRWParamsType>(p)),
-      base_seed(base_seed_)
+      base_seed(base_seed_),
+      task_seeds()
+  {
+  }
+
+  /** \brief Constructor.
+   *
+   * Using this constructor the seed list is set, which takes precedence over \a
+   * base_seed.
+   *
+   * \since Introduced in %Tomographer 5.3
+   */
+  template<typename MHRWParamsType>
+  CDataBase(MHRWParamsType&& p, std::vector<RngSeedType> task_seeds_)
+    : mhrw_params(std::forward<MHRWParamsType>(p)),
+      base_seed(0),
+      task_seeds(std::move(task_seeds_))
   {
   }
 
@@ -189,6 +206,16 @@ struct TOMOGRAPHER_EXPORT CDataBase
    */
   const RngSeedType base_seed;
 
+  /** \brief A list of random seeds to use for each task
+   *
+   * If set, this list of seeds takes precedence over base_seed.  The seed at
+   * index number \a k will be fed to the corresponding task.
+   *
+   * \since Introduced in %Tomographer 5.3
+   */
+  const std::vector<RngSeedType> task_seeds;
+
+
   /** \brief Returns a random seed to seed the random number generator with for run
    * number \a k
    *
@@ -201,9 +228,20 @@ struct TOMOGRAPHER_EXPORT CDataBase
   template<typename TaskNoCountIntType>
   inline RngSeedType getTaskInput(TaskNoCountIntType k) const
   {
-    // empirically it's noticeably better to feed the RNG sequential numbers rather than
-    // try to shuffle bits around (!!)
-    return base_seed + (RngSeedType)k;
+    if (task_seeds.size() > 0) {
+      // specific task seeds given (e.g. from random device)
+      if (k < 0 || (std::size_t)k >= task_seeds.size()) {
+        throw std::out_of_range(streamstr("getTaskInput(): k="<<k<<" out of range; seed list size is = "
+                                          << task_seeds.size()));
+      }
+      return task_seeds[(std::size_t)k];
+    } else {
+      // derive seed from base seed
+      
+      // empirically it's noticeably better to feed the RNG sequential numbers rather than
+      // try to shuffle bits around (!!)
+      return base_seed + (RngSeedType)k;
+    }
   }
 
 

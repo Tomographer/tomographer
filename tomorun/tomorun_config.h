@@ -79,9 +79,9 @@ typedef double TomorunReal;
 // TOMORUN_RNG_CLASS
 //
 #ifdef TOMORUN_RNG_CLASS
-typedef TOMORUN_RNG_CLASS TomorunBaseRngType;
+typedef TOMORUN_RNG_CLASS TomorunRng;//TomorunBaseRngType;
 #else
-typedef std::mt19937 TomorunBaseRngType;
+typedef std::mt19937 TomorunRng;//TomorunBaseRngType;
 #endif
 
 //

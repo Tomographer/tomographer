@@ -52,43 +52,40 @@
 // -----------------------------------------------------------------------------
 
 
-//typedef std::mt19937 BaseRngType;
 
-
-template<typename BaseRngType_>
-struct DeviceSeededRng : public BaseRngType_
-{
-  typedef BaseRngType_ BaseRngType;
-  using typename BaseRngType::result_type;
+// template<typename BaseRngType_>
+// struct DeviceSeededRng : public BaseRngType_
+// {
+//   typedef BaseRngType_ BaseRngType;
+//   using typename BaseRngType::result_type;
   
-  DeviceSeededRng(result_type k) : BaseRngType(_get_device_seed(k)) { }
+//   DeviceSeededRng(result_type k) : BaseRngType(_get_device_seed(k)) { }
 
-  static inline result_type _get_device_seed(result_type k)
-  {
-#if TOMORUN_USE_DEVICE_SEED != 0
-    (void)k; // unused
+//   static inline result_type _get_device_seed(result_type k)
+//   {
+// #if TOMORUN_USE_DEVICE_SEED != 0
+//     (void)k; // unused
     
-    result_type finalseed;
-    // no two threads simultaneously executing the same code here please
-    TOMORUN_THREAD_CRITICAL_SECTION {
-      std::random_device devrandom( TOMORUN_RANDOM_DEVICE );
-      std::uniform_int_distribution<result_type> dseed(
-          std::numeric_limits<result_type>::min(),
-          std::numeric_limits<result_type>::max()
-          ); // full range of result_type
+//     result_type finalseed;
+//     // no two threads simultaneously executing the same code here please
+//     TOMORUN_THREAD_CRITICAL_SECTION {
+//       std::random_device devrandom( TOMORUN_RANDOM_DEVICE );
+//       std::uniform_int_distribution<result_type> dseed(
+//           std::numeric_limits<result_type>::min(),
+//           std::numeric_limits<result_type>::max()
+//           ); // full range of result_type
       
-      finalseed =  dseed(devrandom);
-      // DEBUG: fprintf(stderr, "Rng: device seed=%lu\n", (unsigned long) finalseed) ;
-    } // return out of critical region for OpenMP:
-    return finalseed;
-#else
-    return k;
-#endif
-  }
-};
-
-typedef DeviceSeededRng<std::mt19937>  TomorunRng;
-
+//       finalseed =  dseed(devrandom);
+//       // DEBUG: fprintf(stderr, "Rng: device seed=%lu\n", (unsigned long) finalseed) ;
+//     } // return out of critical region for OpenMP:
+//     return finalseed;
+// #else
+//     return k;
+// #endif
+//   }
+// };
+//
+// typedef DeviceSeededRng<std::mt19937>  TomorunRng;
 
 
 
@@ -120,13 +117,14 @@ struct TomorunCData : public CDataBaseType_
   };
 
  
-  TOMOGRAPHER_ENABLED_IF(!BinningAnalysisEnabled)
+  template<typename SeedInitType,
+           TOMOGRAPHER_ENABLED_IF_TMPL(!BinningAnalysisEnabled)>
   TomorunCData(const DenseLLH & llh_, ValueCalculator valcalc,
-               const ProgOptions * opt, RngType::result_type base_seed)
+               const ProgOptions * opt, SeedInitType base_seed_or_task_seed_list)
     : Base(valcalc,
 	   typename Base::HistogramParams(opt->val_min, opt->val_max, opt->val_nbins),
 	   typename Base::MHRWParamsType(opt->step_size, opt->Nsweep, opt->Ntherm, opt->Nrun),
-	   base_seed),
+	   std::move(base_seed_or_task_seed_list)),
       llh(llh_),
       ctrl_moving_avg_samples(opt->control_step_size_moving_avg_samples),
       ctrl_max_allowed_unknown(opt->control_binning_converged_max_unknown),
@@ -136,14 +134,15 @@ struct TomorunCData : public CDataBaseType_
   {
   }
 
-  TOMOGRAPHER_ENABLED_IF(BinningAnalysisEnabled)
+  template<typename SeedInitType,
+           TOMOGRAPHER_ENABLED_IF_TMPL(BinningAnalysisEnabled)>
   TomorunCData(const DenseLLH & llh_, ValueCalculator valcalc,
-               const ProgOptions * opt, RngType::result_type base_seed)
+               const ProgOptions * opt, SeedInitType base_seed_or_task_seed_list)
     : Base(valcalc,
 	   typename Base::HistogramParams(opt->val_min, opt->val_max, opt->val_nbins),
 	   opt->binning_analysis_num_levels,
 	   typename Base::MHRWParamsType(opt->step_size, opt->Nsweep, opt->Ntherm, opt->Nrun),
-	   base_seed),
+	   std::move(base_seed_or_task_seed_list)),
       llh(llh_),
       ctrl_moving_avg_samples(opt->control_step_size_moving_avg_samples),
       ctrl_max_allowed_unknown(opt->control_binning_converged_max_unknown),
@@ -269,6 +268,44 @@ struct TomorunCData : public CDataBaseType_
 
 
 
+#if TOMORUN_USE_DEVICE_SEED != 0
+template<typename LocalLoggerType>
+std::vector<TomorunRng::result_type> get_base_seed_or_task_seed_list(TomorunInt num_tasks, LocalLoggerType & logger)
+{
+  logger.info("Collecting random seeds from random device ...");
+  std::random_device devrandom( TOMORUN_RANDOM_DEVICE );
+  std::uniform_int_distribution<TomorunRng::result_type> dseed(
+      std::numeric_limits<TomorunRng::result_type>::min(),
+      std::numeric_limits<TomorunRng::result_type>::max()
+      ); // full range of result_type
+
+  std::vector<TomorunRng::result_type> seeds((std::size_t)num_tasks);
+  for (TomorunInt k = 0; k < num_tasks; ++k) {
+    TomorunRng::result_type seed = dseed(devrandom);
+    logger.debug([&](std::ostream & stream) { stream << "Seed for task #" << k << " = " << seed; });
+    seeds[(std::size_t)k] = seed;
+  }
+
+  logger.info("... seeds collected.");
+  return seeds;
+}
+#else
+// just return a base seed
+template<typename LocalLoggerType>
+TomorunRng::result_type get_base_seed_or_task_seed_list(TomorunInt num_tasks, LocalLoggerType & logger)
+{
+  (void)num_tasks;
+  TomorunRng::result_type base_seed =
+    (TomorunRng::result_type)std::chrono::system_clock::now().time_since_epoch().count();
+  logger.debug([&](std::ostream & stream) {
+      stream << "Base rng seed = " << base_seed;
+    });
+  return base_seed;
+}
+#endif
+
+
+
 
 
 //
@@ -306,10 +343,9 @@ inline void tomorun(const DenseLLH & llh, const ProgOptions * opt,
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, typename OurCData::RngType>  OurMHRandomWalkTask;
 
   // seed for random number generator, if no random device is available
-  typename OurCData::RngType::result_type default_base_seed =
-    (typename OurCData::RngType::result_type)std::chrono::system_clock::now().time_since_epoch().count();
+  auto seedinit = get_base_seed_or_task_seed_list(opt->Nrepeats, logger);
 
-  OurCData taskcdat(llh, valcalc, opt, default_base_seed);
+  OurCData taskcdat(llh, valcalc, opt, std::move(seedinit));
 
   TomorunMultiProcTaskDispatcher<OurMHRandomWalkTask, OurCData, LoggerType> tasks(
       &taskcdat, // constant data
