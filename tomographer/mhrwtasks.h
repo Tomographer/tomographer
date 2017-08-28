@@ -44,6 +44,7 @@
 #include <stdexcept>
 
 #include <boost/serialization/serialization.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <tomographer/tools/fmt.h>
 #include <tomographer/tools/needownoperatornew.h>
@@ -123,7 +124,7 @@ struct TOMOGRAPHER_EXPORT CDataBase
   }
 
   //! Construct an invalid object -- ONLY for use with Boost.serialization
-  CDataBase() : mhrw_params(), base_seed() { }
+  CDataBase() : mhrw_params(), base_seed(), task_seeds() { }
 
 
   /** \brief Parameters of the random walk
@@ -166,7 +167,7 @@ struct TOMOGRAPHER_EXPORT CDataBase
    *
    * \since Introduced in %Tomographer 5.3
    */
-  const std::vector<RngSeedType> task_seeds;
+  std::vector<RngSeedType> task_seeds;
 
 
   /** \brief Returns a random seed to seed the random number generator with for run
@@ -226,6 +227,7 @@ private:
   {
     a & mhrw_params;
     a & base_seed;
+    a & task_seeds;
   }
 };
 
