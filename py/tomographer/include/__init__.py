@@ -9,7 +9,7 @@ import os.path
 #
 # The included components are defined here -- this present list is also used by setup.py
 #
-BOOST_DEPS_COMPONENTS = ['algorithm', 'math', 'core', 'exception', 'predef']
+BOOST_DEPS_COMPONENTS = ['algorithm', 'math', 'core', 'exception', 'predef', 'serialization']
 """
 Those components of boost which are included in the header dependencies directory of
 this package.
