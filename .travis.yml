@@ -65,6 +65,8 @@ matrix:
             - libz-dev
             - libopenblas-base
             - libopenblas-dev
+            - lapack-dev
+            - liblapack3
             - openmpi-bin
       env:
         - TT_CC=gcc-4.8

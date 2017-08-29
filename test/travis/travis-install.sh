@@ -153,13 +153,13 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
     # Useful for debugging any issues with conda
     conda info -a
 
-    CVXPY_DEPS="six fastcache multiprocess ecos scs cvxcanon"
-
-    conda create -q -n test-environment python=3.6 libgcc libgfortran openblas lapack pybind11 wheel numpy scipy matplotlib tk scs $CVXPY_DEPS
+    conda create -q -n test-environment python=3.6 libgcc libgfortran lapack openblas pybind11 wheel numpy scipy matplotlib tk scs cvxpy
     source activate test-environment
 
-    # otherwise cvxpy complains that solver SCS is not installed (?)
-    pip install cvxpy
+    python -c 'import scs; print("SCS version: {}".format(scs.__version__))'
+    python -c 'import cvxpy; print("CVXPY version: {}".format(cvxpy.__version__))'
+
+    ls -lh $HOME/.miniconda/envs/test-environment/lib/
 
 else
 
