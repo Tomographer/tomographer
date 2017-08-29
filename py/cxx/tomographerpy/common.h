@@ -97,7 +97,7 @@ typedef std::complex<RealScalar> ComplexScalar;
 //! Integer type used for histogram counts
 typedef int HistCountIntType;
 //! Integer type used for iteration counts in the random walk
-typedef long IterCountIntType;
+typedef int IterCountIntType; // KEEP EVERYTHING "int" OTHERWISE WE BREAK SOURCE COMPATIBILITY (at least until Tomographer 6)
 //! Integer type used for counting the number of tasks
 typedef int TaskCountIntType;
 //! Integer type used for counting the number of measurement outcomes
@@ -119,7 +119,7 @@ typedef double RealType;
  *             versatile \ref HistCountIntType, \ref IterCountIntType, \ref
  *             TaskCountIntType, and \ref FreqCountIntType.
  */
-typedef long CountIntType;
+typedef int CountIntType; // KEEP EVERYTHING "int" OTHERWISE WE BREAK SOURCE COMPATIBILITY (at least until Tomographer 6)
 
 //! Shorthand, a 1-D Eigen::Matrix of RealScalar's
 typedef Eigen::Matrix<RealScalar, Eigen::Dynamic, 1> RealVectorType;
