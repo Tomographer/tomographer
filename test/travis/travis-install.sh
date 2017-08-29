@@ -39,20 +39,24 @@ echo "Using compilers -- C: $CMAKE_C_COMPILER,  C++: $CMAKE_CXX_COMPILER"
 # Python version to use
 #
 if [ "$TT_PYTHON" == "system-python-2.7" ]; then
+
     export PYTHON_EXECUTABLE=/usr/bin/python
     export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DPYTHON_LIBRARY=/usr/lib/x86_64-linux-gnu/libpython2.7.so -DPYTHON_INCLUDE_DIR=/usr/include/python2.7"
     export PIP=/usr/bin/pip
     export INSTALL_PYTHON_DEPS_USING="pip"
+
 elif [ "$TT_PYTHON" == "system-python-3" ]; then
+
     export PYTHON_EXECUTABLE=/usr/bin/python3
     #export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS "  # no special CMake args required
     export PIP=/usr/bin/pip3
     export INSTALL_PYTHON_DEPS_USING="pip"
+
 elif [ "$TT_PYTHON" == "conda-3" ]; then
 
     export MINICONDA_INSTALLER=https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
     export PYTHON_EXECUTABLE=$HOME/.miniconda/envs/test-environment/bin/python
-    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DPYTHON_LIBRARY=$HOME/.miniconda/envs/test-environment/lib/libpython3.6m.so -DPYTHON_INCLUDE_DIR=$HOME/.miniconda/envs/test-environment/include/python3.6m -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.so -DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_program_options.a -DBoost_UNIT_TEST_FRAMEWORK_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so -DBoost_SERIALIZATION_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_serialization.so"
+    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DCMAKE_PREFIX_PATH=$HOME/.miniconda/envs/test-environment -DPYTHON_LIBRARY=$HOME/.miniconda/envs/test-environment/lib/libpython3.6m.so -DPYTHON_INCLUDE_DIR=$HOME/.miniconda/envs/test-environment/include/python3.6m -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.so -DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_program_options.a -DBoost_UNIT_TEST_FRAMEWORK_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so -DBoost_SERIALIZATION_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_serialization.so"
     export PIP=$HOME/.miniconda/envs/test-environment/bin/pip
     export INSTALL_PYTHON_DEPS_USING="conda"
 
@@ -97,7 +101,7 @@ if [ ! -f "$PYBIND11_PATH/_install/include/pybind11/pybind11.h" ]; then curl -L 
 # Python dependencies
 # hack for preventing travis to interrupt after 10min of no output -- see
 # https://github.com/travis-ci/travis-ci/issues/6591
-function write_visual_bells() { while true; do set +x; echo -en "\a"; sleep 10; set -x; done; }; write_visual_bells &
+function write_visual_bells() { set +x; while true; do echo -en "\a"; sleep 10; done; }; write_visual_bells &
 
 
 if [ "$INSTALL_PYTHON_DEPS_USING" == "pip" ]; then
@@ -133,7 +137,7 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
     # Useful for debugging any issues with conda
     conda info -a
 
-    conda create -q -n test-environment python=3.6 gcc libgcc wheel numpy scipy matplotlib tk cvxpy pybind11
+    conda create -q -n test-environment python=3.6 gcc libgcc wheel numpy scipy matplotlib tk cvxpy pybind11 openmpi
     source activate test-environment
 
 else

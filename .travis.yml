@@ -6,11 +6,13 @@ sudo: required
 # Enable C++ support
 language: cpp
 
-# Install dependencies
-install:
-  - . test/travis/travis-install.sh
+
+# No e-mail notifications
+notifications:
+  email: false
 
 
+# Cache some directories
 cache:
   directories:
     - eigen-3.3.1
@@ -25,13 +27,28 @@ git:
   depth: 150
 
 
-# Build steps
+#
+# Install dependencies
+#
+install:
+  - . test/travis/travis-install.sh
+
+#
+# Build & test steps
+#
 script:
   - . test/travis/travis-build-and-test.sh
 
+#
+# System configurations
+#
 matrix:
   include:
-    # Conda goes first for now because I want it to run first so I can debug it
+
+    #
+    # Conda 3, with integrated g++-4.8
+    #
+    # (Conda goes first for now because I want it to run first so I can debug it)
     - compiler: gcc
       addons:
         apt:
@@ -54,9 +71,10 @@ matrix:
         - TT_CC=conda-3
         - TT_PYTHON=conda-3
         - CMAKE_ADD_ARGS="-DTOMOGRAPHER_TESTS_EXPECTED_TO_BE_SKIPPED_AND_FAIL=minimal_mpi_tomorun;test_mpi_multiprocmpi" # no MPI -- test installs ok and doesn't complain
-    # ### Dropping support for gcc 4.6 (especially for pybind11)
+
     #
-    # ### Still support g++ 4.8
+    # g++-4.8 & system python 2.7
+    #
     - compiler: gcc
       addons:
         apt:
@@ -81,6 +99,10 @@ matrix:
       env:
         - TT_CC=gcc-4.8
         - TT_PYTHON=system-python-2.7
+
+    #
+    # g++-5 & system python 2.7
+    #
     - compiler: gcc
       addons:
         apt:
@@ -106,6 +128,10 @@ matrix:
         - TT_CC=gcc-5
         - TT_PYTHON=system-python-2.7
         - CMAKE_ADD_ARGS="-DTOMORUN_MULTIPROC=sequential  -DTOMORUN_CXX_FLAGS='-DTOMORUN_USE_DEVICE_SEED=1' -DTOMOGRAPHER_TESTS_EXPECTED_TO_BE_SKIPPED_AND_FAIL=minimal_mpi_tomorun;test_mpi_multiprocmpi" # no MPI -- test installs ok and doesn't complain
+
+    #
+    # g++-6 & system python 3
+    #
     - compiler: gcc
       addons:
         apt:
@@ -130,6 +156,10 @@ matrix:
       env:
         - TT_CC=gcc-6
         - TT_PYTHON=system-python-3
+
+    #
+    # clang-3.4 & system python 2.7
+    #
     - compiler: clang
       addons:
         apt:
@@ -161,6 +191,10 @@ matrix:
         - TT_PYTHON=system-python-2.7
         - PIP_CC=/usr/bin/gcc
         - PIP_CXX=/usr/bin/g++
+
+    #
+    # clang-3.8 & system python 3
+    #
     - compiler: clang
       addons:
         apt:
@@ -197,9 +231,3 @@ matrix:
         - PIP_CC=/usr/bin/gcc
         - PIP_CXX=/usr/bin/g++
 
-
-
-
-# No e-mail notifications
-notifications:
-  email: false
