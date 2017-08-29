@@ -65,7 +65,7 @@ public:
   typedef typename DMTypes::VectorParamTypeConstRef VectorParamTypeConstRef;
   typedef typename DMTypes::RealScalar RealScalar;
   typedef typename DMTypes::ComplexScalar ComplexScalar;
-  typedef typename MatrixType::Index IndexType;
+  typedef Eigen::Index IndexType;
 
   /** \brief Constructor.  Just give it the DMTypes instance.
    *
@@ -81,19 +81,21 @@ public:
    */
   inline VectorParamType HermToX(MatrixTypeConstRef Herm) const
   {
-    DMTypes dmt(dim);
+    // don't construct a DMTypes object, because it could have a special constructor...
+    //DMTypes dmt(dim);
+    const Eigen::Index dim2 = dim*dim;
 
     // hope RVO kicks in
-    VectorParamType x(dmt.initVectorParamType());
-    const IndexType dimtri = (dmt.dim2() - dmt.dim())/2;
+    VectorParamType x = VectorParamType::Zero(dim2,1);
+    const Eigen::Index dimtri = (dim2 - dim)/2;
 
-    tomographer_assert((IndexType)dmt.dim() == Herm.cols()); // assert Herm is (dim x dim)
+    tomographer_assert(dim == Herm.cols()); // assert Herm is (dim x dim)
     
-    x.block(0,0,(IndexType)dmt.dim(),1) = Herm.real().diagonal();
+    x.block(0,0,dim,1) = Herm.real().diagonal();
 
-    IndexType k = (IndexType)dmt.dim();
+    IndexType k = dim;
     IndexType n, m;
-    for (n = 1; n < (IndexType)dmt.dim(); ++n) {
+    for (n = 1; n < dim; ++n) {
       for (m = 0; m < n; ++m) {
         x(k)          = Herm(n,m).real() * boost::math::constants::root_two<RealScalar>();
         x(dimtri + k) = Herm(n,m).imag() * boost::math::constants::root_two<RealScalar>();
@@ -112,20 +114,20 @@ public:
   template<bool OnlyLowerTri = false>
   inline MatrixType XToHerm(VectorParamTypeConstRef x) const
   {
-    DMTypes dmt(dim);
+    const Eigen::Index dim2 = dim*dim;
 
     // should be optimized by compiler via RVO
-    MatrixType Herm(dmt.initMatrixType());
+    MatrixType Herm = MatrixType::Zero(dim,dim);
     
-    const IndexType dimtri = (IndexType)(dmt.dim2()-dmt.dim())/2;
-    tomographer_assert(x.rows() == (IndexType)dmt.dim2() && x.cols() == 1); // assert x is (dim*dim x 1)
+    const IndexType dimtri = (dim2-dim)/2;
+    tomographer_assert(x.rows() == dim2 && x.cols() == 1); // assert x is (dim*dim x 1)
 
-    Herm.diagonal().real() = x.block(0,0,(IndexType)dmt.dim(),1);
+    Herm.diagonal().real() = x.block(0,0,dim,1);
     Herm.diagonal().imag().setZero();
   
-    IndexType k = (IndexType)dmt.dim();
+    IndexType k = dim;
     IndexType n, m;
-    for (n = 1; n < (IndexType)dmt.dim(); ++n) {
+    for (n = 1; n < dim; ++n) {
       for (m = 0; m < n; ++m) {
         Herm(n,m) = boost::math::constants::half_root_two<RealScalar>() * ComplexScalar(x(k), x(dimtri + k));
         if (!OnlyLowerTri) {
