@@ -31,6 +31,25 @@ script:
 
 matrix:
   include:
+    # Conda goes first for now because I want it to run first so I can debug it
+    - compiler: gcc
+      addons:
+        apt:
+          sources:
+            - ubuntu-toolchain-r-test
+          packages:
+            - gcc
+            - g++
+            - gfortran
+            - gfortran-multilib
+            - libatlas-dev
+            - libatlas-base-dev
+            - libboost1.55-all-dev
+            - libboost1.55-dev
+            - openmpi-bin
+      env:
+        - TT_CC=conda-3
+        - TT_PYTHON=conda-3
     # ### Dropping support for gcc 4.6 (especially for pybind11)
     #
     # ### Still support g++ 4.8
@@ -173,24 +192,6 @@ matrix:
         - PYBIND11_CPP_STANDARD="-std=c++11" # for setup.py
         - PIP_CC=/usr/bin/gcc
         - PIP_CXX=/usr/bin/g++
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - gcc
-            - g++
-            - gfortran
-            - gfortran-multilib
-            - libatlas-dev
-            - libatlas-base-dev
-            - libboost1.55-all-dev
-            - libboost1.55-dev
-            - openmpi-bin
-      env:
-        - TT_CC=conda-3
-        - TT_PYTHON=conda-3
 
 
 

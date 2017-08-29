@@ -247,8 +247,7 @@ dependencies.)
 
     # If using *conda*:
     
-    > conda install numpy
-    > conda install gcc # don't need this on Mac OS X, skip this command
+    > conda install numpy gcc
     > conda install -c conda-forge pybind11
     
     # OR: if using *pip* by itself:
@@ -285,10 +284,9 @@ have to specify explicitly:
 
     > CC=path-to-conda/bin/gcc CXX=path-to-conda/bin/g++ pip install tomographer
     
-On Mac OS X, it appears that *conda*'s python is built using Apple's *clang*, so
-you should use:
-
-    > CC=clang CXX=clang++ pip install tomographer
+I'm not too sure of the exact situation with *conda* on Mac OS X. It appears
+that *conda*'s python is built using Apple's *clang*, but after some tests it
+seems that `tomographer` will also happily compile with *conda*'s `gcc`.
 
 
 ### Install from source — advanced

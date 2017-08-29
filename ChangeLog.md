@@ -5,6 +5,12 @@ Change Log
 
 ## v5.3 (TBD)
 
+  * Fix bug: the automatic base rng seed was ignored causing the rngs to always
+    be seeded with sequential seeds 0, 1, ... etc.
+
+  * Python's `tomographer.tomorun.tomorun()` now provides clearer error messages
+    when used with incorrect arguments
+
   * Fix bug: `MHRandomWalk` would call `allowDone*()` on controllers after every
     iteration, not after every sweep
 
@@ -12,16 +18,19 @@ Change Log
     not at a multiple of the binning analysis sample size, causing some samples
     not to be taken into account
 
-  * Fix bug: the automatic base rng seed was ignored causing the rngs to always
-    be seeded with sequential seeds 0, 1, ... etc.
-
-  * New muliprocessing implementation based on [MPI][]
+  * New C++ muliprocessing implementation based on [MPI][] −
+    `Tomographer::MultiProc::MPI` (provided as an extra tool, not used in
+    `tomorun` nor the Python interface)
 
   * `MHRWTasks::CDataBase` now accepts a list of random seeds to provide for
     each task
     
   * Improved `tomorun`'s implementation of rng seeding using random device
 
+  * Python/C++ bindings API: `tpy::CountIntType` and `tpy::RealType` are
+    deprecated in favor of the more specific `tpy::IterCountIntType`,
+    `tpy::HistCountIntType` etc.
+    
 [MPI]: https://computing.llnl.gov/tutorials/mpi/
 
 

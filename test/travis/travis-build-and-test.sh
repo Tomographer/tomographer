@@ -12,7 +12,7 @@ $CMAKE_PATH/bin/cmake .. -DCMAKE_C_COMPILER=$CMAKE_C_COMPILER -DCMAKE_CXX_COMPIL
 #
 # Run MAKE
 #
-make VERBOSE=1
+make VERBOSE=1 || exit 1
 
 #
 # use python/setup.py to build a source package and to compile the extension a
@@ -24,7 +24,7 @@ make VERBOSE=1
 # make sure that pip can compile & install from the sdist package.  This is the package
 # we want to test in our CTest suite as "setuppy-built".
 #
-CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPILER $PIP install --user ../py/dist/tomographer-*.tar.gz
+CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPILER $PIP install --user ../py/dist/tomographer-*.tar.gz  || exit 1
 
 
-CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all $CMAKE_PATH/bin/ctest --timeout 480
+CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all $CMAKE_PATH/bin/ctest --timeout 480  || exit 1
