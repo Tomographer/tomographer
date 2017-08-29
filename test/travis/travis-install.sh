@@ -56,7 +56,7 @@ elif [ "$TT_PYTHON" == "conda-3" ]; then
 
     export MINICONDA_INSTALLER=https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
     export PYTHON_EXECUTABLE=$HOME/.miniconda/envs/test-environment/bin/python
-    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DCMAKE_PREFIX_PATH=$HOME/.miniconda/envs/test-environment -DPYTHON_LIBRARY=$HOME/.miniconda/envs/test-environment/lib/libpython3.6m.so -DPYTHON_INCLUDE_DIR=$HOME/.miniconda/envs/test-environment/include/python3.6m -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.so -DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_program_options.a -DBoost_UNIT_TEST_FRAMEWORK_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so -DBoost_SERIALIZATION_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_serialization.so"
+    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DCMAKE_PREFIX_PATH=$HOME/.miniconda/envs/test-environment -DPYTHON_LIBRARY=$HOME/.miniconda/envs/test-environment/lib/libpython3.6m.so -DPYTHON_INCLUDE_DIR=$HOME/.miniconda/envs/test-environment/include/python3.6m -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.so -DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_program_options.a -DBoost_UNIT_TEST_FRAMEWORK_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so -DBoost_SERIALIZATION_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_serialization.so " # -DMPI_FOUND=1 '-DMPI_CXX_LIBRARIES=/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so;/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so' '-DMPI_CXX_INCLUDE_PATH=/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi;/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/opal/mca/event/libevent2022/libevent;/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/opal/mca/event/libevent2022/libevent/include;/usr/lib/x86_64-linux-gnu/openmpi/include'"
     export PIP=$HOME/.miniconda/envs/test-environment/bin/pip
     export INSTALL_PYTHON_DEPS_USING="conda"
 
@@ -132,12 +132,13 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
 
     conda config --add channels conda-forge
     conda config --add channels cvxgrp
+    conda config --add channels salford_systems # gcc-5
 
     conda update -q conda
     # Useful for debugging any issues with conda
     conda info -a
 
-    conda create -q -n test-environment python=3.6 gcc=4.8 libgcc=4.8 libgfortran openblas wheel numpy scipy matplotlib tk cvxpy pybind11
+    conda create -q -n test-environment python=3.6 gcc-5 libgcc=5 libgfortran openblas wheel numpy scipy matplotlib tk cvxpy pybind11
     source activate test-environment
 
 else

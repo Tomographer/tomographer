@@ -46,9 +46,8 @@ matrix:
   include:
 
     #
-    # Conda 3, with integrated g++-4.8
+    # Conda 3, with conda-installed gcc/g++-5
     #
-    # (Conda goes first for now because I want it to run first so I can debug it)
     - compiler: gcc
       addons:
         apt:
@@ -70,7 +69,7 @@ matrix:
       env:
         - TT_CC=conda-3
         - TT_PYTHON=conda-3
-        - CMAKE_ADD_ARGS="-DTOMOGRAPHER_TESTS_EXPECTED_TO_BE_SKIPPED_AND_FAIL=minimal_mpi_tomorun;test_mpi_multiprocmpi" # no MPI -- test installs ok and doesn't complain
+        - CMAKE_ADD_ARGS="'-DTOMOGRAPHER_TESTS_EXPECTED_TO_BE_SKIPPED_AND_FAIL=minimal_mpi_tomorun;test_mpi_multiprocmpi'" # no MPI -- test installs ok and doesn't complain
 
     #
     # g++-4.8 & system python 2.7
