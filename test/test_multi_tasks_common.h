@@ -297,7 +297,7 @@ struct StatusRepTestTask {
     do {
       elapsed_ms = (int)std::chrono::duration_cast<std::chrono::milliseconds>(StdClockType::now() - time_start).count();
       if (iface->statusReportRequested()) {
-        logger.longdebug("StatusRepTestTask::run", "Task #%02d: Status report requested", _input);
+        logger.longdebug("StatusRepTestTask::run", "Task input=%02d: Status report requested", _input);
         StatusReportType s(elapsed_ms / (double)ms_to_run,
                            Tomographer::Tools::fmts("elapsed = %d [%.2f%%]; count = %lu = %#lx",
                                                     elapsed_ms, 100.0*elapsed_ms/ms_to_run, count, count));
@@ -496,7 +496,7 @@ struct test_task_dispatcher_status_reporting_fixture {
         });
     
       sigalarm_act = [&task_dispatcher]() {
-        task_dispatcher.requestStatusReport();
+        task_dispatcher.requestStatusReport(); // safe to be called from within a signal handler
         alarm(1);
         signal(SIGALRM, sigalarm_act_cfn);
       };
