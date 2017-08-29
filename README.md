@@ -209,6 +209,10 @@ An example config file would be:
     # Choose of the order of 1/<step-size>
     n-sweep = 100
 
+    # Run this many sweeps before recording any samples (to thermalize the
+    # random walk)
+    n-therm = 1024
+
     # Run until we have recorded this number of samples. Power of two
     # recommended for binning analysis (the default)
     n-run = 32768

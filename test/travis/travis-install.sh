@@ -153,7 +153,7 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
     # Useful for debugging any issues with conda
     conda info -a
 
-    conda create -q -n test-environment python=3.6 libgcc libgfortran openblas wheel numpy scipy matplotlib tk cvxpy pybind11
+    conda create -q -n test-environment python=3.6 libgcc libgfortran openblas pybind11 wheel numpy scipy matplotlib tk cvxpy scs 
     source activate test-environment
 
 else
