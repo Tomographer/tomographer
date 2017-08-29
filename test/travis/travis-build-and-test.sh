@@ -19,7 +19,7 @@ make VERBOSE=1 || exit 1
 # use python/setup.py to build a source package and to compile the extension a
 # first time -- just to make sure it works
 #
-(cd ../py; CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPILER CMAKE_CACHE_FILE=../build/CMakeCache.txt $PYTHON_EXECUTABLE setup.py sdist build bdist_egg bdist_wheel  >setup_py_output.txt || cat setup_py_output.txt )
+(cd ../py; CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPILER CMAKE_CACHE_FILE=../build/CMakeCache.txt $PYTHON_EXECUTABLE setup.py sdist build bdist_egg bdist_wheel || exit 1 ) || exit 1
 
 #
 # make sure that pip can compile & install from the sdist package.  This is the package

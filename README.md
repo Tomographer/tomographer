@@ -247,7 +247,7 @@ dependencies.)
 
     # If using *conda*:
     
-    > conda install numpy gcc
+    > conda install numpy gcc libgcc
     > conda install -c conda-forge pybind11
     
     # OR: if using *pip* by itself:

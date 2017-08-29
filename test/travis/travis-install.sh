@@ -97,7 +97,7 @@ if [ ! -f "$PYBIND11_PATH/_install/include/pybind11/pybind11.h" ]; then curl -L 
 # Python dependencies
 # hack for preventing travis to interrupt after 10min of no output -- see
 # https://github.com/travis-ci/travis-ci/issues/6591
-function write_visual_bells() { while true; do echo -en "\a"; sleep 10; done; }; write_visual_bells &
+function write_visual_bells() { while true; do set +x; echo -en "\a"; sleep 10; set -x; done; }; write_visual_bells &
 
 
 if [ "$INSTALL_PYTHON_DEPS_USING" == "pip" ]; then
@@ -133,7 +133,7 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
     # Useful for debugging any issues with conda
     conda info -a
 
-    conda create -q -n test-environment python=3.6 gcc wheel numpy scipy matplotlib tk cvxpy pybind11
+    conda create -q -n test-environment python=3.6 gcc libgcc wheel numpy scipy matplotlib tk cvxpy pybind11
     source activate test-environment
 
 else
