@@ -52,7 +52,7 @@ elif [ "$TT_PYTHON" == "conda-3" ]; then
 
     export MINICONDA_INSTALLER=https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
     export PYTHON_EXECUTABLE=$HOME/.miniconda/bin/python
-    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DPYTHON_LIBRARY=$HOME/.miniconda/envs/test-environment/lib/libpython3.6m.so -DPYTHON_INCLUDE_DIR=$HOME/.miniconda/envs/test-environment/include/python3.6m -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.so -DBOOST_PROGRAM_OPTIONS_LIBRARY_RELEASE=/usr/lib/x86-64-linux-gnu/libboost_program_options.a -DBOOST_UNIT_TEST_FRAMEWORK_LIBRARY_RELEASE=/usr/lib/x86-64-linux-gnu/libboost_unit_test_framework.so -DBOOST_SERIALIZATION_LIBRARY_RELEASE=/usr/lib/x86-64-linux-gnu/libboost_serialization.so"
+    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DPYTHON_LIBRARY=$HOME/.miniconda/envs/test-environment/lib/libpython3.6m.so -DPYTHON_INCLUDE_DIR=$HOME/.miniconda/envs/test-environment/include/python3.6m -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.so -DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE=/usr/lib/x86-64-linux-gnu/libboost_program_options.a -DBoost_UNIT_TEST_FRAMEWORK_LIBRARY_RELEASE=/usr/lib/x86-64-linux-gnu/libboost_unit_test_framework.so -DBoost_SERIALIZATION_LIBRARY_RELEASE=/usr/lib/x86-64-linux-gnu/libboost_serialization.so"
     export PIP=$HOME/.miniconda/bin/pip
     export INSTALL_PYTHON_DEPS_USING="conda"
 

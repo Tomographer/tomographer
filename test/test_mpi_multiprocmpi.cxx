@@ -276,13 +276,13 @@ BOOST_FIXTURE_TEST_CASE(tasks_run, test_task_dispatcher_MPI_fixture)
   if (world.rank() == 0) {
     pcdata = &cData;
   } else {
-    pcdata = new TestBasicCDataMPI;
+    pcdata = NULL;
   }
 
 
   Tomographer::MultiProc::MPI::TaskDispatcher<TestTaskMPI, TestBasicCDataMPI,
                                               LoggerType, long>
-    task_dispatcher(world.rank() == 0 ? &cData : NULL, world, logger, num_runs);
+    task_dispatcher(pcdata, world, logger, num_runs);
 
   BOOST_MESSAGE("About to run MPI tasks");
 
