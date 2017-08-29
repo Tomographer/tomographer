@@ -53,42 +53,6 @@
 
 
 
-// template<typename BaseRngType_>
-// struct DeviceSeededRng : public BaseRngType_
-// {
-//   typedef BaseRngType_ BaseRngType;
-//   using typename BaseRngType::result_type;
-  
-//   DeviceSeededRng(result_type k) : BaseRngType(_get_device_seed(k)) { }
-
-//   static inline result_type _get_device_seed(result_type k)
-//   {
-// #if TOMORUN_USE_DEVICE_SEED != 0
-//     (void)k; // unused
-    
-//     result_type finalseed;
-//     // no two threads simultaneously executing the same code here please
-//     TOMORUN_THREAD_CRITICAL_SECTION {
-//       std::random_device devrandom( TOMORUN_RANDOM_DEVICE );
-//       std::uniform_int_distribution<result_type> dseed(
-//           std::numeric_limits<result_type>::min(),
-//           std::numeric_limits<result_type>::max()
-//           ); // full range of result_type
-      
-//       finalseed =  dseed(devrandom);
-//       // DEBUG: fprintf(stderr, "Rng: device seed=%lu\n", (unsigned long) finalseed) ;
-//     } // return out of critical region for OpenMP:
-//     return finalseed;
-// #else
-//     return k;
-// #endif
-//   }
-// };
-//
-// typedef DeviceSeededRng<std::mt19937>  TomorunRng;
-
-
-
 
 template<typename DenseLLH_, typename CDataBaseType_,
          bool ControlStepSize, bool ControlValueErrorBins, bool UseTSpaceLLHWalkerLight>

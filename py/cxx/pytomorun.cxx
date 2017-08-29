@@ -264,7 +264,8 @@ public:
 	   HistogramParams hist_params, // histogram parameters
 	   int binning_num_levels, // number of binning levels in the binning analysis
 	   tpy::MHRWParams mhrw_params, // parameters of the random walk
-	   RngType::result_type base_seed, // a random seed to initialize the random number generator
+	   std::vector<RngType::result_type> task_seeds, // the random seeds to initialize the
+                                                         // random number generators for each task
            tpy::LLH_MHWalker_Which jumps_method_which_, // enum value (LLH_MHWalker_Which)
            py::dict ctrl_step_size_params_, // parameters for step size controller
            py::dict ctrl_converged_params_ // parameters for value bins converged controller
@@ -275,7 +276,7 @@ public:
             tpy::pyMHWalkerParamsFromPyObj<Tomographer::MHWalkerParamsStepSize<tpy::RealScalar> >(
                 mhrw_params.mhwalker_params),
             mhrw_params.n_sweep, mhrw_params.n_therm, mhrw_params.n_run),
-        base_seed),
+        task_seeds),
       llh(llh_),
       jumps_method_which(jumps_method_which_),
       ctrl_step_size_params(ctrl_step_size_params_),
@@ -466,8 +467,34 @@ inline T dict_pop_type_or_warning(py::dict dict, std::string key, LocalLoggerTyp
 }
 
 
+#ifndef PYTOMORUN_RANDOM_DEVICE
+#define PYTOMORUN_RANDOM_DEVICE "/dev/random"
+#endif
 
+template<typename LocalLoggerType>
+std::vector<RngType::result_type> get_random_device_seeds(std::size_t num_seeds,
+                                                          LocalLoggerType & logger)
+{
+  logger.info([&](std::ostream & stream) {
+      stream << "Collecting " << num_seeds << " random seed" << (num_seeds!=1 ? "s" : "")
+             << " from random device ...";
+    });
+  std::random_device devrandom(PYTOMORUN_RANDOM_DEVICE);
+  std::uniform_int_distribution<RngType::result_type> dseed(
+      std::numeric_limits<RngType::result_type>::min(),
+      std::numeric_limits<RngType::result_type>::max()
+      ); // full range of result_type
 
+  std::vector<RngType::result_type> seeds((std::size_t)num_seeds);
+  for (std::size_t k = 0; k < num_seeds; ++k) {
+    RngType::result_type seed = dseed(devrandom);
+    logger.debug([&](std::ostream & stream) { stream << "Seed for task #" << k << " = " << seed; });
+    seeds[(std::size_t)k] = seed;
+  }
+
+  logger.info("... seed(s) collected.");
+  return seeds;
+}
 
 
 py::object py_tomorun(
@@ -714,14 +741,26 @@ py::object py_tomorun(
   typedef Tomographer::MHRWTasks::MHRandomWalkTask<OurCData, RngType>  OurMHRandomWalkTask;
 
   // seed for random number generator
-  RngType::result_type base_seed = 0;
   py::object rng_base_seed = py::none();
   if (kwargs.contains("rng_base_seed"_s)) {
     rng_base_seed = kwargs.attr("pop")("rng_base_seed"_s);
   }
+  // parse rng seed argument
+  RngType::result_type base_seed = 0;
+  bool rng_seed_use_random_device_all = false;
   if (rng_base_seed.is_none()) {
     // argument not given, or given but passed `None'
     base_seed = (RngType::result_type) std::chrono::system_clock::now().time_since_epoch().count();
+  } else if (py::isinstance<py::str>(rng_base_seed)) {
+    // a string, expected 'random-device' or 'random-device-all'
+    const std::string base_seed_arg = rng_base_seed.cast<std::string>();
+    if (base_seed_arg == "random-device") {
+      base_seed = get_random_device_seeds(1, logger)[0];
+    } else if (base_seed_arg == "random-device-all") {
+      rng_seed_use_random_device_all = true;
+    } else {
+      throw TomorunInvalidInputError(streamstr("Invalid argument for rng_base_seed = '" << base_seed_arg << "'"));
+    }
   } else {
     // go through py::int_ first, in case the given integer is too large to represent on
     // RngType::result_type
@@ -744,9 +783,20 @@ py::object py_tomorun(
     base_seed = base_seed_int.cast<RngType::result_type>();
   }
 
-  logger.longdebug([&](std::ostream & stream) {
-      stream << "Got base RNG seed = " << base_seed << "\n";
-    }) ;
+  // build list of seeds for the tasks.
+  std::vector<RngType::result_type> task_seeds((std::size_t)num_repeats, 0);
+  if ( ! rng_seed_use_random_device_all ) {
+    // output the base rng seed
+    logger.longdebug([&](std::ostream & stream) {
+        stream << "Base RNG seed = " << base_seed << "\n";
+      }) ;
+    for (std::size_t k = 0; k < (std::size_t)num_repeats; ++k) {
+      task_seeds[k] = base_seed + (RngType::result_type)k;
+    }
+  } else {
+    // read all seeds from random device
+    task_seeds = get_random_device_seeds((std::size_t)num_repeats, logger);
+  }
 
 
   // number of renormalization levels in the binning analysis
@@ -804,7 +854,7 @@ py::object py_tomorun(
   //
 
   OurCData taskcdat(llh, valcalc, hist_params, binning_num_levels, mhrw_params,
-                    base_seed, jumps_method_which, ctrl_step_size_params, ctrl_converged_params);
+                    task_seeds, jumps_method_which, ctrl_step_size_params, ctrl_converged_params);
 
   logger.debug([&](std::ostream & stream) {
       stream << "about to create the task dispatcher.  this pid = " << getpid() << "; this thread id = "
@@ -1070,7 +1120,11 @@ void py_tomo_tomorun(py::module rootmodule)
         ":param rng_base_seed: The base seed to use for the random number generator.  If `None` (the default), a\n"
         "            base seed is generated based on the current time.  Each different run of the random walk\n"
         "            is seeded with incremental seeds starting with the base seed (e.g., if the base seed is \n"
-        "            910533, the different tasks are given the seeds 910533, 910534, 910535, ...).\n"
+        "            910533, the different tasks are given the seeds 910533, 910534, 910535, ...).  Alternatively,\n"
+        "            you may specify `rng_base_seed='random-device'` to read a single base seed from a system\n"
+        "            random device (e.g. /dev/random), or `rng_base_seed='random-device-all'` to read a list of\n"
+        "            seeds from the random device to use for each individual random walk, instead of using\n"
+        "            incremental seeds.\n"
         "            *New in version 5.3: added `rng_base_seed` argument.*\n"
         "\n"
         "\n"

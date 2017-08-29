@@ -46,7 +46,7 @@ matrix:
   include:
 
     #
-    # Conda 3, with conda-installed gcc/g++-5
+    # g++-4.8 with Conda Python 3
     #
     - compiler: gcc
       addons:
@@ -54,8 +54,8 @@ matrix:
           sources:
             - ubuntu-toolchain-r-test
           packages:
-            - gcc
-            - g++
+            - gcc-4.8
+            - g++-4.8
             - gfortran
             - gfortran-multilib
             - libatlas-dev
@@ -65,11 +65,10 @@ matrix:
             - libz-dev
             - libopenblas-base
             - libopenblas-dev
-            # no MPI
+            - openmpi-bin
       env:
-        - TT_CC=conda-3
+        - TT_CC=gcc-4.8
         - TT_PYTHON=conda-3
-        - CMAKE_ADD_ARGS="-DTOMOGRAPHER_TESTS_EXPECTED_TO_BE_SKIPPED_AND_FAIL=minimal_mpi_tomorun;test_mpi_multiprocmpi" # no MPI -- test installs ok and doesn't complain
 
     #
     # g++-4.8 & system python 2.7
