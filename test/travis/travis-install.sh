@@ -155,7 +155,7 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
 
     CVXPY_DEPS="six fastcache multiprocess ecos scs cvxcanon"
 
-    conda create -q -n test-environment python=3.6 libgcc libgfortran openblas pybind11 wheel numpy scipy matplotlib tk scs $CVXPY_DEPS
+    conda create -q -n test-environment python=3.6 libgcc libgfortran openblas lapack pybind11 wheel numpy scipy matplotlib tk scs $CVXPY_DEPS
     source activate test-environment
 
     # otherwise cvxpy complains that solver SCS is not installed (?)
