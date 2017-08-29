@@ -65,7 +65,7 @@ matrix:
             - libz-dev
             - libopenblas-base
             - libopenblas-dev
-            - lapack-dev
+            - liblapack-dev
             - liblapack3
             - openmpi-bin
       env:
