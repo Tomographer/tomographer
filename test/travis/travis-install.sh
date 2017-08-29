@@ -33,12 +33,12 @@ elif [ "$TT_CC" == "clang-3.8" ]; then
     export CMAKE_C_COMPILER="clang-3.8"
     export CMAKE_CXX_COMPILER="clang++-3.8"
     
-elif [ "$TT_CC" == "conda-3" ]; then
+elif [ "$TT_CC" == "conda-3" ]; then # not used in the end
     
     # use gcc/g++ compiler provided by conda
     export CMAKE_C_COMPILER="$HOME/.miniconda/envs/test-environment/bin/gcc"
     export CMAKE_CXX_COMPILER="$HOME/.miniconda/envs/test-environment/bin/g++"
-    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS  -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.so -DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_program_options.a -DBoost_UNIT_TEST_FRAMEWORK_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so -DBoost_SERIALIZATION_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_serialization.so " # -DMPI_FOUND=1 '-DMPI_CXX_LIBRARIES=/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi_cxx.so;/usr/lib/x86_64-linux-gnu/openmpi/lib/libmpi.so' '-DMPI_CXX_INCLUDE_PATH=/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi;/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/opal/mca/event/libevent2022/libevent;/usr/lib/x86_64-linux-gnu/openmpi/include/openmpi/opal/mca/event/libevent2022/libevent/include;/usr/lib/x86_64-linux-gnu/openmpi/include'"
+    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS  -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.so -DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_program_options.a -DBoost_UNIT_TEST_FRAMEWORK_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so -DBoost_SERIALIZATION_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_serialization.so "
     
 else
     
@@ -153,8 +153,13 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
     # Useful for debugging any issues with conda
     conda info -a
 
-    conda create -q -n test-environment python=3.6 libgcc libgfortran openblas pybind11 wheel numpy scipy matplotlib tk cvxpy scs 
+    CVXPY_DEPS="six fastcache multiprocess ecos scs cvxcanon"
+
+    conda create -q -n test-environment python=3.6 libgcc libgfortran openblas pybind11 wheel numpy scipy matplotlib tk scs $CVXPY_DEPS
     source activate test-environment
+
+    # otherwise cvxpy complains that solver SCS is not installed (?)
+    pip install cvxpy
 
 else
 
