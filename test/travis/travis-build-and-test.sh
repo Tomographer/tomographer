@@ -1,4 +1,5 @@
 
+set -x
 
 mkdir build
 cd build
@@ -28,3 +29,6 @@ CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPILER $PIP install --user ../py/dist/tomo
 
 
 CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all $CMAKE_PATH/bin/ctest --timeout 480  || exit 1
+
+
+set +x

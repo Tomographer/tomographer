@@ -3,6 +3,8 @@
 # First, we set up the environment variables we might need later
 #
 
+set -x
+
 #
 # C/C++ compiler
 #
@@ -23,8 +25,8 @@ elif [ "$TT_CC" == "clang-3.8" ]; then
     export CMAKE_CXX_COMPILER="clang++-3.8"
 elif [ "$TT_CC" == "conda-3" ]; then
     # use C/C++ compiler provided by conda -- gcc 4.8
-    export CMAKE_C_COMPILER="$HOME/.miniconda/bin/gcc"
-    export CMAKE_CXX_COMPILER="$HOME/.miniconda/bin/g++"
+    export CMAKE_C_COMPILER="$HOME/.miniconda/envs/test-environment/bin/gcc"
+    export CMAKE_CXX_COMPILER="$HOME/.miniconda/envs/test-environment/bin/g++"
 else
     echo &>2 "TOMOGRAPHER TRAVIS TEST SETUP ERROR: Unknown TT_CC=$TT_CC"
     echo &>2 " --> Please edit top of test/travis/travis-install.sh"
@@ -140,3 +142,5 @@ else
     exit 123
 
 fi
+
+set +x
