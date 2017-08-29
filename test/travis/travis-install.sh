@@ -52,7 +52,7 @@ elif [ "$TT_PYTHON" == "conda-3" ]; then
 
     export MINICONDA_INSTALLER=https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
     export PYTHON_EXECUTABLE=$HOME/.miniconda/bin/python
-    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DPYTHON_LIBRARY=$HOME/.miniconda/envs/test-environment/lib/libpython3.6m.so -DPYTHON_INCLUDE_DIR=$HOME/.miniconda/envs/test-environment/include/python3.6m"
+    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DPYTHON_LIBRARY=$HOME/.miniconda/envs/test-environment/lib/libpython3.6m.so -DPYTHON_INCLUDE_DIR=$HOME/.miniconda/envs/test-environment/include/python3.6m -DZLIB_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libz.so"
     export PIP=$HOME/.miniconda/bin/pip
     export INSTALL_PYTHON_DEPS_USING="conda"
 
