@@ -276,10 +276,10 @@ private:
     tomographer_assert(i < NumValueCalculators);
     tomographer_assert( src != NULL && "Copy constructor invoked with invalid other object." ) ;
 
-    return _create_Ith_copy_a(i, src);
+    return _create_Ith_copy_a<0>(i, src);
   }
 
-  template<int I = 0, typename std::enable_if<(I<NumValueCalculators),bool>::type = true>
+  template<int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I<NumValueCalculators)>
   inline static const void * _create_Ith_copy_a(int i, const void * src) {
     if (I == i) {
       typedef typename std::tuple_element<I, ValueCalculatorsTupleType>::type  ValueCalculator;
@@ -287,7 +287,7 @@ private:
     }
     return _create_Ith_copy_a<I+1>(i, src);
   }
-  template<int I = 0, typename std::enable_if<(I==NumValueCalculators),bool>::type = true>
+  template<int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I==NumValueCalculators)>
   inline static const void * _create_Ith_copy_a(int , const void * ) { return NULL; }
   
 public:
