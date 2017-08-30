@@ -41,13 +41,14 @@ import sanitize_macosx_binary
 # where to find stuff on my system
 #
 # Use g++-6 instead of clang, seems significantly faster ? (after some cheap benchmarks)
-C_COMPILER = '/usr/local/opt/gcc/bin/gcc-6'
-CXX_COMPILER = '/usr/local/opt/gcc/bin/g++-6'
+C_COMPILER = '/usr/local/opt/gcc/bin/gcc-7'
+CXX_COMPILER = '/usr/local/opt/gcc/bin/g++-7'
 EIGEN3_INCLUDE = '/usr/local/opt/eigen/include/eigen3'
 MATIO_INCLUDE = '/usr/local/opt/libmatio/include'
 MATIO_LIB = '/usr/local/opt/libmatio/lib/libmatio.a'
 ZLIB_LIB = '-lz'
-Boost_PROGRAM_OPTIONS_LIB = '/opt/boost-1_64_0-gcc6/lib/libboost_program_options.a'
+Boost_INCLUDEDIR = '/opt/gcc7-env/include'
+Boost_PROGRAM_OPTIONS_LIB = '/opt/gcc7-env/lib/libboost_program_options.a'
 #LDFLAGS="-L/usr/local/opt/llvm/lib"
 
 
@@ -135,6 +136,7 @@ do_run([e.cmake, '..',
         '-DMATIO_LIBRARY_RELEASE='+MATIO_LIB,
         '-DZLIB_LIBRARY='+ZLIB_LIB,
         '-DZLIB_LIBRARY_RELEASE='+ZLIB_LIB,
+        '-DBOOST_INCLUDEDIR='+Boost_INCLUDEDIR,
         '-DBoost_PROGRAM_OPTIONS_LIBRARY='+Boost_PROGRAM_OPTIONS_LIB,
         '-DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE='+Boost_PROGRAM_OPTIONS_LIB,
 

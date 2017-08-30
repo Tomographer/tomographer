@@ -9,9 +9,6 @@ Checklist For Releasing a New Version of Tomographer
 - [ ] Make sure the binary releases for the different systems compile and run on
       all required systems
 
-- [ ] Make sure other custom modules compile against the new tomographer module
-      version
-      
 - [ ] Make sure `python setup.py sdist` and `python setup.py bdist_wheel` work
       for both `python2` and `python3`; if changes were made to the setup file,
       upload and test via [TestPyPi][testpypi] first (install on Mac and Linux).
