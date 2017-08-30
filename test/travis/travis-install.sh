@@ -36,8 +36,8 @@ elif [ "$TT_CC" == "clang-3.8" ]; then
 elif [ "$TT_CC" == "conda-3" ]; then # not used in the end
     
     # use gcc/g++ compiler provided by conda
-    export CMAKE_C_COMPILER="$HOME/.miniconda/envs/test-environment/bin/gcc"
-    export CMAKE_CXX_COMPILER="$HOME/.miniconda/envs/test-environment/bin/g++"
+    export CMAKE_C_COMPILER="$HOME/.miniconda/bin/gcc"
+    export CMAKE_CXX_COMPILER="$HOME/.miniconda/bin/g++"
     export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS  -DZLIB_LIBRARY=/usr/lib/x86_64-linux-gnu/libz.so -DBoost_PROGRAM_OPTIONS_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_program_options.a -DBoost_UNIT_TEST_FRAMEWORK_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_unit_test_framework.so -DBoost_SERIALIZATION_LIBRARY_RELEASE=/usr/lib/x86_64-linux-gnu/libboost_serialization.so "
     
 else
@@ -70,9 +70,9 @@ elif [ "$TT_PYTHON" == "system-python-3" ]; then
 elif [ "$TT_PYTHON" == "conda-3" ]; then
 
     export MINICONDA_INSTALLER=https://repo.continuum.io/miniconda/Miniconda3-latest-Linux-x86_64.sh
-    export PYTHON_EXECUTABLE=$HOME/.miniconda/envs/test-environment/bin/python
-    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DCMAKE_PREFIX_PATH=$HOME/.miniconda/envs/test-environment -DPYTHON_LIBRARY=$HOME/.miniconda/envs/test-environment/lib/libpython3.6m.so -DPYTHON_INCLUDE_DIR=$HOME/.miniconda/envs/test-environment/include/python3.6m "
-    export PIP=$HOME/.miniconda/envs/test-environment/bin/pip
+    export PYTHON_EXECUTABLE=$HOME/.miniconda/bin/python
+    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DCMAKE_PREFIX_PATH=$HOME/.miniconda/envs/test-environment -DPYTHON_LIBRARY=$HOME/.miniconda/lib/libpython3.6m.so -DPYTHON_INCLUDE_DIR=$HOME/.miniconda/include/python3.6m "
+    export PIP=$HOME/.miniconda/bin/pip
     export INSTALL_PYTHON_DEPS_USING="conda"
 
 else
@@ -174,7 +174,7 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
     python -c 'import cvxpy; print("CVXPY version: {}".format(cvxpy.__version__))'
     python -c 'import matplotlib; print("MATPLOTLIB version: {}".format(matplotlib.__version__))'
 
-    ls -lh $HOME/.miniconda/envs/test-environment/lib/
+    ls -lh $HOME/.miniconda/lib/
 
 else
 
