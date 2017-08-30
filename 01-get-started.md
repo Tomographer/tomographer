@@ -157,6 +157,13 @@ tomography experiment.
    MATLAB tool is provided in the source tomographer distribution to help you
    ([`tools/analyze_tomorun_histogram.m`]({{site.github_blob_baseurl}}{{site.tomographer_latest_version}}/tools/analyze_tomorun_histogram.m){:target="_blank"}),
    which uses the Curve Fitting Toolbox to analyze the output from `tomorun`.
+   
+   A Python script which is capable of analyzing output from `tomorun` is also
+   provided
+   ([`tools/analyze_tomorun_histogram_simple.py`]({{site.github_blob_baseurl}}{{site.tomographer_latest_version}}/tools/analyze_tomorun_histogram_simple.py){:target="_blank"})
+   *(note this requires the `tomographer` python package to be installed, see
+   instructions above)*.  Run the script with `--help` to get information on its
+   possible command-line options.
 
 
 7. Write up and publish paper. We will be very happy if you cite us :)
