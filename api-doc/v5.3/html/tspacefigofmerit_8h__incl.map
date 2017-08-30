@@ -1,0 +1,9 @@
+<map id="tomographer/densedm/tspacefigofmerit.h" name="tomographer/densedm/tspacefigofmerit.h">
+<area shape="rect" id="node3" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="182,99,453,124"/>
+<area shape="rect" id="node21" href="$dmtypes_8h.html" title="C++ types for describing dense density matrices in various parameterizations. " alt="" coords="664,92,819,131"/>
+<area shape="rect" id="node22" href="$distmeasures_8h.html" title="Distance measures in quantum information for states represented as dense matrices. " alt="" coords="1786,92,1942,131"/>
+<area shape="rect" id="node26" href="$param__herm__x_8h.html" title="Tools for parameterizing hermitian matrices with the X Parameterization. " alt="" coords="1254,92,1410,131"/>
+<area shape="rect" id="node6" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="651,185,832,211"/>
+<area shape="rect" id="node14" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="515,272,704,297"/>
+<area shape="rect" id="node16" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="779,272,968,297"/>
+</map>

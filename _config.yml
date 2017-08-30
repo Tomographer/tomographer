@@ -37,18 +37,18 @@ include:
 # Tomographer available downloads & versions
 # ------------------------------------------
 
-tomographer_latest_version: v5.2
-tomographer_apidoc_version: v5.2
+tomographer_latest_version: v5.3
+tomographer_apidoc_version: v5.3
 tomographer_binaries:
-  - version: 'v5.2'
+  - version: 'v5.3'
     system: 'macosx'
     ext: '.tar.gz'
     title: 'Mac OS X Binaries (64-bit, TAR.GZ archive), OS X >= 10.6'
-  - version: 'v5.2'
+  - version: 'v5.3'
     system: 'linux'
     ext: '.tar.gz'
     title: "Linux Binaries (64-bit, TAR.GZ archive), statically linked"
-  - version: 'v5.2'
+  - version: 'v5.3'
     system: 'win-mingw32'
     ext: '.zip'
     title: "Windows Binaries (32-bit, ZIP archive)"

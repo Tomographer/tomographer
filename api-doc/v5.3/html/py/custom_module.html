@@ -1,0 +1,222 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    
+    <title>Writing Special-Purpose C++ Code with a Python Interface &#8212; Tomographer Python Interface v5.3 documentation</title>
+    
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    
+    <script type="text/javascript">
+      var DOCUMENTATION_OPTIONS = {
+        URL_ROOT:    './',
+        VERSION:     'v5.3',
+        COLLAPSE_INDEX: false,
+        FILE_SUFFIX: '.html',
+        HAS_SOURCE:  true,
+        SOURCELINK_SUFFIX: '.txt'
+      };
+    </script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdn.mathjax.org/mathjax/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="prev" title="Version and compilation information (tomographer.version)" href="tomographer.version.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head>
+  <body role="document">
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="writing-special-purpose-c-code-with-a-python-interface">
+<h1>Writing Special-Purpose C++ Code with a Python Interface<a class="headerlink" href="#writing-special-purpose-c-code-with-a-python-interface" title="Permalink to this headline">¶</a></h1>
+<p>If you want to perform a specific task which you can&#8217;t do with the general
+<a class="reference internal" href="tomographer.tomorun.html#tomographer.tomorun.tomorun" title="tomographer.tomorun.tomorun"><code class="xref py py-func docutils literal"><span class="pre">tomorun()</span></code></a> function (say, implement a different
+jump function or use a different representation of density matrices), then you
+can write your basic components in C++ while providing a convenient Python
+interface for easily controlling and using your code.</p>
+<p>The Tomographer Python Interface provides several C++ tools which you can use
+and which significantly simplifies your task.  Also, all Python objects defined
+in the Tomographer Python Interface are available via C++.</p>
+<p>We use the nice <a class="reference external" href="https://github.com/pybind/pybind11">pybind11</a> tool for
+interfacing C++ with Python. It includes out-of-the-box interfacing of NumPy
+with Eigen. Learn its basic usage before carrying on too far here.</p>
+<p>Here is minimal but entirely self-contained and fully functional template to get
+started with your custom C++/Python module. Create a directory called
+<code class="docutils literal"><span class="pre">my_custom_module</span></code>, and place the two files
+<a class="reference download internal" href="_downloads/my_custom_module.cxx" download=""><code class="xref download docutils literal"><span class="pre">my_custom_module/my_custom_module.cxx</span></code></a> and
+<a class="reference download internal" href="_downloads/setup.py" download=""><code class="xref download docutils literal"><span class="pre">my_custom_module/setup.py</span></code></a> in there.  Enter that directory, and run
+compile the Python module:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">build</span>
+</pre></div>
+</div>
+<p>You will notice that a directory <code class="docutils literal"><span class="pre">build/lib.XXXXXXXX</span></code> should have appeared.
+To test your compiled module, try out <a class="reference download internal" href="_downloads/test_run.py" download=""><code class="xref download docutils literal"><span class="pre">this</span> <span class="pre">little</span> <span class="pre">script</span></code></a>, place it also in the <code class="docutils literal"><span class="pre">my_custom_module</span></code>
+directory and run:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span> <span class="n">PYTHONPATH</span><span class="o">=</span><span class="n">build</span><span class="o">/</span><span class="n">lib</span><span class="o">.</span><span class="n">XXXXXXXX</span>  <span class="n">python</span> <span class="n">test_run</span><span class="o">.</span><span class="n">py</span>
+</pre></div>
+</div>
+<p>(Of course, you can also run the usual <code class="docutils literal"><span class="pre">python</span> <span class="pre">setup.py</span> <span class="pre">install</span></code> or <code class="docutils literal"><span class="pre">python</span>
+<span class="pre">setup.py</span> <span class="pre">bdist_wheel</span></code> etc.)</p>
+<p>Here is a little overview of the contents of each file.</p>
+<div class="section" id="the-c-source-file-s">
+<h2>The C++ Source File(s)<a class="headerlink" href="#the-c-source-file-s" title="Permalink to this headline">¶</a></h2>
+<p>The idea of the C++ file is to write all the computation in C++, using the
+classes from the <a class="reference external" href="..//">Tomographer framework</a>.</p>
+<p>Most of the useful generic classes in the Tomographer framework are instantiated
+with standard template arguments and exposed to Python.  See <a class="reference external" href="../namespacetpy.html">the tpy
+namespace</a> for the full API documentation.</p>
+<p>The <cite>tpy</cite> namespace most importantly contains a set of <a class="reference external" href="../namespacetpy.html#typedef-members">C++ typedefs</a>, which are types which are already exposed
+as Python objects via the <cite>tomographer</cite> module.  For instance, the template
+class <a class="reference external" href="../struct_tomographer_1_1_m_h_r_w_params.html">MHRWParams</a> is
+typedef&#8217;ed as <a class="reference external" href="../namespacetpy.html#a94b6e199d4b59e18713b380fa4daa784">tpy::MHRWParams</a>.  You&#8217;ll also find the
+types <code class="docutils literal"><span class="pre">tpy::RealScalar</span></code>, <code class="docutils literal"><span class="pre">tpy::CountRealType</span></code>, as well as
+<code class="docutils literal"><span class="pre">tpy::IterCountIntType</span></code>, <code class="docutils literal"><span class="pre">tpy::HistCountIntType</span></code>, <code class="docutils literal"><span class="pre">tpy::TaskCountIntType</span></code>
+and <code class="docutils literal"><span class="pre">tpy::FreqCountIntType</span></code> which specify the C++ types to use for
+floating-point values and integer values storing information about matrix
+elements, iteration counts, histogram counts, etc.</p>
+<p>Note that some classes have slightly different implementations and aren&#8217;t just a
+typedef&#8212;for instance, <a class="reference external" href="../classtpy_1_1_histogram.html">tpy::Histogram</a>
+is re-implemented to use <cite>NumPy</cite> objects, so it can store any data type, but at
+the same type provides almost transparent conversion to and from
+<a class="reference external" href="../class_tomographer_1_1_histogram.html">Tomographer::Histogram</a>.</p>
+<p>The classes in the <cite>tpy</cite> namespace are already exposed to Python in the
+<cite>tomographer</cite> module.  When writing your own custom module, you can take
+advantage of these existing tools so that you don&#8217;t have to expose all these
+helper types yourself; rather they can be transparently passed between Python
+to/from C++.  For instance, you can straightforwardly return a <cite>tpy::Histogram</cite>
+from a C++ function exposed to Python, and the result will be accessible from
+Python as a <a class="reference internal" href="tomographer._hist_classes.html#tomographer.Histogram" title="tomographer.Histogram"><code class="xref py py-class docutils literal"><span class="pre">tomographer.Histogram</span></code></a> object.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">In order to set up the Tomographer Python API properly, you must call
+<a class="reference external" href="../namespacetpy.html#a85146271201de94c995aa16c99ed9952">tpy::import_tomographer()</a> at the
+beginning of your C++ module initialization function.</p>
+</div>
+</div>
+<div class="section" id="the-python-setup-py-file">
+<h2>The Python <code class="docutils literal"><span class="pre">setup.py</span></code> file<a class="headerlink" href="#the-python-setup-py-file" title="Permalink to this headline">¶</a></h2>
+<p>This is a standard <code class="docutils literal"><span class="pre">setup.py</span></code> file for packaging Python packages, using
+<code class="docutils literal"><span class="pre">setuptools</span></code>.  Read up on that.</p>
+<p>There are various flags which need to be set when compiling your module, which
+you can simply steal from the <cite>tomographer</cite> module: indeed, the <cite>tomographer</cite>
+module <a class="reference internal" href="tomographer.version.html#tomographer.version.compile_info" title="tomographer.version.compile_info"><code class="xref py py-data docutils literal"><span class="pre">exposes</span> <span class="pre">the</span> <span class="pre">flags</span> <span class="pre">it</span> <span class="pre">was</span> <span class="pre">compiled</span> <span class="pre">with</span></code></a>, so you can just recycle them.</p>
+<p>This <code class="docutils literal"><span class="pre">setup.py</span></code> script allows the user (you!) to specify options as
+environment variables, for instance:</p>
+<div class="highlight-default"><div class="highlight"><pre><span></span><span class="o">&gt;</span>  <span class="n">CXX_FLAGS</span><span class="o">=</span><span class="s2">&quot;-O0 -g3 -UNDEBUG -march=generic -std=c++11&quot;</span>  <span class="n">python</span> <span class="n">setup</span><span class="o">.</span><span class="n">py</span> <span class="n">build</span>
+</pre></div>
+</div>
+<p>This is done by using the <a class="reference internal" href="tomographer.include.html#tomographer.include.Vars" title="tomographer.include.Vars"><code class="xref py py-class docutils literal"><span class="pre">Vars</span></code></a> class: you give
+it a set of variables and default values, if the variable exists as an
+environment variable it is read there, else it takes the default value.</p>
+<p>Note that if you need to find other custom libraries or include headers, you can
+use the utilities <a class="reference internal" href="tomographer.include.html#tomographer.include.find_include_dir" title="tomographer.include.find_include_dir"><code class="xref py py-func docutils literal"><span class="pre">tomographer.include.find_include_dir()</span></code></a> or
+<a class="reference internal" href="tomographer.include.html#tomographer.include.find_lib" title="tomographer.include.find_lib"><code class="xref py py-func docutils literal"><span class="pre">tomographer.include.find_lib()</span></code></a>.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">You might be tempted to move the import statements for <code class="docutils literal"><span class="pre">pybind11</span></code>,
+<code class="docutils literal"><span class="pre">numpy</span></code>, etc. inside a function, and add those modules as <code class="docutils literal"><span class="pre">setup(...,</span>
+<span class="pre">setup_requires=...)</span></code> and/or <code class="docutils literal"><span class="pre">setup(...,</span> <span class="pre">install_requires=)</span></code>.  You&#8217;ll
+realize that this doesn&#8217;t work with PIP (<code class="docutils literal"><span class="pre">install_requires</span></code> installs the
+package too late, and <code class="docutils literal"><span class="pre">setup_requires</span></code> does not know about PIP&#8212;it uses
+only <cite>easy_install</cite>&#8212;and the package might not be installed properly).  It&#8217;s
+a mess.  Try it yourself, waste about a full day on that, but after that
+don&#8217;t waste any more time and revert your changes back to how it was if you
+don&#8217;t want to go insane as I almost did.  Conclusion: Let&#8217;s avoid any
+unnecessary casualties, and stick to making sure the requirements are already
+installed from the start of the <code class="docutils literal"><span class="pre">setup.py</span></code> script; we just need to document
+this properly.</p>
+</div>
+</div>
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Tomographer Python Interface</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tomographer._hist_classes.html">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.multiproc.html">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.densedm.html">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tomorun.html">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.mhrwtasks.html">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.querrorbars.html">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tools.html">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.jpyutil.html">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.include.html">Utilities for compiling other modules (<cite>tomographer.include</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.version.html">Version and compilation information (<cite>tomographer.version</cite>)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Writing Special-Purpose C++ Code with a Python Interface</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="#the-c-source-file-s">The C++ Source File(s)</a></li>
+<li class="toctree-l2"><a class="reference internal" href="#the-python-setup-py-file">The Python <code class="docutils literal"><span class="pre">setup.py</span></code> file</a></li>
+</ul>
+</li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+      <li>Previous: <a href="tomographer.version.html" title="previous chapter">Version and compilation information (<cite>tomographer.version</cite>)</a></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <form class="search" action="search.html" method="get">
+      <div><input type="text" name="q" /></div>
+      <div><input type="submit" value="Go" /></div>
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Philippe Faist.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.5.2</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/custom_module.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

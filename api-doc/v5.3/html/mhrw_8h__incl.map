@@ -1,0 +1,12 @@
+<map id="tomographer/mhrw.h" name="tomographer/mhrw.h">
+<area shape="rect" id="node10" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="875,172,1062,197"/>
+<area shape="rect" id="node22" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="592,259,754,284"/>
+<area shape="rect" id="node26" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="1798,339,1979,364"/>
+<area shape="rect" id="node34" href="$statusprovider_8h_source.html" title="tomographer/tools/statusprovider.h" alt="" coords="2431,172,2658,197"/>
+<area shape="rect" id="node35" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="236,172,402,197"/>
+<area shape="rect" id="node37" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="1556,259,1827,284"/>
+<area shape="rect" id="node39" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1901,79,2060,117"/>
+<area shape="rect" id="node18" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="1649,419,1838,444"/>
+<area shape="rect" id="node30" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="1077,419,1266,444"/>
+<area shape="rect" id="node40" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="2176,172,2369,197"/>
+</map>

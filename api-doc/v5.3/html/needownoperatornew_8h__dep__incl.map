@@ -1,0 +1,26 @@
+<map id="tomographer/tools/needownoperatornew.h" name="tomographer/tools/needownoperatornew.h">
+<area shape="rect" id="node2" href="$indepmeasllh_8h.html" title="C++ types and functions for calculating the log&#45;likelihood for independent measurements. " alt="" coords="5,79,161,117"/>
+<area shape="rect" id="node4" href="$tspacefigofmerit_8h.html" title="Implement some standard figures of merit for when integrating in T space densely represented density ..." alt="" coords="185,79,341,117"/>
+<area shape="rect" id="node5" href="$tspacellhwalker_8h.html" title="Definitions for a Metropolis&#45;Hastings random walk on a quantum state space with dense matrix type..." alt="" coords="681,252,837,291"/>
+<area shape="rect" id="node6" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="919,172,1090,197"/>
+<area shape="rect" id="node8" href="$mhrw__valuehist__tools_8h.html" title="Tools for collecting a histogram of values during a Metropolis&#45;Hastings random walk using the tools o..." alt="" coords="982,425,1176,464"/>
+<area shape="rect" id="node9" href="$mhrwacceptratiowalkerparamscontroller_8h.html" title="Tools for automatically and dynamically adjusting the step size of the random walk. " alt="" coords="466,345,812,371"/>
+<area shape="rect" id="node10" href="$mhrwstepsizecontroller_8h.html" title="Tools for automatically and dynamically adjusting the step size of the random walk. " alt="" coords="613,432,860,457"/>
+<area shape="rect" id="node11" href="$mhrwtasks_8h.html" title="Multiprocessing tasks interface (see Multiprocessing Task Interfaces) for parallel Metropolis&#45;Hasting..." alt="" coords="1634,345,1809,371"/>
+<area shape="rect" id="node14" href="$mhrwvalueerrorbinsconvergedcontroller_8h.html" title="Tools for automatically stopping the random walk when enough samples have been taken to make all binn..." alt="" coords="1265,345,1610,371"/>
+<area shape="rect" id="node16" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="1219,172,1363,197"/>
+<area shape="rect" id="node18" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1099,79,1257,117"/>
+<area shape="rect" id="node19" href="$multiprocmpi_8h.html" title="MPI Implementation for multi&#45;processing " alt="" coords="1759,259,1972,284"/>
+<area shape="rect" id="node20" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="1621,85,1787,111"/>
+<area shape="rect" id="node21" href="$multiprocomp_8h.html" title="Multiprocessing with OpenMP parallel multithreading. " alt="" coords="1997,259,2188,284"/>
+<area shape="rect" id="node22" href="$multiprocthreadcommon_8h.html" title="Basic multiprocessing templates for thread&#45;based Tomographer::MultiProc implementations. " alt="" coords="1965,172,2220,197"/>
+<area shape="rect" id="node23" href="$multiprocthreads_8h.html" title="Multiprocessing with native C++11 threads. " alt="" coords="2213,259,2423,284"/>
+<area shape="rect" id="node25" href="$valuecalculator_8h.html" title="Some elementary definitions which relate to the ValueCalculator Interface. " alt="" coords="2396,85,2596,111"/>
+<area shape="rect" id="node3" href="$pydensedm_8h_source.html" title="py/cxx/tomographerpy\l/pydensedm.h" alt="" coords="7,165,159,204"/>
+<area shape="rect" id="node7" href="$mhrwstatscollectors_8h.html" title="Definitions for MHRWStatsCollector Interface&#39;s. " alt="" coords="911,259,1140,284"/>
+<area shape="rect" id="node15" href="$pyhistogram_8h_source.html" title="py/cxx/tomographerpy\l/pyhistogram.h" alt="" coords="836,339,989,377"/>
+<area shape="rect" id="node12" href="$pymhrwtasks_8h_source.html" title="py/cxx/tomographerpy\l/pymhrwtasks.h" alt="" coords="1200,425,1353,464"/>
+<area shape="rect" id="node13" href="$pymultiproc_8h_source.html" title="py/cxx/tomographerpy\l/pymultiproc.h" alt="" coords="1833,425,1986,464"/>
+<area shape="rect" id="node17" href="$pymhrw_8h_source.html" title="py/cxx/tomographerpy\l/pymhrw.h" alt="" coords="1833,339,1986,377"/>
+<area shape="rect" id="node24" href="$signal__status__report_8h.html" title="Basic common code for intercepting a signal to print status information of a task manager..." alt="" coords="1671,165,1839,204"/>
+</map>

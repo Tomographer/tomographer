@@ -1,0 +1,4 @@
+var struct_tomographer_1_1_logger_1_1_logger_traits_3_01_origin_prefixed_logger_3_01_base_logger_01_4_01_4 =
+[
+    [ "HasOwnGetLevel", "struct_tomographer_1_1_logger_1_1_logger_traits_3_01_origin_prefixed_logger_3_01_base_logger_01_4_01_4.html#a04d83e4dc572d1301ccdf98a9a6970e7ad8abcf102dd13c852051ba09ef8c0ee6", null ]
+];

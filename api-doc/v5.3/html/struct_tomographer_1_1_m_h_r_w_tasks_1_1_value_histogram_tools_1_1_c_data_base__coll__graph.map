@@ -1,0 +1,9 @@
+<map id="Tomographer::MHRWTasks::ValueHistogramTools::CDataBase&lt; ValueCalculator_, UseBinningAnalysis_, MHWalkerParams_, RngSeedType_, IterCountIntType_, CountRealType_, HistCountIntType_ &gt;" name="Tomographer::MHRWTasks::ValueHistogramTools::CDataBase&lt; ValueCalculator_, UseBinningAnalysis_, MHWalkerParams_, RngSeedType_, IterCountIntType_, CountRealType_, HistCountIntType_ &gt;">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_m_h_r_w_tasks_1_1_c_data_base.html" title="Data needed to be accessible to the working code. " alt="" coords="1375,25,1628,77"/>
+<area shape="rect" id="node3" href="/Users/philippe/Research/projects/tomographer/doc/cppreference-doxygen-web.tag.xml$cpp/container/vector.html" title="std::vector\&lt; RngSeedType \&gt;" alt="" coords="847,6,1037,31"/>
+<area shape="rect" id="node4" href="/Users/philippe/Research/projects/tomographer/doc/cppreference-doxygen-web.tag.xml$cpp/container/vector.html" title="STL class. " alt="" coords="372,6,486,31"/>
+<area shape="rect" id="node6" href="$struct_tomographer_1_1_m_h_r_w_params.html" title="Tomographer::MHRWParams\l\&lt; MHWalkerParams, IterCountInt\lType \&gt;" alt="" coords="833,55,1051,107"/>
+<area shape="rect" id="node7" href="$struct_tomographer_1_1_m_h_r_w_params.html" title="Specify the parameters of a Metropolis&#45;Hastings random walk. " alt="" coords="302,62,556,101"/>
+<area shape="rect" id="node13" href="$struct_tomographer_1_1_tools_1_1_store_if_enabled.html" title="Tomographer::Tools\l::StoreIfEnabled\&lt; int,\l UseBinningAnalysis \&gt;" alt="" coords="1424,253,1579,305"/>
+<area shape="rect" id="node14" href="$struct_tomographer_1_1_tools_1_1_store_if_enabled.html" title="Utility that stores a data type if a compile&#45;time flag is enabled. " alt="" coords="873,253,1011,305"/>
+</map>

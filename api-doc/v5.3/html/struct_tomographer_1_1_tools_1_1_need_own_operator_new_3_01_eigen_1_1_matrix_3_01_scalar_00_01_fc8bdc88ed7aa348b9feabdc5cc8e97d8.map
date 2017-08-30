@@ -1,0 +1,4 @@
+<map id="Tomographer::Tools::NeedOwnOperatorNew&lt; Eigen::Matrix&lt; Scalar, FixedRows, FixedCols, Options, MaxRows, MaxCols &gt; &gt;" name="Tomographer::Tools::NeedOwnOperatorNew&lt; Eigen::Matrix&lt; Scalar, FixedRows, FixedCols, Options, MaxRows, MaxCols &gt; &gt;">
+<area shape="rect" id="node2" href="$struct_tomographer_1_1_tools_1_1_need_eigen_aligned_operator_new.html" title="Tomographer::Tools\l::NeedEigenAlignedOperator\lNew\&lt;!(MaxRows==Eigen::Dynamic\|\l\|MaxCols==Eigen::Dynamic)\&gt;" alt="" coords="405,13,640,78"/>
+<area shape="rect" id="node3" href="$struct_tomographer_1_1_tools_1_1_need_eigen_aligned_operator_new.html" title="Helper to specialize NeedOwnOperatorNew for Eigen types. " alt="" coords="5,19,197,71"/>
+</map>
