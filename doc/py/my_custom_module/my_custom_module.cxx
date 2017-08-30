@@ -57,18 +57,18 @@ typedef Tomographer::DenseDM::TSpace::ObservableValueCalculator<tpy::DMTypes>
 // parameter for the MHWalker (so it can be used for any type of random walk),
 // but the MHWalker we use here needs the specific type
 // MHWalkerParamsStepSize<RealType>: it needs this MHRWParams type:
-typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<tpy::RealType>,
-                                tpy::CountIntType>  CxxMHRWParamsType;
+typedef Tomographer::MHRWParams<Tomographer::MHWalkerParamsStepSize<tpy::RealScalar>,
+                                tpy::IterCountIntType>  CxxMHRWParamsType;
 
 
 typedef Tomographer::MHRWTasks::ValueHistogramTools::CDataBase<
   ValueCalculator, // our value calculator
   true, // use binning analysis
-  Tomographer::MHWalkerParamsStepSize<tpy::RealType>, // MHWalkerParams
+  Tomographer::MHWalkerParamsStepSize<tpy::RealScalar>, // MHWalkerParams
   RngType::result_type, // RngSeedType
-  tpy::CountIntType, // IterCountIntType
-  tpy::RealType, // CountRealType
-  tpy::CountIntType // HistCountIntType
+  tpy::IterCountIntType, // IterCountIntType
+  tpy::CountRealType, // CountRealType
+  tpy::HistCountIntType // HistCountIntType
   >  CDataBase;
 
 //
@@ -95,7 +95,7 @@ struct OurCData : public CDataBase
         hist_params,
         p.attr("get")("binning_num_levels", 7).cast<int>(),
         CxxMHRWParamsType(
-            tpy::pyMHWalkerParamsFromPyObj<Tomographer::MHWalkerParamsStepSize<tpy::RealType> >(
+            tpy::pyMHWalkerParamsFromPyObj<Tomographer::MHWalkerParamsStepSize<tpy::RealScalar> >(
                 mhrw_params.mhwalker_params
                 ),
             mhrw_params.n_sweep,

@@ -127,8 +127,10 @@ if [ "$INSTALL_PYTHON_DEPS_USING" == "pip" ]; then
     $PIP install --user --upgrade pip
     # ... so that we can finally run pip
 
+    # for some reason we need this for pybind11 (??)
+    sudo -H $PIP install pybind11
 
-    (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} ~/.local/bin/pip install --cache-dir=$OUR_TRAVIS_PATH/pip_cache/$PYTHON_EXECUTABLE --user $PIP_EXTRAS wheel cvxpy pybind11 >pip_output.txt 2>&1 || cat pip_output.txt )
+    (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} ~/.local/bin/pip install --cache-dir=$OUR_TRAVIS_PATH/pip_cache/$PYTHON_EXECUTABLE --user $PIP_EXTRAS wheel cvxpy >pip_output.txt 2>&1 || cat pip_output.txt )
 
 elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
 
@@ -153,10 +155,12 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
     # Useful for debugging any issues with conda
     conda info -a
 
-    conda create -q -n test-environment python=3.6 libgcc mkl libgfortran lapack openblas pybind11 wheel
-    source activate test-environment
+    # MKL gives us problems ...
+    conda install nomkl
+    conda install libgcc libgfortran lapack openblas pybind11 wheel
 
-    conda install numpy scipy matplotlib tk scs cvxpy
+    conda create -q -n test-environment python=3.6 numpy scipy matplotlib tk scs cvxpy
+    source activate test-environment
 
     python -c 'import scs; print("SCS version: {}".format(scs.__version__))'
     python -c 'import cvxpy; print("CVXPY version: {}".format(cvxpy.__version__))'

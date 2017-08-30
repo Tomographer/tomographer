@@ -1,4 +1,6 @@
 
+from __future__ import print_function
+
 from setuptools import setup
 from setuptools.extension import Extension
 
@@ -47,7 +49,11 @@ else:
 #
 print(vv.message())
 
-
+include_dirs = [
+    numpy.get_include(),
+    pybind11.get_include(),
+] + tomographer.include.get_include()
+print("Include dirs are = ", include_dirs)
 
 #
 # Set up the python package
@@ -67,10 +73,7 @@ setup(name="my_custom_package",
               # Include directories (note that tomographer.include.get_include() returns a
               # list, including Boost and Eigen header locations as well as Tomographer
               # and Tomographer-Py header locations):
-              include_dirs=[
-                  numpy.get_include(),
-                  pybind11.get_include(),
-              ] + tomographer.include.get_include(),
+              include_dirs=include_dirs,
               # Compiler flags:
               extra_compile_args=shlex.split(vv.get('CXX_FLAGS')),
               # any linker flags, if needed (do NOT use -flto, or else use it at your own risk):

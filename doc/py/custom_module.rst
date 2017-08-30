@@ -55,8 +55,11 @@ as Python objects via the `tomographer` module.  For instance, the template
 class :tomocxx:`MHRWParams <struct_tomographer_1_1_m_h_r_w_params.html>` is
 typedef'ed as :tomocxx:`tpy::MHRWParams
 <namespacetpy.html#a94b6e199d4b59e18713b380fa4daa784>`.  You'll also find the
-types ``tpy::RealType`` and ``tpy::CountIntType`` which serve as template
-arguments for most classes (by default, ``double`` and ``int``, respectively).
+types ``tpy::RealScalar``, ``tpy::CountRealType``, as well as
+``tpy::IterCountIntType``, ``tpy::HistCountIntType``, ``tpy::TaskCountIntType``
+and ``tpy::FreqCountIntType`` which specify the C++ types to use for
+floating-point values and integer values storing information about matrix
+elements, iteration counts, histogram counts, etc.
 
 Note that some classes have slightly different implementations and aren't just a
 typedef---for instance, :tomocxx:`tpy::Histogram <classtpy_1_1_histogram.html>`

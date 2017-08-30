@@ -68,8 +68,13 @@ namespace MHRWTasks {
  * Stores the parameters to the random walk.
  *
  *
+ * \since Since %Tomographer 5.3, you can specify an arbitrary list of seeds as
+ *        inputs to each random number generator for each task (alternative
+ *        constructor).
+ *
  * \since Since %Tomographer 5.3, this class can be serialized with
  *        Boost.Serialization.
+ *
  */
 template<typename MHWalkerParams_, typename IterCountIntType_ = int,
          typename RngSeedType_ = std::mt19937::result_type>
@@ -170,13 +175,19 @@ struct TOMOGRAPHER_EXPORT CDataBase
   std::vector<RngSeedType> task_seeds;
 
 
-  /** \brief Returns a random seed to seed the random number generator with for run
-   * number \a k
+  /** \brief Returns a random seed to seed the random number generator with for
+   *         run number \a k
    *
-   * This simply returns \code base_seed + k \endcode
+   * This function provides the input of the k-th task. Each task must of course
+   * have a different seed, otherwise we will just repeat the same "random"
+   * walks!
    *
-   * This should be considered as the input of the k-th task. Each task must of course
-   * have a different seed, otherwise we will just repeat the same "random" walks!
+   * If \a task_seeds is not empty, then this function simply returns \a
+   * task_seeds[k].  It is an error if \a k is not in range for that vector.  In
+   * other words, if you give a list of seeds with \a task_seeds, you need to
+   * specify enough seeds to cover all tasks.
+   *
+   * If \a task_seeds is empty, then this simply returns <code>base_seed + k</code>.
    *
    */
   template<typename TaskNoCountIntType>
