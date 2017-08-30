@@ -67,7 +67,7 @@ BOOST_AUTO_TEST_CASE(basic)
   hist.record(0.52f);
   hist.record(1.2f);
 
-  BOOST_CHECK_EQUAL(hist.numBins(), 10u);
+  BOOST_CHECK_EQUAL(hist.numBins(), 10);
   BOOST_CHECK_SMALL(hist.params.min, tol_f);
   BOOST_CHECK_CLOSE(hist.params.max, 1.0f, tol_percent_f);
 
@@ -486,7 +486,7 @@ BOOST_AUTO_TEST_CASE(no_underlying_error_bars)
 
   BOOST_CHECK_SMALL(avghist.params.min, tol);
   BOOST_CHECK_CLOSE(avghist.params.max, 1.0, tol_percent);
-  BOOST_CHECK_EQUAL(avghist.numBins(), 4u);
+  BOOST_CHECK_EQUAL(avghist.numBins(), 4);
 
   { SimpleHistogramType hist(p);
     hist.load( inline_vector_4<double>(15, 45, 42, 12) , 36 ); // sum=150
@@ -541,7 +541,7 @@ BOOST_AUTO_TEST_CASE(with_underlying_error_bars)
 
   BOOST_CHECK_SMALL(avghist.params.min, tol);
   BOOST_CHECK_CLOSE(avghist.params.max, 1.0, tol_percent);
-  BOOST_CHECK_EQUAL(avghist.numBins(), 4u);
+  BOOST_CHECK_EQUAL(avghist.numBins(), 4);
 
   { BaseHistogramType hist(p);
     hist.load( inline_vector_4<double>(15, 45, 42, 12) ,

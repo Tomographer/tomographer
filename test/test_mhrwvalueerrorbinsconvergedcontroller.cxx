@@ -210,11 +210,11 @@ BOOST_FIXTURE_TEST_CASE(keepsrunning, TestStatsCollectorFixture2)
         stream << "# samples @ last level: " << coll_samples / (1<<bin_num_levels) ;
       });
   
-    BOOST_CHECK_EQUAL(summary.n_bins, 10u);
-    BOOST_CHECK_EQUAL(summary.n_converged, 8u);
-    BOOST_CHECK_EQUAL(summary.n_unknown, 0u);
-    BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0u);
-    BOOST_CHECK_EQUAL(summary.n_not_converged, 2u);
+    BOOST_CHECK_EQUAL(summary.n_bins, 10);
+    BOOST_CHECK_EQUAL(summary.n_converged, 8);
+    BOOST_CHECK_EQUAL(summary.n_unknown, 0);
+    BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0);
+    BOOST_CHECK_EQUAL(summary.n_not_converged, 2);
   }
 
   // our point sequence is designed so that some bins have not converged -- so the
@@ -233,11 +233,11 @@ BOOST_FIXTURE_TEST_CASE(keepsrunning, TestStatsCollectorFixture2)
 
   auto summary = result.errorBarConvergenceSummary();
 
-  BOOST_CHECK_EQUAL(summary.n_bins, 10u);
-  BOOST_CHECK_EQUAL(summary.n_converged, 10u);
-  BOOST_CHECK_EQUAL(summary.n_unknown, 0u);
-  BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0u);
-  BOOST_CHECK_EQUAL(summary.n_not_converged, 0u);
+  BOOST_CHECK_EQUAL(summary.n_bins, 10);
+  BOOST_CHECK_EQUAL(summary.n_converged, 10);
+  BOOST_CHECK_EQUAL(summary.n_unknown, 0);
+  BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0);
+  BOOST_CHECK_EQUAL(summary.n_not_converged, 0);
 
   logger.debug("keepsrunning test case", [&](std::ostream & stream) {
       result.dumpConvergenceAnalysis(stream);
@@ -294,11 +294,11 @@ BOOST_FIXTURE_TEST_CASE(stops_prematurely_for_long_runs, TestStatsCollectorFixtu
         stream << "# samples @ last level: " << coll_samples / (1<<bin_num_levels) ;
       });
   
-    BOOST_CHECK_EQUAL(summary.n_bins, 10u);
-    BOOST_CHECK_EQUAL(summary.n_converged, 6u);
-    BOOST_CHECK_EQUAL(summary.n_unknown, 0u);
-    BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0u);
-    BOOST_CHECK_EQUAL(summary.n_not_converged, 4u);
+    BOOST_CHECK_EQUAL(summary.n_bins, 10);
+    BOOST_CHECK_EQUAL(summary.n_converged, 6);
+    BOOST_CHECK_EQUAL(summary.n_unknown, 0);
+    BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 0);
+    BOOST_CHECK_EQUAL(summary.n_not_converged, 4);
   }
 
   logger.longdebug("********************************************************************************\n"
@@ -320,11 +320,11 @@ BOOST_FIXTURE_TEST_CASE(stops_prematurely_for_long_runs, TestStatsCollectorFixtu
         stream << "# samples @ last level: " << coll_samples / (1<<bin_num_levels) ;
       });
   
-    BOOST_CHECK_EQUAL(summary.n_bins, 10u);
-    BOOST_CHECK_EQUAL(summary.n_converged, 7u);
-    BOOST_CHECK_EQUAL(summary.n_unknown, 2u);
-    BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 1u);
-    BOOST_CHECK_EQUAL(summary.n_not_converged, 1u);
+    BOOST_CHECK_EQUAL(summary.n_bins, 10);
+    BOOST_CHECK_EQUAL(summary.n_converged, 7);
+    BOOST_CHECK_EQUAL(summary.n_unknown, 2);
+    BOOST_CHECK_EQUAL(summary.n_unknown_isolated, 1);
+    BOOST_CHECK_EQUAL(summary.n_not_converged, 1);
   }
 
   logger.longdebug("********************************************************************************\n"

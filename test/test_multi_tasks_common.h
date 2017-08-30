@@ -321,8 +321,8 @@ private:
 
 
 
-static void (*global_sig_handler_sigalarm_act)(int) = NULL;
-static void * global_sig_handler_sigalarm_task_dispatcher = NULL;
+void (*global_sig_handler_sigalarm_act)(int) = NULL;
+void * global_sig_handler_sigalarm_task_dispatcher = NULL;
 
 struct test_task_dispatcher_status_reporting_fixture {
   StatusRepTestBasicCData cData;
