@@ -159,13 +159,15 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
 
     conda install libgcc libgfortran
 
-    conda create -q -n test-environment python=3.6 pip numpy scipy matplotlib ecos
+    # ### why bother with environments?
+    # conda create -q -n test-environment python=3.6 pip ...
+
+    conda install numpy scipy matplotlib ecos
     conda install -f numpy
     conda install -c cvxgrp scs multiprocess cvxcanon cvxpy
     conda install -c conda-forge pybind11
 
-
-    source activate test-environment
+    #source activate test-environment
 
     python -c 'import numpy; print("NUMPY version: {}".format(numpy.__version__))'
     python -c 'import scs; print("SCS version: {}".format(scs.__version__))'
