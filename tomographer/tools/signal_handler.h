@@ -37,6 +37,7 @@
  */
 
 #include <signal.h>
+#include <stdio.h>
 
 #include <cstdio>
 #include <ctime>
@@ -103,6 +104,16 @@ namespace tomo_internal {
     strcat(buffer, msgend);
   }
 
+  static inline void write_string_stderr_ignore_result(const char * msg) // zero-terminated
+  {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunused-result"
+
+    write(STDERR_FILENO, msg, strlen(msg));
+
+#pragma GCC diagnostic pop
+  }
+
   static std::time_t last_sig_hit_time[NSIG] = { 0 };
   static SignalHandler * signal_handler[NSIG] = { NULL };
 
@@ -135,8 +146,8 @@ namespace tomo_internal {
     { const char * msgint1 = "\n*** interrupt (";
       const char * msgint2 = ")\n";
       char msgint[32];
-      format_string_with_signal_num(msgint, sizeof(msgint), signum, msgint1, msgint2)    ;
-      write(STDERR_FILENO, msgint, strlen(msgint));
+      format_string_with_signal_num(msgint, sizeof(msgint), signum, msgint1, msgint2);
+      write_string_stderr_ignore_result(msgint);
     }
 
     time_t now;
@@ -149,7 +160,7 @@ namespace tomo_internal {
       // write() is OK in a signal handler, fprintf() is not
       //fprintf(stderr, "\n*** Exit\n");
       const char * bufferexit = "\n*** Exit\n";
-      write(STDERR_FILENO, bufferexit, strlen(bufferexit));
+      write_string_stderr_ignore_result(bufferexit);
       ::exit(1);
       return;
     }
@@ -164,7 +175,7 @@ namespace tomo_internal {
       const char * msghandle2 = ")\n";
       char msghandle[1024];
       format_string_with_signal_num(msghandle, sizeof(msghandle), signum, msghandle1, msghandle2) ;
-      write(STDERR_FILENO, msghandle, strlen(msghandle));
+      write_string_stderr_ignore_result(msghandle);
     }
 
   }
