@@ -157,9 +157,8 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
 
     # MKL gives us problems ...
     conda install nomkl
-    conda install libgcc libgfortran lapack openblas pybind11 wheel
 
-    conda create -q -n test-environment python=3.6 numpy scipy matplotlib tk scs cvxpy
+    conda create -q -n test-environment python=3.6 nomkl libgcc libgfortran lapack openblas pybind11 wheel numpy scipy matplotlib tk scs cvxpy
     source activate test-environment
 
     python -c 'import scs; print("SCS version: {}".format(scs.__version__))'
