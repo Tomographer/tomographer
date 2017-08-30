@@ -147,26 +147,30 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
 
     conda config --set always_yes yes --set changeps1 no
 
-    conda config --add channels conda-forge
+    #conda config --add channels conda-forge
     #conda config --add channels cvxgrp
-    #conda config --add channels salford_systems # gcc-5
 
     conda update -q conda
     # Useful for debugging any issues with conda
     conda info -a
 
-    # MKL gives us problems ...
-    conda install nomkl
+    # MKL gives us problems ... ARRRRRGHHHH!!!!
+    #conda install nomkl
 
-    conda create -q -n test-environment python=3.6 nomkl libgcc libgfortran lapack openblas pybind11 wheel numpy scipy matplotlib tk scs cvxpy
+    conda install libgcc libgfortran
+
+    conda create -q -n test-environment python=3.6 pip numpy scipy matplotlib ecos
     conda install -f numpy
-    conda install -f cvxpy scs
+    conda install -c cvxgrp scs multiprocess cvxcanon cvxpy
+    conda install -c conda-forge pybind11
 
 
     source activate test-environment
 
+    python -c 'import numpy; print("NUMPY version: {}".format(numpy.__version__))'
     python -c 'import scs; print("SCS version: {}".format(scs.__version__))'
     python -c 'import cvxpy; print("CVXPY version: {}".format(cvxpy.__version__))'
+    python -c 'import matplotlib; print("MATPLOTLIB version: {}".format(matplotlib.__version__))'
 
     ls -lh $HOME/.miniconda/envs/test-environment/lib/
 
