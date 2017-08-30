@@ -147,7 +147,7 @@
 
 /** \namespace Tomographer::MultiProc::MPI
  *
- * \brief Definitions for multitasking by exploiting an MPI environment (uses Boost.MPI)
+ * \brief Definitions for multitasking by exploiting an %MPI environment (uses Boost.MPI)
  *
  * \since Introduced in %Tomographer 5.3
  */

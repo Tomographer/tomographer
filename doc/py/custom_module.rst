@@ -82,7 +82,7 @@ The Python ``setup.py`` file
 ----------------------------
 
 This is a standard ``setup.py`` file for packaging Python packages, using
-``setuptools``.  Read up on that (and then try to not commit hara-kiri).
+``setuptools``.  Read up on that.
 
 There are various flags which need to be set when compiling your module, which
 you can simply steal from the `tomographer` module: indeed, the `tomographer`

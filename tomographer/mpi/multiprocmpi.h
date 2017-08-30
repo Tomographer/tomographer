@@ -54,7 +54,7 @@ namespace mpi = boost::mpi;
 
 /** \file multiprocmpi.h
  *
- * \brief MPI Implementation for multi-processing
+ * \brief %MPI Implementation for multi-processing
  *
  * See \ref Tomographer::MultiProc::MPI.
  */
@@ -66,9 +66,9 @@ namespace MultiProc {
 
 namespace MPI {
 
-/** \brief Handles parallel execution of tasks using MPI
+/** \brief Handles parallel execution of tasks using %MPI
  *
- * Plug into a given MPI environment to run our tasks.
+ * Plug into a given %MPI environment to run our tasks.
  *
  * The master process, i.e., the one with <code>comm.rank()==0</code>, is very
  * special.  Only this process has to provide the input data (the TaskCData
@@ -77,14 +77,12 @@ namespace MPI {
  * receive status reports.
  *
  * - \a TaskType must be a \ref pageInterfaceTask compliant type.  The types \a
- *   TaskType::ResultType and \a TaskType::StatusReportType must be \a
- *   boost::serialize-able, have associated MPI types, and be
- *   default-constructible.  In addition, \a TaskType::ResultType should be
- *   either move-constructible or copy-constructible.
+ *   TaskType::ResultType and \a TaskType::StatusReportType must be serializable
+ *   with \a Boost.Serialization.  In addition, \a TaskType::ResultType should
+ *   be either move-constructible or copy-constructible.
  *
  * - \a TaskCData should conform to the \ref pageInterfaceTaskCData.  This class
- *   should be serializable with \a boost::serialize and have an associated MPI
- *   type; it should be default-constructible.
+ *   should be serializable with \a Boost.Serialization.
  *
  * - \a LoggerType is the type used for logging messages (derived from \ref
  *   Logger::LoggerBase)
@@ -310,7 +308,7 @@ private:
   };
 
 public:
-  /** \brief Construct the task dispatcher around the given MPI communicator
+  /** \brief Construct the task dispatcher around the given %MPI communicator
    *
    * The const data structure must have been initialized ONLY BY THE MASTER
    * PROCESS (defined as the one with <code>comm_.rank()==0</code>), and all
@@ -940,6 +938,7 @@ public:
 
   /** \brief The total number of task instances that were run
    *
+   * \warning Only the master process can call this function.
    */
   inline TaskCountIntType numTaskRuns() const
   {
@@ -950,6 +949,8 @@ public:
 
   /** \brief Returns the results of all the tasks
    *
+   * \warning Only the master process can call this function.
+   *
    */
   inline const std::vector<TaskResultType*> & collectedTaskResults() const
   {
@@ -958,6 +959,8 @@ public:
   }
 
   /** \brief Returns the result of the given task
+   *
+   * \warning Only the master process can call this function.
    *
    */
   inline const TaskResultType & collectedTaskResult(std::size_t k) const
@@ -978,6 +981,8 @@ public:
    * The callback, when invoked, will be called with a single parameter of type \ref
    * FullStatusReport "FullStatusReport<TaskStatusReportType>".
    *
+   *
+   * \warning Only the master process can call this function.
    */
   template<typename Fn>
   inline void setStatusReportHandler(Fn fnstatus)
@@ -996,6 +1001,8 @@ public:
    * the callback set with \ref setStatusReportHandler().
    *
    * \note This function is safe to be called from within a signal handler.
+   *
+   * \warning Only the master process can call this function.
    */
   inline void requestStatusReport()
   {
@@ -1010,6 +1017,8 @@ public:
    * \a milliseconds milliseconds to the handler set by \ref setStatusReportHandler().
    *
    * Pass \a -1 to cancel the periodic status reporting.
+   *
+   * \warning Only the master process can call this function.
    */
   template<typename IntType>
   inline void requestPeriodicStatusReport(IntType milliseconds)
@@ -1024,6 +1033,8 @@ public:
    * As soon as the tasks notice this request, they will quit.  Any computation performed
    * until then is undefined, and the run() function throws a \ref
    * TasksInterruptedException.
+   *
+   * \warning Only the master process can call this function.
    */
   inline void requestInterrupt()
   {
