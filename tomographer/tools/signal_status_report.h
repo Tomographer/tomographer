@@ -46,7 +46,7 @@ namespace Tomographer
 namespace Tools
 {
 
-/** \brief A generic handler which requests a status report from an OMPTaskDispatcher
+/** \brief A generic handler which requests a status report from an \ref pageInterfaceTaskDispatcher
  *
  */
 template<typename TaskDispatcher, typename Logger>
@@ -77,6 +77,12 @@ struct TOMOGRAPHER_EXPORT SigHandlerTaskDispatcherStatusReporter
 
   virtual void handleSignal(int /*sig*/)
   {
+    //
+    // This handler must be signal-safe. Do not call any C/C++ standard library
+    // functions which are not listed as signal-safe -- see POSIX's list at
+    // http://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_04_03_03
+    //
+    // requestStatusReport() is required to be signal-safe
     tasks->requestStatusReport();
   }
 

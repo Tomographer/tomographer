@@ -308,6 +308,14 @@
  *   sometime later the callback set by \a setStatusReportHandler() will be called with
  *   the relevant status report information.
  *
+ *   This function should be safe to be called from a signal handler. This
+ *   requirement severly limits what this function can do -- the best usually is
+ *   simply to set a value to a <code>volatile std::sig_atomic_int</code> flag
+ *   (or another <code>std::atomic</code> type).  See
+ *   http://en.cppreference.com/w/cpp/utility/program/signal#Signal_handler and
+ *   http://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_04_03_03
+ *   .
+ *
  * \par void requestPeriodicStatusReport(int milliseconds)
  *   Request that the task manager periodically send a status report to the handler set by
  *   \a setStatusReportHandler().  The interval time is specified in milliseconds.  Pass
@@ -315,6 +323,15 @@
  *
  * \par void requestInterrupt()
  *   Interrupt all tasks as soon as possible.
+ *
+ *   This function should be safe to be called from a signal handler. This
+ *   requirement severly limits what this function can do -- the best usually is
+ *   simply to set a value to a <code>volatile std::sig_atomic_int</code> flag
+ *   (or another <code>std::atomic</code> type).  See
+ *   http://en.cppreference.com/w/cpp/utility/program/signal#Signal_handler and
+ *   http://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_04_03_03
+ *   .
+ *
  *
  * The \a TaskDispatcher must also provide the following typedefs:
  *

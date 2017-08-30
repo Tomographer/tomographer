@@ -72,27 +72,79 @@ struct TOMOGRAPHER_EXPORT SignalHandler
 #define TOMOGRAPHER_SIG_HANDLER_REPEAT_EXIT_DELAY 2
 #endif
 
+
 namespace tomo_internal {
+
+  //
+  // helper for formatting a string inside a signal handler, using only
+  // signal-safe POSIX C functions
+  //
+  static inline void format_string_with_signal_num(char * buffer, const std::size_t buffer_max_len,
+                                                   int signum, const char * msgstart, const char * msgend)
+  {
+    const std::size_t msgstartlen = strlen(msgstart);
+    const std::size_t msgendlen = strlen(msgend);
+    assert(signum < 100) ;
+    assert(buffer_max_len >= msgstartlen + 2 + msgendlen + 1) ;
+
+    // strcpy() and strcat() are signal-safe according to POSIX requirements
+
+    strcpy(buffer, msgstart);
+
+    buffer[msgstartlen] = (48 + (signum/10)%10); // 48 == '0'
+    buffer[msgstartlen+1] = 48 + (signum%10);
+    buffer[msgstartlen+2] = '\0';
+
+    strcat(buffer, msgend);
+  }
+
   static std::time_t last_sig_hit_time[NSIG] = { 0 };
   static SignalHandler * signal_handler[NSIG] = { NULL };
 
+  //
+  // hmmm.... actually our implementation is not safe strictly speaking, because
+  // we call functions like std::fprintf which are not signal-reentrant -- see
+  // http://en.cppreference.com/w/cpp/utility/program/signal#Signal_handler
+  //
   static void signal_dispatch_fn(int signum)
   {
+    //
+    // POSIX defines a set of functions which we can call from a signal handler --
+    // http://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_04_03_03
+    //
+
+    using namespace std;
+
+    // abort() is OK in a signal handler
     assert(signum >= 0 && signum < NSIG && "signum out of range 0...NSIG !") ;
     
 #if defined(__MINGW32__) || defined(__MINGW64__)
     // re-attach handler---seems like it's needed on Windows...
+    // signal() is OK in a signal handler
     signal(signum, tomo_internal::signal_dispatch_fn);
 #endif
     
-    std::fprintf(stderr, "\n*** interrupt (%d)\n", signum);
-    std::time_t now;
+    // write() is OK in a signal handler, fprintf() is not.  So do the formatting ourselves.
+    //fprintf(stderr, "\n*** interrupt (%d)\n", signum);
+    // strcpy() and strlen() are OK
+    { const char * msgint1 = "\n*** interrupt (";
+      const char * msgint2 = ")\n";
+      char msgint[32];
+      format_string_with_signal_num(msgint, sizeof(msgint), signum, msgint1, msgint2)    ;
+      write(STDERR_FILENO, msgint, strlen(msgint));
+    }
 
+    time_t now;
+
+    // time() is OK in a signal handler
     time(&now);
 
     if ( (now - tomo_internal::last_sig_hit_time[signum]) < TOMOGRAPHER_SIG_HANDLER_REPEAT_EXIT_DELAY ) {
       // two interrupts within two seconds --> exit
-      std::fprintf(stderr, "\n*** Exit\n");
+      // write() is OK in a signal handler, fprintf() is not
+      //fprintf(stderr, "\n*** Exit\n");
+      const char * bufferexit = "\n*** Exit\n";
+      write(STDERR_FILENO, bufferexit, strlen(bufferexit));
       ::exit(1);
       return;
     }
@@ -102,7 +154,12 @@ namespace tomo_internal {
     if (signal_handler[signum] != NULL) {
       signal_handler[signum]->handleSignal(signum);
     } else {
-      std::fprintf(stderr, "Warning: sig_handle: no signal handler set (got signal %d)\n", signum);
+      // write() is OK in a signal handler, fprintf() is not.  So do the formatting ourselves.
+      const char * msghandle1 = "Warning: sig_handle: no signal handler set (got signal ";
+      const char * msghandle2 = ")\n";
+      char msghandle[1024];
+      format_string_with_signal_num(msghandle, sizeof(msghandle), signum, msghandle1, msghandle2) ;
+      write(STDERR_FILENO, msghandle, strlen(msghandle));
     }
 
   }
