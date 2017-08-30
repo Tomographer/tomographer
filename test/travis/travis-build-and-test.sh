@@ -14,7 +14,7 @@ $CMAKE_PATH/bin/cmake .. -DCMAKE_C_COMPILER=$CMAKE_C_COMPILER -DCMAKE_CXX_COMPIL
 # Run MAKE
 #
 # make tomorun separately, one process only, because it's VERY heavy on RAM
-make tomorun || exit 1
+make tomorun VERBOSE=1 || exit 1
 # then make the rest using all available cores
 make -j`nproc` VERBOSE=1 || exit 1
 

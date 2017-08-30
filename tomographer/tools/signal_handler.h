@@ -84,6 +84,11 @@ namespace tomo_internal {
   {
     const std::size_t msgstartlen = strlen(msgstart);
     const std::size_t msgendlen = strlen(msgend);
+
+    // silence "unused" warnings if building without asserts
+    (void)buffer_max_len;
+    (void)msgendlen;
+
     assert(signum < 100) ;
     assert(buffer_max_len >= msgstartlen + 2 + msgendlen + 1) ;
 

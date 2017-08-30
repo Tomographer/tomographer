@@ -103,9 +103,9 @@ BOOST_AUTO_TEST_CASE(boundaries)
   BOOST_CHECK(!hist.isWithinBounds(std::numeric_limits<float>::infinity()));
   BOOST_CHECK(!hist.isWithinBounds(-std::numeric_limits<float>::infinity()));
 
-  BOOST_CHECK_EQUAL(hist.binIndex(0.13f), 1u);
-  BOOST_CHECK_EQUAL(hist.binIndex(0.99f), 9u);
-  BOOST_CHECK_EQUAL(hist.binIndex(0.34f), 3u);
+  BOOST_CHECK_EQUAL(hist.binIndex(0.13f), 1);
+  BOOST_CHECK_EQUAL(hist.binIndex(0.99f), 9);
+  BOOST_CHECK_EQUAL(hist.binIndex(0.34f), 3);
 
   BOOST_CHECK_SMALL(hist.binLowerValue(0), tol_f);
   BOOST_CHECK_CLOSE(hist.binLowerValue(1), 0.1f, tol_percent_f);
