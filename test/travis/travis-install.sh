@@ -148,7 +148,7 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
     conda config --set always_yes yes --set changeps1 no
 
     conda config --add channels conda-forge
-    conda config --add channels cvxgrp
+    #conda config --add channels cvxgrp
     #conda config --add channels salford_systems # gcc-5
 
     conda update -q conda
