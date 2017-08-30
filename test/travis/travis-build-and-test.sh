@@ -13,7 +13,7 @@ $CMAKE_PATH/bin/cmake .. -DCMAKE_C_COMPILER=$CMAKE_C_COMPILER -DCMAKE_CXX_COMPIL
 #
 # Run MAKE
 #
-make VERBOSE=1 || exit 1
+make -j`nproc` VERBOSE=1 || exit 1
 
 #
 # use python/setup.py to build a source package and to compile the extension a
@@ -34,5 +34,8 @@ CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all $CMAKE_PATH/bin/ctest --timeo
 # Make sure that other custom python modules compile against our tomographer python package
 #
 (cd ../doc/py/my_custom_module/; CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPILER $PYTHON_EXECUTABLE setup.py bdist_wheel || exit 1) || exit 1
+# and make sure it runs
+($PIP install --user ../doc/py/my_custom_module/dist/my_custom_module*.whl || exit 1)
+$PYTHON_EXECUTABLE -c 'import my_custom_module; print(my_custom_module.__version__)' || exit 1
 
 set +x

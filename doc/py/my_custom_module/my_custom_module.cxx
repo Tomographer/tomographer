@@ -409,6 +409,9 @@ PYBIND11_PLUGIN(my_custom_module)
   pylogger->initPythonLogger("my_custom_module"); // logger name for `logging` module
   m.attr("cxxlogger") = pylogger; // ownership is transferred here
 
+  // add version information
+  m.attr("__version__") = py::cast(std::string("1.0"));
+
   auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *pylogger);
 
   logger.debug("my_custom_module() initializing ...");
