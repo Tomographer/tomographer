@@ -24,8 +24,8 @@ steps to get started and analyze data from your experiment:
 1.  Install the necessary Python packages.
 
     First, install `tomographer`'s dependencies.  Depending on whether you're
-    using [*conda*](https://www.continuum.io/downloads){:target="_blank"} or
-    *pip* by itself, you should run the following commands:
+    using [*conda*](https://www.anaconda.com/){:target="_blank"} or *pip* by
+    itself, you should run the following commands:
 
         # for *conda* users:
 
