@@ -13,6 +13,9 @@ $CMAKE_PATH/bin/cmake .. -DCMAKE_C_COMPILER=$CMAKE_C_COMPILER -DCMAKE_CXX_COMPIL
 #
 # Run MAKE
 #
+# make tomorun separately, one process only, because it's VERY heavy on RAM
+make tomorun || exit 1
+# then make the rest using all available cores
 make -j`nproc` VERBOSE=1 || exit 1
 
 #
@@ -33,9 +36,9 @@ CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all $CMAKE_PATH/bin/ctest --timeo
 #
 # Make sure that other custom python modules compile against our tomographer python package
 #
-(cd ../doc/py/my_custom_module/; CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPILER $PYTHON_EXECUTABLE setup.py bdist_wheel || exit 1) || exit 1
+(cd ../doc/py/my_custom_module/; CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPILER $PYTHON_EXECUTABLE setup.py sdist bdist_wheel || exit 1) || exit 1
 # and make sure it runs
-$PIP install --user ../doc/py/my_custom_module/dist/my_custom_package*.whl || exit 1
+$PIP install --user ../doc/py/my_custom_module/dist/my_custom_package*.tar.gz || exit 1
 $PYTHON_EXECUTABLE -c 'import my_custom_module; print(my_custom_module.__version__)' || exit 1
 
 set +x
