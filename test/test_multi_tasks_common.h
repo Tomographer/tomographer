@@ -320,6 +320,10 @@ private:
 };
 
 
+
+static void (*global_sig_handler_sigalarm_act)(int) = NULL;
+static void * global_sig_handler_sigalarm_task_dispatcher = NULL;
+
 struct test_task_dispatcher_status_reporting_fixture {
   StatusRepTestBasicCData cData;
   const int num_runs;
@@ -495,14 +499,21 @@ struct test_task_dispatcher_status_reporting_fixture {
           signal(SIGALRM, SIG_DFL);
         });
     
-      sigalarm_act = [&task_dispatcher]() {
-        task_dispatcher.requestStatusReport(); // safe to be called from within a signal handler
+      global_sig_handler_sigalarm_task_dispatcher = (void*) &task_dispatcher;
+
+      // use pure C function, not std::function/captured lambdas/etc. because
+      // this is a signal we're in, the interrupt can literally come at any
+      // point in the code and we must make sure to use only signal-reentrant
+      // functions
+      global_sig_handler_sigalarm_act = +[](int) {
+        // safe to be called from within a signal handler
+        ((TaskDispatcher*)global_sig_handler_sigalarm_task_dispatcher)->requestStatusReport();
         alarm(1);
-        signal(SIGALRM, sigalarm_act_cfn);
+        signal(SIGALRM, global_sig_handler_sigalarm_act);
       };
-    
+      
       alarm(1);
-      signal(SIGALRM, sigalarm_act_cfn);
+      signal(SIGALRM, global_sig_handler_sigalarm_act);
     
       task_dispatcher.run();
 
