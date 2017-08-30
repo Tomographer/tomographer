@@ -37,8 +37,8 @@ CTEST_OUTPUT_ON_FAILURE=1 BOOST_TEST_LOG_LEVEL=all $CMAKE_PATH/bin/ctest --timeo
 # Make sure that other custom python modules compile against our tomographer python package
 #
 (cd ../doc/py/my_custom_module/; CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPILER $PYTHON_EXECUTABLE setup.py sdist bdist_wheel || exit 1) || exit 1
-# and make sure it runs
-$PIP install --user ../doc/py/my_custom_module/dist/my_custom_package*.tar.gz || exit 1
+# and make sure we can compile it from pip, and run it
+CC=$CMAKE_C_COMPILER CXX=$CMAKE_CXX_COMPILER $PIP install --user ../doc/py/my_custom_module/dist/my_custom_package*.tar.gz || exit 1
 $PYTHON_EXECUTABLE -c 'import my_custom_module; print(my_custom_module.__version__)' || exit 1
 
 set +x
