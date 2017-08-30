@@ -127,16 +127,17 @@ if IsTomographerSources:
 
 # Defaults: optimization flags
 #
-# DO NOT USE -fvisibility=hidden OR -flto. (Event with visibility attributes set I
-# couldn't get other modules which use the python tomographer API to load properly)
+# DO NOT USE -fvisibility=hidden OR -flto. (Even with visibility attributes in
+# the C++ code I couldn't get other modules which use the python tomographer API
+# to load properly)
 vv.setDefault('OPTIMIZATION_CXX_FLAGS', '-UNDEBUG -march=native -O3')
 
 #
 # Default: C++ flags for Mac OS X
 #
-# ### but don't add -stdlib=libc++ on gcc... so what we do is that below, we test each of
-# ### the specified flags and only keep those which are supported by the compiler (ugly
-# ### hack!)
+# ### but don't add -stdlib=libc++ on gcc... so what we do is that below, we
+# ### test each of the specified flags and only keep those which are supported
+# ### by the compiler (ugly hack!)
 #
 def dflt_cxxflags():
     flags = [ ]
