@@ -159,6 +159,10 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
     conda install nomkl
 
     conda create -q -n test-environment python=3.6 nomkl libgcc libgfortran lapack openblas pybind11 wheel numpy scipy matplotlib tk scs cvxpy
+    conda install -f numpy
+    conda install -f cvxpy scs
+
+
     source activate test-environment
 
     python -c 'import scs; print("SCS version: {}".format(scs.__version__))'
