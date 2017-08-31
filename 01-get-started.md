@@ -29,8 +29,7 @@ steps to get started and analyze data from your experiment:
 
         # for *conda* users:
 
-        > conda install numpy
-        > conda install gcc # don't need this on Mac OS X, skip this command
+        > conda install numpy gcc libgcc
         > conda install -c conda-forge pybind11
 
         # OR, for *pip* users:
