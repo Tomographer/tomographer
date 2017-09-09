@@ -127,8 +127,8 @@ if [ "$INSTALL_PYTHON_DEPS_USING" == "pip" ]; then
     $PIP install --user --upgrade pip
     # ... so that we can finally run pip
 
-    # for some reason we need this for pybind11 (??)
-    sudo -H $PIP install pybind11
+    # for some reason we need sudo to install pybind11 (??)
+    sudo -H $PIP install pybind11==2.1.1
 
     (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} ~/.local/bin/pip install --cache-dir=$OUR_TRAVIS_PATH/pip_cache/$PYTHON_EXECUTABLE --user $PIP_EXTRAS wheel cvxpy >pip_output.txt 2>&1 || cat pip_output.txt )
 
@@ -165,7 +165,7 @@ elif [ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]; then
     conda install numpy scipy matplotlib ecos
     conda install -f numpy
     conda install -c cvxgrp scs multiprocess cvxcanon cvxpy
-    conda install -c conda-forge pybind11
+    conda install -c conda-forge pybind11==2.1.1
 
     #source activate test-environment
 
