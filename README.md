@@ -252,11 +252,11 @@ dependencies.)
     # If using *conda*:
     
     > conda install numpy gcc libgcc
-    > conda install -c conda-forge pybind11
+    > conda install -c conda-forge pybind11==2.1.1
     
     # OR: if using *pip* by itself:
     
-    > pip install numpy pybind11
+    > pip install numpy pybind11==2.1.1
     
 All `pip install` commands (e.g. `pip install SOMEPACKAGE`) might have to be
 prefixed by `sudo -H` (e.g. `sudo -H pip install SOMEPACKAGE`) if you need
