@@ -73,8 +73,8 @@ def require_mod_version(mod, modver, minver, fix=None):
 require_mod_version("NumPy", numpy.__version__, "1.8",
                     fix='running "pip install numpy --upgrade"')
 
-# Recent Pybind11, need >= 2.1 for automatic py::metaclass()
-require_mod_version("PyBind11", pybind11.__version__, "2.1",
+# Recent Pybind11, need >= 2.2
+require_mod_version("PyBind11", pybind11.__version__, "2.2",
                     fix='running "pip install pybind11 --upgrade"')
 
 

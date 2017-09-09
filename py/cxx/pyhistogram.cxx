@@ -148,13 +148,14 @@ void py_tomo_histogram(py::module rootmodule)
                            << fmt_hist_param_float(p.min) << ",max="
                            << fmt_hist_param_float(p.max) << ",num_bins=" << p.num_bins << ")");
         })
-      .def("__getstate__", [](const Kl& p) {
-          return py::make_tuple(p.min, p.max, p.num_bins) ;
-        })
-      .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl, tpy::HistogramParams::Scalar,
-                                                    tpy::HistogramParams::Scalar, Eigen::Index>(p, t);
-        })
+      .def(py::pickle(
+               [](const Kl& p) {
+                 return py::make_tuple(p.min, p.max, p.num_bins) ;
+               },
+               [](py::tuple t) {
+                 return tpy::internal::unpack_tuple_and_construct<Kl, tpy::HistogramParams::Scalar,
+                                                                  tpy::HistogramParams::Scalar, Eigen::Index>(t);
+               }))
       ;
   }
 
@@ -324,23 +325,25 @@ void py_tomo_histogram(py::module rootmodule)
                            << ",bins=" << py::repr(p.bins).cast<std::string>()
                            << ",off_chart=" << py::repr(p.off_chart).cast<std::string>() << ")");
         })
-      .def("__getstate__", [](py::object self) {
-          return py::make_tuple(
-              self.attr("params"),
-              self.attr("bins"),
-              self.attr("off_chart")
-              ) ;
-        })
-      .def("__setstate__", [](py::object self, py::tuple t) {
-          check_pickle_tuple_size(py::len(t), 3);
-          tpy::Histogram & histogram = self.cast<tpy::Histogram&>();
+      .def(py::pickle(
+               [](py::object self) {
+                 return py::make_tuple(
+                     self.attr("params"),
+                     self.attr("bins"),
+                     self.attr("off_chart")
+                     ) ;
+               },
+               [](py::tuple t) {
+                 check_pickle_tuple_size(py::len(t), 3);
 
-          new (&histogram) tpy::Histogram(t[0].cast<tpy::HistogramParams>()) ;
+                 tpy::Histogram * histogram = new tpy::Histogram(t[0].cast<tpy::HistogramParams>()) ;
 
-          // restore bins & off_chart
-          histogram.bins = t[1];
-          histogram.off_chart = t[2];
-        })
+                 // restore bins & off_chart
+                 histogram->bins = t[1];
+                 histogram->off_chart = t[2];
+
+                 return histogram;
+               }))
       ;
   }
 
@@ -460,26 +463,26 @@ void py_tomo_histogram(py::module rootmodule)
                            << ",delta=" << py::repr(p.delta).cast<std::string>()
                            << ",off_chart=" << py::repr(p.off_chart).cast<std::string>() << ")");
         })
-      .def("__getstate__", [](py::object self) {
-          return py::make_tuple( self.attr("params"), self.attr("bins"), self.attr("delta"), self.attr("off_chart") );
-        })
-      .def("__setstate__", [](py::object self, py::tuple t) {
-          // allow 5
-          if (py::len(t) < 4 || py::len(t) > 5) { // see below for possible 5th argument to ignore silently
-            throw tpy::TomographerCxxError(streamstr("Invalid pickle state: expected 4, got "
-                                                     << py::len(t)));
-          }
-          tpy::HistogramWithErrorBars & histogram = self.cast<tpy::HistogramWithErrorBars&>();
+      .def(py::pickle(
+               [](py::object self) {
+                 return py::make_tuple( self.attr("params"), self.attr("bins"), self.attr("delta"), self.attr("off_chart") );
+               },
+               [](py::tuple t) {
+                 // allow 5
+                 if (py::len(t) < 4 || py::len(t) > 5) { // see below for possible 5th argument to ignore silently
+                   throw tpy::TomographerCxxError(streamstr("Invalid pickle state: expected 4, got "
+                                                            << py::len(t)));
+                 }
+                 auto histogram = new tpy::HistogramWithErrorBars(t[0].cast<tpy::HistogramParams>()) ;
 
-          new (&histogram) tpy::HistogramWithErrorBars(t[0].cast<tpy::HistogramParams>()) ;
-
-          // restore bins, delta & off_chart
-          histogram.bins = t[1];
-          histogram.delta = t[2];
-          histogram.off_chart = t[3];
-          // It's possible we get passed a 5th parameter (t[4]), if we are unpickling an
-          // AveragedXXXXXHistogram from an earlier version of Tomographer.  Just ignore it.
-        })
+                 // restore bins, delta & off_chart
+                 histogram->bins = t[1];
+                 histogram->delta = t[2];
+                 histogram->off_chart = t[3];
+                 // It's possible we get passed a 5th parameter (t[4]), if we are unpickling an
+                 // AveragedXXXXXHistogram from an earlier version of Tomographer.  Just ignore it.
+                 return histogram;
+               }))
        ;
   }
 

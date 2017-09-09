@@ -109,15 +109,15 @@ void py_tomo_mhrwtasks(py::module rootmodule)
       .def_readwrite("n_unknown", & Kl::n_unknown)
       .def_readwrite("n_unknown_isolated", & Kl::n_unknown_isolated)
       .def_readwrite("n_not_converged", & Kl::n_not_converged)
-      .def("__getstate__", [](py::object p) {
-          return py::make_tuple(p.attr("n_bins"), p.attr("n_converged"), p.attr("n_unknown"),
-                                p.attr("n_unknown_isolated"), p.attr("n_not_converged"));
-        })
-      .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl, Eigen::Index, Eigen::Index, Eigen::Index,
-                                                    Eigen::Index, Eigen::Index>(p, t);
-        })
-      ;
+      .def(py::pickle(
+               [](py::object p) {
+                 return py::make_tuple(p.attr("n_bins"), p.attr("n_converged"), p.attr("n_unknown"),
+                                       p.attr("n_unknown_isolated"), p.attr("n_not_converged"));
+               },
+               [](py::tuple t) {
+                 return tpy::internal::unpack_tuple_and_construct<Kl, Eigen::Index, Eigen::Index, Eigen::Index,
+                                                                  Eigen::Index, Eigen::Index>(t);
+               }))
       ;
   }
 
@@ -170,14 +170,16 @@ void py_tomo_mhrwtasks(py::module rootmodule)
       // .def("__repr__", [](const Kl& p) {
       //     return streamstr("ValueHistogramWithBinningMHRWStatsCollectorResult("<<"..."<<")") ;
       //   })
-      .def("__getstate__", [](py::object p) {
-          return py::make_tuple(p.attr("histogram"), p.attr("error_levels"), p.attr("converged_status"));
-        })
-      .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl,
-                                                    tpy::HistogramWithErrorBars,
-                                                    tpy::RealMatrixType, Eigen::VectorXi>(p, t);
-        })
+      .def(py::pickle(
+               [](py::object p) {
+                 return py::make_tuple(p.attr("histogram"), p.attr("error_levels"), p.attr("converged_status"));
+               },
+               [](py::tuple t) {
+                 return tpy::internal::unpack_tuple_and_construct<Kl,
+                                                                  tpy::HistogramWithErrorBars,
+                                                                  tpy::RealMatrixType,
+                                                                  Eigen::VectorXi>(t);
+               }))
       ;
   }
 
@@ -225,17 +227,18 @@ void py_tomo_mhrwtasks(py::module rootmodule)
           return streamstr("<MHRandomWalkTaskResult with "
                            << py::repr(p.attr("mhrw_params")).cast<std::string>() << ">") ;
         })
-      .def("__getstate__", [](py::object p) {
-          return py::make_tuple(p.attr("stats_results"), p.attr("mhrw_params"), p.attr("acceptance_ratio"));
-        })
-      .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<
-            Kl,
-            py::object,
-            tpy::MHRWParams,
-            double
-            >(p, t);
-        })
+      .def(py::pickle(
+               [](py::object p) {
+                 return py::make_tuple(p.attr("stats_results"), p.attr("mhrw_params"), p.attr("acceptance_ratio"));
+               },
+               [](py::tuple t) {
+                 return tpy::internal::unpack_tuple_and_construct<
+                   Kl,
+                   py::object,
+                   tpy::MHRWParams,
+                   double
+                   >(t);
+               }))
       ;
   }
 

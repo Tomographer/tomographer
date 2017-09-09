@@ -69,36 +69,36 @@ void py_tomo_mhrw(py::module rootmodule)
             boost::core::demangle(typeid(tpy::MHRWParams::CountIntType).name()).c_str()
             ).c_str()
         )
-      .def("__init__", [](Kl & instance, py::args args, py::kwargs kwargs) {
-          py::object mhwalker_params = py::none();
-          tpy::MHRWParams::CountIntType n_sweep = 0, n_therm = 0, n_run = 0;
-          if (py::len(args) && py::len(kwargs)) {
-            throw tpy::TomographerCxxError("Can't specify positional arguments along with keyword arguments "
-                                           "for MHRWParams(...)");
-          }
-          if (py::len(args)) {
-            if (py::len(args) != 4) {
-              throw tpy::TomographerCxxError("Expected exactly four arguments in call to "
-                                             "MHRWParams(mhwalker_params, n_sweep, n_therm, n_run)");
+      .def(py::init([](py::args args, py::kwargs kwargs) {
+            py::object mhwalker_params = py::none();
+            tpy::MHRWParams::CountIntType n_sweep = 0, n_therm = 0, n_run = 0;
+            if (py::len(args) && py::len(kwargs)) {
+              throw tpy::TomographerCxxError("Can't specify positional arguments along with keyword arguments "
+                                             "for MHRWParams(...)");
             }
-            // exactly 4 args given: they are, in order, (mhwalker_params, n_sweep, n_therm, n_run)
-            mhwalker_params = args[0];
-            n_sweep = args[1].cast<tpy::MHRWParams::CountIntType>();
-            n_therm = args[2].cast<tpy::MHRWParams::CountIntType>();
-            n_run = args[3].cast<tpy::MHRWParams::CountIntType>();
-          } else if (py::len(kwargs)) {
-            n_sweep = kwargs.attr("pop")("n_sweep"_s, 0).cast<tpy::MHRWParams::CountIntType>();
-            n_therm = kwargs.attr("pop")("n_therm"_s, 0).cast<tpy::MHRWParams::CountIntType>();
-            n_run = kwargs.attr("pop")("n_run"_s, 0).cast<tpy::MHRWParams::CountIntType>();
-            mhwalker_params = kwargs;
-          } else { // no arguments at all -- default constructor
-            mhwalker_params = py::dict();
-            n_sweep = 0;
-            n_therm = 0;
-            n_run = 0;
-          }
-          new (&instance) Kl(mhwalker_params, n_sweep, n_therm, n_run);
-          })
+            if (py::len(args)) {
+              if (py::len(args) != 4) {
+                throw tpy::TomographerCxxError("Expected exactly four arguments in call to "
+                                               "MHRWParams(mhwalker_params, n_sweep, n_therm, n_run)");
+              }
+              // exactly 4 args given: they are, in order, (mhwalker_params, n_sweep, n_therm, n_run)
+              mhwalker_params = args[0];
+              n_sweep = args[1].cast<tpy::MHRWParams::CountIntType>();
+              n_therm = args[2].cast<tpy::MHRWParams::CountIntType>();
+              n_run = args[3].cast<tpy::MHRWParams::CountIntType>();
+            } else if (py::len(kwargs)) {
+              n_sweep = kwargs.attr("pop")("n_sweep"_s, 0).cast<tpy::MHRWParams::CountIntType>();
+              n_therm = kwargs.attr("pop")("n_therm"_s, 0).cast<tpy::MHRWParams::CountIntType>();
+              n_run = kwargs.attr("pop")("n_run"_s, 0).cast<tpy::MHRWParams::CountIntType>();
+              mhwalker_params = kwargs;
+            } else { // no arguments at all -- default constructor
+              mhwalker_params = py::dict();
+              n_sweep = 0;
+              n_therm = 0;
+              n_run = 0;
+            }
+            return new Kl(mhwalker_params, n_sweep, n_therm, n_run);
+          }))
       .def_readwrite("mhwalker_params", &Kl::mhwalker_params)
       .def_readwrite("n_sweep", &Kl::n_sweep)
       .def_readwrite("n_therm", &Kl::n_therm)
@@ -107,16 +107,19 @@ void py_tomo_mhrw(py::module rootmodule)
           return streamstr("MHRWParams(mhwalker_params="<<py::str(p.mhwalker_params).cast<std::string>()
                            <<",n_sweep="<<p.n_sweep<<",n_therm="<<p.n_therm<<",n_run="<<p.n_run<<")") ;
         })
-      .def("__getstate__", [](const Kl& mhrw_params) {
-          return py::make_tuple(mhrw_params.mhwalker_params,
-                                mhrw_params.n_sweep,
-                                mhrw_params.n_therm,
-                                mhrw_params.n_run);
-        })
-      .def("__setstate__", [](Kl & p, py::tuple t) {
-          tpy::internal::unpack_tuple_and_construct<Kl, py::object, tpy::MHRWParams::CountIntType,
-                                                    tpy::MHRWParams::CountIntType, tpy::MHRWParams::CountIntType>(p, t);
-        });
-    ;
+      .def(py::pickle(
+               [](const Kl& mhrw_params) {
+                 return py::make_tuple(mhrw_params.mhwalker_params,
+                                       mhrw_params.n_sweep,
+                                       mhrw_params.n_therm,
+                                       mhrw_params.n_run);
+               },
+               [](py::tuple t) {
+                 return tpy::internal::unpack_tuple_and_construct<Kl, py::object,
+                                                                  tpy::MHRWParams::CountIntType,
+                                                                  tpy::MHRWParams::CountIntType,
+                                                                  tpy::MHRWParams::CountIntType>(t);
+               }))
+      ;
   }
 }

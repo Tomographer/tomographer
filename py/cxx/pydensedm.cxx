@@ -92,19 +92,21 @@ void py_tomo_densedm(py::module rootmodule)
       .def_property_readonly("dim2", & Kl::dim2 )
       .def_property_readonly("ndof", & Kl::ndof )
       .def("__repr__", [](const Kl & p) { return streamstr("DMTypes(dim="<<p.dim()<<")"); })
-      .def("__getstate__", [](py::object p) { return py::make_tuple(p.attr("dim")); })
-      .def("__setstate__", [](py::object self, py::tuple t) {
-          auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
-          logger.debug("Got t=%s\n", py::repr(t).cast<std::string>().c_str());
-          if (py::len(t) != 1) {
-            throw tpy::TomographerCxxError(streamstr("Invalid pickle state: expected 1 arg, got "
-                                                     << py::len(t)));
-          }
-          Kl & x = self.cast<Kl&>();
-
-          // in-place create the DMTypes object
-          new (&x) Kl(t[0].cast<Eigen::Index>()) ;
-        })
+      .def(py::pickle(
+               [](py::object p) {
+                 return py::make_tuple(p.attr("dim"));
+               },
+               [](py::tuple t) {
+                 auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
+                 logger.debug("Got t=%s\n", py::repr(t).cast<std::string>().c_str());
+                 if (py::len(t) != 1) {
+                   throw tpy::TomographerCxxError(streamstr("Invalid pickle state: expected 1 arg, got "
+                                                            << py::len(t)));
+                 }
+                 // create the DMTypes object
+                 return new Kl(t[0].cast<Eigen::Index>()) ;
+               }
+               ))
       ;
   }
   logger.debug("densedm.ParamX ...");
@@ -235,7 +237,8 @@ void py_tomo_densedm(py::module rootmodule)
           // on rows), a 3-D numpy array (will iter on first dimension), as well as a
           // list of matrices (will iter on list).
           auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
-          logger.debug(streamstr("setMeas("<<py::repr(E).cast<std::string>()<<","<<py::repr(Nx).cast<std::string>()<<"), dmt.dim="<<l.dmt.dim()));
+          logger.debug(streamstr("setMeas("<<py::repr(E).cast<std::string>()<<","<<py::repr(Nx).cast<std::string>()
+                                 <<"), dmt.dim="<<l.dmt.dim()));
           l.resetMeas();
           const std::size_t len = py::len(E);
           if (len != py::len(Nx)) {
@@ -310,25 +313,25 @@ void py_tomo_densedm(py::module rootmodule)
           return streamstr("<IndepMeasLLH dim="<<p.dmt.dim()<<" numEffects="<<p.numEffects()
                            <<" Ntot="<<p.Nx().sum()<<">") ;
         })
-      .def("__getstate__", [](py::object p) {
-          //fprintf(stderr, "DEBUG::: called!!\n");
-          return py::make_tuple(p.attr("dmt"), p.attr("Exn")(), p.attr("Nx")());
-        })
-      .def("__setstate__", [](py::object self, py::tuple t) {
-          auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
-          logger.debug("Got t=%s\n", py::repr(t).cast<std::string>().c_str());
+      .def(py::pickle(
+               [](py::object p) {
+                 return py::make_tuple(p.attr("dmt"), p.attr("Exn")(), p.attr("Nx")());
+               },
+               [](py::tuple t) {
+                 auto logger = Tomographer::Logger::makeLocalLogger(TOMO_ORIGIN, *tpy::logger);
+                 logger.debug("Got t=%s\n", py::repr(t).cast<std::string>().c_str());
+                 
+                 if (py::len(t) != 3) {
+                   throw tpy::TomographerCxxError(streamstr("Invalid pickle state: expected 3 args, got " << py::len(t)));
+                 }
 
-          if (py::len(t) != 3) {
-            throw tpy::TomographerCxxError(streamstr("Invalid pickle state: expected 3 args, got " << py::len(t)));
-          }
-          Kl & x = self.cast<Kl&>();
+                 // create the object.  First argument is dmt, to be passed to the constructor
+                 py::object obj = py::cast(new Kl(t[0].cast<tpy::DMTypes>())) ;
 
-          // in-place create the object.  First argument is dmt, to be passed to the constructor
-          new (&x) Kl(t[0].cast<tpy::DMTypes>()) ;
-
-          // then, set the measurement data
-          self.attr("setMeas")(t[1], t[2], false);
-        })
-      ;
+                 // then, set the measurement data
+                 obj.attr("setMeas")(t[1], t[2], false);
+                 return obj.cast<Kl>();
+               }
+               )) ;
   }
 }

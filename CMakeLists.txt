@@ -260,9 +260,9 @@ if (BUILD_TOMOPY)
 
   # Use pybind11
   #
-  # Need >=2.1 for auto metaclass
+  # Need >= 2.2 (some API changes)
   #
-  find_package(pybind11 2.1 REQUIRED)
+  find_package(pybind11 2.2 REQUIRED)
 
   # All these dependencies will be found using pybind11's stuff.
   #

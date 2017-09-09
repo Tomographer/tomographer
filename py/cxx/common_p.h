@@ -64,13 +64,13 @@ template <std::size_t N, std::size_t ...I> struct make_index_sequence : make_ind
 template <std::size_t ...I> struct make_index_sequence<0,I...> : index_sequence<I...> {};
 
 template<typename Kl, typename ArgPack, std::size_t... I>
-void inplaceconstruct_from_tuple_args(Kl & p, py::tuple t, index_sequence<I...>)
+Kl * construct_from_tuple_args(py::tuple t, index_sequence<I...>)
 {
-  new (&p) Kl( t[I].cast<typename std::tuple_element<I, ArgPack>::type>()... ) ;
+  return new Kl( t[I].cast<typename std::tuple_element<I, ArgPack>::type>()... ) ;
 }
 
 template<typename Kl, typename... Args>
-void unpack_tuple_and_construct(Kl & p, py::tuple t)
+Kl * unpack_tuple_and_construct(py::tuple t)
 {
   if (t.size() != sizeof...(Args)) {
     throw TomographerCxxError(streamstr("Invalid pickle state: expected "<<(sizeof...(Args))<<", got "
@@ -78,7 +78,7 @@ void unpack_tuple_and_construct(Kl & p, py::tuple t)
   }
   // Invoke the in-place constructor. Note that this is needed even when the object just
   // has a trivial default constructor
-  inplaceconstruct_from_tuple_args<Kl, std::tuple<Args...> >(p, t, make_index_sequence<sizeof...(Args)>()) ;
+  return construct_from_tuple_args<Kl, std::tuple<Args...> >(t, make_index_sequence<sizeof...(Args)>()) ;
 }
 
 } // internal

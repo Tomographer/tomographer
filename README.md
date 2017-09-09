@@ -86,7 +86,7 @@ OR: you can compile from source, in which case you'll need:
   - a recent C++ compiler (g++ ≥ 4.8, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.3)
   - [Boost headers ≥ 1.40](http://www.boost.org/) and
     [BCP](http://www.boost.org/doc/libs/1_65_0/tools/bcp/doc/html/index.html)
-  - [PyBind11 ≥ 2.0](http://github.com/pybind/pybind11/)
+  - [PyBind11 ≥ 2.2](http://github.com/pybind/pybind11/)
   - [Python 2.7 or Python 3](http://www.python.org/)
   - [Eigen3 library ≥ 3.3](http://eigen.tuxfamily.org/)
 
