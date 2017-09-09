@@ -78,7 +78,7 @@ To install the Python `tomographer` package, you'll need:
   - `pip`, the Python package manager — you probably already have it (≥ 7.1)
   - a recent C++ compiler (g++ ≥ 4.8, Intel ICC ≥ 14, LLVM/Clang++ ≥ 3.3)
   - *Optional: you can also install `tomographer` in
-    a [conda](https://www.continuum.io/downloads) environment, which can
+    a [conda](https://www.anaconda.com/) environment, which can
     automatically provide both above requirements*
   
 OR: you can compile from source, in which case you'll need:
@@ -103,7 +103,7 @@ Note: OpenMP is now no longer needed if your compiler supports C++ threads
 Tip: On Apple Mac OS X with [homebrew](https://brew.sh), the following commands
 will get you started with all the prerequisites for compiling both `tomorun` and
 the Python `tomographer` package, using Homebrew's python3.  For python, you
-should also consider using [*conda*](https://www.continuum.io/downloads).
+should also consider using [*conda*](https://www.anaconda.com/).
 
     > brew tap homebrew/science
     > brew install python3 boost eigen libmatio pybind11
