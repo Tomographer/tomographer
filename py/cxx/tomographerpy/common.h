@@ -31,6 +31,8 @@
 #include <cstdio>
 #include <string>
 
+#include <type_traits>
+
 #include <pybind11/pybind11.h>
 
 namespace py = pybind11;
