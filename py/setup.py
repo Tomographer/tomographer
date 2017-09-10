@@ -145,6 +145,10 @@ def dflt_cxxflags():
     if sys.platform == 'darwin':
         flags.append("-stdlib=libc++")
 
+    # pybind11 docs really instist on this being important; before 2.2 I had
+    # problems with this but this seems to be better now
+    flags.append("-fvisibility=hidden")
+
     return " ".join([shellquote(f) for f in flags])
 
 vv.setDefault('CXX_FLAGS', dflt_cxxflags)
@@ -425,7 +429,7 @@ REQUIREMENTS = [
     # recent PIP is required (get errors otherwise)
     'pip >= 7.1',
     'numpy >= 1.8',
-    'pybind11 >= 2.1',
+    'pybind11 >= 2.2',
 ],
 
 

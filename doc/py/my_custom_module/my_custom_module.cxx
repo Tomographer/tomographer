@@ -397,10 +397,9 @@ py::object run_function(
 //
 
 
-PYBIND11_PLUGIN(my_custom_module)
+PYBIND11_MODULE(my_custom_module, m)
 {
-  py::module m("my_custom_module",
-               "Module description goes here");
+  m.doc() = "Module description goes here";
 
   tpy::import_tomographer();
 
@@ -435,7 +434,4 @@ PYBIND11_PLUGIN(my_custom_module)
       "Docstring here"
       );
 
-
-  // return the constructed Python module
-  return m.ptr();
 }
