@@ -4,6 +4,9 @@ import datetime
 import numpy as np
 import scipy.io as sio
 
+import logging
+logging.basicConfig(level=logging.DEBUG) # comment to suppress verbose messages
+
 from make_data_file import dim, Emn, Nm, psi_W, proj_W
 
 import tomographer
@@ -24,13 +27,13 @@ def do_numerics():
             jumps_method='light',
             fig_of_merit='obs-value',
             observable=proj_W,
-            hist_params=tomographer.HistogramParams(0.65,0.75,50),
-            mhrw_params=tomographer.MHRWParams(0.1, 50, 4096, 8*65536),
+            hist_params=tomographer.HistogramParams(0.99908, 0.99911, 200),
+            mhrw_params=tomographer.MHRWParams(0.1, 50, 4096, 65536),
             binning_num_levels=12,
             ctrl_converged_params={'enabled': True,
-                                   'max_allowed_not_converged': 3,
-                                   'max_allowed_unknown': 4,
-                                   'max_allowed_unknown_notisolated': 4},
+                                   'max_allowed_not_converged': 20,
+                                   'max_allowed_unknown': 20,
+                                   'max_allowed_unknown_notisolated': 30},
             progress_fn=prg.progress_fn,
             progress_interval_ms=2000,
         )
