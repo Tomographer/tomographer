@@ -109,8 +109,8 @@ export CMAKE_PATH=`pwd`/cmake-3.1.3-Linux-x86_64
 if [ ! -f "$CMAKE_PATH/bin/cmake" ]; then curl -L -O https://cmake.org/files/v3.1/cmake-3.1.3-Linux-x86_64.tar.gz && tar xfz cmake-3.1.3-Linux-x86_64.tar.gz ; fi
 
 # PyBind11:
-export PYBIND11_PATH=`pwd`/pybind11-2.1.0
-if [ ! -f "$PYBIND11_PATH/_install/include/pybind11/pybind11.h" ]; then curl -L https://github.com/pybind/pybind11/archive/v2.1.0.tar.gz | tar xz && (mkdir -p "$PYBIND11_PATH/build" && cd "$PYBIND11_PATH/build" && cmake .. -DPYBIND11_TEST=0 -DCMAKE_INSTALL_PREFIX="$PYBIND11_PATH/_install" && make install) ; fi
+export PYBIND11_PATH=`pwd`/pybind11-2.2.0
+if [ ! -f "$PYBIND11_PATH/_install/include/pybind11/pybind11.h" ]; then curl -L https://github.com/pybind/pybind11/archive/v2.2.0.tar.gz | tar xz && (mkdir -p "$PYBIND11_PATH/build" && cd "$PYBIND11_PATH/build" && cmake .. -DPYBIND11_TEST=0 -DCMAKE_INSTALL_PREFIX="$PYBIND11_PATH/_install" && make install) ; fi
 
 
 # Python dependencies

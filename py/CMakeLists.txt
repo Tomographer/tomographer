@@ -65,7 +65,7 @@ set(tomographerpy_SRCS
   )
 pybind11_add_module(_tomographer_cxx MODULE NO_EXTRAS ${tomographerpy_SRCS})
 # needs to export symbols in binary lib
-target_compile_options(_tomographer_cxx PRIVATE "-fvisibility=default")
+#target_compile_options(_tomographer_cxx PRIVATE "-fvisibility=default") # ok, try with hidden visibility as pybind11 recommends so strongly
 
 
 # depends in particular on tomographer_version.h
