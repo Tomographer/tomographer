@@ -1,0 +1,11 @@
+--- pybind11-2.2.0/include/pybind11/numpy.h	2017-09-09 20:14:25.000000000 -0700
++++ pybind11-2.2.0/include/pybind11/numpy.h.new	2017-09-09 20:13:47.000000000 -0700
+@@ -288,7 +288,7 @@
+ 
+ template <typename T> using is_pod_struct = all_of<
+     std::is_standard_layout<T>,     // since we're accessing directly in memory we need a standard layout type
+-#if !defined(__GNUG__) || defined(__clang__) || __GNUC__ >= 5
++#if !defined(__GNUG__) || defined(_LIBCPP_VERSION) || defined(_GLIBCXX_USE_CXX11_ABI)
+     std::is_trivially_copyable<T>,
+ #else
+     // GCC 4 doesn't implement is_trivially_copyable, so approximate it
