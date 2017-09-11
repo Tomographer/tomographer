@@ -96,10 +96,10 @@ public:
   inline void set_bins(py::object newbins)
   {
     if (py::len(newbins.attr("shape")) != 1) {
-      throw py::type_error("Expected 1-D NumPy array for assignment to Histogram.bins");
+      throw py::value_error("Expected 1-D NumPy array for assignment to Histogram.bins");
     }
     if ((Eigen::Index)py::len(newbins) != params.num_bins) {
-      throw py::type_error(streamstr("Expected "<<params.num_bins<<" elements for assignment to Histogram.bins,"
+      throw py::value_error(streamstr("Expected "<<params.num_bins<<" elements for assignment to Histogram.bins,"
                                      " got "<<py::len(newbins)));
     }
     bins = newbins;
@@ -108,7 +108,7 @@ public:
   {
     auto np = py::module::import("numpy");
     if ( ! np.attr("isscalar")(o).cast<bool>() ) {
-      throw py::type_error("Expected scalar for assignment to Histogram.off_chart");
+      throw py::value_error("Expected scalar for assignment to Histogram.off_chart");
     }
     off_chart = o;
   }
@@ -186,11 +186,11 @@ public:
   inline void set_delta(py::object newdelta)
   {
     if (py::len(newdelta.attr("shape")) != 1) {
-      throw py::type_error("Expected 1-D NumPy array for assignment to HistogramWithErrorBars.delta");
+      throw py::value_error("Expected 1-D NumPy array for assignment to HistogramWithErrorBars.delta");
     }
     if ((Eigen::Index)py::len(newdelta) != params.num_bins) {
-      throw py::type_error(streamstr("Expected " << params.num_bins << " elements for assignment to "
-                                     "HistogramWithErrorBars.delta, got " << py::len(newdelta)));
+      throw py::value_error(streamstr("Expected " << params.num_bins << " elements for assignment to "
+                                      "HistogramWithErrorBars.delta, got " << py::len(newdelta)));
     }
     delta = newdelta;
   }
