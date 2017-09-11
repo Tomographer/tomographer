@@ -103,60 +103,7 @@ if [[ "$INSTALL_PYTHON_DEPS_USING" == "brew-pip" ]]; then
         (cd "$pybind11include" && sudo patch -p2 <$OUR_TRAVIS_PATH/test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch)
     fi
 
-    (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} ~/.local/bin/pip install --cache-dir=$OUR_TRAVIS_PATH/pip_cache/$PYTHON_EXECUTABLE --user $PIP_EXTRAS wheel cvxpy >pip_output.txt 2>&1 || cat pip_output.txt )
-
-elif [[ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]]; then
-
-    # see https://conda.io/docs/user-guide/tasks/use-conda-with-travis-ci.html
-
-    sudo apt-get update
-
-    wget "$MINICONDA_INSTALLER" -O miniconda.sh
-    
-    bash miniconda.sh -b -p "$HOME/.miniconda"
-    export PATH="$HOME/.miniconda/bin:$PATH"
-
-    hash -r
-
-    conda config --set always_yes yes --set changeps1 no
-
-    #conda config --add channels conda-forge
-    #conda config --add channels cvxgrp
-
-    conda update -q conda
-    # Useful for debugging any issues with conda
-    conda info -a
-
-    # MKL gives us problems ... ARRRRRGHHHH!!!!
-    #conda install nomkl
-
-    conda install libgcc libgfortran
-
-    # ### why bother with environments?
-    # conda create -q -n test-environment python=3.6 pip ...
-
-    conda install numpy scipy matplotlib ecos
-    conda install -f numpy
-    conda install -c cvxgrp scs multiprocess cvxcanon cvxpy
-    conda install -c conda-forge pybind11
-
-    if [[ "$TT_CC" =~ ^clang.*$ ]]; then
-        #
-        # PATCH pybind11 for compilation with clang using libstdc++ on gcc-4.8
-        #
-        pybind11include=`$PYTHON_EXECUTABLE -c 'import pybind11; assert(pybind11.__version__ == "2.2.0"); print(pybind11.get_include());'`
-        (cd "$pybind11include" && patch -p2 <test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch)
-    fi
-
-    #source activate test-environment
-
-    python -c 'import pybind11; print("pybind11 version: {}".format(pybind11.__version__))'
-    python -c 'import numpy; print("NUMPY version: {}".format(numpy.__version__))'
-    python -c 'import scs; print("SCS version: {}".format(scs.__version__))'
-    python -c 'import cvxpy; print("CVXPY version: {}".format(cvxpy.__version__))'
-    python -c 'import matplotlib; print("MATPLOTLIB version: {}".format(matplotlib.__version__))'
-
-    ls -lh $HOME/.miniconda/lib/
+    $PIP install $PIP_EXTRAS numpy scipy cvxpy >pip_output.txt 2>&1 || cat pip_output.txt
 
 else
 
