@@ -137,7 +137,7 @@ if [[ "$INSTALL_PYTHON_DEPS_USING" == "pip" ]]; then
         # PATCH pybind11 for compilation with clang using libstdc++ on gcc-4.8
         #
         pybind11include=`$PYTHON_EXECUTABLE -c 'import pybind11; assert(pybind11.__version__ == "2.2.0"); print(pybind11.get_include());'`
-        cd "$pybind11include" && sudo patch -p2 <test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch
+        (cd "$pybind11include" && sudo patch -p2 <test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch)
     fi
 
     (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} ~/.local/bin/pip install --cache-dir=$OUR_TRAVIS_PATH/pip_cache/$PYTHON_EXECUTABLE --user $PIP_EXTRAS wheel cvxpy >pip_output.txt 2>&1 || cat pip_output.txt )
@@ -182,7 +182,7 @@ elif [[ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]]; then
         # PATCH pybind11 for compilation with clang using libstdc++ on gcc-4.8
         #
         pybind11include=`$PYTHON_EXECUTABLE -c 'import pybind11; assert(pybind11.__version__ == "2.2.0"); print(pybind11.get_include());'`
-        cd "$pybind11include" && patch -p2 <test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch
+        (cd "$pybind11include" && patch -p2 <test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch)
     fi
 
     #source activate test-environment
