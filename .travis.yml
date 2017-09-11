@@ -46,6 +46,17 @@ matrix:
   include:
 
     #
+    # Mac OS X, brew python 3
+    #
+    - os: osx
+      before_install:
+        - brew tap homebrew/science
+        - brew install cmake python3 eigen boost libmatio pybind11 open-mpi boost-mpi
+      env:
+        - TT_CC=clang-osx
+        - TT_PYTHON=brew-python-3
+
+    #
     # g++-4.8 with Conda Python 3
     #
     - compiler: gcc
