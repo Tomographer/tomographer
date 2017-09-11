@@ -112,7 +112,7 @@ if [[ ! -f "$CMAKE_PATH/bin/cmake" ]]; then curl -L -O https://cmake.org/files/v
 # patch -- incorporate change https://github.com/pybind/pybind11/pull/1062 which
 #          fixes compilation using clang & libstdc++ on gcc==4
 export PYBIND11_PATH=`pwd`/pybind11-2.2.0
-if [[ ! -f "$PYBIND11_PATH/_install/include/pybind11/pybind11.h" ]]; then curl -L https://github.com/pybind/pybind11/archive/v2.2.0.tar.gz | tar xz && patch -p0 <test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch && (mkdir -p "$PYBIND11_PATH/build" && cd "$PYBIND11_PATH/build" && cmake .. -DPYBIND11_TEST=0 -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE -DCMAKE_INSTALL_PREFIX="$PYBIND11_PATH/_install" && make install) ; fi
+if [[ ! -f "$PYBIND11_PATH/_install/include/pybind11/pybind11.h" ]]; then curl -L https://github.com/pybind/pybind11/archive/v2.2.0.tar.gz | tar xz && patch -p0 <$OUR_TRAVIS_PATH/test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch && (mkdir -p "$PYBIND11_PATH/build" && cd "$PYBIND11_PATH/build" && cmake .. -DPYBIND11_TEST=0 -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE -DCMAKE_INSTALL_PREFIX="$PYBIND11_PATH/_install" && make install) ; fi
 
 
 # Python dependencies
@@ -137,7 +137,7 @@ if [[ "$INSTALL_PYTHON_DEPS_USING" == "pip" ]]; then
         # PATCH pybind11 for compilation with clang using libstdc++ on gcc-4.8
         #
         pybind11include=`$PYTHON_EXECUTABLE -c 'import pybind11; assert(pybind11.__version__ == "2.2.0"); print(pybind11.get_include());'`
-        (cd "$pybind11include" && sudo patch -p2 <test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch)
+        (cd "$pybind11include" && sudo patch -p2 <$OUR_TRAVIS_PATH/test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch)
     fi
 
     (mkdir -p pip_sandbox && cd pip_sandbox && CC=${PIP_CC=gcc} CXX=${PIP_CXX=g++} ~/.local/bin/pip install --cache-dir=$OUR_TRAVIS_PATH/pip_cache/$PYTHON_EXECUTABLE --user $PIP_EXTRAS wheel cvxpy >pip_output.txt 2>&1 || cat pip_output.txt )
