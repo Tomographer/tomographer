@@ -132,7 +132,7 @@ if [[ "$INSTALL_PYTHON_DEPS_USING" == "pip" ]]; then
     # for some reason we need this for pybind11 (??)
     sudo -H $PIP install pybind11
 
-    if [[ "$TT_CC" =~ ^clang*$ ]]; then
+    if [[ "$TT_CC" =~ ^clang.*$ ]]; then
         #
         # PATCH pybind11 for compilation with clang using libstdc++ on gcc-4.8
         #
@@ -177,7 +177,7 @@ elif [[ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]]; then
     conda install -c cvxgrp scs multiprocess cvxcanon cvxpy
     conda install -c conda-forge pybind11
 
-    if [[ "$TT_CC" =~ ^clang*$ ]]; then
+    if [[ "$TT_CC" =~ ^clang.*$ ]]; then
         #
         # PATCH pybind11 for compilation with clang using libstdc++ on gcc-4.8
         #
