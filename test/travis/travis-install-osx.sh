@@ -124,7 +124,8 @@ if [[ "$INSTALL_PYTHON_DEPS_USING" == "brew-pip" ]]; then
         (cd "$pybind11include" && sudo patch -p2 <$OUR_TRAVIS_PATH/test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch)
     fi
 
-    $PIP install $PIP_EXTRAS numpy scipy cvxpy >pip_output.txt 2>&1 || cat pip_output.txt
+    $PIP install numpy scipy >pip_output.txt 2>&1 || cat pip_output.txt
+    $PIP install $PIP_EXTRAS cvxpy >pip_output.txt 2>&1 || cat pip_output.txt
 
 elif [[ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]]; then
 
