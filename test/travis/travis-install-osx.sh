@@ -9,7 +9,8 @@ function nproc { sysctl -n hw.ncpu; }
 #
 # temp directory with short path name
 #
-TMPDIR=`/usr/bin/mktemp -d -t /tmp/zzzzxyyy`
+TMPDIR=/tmp/zzzzxyyy-$$
+mkdir -p $TMPDIR
 
 
 #
@@ -25,7 +26,7 @@ elif [[ "$TT_CC" == "gcc-conda" ]]; then
     # use gcc/g++ compiler provided by conda
     export CMAKE_C_COMPILER="$HOME/.miniconda/bin/gcc"
     export CMAKE_CXX_COMPILER="$HOME/.miniconda/bin/g++"
-    export DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:$HOME/.miniconda/lib"
+    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DCMAKE_INSTALL_RPATH=$HOME/.miniconda/lib -DCMAKE_BUILD_WITH_INSTALL_RPATH=1"
 
 else
     
