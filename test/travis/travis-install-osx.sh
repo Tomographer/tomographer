@@ -57,6 +57,7 @@ export OUR_TRAVIS_PATH=`pwd`
 
 export EIGEN_PATH=/usr/local/opt/eigen/include/eigen3
 export MATIO_PREFIX_PATH=/usr/local/opt/libmatio
+export MATIO_LIBRARY=$MATIO_PREFIX_PATH/lib/libmatio.a
 export CMAKE_PATH=/usr/local/opt/cmake
 export PYBIND11_PREFIX_PATH=/usr/local/opt/pybind11
 

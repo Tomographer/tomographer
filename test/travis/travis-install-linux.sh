@@ -102,6 +102,7 @@ if [[ ! -f "$EIGEN_PATH/Eigen/src/Core/util/Macros.h" ]]; then curl -L https://b
 # MatIO:
 export MATIO_PATH=`pwd`/matio-1.5.9
 export MATIO_PREFIX_PATH="$MATIO_PATH/_install"
+export MATIO_LIBRARY=$MATIO_PREFIX_PATH/lib/libmatio.so
 if [[ ! -f "$MATIO_PREFIX_PATH/include/matio.h" ]]; then curl -L -o matio-1.5.9.tar.gz  https://sourceforge.net/projects/matio/files/matio/1.5.9/matio-1.5.9.tar.gz/download  && tar xfz matio-1.5.9.tar.gz && ( cd matio-1.5.9 && ./configure --prefix="$MATIO_PREFIX_PATH" && make && make install ) ; fi
 
 # CMake:
