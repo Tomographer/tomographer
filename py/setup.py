@@ -204,7 +204,7 @@ if IsTomographerSources and sys.platform == 'darwin':
     print("""\
   To get started on Mac OS X with homebrew, you may run for instance:
 
-    > brew install eigen3 boost boost-bcp pybind11
+    > brew install eigen boost boost-bcp pybind11
 """)
 
 

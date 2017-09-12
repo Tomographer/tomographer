@@ -28,6 +28,11 @@ elif [[ "$TT_CC" == "gcc-conda" ]]; then
     export CMAKE_CXX_COMPILER="$HOME/.miniconda/bin/g++"
     export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DCMAKE_INSTALL_RPATH=$HOME/.miniconda/lib -DCMAKE_BUILD_WITH_INSTALL_RPATH=1"
 
+elif [[ "$TT_CC" == "brew-gcc-7" ]]; then
+    
+    export CMAKE_C_COMPILER="/usr/local/opt/gcc/bin/gcc-7"
+    export CMAKE_CXX_COMPILER="/usr/local/opt/gcc/bin/g++-7"
+
 else
     
     echo &>2 "TOMOGRAPHER TRAVIS TEST SETUP ERROR: Unknown TT_CC=$TT_CC"
@@ -37,7 +42,6 @@ else
 fi
 
 echo "[OSX] Using compilers -- C: $CMAKE_C_COMPILER,  C++: $CMAKE_CXX_COMPILER"
-echo "[OSX] DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH"
 
 #
 # Python version to use
@@ -47,7 +51,8 @@ if [[ "$TT_PYTHON" == "brew-python-3" ]]; then
     export PYTHON_EXECUTABLE=/usr/local/opt/python3/bin/python3
     export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DPYTHON_LIBRARY=/usr/local/opt/python3/Frameworks/Python.framework/Versions/3.6/lib/libpython3.6m.dylib"
     export PIP=/usr/local/bin/pip3
-    export INSTALL_PYTHON_DEPS_USING="brew-pip"
+    export PIP_MAYBE_SUDO=""
+    export INSTALL_PYTHON_DEPS_USING="pip"
 
 elif [[ "$TT_PYTHON" == "conda-python-2.7" ]]; then
 
@@ -59,6 +64,17 @@ elif [[ "$TT_PYTHON" == "conda-python-2.7" ]]; then
 
     # use boost from conda, hide this one
     brew unlink boost
+
+elif [[ "$TT_PYTHON" == "osxsystem-python-2.7" ]]; then
+
+    export PYTHON_EXECUTABLE=/usr/bin/python
+    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DPYTHON_LIBRARY=/System/Library/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib"
+    export PIP=/usr/bin/pip
+    export PIP_MAYBE_SUDO="sudo -H"
+    export INSTALL_PYTHON_DEPS_USING="pip"
+
+    # install pip for system python
+    sudo easy_install pip
 
 else
 
@@ -116,24 +132,24 @@ export PYBIND11_PREFIX_PATH=/usr/local/opt/pybind11
 function write_visual_bells() { set +x; while true; do echo -en "\a"; sleep 10; done; }; write_visual_bells &
 
 
-if [[ "$INSTALL_PYTHON_DEPS_USING" == "brew-pip" ]]; then
+if [[ "$INSTALL_PYTHON_DEPS_USING" == "pip" ]]; then
 
-    $PIP install --upgrade pip
-    $PIP install wheel
+    $PIP_MAYBE_SUDO $PIP install --upgrade pip
+    $PIP_MAYBE_SUDO $PIP install wheel
 
     # for some reason we need sudo to install pybind11 (??)
-    $PIP install pybind11
+    $PIP_MAYBE_SUDO $PIP install pybind11
 
     if [[ "$TT_CC" =~ ^clang.*$ ]]; then
         #
         # PATCH pybind11 for compilation with clang using libstdc++ on gcc-4.8
         #
         pybind11include=`$PYTHON_EXECUTABLE -c 'import pybind11; assert(pybind11.__version__ == "2.2.0"); print(pybind11.get_include());'`
-        (cd "$pybind11include" && sudo patch -p2 <$OUR_TRAVIS_PATH/test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch)
+        (cd "$pybind11include" && $PIP_MAYBE_SUDO patch -p2 <$OUR_TRAVIS_PATH/test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch)
     fi
 
-    $PIP install numpy scipy >pip_output.txt 2>&1 || cat pip_output.txt
-    $PIP install $PIP_EXTRAS cvxpy >pip_output.txt 2>&1 || cat pip_output.txt
+    $PIP_MAYBE_SUDO $PIP install numpy scipy >pip_output.txt 2>&1 || cat pip_output.txt
+    $PIP_MAYBE_SUDO $PIP install $PIP_EXTRAS cvxpy >pip_output.txt 2>&1 || cat pip_output.txt
 
 elif [[ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]]; then
 

@@ -56,18 +56,36 @@ matrix:
         - TT_CC=clang-osx
         - TT_PYTHON=brew-python-3
 
+    # #
+    # # Mac OS X, conda python 2.7 & conda gcc
+    # #
+    # - os: osx
+    #   before_install:
+    #     - brew tap homebrew/science
+    #     - brew install eigen libmatio boost-bcp
+    #   env:
+    #     - TT_CC=gcc-conda
+    #     - TT_PYTHON=conda-python-2.7
+    #     # Use OpenMP; also there's no MPI---so expect those tests to fail
+    #     - CMAKE_ADD_ARGS="-DTOMORUN_MULTIPROC=openmp -DTOMOGRAPHER_TESTS_EXPECTED_TO_BE_SKIPPED_AND_FAIL=minimal_mpi_tomorun;test_mpi_multiprocmpi"
+
     #
-    # Mac OS X, conda python 2.7 & conda gcc
+    # Mac OS X, brew gcc 7 & system python 2.7
     #
-    - os: osx
-      before_install:
-        - brew tap homebrew/science
-        - brew install eigen libmatio boost-bcp
-      env:
-        - TT_CC=gcc-conda
-        - TT_PYTHON=conda-python-2.7
-        # Use OpenMP; also there's no MPI---so expect those tests to fail
-        - CMAKE_ADD_ARGS="-DTOMORUN_MULTIPROC=openmp -DTOMOGRAPHER_TESTS_EXPECTED_TO_BE_SKIPPED_AND_FAIL=minimal_mpi_tomorun;test_mpi_multiprocmpi"
+    # ## PROBLEM: NEEDS BOOST COMPILED WITH GCC-7 -- PROVIDE CUSTOM BOTTLE??
+    #
+    # - os: osx
+    #   before_install:
+    #     - brew tap homebrew/science
+    #     - brew install gcc
+    #     - brew unlink boost
+    #     - brew install boost --cc=gcc-7 --without-single --without-static
+    #     - brew install --cc=gcc-7 eigen libmatio pybind11 boost-bcp
+    #   env:
+    #     - TT_CC=brew-gcc-7
+    #     - TT_PYTHON=osxsystem-python-2.7
+    #     # Use OpenMP; also there's no MPI---so expect those tests to fail
+    #     - CMAKE_ADD_ARGS="-DTOMORUN_MULTIPROC=openmp -DTOMOGRAPHER_TESTS_EXPECTED_TO_BE_SKIPPED_AND_FAIL=minimal_mpi_tomorun;test_mpi_multiprocmpi"
 
     #
     # g++-4.8 with Conda Python 3
