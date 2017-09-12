@@ -4,6 +4,8 @@
 #
 
 
+function nproc { sysctl -n hw.ncpu; }
+
 
 #
 # C/C++ compiler

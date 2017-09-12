@@ -96,34 +96,6 @@ matrix:
         - TT_PYTHON=conda-3
 
     #
-    # g++-4.8 & system python 2.7
-    #
-    - compiler: gcc
-      addons:
-        apt:
-          sources:
-            - ubuntu-toolchain-r-test
-          packages:
-            - gcc-4.8
-            - g++-4.8
-            - gfortran
-            - gfortran-multilib
-            - python-dev
-            - python-numpy
-            - python-scipy
-            - python-matplotlib
-            - python-tk
-            - python-pip
-            - libatlas-dev
-            - libatlas-base-dev
-            - libboost1.55-all-dev
-            - libboost1.55-dev
-            - openmpi-bin
-      env:
-        - TT_CC=gcc-4.8
-        - TT_PYTHON=system-python-2.7
-
-    #
     # g++-5 & system python 2.7
     #
     - compiler: gcc
