@@ -4,7 +4,7 @@
 #
 
 
-INSTALL_BOOST_USING_CONDA_GCC=0
+INSTALL_CUSTOM_BOOST=0
 
 #
 # C/C++ compiler
@@ -19,7 +19,7 @@ elif [[ "$TT_CC" == "gcc-conda" ]]; then
     # use gcc/g++ compiler provided by conda
     export CMAKE_C_COMPILER="$HOME/.miniconda/bin/gcc"
     export CMAKE_CXX_COMPILER="$HOME/.miniconda/bin/g++"
-    INSTALL_BOOST_USING_CONDA_GCC=1
+    INSTALL_CUSTOM_BOOST=1
 
 else
     
@@ -185,9 +185,8 @@ fi
 
 
 
-if [[ "$INSTALL_BOOST_USING_CONDA_GCC" == 1 ]]; then
+if [[ "$INSTALL_CUSTOM_BOOST" == 1 ]]; then
 
-    brew uninstall boost
-    brew install boost --cc="$CMAKE_C_COMPILER"
+    brew upgrade boost --cc="$CMAKE_C_COMPILER"
 
 fi
