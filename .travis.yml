@@ -20,7 +20,8 @@ cache:
     - pybind11-2.2.0/_install
     - cmake-3.1.3-Linux-x86_64
     - pip_cache
-
+    # on OS X, cache custom homebrew builds
+    - $HOME/Library/Caches/Homebrew
 
 # Allow git-describe to find the right version string, otherwise the build fails
 git:

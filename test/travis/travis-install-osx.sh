@@ -174,6 +174,8 @@ elif [[ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]]; then
 
     ls -lh $HOME/.miniconda/lib/
 
+    export PYBIND11_PREFIX_PATH=`python -c 'import pybind11; print(pybind11.get_include())'`
+
 else
 
     echo >&2 "Error: INSTALL_PYTHON_DEPS_USING=$INSTALL_PYTHON_DEPS_USING  unknown !!!"
@@ -185,6 +187,7 @@ fi
 
 if [[ "$INSTALL_BOOST_USING_CONDA_GCC" == 1 ]]; then
 
+    brew uninstall boost
     brew install boost --cc="$CMAKE_C_COMPILER"
 
 fi
