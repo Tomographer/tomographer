@@ -66,7 +66,8 @@ matrix:
       env:
         - TT_CC=gcc-conda
         - TT_PYTHON=conda-python-2.7
-        - CMAKE_ADD_ARGS="-DTOMORUN_MULTIPROC=openmp -DTOMOGRAPHER_TESTS_EXPECTED_TO_BE_SKIPPED_AND_FAIL=minimal_mpi_tomorun;test_mpi_multiprocmpi" # no MPI -- test installs ok and doesn't complain
+        # Use OpenMP; also there's no MPI---so expect those tests to fail
+        - CMAKE_ADD_ARGS="-DTOMORUN_MULTIPROC=openmp -DTOMOGRAPHER_TESTS_EXPECTED_TO_BE_SKIPPED_AND_FAIL=minimal_mpi_tomorun;test_mpi_multiprocmpi"
 
     #
     # g++-4.8 with Conda Python 3

@@ -6,6 +6,11 @@
 
 function nproc { sysctl -n hw.ncpu; }
 
+#
+# temp directory with short path name
+#
+TMPDIR=`/usr/bin/mktemp -d -t /tmp/zzzzxyyy`
+
 
 #
 # C/C++ compiler
@@ -20,6 +25,7 @@ elif [[ "$TT_CC" == "gcc-conda" ]]; then
     # use gcc/g++ compiler provided by conda
     export CMAKE_C_COMPILER="$HOME/.miniconda/bin/gcc"
     export CMAKE_CXX_COMPILER="$HOME/.miniconda/bin/g++"
+    export DYLD_LIBRARY_PATH="$DYLD_LIBRARY_PATH:$HOME/.miniconda/lib"
 
 else
     
@@ -30,6 +36,7 @@ else
 fi
 
 echo "[OSX] Using compilers -- C: $CMAKE_C_COMPILER,  C++: $CMAKE_CXX_COMPILER"
+echo "[OSX] DYLD_LIBRARY_PATH=$DYLD_LIBRARY_PATH"
 
 #
 # Python version to use
