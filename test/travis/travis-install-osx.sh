@@ -18,6 +18,7 @@ elif [[ "$TT_CC" == "gcc-conda" ]]; then
     # use gcc/g++ compiler provided by conda
     export CMAKE_C_COMPILER="$HOME/.miniconda/bin/gcc"
     export CMAKE_CXX_COMPILER="$HOME/.miniconda/bin/g++"
+    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DCMAKE_PREFIX_PATH=$HOME/.miniconda"
 
 else
     
