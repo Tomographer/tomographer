@@ -4,7 +4,6 @@
 #
 
 
-INSTALL_CUSTOM_BOOST=0
 
 #
 # C/C++ compiler
@@ -19,7 +18,6 @@ elif [[ "$TT_CC" == "gcc-conda" ]]; then
     # use gcc/g++ compiler provided by conda
     export CMAKE_C_COMPILER="$HOME/.miniconda/bin/gcc"
     export CMAKE_CXX_COMPILER="$HOME/.miniconda/bin/g++"
-    INSTALL_CUSTOM_BOOST=1
 
 else
     
@@ -151,6 +149,8 @@ elif [[ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]]; then
     # ### why bother with environments?
     # conda create -q -n test-environment python=3.6 pip ...
 
+    conda install boost
+
     conda install numpy scipy matplotlib ecos
     conda install -f numpy
     conda install -c cvxgrp scs multiprocess cvxcanon cvxpy
@@ -185,8 +185,3 @@ fi
 
 
 
-if [[ "$INSTALL_CUSTOM_BOOST" == 1 ]]; then
-
-    brew upgrade boost --cc=`basename "$CMAKE_C_COMPILER"`
-
-fi
