@@ -187,6 +187,6 @@ fi
 
 if [[ "$INSTALL_CUSTOM_BOOST" == 1 ]]; then
 
-    brew upgrade boost --cc="$CMAKE_C_COMPILER"
+    brew upgrade boost --cc=`basename "$CMAKE_C_COMPILER"`
 
 fi
