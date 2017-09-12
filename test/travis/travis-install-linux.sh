@@ -131,7 +131,7 @@ if [[ "$INSTALL_PYTHON_DEPS_USING" == "pip" ]]; then
     # ... so that we can finally run pip
 
     # for some reason we need sudo to install pybind11 (??)
-    sudo -H $PIP install pybind11==2.1.1
+    sudo -H $PIP install pybind11
 
     if [[ "$TT_CC" =~ ^clang.*$ ]]; then
         #
@@ -176,7 +176,7 @@ elif [[ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]]; then
     conda install numpy scipy matplotlib ecos
     conda install -f numpy
     conda install -c cvxgrp scs multiprocess cvxcanon cvxpy
-    conda install -c conda-forge pybind11==2.1.1
+    conda install -c conda-forge pybind11
 
     if [[ "$TT_CC" =~ ^clang.*$ ]]; then
         #
