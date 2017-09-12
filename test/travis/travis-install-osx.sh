@@ -18,7 +18,6 @@ elif [[ "$TT_CC" == "gcc-conda" ]]; then
     # use gcc/g++ compiler provided by conda
     export CMAKE_C_COMPILER="$HOME/.miniconda/bin/gcc"
     export CMAKE_CXX_COMPILER="$HOME/.miniconda/bin/g++"
-    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DCMAKE_PREFIX_PATH=$HOME/.miniconda"
 
 else
     
@@ -44,9 +43,12 @@ elif [[ "$TT_PYTHON" == "conda-python-2.7" ]]; then
 
     export MINICONDA_INSTALLER=https://repo.continuum.io/miniconda/Miniconda2-latest-MacOSX-x86_64.sh
     export PYTHON_EXECUTABLE=$HOME/.miniconda/bin/python
-    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DCMAKE_PREFIX_PATH=$HOME/.miniconda/envs/test-environment -DPYTHON_LIBRARY=$HOME/.miniconda/lib/libpython2.7.so -DPYTHON_INCLUDE_DIR=$HOME/.miniconda/include/python2.7 "
+    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DCMAKE_PREFIX_PATH=$HOME/.miniconda -DPYTHON_LIBRARY=$HOME/.miniconda/lib/libpython2.7.so -DPYTHON_INCLUDE_DIR=$HOME/.miniconda/include/python2.7 "
     export PIP=$HOME/.miniconda/bin/pip
     export INSTALL_PYTHON_DEPS_USING="conda"
+
+    # use boost from conda, hide this one
+    brew unlink boost
 
 else
 

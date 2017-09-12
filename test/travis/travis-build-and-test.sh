@@ -16,11 +16,6 @@ $CMAKE_PATH/bin/cmake .. -DCMAKE_C_COMPILER=$CMAKE_C_COMPILER -DCMAKE_CXX_COMPIL
 # make tomorun separately, one process only, because it's VERY heavy on RAM
 make tomorun VERBOSE=1 || exit 1
 
-#
-# JUST FOR NOW -- SUCCESSFUL EXIT TO STORE TRAVIS CI CACHE
-#
-exit 0
-
 # then make the rest using all available cores
 make -j`nproc` VERBOSE=1 || exit 1
 
