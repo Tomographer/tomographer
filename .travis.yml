@@ -72,20 +72,16 @@ matrix:
     #
     # Mac OS X, brew gcc 7 & system python 2.7
     #
-    # ## PROBLEM: NEEDS BOOST COMPILED WITH GCC-7 -- PROVIDE CUSTOM BOTTLE??
-    #
-    # - os: osx
-    #   before_install:
-    #     - brew tap homebrew/science
-    #     - brew install gcc
-    #     - brew unlink boost
-    #     - brew install boost --cc=gcc-7 --without-single --without-static
-    #     - brew install --cc=gcc-7 eigen libmatio pybind11 boost-bcp
-    #   env:
-    #     - TT_CC=brew-gcc-7
-    #     - TT_PYTHON=osxsystem-python-2.7
-    #     # Use OpenMP; also there's no MPI---so expect those tests to fail
-    #     - CMAKE_ADD_ARGS="-DTOMORUN_MULTIPROC=openmp -DTOMOGRAPHER_TESTS_EXPECTED_TO_BE_SKIPPED_AND_FAIL=minimal_mpi_tomorun;test_mpi_multiprocmpi"
+    - os: osx
+      before_install:
+        - brew tap homebrew/science
+        - brew install gcc
+        - brew unlink boost
+        - brew install eigen libmatio pybind11 boost-bcp open-mpi
+      env:
+        - TT_CC=brew-gcc-7
+        - TT_PYTHON=osxsystem-python-2.7
+        - CMAKE_ADD_ARGS="-DTOMORUN_MULTIPROC=openmp"
 
     #
     # g++-4.8 with Conda Python 3

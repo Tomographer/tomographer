@@ -32,6 +32,7 @@ elif [[ "$TT_CC" == "brew-gcc-7" ]]; then
     
     export CMAKE_C_COMPILER="/usr/local/opt/gcc/bin/gcc-7"
     export CMAKE_CXX_COMPILER="/usr/local/opt/gcc/bin/g++-7"
+    export CUSTOM_BIN_INSTALL_MACOSX_BOOST_GCC7=1
 
 else
     
@@ -97,7 +98,7 @@ fi
 pwd
 export OUR_TRAVIS_PATH=`pwd`
 
-# all dependencies via homebrew for now -- no need to download & install anything manually
+# all (non-python) dependencies are normally installed via homebrew
 
 export EIGEN_PATH=/usr/local/opt/eigen/include/eigen3
 export MATIO_PREFIX_PATH=/usr/local/opt/libmatio
@@ -105,23 +106,18 @@ export MATIO_LIBRARY=$MATIO_PREFIX_PATH/lib/libmatio.dylib
 export CMAKE_PATH=/usr/local/opt/cmake
 export PYBIND11_PREFIX_PATH=/usr/local/opt/pybind11
 
-# # Eigen3: need >= 3.3
-# export EIGEN_PATH=`pwd`/eigen-3.3.1
-# if [[ ! -f "$EIGEN_PATH/Eigen/src/Core/util/Macros.h" ]]; then curl -L https://bitbucket.org/eigen/eigen/get/3.3.1.tar.gz -o eigen-3.3.1.tar.gz && tar xfz eigen-3.3.1.tar.gz && mkdir -p eigen-3.3.1 && mv eigen-eigen-f562a193118d/* eigen-3.3.1 ; fi
 
-# # MatIO:
-# export MATIO_PATH=`pwd`/matio-1.5.9
-# if [[ ! -f "$MATIO_PATH/_install/include/matio.h" ]]; then curl -L -o matio-1.5.9.tar.gz  https://sourceforge.net/projects/matio/files/matio/1.5.9/matio-1.5.9.tar.gz/download  && tar xfz matio-1.5.9.tar.gz && ( cd matio-1.5.9 && ./configure --prefix="$MATIO_PATH/_install" && make && make install ) ; fi
+# ... except this -- we might need custom version of boost compiled with g++-7
+if [[ "$CUSTOM_BIN_INSTALL_MACOSX_BOOST_GCC7" == 1 ]]; then
 
-# # CMake:
-# export CMAKE_PATH=`pwd`/cmake-3.1.3-Linux-x86_64
-# if [[ ! -f "$CMAKE_PATH/bin/cmake" ]]; then curl -L -O https://cmake.org/files/v3.1/cmake-3.1.3-Linux-x86_64.tar.gz && tar xfz cmake-3.1.3-Linux-x86_64.tar.gz ; fi
+    curl -L macosx-gcc7-boost-bin.tar.bz2 https://github.com/Tomographer/tomographer/raw/tomographer-ci-bin/macosx-gcc7-boost-bin.tar.bz2 | tar xj
+    export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DBOOST_INCLUDE_DIR=`pwd`/gcc7-env/include -DBOOST_ROOT=`pwd`/gcc7-env -DBOOST_LIBRARYDIR=`pwd`/gcc7-env/lib"
 
-# # PyBind11:
-# # patch -- incorporate change https://github.com/pybind/pybind11/pull/1062 which
-# #          fixes compilation using clang & libstdc++ on gcc==4
-# export PYBIND11_PATH=`pwd`/pybind11-2.2.0
-# if [[ ! -f "$PYBIND11_PATH/_install/include/pybind11/pybind11.h" ]]; then curl -L https://github.com/pybind/pybind11/archive/v2.2.0.tar.gz | tar xz && patch -p0 <$OUR_TRAVIS_PATH/test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch && (mkdir -p "$PYBIND11_PATH/build" && cd "$PYBIND11_PATH/build" && cmake .. -DPYBIND11_TEST=0 -DPYTHON_EXECUTABLE=$PYTHON_EXECUTABLE -DCMAKE_INSTALL_PREFIX="$PYBIND11_PATH/_install" && make install) ; fi
+    # debug
+    echo "Installed custom boost binaries for Mac OSX / gcc-7"
+    ls `pwd`/gcc7-env/lib
+
+fi
 
 
 
@@ -137,7 +133,6 @@ if [[ "$INSTALL_PYTHON_DEPS_USING" == "pip" ]]; then
     $PIP_MAYBE_SUDO $PIP install --upgrade pip
     $PIP_MAYBE_SUDO $PIP install wheel
 
-    # for some reason we need sudo to install pybind11 (??)
     $PIP_MAYBE_SUDO $PIP install pybind11
 
     if [[ "$TT_CC" =~ ^clang.*$ ]]; then
