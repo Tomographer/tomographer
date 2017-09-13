@@ -81,7 +81,7 @@ matrix:
       env:
         - TT_CC=brew-gcc-7
         - TT_PYTHON=osxsystem-python-2.7
-        - CMAKE_ADD_ARGS="-DTOMORUN_MULTIPROC=openmp"
+        - CMAKE_ADD_ARGS="-DTOMORUN_MULTIPROC=openmp -DCMAKE_CXX_FLAGS=-Wno-int-in-bool-context"
 
     #
     # g++-4.8 with Conda Python 3
