@@ -25,26 +25,6 @@
 # SOFTWARE.
 
 
-if(CMAKE_CURRENT_SOURCE_DIR STREQUAL CMAKE_SOURCE_DIR)
-  # Turn this into an independent cmake project file -- temporarily  ### --- now done, use only with main project
-  cmake_minimum_required(VERSION 3.1)
-
-  project(tomographerpy)
-  set(EIGEN3_INCLUDE_DIR "/usr/local/opt/eigen/include/eigen3")
-  add_definitions(-DTOMOGRAPHER_VERSION="3.1" -DTOMOGRAPHER_VERSION_MAJ=3 -DTOMOGRAPHER_VERSION_MIN=1)
-  add_custom_target(tomographer) # dummy
-
-  set(CMAKE_MODULE_PATH
-    ${CMAKE_MODULE_PATH}
-    "${CMAKE_CURRENT_SOURCE_DIR}/../cmake"
-    "${CMAKE_CURRENT_SOURCE_DIR}/../cmake/vc")
-  include(Util)
-  include(OptimizeForArchitecture)
-  OptimizeForArchitecture()
-  string(REPLACE ";" " " _vc_arch_flags_joined "${Vc_ARCHITECTURE_FLAGS}")
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${_vc_arch_flags_joined}")
-endif()
-
 
 #
 # need Eigen assertions to be live, remove any -NDEBUG flag
@@ -84,6 +64,7 @@ target_include_directories(_tomographer_cxx PUBLIC "cxx")
 #
 target_include_directories(_tomographer_cxx  PUBLIC ${EIGEN3_INCLUDE_DIR})
 target_compile_definitions(_tomographer_cxx PRIVATE -DEIGEN_DONT_PARALLELIZE)
+target_include_directories(_tomographer_cxx PUBLIC ${Boost_INCLUDE_DIR})
 
 # Uses C++ threads (need -pthread on gcc)
 target_link_libraries(_tomographer_cxx PRIVATE Threads::Threads)
