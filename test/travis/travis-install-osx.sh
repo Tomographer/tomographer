@@ -135,14 +135,6 @@ if [[ "$INSTALL_PYTHON_DEPS_USING" == "pip" ]]; then
 
     $PIP_MAYBE_SUDO $PIP install pybind11
 
-    if [[ "$TT_CC" =~ ^clang.*$ ]]; then
-        #
-        # PATCH pybind11 for compilation with clang using libstdc++ on gcc-4.8
-        #
-        pybind11include=`$PYTHON_EXECUTABLE -c 'import pybind11; assert(pybind11.__version__ == "2.2.0"); print(pybind11.get_include());'`
-        (cd "$pybind11include" && $PIP_MAYBE_SUDO patch -p2 <$OUR_TRAVIS_PATH/test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch)
-    fi
-
     $PIP_MAYBE_SUDO $PIP install numpy scipy >pip_output.txt 2>&1 || cat pip_output.txt
     $PIP_MAYBE_SUDO $PIP install $PIP_EXTRAS cvxpy >pip_output.txt 2>&1 || cat pip_output.txt
 
@@ -180,14 +172,6 @@ elif [[ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]]; then
     conda install -f numpy
     conda install -c cvxgrp scs multiprocess cvxcanon cvxpy
     conda install -c conda-forge pybind11
-
-    if [[ "$TT_CC" =~ ^clang.*$ ]]; then
-        #
-        # PATCH pybind11 for compilation with clang using libstdc++ on gcc-4.8
-        #
-        pybind11include=`$PYTHON_EXECUTABLE -c 'import pybind11; assert(pybind11.__version__ == "2.2.0"); print(pybind11.get_include());'`
-        (cd "$pybind11include" && patch -p2 <test/travis/fix_clang-libstdcxx-gcc4_for_pybind-2-2-0.patch)
-    fi
 
     #source activate test-environment
 
