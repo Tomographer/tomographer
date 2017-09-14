@@ -70,7 +70,7 @@ elif [[ "$TT_PYTHON" == "osxsystem-python-2.7" ]]; then
 
     export PYTHON_EXECUTABLE=/usr/bin/python
     export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DPYTHON_LIBRARY=/System/Library/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib"
-    export PIP=/usr/bin/pip
+    export PIP=/usr/local/bin/pip
     export PIP_MAYBE_SUDO="sudo -H"
     export INSTALL_PYTHON_DEPS_USING="pip"
 
