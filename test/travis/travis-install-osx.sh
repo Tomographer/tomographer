@@ -53,6 +53,7 @@ if [[ "$TT_PYTHON" == "brew-python-3" ]]; then
     export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DPYTHON_LIBRARY=/usr/local/opt/python3/Frameworks/Python.framework/Versions/3.6/lib/libpython3.6m.dylib"
     export PIP=/usr/local/bin/pip3
     export PIP_MAYBE_SUDO=""
+    export PIP_DEPS_USE_USER="0"
     export INSTALL_PYTHON_DEPS_USING="pip"
 
 elif [[ "$TT_PYTHON" == "conda-python-2.7" ]]; then
@@ -72,6 +73,7 @@ elif [[ "$TT_PYTHON" == "osxsystem-python-2.7" ]]; then
     export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DPYTHON_LIBRARY=/System/Library/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib"
     export PIP=/usr/local/bin/pip
     export PIP_MAYBE_SUDO="sudo -H"
+    export PIP_DEPS_USE_USER="1"
     export INSTALL_PYTHON_DEPS_USING="pip"
 
     # install pip for system python
@@ -130,13 +132,20 @@ function write_visual_bells() { set +x; while true; do echo -en "\a"; sleep 10; 
 
 if [[ "$INSTALL_PYTHON_DEPS_USING" == "pip" ]]; then
 
+    # system in any case
     $PIP_MAYBE_SUDO $PIP install --upgrade pip
     $PIP_MAYBE_SUDO $PIP install wheel
 
-    $PIP_MAYBE_SUDO $PIP install pybind11
-
     $PIP_MAYBE_SUDO $PIP install numpy scipy >pip_output.txt 2>&1 || cat pip_output.txt
-    $PIP_MAYBE_SUDO $PIP install $PIP_EXTRAS cvxpy >pip_output.txt 2>&1 || cat pip_output.txt
+
+    # PIP_MAYBE_USER refers to these packages only ... especially pybind11
+    if [[ "$PIP_DEPS_USE_USER" == "1" ]]; then
+        $PIP install pybind11 --user
+        $PIP install $PIP_EXTRAS cvxpy --user >pip_output.txt 2>&1 || cat pip_output.txt
+    else
+        $PIP_MAYBE_SUDO $PIP install pybind11
+        $PIP_MAYBE_SUDO $PIP install $PIP_EXTRAS cvxpy >pip_output.txt 2>&1 || cat pip_output.txt
+    fi
 
 elif [[ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]]; then
 

@@ -41,7 +41,7 @@ if tomographer_cflags is not None:
                   " ".join([shlexquote(x) for x in tomographer_cflags]))
 else:
     # We are using a wierdly compiled tomographer module which doesn't expose
-    # its cflags. Use some reasonable defaults.
+    # its cflags. Attempt to use some reasonable defaults.
     vv.setDefault('CXX_FLAGS', '-std=c++11 -UNDEBUG -O3 -g -march=native')
 
 #
@@ -70,7 +70,8 @@ setup(name="my_custom_package",
               # and Tomographer-Py header locations):
               include_dirs=[
                   numpy.get_include(),
-                  pybind11.get_include(),
+                  pybind11.get_include(), # for pybind11 system-wide install
+                  pybind11.get_include(True), # for pybind11 user install
               ] + tomographer.include.get_include(),
               # Compiler flags:
               extra_compile_args=shlex.split(vv.get('CXX_FLAGS')),
