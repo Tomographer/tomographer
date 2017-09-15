@@ -156,25 +156,15 @@ vv.setDefault('CXX_FLAGS', dflt_cxxflags)
 
 
 #
-# PREPARE THE PYTHON SOURCES
+# DETERMINE VERSION FIRST, BEFORE DISPLAYING WELCOME MESSAGE
 #
-
-if IsTomographerSources:
-    setup_sources.setup_sources(thisdir, vv)
-
-
-#
-# Read version info
-#
-with open(os.path.join(thisdir, 'VERSION')) as f:
-    version = ensure_str(f.read()).strip()
+version = setup_sources.get_version(thisdir, IsTomographerSources, vv)
 
 (version_maj, version_min, version_for_pip) = setup_sources.get_version_info(version)
 
 
-
 #
-# Tell the user everything.
+# USER MESSAGE: TELL THE USER EVERYTHING
 #
 
 print("""
@@ -183,8 +173,8 @@ print("""
 
 print("""\
   The `tomographer` python package requires some settings for compiling the C++
-  modules. You may need to specify their location with the use of environment
-  variables. Current values (detected or specified manually) are:
+  modules. You may need to specify them with the use of environment variables.
+  Current values (detected or specified manually) are:
 
 {}""".format("\n".join([ "    {}={}".format(k,v) for k,v in vv.d.items() ])))
 
@@ -206,6 +196,17 @@ if IsTomographerSources and sys.platform == 'darwin':
 
     > brew install eigen boost boost-bcp pybind11
 """)
+
+
+#
+# PREPARE THE PYTHON SOURCES
+#
+
+if IsTomographerSources:
+    setup_sources.setup_sources(thisdir, version, vv)
+
+
+
 
 
 #

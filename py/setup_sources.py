@@ -71,7 +71,47 @@ def is_tomographer_sources(thisdir):
         return False
     return True
 
-def setup_sources(thisdir, vv):
+
+
+def get_version(thisdir, is_tomographer_sources, vv):
+
+    if is_tomographer_sources:
+        #
+        # setup the VERSION file
+        #
+
+        print("Determining version: ", end='')
+
+        version = None
+        try:
+            version = ensure_str(subprocess.check_output([vv.get('GIT'), 'describe', '--tags', 'HEAD'],
+                                                         cwd=thisdir, stderr=subprocess.STDOUT)).strip()
+        except Exception:
+            pass
+        if not version:
+            if os.path.exists(os.path.join(thisdir, '..', 'VERSION')):
+                with open(os.path.join(thisdir, '..', 'VERSION')) as f:
+                    version = ensure_str(f.read()).strip()
+        if not version:
+            raise RuntimeError("Cannot determine Tomographer version (no git info and no VERSION file)")
+
+        # create VERSION file here -- for sdist
+        with open(os.path.join(thisdir, 'VERSION'), 'w') as f:
+            f.write(version + "\n")
+
+        print("sources, version {}".format(version))
+        return version
+
+    #
+    # This is not the original tomographer sources, simply read out VERSION file
+    #
+    version = None
+    with open(os.path.join(thisdir, 'VERSION')) as f:
+        version = ensure_str(f.read()).strip()
+    return version
+
+
+def setup_sources(thisdir, version, vv):
     #
     # We are being run from checked out Tomographer project sources.  Prepare the python
     # sources correctly.
@@ -81,33 +121,11 @@ def setup_sources(thisdir, vv):
 
     print("Setting up sources:")
 
-    #
-    # setup the VERSION file
-    #
-    version = None
-    try:
-        version = ensure_str(subprocess.check_output([vv.get('GIT'), 'describe', '--tags', 'HEAD'],
-                                                     cwd=thisdir, stderr=subprocess.STDOUT)).strip()
-    except Exception:
-        pass
-    if not version:
-        if os.path.exists(os.path.join(thisdir, '..', 'VERSION')):
-            with open(os.path.join(thisdir, '..', 'VERSION')) as f:
-                version = ensure_str(f.read()).strip()
-    if not version:
-        raise RuntimeError("Cannot determine Tomographer version (no git info and no VERSION file)")
-
-    # create VERSION file here -- for sdist
-    with open(os.path.join(thisdir, 'VERSION'), 'w') as f:
-        f.write(version + "\n")
-
     (version_maj, version_min, version_for_pip) = get_version_info(version)
-
 
     #
     # Include our source headers in package data, along with dependencies
     #
-
 
     class ignore_not_header(object):
         def __init__(self, thisdir, but_keep=[]):
