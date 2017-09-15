@@ -3,6 +3,13 @@ Change Log
 ==========
 
 
+## v5.4 (TBD)
+
+  * Upgraded code for *pybind11* ≥ 2.2
+
+  * Bugfixes in MPI multiproc implementation
+
+
 ## v5.3 (2017-08-30)
 
   * Fix bug: the automatic base rng seed was ignored, causing the rngs to always

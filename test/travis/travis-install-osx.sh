@@ -134,7 +134,7 @@ if [[ "$INSTALL_PYTHON_DEPS_USING" == "pip" ]]; then
 
     # system in any case
     $PIP_MAYBE_SUDO $PIP install --upgrade pip
-    $PIP_MAYBE_SUDO $PIP install --upgrade setuptools
+    #$PIP_MAYBE_SUDO $PIP install --upgrade setuptools  # fails for system python ... :(
     $PIP_MAYBE_SUDO $PIP install --upgrade wheel
 
     $PIP_MAYBE_SUDO $PIP --version

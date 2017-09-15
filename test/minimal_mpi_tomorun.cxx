@@ -343,7 +343,7 @@ int main()
     tasks.setStatusReportHandler([&](decltype(tasks)::FullStatusReportType report) {
         std::cout << report.getHumanReport() << "\n" ;
       });
-    tasks.requestPeriodicStatusReport(2000) ;
+    tasks.requestPeriodicStatusReport(1000) ;
   }
 
   //

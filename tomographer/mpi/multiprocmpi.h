@@ -66,6 +66,38 @@ namespace MultiProc {
 
 namespace MPI {
 
+namespace tomo_internal {
+//
+// don't define boost::serialization overloads directly for std::chrono classes,
+// because the user or another library might be doing that already
+//
+template<typename ChronoDurationType>
+struct SerializableDuration : public ChronoDurationType
+{
+  SerializableDuration(typename ChronoDurationType::rep count) : ChronoDurationType(count) { }
+  SerializableDuration(const ChronoDurationType & other) : ChronoDurationType(other) { }
+
+private:
+  friend boost::serialization::access;
+  template<typename Archive>
+  void save(Archive & ar, const unsigned int /*version*/) const
+  {
+    ar << ChronoDurationType::count();
+  }
+  template<typename Archive>
+  void load(Archive & ar, const unsigned int /*version*/)
+  {
+    typename ChronoDurationType::rep thecount;
+    ar >> thecount;
+    *this = ChronoDurationType(thecount);
+  }
+  BOOST_SERIALIZATION_SPLIT_MEMBER()
+};
+} // tomo_internal
+
+
+
+
 /** \brief Handles parallel execution of tasks using %MPI
  *
  * Plug into a given %MPI environment to run our tasks.
@@ -212,7 +244,7 @@ private:
         in_preparation(false),
         full_report(),
         num_reports_waiting(0),
-        last_report_time(StdClockType::now()),
+        next_report_time(StdClockType::now()),
         user_fn(),
         periodic_interval(0)
     {
@@ -243,7 +275,7 @@ private:
     FullStatusReportType full_report;
     int num_reports_waiting;
 
-    StdClockType::time_point last_report_time;
+    StdClockType::time_point next_report_time;
 
     FullStatusReportCallbackType user_fn;
     int periodic_interval;
@@ -258,7 +290,7 @@ private:
 
     inline bool statusReportRequested() const
     {
-      return dispatcher->do_bookkeeping();
+      return dispatcher->check_mpi_messages_and_get_statusrequested();
     }
 
     inline void submitStatusReport(const TaskStatusReportType &statreport)
@@ -296,6 +328,9 @@ private:
   MasterWorkersController * ctrl;
   MasterStatusReportController * ctrl_status_report;
 
+  tomo_internal::SerializableDuration<StdClockType::duration> min_mpi_probe_dt;
+  StdClockType::time_point next_mpi_probe_time;
+
   TaskMgrIface mgriface;
   
   class interrupt_tasks : public std::exception
@@ -315,13 +350,16 @@ public:
    * other processes are required to pass \a NULL to the \a pcdata_ argument
    * here.
    */
-  TaskDispatcher(TaskCData * pcdata_, mpi::communicator & comm_, BaseLoggerType & logger_, int num_task_runs)
+  TaskDispatcher(TaskCData * pcdata_, mpi::communicator & comm_, BaseLoggerType & logger_,
+                 int num_task_runs)
     : pcdata(pcdata_),
       comm(comm_),
       is_master(comm_.rank() == 0),
       llogger("Tomographer::MultiProc::MPI::TaskDispatcher", logger_),
       ctrl(NULL),
       ctrl_status_report(NULL),
+      min_mpi_probe_dt(std::chrono::duration_cast<StdClockType::duration>(std::chrono::milliseconds(100))),
+      next_mpi_probe_time(StdClockType::now()),
       mgriface(this)
   {
     if (is_master) {
@@ -359,9 +397,16 @@ public:
     }
     // broadcast pcdata...
     mpi::broadcast(comm, pcdata, 0);
-    // now, pcdata is initialized everywhere.
+    // other settings to synchronize
+    mpi::broadcast(comm, min_mpi_probe_dt, 0);
+    // now, pcdata and other settings are initialized on all workers
 
-    logger.longdebug("pcdata is now broadcast; is_master=%c", (is_master?'y':'n'));
+    // initialize some local settings
+    next_mpi_probe_time = StdClockType::now();
+
+    logger.longdebug("pcdata is now broadcast; is_master=%c; min_mpi_probe_dt=%u",
+                     (is_master?'y':'n'),
+                     (unsigned int)std::chrono::duration_cast<std::chrono::milliseconds>(min_mpi_probe_dt).count());
 
     if (is_master) {
       tomographer_assert(ctrl != NULL) ;
@@ -405,7 +450,7 @@ public:
         // continue monitoring running processes and gathering results
         logger.longdebug("num_workers_running = %d", ctrl->num_workers_running);
         try {
-          do_bookkeeping();
+          check_mpi_messages_and_get_statusrequested();
         } catch(interrupt_tasks & e) {
           // nothing to do but wait for others to finish...
         }
@@ -438,9 +483,17 @@ public:
 private:
   friend struct TaskMgrIface;
 
-  inline bool do_bookkeeping() // return TRUE if a status report was requested
+  // return TRUE if a status report was requested
+  inline bool check_mpi_messages_and_get_statusrequested(bool force = false)
   {
     auto logger = llogger.subLogger(TOMO_ORIGIN) ;
+
+    auto now = StdClockType::now();
+    if (!force && now < next_mpi_probe_time) {
+      return false; // skip this round, will do next
+    }
+    next_mpi_probe_time = now + min_mpi_probe_dt;
+
 
     bool status_report_requested = false;
 
@@ -464,17 +517,18 @@ private:
 
           status_report_requested = master_initiate_status_report();
 
-        }  else if ( ctrl_status_report->periodic_interval > 0 &&
-                     ( std::chrono::duration_cast<std::chrono::milliseconds>(
-                         StdClockType::now() - ctrl_status_report->last_report_time
-                         ).count()  >  ctrl_status_report->periodic_interval ) ) {
+        }  else if ( ctrl_status_report->periodic_interval > 0 && ( now > ctrl_status_report->next_report_time ) ) {
 
           // enough time has passed since last status report, generate new one
-
           logger.longdebug("Time for a new status report, initiating");
 
-          status_report_requested = master_initiate_status_report();
+          // Mark when next report should be generated (to stay +/- precise with
+          // respect to given periodic_interval)
+          ctrl_status_report->next_report_time = now + std::chrono::duration_cast<StdClockType::duration>(
+              std::chrono::milliseconds(ctrl_status_report->periodic_interval)
+              );
 
+          status_report_requested = master_initiate_status_report();
         }
 
       }
@@ -483,8 +537,10 @@ private:
 
     } else {
 
-      // normal worker -- just check for interrupt or status reports from master
-      // (source rank == 0)
+      // normal worker, not master -- just check for interrupt or status reports
+      // from master (source rank == 0)
+
+      logger.longdebug("Checking for MPI messages from master");
 
       auto maybeorderinterruptmsg = comm.iprobe(0, TAG_MASTER_ORDER_INTERRUPT);
       if (maybeorderinterruptmsg) {
@@ -510,24 +566,40 @@ private:
 
         // we need to send in a status report.
         status_report_requested = true;
-
       }
 
     }
+
+    logger.longdebug("status_report_requested = %c", status_report_requested?'Y':'n') ;
 
     return status_report_requested;
   }
 
   inline void submit_status_report(const TaskStatusReportType &statreport)
   {
+    auto logger = llogger.subLogger(TOMO_ORIGIN) ;
     if (is_master) {
       // just handle our own status report
+      logger.longdebug("Master here: handling our own status report");
       master_handle_incoming_worker_status_report(0, &statreport);
     } else {
+      logger.longdebug("Sending status report to master");
       // with isend() we would have to monitor the MPI request (return value) I guess...
       comm.send(0, // report to master
                 TAG_WORKER_SUBMIT_STATUS_REPORT,
                 statreport) ;
+    }
+  }
+
+  inline void submit_idle_status_report()
+  {
+    auto logger = llogger.subLogger(TOMO_ORIGIN) ;
+    if (is_master) {
+      master_handle_incoming_worker_status_report(0, NULL);
+    } else {
+      logger.longdebug("Sending idle status report to master");
+      comm.send(0, // report to master
+                TAG_WORKER_SUBMIT_IDLE_STATUS_REPORT) ;
     }
   }
 
@@ -596,8 +668,13 @@ private:
     auto logger = llogger.subLogger(TOMO_ORIGIN) ;
     tomographer_assert(is_master) ;
 
+    // process at most a number of messages per message type equal to comm.size()
+    int n;
+
     // see if we have to deliver a new task to someone
-    { auto maybenewtaskmsg = comm.iprobe(mpi::any_source, TAG_WORKER_REQUEST_NEW_TASK_ID);
+    n = comm.size();
+    do {
+      auto maybenewtaskmsg = comm.iprobe(mpi::any_source, TAG_WORKER_REQUEST_NEW_TASK_ID);
       if (maybenewtaskmsg) {
         logger.longdebug("Treating a new task id request message ... ");
         auto msg = *maybenewtaskmsg;
@@ -607,11 +684,16 @@ private:
         // send the worker a new task id
         TaskCountIntType task_id = master_get_new_task_id(msg.source());
         comm.send(msg.source(), TAG_MASTER_DELIVER_NEW_TASK_ID, task_id);
+        --n;
+      } else {
+        n = 0;
       }
-    }
+    } while (n > 0);
 
     // see if there is any task results incoming of tasks which have finished
-    { auto mayberesultmsg = comm.iprobe(mpi::any_source, TAG_WORKER_SUBMIT_RESULT);
+    n = comm.size();
+    do {
+      auto mayberesultmsg = comm.iprobe(mpi::any_source, TAG_WORKER_SUBMIT_RESULT);
       if (mayberesultmsg) { // got something
         logger.longdebug("Treating a result message ... ");
         auto msg = *mayberesultmsg;
@@ -624,11 +706,16 @@ private:
         logger.longdebug("Got result.");
 
         master_store_task_result(msg.source(), result);
+        --n;
+      } else {
+        n = 0;
       }
-    }
+    } while (n > 0);
 
     // see if there is any task results incoming
-    { auto maybestatmsg = comm.iprobe(mpi::any_source, TAG_WORKER_SUBMIT_STATUS_REPORT);
+    n = comm.size();
+    do {
+      auto maybestatmsg = comm.iprobe(mpi::any_source, TAG_WORKER_SUBMIT_STATUS_REPORT);
       if (maybestatmsg) { // got something
         logger.longdebug("Treating a status report message ... ");
         auto msg = *maybestatmsg;
@@ -639,11 +726,16 @@ private:
         comm.recv(msg.source(), msg.tag(), stat);
 
         master_handle_incoming_worker_status_report(msg.source(), &stat);
+        --n;
+      } else {
+        n = 0;
       }
-    }
+    } while (n > 0);
 
     // see if there is any task results incoming reporting idle
-    { auto maybeistatmsg = comm.iprobe(mpi::any_source, TAG_WORKER_SUBMIT_IDLE_STATUS_REPORT);
+    n = comm.size();
+    do {
+      auto maybeistatmsg = comm.iprobe(mpi::any_source, TAG_WORKER_SUBMIT_IDLE_STATUS_REPORT);
       if (maybeistatmsg) { // got something
         logger.longdebug("Treating a status report message ... ");
         auto msg = *maybeistatmsg;
@@ -653,11 +745,16 @@ private:
         comm.recv(msg.source(), msg.tag());
 
         master_handle_incoming_worker_status_report(msg.source(), NULL);
+        --n;
+      } else {
+        n = 0;
       }
-    }
+    } while (n > 0);
 
     // worker finished
-    { auto mmsg = comm.iprobe(mpi::any_source, TAG_WORKER_HELL_YEAH_IM_OUTTA_HERE);
+    n = comm.size();
+    do {
+      auto mmsg = comm.iprobe(mpi::any_source, TAG_WORKER_HELL_YEAH_IM_OUTTA_HERE);
       if (mmsg) { // got something
         logger.longdebug("Treating a worker's farewell message ... ");
         auto msg = *mmsg;
@@ -668,9 +765,12 @@ private:
 
         // we got one less worker running
         -- ctrl->num_workers_running;
-      }
-    }
 
+        --n;
+      } else {
+        n = 0;
+      }
+    } while (n > 0);
 
   }
 
@@ -777,7 +877,6 @@ private:
       }
       // reset data
       ctrl_status_report->reset();
-      ctrl_status_report->last_report_time = StdClockType::now();
       logger.longdebug("Status report finished");
     }
   }
@@ -819,7 +918,10 @@ private:
       // do some bookkeeping here as well -- just in case the task doesn't call
       // status-report-handling stuff (even though it's supposed to, you can't
       // ever trust those classes)
-      do_bookkeeping();
+      bool report_requested = check_mpi_messages_and_get_statusrequested(true);
+      if (report_requested) {
+        submit_idle_status_report();
+      }
 
       // run the given task
       run_task(new_task_id);
@@ -906,21 +1008,12 @@ private:
 
       // make sure there is no pending status report order which we could pick up
       // when starting the next task
-    
-      auto maybeorderstatreportmsg = comm.iprobe(0, TAG_MASTER_ORDER_STATUS_REPORT);
-      if (maybeorderstatreportmsg) {
-        // got an order -- we can't ignore it, because the master is waiting for
-        // our report
-        auto msg = *maybeorderstatreportmsg;
-        tomographer_assert(msg.tag() == TAG_MASTER_ORDER_STATUS_REPORT);
-        tomographer_assert(msg.source() == 0);
-        logger.longdebug("Receiving an status report order from master ... ");
-        comm.recv(msg.source(), msg.tag());
-
-        // report that we're idling for now
-        comm.send(0, // report to master
-                  TAG_WORKER_SUBMIT_IDLE_STATUS_REPORT);
+      //
+      bool report_requested = check_mpi_messages_and_get_statusrequested(true);
+      if (report_requested) {
+        submit_idle_status_report();
       }
+
     }
 
     if (error_msg.size()) {
@@ -930,6 +1023,21 @@ private:
 
 
 public:
+
+  /** \brief Tune the frequency at which MPI messages are probed
+   *
+   * Specify a minimum delta-time duration (in milliseconds) between two probes
+   * of MPI messages.
+   *
+   * This function may only be called on the <b>master process</b>, and
+   * <b>before</b> starting the tasks.
+   */
+  inline void setMinMPIProbeDt(int milliseconds)
+  {
+    tomographer_assert(is_master);
+    min_mpi_probe_dt = milliseconds;
+  }
+
   /** \brief Whether we are the master process
    *
    * Only the master process can query the task results.
