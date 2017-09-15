@@ -82,13 +82,13 @@ private:
   template<typename Archive>
   void save(Archive & ar, const unsigned int /*version*/) const
   {
-    ar << ChronoDurationType::count();
+    ar & ChronoDurationType::count();
   }
   template<typename Archive>
   void load(Archive & ar, const unsigned int /*version*/)
   {
     typename ChronoDurationType::rep thecount;
-    ar >> thecount;
+    ar & thecount;
     *this = ChronoDurationType(thecount);
   }
   BOOST_SERIALIZATION_SPLIT_MEMBER()
