@@ -77,7 +77,7 @@ elif [[ "$TT_PYTHON" == "osxsystem-python-2.7" ]]; then
     export INSTALL_PYTHON_DEPS_USING="pip"
 
     # install pip for system python
-    sudo easy_install pip
+    sudo /usr/bin/easy_install pip
 
 else
 
