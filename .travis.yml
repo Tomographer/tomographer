@@ -70,18 +70,23 @@ matrix:
     #     - CMAKE_ADD_ARGS="-DTOMORUN_MULTIPROC=openmp -DTOMOGRAPHER_TESTS_EXPECTED_TO_BE_SKIPPED_AND_FAIL=minimal_mpi_tomorun;test_mpi_multiprocmpi"
 
     #
-    # Mac OS X, brew gcc 7 & system python 2.7
+    # Mac OS X, brew gcc 7 & conda python 2.7
     #
-    - os: osx
-      before_install:
-        - brew tap homebrew/science
-        - brew install gcc
-        - brew unlink boost
-        - brew install eigen libmatio pybind11 boost-bcp open-mpi
-      env:
-        - TT_CC=brew-gcc-7
-        - TT_PYTHON=conda-python-2.7
-        - CMAKE_ADD_ARGS="-DTOMORUN_MULTIPROC=openmp -DCMAKE_CXX_FLAGS=-Wno-int-in-bool-context"
+    # ### Takes too much time -- exceeds Travis CI job time limit
+    #
+    # ### At some point I could think of splitting the test suite in different
+    # ### batches...
+    #
+    # - os: osx
+    #   before_install:
+    #     - brew tap homebrew/science
+    #     - brew install gcc
+    #     - brew unlink boost
+    #     - brew install eigen libmatio pybind11 boost-bcp open-mpi
+    #   env:
+    #     - TT_CC=brew-gcc-7
+    #     - TT_PYTHON=conda-python-2.7
+    #     - CMAKE_ADD_ARGS="-DTOMORUN_MULTIPROC=openmp -DCMAKE_CXX_FLAGS=-Wno-int-in-bool-context"
 
     #
     # g++-4.8 with Conda Python 3
