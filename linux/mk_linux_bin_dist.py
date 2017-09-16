@@ -158,6 +158,7 @@ do_run([e.cmake, '..',
 do_run([e.make, 'VERBOSE=1'],
        cwd=fullbuildpath)
 
+# override link step -- didn't figure out how to do this precisely with cmake
 do_run([CXX_COMPILER,
         "-O3",
         "-static", "-static-libgcc", "-static-libstdc++",

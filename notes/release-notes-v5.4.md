@@ -1,15 +1,16 @@
 
-Tomographer v5.3
+Tomographer v5.4
 ----------------
 
-Tomographer 5.3 fixes some bugs which were present in Tomographer 5.2, and
-provides some minor enhancements. See the [detailed change log][ChangeLog] as
-well as the [release notes for Tomographer v5.0][tomographer_v5.0_relnotes].
+Tomographer 5.4 provides some fixes making it work better with the recent
+release of *pybind11*, removing some innocuous yet annoying warning messages
+when running the python module. There are no changes in functionality. See
+the [detailed change log][ChangeLog].
 
 To get see how to started, [check out this page][get-started].
 
 If you're interested in using the stand-alone executable program, download the
-binary release `tomographer-tomorun-v5.3` below corresponding to your system.
+binary release `tomographer-tomorun-v5.4` below corresponding to your system.
 
 If you'd like to install the Python package, you don't need to download
 anything; simply [follow these instructions][python_install].
