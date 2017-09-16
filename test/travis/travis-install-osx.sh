@@ -69,6 +69,9 @@ elif [[ "$TT_PYTHON" == "conda-python-2.7" ]]; then
 
 elif [[ "$TT_PYTHON" == "osxsystem-python-2.7" ]]; then
 
+    #
+    # NOT USED -- COULDN'T GET IT TO WORK.
+    #
     export PYTHON_EXECUTABLE=/usr/bin/python
     export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DPYTHON_LIBRARY=/System/Library/Frameworks/Python.framework/Versions/2.7/lib/libpython2.7.dylib"
     export PIP="/usr/bin/python -m pip"
