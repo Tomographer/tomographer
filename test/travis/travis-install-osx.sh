@@ -115,12 +115,19 @@ export PYBIND11_PREFIX_PATH=/usr/local/opt/pybind11
 # ... except this -- we might need custom version of boost compiled with g++-7
 if [[ "$CUSTOM_BIN_INSTALL_MACOSX_BOOST_GCC7" == 1 ]]; then
 
-    curl -L macosx-gcc7-boost-bin.tar.bz2 https://github.com/Tomographer/tomographer/raw/tomographer-ci-bin/macosx-gcc7-boost-bin.tar.bz2 | tar xj
+    curl -L https://github.com/Tomographer/tomographer/raw/tomographer-ci-bin/macosx-gcc7-boost-bin.tar.bz2 | tar xj
     export CMAKE_ADD_ARGS="$CMAKE_ADD_ARGS -DBOOST_INCLUDEDIR=`pwd`/gcc7-env/include -DBOOST_ROOT=`pwd`/gcc7-env -DBOOST_LIBRARYDIR=`pwd`/gcc7-env/lib"
+
+    export CUSTOM_GCC7_ENV=`pwd`/gcc7-env
+
+    # fix dylib names
+    for i in $CUSTOM_GCC7_ENV/lib/*.dylib; do
+        install_name_tool -id "$i" "$i" 
+    done
 
     # debug
     echo "Installed custom boost binaries for Mac OSX / gcc-7"
-    ls `pwd`/gcc7-env/lib
+    ls $CUSTOM_GCC7_ENV/lib
 
 fi
 
