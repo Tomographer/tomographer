@@ -17,7 +17,7 @@ $CMAKE_PATH/bin/cmake .. -DCMAKE_C_COMPILER=$CMAKE_C_COMPILER -DCMAKE_CXX_COMPIL
 make tomorun VERBOSE=1 || exit 1
 
 # then make the rest using all available cores
-make -j`nproc` VERBOSE=1 || exit 1
+make ${MAKE_PARALLEL_OPT=-j`nproc`} VERBOSE=1 || exit 1
 
 #
 # use python/setup.py to build a source package and to compile the extension a

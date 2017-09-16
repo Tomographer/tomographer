@@ -106,7 +106,7 @@ the Python `tomographer` package, using Homebrew's python3.  For python, you
 should also consider using [*conda*](https://www.anaconda.com/).
 
     > brew tap homebrew/science
-    > brew install python3 boost eigen libmatio pybind11
+    > brew install python3 boost boost-bcp eigen libmatio pybind11
 
 
 Installing and Running `tomorun`

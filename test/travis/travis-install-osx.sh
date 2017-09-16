@@ -33,6 +33,7 @@ elif [[ "$TT_CC" == "brew-gcc-7" ]]; then
     export CMAKE_C_COMPILER="/usr/local/opt/gcc/bin/gcc-7"
     export CMAKE_CXX_COMPILER="/usr/local/opt/gcc/bin/g++-7"
     export CUSTOM_BIN_INSTALL_MACOSX_BOOST_GCC7=1
+    export MAKE_PARALLEL_OPT="" # no parallel, perhaps using too much RAM?
 
 else
     
