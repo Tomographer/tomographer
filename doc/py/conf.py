@@ -157,7 +157,7 @@ todo_include_todos = True
 
 
 nitpick_ignore = [
-    ('py:class', 'pybind11_builtins.pybind11_object_48'),
+    ('py:class', 'pybind11_builtins.pybind11_object'),
     ('py:class', 'tomographer.jpyutil._SimpleProgressBar_ConsoleImpl'),
 #    ('py:class', 'object'),
 #    ('py:class', 'tuple'),
