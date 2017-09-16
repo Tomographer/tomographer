@@ -182,7 +182,9 @@ elif [[ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]]; then
     # ### why bother with environments?
     # conda create -q -n test-environment python=3.6 pip ...
 
-    conda install boost
+    if [[ "$CUSTOM_BIN_INSTALL_MACOSX_BOOST_GCC7" != 1 ]]; then
+        conda install boost
+    fi
 
     conda install numpy scipy matplotlib ecos
     conda install -f numpy
