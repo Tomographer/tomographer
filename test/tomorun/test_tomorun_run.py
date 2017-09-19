@@ -152,9 +152,9 @@ def do_check_binning_vs_naive(hfile, args):
     #
     diffs.sort()
 
-    # We require that 90% of the bins have less than 20% relative diff error between binning and naive
+    # We require that 90% of the bins have less than 33% relative diff error between binning and naive
     fraction_in_range = 0.9
-    maxreldiff = 0.2
+    maxreldiff = 0.33
 
     assert_in_range(diffs[int(fraction_in_range*len(diffs))], 0, maxreldiff)
 
