@@ -54,6 +54,16 @@ public:
   inline ValueType getValue(const int = 0) const { return _constval; }
 };
 
+class const_value_calculator_noconstcall {
+private:
+  const int _constval;
+public:
+  const_value_calculator_noconstcall(int constval_) : _constval(constval_) { }
+
+  typedef int ValueType;
+  inline ValueType getValue(const int = 0) { return _constval; }
+};
+
 
 // -----------------------------------------------------------------------------
 // test suites
@@ -131,219 +141,440 @@ BOOST_AUTO_TEST_CASE(essential)
 }
 
 
-BOOST_AUTO_TEST_CASE(fixed1)
-{
-  Tomographer::MultiplexorValueCalculator<
-    int,
-    const_value_calculator
-    > multiplexor(0, [&](){ return new const_value_calculator(191); });
-  BOOST_CHECK_EQUAL(multiplexor.getValue(-1), 191);
-}
-BOOST_AUTO_TEST_CASE(fixed2)
+BOOST_AUTO_TEST_CASE(constnoconst)
 {
   for (int val = 0; val < 2; ++val) {
     Tomographer::MultiplexorValueCalculator<
       int,
       const_value_calculator,
-      const_value_calculator
+      const_value_calculator_noconstcall
       > multiplexor(
 	  val,
-	  [&]() { return new const_value_calculator(0); },
-	  [&]() { return new const_value_calculator(1); }
+	  []() { return new const_value_calculator(0); },
+	  []() { return new const_value_calculator_noconstcall(1); }
 	  );
     BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(fixed1)
+{
+  {
+    Tomographer::MultiplexorValueCalculator<
+      int,
+      const_value_calculator
+      > multiplexor(0, [](){ return new const_value_calculator(191); });
+    BOOST_CHECK_EQUAL(multiplexor.getValue(-1), 191);
+  }
+  {
+    const Tomographer::MultiplexorValueCalculator<
+      int,
+      const_value_calculator
+      > cmultiplexor(0, [](){ return new const_value_calculator(191); });
+    BOOST_CHECK_EQUAL(cmultiplexor.getValue(-1), 191);
+  }
+}
+BOOST_AUTO_TEST_CASE(fixed2)
+{
+  for (int val = 0; val < 2; ++val) {
+    {
+      Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator
+        > multiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); }
+            );
+      BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    }
+    {
+      const Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator
+        > cmultiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); }
+            );
+      BOOST_CHECK_EQUAL(cmultiplexor.getValue(-1), val);
+    }
   }
 }
 BOOST_AUTO_TEST_CASE(fixed3)
 {
   for (int val = 0; val < 3; ++val) {
-    Tomographer::MultiplexorValueCalculator<
-      int,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator
-      > multiplexor(
-	  val,
-	  [&]() { return new const_value_calculator(0); },
-	  [&]() { return new const_value_calculator(1); },
-	  [&]() { return new const_value_calculator(2); }
-	  );
-    BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    {
+      Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > multiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); }
+            );
+      BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    }
+    {
+      const Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > cmultiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); }
+            );
+      BOOST_CHECK_EQUAL(cmultiplexor.getValue(-1), val);
+    }
   }
 }
 BOOST_AUTO_TEST_CASE(fixed4)
 {
   for (int val = 0; val < 4; ++val) {
-    Tomographer::MultiplexorValueCalculator<
-      int,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator
-      > multiplexor(
-	  val,
-	  [&]() { return new const_value_calculator(0); },
-	  [&]() { return new const_value_calculator(1); },
-	  [&]() { return new const_value_calculator(2); },
-	  [&]() { return new const_value_calculator(3); }
-	  );
-    BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    {
+      Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > multiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); }
+            );
+      BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    }
+    {
+      const Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > cmultiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); }
+            );
+      BOOST_CHECK_EQUAL(cmultiplexor.getValue(-1), val);    }
   }
 }
 BOOST_AUTO_TEST_CASE(fixed5)
 {
   for (int val = 0; val < 5; ++val) {
-    Tomographer::MultiplexorValueCalculator<
-      int,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator
-      > multiplexor(
-	  val,
-	  [&]() { return new const_value_calculator(0); },
-	  [&]() { return new const_value_calculator(1); },
-	  [&]() { return new const_value_calculator(2); },
-	  [&]() { return new const_value_calculator(3); },
-	  [&]() { return new const_value_calculator(4); }
-	  );
-    BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    {
+      Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > multiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); },
+            []() { return new const_value_calculator(4); }
+            );
+      BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    }
+    {
+      const Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > cmultiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); },
+            []() { return new const_value_calculator(4); }
+            );
+      BOOST_CHECK_EQUAL(cmultiplexor.getValue(-1), val);
+    }
   }
 }
 BOOST_AUTO_TEST_CASE(fixed6)
 {
   for (int val = 0; val < 6; ++val) {
-    Tomographer::MultiplexorValueCalculator<
-      int,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator
-      > multiplexor(
-	  val,
-	  [&]() { return new const_value_calculator(0); },
-	  [&]() { return new const_value_calculator(1); },
-	  [&]() { return new const_value_calculator(2); },
-	  [&]() { return new const_value_calculator(3); },
-	  [&]() { return new const_value_calculator(4); },
-	  [&]() { return new const_value_calculator(5); }
-	  );
-    BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    {
+      Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > multiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); },
+            []() { return new const_value_calculator(4); },
+            []() { return new const_value_calculator(5); }
+            );
+      BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    }
+    {
+      const Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > cmultiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); },
+            []() { return new const_value_calculator(4); },
+            []() { return new const_value_calculator(5); }
+            );
+      BOOST_CHECK_EQUAL(cmultiplexor.getValue(-1), val);
+    }
   }
 }
 BOOST_AUTO_TEST_CASE(fixed7)
 {
   for (int val = 0; val < 7; ++val) {
-    Tomographer::MultiplexorValueCalculator<
-      int,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator
-      > multiplexor(
-	  val,
-	  [&]() { return new const_value_calculator(0); },
-	  [&]() { return new const_value_calculator(1); },
-	  [&]() { return new const_value_calculator(2); },
-	  [&]() { return new const_value_calculator(3); },
-	  [&]() { return new const_value_calculator(4); },
-	  [&]() { return new const_value_calculator(5); },
-	  [&]() { return new const_value_calculator(6); }
-	  );
-    BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    {
+      Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > multiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); },
+            []() { return new const_value_calculator(4); },
+            []() { return new const_value_calculator(5); },
+            []() { return new const_value_calculator(6); }
+            );
+      BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    }
+    {
+      const Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > cmultiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); },
+            []() { return new const_value_calculator(4); },
+            []() { return new const_value_calculator(5); },
+            []() { return new const_value_calculator(6); }
+            );
+      BOOST_CHECK_EQUAL(cmultiplexor.getValue(-1), val);    }
   }
 }
 BOOST_AUTO_TEST_CASE(fixed8)
 {
   for (int val = 0; val < 8; ++val) {
-    Tomographer::MultiplexorValueCalculator<
-      int,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator
-      > multiplexor(
-	  val,
-	  [&]() { return new const_value_calculator(0); },
-	  [&]() { return new const_value_calculator(1); },
-	  [&]() { return new const_value_calculator(2); },
-	  [&]() { return new const_value_calculator(3); },
-	  [&]() { return new const_value_calculator(4); },
-	  [&]() { return new const_value_calculator(5); },
-	  [&]() { return new const_value_calculator(6); },
-	  [&]() { return new const_value_calculator(7); }
-	  );
-    BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    {
+      Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > multiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); },
+            []() { return new const_value_calculator(4); },
+            []() { return new const_value_calculator(5); },
+            []() { return new const_value_calculator(6); },
+            []() { return new const_value_calculator(7); }
+            );
+      BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    }
+    {
+      const Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > cmultiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); },
+            []() { return new const_value_calculator(4); },
+            []() { return new const_value_calculator(5); },
+            []() { return new const_value_calculator(6); },
+            []() { return new const_value_calculator(7); }
+            );
+      BOOST_CHECK_EQUAL(cmultiplexor.getValue(-1), val);
+    }
   }
 }
 BOOST_AUTO_TEST_CASE(fixed9)
 {
   for (int val = 0; val < 9; ++val) {
-    Tomographer::MultiplexorValueCalculator<
-      int,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator
-      > multiplexor(
-	  val,
-	  [&]() { return new const_value_calculator(0); },
-	  [&]() { return new const_value_calculator(1); },
-	  [&]() { return new const_value_calculator(2); },
-	  [&]() { return new const_value_calculator(3); },
-	  [&]() { return new const_value_calculator(4); },
-	  [&]() { return new const_value_calculator(5); },
-	  [&]() { return new const_value_calculator(6); },
-	  [&]() { return new const_value_calculator(7); },
-	  [&]() { return new const_value_calculator(8); }
-	  );
-    BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    {
+      Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > multiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); },
+            []() { return new const_value_calculator(4); },
+            []() { return new const_value_calculator(5); },
+            []() { return new const_value_calculator(6); },
+            []() { return new const_value_calculator(7); },
+            []() { return new const_value_calculator(8); }
+            );
+      BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    }
+    {
+      const Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > cmultiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); },
+            []() { return new const_value_calculator(4); },
+            []() { return new const_value_calculator(5); },
+            []() { return new const_value_calculator(6); },
+            []() { return new const_value_calculator(7); },
+            []() { return new const_value_calculator(8); }
+            );
+      BOOST_CHECK_EQUAL(cmultiplexor.getValue(-1), val);
+    }
   }
 }
 BOOST_AUTO_TEST_CASE(fixed10)
 {
   for (int val = 0; val < 10; ++val) {
-    Tomographer::MultiplexorValueCalculator<
-      int,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator,
-      const_value_calculator
-      > multiplexor(
-	  val,
-	  [&]() { return new const_value_calculator(0); },
-	  [&]() { return new const_value_calculator(1); },
-	  [&]() { return new const_value_calculator(2); },
-	  [&]() { return new const_value_calculator(3); },
-	  [&]() { return new const_value_calculator(4); },
-	  [&]() { return new const_value_calculator(5); },
-	  [&]() { return new const_value_calculator(6); },
-	  [&]() { return new const_value_calculator(7); },
-	  [&]() { return new const_value_calculator(8); },
-	  [&]() { return new const_value_calculator(9); }
-	  );
-    BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    {
+      Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > multiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); },
+            []() { return new const_value_calculator(4); },
+            []() { return new const_value_calculator(5); },
+            []() { return new const_value_calculator(6); },
+            []() { return new const_value_calculator(7); },
+            []() { return new const_value_calculator(8); },
+            []() { return new const_value_calculator(9); }
+            );
+      BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+    }
+    {
+      const Tomographer::MultiplexorValueCalculator<
+        int,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator,
+        const_value_calculator
+        > cmultiplexor(
+            val,
+            []() { return new const_value_calculator(0); },
+            []() { return new const_value_calculator(1); },
+            []() { return new const_value_calculator(2); },
+            []() { return new const_value_calculator(3); },
+            []() { return new const_value_calculator(4); },
+            []() { return new const_value_calculator(5); },
+            []() { return new const_value_calculator(6); },
+            []() { return new const_value_calculator(7); },
+            []() { return new const_value_calculator(8); },
+            []() { return new const_value_calculator(9); }
+            );
+      BOOST_CHECK_EQUAL(cmultiplexor.getValue(-1), val);
+    }
   }
 }
 

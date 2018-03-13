@@ -49,15 +49,21 @@ namespace Tomographer {
 namespace tomo_internal {
 
 //
-// helper for the helper for getValue() 
+// helper for the helper for getValue()
 //
 template<typename ValueType, typename... ValueCalculators>
 struct MplxVC_getval_helper_helper
 {
   template<int I, typename PointType>
-  static inline ValueType callGetValue(const void * valcalc, PointType && x)
+  static inline ValueType callGetValue(const void * valcalc, PointType && x) // const version
   {
     return ( (const typename std::tuple_element<I, std::tuple<ValueCalculators...> >::type *) valcalc)
+        -> getValue(std::forward<PointType>(x));
+  }
+  template<int I, typename PointType>
+  static inline ValueType callGetValue(void * valcalc, PointType && x) // non-const version
+  {
+    return ( (typename std::tuple_element<I, std::tuple<ValueCalculators...> >::type *) valcalc)
         -> getValue(std::forward<PointType>(x));
   }
 };
@@ -68,19 +74,19 @@ struct MplxVC_getval_helper_helper
 template<int NumValueCalculators, typename ValueType, typename... ValueCalculators>
 struct MplxVC_getval_helper
 {
-  template<typename PointType, int IterI = 0,
-	   TOMOGRAPHER_ENABLED_IF_TMPL(IterI < NumValueCalculators)>
-  static inline ValueType getValue(const int _i, const void * _valcalc, PointType&& x)
+  template<typename PointType, typename VoidPtr, // VoidPtr is `void*' or `const void*'
+           int IterI = 0, TOMOGRAPHER_ENABLED_IF_TMPL(IterI < NumValueCalculators)>
+  static inline ValueType getValue(const int _i, VoidPtr _valcalc, PointType&& x)
   {
     if (IterI == _i) {
       return MplxVC_getval_helper_helper<ValueType,ValueCalculators...>::template callGetValue<IterI>(_valcalc, x) ;
     }
-    return getValue<PointType, IterI+1>(_i, _valcalc, std::forward<PointType>(x));
+    return getValue<PointType, VoidPtr, IterI+1>(_i, _valcalc, std::forward<PointType>(x));
   }
   //
-  template<typename PointType, int IterI = 0,
-	   TOMOGRAPHER_ENABLED_IF_TMPL(IterI == NumValueCalculators)>
-  static inline ValueType getValue(const int, const void * , PointType&& )
+  template<typename PointType, typename VoidPtr, // VoidPtr is `void*' or `const void*'
+           int IterI = 0, TOMOGRAPHER_ENABLED_IF_TMPL(IterI == NumValueCalculators)>
+  static inline ValueType getValue(const int, VoidPtr, PointType&& )
   {
     tomographer_assert(false && "Invalid i: i>=NumValueCalculators or i<0");
     return ValueType();// silence ICC "missing return statement" warning
@@ -92,8 +98,8 @@ template<typename ValueType, typename... ValueCalculators>
 struct MplxVC_getval_helper<1, ValueType, ValueCalculators...>
 {
   TOMO_STATIC_ASSERT_EXPR(sizeof...(ValueCalculators) == 1) ;
-  template<typename PointType>
-  static inline ValueType getValue(const int _i, const void * _valcalc, PointType&& x)
+  template<typename PointType, typename VoidPtr>
+  static inline ValueType getValue(const int _i, VoidPtr _valcalc, PointType&& x)
   {
     tomographer_assert(_i == 0 && "i != 0 but NumValueCalculators == 1");(void)_i;
     return MplxVC_getval_helper_helper<ValueType,ValueCalculators...>::template callGetValue<0>(_valcalc, x) ;
@@ -104,8 +110,8 @@ template<typename ValueType, typename... ValueCalculators>
 struct MplxVC_getval_helper<2, ValueType, ValueCalculators...>
 {
   TOMO_STATIC_ASSERT_EXPR(sizeof...(ValueCalculators) == 2) ;
-  template<typename PointType>
-  static inline ValueType getValue(const int _i, const void * _valcalc, PointType&& x)
+  template<typename PointType, typename VoidPtr>
+  static inline ValueType getValue(const int _i, VoidPtr _valcalc, PointType&& x)
   {
     tomographer_assert(_i >= 0 && _i < (int)sizeof...(ValueCalculators) && "i out of range");
     switch (_i) {
@@ -121,8 +127,8 @@ template<typename ValueType, typename... ValueCalculators>
 struct MplxVC_getval_helper<3, ValueType, ValueCalculators...>
 {
   TOMO_STATIC_ASSERT_EXPR(sizeof...(ValueCalculators) == 3) ;
-  template<typename PointType>
-  static inline ValueType getValue(const int _i, const void * _valcalc, PointType&& x)
+  template<typename PointType, typename VoidPtr>
+  static inline ValueType getValue(const int _i, VoidPtr _valcalc, PointType&& x)
   {
     tomographer_assert(_i >= 0 && _i < (int)sizeof...(ValueCalculators) && "i out of range");
     switch (_i) {
@@ -140,8 +146,8 @@ template<typename ValueType, typename... ValueCalculators>
 struct MplxVC_getval_helper<4, ValueType, ValueCalculators...>
 {
   TOMO_STATIC_ASSERT_EXPR(sizeof...(ValueCalculators) == 4) ;
-  template<typename PointType>
-  static inline ValueType getValue(const int _i, const void * _valcalc, PointType&& x)
+  template<typename PointType, typename VoidPtr>
+  static inline ValueType getValue(const int _i, VoidPtr _valcalc, PointType&& x)
   {
     tomographer_assert(_i >= 0 && _i < (int)sizeof...(ValueCalculators) && "i out of range");
     switch (_i) {
@@ -161,8 +167,8 @@ template<typename ValueType, typename... ValueCalculators>
 struct MplxVC_getval_helper<5, ValueType, ValueCalculators...>
 {
   TOMO_STATIC_ASSERT_EXPR(sizeof...(ValueCalculators) == 5) ;
-  template<typename PointType>
-  static inline ValueType getValue(const int _i, const void * _valcalc, PointType&& x)
+  template<typename PointType, typename VoidPtr>
+  static inline ValueType getValue(const int _i, VoidPtr _valcalc, PointType&& x)
   {
     tomographer_assert(_i >= 0 && _i < (int)sizeof...(ValueCalculators) && "i out of range");
     switch (_i) {
@@ -184,8 +190,8 @@ template<typename ValueType, typename... ValueCalculators>
 struct MplxVC_getval_helper<6, ValueType, ValueCalculators...>
 {
   TOMO_STATIC_ASSERT_EXPR(sizeof...(ValueCalculators) == 6) ;
-  template<typename PointType>
-  static inline ValueType getValue(const int _i, const void * _valcalc, PointType&& x)
+  template<typename PointType, typename VoidPtr>
+  static inline ValueType getValue(const int _i, VoidPtr * _valcalc, PointType&& x)
   {
     tomographer_assert(_i >= 0 && _i < (int)sizeof...(ValueCalculators) && "i out of range");
     switch (_i) {
@@ -233,11 +239,11 @@ public:
 
 private:
 
-  const void * _valcalc;
+  void * _valcalc;
   const int _i;
 
   template<typename TupleCreators>
-  static inline const void * _create_Ith_valcalc(int i, TupleCreators && creators)
+  static inline void * _create_Ith_valcalc(int i, TupleCreators && creators)
   {
     tomographer_assert(0 <= i);
     tomographer_assert(i < NumValueCalculators);
@@ -246,23 +252,23 @@ private:
 
   template<int I = 0, typename TupleCreators = void,
            typename std::enable_if<(I<NumValueCalculators),bool>::type = true>
-  static inline const void * _create_Ith_valcalc_a(int i, TupleCreators && creators)
+  static inline void * _create_Ith_valcalc_a(int i, TupleCreators && creators)
   {
     if (i == I) {
-      return (const void *) std::get<I>(creators)();
+      return (void *) std::get<I>(creators)();
     }
     return _create_Ith_valcalc_a<I+1>(i, std::forward<TupleCreators>(creators));
   }
   template<int I = 0, typename TupleCreators = void,
            typename std::enable_if<(I==NumValueCalculators),bool>::type = true>
-  static inline const void * _create_Ith_valcalc_a(int , TupleCreators && ) { return NULL; }
+  static inline void * _create_Ith_valcalc_a(int , TupleCreators && ) { return NULL; }
 
 
   template<int I = 0, typename std::enable_if<(I<NumValueCalculators),bool>::type = true>
   inline void _delete_all()
   {
     if (_i == I && _valcalc != NULL) {
-      delete (const typename std::tuple_element<I, ValueCalculatorsTupleType>::type *) _valcalc;
+      delete (typename std::tuple_element<I, ValueCalculatorsTupleType>::type *) _valcalc;
     }
     _delete_all<I+1>();
   }
@@ -270,7 +276,7 @@ private:
   inline void _delete_all() { }
 
 
-  static inline const void * _create_Ith_copy(int i, const void * src)
+  static inline void * _create_Ith_copy(int i, void * src)
   {
     tomographer_assert(0 <= i);
     tomographer_assert(i < NumValueCalculators);
@@ -280,7 +286,7 @@ private:
   }
 
   template<int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I<NumValueCalculators)>
-  inline static const void * _create_Ith_copy_a(int i, const void * src) {
+  inline static void * _create_Ith_copy_a(int i, void * src) {
     if (I == i) {
       typedef typename std::tuple_element<I, ValueCalculatorsTupleType>::type  ValueCalculator;
       return new ValueCalculator( *(const ValueCalculator*)src ) ; // copy constructor
@@ -288,7 +294,7 @@ private:
     return _create_Ith_copy_a<I+1>(i, src);
   }
   template<int I = 0, TOMOGRAPHER_ENABLED_IF_TMPL(I==NumValueCalculators)>
-  inline static const void * _create_Ith_copy_a(int , const void * ) { return NULL; }
+  inline static void * _create_Ith_copy_a(int , void * ) { return NULL; }
   
 public:
 
@@ -338,13 +344,28 @@ public:
     return (const typename std::tuple_element<I, ValueCalculatorsTupleType>::type *) _valcalc;
   }
 
-  /** \brief The main method which computes the value according to the pre-chosen ValueCalculator
+  /** \brief The main method which computes the value according to the
+   *         pre-chosen ValueCalculator (const version)
    *
-   * Calculates the value according to the ValueCalculator instance which was chosen at
-   * constructor-time (via the index \a i).
+   * Calculates the value according to the ValueCalculator instance which was
+   * chosen at constructor-time (via the index \a i).
    */
   template<typename PointType>
   inline ValueType getValue(PointType&& x) const
+  {
+    return tomo_internal::MplxVC_getval_helper<
+      NumValueCalculators,ValueType,ValueCalculators...
+      >::getValue(_i, (const void*)_valcalc, std::forward<PointType>(x));
+  }
+
+  /** \brief The main method which computes the value according to the
+   *         pre-chosen ValueCalculator (non-const version)
+   *
+   * Calculates the value according to the ValueCalculator instance which was
+   * chosen at constructor-time (via the index \a i).
+   */
+  template<typename PointType>
+  inline ValueType getValue(PointType&& x)
   {
     return tomo_internal::MplxVC_getval_helper<
       NumValueCalculators,ValueType,ValueCalculators...
