@@ -217,21 +217,79 @@ struct MplxVC_getval_helper<6, ValueType, ValueCalculators...>
 
 
 
-/** \brief A ValueCalculator-instance which the choice of which ValueCalculator to use at
- *         run-time
+/** \brief A ValueCalculator implementation which the choice of which
+ *         ValueCalculator to use at run-time
+ *
+ * A MultiplexorValueCalculator is a proxy \ref pageInterfaceValueCalculator
+ * "ValueCalculator" (which you can use, e.g., in \ref
+ * ValueHistogramMHRWStatsCollector), which allows you to choose one among
+ * several ValueCalculator types to use at runtime.  The possible choices of
+ * ValueCalculator s has to be defined at compile-time as template parameters.
+ * The constructor of the MultiplexorValueCalculator takes as many "creator
+ * functions" as defined ValueCalculator types, and calls only the one which
+ * we'd like to use.
+ *
+ * The choice of the ValueCalculator is fixed upon instantiation of the
+ * MultiplexorValueCalculator. I.e., once decided, the choice of which
+ * ValueCalculator to use cannot be changed.
+ *
+ * \tparam ValueType the ValueType returned by the MultiplexorValueCalculator's
+ *         getValue().  All ValueCalculator s must have ValueTypes which can be
+ *         implicitily converted to this type.  (See \ref
+ *         pageInterfaceValueCalculator)
+ *
+ * \tparam ValueCalculators... The list of ValueCalculator types among which to
+ *         choose at runtime.
+ *
+ * For example, if you woule like to leave open at compile-time whether to use a
+ * TrDistToRefCalculator or a FidelityToRefCalculator, you could write something
+ * along the lines of:
+ * \code
+ *   typedef MultiplexorValueCalculator<double,
+ *                                      TrDistToRefCalculator<...>,
+ *                                      FidelityToRefCalculator<...> >
+ *     MyValueCalculator;
+ *
+ *   ...
+ *
+ *   // choose which value calculator to use at run-time
+ *   int which_value_calculator =
+ *     use_trace_distance ? 0 : 1;  // 0 or 1 is index in the list of
+ *                                  // possible ValueCalculators
+ *   MyValueCalculator valcalc(
+ *     which_value_calculator,
+ *     [&]() { return new TrDistToRefCalculator<...>(...); }
+ *     [&]() { return new FidelityTORefCalculator<...>(...); }
+ *     ) ;
+ *
+ *   ...
+ * \endcode
  *
  * \since Changed in %Tomographer 5.0: Design slightly different; not all value
- *        calculators are instantiated; Constructor now takes lambdas (or callables) which
- *        can create individual value calculators.
+ *        calculators are instantiated; Constructor now takes lambdas (or
+ *        callables) which can create individual value calculators.
+ *
+ * \since Changed in %Tomographer 5.4: Now correctly handles both const and
+ *        non-const calls to getValue()
  */
 template<typename ValueType_, typename... ValueCalculators>
 class TOMOGRAPHER_EXPORT MultiplexorValueCalculator
   : public virtual Tools::NeedOwnOperatorNew<ValueCalculators...>::ProviderType
 {
 public:
+  //! Value type returned by getValue() (see \ref pageInterfaceValueCalculator)
   typedef ValueType_ ValueType;
 
+  //! Number of ValueCalculators given as template parameters
   static constexpr int NumValueCalculators = sizeof...(ValueCalculators);
+
+  /** \brief Internal implementation detail, don't use
+   * 
+   * \internal
+   *
+   * Sequence of if-else's are optimized to a switch statement below this number
+   * of ValueCalculators.
+   */
   static constexpr int NumStaticallyOptimizedIfs = 6;
 
   //  typedef std::tuple<ValueCalculators&...> ValueCalculatorsRefTupleType;
@@ -239,8 +297,13 @@ public:
 
 private:
 
-  void * _valcalc;
+  // pointer to the actual ValueCalculator instance in use, or NULL
+  void * const _valcalc;
+
+  // the index of the actual ValueCalculator in use in the list of possible ones
   const int _i;
+
+  // helper functions
 
   template<typename TupleCreators>
   static inline void * _create_Ith_valcalc(int i, TupleCreators && creators)
@@ -300,14 +363,15 @@ public:
 
   /** \brief Constructor.
    * 
-   * The first parameter, \a i, selects which value calculator is applied. (The whole idea
-   * is that this value can be selected at run-time.)
+   * The first parameter \a i selects which value calculator is applied, given
+   * as an index in the list of possible ValueCalculators (starting at zero, of
+   * course).
    *
-   * Specify as argument a list of callables, which are responsible for creating each
-   * value calculator.  Each callable should take no arguments and create a
-   * ValueCalculator of the corresponding type using the \c new operator.  Only the
-   * callable corresponding to the chosen \a i will be called.  The created
-   * ValueCalculator will be automatically deleted.
+   * The \a creators... are a list of callables which are responsible for
+   * instantiating the required value calculator.  Each callable should take no
+   * arguments and create a ValueCalculator of the corresponding type using the
+   * \c new operator.  Only the callable corresponding to the chosen \a i will
+   * be called.  The created ValueCalculator will be automatically deleted.
    */
   template<typename... CreatorFns>
   inline MultiplexorValueCalculator(const int i, CreatorFns&&... creators)
@@ -322,8 +386,8 @@ public:
     _delete_all();
   }
 
-  // No move constructor, because we want the internal array to be absolutely constant (so
-  // that the compiler can optimize more aggressively).
+  // No move constructor because our members are const, and we would have to
+  // make sure we don't double-free the value calculator.
 
   /** \brief Copy constructor.
    *
@@ -334,7 +398,11 @@ public:
   {
   }
 
-  //! Get a particular value calculator [static index]
+  /** \brief Get a particular value calculator [static index] (const)
+   *
+   * \returns The pointer to the corresponding ValueCalculator, or NULL if the
+   * run-time value calculactor chosen is not equal to \a I.
+   */
   template<int I>
   inline const typename std::tuple_element<I, ValueCalculatorsTupleType>::type * getValueCalculator() const
   {
@@ -342,6 +410,20 @@ public:
       return NULL;
     }
     return (const typename std::tuple_element<I, ValueCalculatorsTupleType>::type *) _valcalc;
+  }
+
+  /** \brief Get a particular value calculator [static index] (non-const)
+   *
+   * \returns The pointer to the corresponding ValueCalculator, or NULL if the
+   * run-time value calculactor chosen is not equal to \a I.
+   */
+  template<int I>
+  inline typename std::tuple_element<I, ValueCalculatorsTupleType>::type * getValueCalculator()
+  {
+    if (_i != I) {
+      return NULL;
+    }
+    return (typename std::tuple_element<I, ValueCalculatorsTupleType>::type *) _valcalc;
   }
 
   /** \brief The main method which computes the value according to the

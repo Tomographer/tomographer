@@ -64,6 +64,15 @@ public:
   inline ValueType getValue(const int = 0) { return _constval; }
 };
 
+class value_calculator_iscallconst {
+public:
+  value_calculator_iscallconst() { }
+
+  typedef int ValueType;
+  inline ValueType getValue(const int = 0) const { return true; }
+  inline ValueType getValue(const int = 0) { return false; }
+};
+
 
 // -----------------------------------------------------------------------------
 // test suites
@@ -154,6 +163,36 @@ BOOST_AUTO_TEST_CASE(constnoconst)
 	  []() { return new const_value_calculator_noconstcall(1); }
 	  );
     BOOST_CHECK_EQUAL(multiplexor.getValue(-1), val);
+  }
+}
+
+BOOST_AUTO_TEST_CASE(iscallconst)
+{
+  for (int val = 0; val < 2; ++val) {
+    {
+      Tomographer::MultiplexorValueCalculator<
+        int,
+        value_calculator_iscallconst,
+        value_calculator_iscallconst
+        > multiplexor(
+            val,
+            []() { return new value_calculator_iscallconst(); },
+            []() { return new value_calculator_iscallconst(); }
+            );
+      BOOST_CHECK_EQUAL(multiplexor.getValue(-1), false);
+    }
+    {
+      const Tomographer::MultiplexorValueCalculator<
+        int,
+        value_calculator_iscallconst,
+        value_calculator_iscallconst
+        > cmultiplexor(
+            val,
+            []() { return new value_calculator_iscallconst(); },
+            []() { return new value_calculator_iscallconst(); }
+            );
+      BOOST_CHECK_EQUAL(cmultiplexor.getValue(-1), true);
+    }
   }
 }
 
