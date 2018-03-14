@@ -318,7 +318,9 @@ private:
   static inline void * _create_Ith_valcalc_a(int i, TupleCreators && creators)
   {
     if (i == I) {
-      return (void *) std::get<I>(creators)();
+      typename std::tuple_element<I, ValueCalculatorsTupleType>::type * valcalc =
+        std::get<I>(creators)();
+      return (void *) valcalc;
     }
     return _create_Ith_valcalc_a<I+1>(i, std::forward<TupleCreators>(creators));
   }
