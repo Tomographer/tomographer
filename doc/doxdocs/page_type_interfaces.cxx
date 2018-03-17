@@ -534,8 +534,15 @@
  * the random walk \a MHWalker (i.e., the \a MHWalkerParams), in order to correct for an
  * acceptance ratio which is not in the required interval.
  *
- * This type interface allows to abstract out the correction of the parameters when using
- * a \ref Tomographer::MHRWAcceptRatioWalkerParamsController.  For correcting a step size,
+ * This type interface allows to abstract out the kind of parameters used by the
+ * \a MHWalker when adjusting those using a \ref
+ * Tomographer::MHRWAcceptRatioWalkerParamsController.  Usually the parameters
+ * are just a step size, but one could think of more elaborate parameter kinds
+ * (say, if we're exploring a space that has more complicated structure); in
+ * such cases one can still use the class \ref
+ * Tomographer::MHRWAcceptRatioWalkerParamsController, while specifying simply
+ * how to adapt the parameters by supplying a \a
+ * MHRWAcceptanceRatioBasedParamsAdjuster class.  For correcting a step size,
  * you can use the ready-to-use \ref Tomographer::MHRWStepSizeController.
  *
  * Objects complying with this type interface should provide the following members:
