@@ -51,7 +51,9 @@ matrix:
     - os: osx
       before_install:
         # - brew tap homebrew/science -- no, DEPRECATED
-        - brew install python3 eigen libmatio pybind11 boost-bcp open-mpi boost-mpi
+        - brew install python
+        - brew install libmatio eigen pybind11
+        - brew install boost-bcp open-mpi boost-mpi
       env:
         - TT_CC=clang-osx
         - TT_PYTHON=brew-python-3
