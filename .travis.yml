@@ -51,6 +51,7 @@ matrix:
     - os: osx
       before_install:
         # - brew tap homebrew/science -- no, DEPRECATED
+        - brew install gcc # apparently a dependency of libmatio, and needs to be installed before the rest???
         - brew upgrade python
         - brew install libmatio eigen pybind11
         - brew install boost-bcp open-mpi boost-mpi
