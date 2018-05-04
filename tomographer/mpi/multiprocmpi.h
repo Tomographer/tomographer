@@ -38,6 +38,7 @@
 #include <boost/exception_ptr.hpp>
 #include <boost/exception/diagnostic_information.hpp>
 #include <boost/serialization/serialization.hpp>
+#include <boost/serialization/vector.hpp>
 
 #include <tomographer/tools/fmt.h>
 #include <tomographer/tools/needownoperatornew.h>
