@@ -9,6 +9,8 @@ Change Log
 
   * Bugfixes in MPI multiproc implementation
 
+  * Minor enhancements in the API
+
 
 ## v5.3 (2017-08-30)
 
@@ -32,13 +34,13 @@ Change Log
 
   * `MHRWTasks::CDataBase` now accepts a list of random seeds to provide for
     each task
-    
+
   * Improved `tomorun`'s implementation of rng seeding using random device
 
   * Python/C++ bindings API: `tpy::CountIntType` and `tpy::RealType` are
     deprecated in favor of the more specific `tpy::IterCountIntType`,
     `tpy::HistCountIntType` etc.
-    
+
 [MPI]: https://computing.llnl.gov/tutorials/mpi/
 
 
@@ -52,19 +54,19 @@ Change Log
   * Added maximum run time for binning-converged controller to prevent
     excessively long runs (`tomorun` option
     `--control-binning-converged-max-add-run-iters`)
-  
+
   * The `tomorun` executable is able to auto-detect number of binning levels,
     like the Python interface
-    
+
   * Better built-in fit models, and support for calculation of the quantum error
     bars in some degenerate cases (Python module `tomographer.querrorbars`)
 
   * Other small enhancements:
-  
+
     - minor optimization in MultiplexorValueCalculator
-    
+
     - detect if iteration count will exceed capacity of integer type used
-    
+
     - `tomographer.tomorun.tomorun()` uses better defaults for max number of
       unconverged bin error bars
 
@@ -75,24 +77,24 @@ Change Log
     default on Mac OS X)
 
   * More meaningful iteration/sweep progress display:
-  
+
         run sweep    19822/32768 [+th:512] : 61.10% done
-    
+
     replaces
-    
+
         iteration 2060800/(3328000=100*(512+32768)) : 61.92% done
 
   * Documentation updates
 
   * Some small internal clean-ups
-  
+
   * Add static minimum logging level compilation configuration option for
     `tomorun` to improve run speed for custom builds;
     added
     [documentation for custom `tomorun` build configurations][tomorun_custom_build]
-    
+
 [tomorun_custom_build]: https://tomographer.github.io/tomographer/api-doc/current/html/page_tomorun_config_build.html
-    
+
 
 ## v5.0 (2017-05-27)
 
@@ -116,9 +118,9 @@ Change Log
     random device (requries custom compilation)
 
   * Updated documentation
-    
+
   * Various fixes to the build system
-  
+
   * Added more minimal examples (`test/minimal_tomorun_controlled.cxx` &
     `test/minimal_single_random_walk.cxx`)
 
@@ -180,10 +182,10 @@ Change Log
   * (python) added compiler info in `tomographer.version.compile_info`
 
   * Doc: Example for writing your own C++ code with a Python module interface
-  
+
   * `PyLogger` made explicitly not GIL-aware, use `GilProtectedPyLogger` if GIL
     is released
-    
+
   * Added test cases (e.g. unpickling data pickled using earlier versions of
     Tomographer)
 
@@ -191,7 +193,7 @@ Change Log
 ## v4.1 (2017-04-08)
 
   * Improved Python packaging and fixed some bugs in `setup.py`
-  
+
   * Minor changes to the Python interface
 
 
@@ -200,25 +202,25 @@ Change Log
   * Switched to [`pybind11`](https://github.com/pybind/pybind11) for Python
     bindings (thanks to Chris Granade for suggesting this great library),
     dropping the dependency on Boost.Python.
-    
+
   * Python package available with `pip`.  Added module `tomographer.include` as
     well as member `tomographer.version.compile_info` for packaging.
-    
+
   * Any custom figure of merit can be specified as a user-defined function to
     the `tomographer.tomorun.tomorun()` in the Python interface
-    
+
   * OpenMP is no longer required neither for `tomorun` nor for the Python
     interface.  This allows to compile with Apple's default clang compiler on
     Mac OS X.  (OpenMP can still be used instead of C++11 threads, if
     preferred.)
-    
+
 
 ## v3.0 (2017-02-22)
 
   * New Python interface (using Boost.Python)
 
   * Test integration with Travis CI
-  
+
   * Overhaul of some C++ components, some enhancements.  Added for instance
     `Tomographer::MHRWTasks::ValueHistogramTasks`
 
@@ -226,7 +228,7 @@ Change Log
 ## v2.0 (2016-09-03)
 
   * Minor improvements to the main `tomorun` program
-  
+
   * Revised framework API for better organization, consistency and flexibility
 
 
