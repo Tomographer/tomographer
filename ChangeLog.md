@@ -3,7 +3,7 @@ Change Log
 ==========
 
 
-## v5.4 (TBD)
+## v5.4 (2018-05-04)
 
   * Upgraded code for *pybind11* ≥ 2.2
 
