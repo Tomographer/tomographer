@@ -314,7 +314,7 @@
  *   (or another <code>std::atomic</code> type).  See
  *   http://en.cppreference.com/w/cpp/utility/program/signal#Signal_handler and
  *   http://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_04_03_03
- *   .
+ *   
  *
  * \par void requestPeriodicStatusReport(int milliseconds)
  *   Request that the task manager periodically send a status report to the handler set by
@@ -330,7 +330,7 @@
  *   (or another <code>std::atomic</code> type).  See
  *   http://en.cppreference.com/w/cpp/utility/program/signal#Signal_handler and
  *   http://pubs.opengroup.org/onlinepubs/9699919799/functions/V2_chap02.html#tag_15_04_03_03
- *   .
+ *   
  *
  *
  * The \a TaskDispatcher must also provide the following typedefs:
