@@ -1,0 +1,7 @@
+<map id="tomographer/tools/boost_test_logger.h" name="tomographer/tools/boost_test_logger.h">
+<area shape="rect" id="node2" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="637,92,825,117"/>
+<area shape="rect" id="node12" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="1203,319,1392,344"/>
+<area shape="rect" id="node17" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="546,165,708,191"/>
+<area shape="rect" id="node26" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="130,319,319,344"/>
+<area shape="rect" id="node22" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="729,239,909,264"/>
+</map>

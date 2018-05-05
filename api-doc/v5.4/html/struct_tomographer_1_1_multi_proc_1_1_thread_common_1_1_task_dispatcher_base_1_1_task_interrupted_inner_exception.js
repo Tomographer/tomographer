@@ -1,0 +1,7 @@
+var struct_tomographer_1_1_multi_proc_1_1_thread_common_1_1_task_dispatcher_base_1_1_task_interrupted_inner_exception =
+[
+    [ "TaskInterruptedInnerException", "struct_tomographer_1_1_multi_proc_1_1_thread_common_1_1_task_dispatcher_base_1_1_task_interrupted_inner_exception.html#ae43d317f8ddaf0cb66de42dda253d45d", null ],
+    [ "~TaskInterruptedInnerException", "struct_tomographer_1_1_multi_proc_1_1_thread_common_1_1_task_dispatcher_base_1_1_task_interrupted_inner_exception.html#ac2669f351634e299d2b15d7a7cf6d4e4", null ],
+    [ "what", "struct_tomographer_1_1_multi_proc_1_1_thread_common_1_1_task_dispatcher_base_1_1_task_interrupted_inner_exception.html#afb7a48ed42219a94cf3b06b9c7cb6a53", null ],
+    [ "msg", "struct_tomographer_1_1_multi_proc_1_1_thread_common_1_1_task_dispatcher_base_1_1_task_interrupted_inner_exception.html#a6dfdbbcd626e707fc337dbb191b8aabb", null ]
+];

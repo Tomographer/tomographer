@@ -1,0 +1,218 @@
+
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN"
+  "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml">
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" />
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <title>Utilities for Jupyter notebooks (tomographer.jpyutil) &#8212; Tomographer Python Interface v5.4 documentation</title>
+    <link rel="stylesheet" href="_static/alabaster.css" type="text/css" />
+    <link rel="stylesheet" href="_static/pygments.css" type="text/css" />
+    <script type="text/javascript" src="_static/documentation_options.js"></script>
+    <script type="text/javascript" src="_static/jquery.js"></script>
+    <script type="text/javascript" src="_static/underscore.js"></script>
+    <script type="text/javascript" src="_static/doctools.js"></script>
+    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mathjax/2.7.1/MathJax.js?config=TeX-AMS-MML_HTMLorMML"></script>
+    <link rel="index" title="Index" href="genindex.html" />
+    <link rel="search" title="Search" href="search.html" />
+    <link rel="next" title="Utilities for compiling other modules (tomographer.include)" href="tomographer.include.html" />
+    <link rel="prev" title="Python Tools Related to Tomography (tomographer.tools)" href="tomographer.tools.html" />
+   
+  <link rel="stylesheet" href="_static/custom.css" type="text/css" />
+  
+  
+  <meta name="viewport" content="width=device-width, initial-scale=0.9, maximum-scale=0.9" />
+
+  </head><body>
+  
+
+    <div class="document">
+      <div class="documentwrapper">
+        <div class="bodywrapper">
+          <div class="body" role="main">
+            
+  <div class="section" id="module-tomographer.jpyutil">
+<span id="utilities-for-jupyter-notebooks-tomographer-jpyutil"></span><h1>Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)<a class="headerlink" href="#module-tomographer.jpyutil" title="Permalink to this headline">¶</a></h1>
+<p>Utilities for Jupyter notebooks.</p>
+<p>Note that the utilities here have simple fallbacks to make them also work outside of
+Jupyter notebooks.  For example, a <a class="reference internal" href="#tomographer.jpyutil.SimpleProgressBar" title="tomographer.jpyutil.SimpleProgressBar"><code class="xref py py-class docutils literal notranslate"><span class="pre">SimpleProgressBar</span></code></a> would display a graphical
+progress bar inside a Jupyter notebook, but inside a python script executed on the
+console, it would simply print out progress information using <code class="docutils literal notranslate"><span class="pre">print(...)</span></code>.</p>
+<dl class="class">
+<dt id="tomographer.jpyutil.SimpleProgressBar">
+<em class="property">class </em><code class="descclassname">tomographer.jpyutil.</code><code class="descname">SimpleProgressBar</code><span class="sig-paren">(</span><em>label_msg_html='Progress: '</em>, <em>displaybox=True</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.jpyutil.SimpleProgressBar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <code class="xref py py-class docutils literal notranslate"><span class="pre">tomographer.jpyutil._SimpleProgressBar_ConsoleImpl</span></code></p>
+<p>A simple progress bar implementation, to be used in a Python <cite>with</cite> statement:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="k">with</span> <span class="n">SimpleProgressBar</span><span class="p">(</span><span class="s2">&quot;Working very hard ... &quot;</span><span class="p">)</span> <span class="k">as</span> <span class="n">prg</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">i</span> <span class="ow">in</span> <span class="nb">range</span><span class="p">(</span><span class="mi">10000</span><span class="p">):</span>
+        <span class="n">prg</span><span class="o">.</span><span class="n">progress</span><span class="p">(</span><span class="n">fraction_done</span><span class="o">=</span><span class="n">i</span><span class="o">/</span><span class="mf">10000.0</span><span class="p">)</span>
+        <span class="c1"># do stuff that takes time</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>This class works both inside a Jupyter notebook, providing a nice graphical progress bar,
+as well as in any other context such as a simple python console script, in which case
+information is simply displayed in the terminal using <cite>print(…)</cite>.</p>
+<p>In addition, it is possible to display additional information to simply the fraction done.
+You can do this by specifying the argument <cite>add_info</cite> to the <a class="reference internal" href="#tomographer.jpyutil.SimpleProgressBar.progress" title="tomographer.jpyutil.SimpleProgressBar.progress"><code class="xref py py-meth docutils literal notranslate"><span class="pre">progress()</span></code></a>
+callback.  Inside a Jupyter notebook, the information is displayed below the progress bar
+and is constantly updated at each call of <a class="reference internal" href="#tomographer.jpyutil.SimpleProgressBar.progress" title="tomographer.jpyutil.SimpleProgressBar.progress"><code class="xref py py-meth docutils literal notranslate"><span class="pre">progress()</span></code></a>.  In the console version,
+the information is simply displayed each time using <code class="docutils literal notranslate"><span class="pre">print(...)</span></code>.</p>
+<p>Note: When we are inside a Jupyter notebook, there is an additional attribute which is
+exposed called <cite>addinfo</cite>.  It is an <cite>IPython.display.HTML</cite> widget which serves to display
+the additional info. By testing for this attribute you can display custom stuff in there,
+e.g. a final report after the work has finished.</p>
+<dl class="method">
+<dt id="tomographer.jpyutil.SimpleProgressBar.progress">
+<code class="descname">progress</code><span class="sig-paren">(</span><em>fraction_done</em><span class="optional">[</span>, <em>add_info=None</em><span class="optional">]</span><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.jpyutil.SimpleProgressBar.progress" title="Permalink to this definition">¶</a></dt>
+<dd><p>The callback function to update the progress bar (or to display new information on the
+console).</p>
+<table class="docutils field-list" frame="void" rules="none">
+<col class="field-name" />
+<col class="field-body" />
+<tbody valign="top">
+<tr class="field-odd field"><th class="field-name">Parameters:</th><td class="field-body"><ul class="first last simple">
+<li><strong>fraction_done</strong> – is the fraction of the job done, a real number between zero and one.</li>
+<li><strong>add_info</strong> – any additional information (formatted as plain text) which should be
+displayed alongside the progress bar. If <cite>None</cite> (or not specified), then no additional
+information is displayed.</li>
+</ul>
+</td>
+</tr>
+</tbody>
+</table>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="class">
+<dt id="tomographer.jpyutil.RandWalkProgressBar">
+<em class="property">class </em><code class="descclassname">tomographer.jpyutil.</code><code class="descname">RandWalkProgressBar</code><span class="sig-paren">(</span><em>label_msg_html='Random Walk Progress: '</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.jpyutil.RandWalkProgressBar" title="Permalink to this definition">¶</a></dt>
+<dd><p>Bases: <a class="reference internal" href="#tomographer.jpyutil.SimpleProgressBar" title="tomographer.jpyutil.SimpleProgressBar"><code class="xref py py-class docutils literal notranslate"><span class="pre">tomographer.jpyutil.SimpleProgressBar</span></code></a></p>
+<p>A progress bar suitable for displaying the status of random walk tasks (as for
+<a class="reference internal" href="tomographer.tomorun.html#tomographer.tomorun.tomorun" title="tomographer.tomorun.tomorun"><code class="xref py py-func docutils literal notranslate"><span class="pre">tomographer.tomorun.tomorun()</span></code></a>, for example).</p>
+<p>This class automatically provides a callback function <a class="reference internal" href="#tomographer.jpyutil.RandWalkProgressBar.progress_fn" title="tomographer.jpyutil.RandWalkProgressBar.progress_fn"><code class="xref py py-meth docutils literal notranslate"><span class="pre">progress_fn()</span></code></a> which
+accepts a <a class="reference internal" href="tomographer.multiproc.html#tomographer.multiproc.FullStatusReport" title="tomographer.multiproc.FullStatusReport"><code class="xref py py-class docutils literal notranslate"><span class="pre">tomographer.multiproc.FullStatusReport</span></code></a>, and is capable of
+displaying meaningful additional information alongside the progress bar.  The callback
+<a class="reference internal" href="#tomographer.jpyutil.RandWalkProgressBar.progress_fn" title="tomographer.jpyutil.RandWalkProgressBar.progress_fn"><code class="xref py py-meth docutils literal notranslate"><span class="pre">progress_fn()</span></code></a> is suitable to be specified directly to, e.g.,
+<a class="reference internal" href="tomographer.tomorun.html#tomographer.tomorun.tomorun" title="tomographer.tomorun.tomorun"><code class="xref py py-func docutils literal notranslate"><span class="pre">tomographer.tomorun.tomorun()</span></code></a>.</p>
+<p>Example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">result</span> <span class="o">=</span> <span class="kc">None</span>
+<span class="k">with</span> <span class="n">RandWalkProgressBar</span><span class="p">()</span> <span class="k">as</span> <span class="n">prg</span><span class="p">:</span>
+    <span class="n">result</span> <span class="o">=</span> <span class="n">tomographer</span><span class="o">.</span><span class="n">tomorun</span><span class="o">.</span><span class="n">tomorun</span><span class="p">(</span><span class="o">...</span><span class="p">,</span> <span class="n">progress_fn</span><span class="o">=</span><span class="n">prg</span><span class="o">.</span><span class="n">progress_fn</span><span class="p">)</span>
+    <span class="n">prg</span><span class="o">.</span><span class="n">displayFinalInfo</span><span class="p">(</span><span class="n">result</span><span class="p">[</span><span class="s1">&#39;final_report_runs&#39;</span><span class="p">])</span>
+</pre></div>
+</div>
+<p>This class works both inside a Jupyter notebook as well as in other contexts such as a
+console for a simple Python script.</p>
+<div class="admonition note">
+<p class="first admonition-title">Note</p>
+<p class="last">The callback method which should be called regularly is <cite>progress_fn()</cite>, and
+not <cite>progress()</cite>.</p>
+</div>
+<dl class="method">
+<dt id="tomographer.jpyutil.RandWalkProgressBar.displayFinalInfo">
+<code class="descname">displayFinalInfo</code><span class="sig-paren">(</span><em>report_str</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.jpyutil.RandWalkProgressBar.displayFinalInfo" title="Permalink to this definition">¶</a></dt>
+<dd><p>Display some text in the “additional information” area of the progress bar.</p>
+<p>This is useful if you want to display some final report after the random walks
+have completed.</p>
+<p>This method works both within a Jupyter notebook as well as in a console.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.jpyutil.RandWalkProgressBar.progress">
+<code class="descname">progress</code><span class="sig-paren">(</span><em>*args</em>, <em>**kwargs</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.jpyutil.RandWalkProgressBar.progress" title="Permalink to this definition">¶</a></dt>
+<dd><p>Do not call this method. It will raise a <cite>RuntimeError</cite>.</p>
+</dd></dl>
+
+<dl class="method">
+<dt id="tomographer.jpyutil.RandWalkProgressBar.progress_fn">
+<code class="descname">progress_fn</code><span class="sig-paren">(</span><em>report</em><span class="sig-paren">)</span><a class="headerlink" href="#tomographer.jpyutil.RandWalkProgressBar.progress_fn" title="Permalink to this definition">¶</a></dt>
+<dd><p>Update the progress bar and additional info to display the current status of the
+random walk specified in <cite>report</cite>, provided as a
+<a class="reference internal" href="tomographer.multiproc.html#tomographer.multiproc.FullStatusReport" title="tomographer.multiproc.FullStatusReport"><code class="xref py py-class docutils literal notranslate"><span class="pre">FullStatusReport</span></code></a> object.</p>
+<p>This method is suitable to be specified as a callback to, e.g.,
+<a class="reference internal" href="tomographer.tomorun.html#tomographer.tomorun.tomorun" title="tomographer.tomorun.tomorun"><code class="xref py py-func docutils literal notranslate"><span class="pre">tomographer.tomorun.tomorun()</span></code></a>.</p>
+</dd></dl>
+
+</dd></dl>
+
+</div>
+
+
+          </div>
+        </div>
+      </div>
+      <div class="sphinxsidebar" role="navigation" aria-label="main navigation">
+        <div class="sphinxsidebarwrapper">
+<h1 class="logo"><a href="index.html">Tomographer Python Interface</a></h1>
+
+
+
+
+
+
+
+
+<h3>Navigation</h3>
+<ul class="current">
+<li class="toctree-l1"><a class="reference internal" href="tomographer._hist_classes.html">Histogram Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._mhrw_classes.html">Metropolis-Hastings Random Walk related classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer._exc_classes.html">Exception Classes (<cite>tomographer</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.multiproc.html">Multiprocessing related classes (<cite>tomographer.multiproc</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.densedm.html">Storing Tomography Data and Calculating the Likelihood Function (<cite>tomographer.densedm</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tomorun.html">Tomorun, the main tomography routine (<cite>tomographer.tomorun</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.mhrwtasks.html">Utilities for Metropolis-Hastings random walk tasks (<cite>tomographer.mhrwtasks</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.querrorbars.html">Computing the quantum error bars (<cite>tomographer.querrorbars</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.tools.html">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">Utilities for Jupyter notebooks (<cite>tomographer.jpyutil</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.include.html">Utilities for compiling other modules (<cite>tomographer.include</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tomographer.version.html">Version and compilation information (<cite>tomographer.version</cite>)</a></li>
+<li class="toctree-l1"><a class="reference internal" href="custom_module.html">Writing Special-Purpose C++ Code with a Python Interface</a></li>
+</ul>
+
+<div class="relations">
+<h3>Related Topics</h3>
+<ul>
+  <li><a href="index.html">Documentation overview</a><ul>
+  <li><a href="tomographer.html">&lt;no title&gt;</a><ul>
+      <li>Previous: <a href="tomographer.tools.html" title="previous chapter">Python Tools Related to Tomography (<cite>tomographer.tools</cite>)</a></li>
+      <li>Next: <a href="tomographer.include.html" title="next chapter">Utilities for compiling other modules (<cite>tomographer.include</cite>)</a></li>
+  </ul></li>
+  </ul></li>
+</ul>
+</div>
+<div id="searchbox" style="display: none" role="search">
+  <h3>Quick search</h3>
+    <div class="searchformwrapper">
+    <form class="search" action="search.html" method="get">
+      <input type="text" name="q" />
+      <input type="submit" value="Go" />
+      <input type="hidden" name="check_keywords" value="yes" />
+      <input type="hidden" name="area" value="default" />
+    </form>
+    </div>
+</div>
+<script type="text/javascript">$('#searchbox').show(0);</script>
+        </div>
+      </div>
+      <div class="clearer"></div>
+    </div>
+    <div class="footer">
+      &copy;2016, Philippe Faist.
+      
+      |
+      Powered by <a href="http://sphinx-doc.org/">Sphinx 1.7.4</a>
+      &amp; <a href="https://github.com/bitprophet/alabaster">Alabaster 0.7.9</a>
+      
+      |
+      <a href="_sources/tomographer.jpyutil.rst.txt"
+          rel="nofollow">Page source</a>
+    </div>
+
+    
+
+    
+  </body>
+</html>

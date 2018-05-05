@@ -30,11 +30,11 @@ steps to get started and analyze data from your experiment:
         # for *conda* users:
 
         > conda install numpy gcc libgcc
-        > conda install -c conda-forge pybind11==2.1.1
+        > conda install -c conda-forge pybind11>=2.2
 
         # OR, for *pip* users:
 
-        > pip install numpy pybind11==2.1.1
+        > pip install numpy pybind11>=2.2
 
     All `pip install` commands (e.g. `pip install SOMEPACKAGE`) might have to be
     prefixed by `sudo -H` (e.g. `sudo -H pip install SOMEPACKAGE`) if you need

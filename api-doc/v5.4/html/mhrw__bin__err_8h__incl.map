@@ -1,0 +1,9 @@
+<map id="tomographer/mhrw_bin_err.h" name="tomographer/mhrw_bin_err.h">
+<area shape="rect" id="node2" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="1002,99,1190,124"/>
+<area shape="rect" id="node22" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="566,259,746,284"/>
+<area shape="rect" id="node30" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="1794,179,1987,204"/>
+<area shape="rect" id="node36" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="255,179,526,204"/>
+<area shape="rect" id="node12" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="715,345,904,371"/>
+<area shape="rect" id="node17" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="1015,179,1177,204"/>
+<area shape="rect" id="node26" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="979,345,1168,371"/>
+</map>

@@ -1,0 +1,14 @@
+<map id="tomographer/mhrwstatscollectors.h" name="tomographer/mhrwstatscollectors.h">
+<area shape="rect" id="node8" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="1688,405,1869,431"/>
+<area shape="rect" id="node22" href="$loggers_8h.html" title="Utilities for logging messages. " alt="" coords="2436,239,2623,264"/>
+<area shape="rect" id="node33" href="$statusprovider_8h_source.html" title="tomographer/tools/statusprovider.h" alt="" coords="2164,159,2391,184"/>
+<area shape="rect" id="node34" href="$histogram_8h.html" title="Definitions for Histogram Types. " alt="" coords="1074,239,1244,264"/>
+<area shape="rect" id="node47" href="$mhrw_8h.html" title="Routines for performing a Metropolis&#45;Hastings random walk. " alt="" coords="1736,79,1880,104"/>
+<area shape="rect" id="node50" href="$mhrw__bin__err_8h.html" title="Binning Analysis in a Metropolis&#45;Hastings random walk. " alt="" coords="1454,152,1613,191"/>
+<area shape="rect" id="node15" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="1955,492,2144,517"/>
+<area shape="rect" id="node17" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="2417,492,2607,517"/>
+<area shape="rect" id="node29" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="2126,319,2288,344"/>
+<area shape="rect" id="node40" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="995,319,1189,344"/>
+<area shape="rect" id="node45" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="296,319,568,344"/>
+<area shape="rect" id="node49" href="$multiproc_8h.html" title="Some common definitions for multiprocessing interfaces. " alt="" coords="2164,239,2330,264"/>
+</map>

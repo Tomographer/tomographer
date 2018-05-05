@@ -1,0 +1,5 @@
+var struct_tomographer_1_1_logger_1_1_logger_traits_3_01_multi_proc_1_1_cxx_threads_1_1_thread_sanitb4e4ff0abba6a39822cce1c99e885e9a =
+[
+    [ "HasOwnGetLevel", "struct_tomographer_1_1_logger_1_1_logger_traits_3_01_multi_proc_1_1_cxx_threads_1_1_thread_sanitb4e4ff0abba6a39822cce1c99e885e9a.html#ae96f9b84c63cbb0b21fbe028c5d00eeeab85f1c7c594852313ce88b6a9c4bdb42", null ],
+    [ "IsThreadSafe", "struct_tomographer_1_1_logger_1_1_logger_traits_3_01_multi_proc_1_1_cxx_threads_1_1_thread_sanitb4e4ff0abba6a39822cce1c99e885e9a.html#ae96f9b84c63cbb0b21fbe028c5d00eeeacd9e2a3ec39b8b05be0354059e60f1a1", null ]
+];

@@ -1,0 +1,8 @@
+<map id="tomographer/histogram.h" name="tomographer/histogram.h">
+<area shape="rect" id="node15" href="$fmt_8h.html" title="Utilities for formatting strings. " alt="" coords="560,85,722,111"/>
+<area shape="rect" id="node22" href="$cxxutil_8h.html" title="Some C++ utilities, with a tad of C++11 tricks. " alt="" coords="989,172,1170,197"/>
+<area shape="rect" id="node32" href="$eigenutil_8h.html" title="Basic utilities for dealing with Eigen matrices and other types. " alt="" coords="1430,85,1623,111"/>
+<area shape="rect" id="node37" href="$needownoperatornew_8h.html" title="Managing the need for specific overrides to operator new() for some types (especially Eigen types) ..." alt="" coords="2023,85,2294,111"/>
+<area shape="rect" id="node27" href="$cxxdefs_8h.html" title="Basic definitions, which may have to be defined before any Eigen headers or further utilities are inc..." alt="" coords="1521,259,1710,284"/>
+<area shape="rect" id="node29" href="$conststr_8h.html" title="A constexpr string type, suitable for basic compile&#45;time string processing. " alt="" coords="961,259,1150,284"/>
+</map>
