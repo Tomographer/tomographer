@@ -320,7 +320,7 @@ convenient environment to run python code interactively.
 
 The full documentation of the Python interface can be generated via Sphinx, and
 is available [online
-here](https://tomographer.github.io/tomographer/api-doc/v3.0/html/py/).
+here](https://tomographer.github.io/tomographer/api-doc/current/html/py/).
 
 
 C++ Framework: API Documentation
