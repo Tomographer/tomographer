@@ -54,7 +54,7 @@ tomographer_binaries:
     title: "Windows Binaries (32-bit, ZIP archive)"
 
 github_blob_baseurl: 'https://github.com/Tomographer/tomographer/blob/'
-paper_url: 'http://dx.doi.org/10.1103/PhysRevLett.117.010404'
+paper_url: 'https://doi.org/10.1103/PhysRevLett.117.010404'
 paper_ref: 'Ph. Faist and R. Renner, Phys. Rev. Lett. 117, 010404 (2016)'
 paper_arxiv_url: 'http://arxiv.org/abs/1509.06763'
 paper_arxiv_ref: 'arxiv:1509.06763'
