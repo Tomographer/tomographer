@@ -86,7 +86,7 @@
 
 /** \page pageTheoryBinningAnalysis Binning Analysis
  *
- * Reference: [Ambegaokar, Troyer, Am. J. Phys. (2010), http://dx.doi.org/10.1119/1.3247985
+ * Reference: [Ambegaokar, Troyer, Am. J. Phys. (2010), https://doi.org/10.1119/1.3247985
  *             http://arxiv.org/abs/0906.0943]
  *
  * The Binning Analysis provides a powerful way of determining error bars for integrals
