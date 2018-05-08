@@ -167,12 +167,12 @@
  *
  * 2. Br&uuml;ning et al., &ldquo;Parametrizations of density matrices,&rdquo; Journal of
  *    Modern Optics 59:1 1 (2012), <a
- *    href="http://dx.doi.org/10.1080/09500340.2011.632097">doi:10.1080/09500340.2011.632097</a>,
+ *    href="https://doi.org/10.1080/09500340.2011.632097">doi:10.1080/09500340.2011.632097</a>,
  *    <a href="http://arxiv.org/abs/1103.4542">arXiv:1103.4542</a>;
  *
  * 3. Bertlmann &amp; Krammer, &ldquo;Bloch vectors for qudits,&rdquo; Journal of Physics
  *    A 41:23 235303 (2008) <a
- *    href="http://dx.doi.org/10.1088/1751-8113/41/23/235303">doi:10.1088/1751-8113/41/23/235303</a>,
+ *    href="https://doi.org/10.1088/1751-8113/41/23/235303">doi:10.1088/1751-8113/41/23/235303</a>,
  *    <a href="http://arxiv.org/abs/0806.1174">arXiv:0806.1174</a>.
  *
  */
