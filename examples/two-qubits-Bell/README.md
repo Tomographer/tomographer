@@ -2,7 +2,7 @@
 # Two-qubit example for `tomorun` usage
 
 Here is the two-qubit example presented in Section 5 of the supplemental material to
-https://dx.doi.org/10.1103/PhysRevLett.117.010404 .
+https://doi.org/10.1103/PhysRevLett.117.010404 .
 
 ## Running the example (with `tomorun` and MATLAB)
 

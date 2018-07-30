@@ -25,7 +25,7 @@ This project comprises three parts:
 The `tomorun` executable produces a histogram of a figure of merit under the
 distribution relevant for a reliable error analysis as described in [Faist &
 Renner, Practical and Reliable Error Bars in Quantum Tomography, Phys. Rev.
-Lett. 117, 010404 (2016)](http://dx.doi.org/10.1103/PhysRevLett.117.010404)
+Lett. 117, 010404 (2016)](https://doi.org/10.1103/PhysRevLett.117.010404)
 ([arXiv:1509.06763](http://arxiv.org/abs/1509.06763)).  The python interface
 provides an interface to the essentially the same functionality as `tomorun`
 from python/numpy code (plus the possibility for calculating a custom figure
@@ -320,7 +320,7 @@ convenient environment to run python code interactively.
 
 The full documentation of the Python interface can be generated via Sphinx, and
 is available [online
-here](https://tomographer.github.io/tomographer/api-doc/v3.0/html/py/).
+here](https://tomographer.github.io/tomographer/api-doc/current/html/py/).
 
 
 C++ Framework: API Documentation
