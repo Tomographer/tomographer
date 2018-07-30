@@ -9,6 +9,8 @@ import numpy as np
 
 import cvxpy
 
+
+
 import scipy.sparse as sp
 
 import tomographer.densedm
@@ -79,13 +81,13 @@ def find_mle(llh, solver_opts=None):
         logger.warning("No measurements given, did you forget to populate the llh object?")
         return None
 
-    rho_R = cvxpy.Symmetric(dim, dim)
-    rho_I = cvxpy.Variable(dim, dim)
+    rho_R = cvxpy.Variable((dim, dim), symmetric=True)
+    rho_I = cvxpy.Variable((dim, dim),)
 
     constraints = [
         rho_I == -rho_I.T,
-        cvxpy.vstack( cvxpy.hstack(rho_R, -rho_I) ,
-                      cvxpy.hstack(rho_I,  rho_R) ) >> 0,
+        cvxpy.vstack( [ cvxpy.hstack([rho_R, -rho_I]),
+                        cvxpy.hstack([rho_I, rho_R]) ] ) >> 0,
         cvxpy.trace(rho_R) == 1,
         ]
 
