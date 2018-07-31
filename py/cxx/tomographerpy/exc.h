@@ -111,6 +111,33 @@ tomo_internal::ExceptionWithDocstring<CppException> & registerExceptionWithDocst
 
 
 /** \brief Helper for catching exceptions in a thread and re-raising them
+ *
+ * Usage example:
+ * \code
+ *  {
+ *    py::gil_scoped_release gil_release; // release Python GIL
+ *    try {
+ *      // parallel code, computations, etc., with possible Python code
+ *      // invocation that might raise Python exceptions (remember to
+ *      // acquire GIL for each such blocks)
+ *      ...
+ *        { py::gil_scoped_acquire gil_acq;
+ *          ... py API calls ....
+ *          checkPyException(); // might raise PyFetchedException
+ *         }
+ *
+ *    } catch (tpy::PyFetchedException & pyerr) {
+ *      // acquire GIL for PyErr_Restore()
+ *      py::gil_scoped_acquire gil_acquire;
+ *  
+ *      pyerr.restorePyException();
+ *      throw py::error_already_set(); // throw C++ error to handle exception
+ *    }
+ *  }
+ * \endcode
+ *
+ * Use \ref checkPyException() to check if Python has set an exception, and to
+ * throw PyFetchedException if necessary.
  */
 class PyFetchedException : public std::exception
 {
@@ -146,6 +173,28 @@ public:
   const char * what() const noexcept { return msg.c_str(); }
 };
 
+
+
+
+
+
+/** \brief Check if any exception is set on the Python side and throw in case
+ *
+ * If any Python exception is set, then throws a \ref PyFetchedException.  This
+ * works well for code that is executed within a block which handles \ref
+ * PyFetchedException.  See doc for that class.
+ *
+ * Make sure you have acquired the GIL, if necessary.
+ *
+ * \since This function was introduced in Tomographer 5.5.
+ */
+inline void checkPyException()
+{
+  if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
+    //fprintf(stderr, "DEBUG:: Python exception set, throwing\n") ;
+    throw tpy::PyFetchedException();
+  }
+}
 
 
 } // namespace tpy

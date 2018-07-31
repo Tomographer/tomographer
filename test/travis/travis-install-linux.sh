@@ -166,8 +166,11 @@ elif [[ "$INSTALL_PYTHON_DEPS_USING" == "conda" ]]; then
 
     conda install numpy scipy matplotlib ecos
     conda install -f numpy
-    conda install -c cvxgrp scs multiprocess cvxcanon "cvxpy>=1.0.1"
+    conda install -c cvxgrp scs multiprocess cvxcanon # cvxpy
     conda install -c conda-forge pybind11
+
+    # problem installing cvxpy>=1.0.0, do it with pip
+    pip install "cvxpy>=1.0.0"
 
     #source activate test-environment
 

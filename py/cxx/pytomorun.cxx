@@ -87,7 +87,10 @@ public:
   tpy::RealScalar getValue(const Eigen::Ref<const tpy::CplxMatrixType> & T) const
   {
     py::gil_scoped_acquire gil_acquire;
-    return fn(py::cast(T)).cast<tpy::RealScalar>();
+    tpy::checkPyException();
+    tpy::RealScalar val = fn(py::cast(T)).cast<tpy::RealScalar>();
+    tpy::checkPyException();
+    return val;
   }
 
 

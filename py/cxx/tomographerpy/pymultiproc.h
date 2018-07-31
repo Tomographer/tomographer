@@ -180,6 +180,7 @@ inline tpy::FullStatusReport preparePyTaskStatusReport(
 }
 
 
+
 /** \brief Set up status reporting for a task dispatcher, using a Python callback for status reports
  *
  * Sets up the given \ref pageInterfaceTaskDispatcher "task dispatcher" \a tasks
@@ -211,19 +212,15 @@ inline void setTasksStatusReportPyCallback(TaskDispatcher & tasks, py::object pr
 
   auto fn = [progress_fn](const typename TaskDispatcher::FullStatusReportType & report) {
 
-    if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
-      //fprintf(stderr, "DEBUG:: error set, throwing\n") ;
-      throw tpy::PyFetchedException();
-    }
+    checkPyException();
+
     // call the python progress callback:
     if (!progress_fn.is_none()) {
       auto r = preparePyTaskStatusReport<TaskType>(report);
       //fprintf(stderr, "DEBUG:: about to call py callback\n") ;
       progress_fn(py::cast(r));
-      if (PyErr_Occurred() != NULL || PyErr_CheckSignals() == -1) {
-        fprintf(stderr, "DEBUG:: error set, throwing\n") ;
-        throw tpy::PyFetchedException();
-      }
+
+      checkPyException();
       //fprintf(stderr, "DEBUG:: py callback done\n") ;
     }
   };
