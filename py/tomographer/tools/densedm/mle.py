@@ -23,7 +23,7 @@ except ImportError as e:
     sys.stderr.write("Tomographer module %s requires `cvxpy`, which is not installed.\n"%(__name__) +
                      "  [for instance (conda): conda install -c cvxgrp \"cvxpy>=1.0.0\"]\n"
                      "  [for instance (pip)  : pip install \"cvxpy>=1.0.0\"]\n")
-
+    raise
 
 
 
