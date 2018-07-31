@@ -57,9 +57,11 @@ except ImportError as e:
     sys.stderr.write(
         "\n"
         "*** ERROR: Please install packages `numpy' and `pybind11' prior to installing `tomographer' ***\n"
-        "    [for instance: pip install numpy pybind11 ]\n"
+        "    [for instance (conda): conda install numpy ; conda install -c conda-forge \"pybind11>=2.2.0\" ]\n"
+        "    [for instance (pip)  : pip install numpy pybind11 ]\n"
         "\n")
     raise
+
 
 def require_mod_version(mod, modver, minver, fix=None):
     if LooseVersion(modver) < LooseVersion(minver):
