@@ -2,6 +2,16 @@
 
 """
 Utility to find the MLE estimate, using `cvxpy <http://www.cvxpy.org/>`_.
+
+NOTE: Module `cvxpy` must be installed, with version at least 1.0.0.  For
+instance::
+
+  # for *conda* users
+  conda install -c cvxgrp "cvxpy>=1.0.0"
+
+  # for *pip* users
+  pip install "cvxpy>=1.0.0"
+
 """
 
 
