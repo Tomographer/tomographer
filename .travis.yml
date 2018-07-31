@@ -54,7 +54,7 @@ matrix:
         - brew cask uninstall oclint || true  # see https://github.com/travis-ci/travis-ci/issues/8826 ???
         - brew upgrade python
         - brew install libmatio eigen pybind11
-        - brew upgrade boost
+        - brew upgrade boost || true
         - brew install boost-bcp open-mpi boost-mpi
       env:
         - TT_CC=clang-osx
